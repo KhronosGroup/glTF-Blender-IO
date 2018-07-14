@@ -1,0 +1,1 @@
+Create Python classes from Blender meshes, materials etc.

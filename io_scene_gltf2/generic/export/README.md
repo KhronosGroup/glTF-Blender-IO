@@ -1,0 +1,1 @@
+Save glTF 2.0 Python classes to file.
