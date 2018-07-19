@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.2">
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLHierarchy</id>
+    <coordinates>
+      <x>590</x>
+      <y>220</y>
+      <w>190</w>
+      <h>300</h>
+    </coordinates>
+    <panel_attributes>type=Package
+io_scene_gltf2
+	blender
+		common
+		export
+		import
+	io
+		common
+		export
+		import
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>
