@@ -17,16 +17,16 @@
 #
 
 import json
+import os
+import shutil
 import struct
 import zlib
-import os
 
-from shutil import copyfile
+from ..common.gltf2_debug import *
+from ..common.gltf2_constants import *
 
-from .gltf2_debug import *
-from .gltf2_constants import *
-from .gltf2_get import *
-
+# FIXME Refactor
+from ...blender.export.gltf2_get import *
 
 #
 # Globals
@@ -348,7 +348,7 @@ def create_image_file(context, blender_image, dst_path, file_format):
         src_path = bpy.path.abspath(blender_image.filepath, library=blender_image.library)
 
         if dst_path != src_path:
-            copyfile(src_path, dst_path)
+            shutil.copyfile(src_path, dst_path)
 
     else:
         # Render a new image to destination, converting to target format.

@@ -16,11 +16,13 @@
 # Imports
 #
 
-import bpy
 import math
+
+import bpy
 import mathutils
 
-from .gltf2_debug import *
+from ...io.common.gltf2_debug import *
+
 from .gltf2_extract import *
 
 #

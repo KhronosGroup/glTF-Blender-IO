@@ -19,7 +19,7 @@
 import bpy
 import os
 
-from .gltf2_debug import *
+from ...io.common.gltf2_debug import *
 
 #
 # Globals

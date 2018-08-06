@@ -17,13 +17,16 @@
 #
 
 import base64
-import bpy
 import copy
 
-from .gltf2_constants import *
+import bpy
+
+from ...io.common.gltf2_constants import *
+from ...io.common.gltf2_debug import *
+
+from ...io.export.gltf2_create import *
+
 from .gltf2_animate import *
-from .gltf2_create import *
-from .gltf2_debug import *
 from .gltf2_extract import *
 from .gltf2_filter import *
 from .gltf2_get import *

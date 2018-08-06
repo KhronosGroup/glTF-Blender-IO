@@ -16,14 +16,17 @@
 # Imports
 #
 
-import bpy
 import json
 import struct
 
-from .gltf2_debug import *
+import bpy
+
+from ...io.common.gltf2_debug import *
+
+from ...io.export.gltf2_create import BlenderEncoder
+
 from .gltf2_filter import *
 from .gltf2_generate import *
-from .gltf2_create import BlenderEncoder
 
 #
 # Globals
