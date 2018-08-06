@@ -20,8 +20,6 @@ import bpy
 
 from ...io.common.gltf2_io_debug import *
 
-from .gltf2_blender_get import *
-
 #
 # Globals
 #
@@ -29,6 +27,28 @@ from .gltf2_blender_get import *
 #
 # Functions
 #
+
+
+def filter_used_materials():
+    """
+    Gathers and returns all unfiltered, valid Blender materials.
+    """
+
+    materials = []
+
+    for blender_material in bpy.data.materials:
+        if blender_material.node_tree and blender_material.use_nodes:
+            for currentNode in blender_material.node_tree.nodes:
+                if isinstance(currentNode, bpy.types.ShaderNodeGroup):
+                    if currentNode.node_tree.name.startswith('glTF Metallic Roughness'):
+                        materials.append(blender_material)
+                    elif currentNode.node_tree.name.startswith('glTF Specular Glossiness'):
+                        materials.append(blender_material)
+        else:
+            materials.append(blender_material)
+
+    return materials
+
 
 def filter_apply(export_settings):
     """
@@ -174,7 +194,7 @@ def filter_apply(export_settings):
 
     filtered_materials = []
 
-    for blender_material in get_used_materials():
+    for blender_material in filter_used_materials():
         
         if blender_material.users == 0:
             continue

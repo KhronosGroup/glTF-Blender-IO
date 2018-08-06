@@ -30,6 +30,7 @@ from ...io.common.gltf2_io_constants import *
 from ...io.common.gltf2_io_debug import *
 
 from ...io.export.gltf2_io_generate import *
+from ...io.export.gltf2_io_get import *
 
 from .gltf2_blender_animate import *
 from .gltf2_blender_extract import *
