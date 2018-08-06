@@ -54,8 +54,7 @@ def is_json(data):
         json.dumps(data, cls=BlenderEncoder)
         return True
     except:
-        import logging
-        logging.exception("failed to json.dump custom properties.")
+        print_console('DEBUG', 'Failed to json.dumps custom properties')
         return False
 
 def create_image_file(context, blender_image, dst_path, file_format):
