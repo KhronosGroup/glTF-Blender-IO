@@ -18,9 +18,9 @@
 
 import bpy
 
-from ...io.common.gltf2_io_debug import *
+from ...io.com.gltf2_io_debug import *
 
-from ...io.export.gltf2_io_get import *
+from ...io.exp.gltf2_io_get import *
 
 #
 # Globals

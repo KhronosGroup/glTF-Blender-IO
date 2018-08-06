@@ -18,8 +18,8 @@
 
 import struct
 
-from ..common.gltf2_io_debug import *
-from ..common.gltf2_io_constants import *
+from ..com.gltf2_io_debug import *
+from ..com.gltf2_io_constants import *
 
 #
 # Globals

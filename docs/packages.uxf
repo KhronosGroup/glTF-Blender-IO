@@ -12,13 +12,13 @@
     <panel_attributes>type=Package
 io_scene_gltf2
 	blender
-		common
-		export
-		import
+		com
+		exp
+		imp
 	io
-		common
-		export
-		import
+		com
+		exp
+		imp
 </panel_attributes>
     <additional_attributes/>
   </element>

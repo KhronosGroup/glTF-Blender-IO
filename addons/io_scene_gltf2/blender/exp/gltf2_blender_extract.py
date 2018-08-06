@@ -19,7 +19,7 @@
 import mathutils
 import mathutils.geometry
 
-from ...io.common.gltf2_io_debug import *
+from ...io.com.gltf2_io_debug import *
 
 #
 # Globals

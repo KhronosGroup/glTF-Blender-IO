@@ -19,6 +19,12 @@
 import bpy
 import os
 
+from bpy_extras.io_utils import ImportHelper
+from bpy.types import Operator
+
+from .blender.imp.io import *
+from .blender.imp.scene import *
+from .blender.imp.util import *
 
 from bpy.props import (CollectionProperty,
                        StringProperty,
@@ -36,10 +42,10 @@ from bpy_extras.io_utils import (ExportHelper)
 
 bl_info = {
     'name': 'glTF 2.0 format',
-    'author': 'Norbert Nopper',
+    'author': 'Julien Duroure & Norbert Nopper',
     'blender': (2, 79, 0),
-    'location': 'File > Export',
-    'description': 'Export as glTF 2.0',
+    'location': 'File > Import-Export',
+    'description': 'Import-Export as glTF 2.0',
     'warning': '',
     'wiki_url': ''
                 '',
@@ -287,7 +293,7 @@ class ExportGLTF2_Base():
         context.scene[self.scene_key] = export_props
 
     def execute(self, context):
-        from .blender.export import gltf2_blender_export
+        from .blender.exp import gltf2_blender_export
 
         if self.will_save_settings:
             self.save_settings(context)
@@ -474,11 +480,46 @@ class ExportGLTF2_AddonPreferences(AddonPreferences):
         layout.prop(self, "experimental")
 
 
+class ImportglTF2(Operator, ImportHelper):
+    bl_idname = 'import_scene.gltf'
+    bl_label  = "glTF 2.0"
+
+    loglevel = bpy.props.EnumProperty(items=Log.getLevels(), description="Log Level", default=Log.default())
+
+    def execute(self, context):
+        return self.import_gltf2(context)
+
+    def import_gltf2(self, context):
+        bpy.context.scene.render.engine = 'CYCLES'
+        self.gltf = glTFImporter(self.filepath, self.loglevel)
+        self.gltf.log.critical("Starting loading glTF file")
+        success, txt = self.gltf.read()
+        if not success:
+            self.report({'ERROR'}, txt)
+            return {'CANCELLED'}
+        self.gltf.log.critical("Data are loaded, start creating Blender stuff")
+        self.gltf.blender_create()
+        self.gltf.debug_missing()
+        self.gltf.log.critical("glTF import is now finished")
+        self.gltf.log.removeHandler(self.gltf.log_handler)
+
+        # Switch to newly created main scene
+        bpy.context.screen.scene = bpy.data.scenes[self.gltf.blender.scene]
+
+        return {'FINISHED'}
+
+
+def menu_func_import(self, context):
+    self.layout.operator(ImportglTF2.bl_idname, text=ImportglTF2.bl_label)
+
+
 def register():
     bpy.utils.register_module(__name__)
 
     bpy.types.INFO_MT_file_export.append(menu_func_export_gltf)
     bpy.types.INFO_MT_file_export.append(menu_func_export_glb)
+
+    bpy.types.INFO_MT_file_import.append(menu_func_import)
 
 
 def unregister():
@@ -486,3 +527,5 @@ def unregister():
 
     bpy.types.INFO_MT_file_export.remove(menu_func_export_gltf)
     bpy.types.INFO_MT_file_export.remove(menu_func_export_glb)
+
+    bpy.types.INFO_MT_file_import.remove(menu_func_import)

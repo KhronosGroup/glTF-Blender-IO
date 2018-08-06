@@ -19,7 +19,7 @@
 import json
 import struct
 
-from ..common.gltf2_io_debug import *
+from ..com.gltf2_io_debug import *
 
 #
 # Globals
