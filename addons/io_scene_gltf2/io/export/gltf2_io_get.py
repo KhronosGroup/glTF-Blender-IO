@@ -16,6 +16,8 @@
 # Imports
 #
 
+import os
+
 from ...io.common.gltf2_io_debug import *
 
 #
@@ -25,6 +27,73 @@ from ...io.common.gltf2_io_debug import *
 #
 # Functions
 #
+
+
+def get_material_requires_texcoords(glTF, index):
+    """
+    Query function, if a material "needs" texture coordinates. This is the case, if a texture is present and used.
+    """
+
+    if glTF.get('materials') is None:
+        return False
+    
+    materials = glTF['materials']
+    
+    if index < 0 or index >= len(materials):
+        return False
+
+    material = materials[index]
+    
+    # General
+    
+    if material.get('emissiveTexture') is not None:
+        return True
+    
+    if material.get('normalTexture') is not None:
+        return True
+    
+    if material.get('occlusionTexture') is not None:
+        return True
+    
+    # Metallic roughness
+    
+    if material.get('baseColorTexture') is not None:
+        return True
+    
+    if material.get('metallicRoughnessTexture') is not None:
+        return True
+    
+    # Specular glossiness
+    
+    if material.get('diffuseTexture') is not None:
+        return True
+
+    if material.get('specularGlossinessTexture') is not None:
+        return True
+    
+    # Unlit Material
+
+    if material.get('baseColorTexture') is not None:
+        return True
+
+    if material.get('diffuseTexture') is not None:
+        return True
+
+    # Displacement
+
+    if material.get('displacementTexture') is not None:
+        return True
+
+    return False
+
+
+def get_material_requires_normals(glTF, index):
+    """
+    Query function, if a material "needs" normals. This is the case, if a texture is present and used.
+    At point of writing, same function as for texture coordinates.
+    """
+    return get_material_requires_texcoords(glTF, index)
+
 
 def get_material_index(glTF, name):
     """
@@ -169,7 +238,27 @@ def get_scene_index(glTF, name):
     return -1
 
 
-def get_image_index(glTF, image):
+def get_texture_index(glTF, filename):
+    """
+    Return the texture index in the glTF array by a given filepath.
+    """
+
+    if glTF.get('textures') is None:
+        return -1
+    
+    image_index = get_image_index(glTF, filename)
+
+    if image_index == -1:
+        return -1
+
+    for texture_index, texture in enumerate(glTF['textures']):
+        if image_index == texture['source']:
+            return texture_index
+        
+    return -1
+
+
+def get_image_index(glTF, filename):
     """
     Return the image index in the glTF array.
     """
@@ -177,13 +266,21 @@ def get_image_index(glTF, image):
     if glTF.get('images') is None:
         return -1
 
-    image_name = get_image_name(image)
+    image_name = get_image_name(filename)
 
     for index, current_image in enumerate(glTF['images']):
         if image_name == current_image['name']:
             return index
 
     return -1
+
+
+def get_image_name(filename):
+    """
+    Return user-facing, extension-agnostic name for image.
+    """
+
+    return os.path.splitext(filename)[0]
 
 
 def get_scalar(default_value, init_value = 0.0):

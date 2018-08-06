@@ -78,6 +78,10 @@ def create_image_file(context, blender_image, dst_path, file_format):
 
         src_path = bpy.path.abspath(blender_image.filepath, library=blender_image.library)
 
+        # Required for comapre.
+        src_path = src_path.replace('\\', '/')
+        dst_path = dst_path.replace('\\', '/')
+
         if dst_path != src_path:
             shutil.copyfile(src_path, dst_path)
 
@@ -2190,7 +2194,7 @@ def generate_images(operator,
         # Property: image
         #
 
-        image = { 'name': get_image_name(blender_image) }
+        image = { 'name': get_image_name(blender_image.name) }
 
         file_format = get_image_format(export_settings, blender_image)
         mime_type = 'image/jpeg' if file_format == 'JPEG' else 'image/png'
@@ -2281,7 +2285,7 @@ def generate_textures(operator,
 
             texture['sampler'] = generate_sampler(export_settings, glTF, magFilter, wrap)
 
-            texture['source'] = get_image_index(glTF, blender_texture.image)
+            texture['source'] = get_image_index(glTF, blender_texture.image.name)
 
             #
             #
@@ -2296,7 +2300,7 @@ def generate_textures(operator,
 
             texture['sampler'] = generate_sampler(export_settings, glTF, magFilter, wrap)
 
-            texture['source'] = get_image_index(glTF, blender_texture.texture.image)
+            texture['source'] = get_image_index(glTF, blender_texture.texture.image.name)
 
             #
             #
@@ -2367,7 +2371,7 @@ def generate_materials(operator,
                                 'index': index
                             }
 
-                            texCoord = get_texcoord_index(glTF, 'BaseColor', blender_node)
+                            texCoord = get_texcoord_index_by_node_group(glTF, 'BaseColor', blender_node)
                             if texCoord > 0:
                                 baseColorTexture['texCoord'] = texCoord
 
@@ -2406,7 +2410,7 @@ def generate_materials(operator,
                                 'index': index
                             }
 
-                            texCoord = get_texcoord_index(glTF, 'MetallicRoughness', blender_node)
+                            texCoord = get_texcoord_index_by_node_group(glTF, 'MetallicRoughness', blender_node)
                             if texCoord > 0:
                                 metallicRoughnessTexture['texCoord'] = texCoord
 
@@ -2432,7 +2436,7 @@ def generate_materials(operator,
                                 'index': index
                             }
 
-                            texCoord = get_texcoord_index(glTF, 'Diffuse', blender_node)
+                            texCoord = get_texcoord_index_by_node_group(glTF, 'Diffuse', blender_node)
                             if texCoord > 0:
                                 diffuseTexture['texCoord'] = texCoord
 
@@ -2458,7 +2462,7 @@ def generate_materials(operator,
                                 'index': index_a
                             }
 
-                            texCoord = get_texcoord_index(glTF, 'Specular', blender_node)
+                            texCoord = get_texcoord_index_by_node_group(glTF, 'Specular', blender_node)
                             if texCoord > 0:
                                 specularGlossinessTexture['texCoord'] = texCoord
 
@@ -2489,7 +2493,7 @@ def generate_materials(operator,
                             'index': index
                         }
 
-                        texCoord = get_texcoord_index(glTF, 'Emissive', blender_node)
+                        texCoord = get_texcoord_index_by_node_group(glTF, 'Emissive', blender_node)
                         if texCoord > 0:
                             emissiveTexture['texCoord'] = texCoord
 
@@ -2511,7 +2515,7 @@ def generate_materials(operator,
                             'index': index
                         }
 
-                        texCoord = get_texcoord_index(glTF, 'Normal', blender_node)
+                        texCoord = get_texcoord_index_by_node_group(glTF, 'Normal', blender_node)
                         if texCoord > 0:
                             normalTexture['texCoord'] = texCoord
 
@@ -2532,7 +2536,7 @@ def generate_materials(operator,
                                 'index': index
                             }
 
-                            texCoord = get_texcoord_index(glTF, 'Occlusion', blender_node)
+                            texCoord = get_texcoord_index_by_node_group(glTF, 'Occlusion', blender_node)
                             if texCoord > 0:
                                 occlusionTexture['texCoord'] = texCoord
 
@@ -2634,7 +2638,7 @@ def generate_materials(operator,
                         # Base color texture
                         #
                         if blender_texture_slot.use_map_color_diffuse:
-                            index = get_texture_index_by_image(glTF, blender_texture_slot.texture.image)
+                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 baseColorTexture = {
                                     'index': index
@@ -2648,7 +2652,7 @@ def generate_materials(operator,
                         #
                         if export_settings['gltf_displacement']:
                             if blender_texture_slot.use_map_displacement:
-                                index = get_texture_index_by_image(glTF, blender_texture_slot.texture.image)
+                                index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                                 if index >= 0:
                                     extensions = material['extensions']
 
@@ -2710,7 +2714,7 @@ def generate_materials(operator,
                         # Diffuse texture becmomes baseColorTexture
                         #
                         if blender_texture_slot.use_map_color_diffuse:
-                            index = get_texture_index_by_image(glTF, blender_texture_slot.texture.image)
+                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 baseColorTexture = {
                                     'index': index
@@ -2721,7 +2725,7 @@ def generate_materials(operator,
                         # Ambient texture becomes occlusionTexture
                         #
                         if blender_texture_slot.use_map_ambient:
-                            index = get_texture_index_by_image(glTF, blender_texture_slot.texture.image)
+                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 ambientTexture = {
                                     'index': index
@@ -2732,7 +2736,7 @@ def generate_materials(operator,
                         # Emissive texture
                         #
                         if blender_texture_slot.use_map_emit:
-                            index = get_texture_index_by_image(glTF, blender_texture_slot.texture.image)
+                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 emissiveTexture = {
                                     'index': index
@@ -2743,7 +2747,7 @@ def generate_materials(operator,
                         # Normal texture
                         #
                         if blender_texture_slot.use_map_normal:
-                            index = get_texture_index_by_image(glTF, blender_texture_slot.texture.image)
+                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 normalTexture = {
                                     'index': index
@@ -2755,7 +2759,7 @@ def generate_materials(operator,
                         #
                         if export_settings['gltf_displacement']:
                             if blender_texture_slot.use_map_displacement:
-                                index = get_texture_index_by_image(glTF, blender_texture_slot.texture.image)
+                                index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                                 if index >= 0:
                                     extensions = material['extensions']
 
