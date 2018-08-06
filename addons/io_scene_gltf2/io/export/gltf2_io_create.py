@@ -28,10 +28,34 @@ from ..common.gltf2_io_constants import *
 #
 # Functions
 #
+def create_asset(export_settings,
+                glTF):
+    """
+    Generates the top level asset entry.
+    """
 
-def create_extensionsUsed(operator,
-                          context,
-                          export_settings,
+    asset = {}
+
+    #
+    #
+
+    asset['version'] = '2.0'
+
+    #
+
+    asset['generator'] = 'Khronos Blender glTF 2.0 exporter'
+
+    #
+
+    if export_settings['gltf_copyright'] != "":
+        asset['copyright'] = export_settings['gltf_copyright']
+
+    #
+    #
+
+    glTF['asset'] = asset
+
+def create_extensionsUsed(export_settings,
                           glTF, extension):
     """
     Creates and assigns the 'extensionsUsed' property.
@@ -46,9 +70,7 @@ def create_extensionsUsed(operator,
         extensionsUsed.append(extension)
 
 
-def create_extensionsRequired(operator,
-                              context,
-                              export_settings,
+def create_extensionsRequired(export_settings,
                               glTF, extension):
     """
     Creates and assigns the 'extensionsRequired' property.
@@ -63,9 +85,7 @@ def create_extensionsRequired(operator,
         extensionsRequired.append(extension)
 
 
-def create_sampler(operator,
-                   context,
-                   export_settings,
+def create_sampler(export_settings,
                    glTF, magFilter, wrap):
     """
     Creates and appends a sampler with the given parameters.
@@ -116,10 +136,7 @@ def create_sampler(operator,
     return len(samplers) - 1
 
 
-def create_bufferView(
-        operator,
-        context,
-        export_settings,
+def create_bufferView(export_settings,
         glTF,
         data_buffer,
         target,
@@ -187,10 +204,7 @@ def create_bufferView(
     return len(bufferViews) - 1
 
 
-def create_accessor(
-        operator,
-        context,
-        export_settings,
+def create_accessor(export_settings,
         glTF,
         data,
         componentType,
@@ -291,7 +305,7 @@ def create_accessor(
 
     data_buffer = struct.pack(convert_type, *data)
 
-    buffer_view = create_bufferView(operator, context, export_settings, glTF, data_buffer, target, convert_type_size)
+    buffer_view = create_bufferView(export_settings, glTF, data_buffer, target, convert_type_size)
 
     if buffer_view < 0:
         print_console('ERROR', 'Invalid buffer view')
