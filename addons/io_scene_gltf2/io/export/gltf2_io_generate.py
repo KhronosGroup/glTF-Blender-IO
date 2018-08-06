@@ -28,7 +28,7 @@ from ..common.gltf2_io_constants import *
 #
 # Functions
 #
-def create_asset(export_settings,
+def generate_asset(export_settings,
                 glTF):
     """
     Generates the top level asset entry.
@@ -55,7 +55,7 @@ def create_asset(export_settings,
 
     glTF['asset'] = asset
 
-def create_extensionsUsed(export_settings,
+def generate_extensionsUsed(export_settings,
                           glTF, extension):
     """
     Creates and assigns the 'extensionsUsed' property.
@@ -70,7 +70,7 @@ def create_extensionsUsed(export_settings,
         extensionsUsed.append(extension)
 
 
-def create_extensionsRequired(export_settings,
+def generate_extensionsRequired(export_settings,
                               glTF, extension):
     """
     Creates and assigns the 'extensionsRequired' property.
@@ -85,7 +85,7 @@ def create_extensionsRequired(export_settings,
         extensionsRequired.append(extension)
 
 
-def create_sampler(export_settings,
+def generate_sampler(export_settings,
                    glTF, magFilter, wrap):
     """
     Creates and appends a sampler with the given parameters.
@@ -136,7 +136,7 @@ def create_sampler(export_settings,
     return len(samplers) - 1
 
 
-def create_bufferView(export_settings,
+def generate_bufferView(export_settings,
         glTF,
         data_buffer,
         target,
@@ -204,7 +204,7 @@ def create_bufferView(export_settings,
     return len(bufferViews) - 1
 
 
-def create_accessor(export_settings,
+def generate_accessor(export_settings,
         glTF,
         data,
         componentType,
@@ -305,7 +305,7 @@ def create_accessor(export_settings,
 
     data_buffer = struct.pack(convert_type, *data)
 
-    buffer_view = create_bufferView(export_settings, glTF, data_buffer, target, convert_type_size)
+    buffer_view = generate_bufferView(export_settings, glTF, data_buffer, target, convert_type_size)
 
     if buffer_view < 0:
         print_console('ERROR', 'Invalid buffer view')
