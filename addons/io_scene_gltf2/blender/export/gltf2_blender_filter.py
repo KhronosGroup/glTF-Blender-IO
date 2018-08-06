@@ -18,6 +18,8 @@
 
 import bpy
 
+from ...io.common.gltf2_io_debug import *
+
 from .gltf2_blender_get import *
 
 #
