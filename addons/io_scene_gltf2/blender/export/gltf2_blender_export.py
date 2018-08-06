@@ -22,7 +22,6 @@ from ...io.common.gltf2_io_debug import *
 
 from ...io.export.gltf2_io_export import *
 
-from .gltf2_blender_create import *
 from .gltf2_blender_filter import *
 from .gltf2_blender_generate import *
 
