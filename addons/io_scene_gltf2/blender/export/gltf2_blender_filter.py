@@ -18,7 +18,7 @@
 
 import bpy
 
-from .gltf2_get import *
+from .gltf2_blender_get import *
 
 #
 # Globals

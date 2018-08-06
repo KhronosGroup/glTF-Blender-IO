@@ -21,9 +21,9 @@ import math
 import bpy
 import mathutils
 
-from ...io.common.gltf2_debug import *
+from ...io.common.gltf2_io_debug import *
 
-from .gltf2_extract import *
+from .gltf2_blender_extract import *
 
 #
 # Globals

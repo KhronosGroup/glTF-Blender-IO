@@ -21,15 +21,16 @@ import copy
 
 import bpy
 
-from ...io.common.gltf2_constants import *
-from ...io.common.gltf2_debug import *
+from ...io.common.gltf2_io_constants import *
+from ...io.common.gltf2_io_debug import *
 
-from ...io.export.gltf2_create import *
+from ...io.export.gltf2_io_create import *
 
-from .gltf2_animate import *
-from .gltf2_extract import *
-from .gltf2_filter import *
-from .gltf2_get import *
+from .gltf2_blender_animate import *
+from .gltf2_blender_create import *
+from .gltf2_blender_extract import *
+from .gltf2_blender_filter import *
+from .gltf2_blender_get import *
 
 
 #

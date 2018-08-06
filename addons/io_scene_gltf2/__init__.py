@@ -20,26 +20,6 @@ import bpy
 import os
 
 
-if 'bpy' in locals():
-    import imp
-    if 'gltf2_animate' in locals():
-        imp.reload(gltf2_animate)
-    if 'gltf2_create' in locals():
-        imp.reload(gltf2_create)
-    if 'gltf2_debug' in locals():
-        imp.reload(gltf2_debug)
-    if 'gltf2_export' in locals():
-        imp.reload(gltf2_export)
-    if 'gltf2_extract' in locals():
-        imp.reload(gltf2_extract)
-    if 'gltf2_filter' in locals():
-        imp.reload(gltf2_filter)
-    if 'gltf2_generate' in locals():
-        imp.reload(gltf2_generate)
-    if 'gltf2_get' in locals():
-        imp.reload(gltf2_get)
-
-
 from bpy.props import (CollectionProperty,
                        StringProperty,
                        BoolProperty,
@@ -307,7 +287,7 @@ class ExportGLTF2_Base():
         context.scene[self.scene_key] = export_props
 
     def execute(self, context):
-        from .blender.export import gltf2_export
+        from .blender.export import gltf2_blender_export
 
         if self.will_save_settings:
             self.save_settings(context)
@@ -373,7 +353,7 @@ class ExportGLTF2_Base():
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = os.path.splitext(os.path.basename(self.filepath))[0] + '.bin'
 
-        return gltf2_export.save(self, context, export_settings)
+        return gltf2_blender_export.save(self, context, export_settings)
 
     def draw(self, context):
         layout = self.layout
