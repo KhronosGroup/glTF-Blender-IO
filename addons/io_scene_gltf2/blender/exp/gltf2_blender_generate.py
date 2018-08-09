@@ -1184,40 +1184,16 @@ def generate_lights(operator,
     #
     #
 
-    for blender_scene in bpy.data.scenes:
-        #
-        # Property: light
-        #
-
-        light = {}
-
-        light['type'] = 'ambient'
-
-        light['color'] = [blender_scene.world.ambient_color[0], blender_scene.world.ambient_color[1],
-                          blender_scene.world.ambient_color[2]]
-
-        #
-
-        light['name'] = 'Ambient_' + blender_scene.name
-
-        #
-        #
-
-        lights.append(light)
-
-    #
-    #
-
     if len(lights) > 0:
-        generate_extensionsUsed(export_settings, glTF, 'KHR_lights')
-        generate_extensionsRequired(export_settings, glTF, 'KHR_lights')
+        generate_extensionsUsed(export_settings, glTF, 'KHR_lights_punctual')
+        generate_extensionsRequired(export_settings, glTF, 'KHR_lights_punctual')
 
         if glTF.get('extensions') is None:
             glTF['extensions'] = {}
 
         extensions = glTF['extensions']
 
-        extensions['KHR_lights'] = {
+        extensions['KHR_lights_punctual'] = {
             'lights': lights
         }
 
@@ -1800,8 +1776,8 @@ def generate_node_instance(context,
             if blender_object.type == 'LAMP':
                 light = get_light_index(glTF, blender_object.data.name)
                 if light >= 0:
-                    khr_lights = {'light': light}
-                    extensions = {'KHR_lights': khr_lights}
+                    khr_lights_punctual = {'light': light}
+                    extensions = {'KHR_lights_punctual': khr_lights_punctual}
 
                     if export_settings['gltf_yup']:
                         # Add correction node for light, as default direction is different to Blender.
@@ -2875,8 +2851,8 @@ def generate_scenes(export_settings,
         if export_settings['gltf_lights']:
             light = get_light_index(glTF, 'Ambient_' + blender_scene.name)
             if light >= 0:
-                khr_lights = {'light': light}
-                extensions = {'KHR_lights': khr_lights}
+                khr_lights_punctual = {'light': light}
+                extensions = {'KHR_lights_punctual': khr_lights_punctual}
                 scene['extensions'] = extensions
 
         #

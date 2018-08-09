@@ -250,7 +250,7 @@ class ExportGLTF2_Base():
     )
 
     export_lights = BoolProperty(
-            name='Export KHR_lights',
+            name='Export KHR_lights_punctual',
             description='',
             default=False
     )
