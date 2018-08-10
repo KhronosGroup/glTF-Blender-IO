@@ -54,7 +54,7 @@ def generate_materials_principled(operator,
     
     if len(blender_node.inputs['Base Color'].links) > 0:
         
-        printf("# TODO: Check links")
+        print_console('DEBUG', '# TODO: Check base color links')
         
     else:
         
@@ -70,7 +70,7 @@ def generate_materials_principled(operator,
     
     if len(blender_node.inputs['Metallic'].links) > 0:
         
-        printf("# TODO: Check links")
+        print_console('DEBUG', '# TODO: Check metallic links')
         
     else:
         
@@ -85,7 +85,7 @@ def generate_materials_principled(operator,
     
     if len(blender_node.inputs['Roughness'].links) > 0:
         
-        printf("# TODO: Check links")
+        print_console('DEBUG', '# TODO: Check roughness links')
         
     else:
         
@@ -96,7 +96,9 @@ def generate_materials_principled(operator,
             
     #
     
-    # TODO: Export NormalTexture etc.
+    print_console('DEBUG', '# TODO: Check transmission links')
+    
+    print_console('DEBUG', '# TODO: Check normal links')
             
     #
             
