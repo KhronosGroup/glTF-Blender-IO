@@ -44,6 +44,8 @@ def filter_used_materials():
                         materials.append(blender_material)
                     elif currentNode.node_tree.name.startswith('glTF Specular Glossiness'):
                         materials.append(blender_material)
+                elif isinstance(currentNode, bpy.types.ShaderNodeBsdfPrincipled):
+                    materials.append(blender_material)
         else:
             materials.append(blender_material)
 

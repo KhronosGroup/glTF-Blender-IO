@@ -34,6 +34,75 @@ from .gltf2_blender_get import *
 # Functions
 #
 
+def generate_materials_principled(operator,
+                                  context,
+                                  export_settings,
+                                  glTF,
+                                  material,
+                                  blender_material,
+                                  blender_node):
+    
+    material['pbrMetallicRoughness'] = {}
+
+    pbrMetallicRoughness = material['pbrMetallicRoughness']
+
+    alpha = 1.0
+
+    #
+    # BaseColorFactor or BaseColorTexture
+    #
+    
+    if len(blender_node.inputs['Base Color'].links) > 0:
+        
+        printf("# TODO: Check links")
+        
+    else:
+        
+        baseColorFactor = get_vec4(blender_node.inputs['Base Color'].default_value, [1.0, 1.0, 1.0, 1.0])
+        
+        if baseColorFactor[0] != 1.0 or baseColorFactor[1] != 1.0 or baseColorFactor[2] != 1.0 or baseColorFactor[3] != 1.0:
+            pbrMetallicRoughness['baseColorFactor'] = baseColorFactor
+            alpha = baseColorFactor[3]
+
+    #
+    # MetallicFactor or Metallic texture
+    #
+    
+    if len(blender_node.inputs['Metallic'].links) > 0:
+        
+        printf("# TODO: Check links")
+        
+    else:
+        
+        metallicFactor = get_scalar(blender_node.inputs['Metallic'].default_value, 1.0)
+        
+        if metallicFactor != 1.0:
+            pbrMetallicRoughness['metallicFactor'] = metallicFactor
+
+    #
+    # RoughnessFactor or Roughness texture
+    #
+    
+    if len(blender_node.inputs['Roughness'].links) > 0:
+        
+        printf("# TODO: Check links")
+        
+    else:
+        
+        roughnessFactor = get_scalar(blender_node.inputs['Roughness'].default_value, 1.0)
+        
+        if roughnessFactor != 1.0:
+            pbrMetallicRoughness['roughnessFactor'] = roughnessFactor
+            
+    #
+    
+    # TODO: Export NormalTexture etc.
+            
+    #
+            
+    material['name'] = blender_material.name
+
+
 def generate_materials(operator,
                        context,
                        export_settings,
@@ -308,6 +377,12 @@ def generate_materials(operator,
                     #
                     #
 
+                    materials.append(material)
+                    
+                elif isinstance(blender_node, bpy.types.ShaderNodeBsdfPrincipled):
+                    
+                    generate_materials_principled(operator, context, export_settings, glTF, material, blender_material, blender_node)
+                    
                     materials.append(material)
 
         else:
