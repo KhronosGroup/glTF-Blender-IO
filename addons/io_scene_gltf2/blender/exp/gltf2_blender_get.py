@@ -39,7 +39,7 @@ def get_texture_index_by_node_group(export_settings, glTF, name, shader_node_gro
     if shader_node_group is None:
         return -1
     
-    if not isinstance(shader_node_group, bpy.types.ShaderNodeGroup):
+    if not isinstance(shader_node_group, bpy.types.ShaderNodeGroup) and not isinstance(shader_node_group, bpy.types.ShaderNodeBsdfPrincipled):
         return -1
 
     if shader_node_group.inputs.get(name) is None:
@@ -69,7 +69,7 @@ def get_texcoord_index_by_node_group(glTF, name, shader_node_group):
     if shader_node_group is None:
         return 0
     
-    if not isinstance(shader_node_group, bpy.types.ShaderNodeGroup):
+    if not isinstance(shader_node_group, bpy.types.ShaderNodeGroup) and not isinstance(shader_node_group, bpy.types.ShaderNodeBsdfPrincipled):
         return 0
 
     if shader_node_group.inputs.get(name) is None:

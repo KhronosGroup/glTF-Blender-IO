@@ -54,7 +54,17 @@ def generate_materials_principled(operator,
     
     if len(blender_node.inputs['Base Color'].links) > 0:
         
-        print_console('DEBUG', '# TODO: Check base color links')
+        index = get_texture_index_by_node_group(export_settings, glTF, 'Base Color', blender_node)
+        if index >= 0:
+            baseColorTexture = {
+                'index': index
+            }
+
+            texCoord = get_texcoord_index_by_node_group(glTF, 'Base Color', blender_node)
+            if texCoord > 0:
+                baseColorTexture['texCoord'] = texCoord
+
+            pbrMetallicRoughness['baseColorTexture'] = baseColorTexture
         
     else:
         

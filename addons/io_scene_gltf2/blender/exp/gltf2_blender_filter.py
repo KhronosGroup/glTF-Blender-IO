@@ -238,6 +238,10 @@ def filter_apply(export_settings):
                                     if blender_link.to_node.node_tree.name.startswith('glTF Metallic Roughness') or blender_link.to_node.node_tree.name.startswith('glTF Specular Glossiness'):
                                         add_node = True
                                         break
+                                elif isinstance(blender_link.to_node, bpy.types.ShaderNodeBsdfPrincipled):
+                                    add_node = True
+                                    break
+                                    
                         if add_node:
                             break
                         
