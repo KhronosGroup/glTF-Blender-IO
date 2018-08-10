@@ -74,7 +74,23 @@ def create_image_file(context, blender_image, dst_path, file_format):
     Creates JPEG or PNG file from a given Blender image.
     """
 
-    if file_format == blender_image.file_format:
+    # Check, if source image exists e.g. does not exist if image is packed.    
+    file_exists = 1
+    try:
+        src_path = bpy.path.abspath(blender_image.filepath, library=blender_image.library)
+        file = open(src_path)
+    except IOError:
+        file_exists = 0
+    else:
+        file.close()
+    
+    if file_exists == 0:
+        # Image does not exist on disk ...
+        blender_image.filepath = dst_path
+        # ... so save it.
+        blender_image.save()
+        
+    elif file_format == blender_image.file_format:
         # Copy source image to destination, keeping original format.
 
         src_path = bpy.path.abspath(blender_image.filepath, library=blender_image.library)
