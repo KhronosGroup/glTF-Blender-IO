@@ -241,6 +241,9 @@ def filter_apply(export_settings):
                                 elif isinstance(blender_link.to_node, bpy.types.ShaderNodeBsdfPrincipled):
                                     add_node = True
                                     break
+                                elif isinstance(blender_link.to_node, bpy.types.ShaderNodeNormalMap):
+                                    add_node = True
+                                    break
                                     
                         if add_node:
                             break

@@ -30,30 +30,51 @@ from ...io.exp.gltf2_io_get import *
 # Functions
 #
 
+def _get_from_node_by_node_group(name, shader_node_group):
+    
+    if shader_node_group is None:
+        return None
+    
+    if not isinstance(shader_node_group, bpy.types.ShaderNodeGroup) and not isinstance(shader_node_group, bpy.types.ShaderNodeBsdfPrincipled):
+        return None
+
+    if shader_node_group.inputs.get(name) is None:
+        return None
+    
+    if len(shader_node_group.inputs[name].links) == 0:
+        return None
+    
+    from_node = shader_node_group.inputs[name].links[0].from_node
+    
+    #
+    
+    if isinstance(from_node, bpy.types.ShaderNodeNormalMap):
+
+        name = 'Color'
+
+        if len(from_node.inputs[name].links) == 0:
+            return None
+
+        from_node = from_node.inputs[name].links[0].from_node
+    
+    #
+
+    if not isinstance(from_node, bpy.types.ShaderNodeTexImage):
+        return None
+
+    return from_node
 
 def get_texture_index_by_node_group(export_settings, glTF, name, shader_node_group):
     """
     Return the texture index in the glTF array.
     """
 
-    if shader_node_group is None:
-        return -1
-    
-    if not isinstance(shader_node_group, bpy.types.ShaderNodeGroup) and not isinstance(shader_node_group, bpy.types.ShaderNodeBsdfPrincipled):
+    from_node = _get_from_node_by_node_group(name, shader_node_group)
+
+    if from_node is None:
         return -1
 
-    if shader_node_group.inputs.get(name) is None:
-        return -1
-    
-    if len(shader_node_group.inputs[name].links) == 0:
-        return -1
-    
-    from_node = shader_node_group.inputs[name].links[0].from_node
-    
     #
-
-    if not isinstance(from_node, bpy.types.ShaderNodeTexImage):
-        return -1
 
     if from_node.image is None or from_node.image.size[0] == 0 or from_node.image.size[1] == 0:
         return -1
@@ -66,23 +87,9 @@ def get_texcoord_index_by_node_group(glTF, name, shader_node_group):
     Return the texture coordinate index, if assigend and used.
     """
 
-    if shader_node_group is None:
-        return 0
-    
-    if not isinstance(shader_node_group, bpy.types.ShaderNodeGroup) and not isinstance(shader_node_group, bpy.types.ShaderNodeBsdfPrincipled):
-        return 0
+    from_node = _get_from_node_by_node_group(name, shader_node_group)
 
-    if shader_node_group.inputs.get(name) is None:
-        return 0
-    
-    if len(shader_node_group.inputs[name].links) == 0:
-        return 0
-    
-    from_node = shader_node_group.inputs[name].links[0].from_node
-    
-    #
-
-    if not isinstance(from_node, bpy.types.ShaderNodeTexImage):
+    if from_node is None:
         return 0
     
     #

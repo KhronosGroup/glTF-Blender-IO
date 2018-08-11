@@ -108,7 +108,19 @@ def generate_materials_principled(operator,
     
     print_console('DEBUG', '# TODO: Check transmission links')
     
-    print_console('DEBUG', '# TODO: Check normal links')
+    if len(blender_node.inputs['Normal'].links) > 0:
+        
+        index = get_texture_index_by_node_group(export_settings, glTF, 'Normal', blender_node)
+        if index >= 0:
+            normalTexture = {
+                'index': index
+            }
+
+            texCoord = get_texcoord_index_by_node_group(glTF, 'Normal', blender_node)
+            if texCoord > 0:
+                normalTexture['texCoord'] = texCoord
+
+            material['normalTexture'] = normalTexture
             
     #
             
