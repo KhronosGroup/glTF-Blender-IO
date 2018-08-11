@@ -98,6 +98,17 @@ def get_texcoord_index_by_node_group(glTF, name, shader_node_group):
         return 0
 
     input_node = from_node.inputs['Vector'].links[0].from_node
+    
+    #
+    
+    if isinstance(input_node, bpy.types.ShaderNodeMapping):
+
+        if len(input_node.inputs['Vector'].links) == 0:
+            return 0
+        
+        input_node = input_node.inputs['Vector'].links[0].from_node
+    
+    #
 
     if not isinstance(input_node, bpy.types.ShaderNodeUVMap):
         return 0
