@@ -255,6 +255,12 @@ class ExportGLTF2_Base():
             default=False
     )
 
+    export_texture_transform = BoolProperty(
+            name='Export KHR_texture_transform',
+            description='',
+            default=False
+    )
+
     export_displacement = BoolProperty(
             name='Export KHR_materials_displacement',
             description='',
@@ -354,6 +360,7 @@ class ExportGLTF2_Base():
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
+        export_settings['gltf_texture_transform'] = self.export_texture_transform
         export_settings['gltf_displacement'] = self.export_displacement
 
         export_settings['gltf_binary'] = bytearray()
@@ -404,6 +411,7 @@ class ExportGLTF2_Base():
         col = layout.box().column()
         col.label('Materials:', icon='MATERIAL_DATA')
         col.prop(self, 'export_materials')
+        col.prop(self, 'export_texture_transform')
 
         col = layout.box().column()
         col.label('Animation:', icon='OUTLINER_DATA_POSE')

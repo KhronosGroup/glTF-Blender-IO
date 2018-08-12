@@ -55,6 +55,7 @@ def generate_asset(export_settings,
 
     glTF['asset'] = asset
 
+
 def generate_extensionsUsed(export_settings,
                           glTF, extension):
     """

@@ -30,21 +30,45 @@ from ...io.exp.gltf2_io_get import *
 # Functions
 #
 
-def _get_from_node_by_node_group(name, shader_node_group):
+def get_shader_mapping_from_shader_image(shader_image):
     
-    if shader_node_group is None:
+    if shader_image is None:
         return None
     
-    if not isinstance(shader_node_group, bpy.types.ShaderNodeGroup) and not isinstance(shader_node_group, bpy.types.ShaderNodeBsdfPrincipled):
+    if not isinstance(shader_image, bpy.types.ShaderNodeTexImage):
         return None
 
-    if shader_node_group.inputs.get(name) is None:
+    if shader_image.inputs.get('Vector') is None:
         return None
     
-    if len(shader_node_group.inputs[name].links) == 0:
+    if len(shader_image.inputs['Vector'].links) == 0:
         return None
     
-    from_node = shader_node_group.inputs[name].links[0].from_node
+    from_node = shader_image.inputs['Vector'].links[0].from_node
+    
+    #
+
+    if not isinstance(from_node, bpy.types.ShaderNodeMapping):
+        return None
+
+    return from_node
+
+
+def get_shader_image_from_shader_node(name, shader_node):
+    
+    if shader_node is None:
+        return None
+    
+    if not isinstance(shader_node, bpy.types.ShaderNodeGroup) and not isinstance(shader_node, bpy.types.ShaderNodeBsdfPrincipled):
+        return None
+
+    if shader_node.inputs.get(name) is None:
+        return None
+    
+    if len(shader_node.inputs[name].links) == 0:
+        return None
+    
+    from_node = shader_node.inputs[name].links[0].from_node
     
     #
     
@@ -64,12 +88,13 @@ def _get_from_node_by_node_group(name, shader_node_group):
 
     return from_node
 
-def get_texture_index_by_node_group(export_settings, glTF, name, shader_node_group):
+
+def get_texture_index_from_shader_node(export_settings, glTF, name, shader_node):
     """
     Return the texture index in the glTF array.
     """
 
-    from_node = _get_from_node_by_node_group(name, shader_node_group)
+    from_node = get_shader_image_from_shader_node(name, shader_node)
 
     if from_node is None:
         return -1
@@ -82,12 +107,12 @@ def get_texture_index_by_node_group(export_settings, glTF, name, shader_node_gro
     return get_texture_index(glTF, from_node.image.name)
 
 
-def get_texcoord_index_by_node_group(glTF, name, shader_node_group):
+def get_texcoord_index_from_shader_node(glTF, name, shader_node):
     """
     Return the texture coordinate index, if assigend and used.
     """
 
-    from_node = _get_from_node_by_node_group(name, shader_node_group)
+    from_node = get_shader_image_from_shader_node(name, shader_node)
 
     if from_node is None:
         return 0
