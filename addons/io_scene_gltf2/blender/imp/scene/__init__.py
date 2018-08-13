@@ -73,9 +73,9 @@ class Scene():
                 scene = bpy.context.scene
             scene.render.engine = "CYCLES"
 
-            self.gltf.blender.set_scene(scene.name)
+            self.gltf.blender_scene = scene.name
         else:
-            self.gltf.blender.set_scene(self.name)
+            self.gltf.blender_scene = self.name
 
         for node in self.root_nodes_idx:
             self.nodes[node].blender_create(None) # None => No parent

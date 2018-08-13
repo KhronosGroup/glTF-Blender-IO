@@ -27,17 +27,6 @@ from ..scene import *
 from ..animation import *
 from ..util import *
 
-
-
-#TODO : to remove, is this class really needed?
-class BlenderData():
-    def __init__(self):
-        pass
-
-    def set_scene(self, scene_name):
-        self.scene = scene_name
-
-
 class glTFImporter():
 
     def __init__(self, filename, loglevel):
@@ -58,13 +47,13 @@ class glTFImporter():
         self.animations = {}
         self.meshes = {}
 
+        self.blender_scene = None
+
         self.extensions_managed = [
             "KHR_materials_pbrSpecularGlossiness"
         ]
 
         self.load()
-
-        self.blender = BlenderData()
 
         self.fmt_char_dict = {}
         self.fmt_char_dict[5120] = 'b' # Byte

@@ -69,7 +69,7 @@ class Camera():
 
 
         obj = bpy.data.objects.new(self.name, cam)
-        bpy.data.scenes[self.gltf.blender.scene].objects.link(obj)
+        bpy.data.scenes[self.gltf.blender_scene].objects.link(obj)
         return obj
 
     def debug_missing(self):

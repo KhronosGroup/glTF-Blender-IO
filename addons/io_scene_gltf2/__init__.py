@@ -286,7 +286,7 @@ class ExportGLTF2_Base():
             except AttributeError:
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
-            
+
 
         return ExportHelper.invoke(self, context, event)
 
@@ -515,7 +515,7 @@ class ImportglTF2(Operator, ImportHelper):
         self.gltf.log.removeHandler(self.gltf.log_handler)
 
         # Switch to newly created main scene
-        bpy.context.screen.scene = bpy.data.scenes[self.gltf.blender.scene]
+        bpy.context.screen.scene = bpy.data.scenes[self.gltf.blender_scene]
 
         return {'FINISHED'}
 

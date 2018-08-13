@@ -58,7 +58,7 @@ class Skin():
 
         armature = bpy.data.armatures.new(name)
         obj = bpy.data.objects.new(name, armature)
-        bpy.data.scenes[self.gltf.blender.scene].objects.link(obj)
+        bpy.data.scenes[self.gltf.blender_scene].objects.link(obj)
         self.blender_armature_name = obj.name
         if parent:
             obj.parent = bpy.data.objects[self.gltf.scene.nodes[parent].blender_object]
@@ -88,7 +88,7 @@ class Skin():
         return bone.matrix
 
     def create_bone(self, node, parent):
-        scene = bpy.data.scenes[self.gltf.blender.scene]
+        scene = bpy.data.scenes[self.gltf.blender_scene]
         obj   = bpy.data.objects[self.blender_armature_name]
 
         bpy.context.screen.scene = scene

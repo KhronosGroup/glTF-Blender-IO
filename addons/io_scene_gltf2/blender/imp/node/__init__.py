@@ -174,7 +174,7 @@ class Node():
 
             obj = bpy.data.objects.new(name, mesh)
             obj.rotation_mode = 'QUATERNION'
-            bpy.data.scenes[self.gltf.blender.scene].objects.link(obj)
+            bpy.data.scenes[self.gltf.blender_scene].objects.link(obj)
             self.set_transforms(obj, parent)
             self.blender_object = obj.name
             self.set_blender_parent(obj, parent)
@@ -224,7 +224,7 @@ class Node():
             self.gltf.log.info("Blender create Empty node")
             obj = bpy.data.objects.new("Node", None)
         obj.rotation_mode = 'QUATERNION'
-        bpy.data.scenes[self.gltf.blender.scene].objects.link(obj)
+        bpy.data.scenes[self.gltf.blender_scene].objects.link(obj)
         self.set_transforms(obj, parent)
         self.blender_object = obj.name
         self.set_blender_parent(obj, parent)
