@@ -58,8 +58,12 @@ class Image():
         if 'bufferView' not in self.json.keys():
             return
 
-        self.bufferView = BufferView(self.json['bufferView'], self.gltf.json['bufferViews'][self.json['bufferView']], self.gltf)
-        self.bufferView.read()
+        if self.json['bufferView'] not in self.gltf.bufferViews.keys():
+            self.gltf.bufferViews[self.json['bufferView']] = BufferView(self.json['bufferView'], self.gltf.json['bufferViews'][self.json['bufferView']], self.gltf)
+            self.gltf.bufferViews[self.json['bufferView']].read()
+
+        self.bufferView = self.gltf.bufferViews[self.json['bufferView']]
+
         self.bufferView.debug_missing()
 
         self.data = self.bufferView.read_binary_data()

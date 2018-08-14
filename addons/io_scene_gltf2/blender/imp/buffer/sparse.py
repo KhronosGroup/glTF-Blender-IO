@@ -60,9 +60,12 @@ class Sparse():
 
 
         if 'values' in self.json.keys():
+            if self.json['values']['bufferView'] not in self.gltf.bufferViews.keys():
+                self.gltf.bufferViews[self.json['values']['bufferView']] = BufferView(self.json['values']['bufferView'], self.gltf.json['bufferViews'][self.json['values']['bufferView']], self.gltf)
+                self.gltf.bufferViews[self.json['values']['bufferView']].read()
 
-            self.bufferView = BufferView(self.json['values']['bufferView'], self.gltf.json['bufferViews'][self.json['values']['bufferView']], self.gltf)
-            self.bufferView.read()
+            self.bufferView = self.gltf.bufferViews[self.json['values']['bufferView']]
+            
             self.bufferView.debug_missing()
 
             #TODO factorisation with accessor code ?

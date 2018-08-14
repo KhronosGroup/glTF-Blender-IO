@@ -39,8 +39,12 @@ class Accessor():
         if 'name' in self.json.keys():
             self.name = self.json['name']
 
-        self.bufferView = BufferView(self.json['bufferView'], self.gltf.json['bufferViews'][self.json['bufferView']], self.gltf)
-        self.bufferView.read()
+        if self.json['bufferView'] not in self.gltf.bufferViews.keys():
+            self.gltf.bufferViews[self.json['bufferView']] = BufferView(self.json['bufferView'], self.gltf.json['bufferViews'][self.json['bufferView']], self.gltf)
+            self.gltf.bufferViews[self.json['bufferView']].read()
+
+        self.bufferView = self.gltf.bufferViews[self.json['bufferView']]
+
         self.bufferView.debug_missing()
 
         fmt_char = self.gltf.fmt_char_dict[self.json['componentType']]
