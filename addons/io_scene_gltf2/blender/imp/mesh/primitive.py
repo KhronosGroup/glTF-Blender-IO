@@ -43,15 +43,27 @@ class Primitive():
             for attr in self.json['attributes'].keys():
                 self.gltf.log.debug("Primitive attribute " + attr)
                 self.attributes[attr] = {}
-                self.attributes[attr]['accessor'] = Accessor(self.json['attributes'][attr], self.gltf.json['accessors'][self.json['attributes'][attr]], self.gltf)
-                self.attributes[attr]['result']   = self.attributes[attr]['accessor'].read()
+                if self.json['attributes'][attr] not in self.gltf.accessors.keys():
+                    self.gltf.accessors[self.json['attributes'][attr]] = Accessor(self.json['attributes'][attr], self.gltf.json['accessors'][self.json['attributes'][attr]], self.gltf)
+                    self.attributes[attr]['accessor'] = self.gltf.accessors[self.json['attributes'][attr]]
+                    self.attributes[attr]['result']   = self.attributes[attr]['accessor'].read()
+                else:
+                    self.attributes[attr]['accessor'] = self.gltf.accessors[self.json['attributes'][attr]]
+                    self.attributes[attr]['result'] = self.attributes[attr]['accessor'].data
+
                 self.attributes[attr]['accessor'].debug_missing()
 
         # reading indices
         if 'indices' in self.json.keys():
             self.gltf.log.debug("Primitive indices")
-            self.accessor = Accessor(self.json['indices'], self.gltf.json['accessors'][self.json['indices']], self.gltf)
-            self.indices  = self.accessor.read()
+            if self.json['indices'] not in self.gltf.accessors.keys():
+                self.gltf.accessors[self.json['indices']] = Accessor(self.json['indices'], self.gltf.json['accessors'][self.json['indices']], self.gltf)
+                self.accessor = self.gltf.accessors[self.json['indices']]
+                self.indices  = self.accessor.read()
+            else:
+                self.accessor = self.gltf.accessors[self.json['indices']]
+                self.indices  = self.accessor.data
+
             self.indices  = [ind[0] for ind in self.indices]
             self.accessor.debug_missing()
         else:
@@ -96,8 +108,14 @@ class Primitive():
                 target = {}
                 for attr in targ.keys():
                     target[attr] = {}
-                    target[attr]['accessor'] = Accessor(targ[attr], self.gltf.json['accessors'][targ[attr]], self.gltf)
-                    target[attr]['result']   = target[attr]['accessor'].read()
+                    if targ[attr] not in self.gltf.accessors.keys():
+                        self.gltf.accessors[targ[attr]] = Accessor(targ[attr], self.gltf.json['accessors'][targ[attr]], self.gltf)
+                        target[attr]['accessor'] = self.gltf.accessors[targ[attr]]
+                        target[attr]['result']   = target[attr]['accessor'].read()
+                    else:
+                        target[attr]['accessor'] = self.gltf.accessors[targ[attr]]
+                        target[attr]['result']   = target[attr]['accessor'].data
+                        
                     target[attr]['accessor'].debug_missing()
                 self.targets.append(target)
 

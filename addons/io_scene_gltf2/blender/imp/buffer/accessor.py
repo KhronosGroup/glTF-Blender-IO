@@ -67,7 +67,8 @@ class Accessor():
             return self.data
 
         else:
-            return self.bufferView.read_data(fmt, stride, self.json['count'], offset)
+            self.data = self.bufferView.read_data(fmt, stride, self.json['count'], offset)
+            return self.data
 
     def apply_sparse(self):
         cpt_idx = 0

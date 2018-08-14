@@ -46,8 +46,14 @@ class Skin():
             self.name = self.json['name']
 
         if 'inverseBindMatrices' in self.json.keys():
-            self.inverseBindMatrices = Accessor(self.json['inverseBindMatrices'], self.gltf.json['accessors'][self.json['inverseBindMatrices']], self.gltf)
-            self.data = self.inverseBindMatrices.read()
+            if self.json['inverseBindMatrices'] not in self.gltf.accessors.keys():
+                self.gltf.accessors[self.json['inverseBindMatrices']] = Accessor(self.json['inverseBindMatrices'], self.gltf.json['accessors'][self.json['inverseBindMatrices']], self.gltf)
+                self.inverseBindMatrices = self.gltf.accessors[self.json['inverseBindMatrices']]
+                self.data = self.inverseBindMatrices.read()
+            else:
+                self.inverseBindMatrices = self.gltf.accessors[self.json['inverseBindMatrices']]
+                self.data = self.inverseBindMatrices.data
+                
             self.inverseBindMatrices.debug_missing()
 
     def create_blender_armature(self, parent):

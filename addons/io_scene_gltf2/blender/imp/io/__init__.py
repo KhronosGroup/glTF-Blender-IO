@@ -46,6 +46,7 @@ class glTFImporter():
         self.images = {}
         self.animations = {}
         self.meshes = {}
+        self.accessors = {}
 
         self.blender_scene = None
 

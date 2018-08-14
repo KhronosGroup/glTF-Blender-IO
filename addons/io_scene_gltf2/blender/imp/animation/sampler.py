@@ -33,10 +33,21 @@ class Sampler():
 
     def read(self):
         self.interpolation = self.json['interpolation']
-        self.input  = Accessor(self.json['input'], self.gltf.json['accessors'][self.json['input']], self.gltf)
-        self.output = Accessor(self.json['output'], self.gltf.json['accessors'][self.json['output']], self.gltf)
-        input_data  = self.input.read()
-        output_data = self.output.read()
+        if self.json['input'] not in self.gltf.accessors.keys():
+            self.gltf.accessors[self.json['input']] = Accessor(self.json['input'], self.gltf.json['accessors'][self.json['input']], self.gltf)
+            self.input = self.gltf.accessors[self.json['input']]
+            input_data  = self.input.read()
+        else:
+            self.input  = self.gltf.accessors[self.json['input']]
+            input_data = self.input.data
+
+        if self.json['output'] not in self.gltf.accessors.keys():
+            self.gltf.accessors[self.json['output']] = Accessor(self.json['output'], self.gltf.json['accessors'][self.json['output']], self.gltf)
+            self.output = self.gltf.accessors[self.json['output']]
+            output_data = self.output.read()
+        else:
+            self.output = self.gltf.accessors[self.json['output']]
+            output_data = self.output.data
 
         self.input.debug_missing()
         self.output.debug_missing()
