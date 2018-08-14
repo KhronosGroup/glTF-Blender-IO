@@ -171,6 +171,56 @@ def generate_materials_principled(operator,
             generate_texture_transform(operator, context, export_settings, glTF, normalTexture, 'Normal', blender_node)
             
     #
+    
+    shader_add = get_shader_add_to_shader_node(blender_node)
+    
+    if shader_add is not None:
+
+        shader_emission = get_shader_emission_from_shader_add(shader_add)
+        
+        if shader_emission is not None:
+                                     
+            #
+            # EmissiveFactor or Emissive texture
+            #
+            
+            if len(shader_emission.inputs['Color'].links) > 0:
+                
+                index = get_texture_index_from_shader_node(export_settings, glTF, 'Color', shader_emission)
+                if index >= 0:
+                    emissiveTexture = {
+                        'index': index
+                    }
+        
+                    texCoord = get_texcoord_index_from_shader_node(glTF, 'Color', shader_emission)
+                    if texCoord > 0:
+                        emissiveTexture['texCoord'] = texCoord
+        
+                    material['emissiveTexture'] = emissiveTexture
+                    
+                    generate_texture_transform(operator, context, export_settings, glTF, emissiveTexture, 'Color', shader_emission)
+                    
+                    if len(shader_emission.inputs['Strength'].links) == 0:
+                        emissiveStrength = get_scalar(shader_emission.inputs['Strength'].default_value, 1.0)
+                        
+                        if emissiveStrength != 1.0:
+                            material['emissiveFactor'] = [emissiveStrength, emissiveStrength, emissiveStrength]
+                
+            else:
+                
+                emissiveFactor = get_vec3(shader_emission.inputs['Color'].default_value, [0.0, 0.0, 0.0])
+
+                if len(shader_emission.inputs['Strength'].links) == 0:
+                    emissiveStrength = get_scalar(shader_emission.inputs['Strength'].default_value, 1.0)
+                    
+                    emissiveFactor[0] *= emissiveStrength
+                    emissiveFactor[1] *= emissiveStrength
+                    emissiveFactor[2] *= emissiveStrength
+                
+                if emissiveFactor[0] != 0.0 or emissiveFactor[1] != 0.0 or emissiveFactor[2] != 0.0:
+                    material['emissiveFactor'] = emissiveFactor
+    
+    #
             
     material['name'] = blender_material.name
 

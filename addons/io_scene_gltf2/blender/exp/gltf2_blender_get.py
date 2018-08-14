@@ -30,6 +30,46 @@ from ...io.exp.gltf2_io_get import *
 # Functions
 #
 
+def get_shader_add_to_shader_node(shader_node):
+
+    if shader_node is None:
+        return None
+
+    if len(shader_node.outputs['BSDF'].links) == 0:
+        return None
+
+    to_node = shader_node.outputs['BSDF'].links[0].to_node
+
+    if not isinstance(to_node, bpy.types.ShaderNodeAddShader):
+        return None
+
+    return to_node
+
+#
+
+def get_shader_emission_from_shader_add(shader_add):
+    
+    if shader_add is None:
+        return None
+    
+    if not isinstance(shader_add, bpy.types.ShaderNodeAddShader):
+        return None
+
+    from_node = None
+
+    for input in shader_add.inputs:
+        
+        if len(input.links) == 0:
+            continue
+        
+        from_node = input.links[0].from_node
+        
+        if isinstance(from_node, bpy.types.ShaderNodeEmission):
+            break
+
+    return from_node
+
+
 def get_shader_mapping_from_shader_image(shader_image):
     
     if shader_image is None:
@@ -59,7 +99,7 @@ def get_shader_image_from_shader_node(name, shader_node):
     if shader_node is None:
         return None
     
-    if not isinstance(shader_node, bpy.types.ShaderNodeGroup) and not isinstance(shader_node, bpy.types.ShaderNodeBsdfPrincipled):
+    if not isinstance(shader_node, bpy.types.ShaderNodeGroup) and not isinstance(shader_node, bpy.types.ShaderNodeBsdfPrincipled) and not isinstance(shader_node, bpy.types.ShaderNodeEmission):
         return None
 
     if shader_node.inputs.get(name) is None:
