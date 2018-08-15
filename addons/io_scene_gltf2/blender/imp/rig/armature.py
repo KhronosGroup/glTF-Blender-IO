@@ -54,7 +54,7 @@ class Skin():
             else:
                 self.inverseBindMatrices = self.gltf.accessors[self.json['inverseBindMatrices']]
                 self.data = self.inverseBindMatrices.data
-                
+
             self.inverseBindMatrices.debug_missing()
 
     def create_blender_armature(self, parent):
@@ -131,18 +131,24 @@ class Skin():
 
         offset = 0
         for prim in node.mesh.primitives:
-            if 'JOINTS_0' in prim.attributes.keys() and 'WEIGHTS_0' in prim.attributes.keys():
+            idx_already_done = {}
 
+            if 'JOINTS_0' in prim.attributes.keys() and 'WEIGHTS_0' in prim.attributes.keys():
                 joint_ = prim.attributes['JOINTS_0']['result']
                 weight_ = prim.attributes['WEIGHTS_0']['result']
 
                 for poly in obj.data.polygons:
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                         vert_idx = obj.data.loops[loop_idx].vertex_index
+
+                        if vert_idx in idx_already_done.keys():
+                            continue
+                        idx_already_done[vert_idx] = True
+
                         if vert_idx in range(offset, offset + prim.vertices_length):
 
                             if offset != 0:
-                                tab_index = vert_idx % offset
+                                tab_index = vert_idx - offset
                             else:
                                 tab_index = vert_idx
 

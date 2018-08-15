@@ -51,6 +51,15 @@ class Primitive():
                     self.attributes[attr]['accessor'] = self.gltf.accessors[self.json['attributes'][attr]]
                     self.attributes[attr]['result'] = self.attributes[attr]['accessor'].data
 
+                # Convert data if needed
+                if attr in ['TEXCOORD_0', 'TEXCOORD_1', 'COLOR_0', 'JOINTS_0', 'WEIGHTS_0']: #TODO
+                    if self.attributes[attr]['accessor'].json['componentType'] == 5121:
+                        for idx_tab, i in enumerate(self.attributes[attr]['result']):
+                            new_tuple = ()
+                            for idx, it in enumerate(i):
+                                new_tuple += (float(it/255.0),)
+                            self.attributes[attr]['result'][idx_tab] = new_tuple
+
                 self.attributes[attr]['accessor'].debug_missing()
 
         # reading indices
@@ -115,7 +124,7 @@ class Primitive():
                     else:
                         target[attr]['accessor'] = self.gltf.accessors[targ[attr]]
                         target[attr]['result']   = target[attr]['accessor'].data
-                        
+
                     target[attr]['accessor'].debug_missing()
                 self.targets.append(target)
 
