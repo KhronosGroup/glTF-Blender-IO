@@ -34,6 +34,7 @@ class Skin():
         self.bones = []
         self.blender_armature_name = None
         self.mesh_id = None
+        self.root = None
 
     def read(self):
         if 'skeleton' in self.json.keys():

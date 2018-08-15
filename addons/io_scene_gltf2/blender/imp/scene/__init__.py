@@ -48,7 +48,7 @@ class Scene():
             self.nodes[node_idx] = node
 
         for skin in self.gltf.skins.values():
-            if skin.root != skin.bones[0]:
+            if skin.root is not None and skin.root != skin.bones[0]:
                 # skin.bones.insert(0, skin.root)
                 self.nodes[skin.root].is_joint = True
                 self.nodes[skin.root].skin_id = skin.index
