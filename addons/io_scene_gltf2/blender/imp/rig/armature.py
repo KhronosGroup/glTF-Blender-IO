@@ -75,7 +75,7 @@ class Skin():
         delta = Quaternion((0.7071068286895752, 0.7071068286895752, 0.0, 0.0))
 
         mat = Matrix()
-        if not parent:
+        if parent is None:
             transform = node.get_transforms()
             mat = transform * delta.to_matrix().to_4x4()
         else:
