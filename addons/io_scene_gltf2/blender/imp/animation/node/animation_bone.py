@@ -63,7 +63,7 @@ class AnimationBone():
 
                                 mat = (parent_mat.to_quaternion() * delta.inverted() * transform.to_quaternion() * delta).to_matrix().to_4x4()
                                 mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * delta.inverted() * transform.to_translation() )) * mat
-                                #TODO scaling of bones
+                                # Blender has no bone "scale" instead the visual scale is defined by the head and tail point
 
                         bone.location = self.animation.node.blender_bone_matrix.to_translation() - mat.to_translation()
                         bone.keyframe_insert(blender_path, frame = key[0] * fps, group='location')
@@ -89,7 +89,7 @@ class AnimationBone():
 
                                 mat = (parent_mat.to_quaternion() * delta.inverted() * transform.to_quaternion() * delta).to_matrix().to_4x4()
                                 mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * delta.inverted() * transform.to_translation() )) * mat
-                                #TODO scaling of bones
+                                 # Blender has no bone "scale" instead the scale is defined by the start and end point
 
                         bone.rotation_quaternion = self.animation.node.blender_bone_matrix.to_quaternion().inverted() * mat.to_quaternion()
                         bone.keyframe_insert(blender_path, frame = key[0] * fps, group='rotation')
@@ -122,10 +122,9 @@ class AnimationBone():
 
                                 mat = (parent_mat.to_quaternion() * delta.inverted() * transform.to_quaternion() * delta).to_matrix().to_4x4()
                                 mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * delta.inverted() * transform.to_translation() )) * mat
-                                #TODO scaling of bones
 
 
-                        #bone.scale # TODO
+                        #bone.scale  # Blender has no bone "scale" instead the scale is defined by the start and end point
                         bone.keyframe_insert(blender_path, frame = key[0] * fps, group='scale')
 
                     # Setting interpolation
