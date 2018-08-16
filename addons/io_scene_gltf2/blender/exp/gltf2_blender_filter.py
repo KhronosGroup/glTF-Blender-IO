@@ -28,6 +28,11 @@ from ...io.com.gltf2_io_debug import *
 # Functions
 #
 
+def filter_merge_image(export_settings, blender_image):
+    # TODO: Implement.
+    
+    return None
+
 
 def filter_used_materials():
     """
@@ -222,6 +227,7 @@ def filter_apply(export_settings):
     #
 
     filtered_textures = []
+    filtered_merged_textures = []
     
     temp_filtered_texture_names = []
 
@@ -231,6 +237,7 @@ def filter_apply(export_settings):
                 
                 if isinstance(blender_node, bpy.types.ShaderNodeTexImage) and blender_node.image is not None and blender_node.image.users != 0 and blender_node.image.size[0] > 0 and blender_node.image.size[1] > 0 and blender_node not in filtered_textures:
                     add_node = False
+                    add_merged_node = False
                     for blender_socket in blender_node.outputs:
                         if blender_socket.is_linked:
                             for blender_link in blender_socket.links:
@@ -244,13 +251,20 @@ def filter_apply(export_settings):
                                 elif isinstance(blender_link.to_node, bpy.types.ShaderNodeNormalMap):
                                     add_node = True
                                     break
+                                elif isinstance(blender_link.to_node, bpy.types.ShaderNodeSeparateRGB):
+                                    add_merged_node = True
+                                    break
                                     
-                        if add_node:
+                        if add_node or add_merged_node:
                             break
                         
                     if add_node:
                         filtered_textures.append(blender_node)
                         # TODO: Add displacement texture, as not stored in node tree.
+                        
+                    if add_merged_node:
+                        filtered_merged_textures.append(blender_node)
+                        
         else:
 
                 for blender_texture_slot in blender_material.texture_slots:
@@ -298,6 +312,19 @@ def filter_apply(export_settings):
                 filtered_images.append(blender_texture.texture.image)
                 if blender_texture.use_map_alpha:
                     filtered_images_use_alpha[blender_texture.texture.image.name] = True
+
+    #
+
+    for blender_texture in filtered_merged_textures:
+        
+        if isinstance(blender_texture, bpy.types.ShaderNodeTexImage):
+            if blender_texture.image is not None and blender_texture.image not in filtered_images and blender_texture.image.users != 0 and blender_texture.image.size[0] > 0 and blender_texture.image.size[1] > 0:
+
+                blender_image = filter_merge_image(export_settings, blender_texture.image)
+                
+                if blender_image is not None:
+
+                    filtered_images.append(blender_image)
                     
     export_settings['filtered_images'] = filtered_images
     export_settings['filtered_images_use_alpha'] = filtered_images_use_alpha
