@@ -147,11 +147,7 @@ class Skin():
 
                         if vert_idx in range(offset, offset + prim.vertices_length):
 
-                            if offset != 0:
-                                tab_index = vert_idx - offset
-                            else:
-                                tab_index = vert_idx
-
+                            tab_index = vert_idx - offset
                             cpt = 0
                             for joint_idx in joint_[tab_index]:
                                 weight_val = weight_[tab_index][cpt]

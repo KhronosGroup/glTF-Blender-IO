@@ -186,10 +186,7 @@ class Mesh():
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                         vert_idx = mesh.loops[loop_idx].vertex_index
                         if vert_idx in range(offset, offset + prim.vertices_length):
-                            if offset != 0:
-                                cpt_idx = vert_idx % offset
-                            else:
-                                cpt_idx = vert_idx
+                            cpt_idx = vert_idx - offset
                             vertex_color.data[loop_idx].color = color_data[cpt_idx][0:3]
                             #TODO : no alpha in vertex color
             offset = offset + prim.vertices_length
