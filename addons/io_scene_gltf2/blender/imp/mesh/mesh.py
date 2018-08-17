@@ -139,26 +139,29 @@ class Mesh():
 
             obj.shape_key_add("target_" + str(i))
 
+            offset_idx = 0
             for prim in self.primitives:
-                if i > len(prim.targets):
+                if i >= len(prim.targets):
                     continue
 
                 bm = bmesh.new()
                 bm.from_mesh(mesh)
 
                 shape_layer = bm.verts.layers.shape[i+1]
-                vert_idx = 0
-                for vert in bm.verts:
-                    shape = vert[shape_layer]
-                    co = self.gltf.convert.location(list(prim.targets[i]['POSITION']['result'][vert_idx]))
-                    shape.x = obj.data.vertices[vert_idx].co.x + co[0]
-                    shape.y = obj.data.vertices[vert_idx].co.y + co[1]
-                    shape.z = obj.data.vertices[vert_idx].co.z + co[2]
 
-                    vert_idx += 1
+                for vert in bm.verts:
+                    if not vert.index in range(offset_idx, offset_idx + prim.vertices_length):
+                        continue
+
+                    shape = vert[shape_layer]
+                    co = self.gltf.convert.location(list(prim.targets[i]['POSITION']['result'][vert.index - offset_idx]))
+                    shape.x = obj.data.vertices[vert.index].co.x + co[0]
+                    shape.y = obj.data.vertices[vert.index].co.y + co[1]
+                    shape.z = obj.data.vertices[vert.index].co.z + co[2]
 
                 bm.to_mesh(obj.data)
                 bm.free()
+                offset_idx += prim.vertices_length
 
         # set default weights for shape keys, and names
         for i in range(max_shape_to_create):
