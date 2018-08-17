@@ -30,6 +30,27 @@ from ...io.exp.gltf2_io_get import *
 # Functions
 #
 
+def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
+    """
+     returns the first ShaderNodeTexImage found in the path from the socket
+    """
+    if shader_socket is None:
+        return None
+    
+    if max_hops <= 0:
+        return None
+
+    for link in shader_socket.links:
+        if isinstance(link.from_node, bpy.types.ShaderNodeTexImage):
+            return link.from_node
+        
+        for socket in link.from_node.inputs.values():
+            image = find_shader_image_from_shader_socket(shader_socket=socket, max_hops=max_hops - 1)
+            if image is not None:
+                return image
+
+    return None
+
 def get_shader_add_to_shader_node(shader_node):
 
     if shader_node is None:
@@ -92,6 +113,34 @@ def get_shader_mapping_from_shader_image(shader_image):
         return None
 
     return from_node
+    
+def get_image_material_usage_to_socket(shader_image, socket_name):
+    if shader_image is None:
+        return -1
+    
+    if not isinstance(shader_image, bpy.types.ShaderNodeTexImage):
+        return -2
+
+    if shader_image.outputs.get('Color') is None:
+        return -3
+
+    if len(shader_image.outputs.get('Color').links) == 0:
+        return -4
+
+    for img_link in shader_image.outputs.get('Color').links:
+        separate_rgb = img_link.to_node
+
+        if not isinstance(separate_rgb, bpy.types.ShaderNodeSeparateRGB):
+            continue
+
+        for i, channel in enumerate("RGB"):
+            if separate_rgb.outputs.get(channel) is None:
+                continue
+            for link in separate_rgb.outputs.get(channel).links:
+                if socket_name == link.to_socket.name:
+                    return i
+        
+    return -6
 
 
 def get_shader_image_from_shader_node(name, shader_node):
@@ -146,6 +195,10 @@ def get_texture_index_from_shader_node(export_settings, glTF, name, shader_node)
 
     return get_texture_index(glTF, from_node.image.name)
 
+def get_texture_index_from_export_settings(export_settings, name):
+    """
+    Return the texture index in the glTF array
+    """
 
 def get_texcoord_index_from_shader_node(glTF, name, shader_node):
     """

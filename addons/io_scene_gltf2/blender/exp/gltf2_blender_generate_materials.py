@@ -124,32 +124,37 @@ def generate_materials_principled(operator,
     # MetallicFactor or Metallic texture
     #
     
-    if len(blender_node.inputs['Metallic'].links) > 0:
-        
-        print_console('DEBUG', '# TODO: Check metallic links')
-        
-    else:
-        
+    metallic_name = ""
+    img = find_shader_image_from_shader_socket(blender_node.inputs['Metallic'])
+    if img is not None:
+        metallic_name = img.name
+    else:     
         metallicFactor = get_scalar(blender_node.inputs['Metallic'].default_value, 1.0)
-        
         if metallicFactor != 1.0:
             pbrMetallicRoughness['metallicFactor'] = metallicFactor
 
     #
     # RoughnessFactor or Roughness texture
     #
-    
-    if len(blender_node.inputs['Roughness'].links) > 0:
-        
-        print_console('DEBUG', '# TODO: Check roughness links')
-        
+    roughness_name = ""
+    img = find_shader_image_from_shader_socket(blender_node.inputs['Roughness'])
+    if img is not None:
+        roughness_name = img.name
     else:
-        
         roughnessFactor = get_scalar(blender_node.inputs['Roughness'].default_value, 1.0)
-        
         if roughnessFactor != 1.0:
             pbrMetallicRoughness['roughnessFactor'] = roughnessFactor
-            
+
+    if metallic_name != roughness_name:
+        metallic_roughness_name = metallic_name + roughness_name
+    else:
+        metallic_roughness_name = metallic_name
+    metallicRoughnessIndex = get_texture_index(glTF, metallic_roughness_name)
+
+    if metallicRoughnessIndex >= 0:
+        pbrMetallicRoughness['metallicRoughnessTexture'] = {
+                'index': metallicRoughnessIndex
+            }
     #
     
     print_console('DEBUG', '# TODO: Check transmission links')
@@ -223,6 +228,7 @@ def generate_materials_principled(operator,
     #
             
     material['name'] = blender_material.name
+    print(material)
 
 
 def generate_materials(operator,
