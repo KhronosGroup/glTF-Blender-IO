@@ -19,6 +19,9 @@
 import bpy
 
 from ...io.com.gltf2_io_debug import *
+from ...io.com import gltf2_io_image
+from .gltf2_blender_get import get_image_material_usage_to_socket
+from ..com.gltf2_blender_image import *
 
 #
 # Globals
@@ -29,10 +32,25 @@ from ...io.com.gltf2_io_debug import *
 #
 
 def filter_merge_image(export_settings, blender_image):
-    # TODO: Implement.
-    
-    return None
+    metallic_channel = get_image_material_usage_to_socket(blender_image, "Metallic")
+    roughness_channel = get_image_material_usage_to_socket(blender_image, "Roughness")
 
+    if metallic_channel < 0 and roughness_channel < 0:
+        return False
+    
+    if export_settings.get("metallic_roughness_image") is None:
+        export_settings["metallic_roughness_image"] = gltf2_io_image.create_img(width=blender_image.image.size[0], height=blender_image.image.size[1], r=1.0, g=1.0, b=1.0, a=1.0)
+
+    img = create_img_from_blender_image(blender_image.image)
+
+    if metallic_channel >= 0:
+        gltf2_io_image.copy_img_channel(dst_image=export_settings["metallic_roughness_image"], dst_channel=2, src_image=img, src_channel=metallic_channel)
+        export_settings["metallic_roughness_image"].name = blender_image.name + export_settings["metallic_roughness_image"].name
+    if roughness_channel >= 0:
+        gltf2_io_image.copy_img_channel(dst_image=export_settings["metallic_roughness_image"], dst_channel=1, src_image=img, src_channel=roughness_channel)
+        if metallic_channel < 0:
+            export_settings["metallic_roughness_image"].name = export_settings["metallic_roughness_image"].name + blender_image.name
+    return True
 
 def filter_used_materials():
     """
@@ -296,6 +314,7 @@ def filter_apply(export_settings):
     #
 
     filtered_images = []
+    filtered_merged_images = []
     filtered_images_use_alpha = {}
 
     for blender_texture in filtered_textures:
@@ -316,16 +335,18 @@ def filter_apply(export_settings):
     #
 
     for blender_texture in filtered_merged_textures:
-        
         if isinstance(blender_texture, bpy.types.ShaderNodeTexImage):
             if blender_texture.image is not None and blender_texture.image not in filtered_images and blender_texture.image.users != 0 and blender_texture.image.size[0] > 0 and blender_texture.image.size[1] > 0:
+                filter_merge_image(export_settings, blender_texture)
 
-                blender_image = filter_merge_image(export_settings, blender_texture.image)
-                
-                if blender_image is not None:
+    img = export_settings.get("metallic_roughness_image")          
+    if img is not None:
+        print(img.name)
+        filtered_merged_images.append(img)
+        export_settings['filtered_textures'].append(img)
+    
 
-                    filtered_images.append(blender_image)
-                    
+    export_settings['filtered_merged_images'] = filtered_merged_images
     export_settings['filtered_images'] = filtered_images
     export_settings['filtered_images_use_alpha'] = filtered_images_use_alpha
     

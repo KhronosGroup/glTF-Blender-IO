@@ -31,6 +31,34 @@ class Image():
         self.height = height
         self.channels = 4
         self.pixels = pixels
+        self.name = ""
+    
+    def to_png_data(self):
+        buf = bytearray([int(channel * 255.0) for channel in self.pixels])
+
+        #
+        # Taken from 'blender-thumbnailer.py' in Blender.
+        #
+
+        # reverse the vertical line order and add null bytes at the start
+        width_byte_4 = self.width * 4
+        raw_data = b"".join(
+            b'\x00' + buf[span:span + width_byte_4] for span in range((self.height - 1) * self.width * 4, -1, - width_byte_4))
+
+        def png_pack(png_tag, data):
+            chunk_head = png_tag + data
+            return struct.pack("!I", len(data)) + chunk_head + struct.pack("!I", 0xFFFFFFFF & zlib.crc32(chunk_head))
+
+        return b"".join([
+            b'\x89PNG\r\n\x1a\n',
+            png_pack(b'IHDR', struct.pack("!2I5B", self.width, self.height, 8, 6, 0, 0, 0)),
+            png_pack(b'IDAT', zlib.compress(raw_data, 9)),
+            png_pack(b'IEND', b'')])
+
+    def save_png(self, dst_path):
+        data = self.to_png_data()
+        with open(dst_path, 'wb') as f:
+            f.write(data)
 
 
 def create_img(width, height, r=0.0, g=0.0, b=0.0, a=1.0):

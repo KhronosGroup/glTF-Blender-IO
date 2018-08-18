@@ -28,6 +28,7 @@ import bpy
 
 from ...io.com.gltf2_io_constants import *
 from ...io.com.gltf2_io_debug import *
+from ...io.com.gltf2_io_image import *
 
 from ...io.exp.gltf2_io_generate import *
 from ...io.exp.gltf2_io_get import *
@@ -2178,7 +2179,7 @@ def generate_images(operator,
     filtered_images = export_settings['filtered_images']
 
     images = []
-
+    
     #
     #
 
@@ -2237,6 +2238,58 @@ def generate_images(operator,
 
         images.append(image)
 
+        for merged_image in export_settings['filtered_merged_images']:
+            #
+            # Property: image
+            #
+
+            image = { 'name': get_image_name(merged_image.name) }
+
+            mime_type = 'image/png'
+
+            #
+
+            if export_settings['gltf_format'] == 'ASCII':
+
+                if export_settings['gltf_embed_images']:
+                    # Embed image as Base64.
+
+                    image_data = merged_image.to_png_data()
+
+                    # Required
+
+                    image['mimeType'] = mime_type
+
+                    image['uri'] = 'data:' + mime_type +  ';base64,' + base64.b64encode(image_data).decode('ascii')
+
+                else:
+                    # Store image external.
+
+                    path = export_settings['gltf_filedirectory'] + merged_image.name + ".png"
+
+                    merged_image.save_png(path)
+
+                    # Required
+
+                    image['uri'] = merged_image.name + ".png"
+
+            else:
+                # Store image as glb.
+
+                image_data = merged_image.to_png_data()
+
+                bufferView = generate_bufferView(export_settings, glTF, image_data, 0, 0)
+
+                # Required
+
+                image['mimeType'] = mime_type
+
+                image['bufferView'] = bufferView
+
+            #
+            #
+
+            images.append(image)
     #
     #
 
@@ -2285,6 +2338,13 @@ def generate_textures(operator,
 
             textures.append(texture)
 
+        elif isinstance(blender_texture, Image):
+            magFilter = 9729
+            wrap = 10497
+
+            texture['sampler'] = generate_sampler(export_settings, glTF, magFilter, wrap)
+            texture['source'] = get_image_index(glTF, blender_texture.name)
+            textures.append(texture)
         else:
             magFilter = 9729
             wrap = 10497
@@ -2299,7 +2359,7 @@ def generate_textures(operator,
             #
 
             textures.append(texture)
-
+    print(textures)
     #
     #
 
