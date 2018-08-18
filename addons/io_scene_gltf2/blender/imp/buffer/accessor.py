@@ -31,10 +31,14 @@ class Accessor():
         self.json  = json   # Accessor json
         self.gltf =  gltf # Reference to global glTF instance
         self.name = None
+        self.normalized = False
 
     def read(self):
         if not 'bufferView' in self.json:
             return
+
+        if 'normalized' in self.json.keys():
+            self.normalized = self.json['normalized']
 
         if 'name' in self.json.keys():
             self.name = self.json['name']
