@@ -175,7 +175,11 @@ class Node():
             obj = bpy.data.objects.new(name, mesh)
             obj.rotation_mode = 'QUATERNION'
             bpy.data.scenes[self.gltf.blender_scene].objects.link(obj)
-            self.set_transforms(obj, parent)
+
+            # Transforms apply only if this mesh is not skinned
+            # See implementation node of gltf2 specification
+            if not (self.mesh and self.mesh.skin is not None):
+                self.set_transforms(obj, parent)
             self.blender_object = obj.name
             self.set_blender_parent(obj, parent)
 
