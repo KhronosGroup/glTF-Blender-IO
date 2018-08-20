@@ -228,7 +228,6 @@ def generate_materials_principled(operator,
     #
             
     material['name'] = blender_material.name
-    print(material)
 
 
 def generate_materials(operator,
@@ -567,8 +566,6 @@ def generate_materials(operator,
                                     'index': index
                                 }
                                 pbrMetallicRoughness['baseColorTexture'] = baseColorTexture
-                            else:
-                                print('failed to find image: ' + blender_texture_slot.texture.image.name)
 
                         #
                         # Displacement textue

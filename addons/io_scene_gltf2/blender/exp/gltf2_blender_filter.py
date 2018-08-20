@@ -52,6 +52,7 @@ def filter_merge_image(export_settings, blender_image):
             export_settings["metallic_roughness_image"].name = export_settings["metallic_roughness_image"].name + blender_image.name
     return True
 
+
 def filter_used_materials():
     """
     Gathers and returns all unfiltered, valid Blender materials.
@@ -341,7 +342,6 @@ def filter_apply(export_settings):
 
     img = export_settings.get("metallic_roughness_image")          
     if img is not None:
-        print(img.name)
         filtered_merged_images.append(img)
         export_settings['filtered_textures'].append(img)
     
