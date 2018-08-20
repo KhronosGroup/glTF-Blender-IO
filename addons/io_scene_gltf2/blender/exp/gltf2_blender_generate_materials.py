@@ -126,8 +126,8 @@ def generate_materials_principled(operator,
     
     metallic_name = ""
     img = find_shader_image_from_shader_socket(blender_node.inputs['Metallic'])
-    if img is not None:
-        metallic_name = img.name
+    if img is not None and img.image is not None:
+        metallic_name = img.image.name
     else:     
         metallicFactor = get_scalar(blender_node.inputs['Metallic'].default_value, 1.0)
         if metallicFactor != 1.0:
@@ -138,8 +138,8 @@ def generate_materials_principled(operator,
     #
     roughness_name = ""
     img = find_shader_image_from_shader_socket(blender_node.inputs['Roughness'])
-    if img is not None:
-        roughness_name = img.name
+    if img is not None and img.image is not None:
+        roughness_name = img.image.name
     else:
         roughnessFactor = get_scalar(blender_node.inputs['Roughness'].default_value, 1.0)
         if roughnessFactor != 1.0:
