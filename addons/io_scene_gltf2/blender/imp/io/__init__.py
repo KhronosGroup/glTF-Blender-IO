@@ -22,6 +22,7 @@
  """
 
 import json
+import bpy
 
 from ..scene import *
 from ..animation import *
@@ -226,6 +227,23 @@ class glTFImporter():
 
         for scene in self.other_scenes:
             scene.blender_create()
+
+        # Armature corrections
+        # These are done post scenes: as joint order is not exact while the scenes are being built through the nodes.
+        # Bones in Blender also have no scale: instead its simply head (joint position) and tail (child position).
+        
+        for obj in bpy.data.objects:
+            if obj.type == "ARMATURE":
+                bpy.context.scene.objects.active = obj
+                armature = obj.data
+                bpy.ops.object.mode_set(mode="EDIT")
+                for bone in armature.edit_bones:
+                    if len(bone.children) == 1:
+                        bone.tail = bone.children[0].head 
+                    if len(bone.children) == 0 and bone.parent is not None:
+                        bone.tail = bone.head - (bone.parent.head - bone.parent.tail)
+                
+                bpy.ops.object.mode_set(mode="OBJECT")
 
 
     def debug_missing(self):
