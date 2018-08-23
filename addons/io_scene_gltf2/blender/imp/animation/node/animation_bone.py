@@ -115,16 +115,14 @@ class AnimationBone():
                         else:
                             if not self.animation.gltf.scene.nodes[self.animation.node.parent].is_joint: # TODO if Node in another scene
                                 parent_mat = bpy.data.objects[self.animation.gltf.scene.nodes[self.animation.node.parent].blender_object].matrix_world
-                                mat = transform * parent_mat.inverted()
+                                mat = transform
                             else:
                                 parent_mat = self.animation.gltf.scene.nodes[self.animation.node.parent].blender_bone_matrix
-
-                                mat = (parent_mat.to_quaternion() * transform.to_quaternion()).to_matrix().to_4x4()
-                                mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * transform.to_translation() )) * mat
-                                #TODO scaling of bones ?
+                                mat = parent_mat.inverted() * transform
 
 
                         #bone.scale # TODO
+                        bone.scale = mat.to_scale()
                         bone.keyframe_insert(blender_path, frame = key[0] * fps, group='scale')
 
                     # Setting interpolation
