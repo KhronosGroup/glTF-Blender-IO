@@ -38,6 +38,9 @@ class Image():
 
     def read(self):
 
+
+        self.image_name = "Image_" + str(self.index)
+
         if 'uri' in self.json.keys():
             sep = ';base64,'
             if self.json['uri'][:5] == 'data:':
@@ -45,7 +48,6 @@ class Image():
                 if idx != -1:
                     data = self.json['uri'][idx+len(sep):]
                     self.data = base64.b64decode(data)
-                    self.image_name = "Image_" + str(self.index)
                     return
 
             if isfile(join(dirname(self.gltf.filename), self.json['uri'])):
