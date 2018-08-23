@@ -25,7 +25,7 @@ import bpy
 import os
 import base64
 import tempfile
-from os.path import dirname, join, isfile
+from os.path import dirname, join, isfile, basename
 from ..buffer import *
 
 class Image():
@@ -45,11 +45,13 @@ class Image():
                 if idx != -1:
                     data = self.json['uri'][idx+len(sep):]
                     self.data = base64.b64decode(data)
+                    self.image_name = "Image_" + str(self.index)
                     return
 
             if isfile(join(dirname(self.gltf.filename), self.json['uri'])):
                 with open(join(dirname(self.gltf.filename), self.json['uri']), 'rb') as f_:
                     self.data = f_.read()
+                    self.image_name = basename(join(dirname(self.gltf.filename), self.json['uri']))
                     return
             else:
                 self.gltf.log.error("Missing file (index " + str(self.index) + "): " + self.json['uri'])
@@ -78,7 +80,7 @@ class Image():
 
         blender_image = bpy.data.images.load(tmp_image.name)
         blender_image.pack()
-        blender_image.name = "Image_" + str(self.index)
+        blender_image.name = self.image_name
         self.blender_image_name = blender_image.name
         os.remove(tmp_image.name)
 
