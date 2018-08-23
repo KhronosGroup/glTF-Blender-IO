@@ -22,6 +22,8 @@
  """
 
 import bpy
+from math import sqrt
+from mathutils import Quaternion
 
 from ..node import *
 
@@ -64,6 +66,13 @@ class Scene():
                 self.root_nodes_idx.append(node)
 
     def blender_create(self):
+
+        # Create Yup2Zup empty
+        obj_rotation = bpy.data.objects.new("Yup2Zup", None)
+        obj_rotation.rotation_mode = 'QUATERNION'
+        obj_rotation.rotation_quaternion = Quaternion((sqrt(2)/2, sqrt(2)/2,0.0,0.0))
+
+
     # Create a new scene only if not already exists in .blend file
     # TODO : put in current scene instead ?
         if self.name not in [scene.name for scene in bpy.data.scenes]:
@@ -92,6 +101,12 @@ class Scene():
 
         for node in self.root_nodes_idx:
                 self.nodes[node].animation.blender_anim()
+
+
+        # Parent root node to rotation object
+        bpy.data.scenes[self.gltf.blender_scene].objects.link(obj_rotation)
+        for node in self.root_nodes_idx:
+            bpy.data.objects[self.nodes[node].blender_object].parent = obj_rotation
 
 
     # TODO create blender for other scenes
