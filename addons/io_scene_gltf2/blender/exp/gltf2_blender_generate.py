@@ -59,6 +59,7 @@ class BlenderEncoder(json.JSONEncoder):
 
         return super(BlenderEncoder, self).default(obj)
 
+
 def _is_json(data):
     """
     Test, if a data set can be expressed as JSON.
@@ -69,6 +70,7 @@ def _is_json(data):
     except:
         print_console('DEBUG', 'Failed to json.dumps custom properties')
         return False
+
 
 def create_image_file(context, blender_image, dst_path, file_format):
     """
@@ -2238,58 +2240,58 @@ def generate_images(operator,
 
         images.append(image)
 
-        for merged_image in export_settings['filtered_merged_images']:
-            #
-            # Property: image
-            #
+    for merged_image in export_settings['filtered_merged_images']:
+        #
+        # Property: image
+        #
 
-            image = { 'name': get_image_name(merged_image.name) }
+        image = { 'name': get_image_name(merged_image.name) }
 
-            mime_type = 'image/png'
+        mime_type = 'image/png'
 
-            #
+        #
 
-            if export_settings['gltf_format'] == 'ASCII':
+        if export_settings['gltf_format'] == 'ASCII':
 
-                if export_settings['gltf_embed_images']:
-                    # Embed image as Base64.
-
-                    image_data = merged_image.to_png_data()
-
-                    # Required
-
-                    image['mimeType'] = mime_type
-
-                    image['uri'] = 'data:' + mime_type +  ';base64,' + base64.b64encode(image_data).decode('ascii')
-
-                else:
-                    # Store image external.
-
-                    path = export_settings['gltf_filedirectory'] + merged_image.name + ".png"
-
-                    merged_image.save_png(path)
-
-                    # Required
-
-                    image['uri'] = merged_image.name + ".png"
-
-            else:
-                # Store image as glb.
+            if export_settings['gltf_embed_images']:
+                # Embed image as Base64.
 
                 image_data = merged_image.to_png_data()
-
-                bufferView = generate_bufferView(export_settings, glTF, image_data, 0, 0)
 
                 # Required
 
                 image['mimeType'] = mime_type
 
-                image['bufferView'] = bufferView
+                image['uri'] = 'data:' + mime_type +  ';base64,' + base64.b64encode(image_data).decode('ascii')
 
-            #
-            #
+            else:
+                # Store image external.
 
-            images.append(image)
+                path = export_settings['gltf_filedirectory'] + merged_image.name + ".png"
+
+                merged_image.save_png(path)
+
+                # Required
+
+                image['uri'] = merged_image.name + ".png"
+
+        else:
+            # Store image as glb.
+
+            image_data = merged_image.to_png_data()
+
+            bufferView = generate_bufferView(export_settings, glTF, image_data, 0, 0)
+
+            # Required
+
+            image['mimeType'] = mime_type
+
+            image['bufferView'] = bufferView
+
+        #
+        #
+
+        images.append(image)
     #
     #
 
@@ -2359,7 +2361,7 @@ def generate_textures(operator,
             #
 
             textures.append(texture)
-    print(textures)
+
     #
     #
 
