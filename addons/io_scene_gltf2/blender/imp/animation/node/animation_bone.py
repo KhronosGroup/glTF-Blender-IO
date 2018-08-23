@@ -56,7 +56,7 @@ class AnimationBone():
                         else:
                             if not self.animation.gltf.scene.nodes[self.animation.node.parent].is_joint: # TODO if Node in another scene
                                 parent_mat = bpy.data.objects[self.animation.gltf.scene.nodes[self.animation.node.parent].blender_object].matrix_world
-                                mat = transform * parent_mat.inverted()
+                                mat = transform
                             else:
                                 parent_mat = self.animation.gltf.scene.nodes[self.animation.node.parent].blender_bone_matrix
 
@@ -82,7 +82,7 @@ class AnimationBone():
                         else:
                             if not self.animation.gltf.scene.nodes[self.animation.node.parent].is_joint: # TODO if Node in another scene
                                 parent_mat = bpy.data.objects[self.animation.gltf.scene.nodes[self.animation.node.parent].blender_object].matrix_world
-                                mat = transform * parent_mat.inverted()
+                                mat = transform
                             else:
                                 parent_mat = self.animation.gltf.scene.nodes[self.animation.node.parent].blender_bone_matrix
 
