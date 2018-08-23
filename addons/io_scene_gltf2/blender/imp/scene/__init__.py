@@ -105,6 +105,7 @@ class Scene():
 
         # Parent root node to rotation object
         bpy.data.scenes[self.gltf.blender_scene].objects.link(obj_rotation)
+        obj_rotation.hide = True
         for node in self.root_nodes_idx:
             bpy.data.objects[self.nodes[node].blender_object].parent = obj_rotation
 
