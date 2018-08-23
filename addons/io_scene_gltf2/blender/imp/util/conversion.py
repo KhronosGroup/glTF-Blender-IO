@@ -37,8 +37,8 @@ class Conversion():
 
         mat = Matrix([
             [s[0], 0, 0, 0],
-            [0, s[2], 0, 0],
-            [0, 0, s[1], 0],
+            [0, s[1], 0, 0],
+            [0, 0, s[2], 0],
             [0, 0, 0, 1]
         ])
 
@@ -48,13 +48,13 @@ class Conversion():
         return mat
 
     def quaternion(self, q):
-        return Quaternion([q[3], q[0], -q[2], q[1]])
+        return Quaternion([q[3], q[0], q[1], q[2]])
 
     def matrix_quaternion(self, q):
-        return Quaternion([q[0], q[1], -q[3], q[2]])
+        return Quaternion([q[0], q[1], q[2], q[3]])
 
     def location(self, location):
-        return [location[0], -location[2], location[1]]
+        return location
 
     def scale(self, scale):
-        return scale # TODO test scale animation
+        return scale

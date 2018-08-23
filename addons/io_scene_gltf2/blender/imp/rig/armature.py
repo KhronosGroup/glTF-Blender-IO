@@ -73,23 +73,22 @@ class Skin():
 
     def set_bone_transforms(self, bone, node, parent):
         obj   = bpy.data.objects[self.blender_armature_name]
-        delta = Quaternion((0.7071068286895752, 0.7071068286895752, 0.0, 0.0))
 
         mat = Matrix()
         if parent is None:
             transform = node.get_transforms()
-            mat = transform * delta.to_matrix().to_4x4()
+            mat = transform
         else:
             if not self.gltf.scene.nodes[parent].is_joint: # TODO if Node in another scene
                 transform  = node.get_transforms()
-                mat = transform * delta.to_matrix().to_4x4()
+                mat = transform
             else:
                 transform = node.get_transforms()
                 parent_mat = obj.data.edit_bones[self.gltf.scene.nodes[parent].blender_bone_name].matrix # Node in another scene
 
-                mat = (parent_mat.to_quaternion() * delta.inverted() * transform.to_quaternion() * delta).to_matrix().to_4x4()
-                mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * delta.inverted() * transform.to_translation() )) * mat
-                #TODO scaling of bones
+                mat = (parent_mat.to_quaternion() * transform.to_quaternion()).to_matrix().to_4x4()
+                mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * transform.to_translation() )) * mat
+                #TODO scaling of bones ?
 
         bone.matrix = mat
         return bone.matrix

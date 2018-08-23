@@ -93,8 +93,8 @@ class Node():
             s = self.json['scale']
             mat = Matrix([
                 [s[0], 0, 0, 0],
-                [0, s[2], 0, 0],
-                [0, 0, s[1], 0],
+                [0, s[1], 0, 0],
+                [0, 0, s[2], 0],
                 [0, 0, 0, 1]
             ])
 
@@ -117,8 +117,7 @@ class Node():
         for node in self.gltf.scene.nodes.values(): # TODO if parent is in another scene
             if node.index == parent:
                 if node.is_joint == True:
-                    delta = Quaternion((0.7071068286895752, 0.7071068286895752, 0.0, 0.0))
-                    obj.matrix_world = self.transform * delta.inverted().to_matrix().to_4x4()
+                    obj.matrix_world = self.transform
                     return
                 else:
                     obj.matrix_world = self.transform
