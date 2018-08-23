@@ -64,7 +64,7 @@ class AnimationBone():
                                 mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * transform.to_translation() )) * mat
                                 #TODO scaling of bones ?
 
-                        bone.location = self.animation.node.blender_bone_matrix.to_translation() - mat.to_translation()
+                        bone.location = self.animation.node.blender_bone_matrix.inverted() * mat.to_translation()
                         bone.keyframe_insert(blender_path, frame = key[0] * fps, group='location')
 
 
