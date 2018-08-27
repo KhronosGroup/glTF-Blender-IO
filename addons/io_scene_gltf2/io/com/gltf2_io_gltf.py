@@ -219,26 +219,3 @@ class PyglTF():
                 return True, skin.index
 
         return is_joint, None
-
-
-    def debug_missing(self):
-        keys = [
-                'scene',
-                'nodes',
-                'scenes',
-                'meshes',
-                'accessors',
-                'bufferViews',
-                'buffers',
-                'materials',
-                'animations',
-                'cameras',
-                'skins',
-                'textures',
-                'images',
-                'asset'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.log.debug("GLTF MISSING " + key)

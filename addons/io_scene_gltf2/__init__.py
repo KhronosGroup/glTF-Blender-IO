@@ -510,7 +510,6 @@ class ImportglTF2(Operator, ImportHelper):
             return {'CANCELLED'}
         self.gltf.log.critical("Data are loaded, start creating Blender stuff")
         BlenderGlTF.create(self.gltf)
-        self.gltf.debug_missing()
         self.gltf.log.critical("glTF import is now finished")
         self.gltf.log.removeHandler(self.gltf.log_handler)
 
