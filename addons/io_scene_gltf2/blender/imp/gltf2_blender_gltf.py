@@ -30,7 +30,7 @@ class BlenderGlTF():
         gltf.scene.blender_create()
 
         for scene in gltf.other_scenes:
-            gltf.blender_create()
+            scene.blender_create()
 
         # Armature correction
         # Try to detect bone chains, and set bone lengths
