@@ -27,8 +27,19 @@ class PyScene():
     def __init__(self, index, json, gltf):
         self.json = json   # Scene json
         self.gltf = gltf # Reference to global glTF instance
-        self.nodes = {}
-        self.root_nodes_idx = []
+
+        # glTF2.0 scene properties required
+        # No required !
+
+        # glTF2.0 scene properties not required
+        #TODO : note that all these properties are not managed yet
+        self.nodes = {} #TODO: rename ? in specification, nodes contains only root nodes
+        self.name = ""
+        self.extensions = {}
+        self.extras = {}
+
+        # PyScene specific
+        self.root_nodes_idx = [] #TODO: in specification, nodes contains only root nodes
 
     def read(self):
         if 'name' in self.json.keys():
