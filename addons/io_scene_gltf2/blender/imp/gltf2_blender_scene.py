@@ -24,6 +24,7 @@ import bpy
 from math import sqrt
 from mathutils import Quaternion
 from ...io.com.gltf2_io_scene import *
+from .gltf2_blender_node import *
 
 class BlenderScene():
 
@@ -50,7 +51,7 @@ class BlenderScene():
             pyscene.gltf.blender_scene = pyscene.name
 
         for node in pyscene.root_nodes_idx:
-            pyscene.nodes[node].blender_create(None) # None => No parent
+            BlenderNode.create(pyscene.nodes[node], None) # None => No parent
 
         # Now that all mesh / bones are created, create vertex groups on mesh
         for armature in pyscene.gltf.skins.values():

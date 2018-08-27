@@ -21,7 +21,7 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ...blender.imp.node import * #SPLIT_TODO
+from .gltf2_io_node import *
 
 class PyScene():
     def __init__(self, index, json, gltf):
@@ -51,7 +51,7 @@ class PyScene():
 
 
         for node_idx in self.json['nodes']:
-            node = Node(node_idx, self.gltf.json['nodes'][node_idx], self.gltf, self)
+            node = PyNode(node_idx, self.gltf.json['nodes'][node_idx], self.gltf, self)
             node.read()
             node.debug_missing()
             self.nodes[node_idx] = node

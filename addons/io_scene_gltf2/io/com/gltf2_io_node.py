@@ -25,11 +25,11 @@ import bpy
 
 from mathutils import Matrix, Vector, Quaternion
 
-from ..mesh import *
-from ..camera import *
-from ..animation import *
+from ...blender.imp.mesh import * #SPLIT_TODO
+from ...blender.imp.camera import *  #SPLIT_TODO
+from ...blender.imp.animation import * #SPLIT_TODO
 
-class Node():
+class PyNode():
     def __init__(self, index, json, gltf, scene):
         self.index = index
         self.json = json   # Node json
@@ -75,7 +75,7 @@ class Node():
             return
 
         for child in self.json['children']:
-            child = Node(child, self.gltf.json['nodes'][child], self.gltf, self.scene)
+            child = PyNode(child, self.gltf.json['nodes'][child], self.gltf, self.scene)
             child.read()
             child.debug_missing()
             self.children.append(child)
@@ -151,89 +151,6 @@ class Node():
                     return
 
         self.gltf.log.error("ERROR, parent not found")
-
-    def blender_create(self, parent):
-        self.parent = parent
-        if self.mesh:
-            if self.name:
-                self.gltf.log.info("Blender create Mesh node " + self.name)
-            else:
-                self.gltf.log.info("Blender create Mesh node")
-
-            if self.name:
-                name = self.name
-            else:
-                # Take mesh name if exist
-                if self.mesh.name:
-                    name = self.mesh.name
-                else:
-                    name = "Object_" + str(self.index)
-
-            mesh = self.mesh.blender_create(parent)
-
-            obj = bpy.data.objects.new(name, mesh)
-            obj.rotation_mode = 'QUATERNION'
-            bpy.data.scenes[self.gltf.blender_scene].objects.link(obj)
-
-            # Transforms apply only if this mesh is not skinned
-            # See implementation node of gltf2 specification
-            if not (self.mesh and self.mesh.skin is not None):
-                self.set_transforms(obj, parent)
-            self.blender_object = obj.name
-            self.set_blender_parent(obj, parent)
-
-            self.mesh.blender_set_mesh(mesh, obj)
-
-            for child in self.children:
-                child.blender_create(self.index)
-
-            return
-
-        if self.camera:
-            if self.name:
-                self.gltf.log.info("Blender create Camera node " + self.name)
-            else:
-                self.gltf.log.info("Blender create Camera node")
-            obj = self.camera.create_blender()
-            self.set_transforms(obj, parent) #TODO default rotation of cameras ?
-            self.blender_object = obj.name
-            self.set_blender_parent(obj, parent)
-
-            return
-
-
-        if self.is_joint:
-            if self.name:
-                self.gltf.log.info("Blender create Bone node " + self.name)
-            else:
-                self.gltf.log.info("Blender create Bone node")
-            # Check if corresponding armature is already created, create it if needed
-            if self.gltf.skins[self.skin_id].blender_armature_name is None:
-                self.gltf.skins[self.skin_id].create_blender_armature(parent)
-
-            self.gltf.skins[self.skin_id].create_bone(self, parent)
-
-            for child in self.children:
-                child.blender_create(self.index)
-
-            return
-
-        # No mesh, no camera. For now, create empty #TODO
-
-        if self.name:
-            self.gltf.log.info("Blender create Empty node " + self.name)
-            obj = bpy.data.objects.new(self.name, None)
-        else:
-            self.gltf.log.info("Blender create Empty node")
-            obj = bpy.data.objects.new("Node", None)
-        obj.rotation_mode = 'QUATERNION'
-        bpy.data.scenes[self.gltf.blender_scene].objects.link(obj)
-        self.set_transforms(obj, parent)
-        self.blender_object = obj.name
-        self.set_blender_parent(obj, parent)
-
-        for child in self.children:
-            child.blender_create(self.index)
 
     def debug_missing(self):
         keys = [
