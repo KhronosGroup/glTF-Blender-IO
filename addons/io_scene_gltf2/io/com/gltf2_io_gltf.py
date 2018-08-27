@@ -30,6 +30,32 @@ from ...blender.imp.util import * #SPLIT_TODO
 class PyglTF():
 
     def __init__(self, filename, loglevel):
+
+        # glTF properties required
+        self.asset = {} #TODO : create an asset class
+
+        # glTF properties not required
+        #TODO : note that all these are not managed yet
+        self.extensionsUsed = ""
+        self.extensionsRequired = ""
+        self.accessors = {}
+        self.animations = {}
+        self.buffers = {}
+        self.bufferViews = {}
+        self.cameras = {}
+        self.images = {}
+        self.materials = {}
+        self.meshes = {}
+        self.nodes = {}
+        self.samplers = {}
+        self.scene = -1
+        self.scenes = {}
+        self.skins = {}
+        self.textures = {}
+        self.extensions = {}
+        self.extras = {}
+
+        # PyGlTF specific
         self.filename = filename
         self.other_scenes = []
 
@@ -39,15 +65,7 @@ class PyglTF():
         self.log = log.logger
         self.log_handler = log.hdlr
 
-        self.buffers = {}
-        self.materials = {}
         self.default_material = None
-        self.skins = {}
-        self.images = {}
-        self.animations = {}
-        self.meshes = {}
-        self.accessors = {}
-        self.bufferViews = {}
 
         self.extensions_managed = [
             "KHR_materials_pbrSpecularGlossiness"
@@ -55,6 +73,7 @@ class PyglTF():
 
         self.load()
 
+        #TODO : merge with io_constants
         self.fmt_char_dict = {}
         self.fmt_char_dict[5120] = 'b' # Byte
         self.fmt_char_dict[5121] = 'B' # Unsigned Byte
