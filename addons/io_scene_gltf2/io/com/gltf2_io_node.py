@@ -59,7 +59,6 @@ class PyNode():
 
         # PyNode specific
 
-        self.blender_object = ""
         self.animation = AnimationData(self, self.gltf)
         self.is_joint = False
         self.parent = None

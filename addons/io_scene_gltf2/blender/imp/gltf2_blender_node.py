@@ -27,6 +27,10 @@ class BlenderNode():
 
     @staticmethod
     def create(pynode, parent):
+
+        # Blender attributes initialization
+        self.blender_object = ""
+
         pynode.parent = parent
         if pynode.mesh:
             if pynode.name:
