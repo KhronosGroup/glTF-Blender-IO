@@ -77,7 +77,6 @@ class PyNode():
         for child in self.json['children']:
             child = PyNode(child, self.gltf.json['nodes'][child], self.gltf, self.scene)
             child.read()
-            child.debug_missing()
             self.children.append(child)
             self.scene.nodes[child.index] = child
 
@@ -122,21 +121,3 @@ class PyNode():
                 else:
                     obj.matrix_world = self.transform
                     return
-
-
-    def debug_missing(self):
-        keys = [
-                'name',
-                'mesh',
-                'matrix',
-                'translation',
-                'rotation',
-                'scale',
-                'children',
-                'camera',
-                'skin'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("NODE MISSING " + key)

@@ -53,7 +53,6 @@ class PyScene():
         for node_idx in self.json['nodes']:
             node = PyNode(node_idx, self.gltf.json['nodes'][node_idx], self.gltf, self)
             node.read()
-            node.debug_missing()
             self.nodes[node_idx] = node
 
         for skin in self.gltf.skins.values():
