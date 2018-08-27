@@ -49,8 +49,6 @@ class PyglTF():
         self.accessors = {}
         self.bufferViews = {}
 
-        self.blender_scene = None #SPLIT_TODO
-
         self.extensions_managed = [
             "KHR_materials_pbrSpecularGlossiness"
         ]

@@ -27,6 +27,10 @@ class BlenderGlTF():
 
     @staticmethod
     def create(gltf):
+
+        # Blender attributes initialization
+        gltf.blender_scene = None
+
         gltf.scene.blender_create()
 
         for scene in gltf.other_scenes:
