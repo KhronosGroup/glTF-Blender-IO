@@ -35,9 +35,30 @@ class PyNode():
         self.json = json   # Node json
         self.gltf = gltf # Reference to global glTF instance
         self.scene = scene # Reference to scene
-        self.mesh = None
+
+
+        # glTF2.0 required properties
+        # No required !
+
+        # glTF2.0 not required properties, with default values
+        self.matrix      = [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
+        self.rotation    = [0.0,0.0,0.0,1.0]
+        self.scale       = [1.0,1.0,1.0]
+        self.translation = [0.0,0.0,0.0]
+
+        # glTF2.0 not required properties
+        #TODO : note that all these properties are not managed yet
         self.camera = None
         self.children = []
+        self.skin = None #TODO
+        self.mesh = None
+        self.weights = []
+        self.name = ""
+        self.extensions = {}
+        self.extras = {}
+
+        # PyNode specific
+
         self.blender_object = ""
         self.animation = AnimationData(self, self.gltf)
         self.is_joint = False
