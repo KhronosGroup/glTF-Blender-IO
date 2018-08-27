@@ -23,7 +23,7 @@
 
 import json
 
-from ...blender.imp.scene import * #SPLIT_TODO
+from .gltf2_io_scene import *
 from ...blender.imp.animation import * #SPLIT_TODO
 from ...blender.imp.util import * #SPLIT_TODO
 
@@ -180,7 +180,7 @@ class PyglTF():
                     self.log.error("Extension " + ext + " is not available on this addon version")
                     # Non blocking error
 
-        self.scene = Scene(idx, scene, self)
+        self.scene = PyScene(idx, scene, self)
         self.scene.read()
         self.scene.debug_missing()
 

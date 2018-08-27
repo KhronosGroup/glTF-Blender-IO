@@ -21,13 +21,9 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-import bpy
-from math import sqrt
-from mathutils import Quaternion
+from ...blender.imp.node import * #SPLIT_TODO
 
-from ..node import *
-
-class Scene():
+class PyScene():
     def __init__(self, index, json, gltf):
         self.json = json   # Scene json
         self.gltf = gltf # Reference to global glTF instance
@@ -64,54 +60,6 @@ class Scene():
         for node in self.nodes:
             if node not in parent_detector.keys():
                 self.root_nodes_idx.append(node)
-
-    def blender_create(self):
-
-        # Create Yup2Zup empty
-        obj_rotation = bpy.data.objects.new("Yup2Zup", None)
-        obj_rotation.rotation_mode = 'QUATERNION'
-        obj_rotation.rotation_quaternion = Quaternion((sqrt(2)/2, sqrt(2)/2,0.0,0.0))
-
-
-    # Create a new scene only if not already exists in .blend file
-    # TODO : put in current scene instead ?
-        if self.name not in [scene.name for scene in bpy.data.scenes]:
-            if self.name:
-                scene = bpy.data.scenes.new(self.name)
-            else:
-                scene = bpy.context.scene
-            scene.render.engine = "CYCLES"
-
-            self.gltf.blender_scene = scene.name
-        else:
-            self.gltf.blender_scene = self.name
-
-        for node in self.root_nodes_idx:
-            self.nodes[node].blender_create(None) # None => No parent
-
-        # Now that all mesh / bones are created, create vertex groups on mesh
-        for armature in self.gltf.skins.values():
-            armature.create_vertex_groups()
-
-        for armature in self.gltf.skins.values():
-            armature.assign_vertex_groups()
-
-        for armature in self.gltf.skins.values():
-            armature.create_armature_modifiers()
-
-        for node in self.root_nodes_idx:
-                self.nodes[node].animation.blender_anim()
-
-
-        # Parent root node to rotation object
-        bpy.data.scenes[self.gltf.blender_scene].objects.link(obj_rotation)
-        obj_rotation.hide = True
-        for node in self.root_nodes_idx:
-            bpy.data.objects[self.nodes[node].blender_object].parent = obj_rotation
-
-
-    # TODO create blender for other scenes
-
 
 
     def debug_missing(self):

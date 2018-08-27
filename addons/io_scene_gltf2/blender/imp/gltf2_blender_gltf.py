@@ -22,6 +22,7 @@
 
 import bpy
 from ...io.com.gltf2_io_gltf import *
+from .gltf2_blender_scene import *
 
 class BlenderGlTF():
 
@@ -31,10 +32,10 @@ class BlenderGlTF():
         # Blender attributes initialization
         gltf.blender_scene = None
 
-        gltf.scene.blender_create()
+        BlenderScene.create(gltf.scene)
 
         for scene in gltf.other_scenes:
-            scene.blender_create()
+            BlenderScene.create(scene)
 
         # Armature correction
         # Try to detect bone chains, and set bone lengths
