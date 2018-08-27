@@ -60,14 +60,3 @@ class PyScene():
         for node in self.nodes:
             if node not in parent_detector.keys():
                 self.root_nodes_idx.append(node)
-
-
-    def debug_missing(self):
-        keys = [
-                'nodes',
-                'name'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("SCENE MISSING " + key)

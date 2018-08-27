@@ -182,7 +182,6 @@ class PyglTF():
 
         self.scene = PyScene(idx, scene, self)
         self.scene.read()
-        self.scene.debug_missing()
 
         # manage all scenes (except root scene that is already managed)
         scene_idx = 0
@@ -191,7 +190,6 @@ class PyglTF():
                 continue
             scene = Scene(scene_idx, self.json['scenes'][scene_idx] , self)
             scene.read()
-            scene.debug_missing()
             scene_idx += 1
             self.other_scenes.append(scene)
 
