@@ -21,9 +21,7 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-import bpy
-
-from mathutils import Matrix, Vector, Quaternion
+from mathutils import Matrix, Vector, Quaternion #SPLIT_TODO
 
 from ...blender.imp.mesh import * #SPLIT_TODO
 from ...blender.imp.camera import *  #SPLIT_TODO
