@@ -29,7 +29,7 @@ class BlenderNode():
     def create(pynode, parent):
 
         # Blender attributes initialization
-        self.blender_object = ""
+        pynode.blender_object = ""
 
         pynode.parent = parent
         if pynode.mesh:
@@ -56,7 +56,7 @@ class BlenderNode():
             # Transforms apply only if this mesh is not skinned
             # See implementation node of gltf2 specification
             if not (pynode.mesh and pynode.mesh.skin is not None):
-                pynode.set_transforms(obj, parent)
+                BlenderNode.set_transforms(pynode, obj, parent)
             pynode.blender_object = obj.name
             BlenderNode.set_parent(pynode, obj, parent)
 
@@ -73,7 +73,7 @@ class BlenderNode():
             else:
                 pynode.gltf.log.info("Blender create Camera node")
             obj = pynode.camera.create_blender()
-            pynode.set_transforms(obj, parent) #TODO default rotation of cameras ?
+            BlenderNode.set_transforms(pynode, obj, parent) #TODO default rotation of cameras ?
             pynode.blender_object = obj.name
             BlenderNode.set_parent(pynode, obj, parent)
 
@@ -106,7 +106,7 @@ class BlenderNode():
             obj = bpy.data.objects.new("Node", None)
         obj.rotation_mode = 'QUATERNION'
         bpy.data.scenes[pynode.gltf.blender_scene].objects.link(obj)
-        pynode.set_transforms(obj, parent)
+        BlenderNode.set_transforms(pynode, obj, parent)
         pynode.blender_object = obj.name
         BlenderNode.set_parent(pynode, obj, parent)
 
@@ -141,3 +141,18 @@ class BlenderNode():
                     return
 
         pynode.gltf.log.error("ERROR, parent not found")
+
+    @staticmethod
+    def set_transforms(pynode, obj, parent):
+        if parent is None:
+            obj.matrix_world =  pynode.transform
+            return
+
+        for node in pynode.gltf.scene.nodes.values(): # TODO if parent is in another scene
+            if node.index == parent:
+                if node.is_joint == True:
+                    obj.matrix_world = pynode.transform
+                    return
+                else:
+                    obj.matrix_world = pynode.transform
+                    return

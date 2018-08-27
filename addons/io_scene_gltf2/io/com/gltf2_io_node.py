@@ -124,18 +124,3 @@ class PyNode():
             mat = Matrix.Translation(Vector(self.gltf.convert.location(self.json['translation']))) * mat
 
         return mat
-
-
-    def set_transforms(self, obj, parent):
-        if parent is None:
-            obj.matrix_world =  self.transform
-            return
-
-        for node in self.gltf.scene.nodes.values(): # TODO if parent is in another scene
-            if node.index == parent:
-                if node.is_joint == True:
-                    obj.matrix_world = self.transform
-                    return
-                else:
-                    obj.matrix_world = self.transform
-                    return
