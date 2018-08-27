@@ -54,7 +54,7 @@ class BlenderNode():
             if not (pynode.mesh and pynode.mesh.skin is not None):
                 pynode.set_transforms(obj, parent)
             pynode.blender_object = obj.name
-            pynode.set_blender_parent(obj, parent)
+            BlenderNode.set_parent(pynode, obj, parent)
 
             pynode.mesh.blender_set_mesh(mesh, obj)
 
@@ -71,7 +71,7 @@ class BlenderNode():
             obj = pynode.camera.create_blender()
             pynode.set_transforms(obj, parent) #TODO default rotation of cameras ?
             pynode.blender_object = obj.name
-            pynode.set_blender_parent(obj, parent)
+            BlenderNode.set_parent(pynode, obj, parent)
 
             return
 
@@ -104,7 +104,36 @@ class BlenderNode():
         bpy.data.scenes[pynode.gltf.blender_scene].objects.link(obj)
         pynode.set_transforms(obj, parent)
         pynode.blender_object = obj.name
-        pynode.set_blender_parent(obj, parent)
+        BlenderNode.set_parent(pynode, obj, parent)
 
         for child in pynode.children:
             BlenderNode.create(child, pynode.index)
+
+
+    @staticmethod
+    def set_parent(pynode, obj, parent):
+
+        if parent is None:
+            return
+
+        for node in pynode.gltf.scene.nodes.values(): # TODO if parent is in another scene
+            if node.index == parent:
+                if node.is_joint == True:
+                    bpy.ops.object.select_all(action='DESELECT')
+                    bpy.data.objects[node.blender_armature_name].select = True
+                    bpy.context.scene.objects.active = bpy.data.objects[node.blender_armature_name]
+                    bpy.ops.object.mode_set(mode='EDIT')
+                    bpy.data.objects[node.blender_armature_name].data.edit_bones.active = bpy.data.objects[node.blender_armature_name].data.edit_bones[node.blender_bone_name]
+                    bpy.ops.object.mode_set(mode='OBJECT')
+                    bpy.ops.object.select_all(action='DESELECT')
+                    obj.select = True
+                    bpy.data.objects[node.blender_armature_name].select = True
+                    bpy.context.scene.objects.active = bpy.data.objects[node.blender_armature_name]
+                    bpy.ops.object.parent_set(type='BONE', keep_transform=True)
+
+                    return
+                if node.blender_object:
+                    obj.parent = bpy.data.objects[node.blender_object]
+                    return
+
+        pynode.gltf.log.error("ERROR, parent not found")

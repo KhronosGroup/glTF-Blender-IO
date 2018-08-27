@@ -124,34 +124,6 @@ class PyNode():
                     return
 
 
-
-    def set_blender_parent(self, obj, parent):
-
-        if parent is None:
-            return
-
-        for node in self.gltf.scene.nodes.values(): # TODO if parent is in another scene
-            if node.index == parent:
-                if node.is_joint == True:
-                    bpy.ops.object.select_all(action='DESELECT')
-                    bpy.data.objects[node.blender_armature_name].select = True
-                    bpy.context.scene.objects.active = bpy.data.objects[node.blender_armature_name]
-                    bpy.ops.object.mode_set(mode='EDIT')
-                    bpy.data.objects[node.blender_armature_name].data.edit_bones.active = bpy.data.objects[node.blender_armature_name].data.edit_bones[node.blender_bone_name]
-                    bpy.ops.object.mode_set(mode='OBJECT')
-                    bpy.ops.object.select_all(action='DESELECT')
-                    obj.select = True
-                    bpy.data.objects[node.blender_armature_name].select = True
-                    bpy.context.scene.objects.active = bpy.data.objects[node.blender_armature_name]
-                    bpy.ops.object.parent_set(type='BONE', keep_transform=True)
-
-                    return
-                if node.blender_object:
-                    obj.parent = bpy.data.objects[node.blender_object]
-                    return
-
-        self.gltf.log.error("ERROR, parent not found")
-
     def debug_missing(self):
         keys = [
                 'name',
