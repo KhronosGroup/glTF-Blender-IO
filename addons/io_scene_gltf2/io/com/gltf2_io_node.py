@@ -21,11 +21,11 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from mathutils import Matrix, Vector, Quaternion #SPLIT_TODO
-
 from ...blender.imp.mesh import * #SPLIT_TODO
 from ...blender.imp.camera import *  #SPLIT_TODO
 from ...blender.imp.animation import * #SPLIT_TODO
+
+from .gltf2_io_trs import *
 
 class PyNode():
     def __init__(self, index, json, gltf, scene):
@@ -60,6 +60,7 @@ class PyNode():
         self.animation = AnimationData(self, self.gltf)
         self.is_joint = False
         self.parent = None
+        self.transform = [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
 
     def read(self):
         if 'name' in self.json.keys():
@@ -101,26 +102,25 @@ class PyNode():
     def get_transforms(self):
 
         if 'matrix' in self.json.keys():
-            return self.gltf.convert.matrix(self.json['matrix'])
+            self.matrix = self.json['matrix']
+            return self.matrix
 
-        mat = Matrix()
-
+        #No matrix, but TRS
+        mat = self.transform #init
 
         if 'scale' in self.json.keys():
-            s = self.json['scale']
-            mat = Matrix([
-                [s[0], 0, 0, 0],
-                [0, s[1], 0, 0],
-                [0, 0, s[2], 0],
-                [0, 0, 0, 1]
-            ])
+            self.scale = self.json['scale']
+            mat = TRS.scale_to_matrix(self.scale)
 
 
         if 'rotation' in self.json.keys():
-            q = self.gltf.convert.quaternion(self.json['rotation'])
-            mat = q.to_matrix().to_4x4() * mat
+            self.rotation = self.json['rotation']
+            q_mat = TRS.quaternion_to_matrix(self.rotation)
+            mat = TRS.matrix_multiply(q_mat, mat)
 
         if 'translation' in self.json.keys():
-            mat = Matrix.Translation(Vector(self.gltf.convert.location(self.json['translation']))) * mat
+            self.translation = self.json['translation']
+            loc_mat = TRS.translation_to_matrix(self.translation)
+            mat = TRS.matrix_multiply(loc_mat, mat)
 
         return mat

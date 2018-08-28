@@ -22,6 +22,7 @@
 
 import bpy
 from ...io.com.gltf2_io_node import *
+from ...blender.imp.util.conversion import * #TODO move to blender/com
 
 class BlenderNode():
 
@@ -145,14 +146,14 @@ class BlenderNode():
     @staticmethod
     def set_transforms(pynode, obj, parent):
         if parent is None:
-            obj.matrix_world =  pynode.transform
+            obj.matrix_world =  Conversion.matrix(pynode.transform)
             return
 
         for node in pynode.gltf.scene.nodes.values(): # TODO if parent is in another scene
             if node.index == parent:
                 if node.is_joint == True:
-                    obj.matrix_world = pynode.transform
+                    obj.matrix_world = Conversion.matrix(pynode.transform)
                     return
                 else:
-                    obj.matrix_world = pynode.transform
+                    obj.matrix_world = Conversion.matrix(pynode.transform)
                     return

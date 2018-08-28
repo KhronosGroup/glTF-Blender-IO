@@ -24,6 +24,7 @@
 import bpy
 from mathutils import Vector, Matrix, Quaternion
 from ..buffer import *
+from ..util.conversion import * #TODO: move to com
 
 class Skin():
     def __init__(self, index, json, gltf):
@@ -76,14 +77,14 @@ class Skin():
 
         mat = Matrix()
         if parent is None:
-            transform = node.get_transforms()
+            transform = Conversion.matrix(node.transform)
             mat = transform
         else:
             if not self.gltf.scene.nodes[parent].is_joint: # TODO if Node in another scene
-                transform  = node.get_transforms()
+                transform  = Conversion.matrix(node.transform)
                 mat = transform
             else:
-                transform = node.get_transforms()
+                transform = Conversion.matrix(node.transform)
                 parent_mat = obj.data.edit_bones[self.gltf.scene.nodes[parent].blender_bone_name].matrix # Node in another scene
 
                 mat = (parent_mat.to_quaternion() * transform.to_quaternion()).to_matrix().to_4x4()

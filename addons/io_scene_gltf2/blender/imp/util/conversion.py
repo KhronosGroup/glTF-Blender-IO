@@ -27,23 +27,11 @@ class Conversion():
     def __init__(self):
         pass
 
-    def matrix(self, mat_input):
-        mat_input =  Matrix([mat_input[0:4], mat_input[4:8], mat_input[8:12], mat_input[12:16]])
-        mat_input.transpose()
 
-        s = mat_input.to_scale()
-        rotation = mat_input.to_quaternion()
-        location = mat_input.to_translation()
-
-        mat = Matrix([
-            [s[0], 0, 0, 0],
-            [0, s[1], 0, 0],
-            [0, 0, s[2], 0],
-            [0, 0, 0, 1]
-        ])
-
-        mat = self.matrix_quaternion(rotation).to_matrix().to_4x4() * mat
-        mat = Matrix.Translation(Vector(self.location(location))) * mat
+    @staticmethod
+    def matrix(mat_input):
+        mat =  Matrix([mat_input[0:4], mat_input[4:8], mat_input[8:12], mat_input[12:16]])
+        mat.transpose()
 
         return mat
 
