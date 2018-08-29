@@ -49,14 +49,3 @@ class PyCamera():
                     self.xmag = self.json[self.type]['xmag']
                 if 'ymag' in self.json[self.type].keys():
                     self.ymag = self.json[self.type]['ymag']
-
-    def debug_missing(self):
-        keys = [
-                'type',
-                'perspective',
-                'orthographic'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("CAMERA MISSING " + key)

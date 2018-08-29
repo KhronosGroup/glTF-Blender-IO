@@ -86,8 +86,6 @@ class PyNode():
         if 'camera' in self.json.keys():
             self.camera = PyCamera(self.json['camera'], self.name, self.gltf.json['cameras'][self.json['camera']], self.gltf)
             self.camera.read()
-            self.camera.debug_missing()
-
 
         if not 'children' in self.json.keys():
             return
