@@ -22,6 +22,7 @@
 
 import bpy
 from ...io.com.gltf2_io_node import *
+from .gltf2_blender_mesh import *
 from ...blender.imp.util.conversion import * #TODO move to blender/com
 
 class BlenderNode():
@@ -48,7 +49,7 @@ class BlenderNode():
                 else:
                     name = "Object_" + str(pynode.index)
 
-            mesh = pynode.mesh.blender_create(parent)
+            mesh = BlenderMesh.create(pynode.mesh,parent)
 
             obj = bpy.data.objects.new(name, mesh)
             obj.rotation_mode = 'QUATERNION'
@@ -61,7 +62,7 @@ class BlenderNode():
             pynode.blender_object = obj.name
             BlenderNode.set_parent(pynode, obj, parent)
 
-            pynode.mesh.blender_set_mesh(mesh, obj)
+            BlenderMesh.set_mesh(pynode.mesh, mesh, obj)
 
             for child in pynode.children:
                 BlenderNode.create(child, pynode.index)

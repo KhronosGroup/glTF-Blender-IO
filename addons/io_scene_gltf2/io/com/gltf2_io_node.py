@@ -21,7 +21,7 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ...blender.imp.mesh import * #SPLIT_TODO
+from .gltf2_io_mesh import *
 from ...blender.imp.camera import *  #SPLIT_TODO
 from ...blender.imp.animation import * #SPLIT_TODO
 
@@ -74,7 +74,7 @@ class PyNode():
 
         if 'mesh' in self.json.keys():
             if self.json['mesh'] not in self.gltf.meshes.keys():
-                self.gltf.meshes[self.json['mesh']] = Mesh(self.json['mesh'], self.gltf.json['meshes'][self.json['mesh']], self.gltf)
+                self.gltf.meshes[self.json['mesh']] = PyMesh(self.json['mesh'], self.gltf.json['meshes'][self.json['mesh']], self.gltf)
                 self.mesh = self.gltf.meshes[self.json['mesh']]
                 self.mesh.read()
                 self.mesh.debug_missing()
