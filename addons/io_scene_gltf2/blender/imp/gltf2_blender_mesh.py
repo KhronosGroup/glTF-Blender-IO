@@ -23,6 +23,8 @@
 import bpy
 import bmesh
 
+from .gltf2_blender_primitive import *
+
 class BlenderMesh():
 
     @staticmethod
@@ -44,7 +46,7 @@ class BlenderMesh():
         edges = []
         faces = []
         for prim in pymesh.primitives:
-            verts, edges, faces = prim.blender_create(verts, edges, faces)
+            verts, edges, faces = BlenderPrimitive.create(prim, verts, edges, faces)
 
         mesh.from_pydata(verts, edges, faces)
         mesh.validate()
@@ -57,20 +59,20 @@ class BlenderMesh():
         # Normals
         offset = 0
         for prim in pymesh.primitives:
-            offset = prim.blender_set_normals(mesh, offset)
+            offset = BlenderPrimitive.set_normals(prim, mesh, offset)
 
         mesh.update()
 
         # manage UV
         offset = 0
         for prim in pymesh.primitives:
-            offset = prim.blender_set_UV(obj, mesh, offset)
+            offset = BlenderPrimitive.set_UV(prim, obj, mesh, offset)
 
         mesh.update()
 
         # Object and UV are now created, we can set UVMap into material
         for prim in pymesh.primitives:
-            prim.blender_set_UV_in_mat(obj)
+            BlenderPrimitive.set_UV_in_mat(prim, obj)
 
         # Assign materials to mesh
         offset = 0
@@ -79,7 +81,7 @@ class BlenderMesh():
         bm.from_mesh(obj.data)
         bm.faces.ensure_lookup_table()
         for prim in pymesh.primitives:
-            offset, cpt_index_mat = prim.blender_assign_material(obj, bm, offset, cpt_index_mat)
+            offset, cpt_index_mat = BlenderPrimitive.assign_material(prim, obj, bm, offset, cpt_index_mat)
 
         bm.to_mesh(obj.data)
         bm.free()

@@ -21,8 +21,8 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ...blender.imp.mesh.primitive import *
-from ...blender.imp.rig import *
+from .gltf2_io_primitive import *
+from ...blender.imp.rig import * #SPLIT_TODO
 
 class PyMesh():
     def __init__(self, index, json, gltf):
@@ -52,7 +52,7 @@ class PyMesh():
 
         cpt_idx_prim = 0
         for primitive_it in self.json['primitives']:
-            primitive = Primitive(cpt_idx_prim, primitive_it, self.gltf)
+            primitive = PyPrimitive(cpt_idx_prim, primitive_it, self.gltf)
             primitive.read()
             self.primitives.append(primitive)
             primitive.debug_missing()

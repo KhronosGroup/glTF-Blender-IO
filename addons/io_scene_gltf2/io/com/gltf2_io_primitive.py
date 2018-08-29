@@ -21,12 +21,10 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ..buffer import *
-from ..material import *
+from ...blender.imp.buffer import * #SPLIT_TODO
+from ...blender.imp.material import * #SPLIT_TODO
 
-from mathutils import Vector
-
-class Primitive():
+class PyPrimitive():
     def __init__(self, index, json, gltf):
         self.index = index
         self.json  = json  # Primitive json
@@ -128,84 +126,6 @@ class Primitive():
 
                     target[attr]['accessor'].debug_missing()
                 self.targets.append(target)
-
-
-    def blender_create(self, verts, edges, faces):
-        # TODO mode of primitive 4 for now.
-        current_length = len(verts)
-        prim_verts = [self.gltf.convert.location(vert) for vert in self.attributes['POSITION']['result']]
-        self.vertices_length = len(prim_verts)
-        verts.extend(prim_verts)
-        prim_faces = []
-        for i in range(0, len(self.indices), 3):
-            vals = self.indices[i:i+3]
-            new_vals = []
-            for y in vals:
-                new_vals.append(y+current_length)
-            prim_faces.append(tuple(new_vals))
-        faces.extend(prim_faces)
-        self.faces_length = len(prim_faces)
-
-        # manage material of primitive
-        if self.mat:
-
-            # Create Blender material
-            if not self.mat.blender_material:
-                self.mat.create_blender()
-
-        return verts, edges, faces
-
-    def blender_set_normals(self, mesh, offset):
-        if 'NORMAL' in self.attributes.keys():
-            for poly in mesh.polygons:
-                for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
-                    vert_idx = mesh.loops[loop_idx].vertex_index
-                    if vert_idx in range(offset, offset + self.vertices_length):
-                        cpt_vert = vert_idx - offset
-                        mesh.vertices[vert_idx].normal = self.attributes['NORMAL']['result'][cpt_vert]
-        offset = offset + self.vertices_length
-        return offset
-
-    def blender_set_UV(self, obj, mesh, offset):
-        for texcoord in [attr for attr in self.attributes.keys() if attr[:9] == "TEXCOORD_"]:
-            if not texcoord in mesh.uv_textures:
-                mesh.uv_textures.new(texcoord)
-                self.blender_texcoord[int(texcoord[9:])] = texcoord
-
-            for poly in mesh.polygons:
-                for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
-                    vert_idx = mesh.loops[loop_idx].vertex_index
-                    if vert_idx in range(offset, offset + self.vertices_length):
-                        obj.data.uv_layers[texcoord].data[loop_idx].uv = Vector((self.attributes[texcoord]['result'][vert_idx-offset][0], 1-self.attributes[texcoord]['result'][vert_idx-offset][1]))
-
-        offset = offset + self.vertices_length
-        return offset
-
-    def blender_set_UV_in_mat(self, obj):
-        if hasattr(self.mat, "KHR_materials_pbrSpecularGlossiness"):
-            if self.mat.KHR_materials_pbrSpecularGlossiness.diffuse_type in [self.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, self.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
-                self.mat.set_uvmap(self, obj)
-            else:
-                if self.mat.KHR_materials_pbrSpecularGlossiness.specgloss_type in [self.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, self.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
-                    self.mat.set_uvmap(self, obj)
-
-        else:
-            if self.mat.pbr.color_type in [self.mat.pbr.TEXTURE, self.mat.pbr.TEXTURE_FACTOR] :
-                self.mat.set_uvmap(self, obj)
-            else:
-                if self.mat.pbr.metallic_type in [self.mat.pbr.TEXTURE, self.mat.pbr.TEXTURE_FACTOR] :
-                    self.mat.set_uvmap(self, obj)
-
-    def blender_assign_material(self, obj, bm, offset, cpt_index_mat):
-        obj.data.materials.append(bpy.data.materials[self.mat.blender_material])
-        for vert in bm.verts:
-            if vert.index in range(offset, offset + self.vertices_length):
-                for loop in vert.link_loops:
-                    face = loop.face.index
-                    bm.faces[face].material_index = cpt_index_mat
-        cpt_index_mat += 1
-        offset = offset + self.vertices_length
-        return offset, cpt_index_mat
 
     def debug_missing(self):
         keys = [
