@@ -33,7 +33,7 @@ class PyMesh():
         # glTF2.0 required properties
         self.primitives = []
 
-        # glTF22.0 not required properties
+        # glTF2.0 not required properties
         self.target_weights = [] #TODO to be renamed weights
         self.name = None
         self.extensions = {}
