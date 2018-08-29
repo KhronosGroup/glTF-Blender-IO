@@ -77,7 +77,6 @@ class PyNode():
                 self.gltf.meshes[self.json['mesh']] = PyMesh(self.json['mesh'], self.gltf.json['meshes'][self.json['mesh']], self.gltf)
                 self.mesh = self.gltf.meshes[self.json['mesh']]
                 self.mesh.read()
-                self.mesh.debug_missing()
             else:
                 self.mesh = self.gltf.meshes[self.json['mesh']]
 

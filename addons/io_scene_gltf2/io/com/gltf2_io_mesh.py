@@ -64,14 +64,3 @@ class PyMesh():
             self.skin.debug_missing()
         else:
             self.skin = self.gltf.skins[skin_id]
-
-    def debug_missing(self):
-        keys = [
-                'name',
-                'primitives',
-                'weights'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("MESH MISSING " + key)
