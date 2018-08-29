@@ -22,7 +22,7 @@
  """
 
 from .gltf2_io_mesh import *
-from ...blender.imp.camera import *  #SPLIT_TODO
+from .gltf2_io_camera import *
 from ...blender.imp.animation import * #SPLIT_TODO
 
 from .gltf2_io_trs import *
@@ -84,7 +84,7 @@ class PyNode():
                 self.mesh.rig(self.json['skin'], self.index)
 
         if 'camera' in self.json.keys():
-            self.camera = Camera(self.json['camera'], self.name, self.gltf.json['cameras'][self.json['camera']], self.gltf)
+            self.camera = PyCamera(self.json['camera'], self.name, self.gltf.json['cameras'][self.json['camera']], self.gltf)
             self.camera.read()
             self.camera.debug_missing()
 

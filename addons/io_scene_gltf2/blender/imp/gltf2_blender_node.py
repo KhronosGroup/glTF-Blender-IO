@@ -23,6 +23,7 @@
 import bpy
 from ...io.com.gltf2_io_node import *
 from .gltf2_blender_mesh import *
+from .gltf2_blender_camera import *
 from ...blender.imp.util.conversion import * #TODO move to blender/com
 
 class BlenderNode():
@@ -74,7 +75,7 @@ class BlenderNode():
                 pynode.gltf.log.info("Blender create Camera node " + pynode.name)
             else:
                 pynode.gltf.log.info("Blender create Camera node")
-            obj = pynode.camera.create_blender()
+            obj = BlenderCamera.create(pynode.camera)
             BlenderNode.set_transforms(pynode, obj, parent) #TODO default rotation of cameras ?
             pynode.blender_object = obj.name
             BlenderNode.set_parent(pynode, obj, parent)
