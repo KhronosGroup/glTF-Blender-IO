@@ -28,6 +28,18 @@ class Sparse():
     def __init__(self, component_type, type, json, gltf):
         self.json = json # Sparse json
         self.gltf = gltf # Reference to global glTF instance
+
+
+        # glTF2.0 required properties
+        self.count = None
+        self.indices = None
+        self.values = None
+
+        # glTF2.0 not required properties
+        self.extensions = {}
+        self.extras = {}
+
+        # Sparse specifics
         self.component_type = component_type
         self.type = type
 
