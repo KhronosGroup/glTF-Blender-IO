@@ -30,6 +30,21 @@ class BufferView():
         self.json  = json  # bufferView json
         self.gltf = gltf # Reference to global glTF instance
 
+        # glTF2.0 required properties
+        self.buffer_ = None #TODO to be renamed, already an attribute with this name
+        self.byteLength = None
+
+        # glTF2.0 not required properties, with default values
+        self.byteOffset = 0
+
+        # glTF2.0 not required properties
+        self.byteStride = None
+        self.target = None
+        self.name = None
+        self.extensions = {}
+        self.extras = {}
+
+
     def read(self):
         if not 'buffer' in self.json.keys():
             return
@@ -43,13 +58,13 @@ class BufferView():
         data = []
 
         if 'byteOffset' in self.json.keys():
-            bufferview_offset = self.json['byteOffset']
+            bufferview_offset = self.json['byteOffset'] #TODO use self.byteOffset
         else:
-            bufferview_offset = 0
+            bufferview_offset = 0 #TODO use self.byteOffset
 
         length = self.json['byteLength']
 
-        if 'byteStride' in self.json.keys():
+        if 'byteStride' in self.json.keys(): #TODO use self.byteStride
             stride = self.json['byteStride']
         else:
             stride = stride_
