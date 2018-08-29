@@ -27,7 +27,25 @@ class PyCamera():
         self.index = index
         self.json  = json # Camera json
         self.gltf =  gltf # Reference to global glTF instance
-        self.name = name
+
+        # glTF2.0 required properties
+        self.type = None
+
+        # glTF2.0 not required properties
+        self.orthographic = None
+        self.perspective = None
+        self.name = name            #TODO must be set here, not outside and pass as parameter
+        self.extensions = {}
+        self.extras = {}
+
+        # PyCamera specifics
+        # Lots of work TODO here
+        # self.zfar
+        # self.znear
+        # self.aspectRatio
+        # self.yfoc
+        # self.xmag
+        # self.ymag
 
     def read(self):
         if 'type' in self.json.keys():
