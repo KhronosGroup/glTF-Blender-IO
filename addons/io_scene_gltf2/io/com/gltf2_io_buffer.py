@@ -30,6 +30,15 @@ class Buffer():
         self.json  = json  # buffer json
         self.gltf = gltf # Reference to global glTF instance
 
+        # glTF2.0 required properties
+        self.byteLength = None
+
+        # glTF2.0 not required properties
+        self.uri = None
+        self.name = None
+        self.extensions = {}
+        self.extras = {}
+
     def read(self):
 
         if self.gltf.is_glb_format:
