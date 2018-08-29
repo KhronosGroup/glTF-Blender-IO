@@ -56,8 +56,6 @@ class Skin():
                 self.inverseBindMatrices = self.gltf.accessors[self.json['inverseBindMatrices']]
                 self.data = self.inverseBindMatrices.data
 
-            self.inverseBindMatrices.debug_missing()
-
     def create_blender_armature(self, parent):
         if self.name is not None:
             name = self.name

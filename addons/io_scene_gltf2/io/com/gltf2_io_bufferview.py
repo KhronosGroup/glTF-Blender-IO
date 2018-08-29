@@ -38,7 +38,6 @@ class BufferView():
             self.gltf.buffers[self.json['buffer']] = Buffer(self.json['buffer'], self.gltf.json['buffers'][self.json['buffer']], self.gltf)
             self.gltf.buffers[self.json['buffer']].read()
         self.buffer = self.gltf.buffers[self.json['buffer']]
-        self.buffer.debug_missing()
 
     def read_data(self, fmt, stride_, count, accessor_offset):
         data = []
@@ -75,16 +74,3 @@ class BufferView():
         length = self.json['byteLength']
 
         return self.buffer.data[bufferview_offset:bufferview_offset + length]
-
-
-    def debug_missing(self):
-        keys = [
-                'buffer',
-                'byteStride',
-                'byteOffset',
-                'byteLength'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("BUFFERVIEW MISSING " + key)

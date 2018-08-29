@@ -49,8 +49,6 @@ class Accessor():
 
         self.bufferView = self.gltf.bufferViews[self.json['bufferView']]
 
-        self.bufferView.debug_missing()
-
         fmt_char = self.gltf.fmt_char_dict[self.json['componentType']]
         component_size = struct.calcsize(fmt_char)
 
@@ -69,7 +67,6 @@ class Accessor():
         if 'sparse' in self.json.keys():
             self.sparse = Sparse(self.json['componentType'], self.json['type'], self.json['sparse'], self.gltf)
             self.sparse.read()
-            self.sparse.debug_missing()
             self.data = self.bufferView.read_data(fmt, stride, self.json['count'], offset)
             self.apply_sparse()
             return self.data
@@ -83,20 +80,3 @@ class Accessor():
         for idx in self.sparse.indices:
             self.data[idx[0]] = self.sparse.data[cpt_idx]
             cpt_idx += 1
-
-    def debug_missing(self):
-        keys = [
-                'componentType',
-                'count',
-                'type',
-                'bufferView',
-                'byteOffset',
-                'min', #TODO :  add some checks ?
-                'max', #TODO :  add some checks ?
-                'name',
-                'sparse'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("ACCESSOR MISSING " + key)

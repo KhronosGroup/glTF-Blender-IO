@@ -49,13 +49,3 @@ class Buffer():
 
             with open(join(dirname(self.gltf.filename), self.json['uri']), 'rb') as f_:
                 self.data = f_.read()
-
-    def debug_missing(self):
-        keys = [
-                'byteLength',
-                'uri'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("BUFFER MISSING " + key)

@@ -49,9 +49,6 @@ class Sampler():
             self.output = self.gltf.accessors[self.json['output']]
             output_data = self.output.data
 
-        self.input.debug_missing()
-        self.output.debug_missing()
-
         anim_data = []
 
         if self.channels == 0:

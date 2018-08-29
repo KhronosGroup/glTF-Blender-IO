@@ -38,7 +38,6 @@ class Sparse():
         if 'indices' in self.json.keys():
             self.indices_buffer = BufferView(self.json['indices']['bufferView'], self.gltf.json['bufferViews'][self.json['indices']['bufferView']], self.gltf)
             self.indices_buffer.read()
-            self.indices_buffer.debug_missing()
 
             #TODO factorisation with accessor code ?
             fmt_char = self.gltf.fmt_char_dict[self.json['indices']['componentType']]
@@ -66,8 +65,6 @@ class Sparse():
 
             self.bufferView = self.gltf.bufferViews[self.json['values']['bufferView']]
 
-            self.bufferView.debug_missing()
-
             #TODO factorisation with accessor code ?
             fmt_char = self.gltf.fmt_char_dict[self.component_type]
             component_size = struct.calcsize(fmt_char)
@@ -85,14 +82,3 @@ class Sparse():
                 offset = 0
 
             self.data = self.bufferView.read_data(fmt, stride, self.count, offset)
-
-    def debug_missing(self):
-        keys = [
-                'values',
-                'indices',
-                'count'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("SPARSE MISSING " + key)

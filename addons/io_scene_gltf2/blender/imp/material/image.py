@@ -68,8 +68,6 @@ class Image():
 
         self.bufferView = self.gltf.bufferViews[self.json['bufferView']]
 
-        self.bufferView.debug_missing()
-
         self.data = self.bufferView.read_binary_data()
 
         return

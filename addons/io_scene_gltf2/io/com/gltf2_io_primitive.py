@@ -71,8 +71,6 @@ class PyPrimitive():
                                     new_tuple += (float(it/255.0),)
                                 self.attributes[attr]['result'][idx_tab] = new_tuple
 
-                self.attributes[attr]['accessor'].debug_missing()
-
         # reading indices
         if 'indices' in self.json.keys():
             self.gltf.log.debug("Primitive indices")
@@ -85,7 +83,6 @@ class PyPrimitive():
                 self.indices  = self.accessor.data
 
             self.indices  = [ind[0] for ind in self.indices]
-            self.accessor.debug_missing()
         else:
             self.indices = range(0, len(self.attributes['POSITION']['result']))
 
@@ -136,5 +133,4 @@ class PyPrimitive():
                         target[attr]['accessor'] = self.gltf.accessors[targ[attr]]
                         target[attr]['result']   = target[attr]['accessor'].data
 
-                    target[attr]['accessor'].debug_missing()
                 self.targets.append(target)
