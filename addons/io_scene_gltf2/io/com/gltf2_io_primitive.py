@@ -29,10 +29,22 @@ class PyPrimitive():
         self.index = index
         self.json  = json  # Primitive json
         self.gltf = gltf # Reference to global glTF instance
+
+        # glTF2.0 required properties
         self.attributes = {}
-        self.mat = None
+
+        # glTF2.0 not required properties, with default values
+        self.mode = 4
+
+        # glTF2.0 not required properties
+        self.indices_ = None #TODO: to be renamed, because my code already has a indice attribute
+        self.material = None
         self.targets = [] # shapekeys
-        self.blender_texcoord = {}
+        self.extensions = {}
+        self.extras = {}
+
+        # PyPrimitive specific
+        self.mat = None
 
     def read(self):
 

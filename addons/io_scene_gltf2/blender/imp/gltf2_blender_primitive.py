@@ -27,6 +27,9 @@ class BlenderPrimitive():
 
     @staticmethod
     def create(pyprimitive, verts, edges, faces):
+
+        pyprimitive.blender_texcoord = {}
+
         # TODO mode of primitive 4 for now.
         current_length = len(verts)
         prim_verts = [pyprimitive.gltf.convert.location(vert) for vert in pyprimitive.attributes['POSITION']['result']]
