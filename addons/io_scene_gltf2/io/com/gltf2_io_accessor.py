@@ -30,12 +30,28 @@ class Accessor():
     def __init__(self, index, json, gltf):
         self.json  = json   # Accessor json
         self.gltf =  gltf # Reference to global glTF instance
-        self.name = None
+
+        # glTF2.0 required properties
+        self.componentType = None
+        self.count = None
+        self.type = None
+
+        # glTF2.0 not required properties, with default values
+        self.byteOffset = 0
         self.normalized = False
+
+        # glTF2.0 not required properties
+        self.bufferView_ = None #TODO must be renamed, already an attribute with this name in my code
+        self.max = None
+        self.min = None
+        self.sparse = None
+        self.name = ""
+        self.extensions = {}
+        self.extras = {}
 
     def read(self):
         if not 'bufferView' in self.json:
-            return
+            return # TODO initialize with 0 when not present!
 
         if 'normalized' in self.json.keys():
             self.normalized = self.json['normalized']
@@ -60,9 +76,9 @@ class Accessor():
         # TODO data alignment stuff
 
         if 'byteOffset' in self.json.keys():
-            offset = self.json['byteOffset']
+            offset = self.json['byteOffset'] #TODO use self.byteOffset
         else:
-            offset = 0
+            offset = 0 #TODO use self.byteOffset
 
         if 'sparse' in self.json.keys():
             self.sparse = Sparse(self.json['componentType'], self.json['type'], self.json['sparse'], self.gltf)
