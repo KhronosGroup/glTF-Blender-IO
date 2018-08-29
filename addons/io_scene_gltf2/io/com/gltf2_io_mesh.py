@@ -55,7 +55,6 @@ class PyMesh():
             primitive = PyPrimitive(cpt_idx_prim, primitive_it, self.gltf)
             primitive.read()
             self.primitives.append(primitive)
-            primitive.debug_missing()
             cpt_idx_prim += 1
 
         # reading default targets weights if any

@@ -126,29 +126,3 @@ class PyPrimitive():
 
                     target[attr]['accessor'].debug_missing()
                 self.targets.append(target)
-
-    def debug_missing(self):
-        keys = [
-                'indices',
-                'attributes',
-                'material',
-                'targets'
-                ]
-
-        keys_attr = [
-                'POSITION',
-                'NORMAL',
-                'TEXCOORD_0',
-                'TEXCOORD_1',
-                'JOINTS_0',
-                'WEIGHTS_0'
-        ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("PRIMITIVE MISSING " + key)
-
-        if 'attributes' in self.json.keys():
-            for attr in self.json['attributes'].keys():
-                if attr not in keys_attr:
-                    self.gltf.log.debug("PRIMITIVE MISSING attribute " + attr)
