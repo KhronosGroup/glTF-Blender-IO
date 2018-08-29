@@ -29,9 +29,17 @@ class PyMesh():
         self.index = index
         self.json = json    # Mesh json
         self.gltf = gltf  # Reference to global glTF instance
+
+        # glTF2.0 required properties
         self.primitives = []
-        self.target_weights = []
+
+        # glTF22.0 not required properties
+        self.target_weights = [] #TODO to be renamed weights
         self.name = None
+        self.extensions = {}
+        self.extras = {}
+
+        # PyMesh specific
         self.skin = None
 
 
