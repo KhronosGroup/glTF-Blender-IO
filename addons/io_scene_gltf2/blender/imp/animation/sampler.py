@@ -21,7 +21,7 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ..buffer import *
+from ....io.com.gltf2_io_accessor import *
 
 class Sampler():
     def __init__(self, index, json, gltf, channels=0):

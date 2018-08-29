@@ -23,7 +23,7 @@
 
 import bpy
 from mathutils import Vector, Matrix, Quaternion
-from ..buffer import *
+from ....io.com.gltf2_io_accessor import *
 from ..util.conversion import * #TODO: move to com
 
 class Skin():

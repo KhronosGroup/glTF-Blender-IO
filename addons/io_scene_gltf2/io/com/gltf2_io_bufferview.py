@@ -22,7 +22,7 @@
  """
 
 import struct
-from .buffer import *
+from .gltf2_io_buffer import *
 
 class BufferView():
     def __init__(self, index, json, gltf):

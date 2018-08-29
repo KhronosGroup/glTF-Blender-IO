@@ -22,7 +22,7 @@
  """
 
 import struct
-from .bufferview import *
+from .gltf2_io_bufferview import *
 
 class Sparse():
     def __init__(self, component_type, type, json, gltf):
@@ -65,7 +65,7 @@ class Sparse():
                 self.gltf.bufferViews[self.json['values']['bufferView']].read()
 
             self.bufferView = self.gltf.bufferViews[self.json['values']['bufferView']]
-            
+
             self.bufferView.debug_missing()
 
             #TODO factorisation with accessor code ?

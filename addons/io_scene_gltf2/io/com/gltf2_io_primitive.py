@@ -21,7 +21,7 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ...blender.imp.buffer import * #SPLIT_TODO
+from .gltf2_io_accessor import *
 from ...blender.imp.material import * #SPLIT_TODO
 
 class PyPrimitive():

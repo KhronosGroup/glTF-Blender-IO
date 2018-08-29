@@ -22,8 +22,8 @@
  """
 
 import struct
-from .bufferview import *
-from .sparse import *
+from .gltf2_io_bufferview import *
+from .gltf2_io_sparse import *
 
 
 class Accessor():

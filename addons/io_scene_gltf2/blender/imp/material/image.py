@@ -26,7 +26,7 @@ import os
 import base64
 import tempfile
 from os.path import dirname, join, isfile, basename
-from ..buffer import *
+from ....io.com.gltf2_io_bufferview import *
 
 class Image():
     def __init__(self, index, json, gltf):
