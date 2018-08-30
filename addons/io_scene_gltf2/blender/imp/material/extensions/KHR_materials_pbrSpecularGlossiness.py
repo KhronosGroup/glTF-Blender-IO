@@ -21,7 +21,7 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ..texture import *
+from .....io.com.gltf2_io_texture import *
 import bpy
 
 class KHR_materials_pbrSpecularGlossiness():

@@ -21,7 +21,7 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ...blender.imp.material.texture import * #SPLIT_TODO
+from .gltf2_io_texture import *
 
 class PyPbr():
 
@@ -61,7 +61,7 @@ class PyPbr():
 
         if 'baseColorTexture' in self.json.keys():
             self.color_type = self.TEXTURE
-            self.baseColorTexture = Texture(self.json['baseColorTexture']['index'], self.gltf.json['textures'][self.json['baseColorTexture']['index']], self.gltf)
+            self.baseColorTexture = PyTexture(self.json['baseColorTexture']['index'], self.gltf.json['textures'][self.json['baseColorTexture']['index']], self.gltf)
             self.baseColorTexture.read()
             self.baseColorTexture.debug_missing()
 
@@ -72,7 +72,7 @@ class PyPbr():
 
         if 'metallicRoughnessTexture' in self.json.keys():
             self.metallic_type = self.TEXTURE
-            self.metallicRoughnessTexture = Texture(self.json['metallicRoughnessTexture']['index'], self.gltf.json['textures'][self.json['metallicRoughnessTexture']['index']], self.gltf)
+            self.metallicRoughnessTexture = PyTexture(self.json['metallicRoughnessTexture']['index'], self.gltf.json['textures'][self.json['metallicRoughnessTexture']['index']], self.gltf)
             self.metallicRoughnessTexture.read()
             self.metallicRoughnessTexture.debug_missing()
 

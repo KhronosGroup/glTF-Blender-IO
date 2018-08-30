@@ -21,6 +21,7 @@
  """
 
 import bpy
+from .gltf2_blender_texture import *
 
 class BlenderPbr():
 
@@ -92,7 +93,7 @@ class BlenderPbr():
                 math_vc_B = node_tree.nodes.new('ShaderNodeMath')
                 math_vc_B.operation = 'MULTIPLY'
 
-            pypbr.baseColorTexture.blender_create()
+            BlenderTexture.create(pypbr.baseColorTexture)
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
@@ -160,7 +161,7 @@ class BlenderPbr():
 
         elif pypbr.color_type == pypbr.TEXTURE:
 
-            pypbr.baseColorTexture.blender_create()
+            BlenderTexture.create(pypbr.baseColorTexture)
 
             #TODO alpha ?
             if pypbr.vertex_color:
@@ -248,7 +249,7 @@ class BlenderPbr():
             principled.inputs[7].default_value = pypbr.roughnessFactor
 
         elif pypbr.metallic_type == pypbr.TEXTURE:
-            pypbr.metallicRoughnessTexture.blender_create()
+            BlenderTexture.create(pypbr.metallicRoughnessTexture)
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
             metallic_text.image = bpy.data.images[pypbr.metallicRoughnessTexture.image.blender_image_name]
             metallic_text.color_space = 'NONE'
@@ -274,7 +275,7 @@ class BlenderPbr():
 
         elif pypbr.metallic_type == pypbr.TEXTURE_FACTOR:
 
-            pypbr.metallicRoughnessTexture.blender_create()
+            BlenderTexture.create(pypbr.metallicRoughnessTexture)
 
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
             metallic_text.image = bpy.data.images[pypbr.metallicRoughnessTexture.image.blender_image_name]

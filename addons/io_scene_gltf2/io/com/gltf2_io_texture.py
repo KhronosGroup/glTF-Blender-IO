@@ -21,34 +21,31 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .....io.com.gltf2_io_texture import *
+from ...blender.imp.material.image import *
 
-class Map():
-    def __init__(self, json, factor, gltf):
-        self.json   = json # map json
-        self.factor = factor
-        self.gltf   = gltf # Reference to global glTF instance
+class PyTexture():
+    def __init__(self, index, json, gltf):
+        self.index = index
+        self.json = json # texture json
+        self.gltf = gltf # Reference to global glTF instance
 
     def read(self):
-        self.texture = PyTexture(self.json['index'], self.gltf.json['textures'][self.json['index']], self.gltf)
-        self.texture.read()
-        self.texture.debug_missing()
+        if 'source' in self.json.keys():
 
-        if 'texCoord' in self.json.keys():
-            self.texCoord = int(self.json['texCoord'])
-        else:
-            self.texCoord = 0
+            if self.json['source'] not in self.gltf.images.keys():
+                image = Image(self.json['source'], self.gltf.json['images'][self.json['source']], self.gltf)
+                self.gltf.images[self.json['source']] = image
 
-    def create_blender(self):
-        pass
+            self.image = self.gltf.images[self.json['source']]
+            self.image.read()
+            self.image.debug_missing()
 
     def debug_missing(self):
 
         keys = [
-                'index',
-                'texCoord'
+                'source'
                 ]
 
         for key in self.json.keys():
             if key not in keys:
-                self.gltf.log.debug("MAP MISSING " + key)
+                self.gltf.log.debug("PBR MISSING " + key)

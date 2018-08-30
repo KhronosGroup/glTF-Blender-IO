@@ -22,6 +22,7 @@
  """
 
 from .map import *
+from ...gltf2_blender_texture import *
 
 class NormalMap(Map):
     def __init__(self, json, factor, gltf):
@@ -38,7 +39,7 @@ class NormalMap(Map):
         material = bpy.data.materials[mat_name]
         node_tree = material.node_tree
 
-        self.texture.blender_create()
+        BlenderTexture.create(self.texture)
 
         # retrieve principled node and output node
         principled = None
