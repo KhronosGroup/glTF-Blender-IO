@@ -21,8 +21,6 @@
  """
 
 import bpy
-import bmesh
-
 
 class BlenderMaterial():
 
