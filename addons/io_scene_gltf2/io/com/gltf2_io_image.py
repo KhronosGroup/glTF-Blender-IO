@@ -84,18 +84,6 @@ class PyImage():
 
         return
 
-    def debug_missing(self):
-        if self.index is None:
-            return
-        keys = [
-                'uri'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("MATERIAL MISSING " + key)
-
-
 #
 # Imports
 #

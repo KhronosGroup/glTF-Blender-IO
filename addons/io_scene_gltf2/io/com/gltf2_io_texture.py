@@ -48,4 +48,3 @@ class PyTexture():
 
             self.image = self.gltf.images[self.json['source']]
             self.image.read()
-            self.image.debug_missing()
