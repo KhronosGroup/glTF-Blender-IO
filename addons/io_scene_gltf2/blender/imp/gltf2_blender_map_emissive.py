@@ -18,28 +18,26 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .....io.com.gltf2_io_map import *
-from ...gltf2_blender_texture import *
+import bpy
+from .gltf2_blender_texture import *
 
-class EmissiveMap(Map):
-    def __init__(self, json, factor, gltf):
-        super(EmissiveMap, self).__init__(json, factor, gltf)
+class BlenderEmissiveMap():
 
-    def create_blender(self, mat_name):
+    @staticmethod
+    def create(pymap, mat_name):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            self.create_blender_cycles(mat_name)
+            BlenderEmissiveMap.create_cycles(pymap, mat_name)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_blender_cycles(self, mat_name):
+    def create_cycles(pymap, mat_name):
         material = bpy.data.materials[mat_name]
         node_tree = material.node_tree
 
-        BlenderTexture.create(self.texture)
+        BlenderTexture.create(pymap.texture)
 
         # retrieve principled node and output node
         if len([node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"]) != 0:
@@ -61,10 +59,10 @@ class EmissiveMap(Map):
         mapping.location = -1500, 1000
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
         uvmap.location = -2000,1000
-        uvmap["gltf2_texcoord"] = self.texCoord # Set custom flag to retrieve TexCoord
+        uvmap["gltf2_texcoord"] = pymap.texCoord # Set custom flag to retrieve TexCoord
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[self.texture.image.blender_image_name]
+        text.image = bpy.data.images[pymap.texture.image.blender_image_name]
         text.location = -1000,1000
         add = node_tree.nodes.new('ShaderNodeAddShader')
         add.location = 500,500
@@ -72,17 +70,17 @@ class EmissiveMap(Map):
         math_R  = node_tree.nodes.new('ShaderNodeMath')
         math_R.location = -500, 1500
         math_R.operation = 'MULTIPLY'
-        math_R.inputs[1].default_value = self.factor[0]
+        math_R.inputs[1].default_value = pymap.factor[0]
 
         math_G  = node_tree.nodes.new('ShaderNodeMath')
         math_G.location = -500, 1250
         math_G.operation = 'MULTIPLY'
-        math_G.inputs[1].default_value = self.factor[1]
+        math_G.inputs[1].default_value = pymap.factor[1]
 
         math_B  = node_tree.nodes.new('ShaderNodeMath')
         math_B.location = -500, 1000
         math_B.operation = 'MULTIPLY'
-        math_B.inputs[1].default_value = self.factor[2]
+        math_B.inputs[1].default_value = pymap.factor[2]
 
         # create links
         node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])

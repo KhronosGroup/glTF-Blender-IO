@@ -22,6 +22,9 @@
 
 import bpy
 from .gltf2_blender_pbrMetallicRoughness import *
+from .gltf2_blender_map_emissive import *
+from .gltf2_blender_map_normal import *
+from .gltf2_blender_map_occlusion import *
 
 class BlenderMaterial():
 
@@ -46,16 +49,16 @@ class BlenderMaterial():
 
         # add emission map if needed
         if pymaterial.emissivemap:
-            pymaterial.emissivemap.create_blender(mat.name)
+            BlenderEmissiveMap.create(pymaterial.emissivemap, mat.name)
 
         # add normal map if needed
         if pymaterial.normalmap:
-            pymaterial.normalmap.create_blender(mat.name)
+            BlenderNormalMap.create(pymaterial.normalmap, mat.name)
 
         # add occlusion map if needed
         # will be pack, but not used
         if pymaterial.occlusionmap:
-            pymaterial.occlusionmap.create_blender(mat.name)
+            BlenderOcclusionMap.create(pymaterial.occlusionmap, mat.name)
 
     @staticmethod
     def set_uvmap(pymaterial, prim, obj):

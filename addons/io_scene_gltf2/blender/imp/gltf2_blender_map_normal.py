@@ -18,28 +18,26 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .....io.com.gltf2_io_map import *
-from ...gltf2_blender_texture import *
+import bpy
+from .gltf2_blender_texture import *
 
-class NormalMap(Map):
-    def __init__(self, json, factor, gltf):
-        super(NormalMap, self).__init__(json, factor, gltf)
+class BlenderNormalMap():
 
-    def create_blender(self, mat_name):
+    @staticmethod
+    def create(pymap, mat_name):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            self.create_blender_cycles(mat_name)
+            BlenderNormalMap.create_cycles(pymap, mat_name)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_blender_cycles(self, mat_name):
+    def create_cycles(pymap, mat_name):
         material = bpy.data.materials[mat_name]
         node_tree = material.node_tree
 
-        BlenderTexture.create(self.texture)
+        BlenderTexture.create(pymap.texture)
 
         # retrieve principled node and output node
         principled = None
@@ -57,10 +55,10 @@ class NormalMap(Map):
         mapping.location = -1000,-500
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
         uvmap.location = -1500, -500
-        uvmap["gltf2_texcoord"] = self.texCoord # Set custom flag to retrieve TexCoord
+        uvmap["gltf2_texcoord"] = pymap.texCoord # Set custom flag to retrieve TexCoord
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[self.texture.image.blender_image_name]
+        text.image = bpy.data.images[pymap.texture.image.blender_image_name]
         text.color_space = 'NONE'
         text.location = -500, -500
 

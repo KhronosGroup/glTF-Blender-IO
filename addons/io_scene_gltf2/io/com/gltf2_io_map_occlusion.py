@@ -21,22 +21,8 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .....io.com.gltf2_io_map import *
-from ...gltf2_blender_texture import *
+from .gltf2_io_map import *
 
-class OcclusionMap(Map):
+class PyOcclusionMap(PyMap):
     def __init__(self, json, factor, gltf):
-        super(OcclusionMap, self).__init__(json, factor, gltf)
-
-    def create_blender(self, mat_name):
-        engine = bpy.context.scene.render.engine
-        if engine == 'CYCLES':
-            self.create_blender_cycles(mat_name)
-        else:
-            pass #TODO for internal / Eevee in future 2.8
-
-    def create_blender_cycles(self, mat_name):
-        BlenderTexture.create(self.texture)
-
-        # Pack texture, but doesn't use it for now. Occlusion is calculated from Cycles.
-        bpy.data.images[self.texture.image.blender_image_name].use_fake_user = True
+        super(PyOcclusionMap, self).__init__(json, factor, gltf)

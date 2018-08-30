@@ -21,24 +21,8 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .gltf2_io_texture import *
+from .gltf2_io_map import *
 
-# Note that Map is not a glTF2.0 object
-# This class is used for inheritance of maps
-class PyMap():
+class PyEmissiveMap(PyMap):
     def __init__(self, json, factor, gltf):
-        self.json   = json # map json
-        self.factor = factor
-        self.gltf   = gltf # Reference to global glTF instance
-
-    def read(self):
-        self.texture = PyTexture(self.json['index'], self.gltf.json['textures'][self.json['index']], self.gltf)
-        self.texture.read()
-
-        if 'texCoord' in self.json.keys():
-            self.texCoord = int(self.json['texCoord'])
-        else:
-            self.texCoord = 0
-
-    def create_blender(self):
-        pass
+        super(PyEmissiveMap, self).__init__(json, factor, gltf)

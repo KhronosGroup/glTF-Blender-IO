@@ -22,9 +22,9 @@
  """
 
 from .gltf2_io_pbrMetallicRoughness import *
-from ...blender.imp.material.map.normalmap import * #SPLIT_TODO
-from ...blender.imp.material.map.emissivemap import * #SPLIT_TODO
-from ...blender.imp.material.map.occlusionmap import * #SPLIT_TODO
+from .gltf2_io_map_normal import *
+from .gltf2_io_map_emissive import *
+from .gltf2_io_map_occlusion import *
 from ...blender.imp.material.extensions import * #SPLIT_TODO
 
 class PyMaterial():
@@ -89,17 +89,17 @@ class PyMaterial():
             else:
                 factor = [1.0, 1.0, 1.0]
 
-            self.emissivemap = EmissiveMap(self.json['emissiveTexture'], factor, self.gltf)
+            self.emissivemap = PyEmissiveMap(self.json['emissiveTexture'], factor, self.gltf)
             self.emissivemap.read()
 
         # Normal Map
         if 'normalTexture' in self.json.keys():
-            self.normalmap = NormalMap(self.json['normalTexture'], 1.0, self.gltf)
+            self.normalmap = PyNormalMap(self.json['normalTexture'], 1.0, self.gltf)
             self.normalmap.read()
 
         # Occlusion Map
         if 'occlusionTexture' in self.json.keys():
-            self.occlusionmap = OcclusionMap(self.json['occlusionTexture'], 1.0, self.gltf)
+            self.occlusionmap = PyOcclusionMap(self.json['occlusionTexture'], 1.0, self.gltf)
             self.occlusionmap.read()
 
     def use_vertex_color(self):
