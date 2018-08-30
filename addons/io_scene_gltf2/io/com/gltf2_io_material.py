@@ -62,7 +62,6 @@ class PyMaterial():
         if self.index is None:
             self.pbr = Pbr(None, self.gltf)
             self.pbr.read()
-            self.pbr.debug_missing()
             self.name = "Default Material"
             return
 
@@ -81,7 +80,6 @@ class PyMaterial():
         else:
             self.pbr = PyPbr(None, self.gltf)
         self.pbr.read()
-        self.pbr.debug_missing()
 
         # Emission
         if 'emissiveTexture' in self.json.keys():

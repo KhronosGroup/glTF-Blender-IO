@@ -87,18 +87,3 @@ class PyPbr():
             self.roughnessFactor = self.json['roughnessFactor']
             if self.metallic_type == self.TEXTURE and self.roughnessFactor != 1.0 and self.metallicFactor != 1.0:
                 self.metallic_type = self.TEXTURE_FACTOR
-
-    def debug_missing(self):
-        if self.json is None:
-            return
-        keys = [
-                'baseColorFactor',
-                'metallicFactor',
-                'roughnessFactor',
-                'baseColorTexture',
-                'metallicRoughnessTexture'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("PBR MISSING " + key)
