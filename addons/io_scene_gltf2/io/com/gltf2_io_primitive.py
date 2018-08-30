@@ -113,7 +113,6 @@ class PyPrimitive():
                 if self.gltf.default_material is None:
                     self.gltf.default_material = PyMaterial(None, None, self.gltf)
                     self.gltf.default_material.read()
-                    self.gltf.default_material.debug_missing()
 
                 self.mat = self.gltf.default_material
 
