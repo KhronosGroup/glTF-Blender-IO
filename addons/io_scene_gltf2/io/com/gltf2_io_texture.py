@@ -29,6 +29,16 @@ class PyTexture():
         self.json = json # texture json
         self.gltf = gltf # Reference to global glTF instance
 
+        # glTF2.0 required properties
+        # No required properties
+
+        # glTF2.0 not requirement properties
+        self.sampler = None #TODO Not implemented yet
+        self.source_ = None #TODO to be renamed, already an attribute with this name
+        self.name = ""
+        self.extension = {}
+        self.extras = {}
+
     def read(self):
         if 'source' in self.json.keys():
 
