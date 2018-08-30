@@ -49,9 +49,8 @@ class KHR_materials_pbrSpecularGlossiness():
 
         if 'diffuseTexture' in self.json.keys():
             self.diffuse_type = self.TEXTURE
-            self.diffuseTexture = Texture(self.json['diffuseTexture']['index'], self.gltf.json['textures'][self.json['diffuseTexture']['index']], self.gltf)
+            self.diffuseTexture = PyTexture(self.json['diffuseTexture']['index'], self.gltf.json['textures'][self.json['diffuseTexture']['index']], self.gltf)
             self.diffuseTexture.read()
-            self.diffuseTexture.debug_missing()
 
             if 'texCoord' in self.json['diffuseTexture']:
                 self.diffuseTexture.texcoord = int(self.json['diffuseTexture']['texCoord'])
@@ -65,9 +64,8 @@ class KHR_materials_pbrSpecularGlossiness():
 
         if 'specularGlossinessTexture' in self.json.keys():
             self.specgloss_type = self.TEXTURE
-            self.specularGlossinessTexture = Texture(self.json['specularGlossinessTexture']['index'], self.gltf.json['textures'][self.json['specularGlossinessTexture']['index']], self.gltf)
+            self.specularGlossinessTexture = PyTexture(self.json['specularGlossinessTexture']['index'], self.gltf.json['textures'][self.json['specularGlossinessTexture']['index']], self.gltf)
             self.specularGlossinessTexture.read()
-            self.specularGlossinessTexture.debug_missing()
 
             if 'texCoord' in self.json['specularGlossinessTexture']:
                 self.specularGlossinessTexture.texcoord = int(self.json['specularGlossinessTexture']['texCoord'])
