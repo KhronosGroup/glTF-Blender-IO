@@ -51,7 +51,7 @@ class BlenderPrimitive():
         if pyprimitive.mat:
 
             # Create Blender material
-            if not pyprimitive.mat.blender_material:
+            if not hasattr(pyprimitive.mat, "blender_material"):
                 BlenderMaterial.create(pyprimitive.mat)
 
         return verts, edges, faces

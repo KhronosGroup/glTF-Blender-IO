@@ -31,9 +31,26 @@ class PyMaterial():
         self.index = index
         self.json = json # Material json
         self.gltf = gltf # Reference to global glTF instance
-        self.name = None
 
-        self.blender_material = None
+        # glTF2.0 required properties
+        # No required properties!
+
+        # glTF2.0 not required properties, with default values
+        self.emissiveFactor = [0,0,0]
+        self.alphaMode = "OPAQUE"
+        self.alphaCutoff = 0.5
+        self.doubleSided = False
+
+        # glTF2.0 not required properties
+        self.name = ""
+        self.pbrMetallicRoughness = None    #TODO linked to self.pbr
+        self.normalTexture = None           #TODO linked to self.normalmap
+        self.occlusionTexture = None        #TODO linked to self.occlusionmap
+        self.emissiveTexture = None         #TODO linked to self.emissivemap
+        self.extensions = {}
+        self.extras = {}
+
+        # PyMaterial spefifics
 
         self.emissivemap  = None
         self.normalmap    = None
@@ -69,7 +86,7 @@ class PyMaterial():
         # Emission
         if 'emissiveTexture' in self.json.keys():
             if 'emissiveFactor' in self.json.keys():
-                factor = self.json['emissiveFactor']
+                factor = self.json['emissiveFactor'] #TODO use self.emissiveFactor
             else:
                 factor = [1.0, 1.0, 1.0]
 
