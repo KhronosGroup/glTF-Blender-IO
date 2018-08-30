@@ -21,7 +21,6 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-import bpy
 from ...blender.imp.material.texture import * #SPLIT_TODO
 
 class PyPbr():
