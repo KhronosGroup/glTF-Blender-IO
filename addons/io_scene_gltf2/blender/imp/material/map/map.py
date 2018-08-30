@@ -32,7 +32,6 @@ class Map():
     def read(self):
         self.texture = PyTexture(self.json['index'], self.gltf.json['textures'][self.json['index']], self.gltf)
         self.texture.read()
-        self.texture.debug_missing()
 
         if 'texCoord' in self.json.keys():
             self.texCoord = int(self.json['texCoord'])

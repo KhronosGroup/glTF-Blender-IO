@@ -63,7 +63,6 @@ class PyPbr():
             self.color_type = self.TEXTURE
             self.baseColorTexture = PyTexture(self.json['baseColorTexture']['index'], self.gltf.json['textures'][self.json['baseColorTexture']['index']], self.gltf)
             self.baseColorTexture.read()
-            self.baseColorTexture.debug_missing()
 
             if 'texCoord' in self.json['baseColorTexture']:
                 self.baseColorTexture.texcoord = int(self.json['baseColorTexture']['texCoord'])
@@ -74,7 +73,6 @@ class PyPbr():
             self.metallic_type = self.TEXTURE
             self.metallicRoughnessTexture = PyTexture(self.json['metallicRoughnessTexture']['index'], self.gltf.json['textures'][self.json['metallicRoughnessTexture']['index']], self.gltf)
             self.metallicRoughnessTexture.read()
-            self.metallicRoughnessTexture.debug_missing()
 
             if 'texCoord' in self.json['metallicRoughnessTexture']:
                 self.metallicRoughnessTexture.texcoord = int(self.json['metallicRoughnessTexture']['texCoord'])

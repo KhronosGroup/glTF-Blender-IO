@@ -39,13 +39,3 @@ class PyTexture():
             self.image = self.gltf.images[self.json['source']]
             self.image.read()
             self.image.debug_missing()
-
-    def debug_missing(self):
-
-        keys = [
-                'source'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("PBR MISSING " + key)
