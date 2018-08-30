@@ -24,6 +24,7 @@ import bpy
 import os
 import tempfile
 
+# Note that Image is not a glTF2.0 object
 class BlenderImage():
 
     @staticmethod
