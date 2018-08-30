@@ -21,7 +21,6 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-import bpy
 from .gltf2_io_pbrMetallicRoughness import *
 from ...blender.imp.material.map.normalmap import * #SPLIT_TODO
 from ...blender.imp.material.map.emissivemap import * #SPLIT_TODO
