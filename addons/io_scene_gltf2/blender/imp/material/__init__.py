@@ -20,6 +20,6 @@
  * ***** END GPL LICENSE BLOCK *****
  * This development is done in strong collaboration with Airbus Defence & Space
  """
-from .pbr import *
+ 
 from .texture import *
 from .image import *

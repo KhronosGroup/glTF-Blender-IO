@@ -22,7 +22,7 @@
  """
 
 import bpy
-from ...blender.imp.material.pbr import * #SPLIT_TODO
+from .gltf2_io_pbrMetallicRoughness import *
 from ...blender.imp.material.map import * #SPLIT_TODO
 from ...blender.imp.material.extensions import * #SPLIT_TODO
 
@@ -77,9 +77,9 @@ class PyMaterial():
             self.name = self.json['name']
 
         if 'pbrMetallicRoughness' in self.json.keys():
-            self.pbr = Pbr(self.json['pbrMetallicRoughness'], self.gltf)
+            self.pbr = PyPbr(self.json['pbrMetallicRoughness'], self.gltf)
         else:
-            self.pbr = Pbr(None, self.gltf)
+            self.pbr = PyPbr(None, self.gltf)
         self.pbr.read()
         self.pbr.debug_missing()
 

@@ -21,6 +21,7 @@
  """
 
 import bpy
+from .gltf2_blender_pbrMetallicRoughness import *
 
 class BlenderMaterial():
 
@@ -41,7 +42,7 @@ class BlenderMaterial():
             pymaterial.KHR_materials_pbrSpecularGlossiness.create_blender(mat.name)
         else:
             # create pbr material
-            pymaterial.pbr.create_blender(mat.name)
+            BlenderPbr.create(pymaterial.pbr, mat.name)
 
         # add emission map if needed
         if pymaterial.emissivemap:
