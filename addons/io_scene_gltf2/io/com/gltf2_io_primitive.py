@@ -22,7 +22,7 @@
  """
 
 from .gltf2_io_accessor import *
-from ...blender.imp.material import * #SPLIT_TODO
+from .gltf2_io_material import *
 
 class PyPrimitive():
     def __init__(self, index, json, gltf):
@@ -91,7 +91,7 @@ class PyPrimitive():
         if 'material' in self.json.keys():
             # create material if not already exits
             if self.json['material'] not in self.gltf.materials.keys():
-                self.mat = Material(self.json['material'], self.gltf.json['materials'][self.json['material']], self.gltf)
+                self.mat = PyMaterial(self.json['material'], self.gltf.json['materials'][self.json['material']], self.gltf)
                 self.mat.read()
                 self.mat.debug_missing()
                 self.gltf.materials[self.json['material']] = self.mat
@@ -106,14 +106,14 @@ class PyPrimitive():
         else:
             # If there is a COLOR_0, we are going to use it in material
             if 'COLOR_0' in self.attributes.keys():
-                self.mat = Material(None, None, self.gltf)
+                self.mat = PyMaterial(None, None, self.gltf)
                 self.mat.read()
                 self.mat.debug_missing()
                 self.mat.use_vertex_color()
             else:
                 # No material, use default one
                 if self.gltf.default_material is None:
-                    self.gltf.default_material = Material(None, None, self.gltf)
+                    self.gltf.default_material = PyMaterial(None, None, self.gltf)
                     self.gltf.default_material.read()
                     self.gltf.default_material.debug_missing()
 

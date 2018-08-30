@@ -23,6 +23,8 @@
 import bpy
 from mathutils import Vector
 
+from .gltf2_blender_material import *
+
 class BlenderPrimitive():
 
     @staticmethod
@@ -50,7 +52,7 @@ class BlenderPrimitive():
 
             # Create Blender material
             if not pyprimitive.mat.blender_material:
-                pyprimitive.mat.create_blender()
+                BlenderMaterial.create(pyprimitive.mat)
 
         return verts, edges, faces
 
@@ -83,17 +85,17 @@ class BlenderPrimitive():
     def set_UV_in_mat(pyprimitive, obj):
         if hasattr(pyprimitive.mat, "KHR_materials_pbrSpecularGlossiness"):
             if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.diffuse_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
-                pyprimitive.mat.set_uvmap(pyprimitive, obj)
+                BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
             else:
                 if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.specgloss_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
-                    pyprimitive.mat.set_uvmap(pyprimitive, obj)
+                    BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
 
         else:
             if pyprimitive.mat.pbr.color_type in [pyprimitive.mat.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
-                pyprimitive.mat.set_uvmap(pyprimitive, obj)
+                BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
             else:
                 if pyprimitive.mat.pbr.metallic_type in [pyprimitive.mat.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
-                    pyprimitive.mat.set_uvmap(pyprimitive, obj)
+                    BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
 
     def assign_material(pyprimitive, obj, bm, offset, cpt_index_mat):
         obj.data.materials.append(bpy.data.materials[pyprimitive.mat.blender_material])

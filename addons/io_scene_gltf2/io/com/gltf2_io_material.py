@@ -22,11 +22,11 @@
  """
 
 import bpy
-from .pbr import *
-from .map import *
-from .extensions import *
+from ...blender.imp.material.pbr import * #SPLIT_TODO
+from ...blender.imp.material.map import * #SPLIT_TODO
+from ...blender.imp.material.extensions import * #SPLIT_TODO
 
-class Material():
+class PyMaterial():
     def __init__(self, index, json, gltf):
         self.index = index
         self.json = json # Material json
@@ -94,41 +94,6 @@ class Material():
             self.KHR_materials_pbrSpecularGlossiness.use_vertex_color()
         else:
             self.pbr.use_vertex_color()
-
-    def create_blender(self):
-        if self.name is not None:
-            name = self.name
-        else:
-            name = "Material_" + str(self.index)
-
-        mat = bpy.data.materials.new(name)
-        self.blender_material = mat.name
-
-        if hasattr(self, 'KHR_materials_pbrSpecularGlossiness'):
-            self.KHR_materials_pbrSpecularGlossiness.create_blender(mat.name)
-        else:
-            # create pbr material
-            self.pbr.create_blender(mat.name)
-
-        # add emission map if needed
-        if self.emissivemap:
-            self.emissivemap.create_blender(mat.name)
-
-        # add normal map if needed
-        if self.normalmap:
-            self.normalmap.create_blender(mat.name)
-
-        # add occlusion map if needed
-        # will be pack, but not used
-        if self.occlusionmap:
-            self.occlusionmap.create_blender(mat.name)
-
-    def set_uvmap(self, prim, obj):
-        node_tree = bpy.data.materials[self.blender_material].node_tree
-        uvmap_nodes =  [node for node in node_tree.nodes if node.type == 'UVMAP']
-        for uvmap_node in uvmap_nodes:
-            if uvmap_node["gltf2_texcoord"] in prim.blender_texcoord.keys():
-                uvmap_node.uv_map = prim.blender_texcoord[uvmap_node["gltf2_texcoord"]]
 
     def debug_missing(self):
         if self.index is None:
