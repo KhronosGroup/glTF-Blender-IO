@@ -21,7 +21,7 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from ...blender.imp.material.image import *
+from .gltf2_io_image import *
 
 class PyTexture():
     def __init__(self, index, json, gltf):
@@ -43,7 +43,7 @@ class PyTexture():
         if 'source' in self.json.keys():
 
             if self.json['source'] not in self.gltf.images.keys():
-                image = Image(self.json['source'], self.gltf.json['images'][self.json['source']], self.gltf)
+                image = PyImage(self.json['source'], self.gltf.json['images'][self.json['source']], self.gltf)
                 self.gltf.images[self.json['source']] = image
 
             self.image = self.gltf.images[self.json['source']]

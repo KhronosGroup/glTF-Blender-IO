@@ -20,8 +20,10 @@
  * ***** END GPL LICENSE BLOCK *****
  """
 
+from .gltf2_blender_image import *
+
 class BlenderTexture():
 
     @staticmethod
     def create(pytexture):
-        pytexture.image.blender_create()
+        BlenderImage.create(pytexture.image)

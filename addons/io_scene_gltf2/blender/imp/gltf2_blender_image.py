@@ -18,7 +18,23 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
- 
-from .image import *
+
+import bpy
+import os
+import tempfile
+
+class BlenderImage():
+
+    @staticmethod
+    def create(self):
+        # Create a temp image, pack, and delete image
+        tmp_image = tempfile.NamedTemporaryFile(delete=False)
+        tmp_image.write(self.data)
+        tmp_image.close()
+
+        blender_image = bpy.data.images.load(tmp_image.name)
+        blender_image.pack()
+        blender_image.name = self.image_name
+        self.blender_image_name = blender_image.name
+        os.remove(tmp_image.name)
