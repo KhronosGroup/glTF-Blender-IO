@@ -94,19 +94,3 @@ class PyMaterial():
             self.KHR_materials_pbrSpecularGlossiness.use_vertex_color()
         else:
             self.pbr.use_vertex_color()
-
-    def debug_missing(self):
-        if self.index is None:
-            return
-        keys = [
-                'name',
-                'pbrMetallicRoughness',
-                'emissiveFactor',
-                'normalTexture',
-                'emissiveTexture',
-                'occlusionTexture'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("MATERIAL MISSING " + key)

@@ -93,7 +93,6 @@ class PyPrimitive():
             if self.json['material'] not in self.gltf.materials.keys():
                 self.mat = PyMaterial(self.json['material'], self.gltf.json['materials'][self.json['material']], self.gltf)
                 self.mat.read()
-                self.mat.debug_missing()
                 self.gltf.materials[self.json['material']] = self.mat
 
                 if 'COLOR_0' in self.attributes.keys():
@@ -108,7 +107,6 @@ class PyPrimitive():
             if 'COLOR_0' in self.attributes.keys():
                 self.mat = PyMaterial(None, None, self.gltf)
                 self.mat.read()
-                self.mat.debug_missing()
                 self.mat.use_vertex_color()
             else:
                 # No material, use default one
