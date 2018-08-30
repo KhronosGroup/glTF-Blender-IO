@@ -26,6 +26,7 @@ from ...blender.imp.material.texture import * #SPLIT_TODO
 
 class PyPbr():
 
+    #TODO: move to blender file?
     SIMPLE  = 1
     TEXTURE = 2
     TEXTURE_FACTOR = 3
@@ -34,18 +35,26 @@ class PyPbr():
         self.json = json # pbrMetallicRoughness json
         self.gltf = gltf # Reference to global glTF instance
 
+        # glTF2.0 required properties
+        # No required properties
+
+        # glTF2.0 not required properties, with default values
+        self.baseColorFactor = [1,1,1,1]
+        self.metallicFactor = 1
+        self.roughnessFactor = 1
+
+        # glTF2.0 not required properties
+        self.baseColorTexture = None
+        self.metallicRoughnessTexture = None
+        self.extensions = None
+        self.extras = None
+
+        # PyPbr specifics
+        # TODO: move to Blender file?
         self.color_type = self.SIMPLE
         self.vertex_color = False
         self.metallic_type = self.SIMPLE
 
-        # Default values
-        self.baseColorFactor = [1,1,1,1]
-        self.baseColorTexture = None
-        self.metallicFactor = 1
-        self.roughnessFactor = 1
-        self.metallicRoughnessTexture = None
-        self.extensions = None
-        self.extras = None
 
     def read(self):
         if self.json is None:
