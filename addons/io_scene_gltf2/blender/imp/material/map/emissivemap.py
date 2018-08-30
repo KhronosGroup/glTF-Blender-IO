@@ -21,7 +21,8 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .map import *
+from .....io.com.gltf2_io_map import *
+from ...gltf2_blender_texture import *
 
 class EmissiveMap(Map):
     def __init__(self, json, factor, gltf):

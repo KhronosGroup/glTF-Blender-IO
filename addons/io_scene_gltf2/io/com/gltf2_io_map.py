@@ -21,8 +21,10 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .....io.com.gltf2_io_texture import *
+from .gltf2_io_texture import *
 
+# Note that Map is not a glTF2.0 object
+# This class is used for inheritance of maps
 class Map():
     def __init__(self, json, factor, gltf):
         self.json   = json # map json
@@ -40,14 +42,3 @@ class Map():
 
     def create_blender(self):
         pass
-
-    def debug_missing(self):
-
-        keys = [
-                'index',
-                'texCoord'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("MAP MISSING " + key)

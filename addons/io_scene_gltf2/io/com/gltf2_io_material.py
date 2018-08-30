@@ -23,7 +23,9 @@
 
 import bpy
 from .gltf2_io_pbrMetallicRoughness import *
-from ...blender.imp.material.map import * #SPLIT_TODO
+from ...blender.imp.material.map.normalmap import * #SPLIT_TODO
+from ...blender.imp.material.map.emissivemap import * #SPLIT_TODO
+from ...blender.imp.material.map.occlusionmap import * #SPLIT_TODO
 from ...blender.imp.material.extensions import * #SPLIT_TODO
 
 class PyMaterial():
@@ -90,19 +92,16 @@ class PyMaterial():
 
             self.emissivemap = EmissiveMap(self.json['emissiveTexture'], factor, self.gltf)
             self.emissivemap.read()
-            self.emissivemap.debug_missing()
 
         # Normal Map
         if 'normalTexture' in self.json.keys():
             self.normalmap = NormalMap(self.json['normalTexture'], 1.0, self.gltf)
             self.normalmap.read()
-            self.normalmap.debug_missing()
 
         # Occlusion Map
         if 'occlusionTexture' in self.json.keys():
             self.occlusionmap = OcclusionMap(self.json['occlusionTexture'], 1.0, self.gltf)
             self.occlusionmap.read()
-            self.occlusionmap.debug_missing()
 
     def use_vertex_color(self):
         if hasattr(self, 'KHR_materials_pbrSpecularGlossiness'):
