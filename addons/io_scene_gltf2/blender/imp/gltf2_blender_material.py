@@ -22,6 +22,7 @@
 
 import bpy
 from .gltf2_blender_pbrMetallicRoughness import *
+from .gltf2_blender_KHR_materials_pbrSpecularGlossiness import *
 from .gltf2_blender_map_emissive import *
 from .gltf2_blender_map_normal import *
 from .gltf2_blender_map_occlusion import *
@@ -42,7 +43,7 @@ class BlenderMaterial():
         pymaterial.blender_material = mat.name
 
         if hasattr(pymaterial, 'KHR_materials_pbrSpecularGlossiness'):
-            pymaterial.KHR_materials_pbrSpecularGlossiness.create_blender(mat.name)
+            BlenderKHR_materials_pbrSpecularGlossiness.create(pymaterial.KHR_materials_pbrSpecularGlossiness, mat.name)
         else:
             # create pbr material
             BlenderPbr.create(pymaterial.pbr, mat.name)

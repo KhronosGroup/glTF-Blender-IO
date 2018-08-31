@@ -25,7 +25,7 @@ from .gltf2_io_pbrMetallicRoughness import *
 from .gltf2_io_map_normal import *
 from .gltf2_io_map_emissive import *
 from .gltf2_io_map_occlusion import *
-from ...blender.imp.material.extensions import * #SPLIT_TODO
+from .gltf2_io_KHR_materials_pbrSpecularGlossiness import *
 
 class PyMaterial():
     def __init__(self, index, json, gltf):
@@ -68,7 +68,7 @@ class PyMaterial():
 
         if 'extensions' in self.json.keys():
             if 'KHR_materials_pbrSpecularGlossiness' in self.json['extensions'].keys():
-                self.KHR_materials_pbrSpecularGlossiness = KHR_materials_pbrSpecularGlossiness(self.json['extensions']['KHR_materials_pbrSpecularGlossiness'], self.gltf)
+                self.KHR_materials_pbrSpecularGlossiness = PyKHR_materials_pbrSpecularGlossiness(self.json['extensions']['KHR_materials_pbrSpecularGlossiness'], self.gltf)
                 self.KHR_materials_pbrSpecularGlossiness.read()
                 self.KHR_materials_pbrSpecularGlossiness.debug_missing()
 
