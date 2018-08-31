@@ -39,6 +39,3 @@ class PyMap():
             self.texCoord = int(self.json['texCoord'])
         else:
             self.texCoord = 0
-
-    def create_blender(self):
-        pass
