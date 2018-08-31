@@ -70,7 +70,6 @@ class PyMaterial():
             if 'KHR_materials_pbrSpecularGlossiness' in self.json['extensions'].keys():
                 self.KHR_materials_pbrSpecularGlossiness = PyKHR_materials_pbrSpecularGlossiness(self.json['extensions']['KHR_materials_pbrSpecularGlossiness'], self.gltf)
                 self.KHR_materials_pbrSpecularGlossiness.read()
-                self.KHR_materials_pbrSpecularGlossiness.debug_missing()
 
         # Not default material
         if 'name' in self.json.keys():

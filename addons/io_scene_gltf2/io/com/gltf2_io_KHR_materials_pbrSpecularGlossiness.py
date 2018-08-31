@@ -80,18 +80,5 @@ class PyKHR_materials_pbrSpecularGlossiness():
                 self.specgloss_type = self.TEXTURE_FACTOR
 
 
-    def use_vertex_color(self):
+    def use_vertex_color(self): #SPLIT_TODO : on io or blender?
         self.vertex_color = True
-
-
-
-    def debug_missing(self):
-        if self.json is None:
-            return
-        keys = [
-
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("KHR_materials_pbrSpecularGlossiness MISSING " + key)
