@@ -33,14 +33,21 @@ class PyKHR_materials_pbrSpecularGlossiness():
         self.json = json # KHR_materials_pbrSpecularGlossiness json
         self.gltf = gltf # Reference to global glTF instance
 
+        # KHR_materials_pbrSpecularGlossiness required properties
+        # No required properties
+
+        # KHR_materials_pbrSpecularGlossiness not required properties, with default values
+        self.diffuseFactor    = [1.0,1.0,1.0,1.0]
+        self.specularFactor   = [1.0,1.0,1.0]
+        self.glossinessFactor = 1.0
+
+        # KHR_materials_pbrSpecularGlossiness not required properties
+        self.diffuseTexture_ = None             #TODO rename, already attribute with this name
+        self.specularGlossinessFactor_ = None   #TODO rename, already attribute with this name
+
         self.diffuse_type   = self.SIMPLE
         self.specgloss_type = self.SIMPLE
         self.vertex_color   = False
-
-        # Default Values
-        self.diffuseFactor    = [1.0,1.0,1.0,1.0]
-        self.glossinessFactor = 1.0
-        self.specularFactor   = [1.0,1.0,1.0]
 
     def read(self):
         if self.json is None:
