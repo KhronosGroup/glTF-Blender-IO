@@ -70,14 +70,3 @@ class Sampler():
                 anim_data.append(anim_data_chan)
 
             return anim_data
-
-    def debug_missing(self):
-        keys = [
-                'input',
-                'output',
-                'interpolation'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("SAMPLER CHANNEL MISSING " + key)

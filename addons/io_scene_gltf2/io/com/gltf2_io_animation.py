@@ -41,7 +41,6 @@ class Animation():
         for channel in self.json['channels']:
             chan = AnimChannel(channel_idx, self.json['channels'][channel_idx], self, self.gltf)
             chan.read()
-            chan.debug_missing()
             self.channels.append(chan)
             channel_idx += 1
 
@@ -57,13 +56,3 @@ class Animation():
                 node.animation.set_anim(channel)
             else:
                 self.gltf.log.error("ERROR, node not found")
-
-    def debug_missing(self):
-        keys = [
-                'samplers',
-                'channels'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("ANIMATION MISSING " + key)
