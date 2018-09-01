@@ -21,7 +21,6 @@
  """
 
 import bpy
-from ...io.com.gltf2_io_gltf import *
 from .gltf2_blender_scene import *
 
 class BlenderGlTF():

@@ -60,7 +60,7 @@ class PyAnimation():
 
     def dispatch_to_nodes(self):
         for channel in self.channels:
-            node = self.gltf.get_node(channel.node)
+            node = self.gltf.scene.nodes[channel.node]
             if node:
                 node.animation.set_anim(channel)
             else:

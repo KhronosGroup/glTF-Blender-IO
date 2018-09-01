@@ -41,7 +41,7 @@ class PyAnimChannel():
             channels = 0
         else:
             channels = 0
-            for prim in self.gltf.get_node(self.node).mesh.primitives:
+            for prim in self.gltf.scene.nodes[self.node].mesh.primitives:
                 if len(prim.targets) > channels:
                     channels = len(prim.targets)
         self.sampler = PySampler(self.json['sampler'], self.anim.json['samplers'][self.json['sampler']], self.gltf, channels)

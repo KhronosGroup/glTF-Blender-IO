@@ -22,6 +22,8 @@ import os
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 
+from .io.com.gltf2_io_debug import *
+from .io.imp.gltf2_io_gltf import *
 from .blender.imp.gltf2_blender_gltf import *
 
 from bpy.props import (CollectionProperty,
@@ -500,9 +502,7 @@ class ImportglTF2(Operator, ImportHelper):
 
     def import_gltf2(self, context):
         bpy.context.scene.render.engine = 'CYCLES'
-        self.gltf = PyglTF(self.filepath, self.loglevel)
-        self.gltf.log.critical("Starting loading glTF file")
-        success, txt = self.gltf.read()
+        success, self.gltf, txt = glTFImporter.importer(self.filepath, self.loglevel)
         if not success:
             self.report({'ERROR'}, txt)
             return {'CANCELLED'}
