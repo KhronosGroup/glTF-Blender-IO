@@ -24,7 +24,7 @@
 import json
 
 from .gltf2_io_scene import *
-from ...blender.imp.animation import * #SPLIT_TODO
+from .gltf2_io_animation import *
 from ...blender.imp.util import * #SPLIT_TODO
 
 class PyglTF():

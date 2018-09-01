@@ -23,7 +23,7 @@
 
 from .gltf2_io_mesh import *
 from .gltf2_io_camera import *
-from ...blender.imp.animation import * #SPLIT_TODO
+from .gltf2_io_animation import *
 
 from .gltf2_io_trs import *
 

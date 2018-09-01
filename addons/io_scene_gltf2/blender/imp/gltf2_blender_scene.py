@@ -26,6 +26,7 @@ from mathutils import Quaternion
 from ...io.com.gltf2_io_scene import *
 from .gltf2_blender_node import *
 from .gltf2_blender_skin import *
+from .gltf2_blender_animation import *
 
 class BlenderScene():
 
@@ -65,7 +66,7 @@ class BlenderScene():
             BlenderSkin.create_armature_modifiers(armature)
 
         for node in pyscene.root_nodes_idx:
-                pyscene.nodes[node].animation.blender_anim()
+            BlenderAnimation.anim(pyscene.nodes[node].animation)
 
 
         # Parent root node to rotation object

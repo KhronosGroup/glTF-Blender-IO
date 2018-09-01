@@ -21,6 +21,6 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .animation_data import *
-from .animation_bone import *
-from .animation_node import *
+class PyAnimationBone():
+    def __init__(self, animation):
+        self.animation = animation

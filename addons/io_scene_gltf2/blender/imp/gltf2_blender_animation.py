@@ -18,8 +18,19 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .animation import *
-from .node import *
+from .gltf2_blender_animation_bone import *
+from .gltf2_blender_animation_node import *
+
+class BlenderAnimation():
+
+    @staticmethod
+    def anim(pyanim):
+        if pyanim.node.is_joint:
+            BlenderBoneAnim.anim(pyanim.bone_anim)
+        else:
+            BlenderNodeAnim.anim(pyanim.node_anim)
+
+        for child in pyanim.node.children:
+            BlenderAnimation.anim(child.animation)

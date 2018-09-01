@@ -21,41 +21,49 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .sampler import *
+from .gltf2_io_animation_channel import *
+from .gltf2_io_animation_data import *
 
-class AnimChannel():
-    def __init__(self, index, json, anim, gltf):
+class Animation():
+    def __init__(self, index, json, gltf):
         self.index = index
-        self.json  = json # Anim Channel json
-        self.anim  = anim # Reference to animation
+        self.json  = json # Animation json
         self.gltf  = gltf # Reference to global glTF instance
+        self.name  = None
+
+        self.channels = []
 
     def read(self):
-        if not 'target' in self.json.keys():
+        if not 'channels' in self.json.keys():
             return
 
-        self.node = self.json['target']['node']
-        self.path = self.json['target']['path']
+        channel_idx = 0
+        for channel in self.json['channels']:
+            chan = AnimChannel(channel_idx, self.json['channels'][channel_idx], self, self.gltf)
+            chan.read()
+            chan.debug_missing()
+            self.channels.append(chan)
+            channel_idx += 1
 
-        if self.path != "weights":
-            channels = 0
-        else:
-            channels = 0
-            for prim in self.gltf.get_node(self.node).mesh.primitives:
-                if len(prim.targets) > channels:
-                    channels = len(prim.targets)
-        self.sampler = Sampler(self.json['sampler'], self.anim.json['samplers'][self.json['sampler']], self.gltf, channels)
-        self.data = self.sampler.read()
-        self.sampler.debug_missing()
-        self.interpolation = self.sampler.interpolation
+        self.dispatch_to_nodes()
 
+        if 'name' in self.json.keys():
+            self.name = self.json['name']
+
+    def dispatch_to_nodes(self):
+        for channel in self.channels:
+            node = self.gltf.get_node(channel.node)
+            if node:
+                node.animation.set_anim(channel)
+            else:
+                self.gltf.log.error("ERROR, node not found")
 
     def debug_missing(self):
         keys = [
-                'sampler',
-                'target'
+                'samplers',
+                'channels'
                 ]
 
         for key in self.json.keys():
             if key not in keys:
-                self.gltf.log.debug("ANIMATION CHANNEL MISSING " + key)
+                self.gltf.log.debug("ANIMATION MISSING " + key)
