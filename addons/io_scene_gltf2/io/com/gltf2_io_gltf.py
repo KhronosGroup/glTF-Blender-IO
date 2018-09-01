@@ -25,6 +25,7 @@ import json
 
 from .gltf2_io_scene import *
 from .gltf2_io_animation import *
+from .gltf2_io_asset import *
 from .gltf2_io_debug import *
 
 class PyglTF():
@@ -32,7 +33,7 @@ class PyglTF():
     def __init__(self, filename, loglevel=logging.ERROR):
 
         # glTF properties required
-        self.asset = {} #TODO : create an asset class
+        self.asset = None
 
         # glTF properties not required
         #TODO : note that all these are not managed yet
@@ -144,22 +145,15 @@ class PyglTF():
             return self.json['scene'], self.json['scenes'][self.json['scene']]
         return 0, self.json['scenes'][0]
 
-    def check_version(self):
-        if not 'asset' in self.json.keys():
-            return False, "No asset data in json"
-
-        if not 'version' in self.json['asset']:
-            return False, "No version data in json asset"
-
-        if self.json['asset']['version'] != "2.0":
-            return False, "glTF version must be 2.0"
-
-        return True, None
-
 
     def read(self):
+        if 'asset' in self.json.keys():
+            self.asset = PyAsset(self.json['asset'], self)
+            self.asset.read()
+        else:
+            return False, "asset is mandatory"
 
-        check_version, txt = self.check_version()
+        check_version, txt = self.asset.check_version()
         if not check_version:
             return False, txt
 
