@@ -20,6 +20,7 @@
  * ***** END GPL LICENSE BLOCK *****
  """
 from ..com.gltf2_io_gltf import *
+from .gltf2_io_asset import *
 import logging
 
 class glTFImporter():
@@ -84,12 +85,11 @@ class glTFImporter():
     @staticmethod
     def read(pygltf):
         if 'asset' in pygltf.json.keys():
-            pygltf.asset = PyAsset(pygltf.json['asset'], pygltf)
-            pygltf.asset.read()
+            pygltf.asset = AssetImporter.importer(pygltf.json['asset'], pygltf)
         else:
             return False, "asset is mandatory"
 
-        check_version, txt = pygltf.asset.check_version()
+        check_version, txt = AssetImporter.check_version(pygltf.asset)
         if not check_version:
             return False, txt
 
