@@ -1,0 +1,83 @@
+"""
+ * ***** BEGIN GPL LICENSE BLOCK *****
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *
+ * Contributor(s): Julien Duroure.
+ *
+ * ***** END GPL LICENSE BLOCK *****
+ * This development is done in strong collaboration with Airbus Defence & Space
+ """
+
+from .gltf2_io_accessor import *
+
+class PySampler():
+    def __init__(self, index, json, gltf, channels=0):
+        self.index = index
+        self.json  = json # Sampler json
+        self.gltf  = gltf # Reference to global glTF instance
+
+        # glTF2.0 required properties
+        self.input_ = None #TODO to be renamed, already an attribute with this name
+        self.output_ = None #TODO to be renamed, already an attribute with this name
+
+        # glTF2.0 not required properties, with default values
+        self.interpolation = 'LINEAR'
+
+        # glTF2.0 not required properties
+        self.extensions = {}
+        self.extras = {}
+
+        self.channels = channels # for shape keys weights
+
+    def read(self):
+        self.interpolation = self.json['interpolation']
+        if self.json['input'] not in self.gltf.accessors.keys():
+            self.gltf.accessors[self.json['input']] = Accessor(self.json['input'], self.gltf.json['accessors'][self.json['input']], self.gltf)
+            self.input = self.gltf.accessors[self.json['input']]
+            input_data  = self.input.read()
+        else:
+            self.input  = self.gltf.accessors[self.json['input']]
+            input_data = self.input.data
+
+        if self.json['output'] not in self.gltf.accessors.keys():
+            self.gltf.accessors[self.json['output']] = Accessor(self.json['output'], self.gltf.json['accessors'][self.json['output']], self.gltf)
+            self.output = self.gltf.accessors[self.json['output']]
+            output_data = self.output.read()
+        else:
+            self.output = self.gltf.accessors[self.json['output']]
+            output_data = self.output.data
+
+        anim_data = []
+
+        if self.channels == 0:
+            cpt_idx = 0
+            for i in input_data:
+                anim_data.append(tuple([input_data[cpt_idx][0], output_data[cpt_idx]]))
+                cpt_idx += 1
+
+            return anim_data
+
+        else:
+
+            for chan in range(0, self.channels):
+                anim_data_chan = []
+                cpt_idx = 0
+                for i in input_data:
+                    anim_data_chan.append(tuple([input_data[cpt_idx][0], output_data[cpt_idx*self.channels+chan][0]]))
+                    cpt_idx += 1
+                anim_data.append(anim_data_chan)
+
+            return anim_data
