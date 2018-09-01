@@ -23,11 +23,22 @@
 
 from .gltf2_io_accessor import *
 
-class Sampler():
+class PySampler():
     def __init__(self, index, json, gltf, channels=0):
         self.index = index
         self.json  = json # Sampler json
         self.gltf  = gltf # Reference to global glTF instance
+
+        # glTF2.0 required properties
+        self.input_ = None #TODO to be renamed, already an attribute with this name
+        self.output_ = None #TODO to be renamed, already an attribute with this name
+
+        # glTF2.0 not required properties, with default values
+        self.interpolation = 'LINEAR'
+
+        # glTF2.0 not required properties
+        self.extensions = {}
+        self.extras = {}
 
         self.channels = channels # for shape keys weights
 

@@ -24,13 +24,22 @@
 from .gltf2_io_animation_channel import *
 from .gltf2_io_animation_data import *
 
-class Animation():
+class PyAnimation():
     def __init__(self, index, json, gltf):
         self.index = index
         self.json  = json # Animation json
         self.gltf  = gltf # Reference to global glTF instance
-        self.name  = None
 
+        # glTF2.0 required properties
+        self.channels_ = [] #TODO to be rename, already an attribute with this name in my code
+        self.samplers = []
+
+        # glTF2.0 not required properties
+        self.name  = None
+        self.extensions = {}
+        self.extras = {}
+
+        # Animation specific
         self.channels = []
 
     def read(self):
@@ -39,7 +48,7 @@ class Animation():
 
         channel_idx = 0
         for channel in self.json['channels']:
-            chan = AnimChannel(channel_idx, self.json['channels'][channel_idx], self, self.gltf)
+            chan = PyAnimChannel(channel_idx, self.json['channels'][channel_idx], self, self.gltf)
             chan.read()
             self.channels.append(chan)
             channel_idx += 1

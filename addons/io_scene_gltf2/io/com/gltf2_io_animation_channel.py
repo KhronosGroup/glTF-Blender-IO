@@ -23,7 +23,7 @@
 
 from .gltf2_io_animation_sampler import *
 
-class AnimChannel():
+class PyAnimChannel():
     def __init__(self, index, json, anim, gltf):
         self.index = index
         self.json  = json # Anim Channel json
@@ -44,6 +44,6 @@ class AnimChannel():
             for prim in self.gltf.get_node(self.node).mesh.primitives:
                 if len(prim.targets) > channels:
                     channels = len(prim.targets)
-        self.sampler = Sampler(self.json['sampler'], self.anim.json['samplers'][self.json['sampler']], self.gltf, channels)
+        self.sampler = PySampler(self.json['sampler'], self.anim.json['samplers'][self.json['sampler']], self.gltf, channels)
         self.data = self.sampler.read()
         self.interpolation = self.sampler.interpolation

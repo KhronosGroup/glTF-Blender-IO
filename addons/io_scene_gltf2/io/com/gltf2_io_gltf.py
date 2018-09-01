@@ -198,7 +198,7 @@ class PyglTF():
         if 'animations' in self.json.keys():
             anim_idx = 0
             for anim in self.json['animations']:
-                animation = Animation(anim_idx, self.json['animations'][anim_idx], self)
+                animation = PyAnimation(anim_idx, self.json['animations'][anim_idx], self)
                 animation.read()
                 self.animations[animation.index] = animation
                 anim_idx += 1

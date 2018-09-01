@@ -21,10 +21,18 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .gltf2_io_animation_node import *
-from .gltf2_io_animation_bone import *
+# Note that this class is not a glTF object
+class PyAnimationBone():
+    def __init__(self, animation):
+        self.animation = animation
 
-class AnimationData():
+# Note that this class is not a glTF object
+class PyAnimationNode():
+    def __init__(self, animation):
+        self.animation = animation
+
+# Note that this class is not a glTF object
+class PyAnimationData():
     def __init__(self, node, gltf):
         self.node = node
         self.gltf = gltf

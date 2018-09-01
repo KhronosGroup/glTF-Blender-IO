@@ -57,7 +57,7 @@ class PyNode():
 
         # PyNode specific
 
-        self.animation = AnimationData(self, self.gltf)
+        self.animation = PyAnimationData(self, self.gltf)
         self.is_joint = False
         self.parent = None
         self.transform = [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0]
