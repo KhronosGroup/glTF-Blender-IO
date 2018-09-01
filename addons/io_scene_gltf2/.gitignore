@@ -6,3 +6,4 @@ blender/import/__pycache__/
 io/common/__pycache__/
 io/export/__pycache__/
 io/import/__pycache__/
+**.pyc
