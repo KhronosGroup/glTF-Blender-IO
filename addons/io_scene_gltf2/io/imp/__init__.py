@@ -20,4 +20,4 @@
  * ***** END GPL LICENSE BLOCK *****
  """
 
-from .imp import *
+from .gltf2_io_gltf import *
