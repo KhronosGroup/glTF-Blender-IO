@@ -29,6 +29,9 @@ class BlenderSkin():
 
     @staticmethod
     def create_armature(pyskin, parent):
+
+        pyskin.blender_armature_name = None
+
         if pyskin.name is not None:
             name = pyskin.name
         else:

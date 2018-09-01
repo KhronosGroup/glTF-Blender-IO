@@ -29,11 +29,23 @@ class PySkin():
         self.index = index
         self.json  = json # skin json
         self.gltf  = gltf # Reference to global glTF instance
+
+
+        # glTF2.0 required properties
+        self.joints = [] #TODO is self.bones in my code ?
+
+        # glTF2.0 not required properties
+        self.inverseBindMatrices_ = None #TODO to be renamed, already attribute with this name
+        self.skeleton = None #TODO is self.root in my code
         self.name  = None
-        self.bones = []
-        self.blender_armature_name = None
+        self.extensions = {}
+        self.extras = {}
+
+        # glTF2.0 specifics
+
+        self.bones = [] #TODO is joints
         self.mesh_id = None
-        self.root = None
+        self.root = None #TODO is skeleton
 
     def read(self):
         if 'skeleton' in self.json.keys():
