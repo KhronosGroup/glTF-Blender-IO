@@ -24,6 +24,7 @@ import bpy
 from mathutils import Vector
 
 from .gltf2_blender_material import *
+from ..com.gltf2_blender_conversion import *
 
 class BlenderPrimitive():
 
@@ -34,7 +35,7 @@ class BlenderPrimitive():
 
         # TODO mode of primitive 4 for now.
         current_length = len(verts)
-        prim_verts = [pyprimitive.gltf.convert.location(vert) for vert in pyprimitive.attributes['POSITION']['result']]
+        prim_verts = [Conversion.loc_gltf_to_blender(vert) for vert in pyprimitive.attributes['POSITION']['result']]
         pyprimitive.vertices_length = len(prim_verts)
         verts.extend(prim_verts)
         prim_faces = []

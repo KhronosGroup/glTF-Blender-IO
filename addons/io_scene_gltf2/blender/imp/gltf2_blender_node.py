@@ -25,7 +25,7 @@ from ...io.com.gltf2_io_node import *
 from .gltf2_blender_mesh import *
 from .gltf2_blender_camera import *
 from .gltf2_blender_skin import *
-from ...blender.imp.util.conversion import * #TODO move to blender/com
+from ..com.gltf2_blender_conversion import *
 
 class BlenderNode():
 
@@ -149,14 +149,14 @@ class BlenderNode():
     @staticmethod
     def set_transforms(pynode, obj, parent):
         if parent is None:
-            obj.matrix_world =  Conversion.matrix(pynode.transform)
+            obj.matrix_world =  Conversion.matrix_gltf_to_blender(pynode.transform)
             return
 
         for node in pynode.gltf.scene.nodes.values(): # TODO if parent is in another scene
             if node.index == parent:
                 if node.is_joint == True:
-                    obj.matrix_world = Conversion.matrix(pynode.transform)
+                    obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
                     return
                 else:
-                    obj.matrix_world = Conversion.matrix(pynode.transform)
+                    obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
                     return

@@ -23,7 +23,7 @@
 
 import bpy
 from mathutils import Vector, Matrix, Quaternion
-from ...blender.imp.util.conversion import * #TODO move to blender/com
+from ..com.gltf2_blender_conversion import *
 
 class BlenderSkin():
 
@@ -50,14 +50,14 @@ class BlenderSkin():
 
         mat = Matrix()
         if parent is None:
-            transform = Conversion.matrix(node.transform)
+            transform = Conversion.matrix_gltf_to_blender(node.transform)
             mat = transform
         else:
             if not pyskin.gltf.scene.nodes[parent].is_joint: # TODO if Node in another scene
-                transform  = Conversion.matrix(node.transform)
+                transform  = Conversion.matrix_gltf_to_blender(node.transform)
                 mat = transform
             else:
-                transform = Conversion.matrix(node.transform)
+                transform = Conversion.matrix_gltf_to_blender(node.transform)
                 parent_mat = obj.data.edit_bones[pyskin.gltf.scene.nodes[parent].blender_bone_name].matrix # Node in another scene
 
                 mat = (parent_mat.to_quaternion() * transform.to_quaternion()).to_matrix().to_4x4()

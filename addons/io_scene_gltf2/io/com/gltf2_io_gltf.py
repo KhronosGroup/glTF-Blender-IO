@@ -59,8 +59,6 @@ class PyglTF():
         self.filename = filename
         self.other_scenes = []
 
-        self.convert = Conversion()
-
         log = Log(loglevel)
         self.log = log.logger
         self.log_handler = log.hdlr

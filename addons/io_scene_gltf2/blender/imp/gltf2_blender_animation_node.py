@@ -24,6 +24,7 @@ import bpy
 from mathutils import Quaternion, Matrix, Vector
 
 from .gltf2_blender_animation_data import *
+from ..com.gltf2_blender_conversion import *
 
 class BlenderNodeAnim():
 
@@ -48,7 +49,7 @@ class BlenderNodeAnim():
                     if channel.path == "translation":
                         blender_path = "location"
                         for key in channel.data:
-                           obj.location = Vector(pyanim.animation.gltf.convert.location(list(key[1])))
+                           obj.location = Vector(Conversion.loc_gltf_to_blender(list(key[1])))
                            obj.keyframe_insert(blender_path, frame = key[0] * fps, group='location')
 
                         # Setting interpolation
@@ -59,7 +60,7 @@ class BlenderNodeAnim():
                     elif channel.path == "rotation":
                         blender_path = "rotation_quaternion"
                         for key in channel.data:
-                            obj.rotation_quaternion = pyanim.animation.gltf.convert.quaternion(key[1])
+                            obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(key[1])
                             obj.keyframe_insert(blender_path, frame = key[0] * fps, group='rotation')
 
                         # Setting interpolation
@@ -71,7 +72,7 @@ class BlenderNodeAnim():
                     elif channel.path == "scale":
                         blender_path = "scale"
                         for key in channel.data:
-                            obj.scale = Vector(pyanim.animation.gltf.convert.scale(list(key[1])))
+                            obj.scale = Vector(Conversion.scale_gltf_to_blender(list(key[1])))
                             obj.keyframe_insert(blender_path, frame = key[0] * fps, group='scale')
 
                         # Setting interpolation

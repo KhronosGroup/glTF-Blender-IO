@@ -24,6 +24,7 @@ import bpy
 from mathutils import Quaternion, Matrix
 
 from .gltf2_blender_animation_data import *
+from ..com.gltf2_blender_conversion import *
 
 class BlenderBoneAnim():
 
@@ -50,7 +51,7 @@ class BlenderBoneAnim():
                 if channel.path == "translation":
                     blender_path = "location"
                     for key in channel.data:
-                        transform = Matrix.Translation(pyanim.animation.gltf.convert.location(list(key[1])))
+                        transform = Matrix.Translation(Conversion.loc_gltf_to_blender(list(key[1])))
                         if not pyanim.animation.node.parent:
                             mat = transform
                         else:
@@ -76,7 +77,7 @@ class BlenderBoneAnim():
                 elif channel.path == "rotation":
                     blender_path = "rotation_quaternion"
                     for key in channel.data:
-                        transform = (pyanim.animation.gltf.convert.quaternion(key[1])).to_matrix().to_4x4()
+                        transform = (Conversion.quaternion_gltf_to_blender(key[1])).to_matrix().to_4x4()
                         if not pyanim.animation.node.parent:
                             mat = transform
                         else:
@@ -102,7 +103,7 @@ class BlenderBoneAnim():
                 elif channel.path == "scale":
                     blender_path = "scale"
                     for key in channel.data:
-                        s = pyanim.animation.gltf.convert.scale(list(key[1]))
+                        s = Conversion.scale_gltf_to_blender(list(key[1]))
                         transform = Matrix([
                             [s[0], 0, 0, 0],
                             [0, s[1], 0, 0],

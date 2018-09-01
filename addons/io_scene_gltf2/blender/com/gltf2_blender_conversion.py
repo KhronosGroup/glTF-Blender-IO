@@ -18,31 +18,26 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
 
 from mathutils import Matrix, Vector, Quaternion
 
 class Conversion():
-    def __init__(self):
-        pass
-
 
     @staticmethod
-    def matrix(mat_input):
+    def matrix_gltf_to_blender(mat_input):
         mat =  Matrix([mat_input[0:4], mat_input[4:8], mat_input[8:12], mat_input[12:16]])
         mat.transpose()
-
         return mat
 
-    def quaternion(self, q):
-        return Quaternion([q[3], q[0], q[1], q[2]])
+    @staticmethod
+    def loc_gltf_to_blender(loc):
+        return loc
 
-    def matrix_quaternion(self, q):
-        return Quaternion([q[0], q[1], q[2], q[3]])
-
-    def location(self, location):
-        return location
-
-    def scale(self, scale):
+    @staticmethod
+    def scale_gltf_to_blender(scale):
         return scale
+
+    @staticmethod
+    def quaternion_gltf_to_blender(q):
+        return Quaternion([q[3], q[0], q[1], q[2]])

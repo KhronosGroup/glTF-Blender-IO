@@ -21,5 +21,4 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .conversion import *
 from .logging import *
