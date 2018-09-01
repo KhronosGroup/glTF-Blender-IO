@@ -87,5 +87,5 @@ class PyKHR_materials_pbrSpecularGlossiness():
                 self.specgloss_type = self.TEXTURE_FACTOR
 
 
-    def use_vertex_color(self): #SPLIT_TODO : on io or blender?
+    def use_vertex_color(self):
         self.vertex_color = True
