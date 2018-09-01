@@ -22,8 +22,6 @@
 from ..com.gltf2_io_gltf import *
 import logging
 
-print("Loading")
-
 class glTFImporter():
 
     @staticmethod
