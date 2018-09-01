@@ -53,15 +53,3 @@ class PySkin():
             else:
                 self.inverseBindMatrices = self.gltf.accessors[self.json['inverseBindMatrices']]
                 self.data = self.inverseBindMatrices.data
-
-    def debug_missing(self):
-        keys = [
-                'skeleton',
-                'joints',
-                'name',
-                'inverseBindMatrices'
-                ]
-
-        for key in self.json.keys():
-            if key not in keys:
-                self.gltf.log.debug("SKIN MISSING " + key)

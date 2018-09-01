@@ -68,6 +68,5 @@ class PyMesh():
             self.skin.mesh_id = mesh_id
             self.gltf.skins[skin_id] = self.skin
             self.skin.read()
-            self.skin.debug_missing()
         else:
             self.skin = self.gltf.skins[skin_id]
