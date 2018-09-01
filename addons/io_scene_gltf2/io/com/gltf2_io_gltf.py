@@ -29,7 +29,7 @@ from .gltf2_io_debug import *
 
 class PyglTF():
 
-    def __init__(self, filename, loglevel):
+    def __init__(self, filename, loglevel=logging.ERROR):
 
         # glTF properties required
         self.asset = {} #TODO : create an asset class
