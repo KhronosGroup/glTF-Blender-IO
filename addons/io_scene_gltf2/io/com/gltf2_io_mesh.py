@@ -22,7 +22,7 @@
  """
 
 from .gltf2_io_primitive import *
-from ...blender.imp.rig import * #SPLIT_TODO
+from .gltf2_io_skin import *
 
 class PyMesh():
     def __init__(self, index, json, gltf):
@@ -64,7 +64,7 @@ class PyMesh():
 
     def rig(self, skin_id, mesh_id):
         if skin_id not in self.gltf.skins.keys():
-            self.skin = Skin(skin_id, self.gltf.json['skins'][skin_id], self.gltf)
+            self.skin = PySkin(skin_id, self.gltf.json['skins'][skin_id], self.gltf)
             self.skin.mesh_id = mesh_id
             self.gltf.skins[skin_id] = self.skin
             self.skin.read()

@@ -25,6 +25,7 @@ from math import sqrt
 from mathutils import Quaternion
 from ...io.com.gltf2_io_scene import *
 from .gltf2_blender_node import *
+from .gltf2_blender_skin import *
 
 class BlenderScene():
 
@@ -55,13 +56,13 @@ class BlenderScene():
 
         # Now that all mesh / bones are created, create vertex groups on mesh
         for armature in pyscene.gltf.skins.values():
-            armature.create_vertex_groups()
+            BlenderSkin.create_vertex_groups(armature)
 
         for armature in pyscene.gltf.skins.values():
-            armature.assign_vertex_groups()
+            BlenderSkin.assign_vertex_groups(armature)
 
         for armature in pyscene.gltf.skins.values():
-            armature.create_armature_modifiers()
+            BlenderSkin.create_armature_modifiers(armature)
 
         for node in pyscene.root_nodes_idx:
                 pyscene.nodes[node].animation.blender_anim()

@@ -24,6 +24,7 @@ import bpy
 from ...io.com.gltf2_io_node import *
 from .gltf2_blender_mesh import *
 from .gltf2_blender_camera import *
+from .gltf2_blender_skin import *
 from ...blender.imp.util.conversion import * #TODO move to blender/com
 
 class BlenderNode():
@@ -90,9 +91,9 @@ class BlenderNode():
                 pynode.gltf.log.info("Blender create Bone node")
             # Check if corresponding armature is already created, create it if needed
             if pynode.gltf.skins[pynode.skin_id].blender_armature_name is None:
-                pynode.gltf.skins[pynode.skin_id].create_blender_armature(parent)
+                BlenderSkin.create_armature(pynode.gltf.skins[pynode.skin_id], parent)
 
-            pynode.gltf.skins[pynode.skin_id].create_bone(pynode, parent)
+            BlenderSkin.create_bone(pynode.gltf.skins[pynode.skin_id], pynode, parent)
 
             for child in pynode.children:
                 BlenderNode.create(child, pynode.index)
