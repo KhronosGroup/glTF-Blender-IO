@@ -25,4 +25,4 @@ from .gltf2_io_map import *
 
 class PyOcclusionMap(PyMap):
     def __init__(self, json, factor, gltf):
-        super(PyOcclusionMap, self).__init__(json, factor, gltf)
+        PyMap.__init__(self, json, factor, gltf)

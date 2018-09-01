@@ -25,4 +25,4 @@ from .gltf2_io_map import *
 
 class PyEmissiveMap(PyMap):
     def __init__(self, json, factor, gltf):
-        super(PyEmissiveMap, self).__init__(json, factor, gltf)
+        PyMap.__init__(self, json, factor, gltf)
