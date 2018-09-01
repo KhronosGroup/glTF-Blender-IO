@@ -23,7 +23,6 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 
 from .blender.imp.gltf2_blender_gltf import *
-from .blender.imp.util import * #SPLIT_TODO
 
 from bpy.props import (CollectionProperty,
                        StringProperty,
