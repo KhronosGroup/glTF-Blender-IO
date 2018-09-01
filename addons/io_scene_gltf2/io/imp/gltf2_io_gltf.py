@@ -21,6 +21,7 @@
  """
 from ..com.gltf2_io_gltf import *
 from .gltf2_io_asset import *
+from .gltf2_io_scene import *
 import logging
 
 class glTFImporter():
@@ -108,16 +109,14 @@ class glTFImporter():
                     pygltf.log.error("Extension " + ext + " is not available on this addon version")
                     # Non blocking error
 
-        pygltf.scene = PyScene(idx, scene, pygltf)
-        pygltf.scene.read()
+        pygltf.scene = SceneImporter.importer(idx, scene, pygltf)
 
         # manage all scenes (except root scene that is already managed)
         scene_idx = 0
         for scene_it in pygltf.json['scenes']:
             if scene_idx == idx:
                 continue
-            scene = Scene(scene_idx, pygltf.json['scenes'][scene_idx] , pygltf)
-            scene.read()
+            scene = SceneImporter.importer(scene_idx, pygltf.json['scenes'][scene_idx] , pygltf)
             scene_idx += 1
             pygltf.other_scenes.append(scene)
 

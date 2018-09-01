@@ -40,33 +40,4 @@ class PyScene():
 
         # PyScene specific
         self.root_nodes_idx = [] #TODO: in specification, nodes contains only root nodes
-
-    def read(self):
-        if 'name' in self.json.keys():
-            self.name = self.json['name']
-            self.gltf.log.info("Scene " + self.json['name'])
-        else:
-            self.name = None
-            self.gltf.log.info("Scene...")
-
-
-        for node_idx in self.json['nodes']:
-            node = PyNode(node_idx, self.gltf.json['nodes'][node_idx], self.gltf, self)
-            node.read()
-            self.nodes[node_idx] = node
-
-        for skin in self.gltf.skins.values():
-            if skin.root is not None and skin.root != skin.bones[0]:
-                # skin.bones.insert(0, skin.root)
-                self.nodes[skin.root].is_joint = True
-                self.nodes[skin.root].skin_id = skin.index
-
-        # manage root nodes
-        parent_detector = {}
-        for node in self.nodes:
-            for child in self.nodes[node].children:
-                parent_detector[child.index] = node
-
-        for node in self.nodes:
-            if node not in parent_detector.keys():
-                self.root_nodes_idx.append(node)
+        
