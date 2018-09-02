@@ -22,9 +22,7 @@
  """
 
 from .gltf2_io_pbrMetallicRoughness import *
-from .gltf2_io_map_normal import *
-from .gltf2_io_map_emissive import *
-from .gltf2_io_map_occlusion import *
+from .gltf2_io_map import *
 from .gltf2_io_KHR_materials_pbrSpecularGlossiness import *
 
 class PyMaterial():

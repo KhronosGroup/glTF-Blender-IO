@@ -55,17 +55,17 @@ class MaterialImporter():
             else:
                 factor = [1.0, 1.0, 1.0]
 
-            pymaterial.emissivemap = PyEmissiveMap(pymaterial.json['emissiveTexture'], factor, pymaterial.gltf)
+            pymaterial.emissivemap = PyMap(pymaterial.json['emissiveTexture'], factor, pymaterial.gltf)
             pymaterial.emissivemap.read()
 
         # Normal Map
         if 'normalTexture' in pymaterial.json.keys():
-            pymaterial.normalmap = PyNormalMap(pymaterial.json['normalTexture'], 1.0, pymaterial.gltf)
+            pymaterial.normalmap = PyMap(pymaterial.json['normalTexture'], 1.0, pymaterial.gltf)
             pymaterial.normalmap.read()
 
         # Occlusion Map
         if 'occlusionTexture' in pymaterial.json.keys():
-            pymaterial.occlusionmap = PyOcclusionMap(pymaterial.json['occlusionTexture'], 1.0, pymaterial.gltf)
+            pymaterial.occlusionmap = PyMap(pymaterial.json['occlusionTexture'], 1.0, pymaterial.gltf)
             pymaterial.occlusionmap.read()
 
     @staticmethod
