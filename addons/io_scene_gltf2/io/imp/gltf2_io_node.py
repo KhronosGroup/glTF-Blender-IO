@@ -22,6 +22,7 @@
 
 from ..com.gltf2_io_node import *
 from .gltf2_io_camera import *
+from .gltf2_io_mesh import *
 
 class NodeImporter():
 
@@ -65,9 +66,8 @@ class NodeImporter():
 
         if 'mesh' in pynode.json.keys():
             if pynode.json['mesh'] not in pynode.gltf.meshes.keys():
-                pynode.gltf.meshes[pynode.json['mesh']] = PyMesh(pynode.json['mesh'], pynode.gltf.json['meshes'][pynode.json['mesh']], pynode.gltf)
+                pynode.gltf.meshes[pynode.json['mesh']] = MeshImporter.importer(pynode.json['mesh'], pynode.gltf.json['meshes'][pynode.json['mesh']], pynode.gltf)
                 pynode.mesh = pynode.gltf.meshes[pynode.json['mesh']]
-                pynode.mesh.read()
             else:
                 pynode.mesh = pynode.gltf.meshes[pynode.json['mesh']]
 
