@@ -22,6 +22,7 @@
 
 from ..com.gltf2_io_primitive import *
 from .gltf2_io_accessor import *
+from .gltf2_io_material import *
 
 class PrimitiveImporter():
 
@@ -69,8 +70,7 @@ class PrimitiveImporter():
         if 'material' in pyprimitive.json.keys():
             # create material if not already exits
             if pyprimitive.json['material'] not in pyprimitive.gltf.materials.keys():
-                pyprimitive.mat = PyMaterial(pyprimitive.json['material'], pyprimitive.gltf.json['materials'][pyprimitive.json['material']], pyprimitive.gltf)
-                pyprimitive.mat.read()
+                pyprimitive.mat = MaterialImporter.importer(pyprimitive.json['material'], pyprimitive.gltf.json['materials'][pyprimitive.json['material']], pyprimitive.gltf)
                 pyprimitive.gltf.materials[pyprimitive.json['material']] = pyprimitive.mat
 
                 if 'COLOR_0' in pyprimitive.attributes.keys():
@@ -83,14 +83,12 @@ class PrimitiveImporter():
         else:
             # If there is a COLOR_0, we are going to use it in material
             if 'COLOR_0' in pyprimitive.attributes.keys():
-                pyprimitive.mat = PyMaterial(None, None, pyprimitive.gltf)
-                pyprimitive.mat.read()
-                pyprimitive.mat.use_vertex_color()
+                pyprimitive.mat = MaterialImporter.importer(None, None, pyprimitive.gltf)
+                MaterialImporter.use_vertex_color(pyprimitive.mat)
             else:
                 # No material, use default one
                 if pyprimitive.gltf.default_material is None:
-                    pyprimitive.gltf.default_material = PyMaterial(None, None, pyprimitive.gltf)
-                    pyprimitive.gltf.default_material.read()
+                    pyprimitive.gltf.default_material = MaterialImporter.importer(None, None, pyprimitive.gltf)
 
                 pyprimitive.mat = pyprimitive.gltf.default_material
 
