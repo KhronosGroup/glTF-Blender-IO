@@ -21,7 +21,7 @@
  """
 
 from ..com.gltf2_io_image import *
-from .gltf2_io_bufferView import *
+from .gltf2_io_bufferview import *
 
 class ImageImporter():
 

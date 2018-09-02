@@ -21,7 +21,7 @@
  """
 
 from ..com.gltf2_io_accessor import *
-from .gltf2_io_bufferView import *
+from .gltf2_io_bufferview import *
 from .gltf2_io_sparse import *
 
 class AccessorImporter():
