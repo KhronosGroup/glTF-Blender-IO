@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_sparse import *
+from .gltf2_io_bufferview import *
 
 class SparseImporter():
 
@@ -29,8 +30,7 @@ class SparseImporter():
         pysparse.count = pysparse.json['count']
 
         if 'indices' in pysparse.json.keys():
-            pysparse.indices_buffer = BufferView(pysparse.json['indices']['bufferView'], pysparse.gltf.json['bufferViews'][pysparse.json['indices']['bufferView']], pysparse.gltf)
-            pysparse.indices_buffer.read()
+            pysparse.indices_buffer = BufferViewImporter.importer(pysparse.json['indices']['bufferView'], pysparse.gltf.json['bufferViews'][pysparse.json['indices']['bufferView']], pysparse.gltf)
 
             #TODO factorisation with accessor code ?
             fmt_char = pysparse.gltf.fmt_char_dict[pysparse.json['indices']['componentType']]
@@ -53,8 +53,7 @@ class SparseImporter():
 
         if 'values' in pysparse.json.keys():
             if pysparse.json['values']['bufferView'] not in pysparse.gltf.bufferViews.keys():
-                pysparse.gltf.bufferViews[pysparse.json['values']['bufferView']] = BufferView(pysparse.json['values']['bufferView'], pysparse.gltf.json['bufferViews'][pysparse.json['values']['bufferView']], pysparse.gltf)
-                pysparse.gltf.bufferViews[pysparse.json['values']['bufferView']].read()
+                pysparse.gltf.bufferViews[pysparse.json['values']['bufferView']] = BufferViewImporter.importer(pysparse.json['values']['bufferView'], pysparse.gltf.json['bufferViews'][pysparse.json['values']['bufferView']], pysparse.gltf)
 
             pysparse.bufferView = pysparse.gltf.bufferViews[pysparse.json['values']['bufferView']]
 

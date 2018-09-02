@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_skin import *
+from .gltf2_io_accessor import *
 
 class SkinImporter():
 
@@ -37,9 +38,9 @@ class SkinImporter():
 
         if 'inverseBindMatrices' in pyskin.json.keys():
             if pyskin.json['inverseBindMatrices'] not in pyskin.gltf.accessors.keys():
-                pyskin.gltf.accessors[pyskin.json['inverseBindMatrices']] = Accessor(pyskin.json['inverseBindMatrices'], pyskin.gltf.json['accessors'][pyskin.json['inverseBindMatrices']], pyskin.gltf)
+                pyskin.gltf.accessors[pyskin.json['inverseBindMatrices']], data = AccessorImporter.importer(pyskin.json['inverseBindMatrices'], pyskin.gltf.json['accessors'][pyskin.json['inverseBindMatrices']], pyskin.gltf)
                 pyskin.inverseBindMatrices = pyskin.gltf.accessors[pyskin.json['inverseBindMatrices']]
-                pyskin.data = pyskin.inverseBindMatrices.read()
+                pyskin.data = data
             else:
                 pyskin.inverseBindMatrices = pyskin.gltf.accessors[pyskin.json['inverseBindMatrices']]
                 pyskin.data = pyskin.inverseBindMatrices.data
