@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_texture import *
+from .gltf2_io_image import *
 
 class TextureImporter():
 
@@ -29,11 +30,10 @@ class TextureImporter():
         if 'source' in pytexture.json.keys():
 
             if pytexture.json['source'] not in pytexture.gltf.images.keys():
-                image = PyImage(pytexture.json['source'], pytexture.gltf.json['images'][pytexture.json['source']], pytexture.gltf)
+                image = ImageImporter.importer(pytexture.json['source'], pytexture.gltf.json['images'][pytexture.json['source']], pytexture.gltf)
                 pytexture.gltf.images[pytexture.json['source']] = image
 
             pytexture.image = pytexture.gltf.images[pytexture.json['source']]
-            pytexture.image.read()
 
     @staticmethod
     def importer(idx, json, gltf):
