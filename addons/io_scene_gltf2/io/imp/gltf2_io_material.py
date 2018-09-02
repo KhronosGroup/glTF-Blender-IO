@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_material import *
+from .gltf2_io_pbrMetallicRoughness import *
 
 class MaterialImporter():
 
@@ -29,8 +30,7 @@ class MaterialImporter():
 
         # If no index, this is the default material
         if pymaterial.index is None:
-            pymaterial.pbr = PyPbr(None, pymaterial.gltf)
-            pymaterial.pbr.read()
+            pymaterial.pbr = PbrImporter.importer(None, pymaterial.gltf)
             pymaterial.name = "Default Material"
             return
 
@@ -44,10 +44,9 @@ class MaterialImporter():
             pymaterial.name = pymaterial.json['name']
 
         if 'pbrMetallicRoughness' in pymaterial.json.keys():
-            pymaterial.pbr = PyPbr(pymaterial.json['pbrMetallicRoughness'], pymaterial.gltf)
+            pymaterial.pbr = PbrImporter.importer(pymaterial.json['pbrMetallicRoughness'], pymaterial.gltf)
         else:
-            pymaterial.pbr = PyPbr(None, pymaterial.gltf)
-        pymaterial.pbr.read()
+            pymaterial.pbr = PbrImporter.importer(None, pymaterial.gltf)
 
         # Emission
         if 'emissiveTexture' in pymaterial.json.keys():
