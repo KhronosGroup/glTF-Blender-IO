@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_animation_channel import *
+from .gltf2_io_animation_sampler import *
 
 class AnimChannelImporter():
 
@@ -39,8 +40,7 @@ class AnimChannelImporter():
             for prim in pychannel.gltf.scene.nodes[pychannel.node].mesh.primitives:
                 if len(prim.targets) > channels:
                     channels = len(prim.targets)
-        pychannel.sampler = PySampler(pychannel.json['sampler'], pychannel.anim.json['samplers'][pychannel.json['sampler']], pychannel.gltf, channels)
-        pychannel.data = pychannel.sampler.read()
+        pychannel.sampler, pychannel.data = SamplerImporter.importer(pychannel.json['sampler'], pychannel.anim.json['samplers'][pychannel.json['sampler']], pychannel.gltf, channels)
         pychannel.interpolation = pychannel.sampler.interpolation
 
     @staticmethod
