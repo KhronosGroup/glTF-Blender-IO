@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_image import *
+from .gltf2_io_bufferView import *
 
 class ImageImporter():
 
@@ -51,8 +52,7 @@ class ImageImporter():
             return
 
         if pyimage.json['bufferView'] not in pyimage.gltf.bufferViews.keys():
-            pyimage.gltf.bufferViews[pyimage.json['bufferView']] = BufferView(pyimage.json['bufferView'], pyimage.gltf.json['bufferViews'][pyimage.json['bufferView']], pyimage.gltf)
-            pyimage.gltf.bufferViews[pyimage.json['bufferView']].read()
+            pyimage.gltf.bufferViews[pyimage.json['bufferView']] = BufferViewImporter.importer(pyimage.json['bufferView'], pyimage.gltf.json['bufferViews'][pyimage.json['bufferView']], pyimage.gltf)
 
         pyimage.bufferView = pyimage.gltf.bufferViews[pyimage.json['bufferView']]
 
