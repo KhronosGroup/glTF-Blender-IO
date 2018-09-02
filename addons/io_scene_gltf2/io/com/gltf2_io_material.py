@@ -61,7 +61,7 @@ class PyMaterial():
 
         # If no index, this is the default material
         if self.index is None:
-            self.pbr = Pbr(None, self.gltf)
+            self.pbr = PyPbr(None, self.gltf)
             self.pbr.read()
             self.name = "Default Material"
             return
