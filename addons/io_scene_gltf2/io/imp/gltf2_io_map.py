@@ -18,15 +18,24 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .gltf2_io_texture import *
+from ..com.gltf2_io_map import *
 
-# Note that Map is not a glTF2.0 object
-# This class is used for inheritance of maps
-class PyMap():
-    def __init__(self, json, factor, gltf):
-        self.json   = json # map json
-        self.factor = factor
-        self.gltf   = gltf # Reference to global glTF instance
+class MapImporter():
+
+    @staticmethod
+    def read(pymap):
+        pymap.texture = PyTexture(pymap.json['index'], pymap.gltf.json['textures'][pymap.json['index']], pymap.gltf)
+        pymap.texture.read()
+
+        if 'texCoord' in pymap.json.keys():
+            pymap.texCoord = int(pymap.json['texCoord'])
+        else:
+            pymap.texCoord = 0
+
+    @staticmethod
+    def importer(json, factor, gltf):
+        map = PyMap(json, factor, gltf)
+        MapImporter.read(map)
+        return map

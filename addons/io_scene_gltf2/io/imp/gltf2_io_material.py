@@ -22,6 +22,7 @@
 
 from ..com.gltf2_io_material import *
 from .gltf2_io_pbrMetallicRoughness import *
+from .gltf2_io_map import *
 
 class MaterialImporter():
 
@@ -55,18 +56,15 @@ class MaterialImporter():
             else:
                 factor = [1.0, 1.0, 1.0]
 
-            pymaterial.emissivemap = PyMap(pymaterial.json['emissiveTexture'], factor, pymaterial.gltf)
-            pymaterial.emissivemap.read()
+            pymaterial.emissivemap = MapImporter.importer(pymaterial.json['emissiveTexture'], factor, pymaterial.gltf)
 
         # Normal Map
         if 'normalTexture' in pymaterial.json.keys():
-            pymaterial.normalmap = PyMap(pymaterial.json['normalTexture'], 1.0, pymaterial.gltf)
-            pymaterial.normalmap.read()
+            pymaterial.normalmap = MapImporter.importer(pymaterial.json['normalTexture'], 1.0, pymaterial.gltf)
 
         # Occlusion Map
         if 'occlusionTexture' in pymaterial.json.keys():
-            pymaterial.occlusionmap = PyMap(pymaterial.json['occlusionTexture'], 1.0, pymaterial.gltf)
-            pymaterial.occlusionmap.read()
+            pymaterial.occlusionmap = MapImporter.importer(pymaterial.json['occlusionTexture'], 1.0, pymaterial.gltf)
 
     @staticmethod
     def use_vertex_color(pymaterial):
