@@ -22,6 +22,7 @@
 
 from ..com.gltf2_io_accessor import *
 from .gltf2_io_bufferView import *
+from .gltf2_io_sparse import *
 
 class AccessorImporter():
 
@@ -57,8 +58,7 @@ class AccessorImporter():
             offset = 0 #TODO use pyaccessor.byteOffset
 
         if 'sparse' in pyaccessor.json.keys():
-            pyaccessor.sparse = Sparse(pyaccessor.json['componentType'], pyaccessor.json['type'], pyaccessor.json['sparse'], pyaccessor.gltf)
-            pyaccessor.sparse.read()
+            pyaccessor.sparse = SparseImporter.importer(pyaccessor.json['componentType'], pyaccessor.json['type'], pyaccessor.json['sparse'], pyaccessor.gltf)
             pyaccessor.data = BufferViewImporter.read_data(pyaccessor.bufferView, fmt, stride, pyaccessor.json['count'], offset)
             AccessorImporter.apply_sparse(pyaccessor)
             return pyaccessor.data
