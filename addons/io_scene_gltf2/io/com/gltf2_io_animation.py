@@ -41,27 +41,3 @@ class PyAnimation():
 
         # Animation specific
         self.channels = []
-
-    def read(self):
-        if not 'channels' in self.json.keys():
-            return
-
-        channel_idx = 0
-        for channel in self.json['channels']:
-            chan = PyAnimChannel(channel_idx, self.json['channels'][channel_idx], self, self.gltf)
-            chan.read()
-            self.channels.append(chan)
-            channel_idx += 1
-
-        self.dispatch_to_nodes()
-
-        if 'name' in self.json.keys():
-            self.name = self.json['name']
-
-    def dispatch_to_nodes(self):
-        for channel in self.channels:
-            node = self.gltf.scene.nodes[channel.node]
-            if node:
-                node.animation.set_anim(channel)
-            else:
-                self.gltf.log.error("ERROR, node not found")

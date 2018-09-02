@@ -22,6 +22,7 @@
 from ..com.gltf2_io_gltf import *
 from .gltf2_io_asset import *
 from .gltf2_io_scene import *
+from .gltf2_io_animation import *
 import logging
 
 class glTFImporter():
@@ -125,8 +126,7 @@ class glTFImporter():
         if 'animations' in pygltf.json.keys():
             anim_idx = 0
             for anim in pygltf.json['animations']:
-                animation = PyAnimation(anim_idx, pygltf.json['animations'][anim_idx], pygltf)
-                animation.read()
+                animation = AnimationImporter.importer(anim_idx, pygltf.json['animations'][anim_idx], pygltf)
                 pygltf.animations[animation.index] = animation
                 anim_idx += 1
 
