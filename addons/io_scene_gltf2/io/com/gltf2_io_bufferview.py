@@ -81,14 +81,3 @@ class BufferView():
             offset += stride
 
         return data
-
-    #SPLIT_TODO: to be remove when image is done
-    def read_binary_data(self):
-        if 'byteOffset' in self.json.keys():
-            bufferview_offset = self.json['byteOffset']
-        else:
-            bufferview_offset = 0
-
-        length = self.json['byteLength']
-
-        return self.buffer.data[bufferview_offset:bufferview_offset + length]
