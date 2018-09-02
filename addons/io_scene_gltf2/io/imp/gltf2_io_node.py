@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_node import *
+from .gltf2_io_camera import *
 
 class NodeImporter():
 
@@ -74,8 +75,7 @@ class NodeImporter():
                 pynode.mesh.rig(pynode.json['skin'], pynode.index)
 
         if 'camera' in pynode.json.keys():
-            pynode.camera = PyCamera(pynode.json['camera'], pynode.name, pynode.gltf.json['cameras'][pynode.json['camera']], pynode.gltf)
-            pynode.camera.read()
+            pynode.camera = CameraImporter.importer(pynode.json['camera'], pynode.name, pynode.gltf.json['cameras'][pynode.json['camera']], pynode.gltf)
 
         if not 'children' in pynode.json.keys():
             return
