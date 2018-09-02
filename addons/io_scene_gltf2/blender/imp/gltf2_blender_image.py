@@ -28,14 +28,17 @@ import tempfile
 class BlenderImage():
 
     @staticmethod
-    def create(self):
+    def create(img):
+
+        img.blender_image_name = None
+
         # Create a temp image, pack, and delete image
         tmp_image = tempfile.NamedTemporaryFile(delete=False)
-        tmp_image.write(self.data)
+        tmp_image.write(img.data)
         tmp_image.close()
 
         blender_image = bpy.data.images.load(tmp_image.name)
         blender_image.pack()
-        blender_image.name = self.image_name
-        self.blender_image_name = blender_image.name
+        blender_image.name = img.image_name
+        img.blender_image_name = blender_image.name
         os.remove(tmp_image.name)
