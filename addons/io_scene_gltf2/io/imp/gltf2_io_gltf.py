@@ -75,7 +75,7 @@ class glTFImporter():
 
         else:
             # Parsing glb file
-            pygltf.load_glb()
+            glTFImporter.load_glb(pygltf)
 
     @staticmethod
     def get_root_scene(pygltf):
