@@ -49,6 +49,10 @@ class Accessor():
         self.extensions = {}
         self.extras = {}
 
+    #SPLIT_TODO: to be removed
+    # already done for primitives
+    #SPLIT_TODO: animation_sampler (input & output)
+    #SPLIT_TODO: skin
     def read(self):
         if not 'bufferView' in self.json:
             return # TODO initialize with 0 when not present!
@@ -91,6 +95,7 @@ class Accessor():
             self.data = self.bufferView.read_data(fmt, stride, self.json['count'], offset)
             return self.data
 
+    #SPLIT_TODO: to be removed when .read() is removed
     def apply_sparse(self):
         cpt_idx = 0
         for idx in self.sparse.indices:

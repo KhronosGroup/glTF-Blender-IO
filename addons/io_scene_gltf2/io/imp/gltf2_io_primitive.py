@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_primitive import *
+from .gltf2_io_accessor import *
 
 class PrimitiveImporter():
 
@@ -33,9 +34,8 @@ class PrimitiveImporter():
                 pyprimitive.gltf.log.debug("Primitive attribute " + attr)
                 pyprimitive.attributes[attr] = {}
                 if pyprimitive.json['attributes'][attr] not in pyprimitive.gltf.accessors.keys():
-                    pyprimitive.gltf.accessors[pyprimitive.json['attributes'][attr]] = Accessor(pyprimitive.json['attributes'][attr], pyprimitive.gltf.json['accessors'][pyprimitive.json['attributes'][attr]], pyprimitive.gltf)
+                    pyprimitive.gltf.accessors[pyprimitive.json['attributes'][attr]], pyprimitive.attributes[attr]['result'] = AccessorImporter.importer(pyprimitive.json['attributes'][attr], pyprimitive.gltf.json['accessors'][pyprimitive.json['attributes'][attr]], pyprimitive.gltf)
                     pyprimitive.attributes[attr]['accessor'] = pyprimitive.gltf.accessors[pyprimitive.json['attributes'][attr]]
-                    pyprimitive.attributes[attr]['result']   = pyprimitive.attributes[attr]['accessor'].read()
                 else:
                     pyprimitive.attributes[attr]['accessor'] = pyprimitive.gltf.accessors[pyprimitive.json['attributes'][attr]]
                     pyprimitive.attributes[attr]['result'] = pyprimitive.attributes[attr]['accessor'].data
@@ -54,9 +54,8 @@ class PrimitiveImporter():
         if 'indices' in pyprimitive.json.keys():
             pyprimitive.gltf.log.debug("Primitive indices")
             if pyprimitive.json['indices'] not in pyprimitive.gltf.accessors.keys():
-                pyprimitive.gltf.accessors[pyprimitive.json['indices']] = Accessor(pyprimitive.json['indices'], pyprimitive.gltf.json['accessors'][pyprimitive.json['indices']], pyprimitive.gltf)
+                pyprimitive.gltf.accessors[pyprimitive.json['indices']], pyprimitive.indices = AccessorImporter.importer(pyprimitive.json['indices'], pyprimitive.gltf.json['accessors'][pyprimitive.json['indices']], pyprimitive.gltf)
                 pyprimitive.accessor = pyprimitive.gltf.accessors[pyprimitive.json['indices']]
-                pyprimitive.indices  = pyprimitive.accessor.read()
             else:
                 pyprimitive.accessor = pyprimitive.gltf.accessors[pyprimitive.json['indices']]
                 pyprimitive.indices  = pyprimitive.accessor.data
@@ -102,9 +101,8 @@ class PrimitiveImporter():
                 for attr in targ.keys():
                     target[attr] = {}
                     if targ[attr] not in pyprimitive.gltf.accessors.keys():
-                        pyprimitive.gltf.accessors[targ[attr]] = Accessor(targ[attr], pyprimitive.gltf.json['accessors'][targ[attr]], pyprimitive.gltf)
+                        pyprimitive.gltf.accessors[targ[attr]], target[attr]['result'] = AccessorImporter.importer(targ[attr], pyprimitive.gltf.json['accessors'][targ[attr]], pyprimitive.gltf)
                         target[attr]['accessor'] = pyprimitive.gltf.accessors[targ[attr]]
-                        target[attr]['result']   = target[attr]['accessor'].read()
                     else:
                         target[attr]['accessor'] = pyprimitive.gltf.accessors[targ[attr]]
                         target[attr]['result']   = target[attr]['accessor'].data
