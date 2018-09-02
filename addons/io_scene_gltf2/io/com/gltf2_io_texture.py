@@ -38,14 +38,3 @@ class PyTexture():
         self.name = ""
         self.extension = {}
         self.extras = {}
-
-    #SPLIT_TODO: to be removed when KHR_materials_pbrSpecularGlossiness is done
-    def read(self):
-        if 'source' in self.json.keys():
-
-            if self.json['source'] not in self.gltf.images.keys():
-                image = PyImage(self.json['source'], self.gltf.json['images'][self.json['source']], self.gltf)
-                self.gltf.images[self.json['source']] = image
-
-            self.image = self.gltf.images[self.json['source']]
-            self.image.read()

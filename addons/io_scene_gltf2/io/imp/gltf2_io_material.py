@@ -22,6 +22,7 @@
 
 from ..com.gltf2_io_material import *
 from .gltf2_io_pbrMetallicRoughness import *
+from .gltf2_io_KHR_materials_pbrSpecularGlossiness import *
 from .gltf2_io_map import *
 
 class MaterialImporter():
@@ -37,8 +38,7 @@ class MaterialImporter():
 
         if 'extensions' in pymaterial.json.keys():
             if 'KHR_materials_pbrSpecularGlossiness' in pymaterial.json['extensions'].keys():
-                pymaterial.KHR_materials_pbrSpecularGlossiness = PyKHR_materials_pbrSpecularGlossiness(pymaterial.json['extensions']['KHR_materials_pbrSpecularGlossiness'], pymaterial.gltf)
-                pymaterial.KHR_materials_pbrSpecularGlossiness.read()
+                pymaterial.KHR_materials_pbrSpecularGlossiness = KHR_materials_pbrSpecularGlossinessImporter.importer(pymaterial.json['extensions']['KHR_materials_pbrSpecularGlossiness'], pymaterial.gltf)
 
         # Not default material
         if 'name' in pymaterial.json.keys():
@@ -69,9 +69,9 @@ class MaterialImporter():
     @staticmethod
     def use_vertex_color(pymaterial):
         if hasattr(pymaterial, 'KHR_materials_pbrSpecularGlossiness'):
-            pymaterial.KHR_materials_pbrSpecularGlossiness.use_vertex_color()
+            KHR_materials_pbrSpecularGlossinessImporter.use_vertex_color(pymaterial.KHR_materials_pbrSpecularGlossiness)
         else:
-            pymaterial.pbr.use_vertex_color()
+            PbrImporter.use_vertex_color(pymaterial.pbr)
 
     @staticmethod
     def importer(idx, json, gltf):

@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_pbrMetallicRoughness import *
+from .gltf2_io_texture import *
 
 class PbrImporter():
 
@@ -31,8 +32,7 @@ class PbrImporter():
 
         if 'baseColorTexture' in pypbr.json.keys():
             pypbr.color_type = pypbr.TEXTURE
-            pypbr.baseColorTexture = PyTexture(pypbr.json['baseColorTexture']['index'], pypbr.gltf.json['textures'][pypbr.json['baseColorTexture']['index']], pypbr.gltf)
-            pypbr.baseColorTexture.read()
+            pypbr.baseColorTexture = TextureImporter.importer(pypbr.json['baseColorTexture']['index'], pypbr.gltf.json['textures'][pypbr.json['baseColorTexture']['index']], pypbr.gltf)
 
             if 'texCoord' in pypbr.json['baseColorTexture']:
                 pypbr.baseColorTexture.texcoord = int(pypbr.json['baseColorTexture']['texCoord'])
@@ -41,8 +41,7 @@ class PbrImporter():
 
         if 'metallicRoughnessTexture' in pypbr.json.keys():
             pypbr.metallic_type = pypbr.TEXTURE
-            pypbr.metallicRoughnessTexture = PyTexture(pypbr.json['metallicRoughnessTexture']['index'], pypbr.gltf.json['textures'][pypbr.json['metallicRoughnessTexture']['index']], pypbr.gltf)
-            pypbr.metallicRoughnessTexture.read()
+            pypbr.metallicRoughnessTexture = TextureImporter.importer(pypbr.json['metallicRoughnessTexture']['index'], pypbr.gltf.json['textures'][pypbr.json['metallicRoughnessTexture']['index']], pypbr.gltf)
 
             if 'texCoord' in pypbr.json['metallicRoughnessTexture']:
                 pypbr.metallicRoughnessTexture.texcoord = int(pypbr.json['metallicRoughnessTexture']['texCoord'])
