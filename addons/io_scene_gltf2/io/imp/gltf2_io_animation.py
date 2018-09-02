@@ -42,11 +42,17 @@ class AnimationImporter():
             pyanimation.name = pyanimation.json['name']
 
     @staticmethod
+    def set_anim(pyanimation, channel):
+        if channel.anim.index not in pyanimation.anims.keys():
+            pyanimation.anims[channel.anim.index] = []
+        pyanimation.anims[channel.anim.index].append(channel)
+
+    @staticmethod
     def dispatch_to_nodes(pyanimation):
         for channel in pyanimation.channels:
             node = pyanimation.gltf.scene.nodes[channel.node]
             if node:
-                node.animation.set_anim(channel)
+                AnimationImporter.set_anim(node.animation, channel)
             else:
                 pyanimation.gltf.log.error("ERROR, node not found")
 
