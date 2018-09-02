@@ -46,42 +46,6 @@ class PyImage():
         self.json  = json # Image json
         self.gltf  = gltf # Reference to global glTF instance
 
-    def read(self):
-
-
-        self.image_name = "Image_" + str(self.index)
-
-        if 'uri' in self.json.keys():
-            sep = ';base64,'
-            if self.json['uri'][:5] == 'data:':
-                idx = self.json['uri'].find(sep)
-                if idx != -1:
-                    data = self.json['uri'][idx+len(sep):]
-                    self.data = base64.b64decode(data)
-                    return
-
-            if isfile(join(dirname(self.gltf.filename), self.json['uri'])):
-                with open(join(dirname(self.gltf.filename), self.json['uri']), 'rb') as f_:
-                    self.data = f_.read()
-                    self.image_name = basename(join(dirname(self.gltf.filename), self.json['uri']))
-                    return
-            else:
-                self.gltf.log.error("Missing file (index " + str(self.index) + "): " + self.json['uri'])
-                return
-
-        if 'bufferView' not in self.json.keys():
-            return
-
-        if self.json['bufferView'] not in self.gltf.bufferViews.keys():
-            self.gltf.bufferViews[self.json['bufferView']] = BufferView(self.json['bufferView'], self.gltf.json['bufferViews'][self.json['bufferView']], self.gltf)
-            self.gltf.bufferViews[self.json['bufferView']].read()
-
-        self.bufferView = self.gltf.bufferViews[self.json['bufferView']]
-
-        self.data = self.bufferView.read_binary_data() #SPLIT_TODO
-
-        return
-
 #
 # Imports
 #
