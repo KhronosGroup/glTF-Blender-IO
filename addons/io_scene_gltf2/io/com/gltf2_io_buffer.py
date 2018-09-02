@@ -38,23 +38,3 @@ class Buffer():
         self.name = None
         self.extensions = {}
         self.extras = {}
-
-    def read(self):
-
-        if self.gltf.is_glb_format:
-            return
-
-        self.length = self.json['byteLength']
-
-        if 'uri' in self.json.keys():
-            sep = ';base64,'
-            if self.json['uri'][:5] == 'data:':
-                idx = self.json['uri'].find(sep)
-                if idx != -1:
-                    data = self.json['uri'][idx+len(sep):]
-                    self.data = base64.b64decode(data)
-                    return
-
-
-            with open(join(dirname(self.gltf.filename), self.json['uri']), 'rb') as f_:
-                self.data = f_.read()

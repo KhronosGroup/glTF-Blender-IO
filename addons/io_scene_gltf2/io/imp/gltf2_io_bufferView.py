@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_bufferview import *
+from .gltf2_io_buffer import *
 
 class BufferViewImporter():
 
@@ -30,8 +31,7 @@ class BufferViewImporter():
             return
 
         if pybufferview.json['buffer'] not in pybufferview.gltf.buffers:
-            pybufferview.gltf.buffers[pybufferview.json['buffer']] = Buffer(pybufferview.json['buffer'], pybufferview.gltf.json['buffers'][pybufferview.json['buffer']], pybufferview.gltf)
-            pybufferview.gltf.buffers[pybufferview.json['buffer']].read()
+            pybufferview.gltf.buffers[pybufferview.json['buffer']] = BufferImporter.importer(pybufferview.json['buffer'], pybufferview.gltf.json['buffers'][pybufferview.json['buffer']], pybufferview.gltf)
         pybufferview.buffer = pybufferview.gltf.buffers[pybufferview.json['buffer']]
 
     @staticmethod
