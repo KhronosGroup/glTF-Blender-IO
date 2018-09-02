@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_scene import *
+from .gltf2_io_node import *
 
 class SceneImporter():
 
@@ -35,8 +36,7 @@ class SceneImporter():
 
 
         for node_idx in pyscene.json['nodes']:
-            node = PyNode(node_idx, pyscene.gltf.json['nodes'][node_idx], pyscene.gltf, pyscene)
-            node.read()
+            node = NodeImporter.importer(node_idx, pyscene.gltf.json['nodes'][node_idx], pyscene.gltf, pyscene)
             pyscene.nodes[node_idx] = node
 
         for skin in pyscene.gltf.skins.values():
