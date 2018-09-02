@@ -80,7 +80,7 @@ class PyImage():
 
         self.bufferView = self.gltf.bufferViews[self.json['bufferView']]
 
-        self.data = self.bufferView.read_binary_data()
+        self.data = self.bufferView.read_binary_data() #SPLIT_TODO
 
         return
 

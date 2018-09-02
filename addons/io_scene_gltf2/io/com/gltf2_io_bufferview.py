@@ -45,6 +45,7 @@ class BufferView():
         self.extras = {}
 
 
+    #SPLIT_TODO: to be remove when accessor is finished (animation sampler / skin)
     def read(self):
         if not 'buffer' in self.json.keys():
             return
@@ -54,6 +55,7 @@ class BufferView():
             self.gltf.buffers[self.json['buffer']].read()
         self.buffer = self.gltf.buffers[self.json['buffer']]
 
+    #SPLIT_TODO: to be remove when accessor is finished (animation sampler / skin)
     def read_data(self, fmt, stride_, count, accessor_offset):
         data = []
 
@@ -80,6 +82,7 @@ class BufferView():
 
         return data
 
+    #SPLIT_TODO: to be remove when image is done
     def read_binary_data(self):
         if 'byteOffset' in self.json.keys():
             bufferview_offset = self.json['byteOffset']

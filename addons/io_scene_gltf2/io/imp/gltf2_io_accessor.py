@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_accessor import *
+from .gltf2_io_bufferView import *
 
 class AccessorImporter():
 
@@ -36,8 +37,7 @@ class AccessorImporter():
             pyaccessor.name = pyaccessor.json['name']
 
         if pyaccessor.json['bufferView'] not in pyaccessor.gltf.bufferViews.keys():
-            pyaccessor.gltf.bufferViews[pyaccessor.json['bufferView']] = BufferView(pyaccessor.json['bufferView'], pyaccessor.gltf.json['bufferViews'][pyaccessor.json['bufferView']], pyaccessor.gltf)
-            pyaccessor.gltf.bufferViews[pyaccessor.json['bufferView']].read()
+            pyaccessor.gltf.bufferViews[pyaccessor.json['bufferView']] = BufferViewImporter.importer(pyaccessor.json['bufferView'], pyaccessor.gltf.json['bufferViews'][pyaccessor.json['bufferView']], pyaccessor.gltf)
 
         pyaccessor.bufferView = pyaccessor.gltf.bufferViews[pyaccessor.json['bufferView']]
 
@@ -59,12 +59,12 @@ class AccessorImporter():
         if 'sparse' in pyaccessor.json.keys():
             pyaccessor.sparse = Sparse(pyaccessor.json['componentType'], pyaccessor.json['type'], pyaccessor.json['sparse'], pyaccessor.gltf)
             pyaccessor.sparse.read()
-            pyaccessor.data = pyaccessor.bufferView.read_data(fmt, stride, pyaccessor.json['count'], offset)
+            pyaccessor.data = BufferViewImporter.read_data(pyaccessor.bufferView, fmt, stride, pyaccessor.json['count'], offset)
             AccessorImporter.apply_sparse(pyaccessor)
             return pyaccessor.data
 
         else:
-            pyaccessor.data = pyaccessor.bufferView.read_data(fmt, stride, pyaccessor.json['count'], offset)
+            pyaccessor.data = BufferViewImporter.read_data(pyaccessor.bufferView, fmt, stride, pyaccessor.json['count'], offset)
             return pyaccessor.data
 
     @staticmethod
