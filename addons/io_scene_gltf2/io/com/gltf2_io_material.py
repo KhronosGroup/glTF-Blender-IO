@@ -22,9 +22,7 @@
  """
 
 from .gltf2_io_pbrMetallicRoughness import *
-from .gltf2_io_map_normal import *
-from .gltf2_io_map_emissive import *
-from .gltf2_io_map_occlusion import *
+from .gltf2_io_map import *
 from .gltf2_io_KHR_materials_pbrSpecularGlossiness import *
 
 class PyMaterial():
@@ -56,53 +54,3 @@ class PyMaterial():
         self.emissivemap  = None
         self.normalmap    = None
         self.occlusionmap = None
-
-    def read(self):
-
-        # If no index, this is the default material
-        if self.index is None:
-            self.pbr = PyPbr(None, self.gltf)
-            self.pbr.read()
-            self.name = "Default Material"
-            return
-
-        if 'extensions' in self.json.keys():
-            if 'KHR_materials_pbrSpecularGlossiness' in self.json['extensions'].keys():
-                self.KHR_materials_pbrSpecularGlossiness = PyKHR_materials_pbrSpecularGlossiness(self.json['extensions']['KHR_materials_pbrSpecularGlossiness'], self.gltf)
-                self.KHR_materials_pbrSpecularGlossiness.read()
-
-        # Not default material
-        if 'name' in self.json.keys():
-            self.name = self.json['name']
-
-        if 'pbrMetallicRoughness' in self.json.keys():
-            self.pbr = PyPbr(self.json['pbrMetallicRoughness'], self.gltf)
-        else:
-            self.pbr = PyPbr(None, self.gltf)
-        self.pbr.read()
-
-        # Emission
-        if 'emissiveTexture' in self.json.keys():
-            if 'emissiveFactor' in self.json.keys():
-                factor = self.json['emissiveFactor'] #TODO use self.emissiveFactor
-            else:
-                factor = [1.0, 1.0, 1.0]
-
-            self.emissivemap = PyEmissiveMap(self.json['emissiveTexture'], factor, self.gltf)
-            self.emissivemap.read()
-
-        # Normal Map
-        if 'normalTexture' in self.json.keys():
-            self.normalmap = PyNormalMap(self.json['normalTexture'], 1.0, self.gltf)
-            self.normalmap.read()
-
-        # Occlusion Map
-        if 'occlusionTexture' in self.json.keys():
-            self.occlusionmap = PyOcclusionMap(self.json['occlusionTexture'], 1.0, self.gltf)
-            self.occlusionmap.read()
-
-    def use_vertex_color(self):
-        if hasattr(self, 'KHR_materials_pbrSpecularGlossiness'):
-            self.KHR_materials_pbrSpecularGlossiness.use_vertex_color()
-        else:
-            self.pbr.use_vertex_color()

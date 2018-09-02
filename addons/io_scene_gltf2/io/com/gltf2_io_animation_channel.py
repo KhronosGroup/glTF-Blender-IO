@@ -29,21 +29,3 @@ class PyAnimChannel():
         self.json  = json # Anim Channel json
         self.anim  = anim # Reference to animation
         self.gltf  = gltf # Reference to global glTF instance
-
-    def read(self):
-        if not 'target' in self.json.keys():
-            return
-
-        self.node = self.json['target']['node']
-        self.path = self.json['target']['path']
-
-        if self.path != "weights":
-            channels = 0
-        else:
-            channels = 0
-            for prim in self.gltf.get_node(self.node).mesh.primitives:
-                if len(prim.targets) > channels:
-                    channels = len(prim.targets)
-        self.sampler = PySampler(self.json['sampler'], self.anim.json['samplers'][self.json['sampler']], self.gltf, channels)
-        self.data = self.sampler.read()
-        self.interpolation = self.sampler.interpolation

@@ -46,24 +46,3 @@ class PyCamera():
         # self.yfoc
         # self.xmag
         # self.ymag
-
-    def read(self):
-        if 'type' in self.json.keys():
-            self.type = self.json['type']
-
-        if self.type in self.json.keys():
-            if 'zfar' in self.json[self.type].keys():
-                self.zfar = self.json[self.type]['zfar']
-            if 'znear' in self.json[self.type].keys():
-                self.znear = self.json[self.type]['znear']
-
-            if self.type == "perspective":
-                if 'aspectRatio' in self.json[self.type].keys():
-                    self.aspectRatio = self.json[self.type]['aspectRatio']
-                if 'yfov' in self.json[self.type].keys():
-                    self.yfoc = self.json[self.type]['yfov']
-            elif self.type == "orthographic":
-                if 'xmag' in self.json[self.type].keys():
-                    self.xmag = self.json[self.type]['xmag']
-                if 'ymag' in self.json[self.type].keys():
-                    self.ymag = self.json[self.type]['ymag']

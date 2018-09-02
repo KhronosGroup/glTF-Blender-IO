@@ -18,11 +18,24 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .gltf2_io_map import *
+from ..com.gltf2_io_map import *
+from .gltf2_io_texture import *
 
-class PyOcclusionMap(PyMap):
-    def __init__(self, json, factor, gltf):
-        PyMap.__init__(self, json, factor, gltf)
+class MapImporter():
+
+    @staticmethod
+    def read(pymap):
+        pymap.texture = TextureImporter.importer(pymap.json['index'], pymap.gltf.json['textures'][pymap.json['index']], pymap.gltf)
+
+        if 'texCoord' in pymap.json.keys():
+            pymap.texCoord = int(pymap.json['texCoord'])
+        else:
+            pymap.texCoord = 0
+
+    @staticmethod
+    def importer(json, factor, gltf):
+        map = PyMap(json, factor, gltf)
+        MapImporter.read(map)
+        return map

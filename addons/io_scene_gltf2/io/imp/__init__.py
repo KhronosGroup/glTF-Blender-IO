@@ -18,11 +18,6 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .gltf2_io_map import *
-
-class PyNormalMap(PyMap):
-    def __init__(self, json, factor, gltf):
-        PyMap.__init__(self, json, factor, gltf)
+from .gltf2_io_gltf import *

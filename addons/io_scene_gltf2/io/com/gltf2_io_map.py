@@ -30,12 +30,3 @@ class PyMap():
         self.json   = json # map json
         self.factor = factor
         self.gltf   = gltf # Reference to global glTF instance
-
-    def read(self):
-        self.texture = PyTexture(self.json['index'], self.gltf.json['textures'][self.json['index']], self.gltf)
-        self.texture.read()
-
-        if 'texCoord' in self.json.keys():
-            self.texCoord = int(self.json['texCoord'])
-        else:
-            self.texCoord = 0

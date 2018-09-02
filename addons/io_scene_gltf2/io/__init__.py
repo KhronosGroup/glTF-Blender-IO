@@ -20,4 +20,4 @@
  * ***** END GPL LICENSE BLOCK *****
  """
 
-from .com import *
+from .imp import *

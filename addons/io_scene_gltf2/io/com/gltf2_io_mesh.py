@@ -41,32 +41,3 @@ class PyMesh():
 
         # PyMesh specific
         self.skin = None
-
-
-    def read(self):
-        if 'name' in self.json.keys():
-            self.name = self.json['name']
-            self.gltf.log.debug("Mesh " + self.json['name'])
-        else:
-            self.gltf.log.debug("Mesh index " + str(self.index))
-
-        cpt_idx_prim = 0
-        for primitive_it in self.json['primitives']:
-            primitive = PyPrimitive(cpt_idx_prim, primitive_it, self.gltf)
-            primitive.read()
-            self.primitives.append(primitive)
-            cpt_idx_prim += 1
-
-        # reading default targets weights if any
-        if 'weights' in self.json.keys():
-            for weight in self.json['weights']:
-                self.target_weights.append(weight)
-
-    def rig(self, skin_id, mesh_id):
-        if skin_id not in self.gltf.skins.keys():
-            self.skin = PySkin(skin_id, self.gltf.json['skins'][skin_id], self.gltf)
-            self.skin.mesh_id = mesh_id
-            self.gltf.skins[skin_id] = self.skin
-            self.skin.read()
-        else:
-            self.skin = self.gltf.skins[skin_id]

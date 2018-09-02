@@ -39,9 +39,3 @@ class PyAnimationData():
         self.anims = {}
         self.node_anim = PyAnimationNode(self)
         self.bone_anim = PyAnimationBone(self)
-
-
-    def set_anim(self, channel):
-        if channel.anim.index not in self.anims.keys():
-            self.anims[channel.anim.index] = []
-        self.anims[channel.anim.index].append(channel)

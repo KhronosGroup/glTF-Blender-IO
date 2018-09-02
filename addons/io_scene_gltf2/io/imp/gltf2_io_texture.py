@@ -18,11 +18,25 @@
  * Contributor(s): Julien Duroure.
  *
  * ***** END GPL LICENSE BLOCK *****
- * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .gltf2_io_map import *
+from ..com.gltf2_io_texture import *
+from .gltf2_io_image import *
 
-class PyEmissiveMap(PyMap):
-    def __init__(self, json, factor, gltf):
-        PyMap.__init__(self, json, factor, gltf)
+class TextureImporter():
+
+    @staticmethod
+    def read(pytexture):
+        if 'source' in pytexture.json.keys():
+
+            if pytexture.json['source'] not in pytexture.gltf.images.keys():
+                image = ImageImporter.importer(pytexture.json['source'], pytexture.gltf.json['images'][pytexture.json['source']], pytexture.gltf)
+                pytexture.gltf.images[pytexture.json['source']] = image
+
+            pytexture.image = pytexture.gltf.images[pytexture.json['source']]
+
+    @staticmethod
+    def importer(idx, json, gltf):
+        texture = PyTexture(idx, json, gltf)
+        TextureImporter.read(texture)
+        return texture

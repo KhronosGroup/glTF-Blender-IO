@@ -21,8 +21,6 @@
  * This development is done in strong collaboration with Airbus Defence & Space
  """
 
-from .gltf2_io_constants import *
-
 class PyAsset():
     def __init__(self, json, gltf):
         self.json  = json   # Asset json
@@ -37,26 +35,3 @@ class PyAsset():
         self.minVersion = None
         self.extensions = {}
         self.extras = {}
-
-
-    def read(self):
-        if 'version' in self.json.keys():
-            self.version = self.json['version']
-
-        if 'copyright' in self.json.keys():
-            self.copyright = self.json['copyright']
-
-        if 'generator' in self.json.keys():
-            self.generator = self.json['generator']
-
-        if 'minVersion' in self.json.keys():
-            self.minVersion = self.json['minVersion']
-
-    def check_version(self):
-        if self.version is None:
-            return False, "Version is mandatory"
-
-        if self.version != GLTF_VERSION:
-            return False, "glTF version is not supported"
-
-        return True, None
