@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_mesh import *
+from .gltf2_io_primitive import *
 
 class MeshImporter():
 
@@ -34,8 +35,7 @@ class MeshImporter():
 
         cpt_idx_prim = 0
         for primitive_it in pymesh.json['primitives']:
-            primitive = PyPrimitive(cpt_idx_prim, primitive_it, pymesh.gltf)
-            primitive.read()
+            primitive = PrimitiveImporter.importer(cpt_idx_prim, primitive_it, pymesh.gltf)
             pymesh.primitives.append(primitive)
             cpt_idx_prim += 1
 
