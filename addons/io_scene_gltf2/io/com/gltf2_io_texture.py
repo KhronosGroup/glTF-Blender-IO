@@ -39,6 +39,7 @@ class PyTexture():
         self.extension = {}
         self.extras = {}
 
+    #SPLIT_TODO: to be removed when KHR_materials_pbrSpecularGlossiness is done
     def read(self):
         if 'source' in self.json.keys():
 

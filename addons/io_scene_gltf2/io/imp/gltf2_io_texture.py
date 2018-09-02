@@ -20,22 +20,23 @@
  * ***** END GPL LICENSE BLOCK *****
  """
 
-from ..com.gltf2_io_map import *
-from .gltf2_io_texture import *
+from ..com.gltf2_io_texture import *
 
-class MapImporter():
-
-    @staticmethod
-    def read(pymap):
-        pymap.texture = TextureImporter.importer(pymap.json['index'], pymap.gltf.json['textures'][pymap.json['index']], pymap.gltf)
-
-        if 'texCoord' in pymap.json.keys():
-            pymap.texCoord = int(pymap.json['texCoord'])
-        else:
-            pymap.texCoord = 0
+class TextureImporter():
 
     @staticmethod
-    def importer(json, factor, gltf):
-        map = PyMap(json, factor, gltf)
-        MapImporter.read(map)
-        return map
+    def read(pytexture):
+        if 'source' in pytexture.json.keys():
+
+            if pytexture.json['source'] not in pytexture.gltf.images.keys():
+                image = PyImage(pytexture.json['source'], pytexture.gltf.json['images'][pytexture.json['source']], pytexture.gltf)
+                pytexture.gltf.images[pytexture.json['source']] = image
+
+            pytexture.image = pytexture.gltf.images[pytexture.json['source']]
+            pytexture.image.read()
+
+    @staticmethod
+    def importer(idx, json, gltf):
+        texture = PyTexture(idx, json, gltf)
+        TextureImporter.read(texture)
+        return texture
