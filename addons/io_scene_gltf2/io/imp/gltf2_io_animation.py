@@ -21,6 +21,7 @@
  """
 
 from ..com.gltf2_io_animation import *
+from .gltf2_io_animation_channel import *
 
 class AnimationImporter():
 
@@ -31,8 +32,7 @@ class AnimationImporter():
 
         channel_idx = 0
         for channel in pyanimation.json['channels']:
-            chan = PyAnimChannel(channel_idx, pyanimation.json['channels'][channel_idx], pyanimation, pyanimation.gltf)
-            chan.read()
+            chan = AnimChannelImporter.importer(channel_idx, pyanimation.json['channels'][channel_idx], pyanimation, pyanimation.gltf)
             pyanimation.channels.append(chan)
             channel_idx += 1
 
