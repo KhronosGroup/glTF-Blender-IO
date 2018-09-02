@@ -46,8 +46,6 @@ class PyImage():
         self.json  = json # Image json
         self.gltf  = gltf # Reference to global glTF instance
 
-        self.blender_image_name = None
-
     def read(self):
 
 
