@@ -72,7 +72,7 @@ class NodeImporter():
                 pynode.mesh = pynode.gltf.meshes[pynode.json['mesh']]
 
             if 'skin' in pynode.json.keys():
-                pynode.mesh.rig(pynode.json['skin'], pynode.index)
+                MeshImporter.rig(pynode.mesh, pynode.json['skin'], pynode.index)
 
         if 'camera' in pynode.json.keys():
             pynode.camera = CameraImporter.importer(pynode.json['camera'], pynode.name, pynode.gltf.json['cameras'][pynode.json['camera']], pynode.gltf)

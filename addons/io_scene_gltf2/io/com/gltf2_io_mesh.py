@@ -41,13 +41,3 @@ class PyMesh():
 
         # PyMesh specific
         self.skin = None
-
-
-    def rig(self, skin_id, mesh_id):
-        if skin_id not in self.gltf.skins.keys():
-            self.skin = PySkin(skin_id, self.gltf.json['skins'][skin_id], self.gltf)
-            self.skin.mesh_id = mesh_id
-            self.gltf.skins[skin_id] = self.skin
-            self.skin.read()
-        else:
-            self.skin = self.gltf.skins[skin_id]

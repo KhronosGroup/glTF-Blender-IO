@@ -46,22 +46,3 @@ class PySkin():
         self.bones = [] #TODO is joints
         self.mesh_id = None
         self.root = None #TODO is skeleton
-
-    def read(self):
-        if 'skeleton' in self.json.keys():
-            self.root = self.json['skeleton']
-
-        if 'joints' in self.json.keys():
-            self.bones = self.json['joints']
-
-        if 'name' in self.json.keys():
-            self.name = self.json['name']
-
-        if 'inverseBindMatrices' in self.json.keys():
-            if self.json['inverseBindMatrices'] not in self.gltf.accessors.keys():
-                self.gltf.accessors[self.json['inverseBindMatrices']] = Accessor(self.json['inverseBindMatrices'], self.gltf.json['accessors'][self.json['inverseBindMatrices']], self.gltf)
-                self.inverseBindMatrices = self.gltf.accessors[self.json['inverseBindMatrices']]
-                self.data = self.inverseBindMatrices.read()
-            else:
-                self.inverseBindMatrices = self.gltf.accessors[self.json['inverseBindMatrices']]
-                self.data = self.inverseBindMatrices.data

@@ -22,6 +22,7 @@
 
 from ..com.gltf2_io_mesh import *
 from .gltf2_io_primitive import *
+from .gltf2_io_skin import *
 
 class MeshImporter():
 
@@ -43,6 +44,15 @@ class MeshImporter():
         if 'weights' in pymesh.json.keys():
             for weight in pymesh.json['weights']:
                 pymesh.target_weights.append(weight)
+
+    @staticmethod
+    def rig(pymesh, skin_id, mesh_id):
+        if skin_id not in pymesh.gltf.skins.keys():
+            pymesh.skin = SkinImporter.importer(skin_id, pymesh.gltf.json['skins'][skin_id], pymesh.gltf)
+            pymesh.skin.mesh_id = mesh_id
+            pymesh.gltf.skins[skin_id] = pymesh.skin
+        else:
+            pymesh.skin = pymesh.gltf.skins[skin_id]
 
     @staticmethod
     def importer(idx, json, gltf):
