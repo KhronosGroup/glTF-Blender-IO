@@ -38,7 +38,11 @@ class glTFImporter():
 
         # json
         type, str_json, offset = glTFImporter.load_chunk(pygltf, offset)
-        pygltf.json = json.loads(str_json.decode('utf-8'))
+        try:
+            pygltf.json = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
+        except ValueError as e:
+            return False, e.args[0]
+
 
         # binary data
         chunk_cpt = 0
@@ -50,6 +54,7 @@ class glTFImporter():
             chunk_cpt += 1
 
         pygltf.content = None
+        return True, None
 
     @staticmethod
     def load_chunk(pygltf, offset):
@@ -59,6 +64,10 @@ class glTFImporter():
         data         = pygltf.content[offset + 8 : offset + 8 + data_length]
 
         return data_type, data, offset + 8 + data_length
+
+    @staticmethod
+    def bad_json_value(val):
+        raise ValueError('Json contains some unauthorized values')
 
     @staticmethod
     def load(pygltf):
@@ -72,11 +81,16 @@ class glTFImporter():
             pygltf.content = None
             with open(pygltf.filename, 'r') as f:
                 content = f.read()
-                pygltf.json = json.loads(content)
+                try:
+                    pygltf.json = json.loads(content, parse_constant=glTFImporter.bad_json_value)
+                    return True, None
+                except ValueError as e:
+                    return False, e.args[0]
 
         else:
             # Parsing glb file
-            glTFImporter.load_glb(pygltf)
+            success, txt = glTFImporter.load_glb(pygltf)
+            return success, txt
 
     @staticmethod
     def get_root_scene(pygltf):
@@ -158,7 +172,8 @@ class glTFImporter():
     @staticmethod
     def importer(filename, loglevel=logging.ERROR):
         pygltf = PyglTF(filename, loglevel=loglevel)
-        glTFImporter.load(pygltf)
-        success, txt = glTFImporter.read(pygltf)
+        success, txt = glTFImporter.load(pygltf)
+        if success:
+            success, txt = glTFImporter.read(pygltf)
 
         return success, pygltf, txt
