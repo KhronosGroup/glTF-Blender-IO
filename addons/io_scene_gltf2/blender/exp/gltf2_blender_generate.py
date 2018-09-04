@@ -26,9 +26,11 @@ import zlib
 
 import bpy
 
+from ..com.gltf2_blender_image import *
+from ...io.com.gltf2_io_image import *
+
 from ...io.com.gltf2_io_constants import *
 from ...io.com.gltf2_io_debug import *
-from ...io.com.gltf2_io_image import *
 
 from ...io.exp.gltf2_io_generate import *
 from ...io.exp.gltf2_io_get import *
@@ -39,6 +41,7 @@ from .gltf2_blender_filter import *
 from .gltf2_blender_get import *
 from .gltf2_blender_generate_materials import *
 
+from ...io.com.gltf2_io import Animation, Camera, Mesh, MeshPrimitive, Node, Skin, Image, TextureInfo, Scene, Buffer
 
 #
 # Globals
@@ -77,7 +80,7 @@ def create_image_file(context, blender_image, dst_path, file_format):
     Creates JPEG or PNG file from a given Blender image.
     """
 
-    # Check, if source image exists e.g. does not exist if image is packed.    
+    # Check, if source image exists e.g. does not exist if image is packed.
     file_exists = 1
     try:
         src_path = bpy.path.abspath(blender_image.filepath, library=blender_image.library)
@@ -86,13 +89,13 @@ def create_image_file(context, blender_image, dst_path, file_format):
         file_exists = 0
     else:
         file.close()
-    
+
     if file_exists == 0:
         # Image does not exist on disk ...
         blender_image.filepath = dst_path
         # ... so save it.
         blender_image.save()
-        
+
     elif file_format == blender_image.file_format:
         # Copy source image to destination, keeping original format.
 
@@ -142,8 +145,9 @@ def _create_jpg_data(context, export_settings, blender_image):
 
     jpg_data = open(path, 'rb').read()
     os.remove(path)
-    
+
     return jpg_data
+
 
 def _create_png_data(context, export_settings, blender_image):
     """
@@ -412,7 +416,8 @@ def generate_animations_parameter(
             if interpolation == 'CUBICSPLINE':
                 interpolation = 'CONVERSION_NEEDED'
             rotation_data = animate_rotation_euler(export_settings, rotation_euler, rotation_mode, interpolation,
-                                                   node_type, used_node_name, action.name, matrix_correction, matrix_basis)
+                                                   node_type, used_node_name, action.name, matrix_correction,
+                                                   matrix_basis)
 
         if rotation_quaternion.count(None) < 4:
             interpolation = animate_get_interpolation(export_settings, rotation_quaternion)
@@ -746,6 +751,7 @@ def generate_animations_parameter(
 
         write_transform_index += 1
 
+
 #
 # Property: animations
 #
@@ -756,6 +762,7 @@ def generate_animations(operator,
     """
     Generates the top level animations entry.
     """
+
     def process_object_animations(blender_object, blender_action):
         correction_matrix_local = blender_object.matrix_parent_inverse
         matrix_basis = mathutils.Matrix.Identity(4)
@@ -841,7 +848,9 @@ def generate_animations(operator,
 
                         tmp_location, tmp_rotation, tmp_scale = matrix.decompose()
 
-                        gltf_joint_cache[blender_action.name][blender_bone.name][float(frame)] = [tmp_location, tmp_rotation, tmp_scale]
+                        gltf_joint_cache[blender_action.name][blender_bone.name][float(frame)] = [tmp_location,
+                                                                                                  tmp_rotation,
+                                                                                                  tmp_scale]
 
                 #
 
@@ -976,13 +985,12 @@ def generate_animations(operator,
     #
 
     if len(animations) > 0:
-        glTF['animations'] = []
         # Sampler 'name' is used to gather the index. However, 'name' is no property of sampler and has to be removed.
         for animation in animations.values():
             for sampler in animation['samplers']:
                 del sampler['name']
             if len(animation['channels']) > 0:
-                glTF['animations'].append(animation)
+                glTF.animations.append(Animation.from_dict(animation))
 
 
 def compute_bone_matrices(axis_basis_change, blender_bone, blender_object, export_settings):
@@ -1132,19 +1140,19 @@ def generate_cameras(export_settings, glTF):
         #
         #
 
-        cameras.append(camera)
+        cameras.append(Camera.from_dict(camera))
 
     #
     #
 
     if len(cameras) > 0:
-        glTF['cameras'] = cameras
+        glTF.cameras = cameras
 
 
 def generate_lights(operator,
-                        context,
-                        export_settings,
-                        glTF):
+                    context,
+                    export_settings,
+                    glTF):
     """
     Generates the top level lights entry.
     Note: This is currently an experimental feature.
@@ -1185,7 +1193,7 @@ def generate_lights(operator,
             light['spot'] = spot
 
         light['color'] = [blender_light.color[0], blender_light.color[1], blender_light.color[2]]
-        
+
         # Blender Render lamps have no real-world units, while glTF lights use candela
         # (for punctual lights) and lux (for ambient and directional lights). For lack
         # of a better conversion, use the unitless energy value here.
@@ -1208,10 +1216,7 @@ def generate_lights(operator,
         generate_extensionsUsed(export_settings, glTF, 'KHR_lights_punctual')
         generate_extensionsRequired(export_settings, glTF, 'KHR_lights_punctual')
 
-        if glTF.get('extensions') is None:
-            glTF['extensions'] = {}
-
-        extensions = glTF['extensions']
+        extensions = glTF.extensions
 
         extensions['KHR_lights_punctual'] = {
             'lights': lights
@@ -1246,15 +1251,31 @@ def generate_meshes(operator,
         # Property: mesh
         #
 
-        mesh = {}
+        primitives = []
+
+        mesh = Mesh(
+            extensions={},
+            extras=None,
+            name=name,
+            primitives=primitives,
+            weights=[]
+        )
 
         #
 
-        primitives = []
-
         for internal_primitive in internal_primitives:
 
-            primitive = {}
+            attributes = {}
+
+            primitive = MeshPrimitive(
+                attributes=attributes,
+                extensions={},
+                extras={},
+                indices=None,
+                material=None,
+                mode=None,
+                targets=[]
+            )
 
             #
             #
@@ -1270,7 +1291,7 @@ def generate_meshes(operator,
 
                 # Meshes/primitives without material are allowed.
                 if material >= 0:
-                    primitive['material'] = material
+                    primitive.material = material
                 else:
                     print_console('WARNING', 'Material ' + internal_primitive[
                         'material'] + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
@@ -1302,18 +1323,13 @@ def generate_meshes(operator,
             type = GLTF_DATA_TYPE_SCALAR
 
             indices_index = generate_accessor(export_settings, glTF, indices, componentType, count,
-                                            type, "ELEMENT_ARRAY_BUFFER")
+                                              type, "ELEMENT_ARRAY_BUFFER")
 
             if indices_index < 0:
                 print_console('ERROR', 'Could not create accessor for indices')
                 continue
 
-            primitive['indices'] = indices_index
-
-            #
-            #
-
-            attributes = {}
+            primitive.indices = indices_index
 
             #
 
@@ -1329,7 +1345,7 @@ def generate_meshes(operator,
             count = len(internal_position) // 3
 
             position = generate_accessor(export_settings, glTF, internal_position, componentType,
-                                       count, GLTF_DATA_TYPE_VEC3, "ARRAY_BUFFER")
+                                         count, GLTF_DATA_TYPE_VEC3, "ARRAY_BUFFER")
 
             if position < 0:
                 print_console('ERROR', 'Could not create accessor for position')
@@ -1345,8 +1361,8 @@ def generate_meshes(operator,
                 count = len(internal_normal) // 3
 
                 normal = generate_accessor(export_settings, glTF, internal_normal,
-                                         GLTF_COMPONENT_TYPE_FLOAT,
-                                         count, GLTF_DATA_TYPE_VEC3, "ARRAY_BUFFER")
+                                           GLTF_COMPONENT_TYPE_FLOAT,
+                                           count, GLTF_DATA_TYPE_VEC3, "ARRAY_BUFFER")
 
                 if normal < 0:
                     print_console('ERROR', 'Could not create accessor for normal')
@@ -1363,8 +1379,8 @@ def generate_meshes(operator,
                     count = len(internal_tangent) // 4
 
                     tangent = generate_accessor(export_settings, glTF, internal_tangent,
-                                              GLTF_COMPONENT_TYPE_FLOAT,
-                                              count, GLTF_DATA_TYPE_VEC4, "ARRAY_BUFFER")
+                                                GLTF_COMPONENT_TYPE_FLOAT,
+                                                count, GLTF_DATA_TYPE_VEC4, "ARRAY_BUFFER")
 
                     if tangent < 0:
                         print_console('ERROR', 'Could not create accessor for tangent')
@@ -1387,8 +1403,8 @@ def generate_meshes(operator,
                         count = len(internal_texcoord) // 2
 
                         texcoord = generate_accessor(export_settings, glTF, internal_texcoord,
-                                                   GLTF_COMPONENT_TYPE_FLOAT, count, GLTF_DATA_TYPE_VEC2,
-                                                   "ARRAY_BUFFER")
+                                                     GLTF_COMPONENT_TYPE_FLOAT, count, GLTF_DATA_TYPE_VEC2,
+                                                     "ARRAY_BUFFER")
 
                         if texcoord < 0:
                             process_texcoord = False
@@ -1416,8 +1432,8 @@ def generate_meshes(operator,
                         count = len(internal_color) // 4
 
                         color = generate_accessor(export_settings, glTF, internal_color,
-                                                GLTF_COMPONENT_TYPE_FLOAT,
-                                                count, GLTF_DATA_TYPE_VEC4, "ARRAY_BUFFER")
+                                                  GLTF_COMPONENT_TYPE_FLOAT,
+                                                  count, GLTF_DATA_TYPE_VEC4, "ARRAY_BUFFER")
 
                         if color < 0:
                             process_color = False
@@ -1446,8 +1462,8 @@ def generate_meshes(operator,
                         count = len(internal_joint) // 4
 
                         joint = generate_accessor(export_settings, glTF, internal_joint,
-                                                GLTF_COMPONENT_TYPE_UNSIGNED_SHORT,
-                                                count, GLTF_DATA_TYPE_VEC4, "ARRAY_BUFFER")
+                                                  GLTF_COMPONENT_TYPE_UNSIGNED_SHORT,
+                                                  count, GLTF_DATA_TYPE_VEC4, "ARRAY_BUFFER")
 
                         if joint < 0:
                             process_bone = False
@@ -1560,13 +1576,13 @@ def generate_meshes(operator,
                                     count = len(internal_target_tangent) // 3
 
                                     target_tangent = generate_accessor(
-                                                                     export_settings,
-                                                                     glTF,
-                                                                     internal_target_tangent,
-                                                                     GLTF_COMPONENT_TYPE_FLOAT,
-                                                                     count,
-                                                                     GLTF_DATA_TYPE_VEC3,
-                                                                     "")
+                                        export_settings,
+                                        glTF,
+                                        internal_target_tangent,
+                                        GLTF_COMPONENT_TYPE_FLOAT,
+                                        count,
+                                        GLTF_DATA_TYPE_VEC3,
+                                        "")
 
                                     if target_tangent < 0:
                                         print_console('ERROR', 'Could not create accessor for ' + target_tangent_id)
@@ -1582,12 +1598,7 @@ def generate_meshes(operator,
                                 morph_index += 1
 
                     if len(targets) > 0:
-                        primitive['targets'] = targets
-
-            #
-            #
-
-            primitive['attributes'] = attributes
+                        primitive.targets = targets
 
             #
             #
@@ -1600,7 +1611,7 @@ def generate_meshes(operator,
             extras = generate_extras(blender_mesh)
 
             if extras is not None:
-                mesh['extras'] = extras
+                mesh.extras = extras
 
         #
 
@@ -1624,14 +1635,6 @@ def generate_meshes(operator,
                     mesh['extras']['targetNames'] = target_names
 
         #
-
-        mesh['primitives'] = primitives
-
-        #
-
-        mesh['name'] = name
-
-        #
         #
 
         meshes.append(mesh)
@@ -1640,7 +1643,7 @@ def generate_meshes(operator,
     #
 
     if len(meshes) > 0:
-        glTF['meshes'] = meshes
+        glTF.meshes = meshes
 
 
 def generate_duplicate_mesh(glTF, blender_object):
@@ -1659,7 +1662,8 @@ def generate_duplicate_mesh(glTF, blender_object):
     if mesh_index == -1:
         return False
 
-    new_mesh = copy.deepcopy(glTF['meshes'][mesh_index])
+    copy_obj = glTF.meshes[mesh_index].to_dict()
+    new_mesh = Mesh.from_dict(copy.deepcopy(copy_obj))  # deep copy
 
     #
 
@@ -1683,9 +1687,9 @@ def generate_duplicate_mesh(glTF, blender_object):
 
     new_name = blender_object.data.name + '_' + blender_object.name
 
-    new_mesh['name'] = new_name
+    new_mesh.name = new_name
 
-    glTF['meshes'].append(new_mesh)
+    glTF.meshes.append(new_mesh)
 
     return get_mesh_index(glTF, new_name)
 
@@ -1705,17 +1709,17 @@ def generate_node_parameter(
     #
 
     if translation[0] != 0.0 or translation[1] != 0.0 or translation[2] != 0.0:
-        node['translation'] = [translation[0], translation[1], translation[2]]
+        node.translation = [translation[0], translation[1], translation[2]]
 
     #
 
     if rotation[0] != 0.0 or rotation[1] != 0.0 or rotation[2] != 0.0 or rotation[3] != 1.0:
-        node['rotation'] = [rotation[0], rotation[1], rotation[2], rotation[3]]
+        node.rotation = [rotation[0], rotation[1], rotation[2], rotation[3]]
 
     #
 
     if scale[0] != 1.0 or scale[1] != 1.0 or scale[2] != 1.0:
-        node['scale'] = [scale[0], scale[1], scale[2]]
+        node.scale = [scale[0], scale[1], scale[2]]
 
 
 def generate_node_instance(context,
@@ -1728,13 +1732,27 @@ def generate_node_instance(context,
     Helper function for storing node instances.
     """
 
-    correction_quaternion = convert_swizzle_rotation(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)), export_settings)
+    correction_quaternion = convert_swizzle_rotation(mathutils.Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)),
+                                                     export_settings)
 
     #
     # Property: node
     #
 
-    node = {}
+    node = Node(
+        camera=None,
+        children=[],
+        extensions={},
+        extras=None,
+        matrix=[],
+        mesh=None,
+        name=None,
+        rotation=None,
+        scale=None,
+        skin=None,
+        translation=None,
+        weights=None
+    )
 
     #
     #
@@ -1768,7 +1786,7 @@ def generate_node_instance(context,
                 #
 
                 if mesh >= 0:
-                    node['mesh'] = mesh
+                    node.mesh = mesh
 
         #
         #
@@ -1790,7 +1808,7 @@ def generate_node_instance(context,
 
                         nodes.append(correction_node)
                     else:
-                        node['camera'] = camera
+                        node.camera = camera
 
         if export_settings['gltf_lights']:
             if blender_object.type == 'LAMP':
@@ -1811,7 +1829,7 @@ def generate_node_instance(context,
 
                         nodes.append(correction_node)
                     else:
-                        node['extensions'] = extensions
+                        node.extensions = extensions
 
     #
 
@@ -1819,11 +1837,11 @@ def generate_node_instance(context,
         extras = generate_extras(blender_object)
 
         if extras is not None:
-            node['extras'] = extras
+            node.extras = extras
 
             #
 
-    node['name'] = blender_object.name
+    node.name = blender_object.name
 
     #
 
@@ -1867,7 +1885,7 @@ def generate_nodes(operator,
                     node = generate_node_instance(context, export_settings, glTF, nodes, blender_dupli_object,
                                                   True)
 
-                    node['name'] = 'Duplication_' + blender_object.name + '_' + blender_dupli_object.name
+                    node.name = 'Duplication_' + blender_object.name + '_' + blender_dupli_object.name
 
                     #
                     #
@@ -1876,13 +1894,26 @@ def generate_nodes(operator,
 
                 #
 
-                node = {}
+                node = Node(
+                    camera=None,
+                    children=[],
+                    extensions={},
+                    extras=None,
+                    matrix=[],
+                    mesh=None,
+                    name=None,
+                    rotation=None,
+                    scale=None,
+                    skin=None,
+                    translation=None,
+                    weights=None
+                )
 
-                node['name'] = 'Duplication_Offset_' + blender_object.name
+                node.name = 'Duplication_Offset_' + blender_object.name
 
                 translation = convert_swizzle_location(blender_object.dupli_group.dupli_offset, export_settings)
 
-                node['translation'] = [-translation[0], -translation[1], -translation[2]]
+                node.translation = [-translation[0], -translation[1], -translation[2]]
 
                 nodes.append(node)
 
@@ -1890,7 +1921,7 @@ def generate_nodes(operator,
     #
 
     if len(nodes) > 0:
-        glTF['nodes'] = nodes
+        glTF.nodes = nodes
 
     #
     #
@@ -1944,7 +1975,20 @@ def generate_nodes(operator,
                         axis_basis_change = mathutils.Matrix.Identity(4)
 
                     if not joints_written:
-                        node = {}
+                        node = Node(
+                            camera=None,
+                            children=[],
+                            extensions={},
+                            extras=None,
+                            matrix=[],
+                            mesh=None,
+                            name=None,
+                            rotation=None,
+                            scale=None,
+                            skin=None,
+                            translation=None,
+                            weights=None
+                        )
 
                         if blender_bone.parent is None:
                             correction_matrix_local = axis_basis_change * blender_bone.bone.matrix_local
@@ -1961,7 +2005,7 @@ def generate_nodes(operator,
 
                         #
 
-                        node['name'] = blender_object.name + "_" + blender_bone.name
+                        node.name = blender_object.name + "_" + blender_bone.name
 
                         #
                         #
@@ -1989,11 +2033,18 @@ def generate_nodes(operator,
 
                 #
 
-                skin = {}
+                skin = Skin(
+                    extensions=None,
+                    extras=None,
+                    inverse_bind_matrices=None,
+                    joints=[],
+                    name=None,
+                    skeleton=None
+                )
 
-                skin['skeleton'] = get_node_index(glTF, blender_object.name)
+                skin.skeleton = get_node_index(glTF, blender_object.name)
 
-                skin['joints'] = joints
+                skin.joints = joints
 
                 #
                 count = len(inverse_matrices) // 16
@@ -2009,7 +2060,7 @@ def generate_nodes(operator,
                     ""
                 )
 
-                skin['inverseBindMatrices'] = inverseBindMatrices
+                skin.inverse_bind_matrices = inverseBindMatrices
 
                 #
 
@@ -2024,7 +2075,7 @@ def generate_nodes(operator,
     #
 
     if len(skins) > 0:
-        glTF['skins'] = skins
+        glTF.skins = skins
 
     #
     # Resolve children etc.
@@ -2057,7 +2108,7 @@ def generate_nodes(operator,
 
                     index_offset = len(blender_armature.children) + index_local_offset
 
-                node['skin'] = get_skin_index(glTF, blender_armature.name, index_offset)
+                node.skin = get_skin_index(glTF, blender_armature.name, index_offset)
 
         #
 
@@ -2108,7 +2159,7 @@ def generate_nodes(operator,
                     if child_index >= 0:
                         duplication_children.append(child_index)
 
-                duplication_node['children'] = duplication_children
+                duplication_node.children = duplication_children
 
                 #
 
@@ -2164,10 +2215,10 @@ def generate_nodes(operator,
 
                         child_node = nodes[node_index]
 
-                        child_node['children'] = joint_children
+                        child_node.children = joint_children
 
         if len(children) > 0:
-            node['children'] = children
+            node.children = children
 
 
 def generate_images(operator,
@@ -2181,7 +2232,7 @@ def generate_images(operator,
     filtered_images = export_settings['filtered_images']
 
     images = []
-    
+
     #
     #
 
@@ -2190,7 +2241,7 @@ def generate_images(operator,
         # Property: image
         #
 
-        image = { 'name': get_image_name(blender_image.name) }
+        image = {'name': get_image_name(blender_image.name)}
 
         file_format = get_image_format(export_settings, blender_image)
         mime_type = 'image/jpeg' if file_format == 'JPEG' else 'image/png'
@@ -2208,7 +2259,7 @@ def generate_images(operator,
 
                 image['mimeType'] = mime_type
 
-                image['uri'] = 'data:' + mime_type +  ';base64,' + base64.b64encode(image_data).decode('ascii')
+                image['uri'] = 'data:' + mime_type + ';base64,' + base64.b64encode(image_data).decode('ascii')
 
             else:
                 # Store image external.
@@ -2217,6 +2268,13 @@ def generate_images(operator,
                 path = export_settings['gltf_filedirectory'] + uri
 
                 create_image_file(context, blender_image, path, file_format)
+
+                test_dst = create_img(blender_image.size[0], blender_image.size[1])
+                test_src = create_img_from_blender_image(blender_image)
+
+                copy_img_channel(test_dst, 0, test_src, 0)
+                copy_img_channel(test_dst, 2, test_src, 1)
+                test_save_img(test_dst, path + ".test.png")
 
                 # Required
 
@@ -2238,65 +2296,13 @@ def generate_images(operator,
         #
         #
 
-        images.append(image)
+        images.append(Image.from_dict(image))
 
-    for merged_image in export_settings['filtered_merged_images']:
-        #
-        # Property: image
-        #
-
-        image = { 'name': get_image_name(merged_image.name) }
-
-        mime_type = 'image/png'
-
-        #
-
-        if export_settings['gltf_format'] == 'ASCII':
-
-            if export_settings['gltf_embed_images']:
-                # Embed image as Base64.
-
-                image_data = merged_image.to_png_data()
-
-                # Required
-
-                image['mimeType'] = mime_type
-
-                image['uri'] = 'data:' + mime_type +  ';base64,' + base64.b64encode(image_data).decode('ascii')
-
-            else:
-                # Store image external.
-
-                path = export_settings['gltf_filedirectory'] + merged_image.name + ".png"
-
-                merged_image.save_png(path)
-
-                # Required
-
-                image['uri'] = merged_image.name + ".png"
-
-        else:
-            # Store image as glb.
-
-            image_data = merged_image.to_png_data()
-
-            bufferView = generate_bufferView(export_settings, glTF, image_data, 0, 0)
-
-            # Required
-
-            image['mimeType'] = mime_type
-
-            image['bufferView'] = bufferView
-
-        #
-        #
-
-        images.append(image)
     #
     #
 
     if len(images) > 0:
-        glTF['images'] = images
+        glTF.images = images
 
 
 def generate_textures(operator,
@@ -2338,15 +2344,8 @@ def generate_textures(operator,
             #
             #
 
-            textures.append(texture)
+            textures.append(TextureInfo.from_dict(texture))
 
-        elif isinstance(blender_texture, Image):
-            magFilter = 9729
-            wrap = 10497
-
-            texture['sampler'] = generate_sampler(export_settings, glTF, magFilter, wrap)
-            texture['source'] = get_image_index(glTF, blender_texture.name)
-            textures.append(texture)
         else:
             magFilter = 9729
             wrap = 10497
@@ -2360,13 +2359,13 @@ def generate_textures(operator,
             #
             #
 
-            textures.append(texture)
+            textures.append(TextureInfo.from_dict(texture))
 
     #
     #
 
     if len(textures) > 0:
-        glTF['textures'] = textures
+        glTF.textures = textures
 
 
 def generate_scenes(export_settings,
@@ -2384,11 +2383,14 @@ def generate_scenes(export_settings,
         # Property: scene
         #
 
-        scene = {}
-
-        #
-
         nodes = []
+
+        scene = Scene(
+            extensions=None,
+            extras=None,
+            name=blender_scene.name,
+            nodes=nodes
+        )
 
         for blender_object in blender_scene.objects:
             if blender_object.parent is None:
@@ -2399,9 +2401,6 @@ def generate_scenes(export_settings,
 
                 nodes.append(node_index)
 
-        if len(nodes) > 0:
-            scene['nodes'] = nodes
-
         #
 
         if export_settings['gltf_lights']:
@@ -2409,7 +2408,7 @@ def generate_scenes(export_settings,
             if light >= 0:
                 khr_lights_punctual = {'light': light}
                 extensions = {'KHR_lights_punctual': khr_lights_punctual}
-                scene['extensions'] = extensions
+                scene.extensions = extensions
 
         #
 
@@ -2417,11 +2416,9 @@ def generate_scenes(export_settings,
             extras = generate_extras(blender_scene.world)
 
             if extras is not None:
-                scene['extras'] = extras
+                scene.extras = extras
 
                 #
-
-        scene['name'] = blender_scene.name
 
         #
         #
@@ -2432,7 +2429,7 @@ def generate_scenes(export_settings,
     #
 
     if len(scenes) > 0:
-        glTF['scenes'] = scenes
+        glTF.scenes = scenes
 
 
 def generate_scene(glTF):
@@ -2446,7 +2443,7 @@ def generate_scene(glTF):
     #
 
     if index >= 0:
-        glTF['scene'] = index
+        glTF.scene = index
 
 
 def generate_glTF(operator,
@@ -2541,7 +2538,7 @@ def generate_glTF(operator,
     byteLength = len(export_settings['gltf_binary'])
 
     if byteLength > 0:
-        glTF['buffers'] = []
+        glTF.buffers = []
 
         buffer = {
             'byteLength': byteLength
@@ -2556,4 +2553,4 @@ def generate_glTF(operator,
 
             buffer['uri'] = uri
 
-        glTF['buffers'].append(buffer)
+        glTF.buffers.append(Buffer.from_dict(buffer))

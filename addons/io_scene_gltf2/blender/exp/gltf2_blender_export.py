@@ -21,6 +21,7 @@ import bpy
 from ...io.com.gltf2_io_debug import *
 
 from ...io.exp.gltf2_io_export import *
+from ...io.com.gltf2_io import Gltf
 
 from .gltf2_blender_filter import *
 from .gltf2_blender_generate import *
@@ -80,13 +81,49 @@ def save(operator,
     
     #
 
-    glTF = {}
+    glTF = Gltf(
+        accessors=[],
+        animations=[],
+        asset=None,
+        buffers=[],
+        buffer_views=[],
+        cameras=[],
+        extensions={},
+        extensions_required=[],
+        extensions_used=[],
+        extras=None,
+        images=[],
+        materials=[],
+        meshes=[],
+        nodes=[],
+        samplers=[],
+        scene=-1,
+        scenes=[],
+        skins=[],
+        textures=[]
+    )
 
     generate_glTF(operator, context, export_settings, glTF)
 
     #
 
-    save_gltf(glTF, export_settings, BlenderEncoder)
+    def dict_strip_null_keys(obj):
+        o = obj
+        if isinstance(obj, dict):
+            o = {}
+            for k, v in obj.items():
+                if v is None:
+                    continue
+                elif isinstance(v, list) and len(v) == 0:
+                    continue
+                o[k] = dict_strip_null_keys(v)
+        elif isinstance(obj, list):
+            o = []
+            for v in obj:
+                o.append(dict_strip_null_keys(v))
+        return o
+
+    save_gltf(dict_strip_null_keys(glTF.to_dict()), export_settings, BlenderEncoder)
         
     #
     

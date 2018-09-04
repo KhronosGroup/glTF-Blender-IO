@@ -19,6 +19,7 @@
 import bpy
 
 from ...io.com.gltf2_io_debug import *
+from ...io.com.gltf2_io import Material
 
 from ...io.exp.gltf2_io_generate import *
 from ...io.exp.gltf2_io_get import *
@@ -737,7 +738,7 @@ def generate_materials(operator,
                 #
                 #
 
-                materials.append(material)
+                materials.append(Material.from_dict(material))
 
     #
     #
@@ -754,4 +755,4 @@ def generate_materials(operator,
             generate_extensionsUsed(export_settings, glTF, 'KHR_materials_displacement')
             generate_extensionsRequired(export_settings, glTF, 'KHR_materials_displacement')
 
-        glTF['materials'] = materials
+        glTF.materials = materials

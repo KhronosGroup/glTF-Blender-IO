@@ -34,10 +34,10 @@ def get_material_requires_texcoords(glTF, index):
     Query function, if a material "needs" texture coordinates. This is the case, if a texture is present and used.
     """
 
-    if glTF.get('materials') is None:
+    if glTF.materials is None:
         return False
     
-    materials = glTF['materials']
+    materials = glTF.materials
     
     if index < 0 or index >= len(materials):
         return False
@@ -46,42 +46,21 @@ def get_material_requires_texcoords(glTF, index):
     
     # General
     
-    if material.get('emissiveTexture') is not None:
+    if material.emissive_texture is not None:
         return True
     
-    if material.get('normalTexture') is not None:
+    if material.normal_texture is not None:
         return True
     
-    if material.get('occlusionTexture') is not None:
+    if material.occlusion_texture is not None:
         return True
     
     # Metallic roughness
-    
-    if material.get('baseColorTexture') is not None:
-        return True
-    
-    if material.get('metallicRoughnessTexture') is not None:
-        return True
-    
-    # Specular glossiness
-    
-    if material.get('diffuseTexture') is not None:
+
+    if material.pbr_metallic_roughness is not None and material.pbr_metallic_roughness.base_color_texture is not None:
         return True
 
-    if material.get('specularGlossinessTexture') is not None:
-        return True
-    
-    # Unlit Material
-
-    if material.get('baseColorTexture') is not None:
-        return True
-
-    if material.get('diffuseTexture') is not None:
-        return True
-
-    # Displacement
-
-    if material.get('displacementTexture') is not None:
+    if material.pbr_metallic_roughness is not None and material.pbr_metallic_roughness.metallic_roughness_texture is not None:
         return True
 
     return False
@@ -103,12 +82,12 @@ def get_material_index(glTF, name):
     if name is None:
         return -1
 
-    if glTF.get('materials') is None:
+    if glTF.materials is None:
         return -1
 
     index = 0
-    for material in glTF['materials']:
-        if material['name'] == name:
+    for material in glTF.materials:
+        if material.name == name:
             return index
         
         index += 1
@@ -121,12 +100,12 @@ def get_mesh_index(glTF, name):
     Return the mesh index in the glTF array.
     """
 
-    if glTF.get('meshes') is None:
+    if glTF.meshes is None:
         return -1
 
     index = 0
-    for mesh in glTF['meshes']:
-        if mesh['name'] == name:
+    for mesh in glTF.meshes:
+        if mesh.name == name:
             return index
         
         index += 1
@@ -139,14 +118,14 @@ def get_skin_index(glTF, name, index_offset):
     Return the skin index in the glTF array.
     """
 
-    if glTF.get('skins') is None:
+    if glTF.skins is None:
         return -1
     
     skeleton = get_node_index(glTF, name)
 
     index = 0
-    for skin in glTF['skins']:
-        if skin['skeleton'] == skeleton:
+    for skin in glTF.skins:
+        if skin.skeleton == skeleton:
             return index + index_offset
         
         index += 1
@@ -159,12 +138,12 @@ def get_camera_index(glTF, name):
     Return the camera index in the glTF array.
     """
 
-    if glTF.get('cameras') is None:
+    if glTF.cameras is None:
         return -1
 
     index = 0
-    for camera in glTF['cameras']:
-        if camera['name'] == name:
+    for camera in glTF.cameras:
+        if camera.name == name:
             return index
         
         index += 1
@@ -177,10 +156,10 @@ def get_light_index(glTF, name):
     Return the light index in the glTF array.
     """
 
-    if glTF.get('extensions') is None:
+    if glTF.extensions is None:
         return -1
     
-    extensions = glTF['extensions']
+    extensions = glTF.extensions
         
     if extensions.get('KHR_lights_punctual') is None:
         return -1
@@ -207,12 +186,12 @@ def get_node_index(glTF, name):
     Return the node index in the glTF array.
     """
 
-    if glTF.get('nodes') is None:
+    if glTF.nodes is None:
         return -1
 
     index = 0
-    for node in glTF['nodes']:
-        if node['name'] == name:
+    for node in glTF.nodes:
+        if node.name == name:
             return index
         
         index += 1
@@ -225,12 +204,12 @@ def get_scene_index(glTF, name):
     Return the scene index in the glTF array.
     """
 
-    if glTF.get('scenes') is None:
+    if glTF.scenes is None:
         return -1
 
     index = 0
-    for scene in glTF['scenes']:
-        if scene['name'] == name:
+    for scene in glTF.scenes:
+        if scene.name == name:
             return index
         
         index += 1
@@ -243,7 +222,7 @@ def get_texture_index(glTF, filename):
     Return the texture index in the glTF array by a given filepath.
     """
 
-    if glTF.get('textures') is None:
+    if glTF.textures is None:
         return -1
     
     image_index = get_image_index(glTF, filename)
@@ -251,8 +230,8 @@ def get_texture_index(glTF, filename):
     if image_index == -1:
         return -1
 
-    for texture_index, texture in enumerate(glTF['textures']):
-        if image_index == texture['source']:
+    for texture_index, texture in enumerate(glTF.textures):
+        if image_index == texture.source:
             return texture_index
         
     return -1
@@ -263,13 +242,13 @@ def get_image_index(glTF, filename):
     Return the image index in the glTF array.
     """
 
-    if glTF.get('images') is None:
+    if glTF.images is None:
         return -1
 
     image_name = get_image_name(filename)
 
-    for index, current_image in enumerate(glTF['images']):
-        if image_name == current_image['name']:
+    for index, current_image in enumerate(glTF.images):
+        if image_name == current_image.name:
             return index
 
     return -1
@@ -371,10 +350,10 @@ def get_index(elements, name):
     
     index = 0
     for element in elements:
-        if element.get('name') is None:
+        if element.name is None:
             return -1
     
-        if element['name'] == name:
+        if element.name == name:
             return index
         
         index += 1

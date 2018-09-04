@@ -20,6 +20,7 @@ import struct
 
 from ..com.gltf2_io_debug import *
 from ..com.gltf2_io_constants import *
+from ..com.gltf2_io import Asset, Accessor, BufferView
 
 #
 # Globals
@@ -34,26 +35,22 @@ def generate_asset(export_settings,
     Generates the top level asset entry.
     """
 
-    asset = {}
-
-    #
-    #
-
-    asset['version'] = '2.0'
-
-    #
-
-    asset['generator'] = 'Khronos Blender glTF 2.0 exporter'
-
-    #
+    asset = Asset(
+        version='2.0',
+        generator='Khronos Blender glTF 2.0 exporter',
+        copyright=None,
+        extensions=None,
+        extras=None,
+        min_version=None
+    )
 
     if export_settings['gltf_copyright'] != "":
-        asset['copyright'] = export_settings['gltf_copyright']
+        asset.copyright = export_settings['gltf_copyright']
 
     #
     #
 
-    glTF['asset'] = asset
+    glTF.asset = asset
 
 
 def generate_extensionsUsed(export_settings,
@@ -62,10 +59,10 @@ def generate_extensionsUsed(export_settings,
     Creates and assigns the 'extensionsUsed' property.
     """
 
-    if glTF.get('extensionsUsed') is None:
-        glTF['extensionsUsed'] = []
+    if glTF.extensions_used is None:
+        glTF.extensions_used = []
 
-    extensionsUsed = glTF['extensionsUsed']
+    extensionsUsed = glTF.extensions_used
 
     if extension not in extensionsUsed:
         extensionsUsed.append(extension)
@@ -77,10 +74,10 @@ def generate_extensionsRequired(export_settings,
     Creates and assigns the 'extensionsRequired' property.
     """
 
-    if glTF.get('extensionsRequired') is None:
-        glTF['extensionsRequired'] = []
+    if glTF.extensions_required is None:
+        glTF.extensions_required = []
 
-    extensionsRequired = glTF['extensionsRequired']
+    extensionsRequired = glTF.extensions_required
 
     if extension not in extensionsRequired:
         extensionsRequired.append(extension)
@@ -92,10 +89,10 @@ def generate_sampler(export_settings,
     Creates and appends a sampler with the given parameters.
     """
 
-    if glTF.get('samplers') is None:
-        glTF['samplers'] = []
+    if glTF.samplers is None:
+        glTF.samplers = []
 
-    samplers = glTF['samplers']
+    samplers = glTF.samplers
 
     #
 
@@ -160,10 +157,10 @@ def generate_bufferView(export_settings,
 
     #
 
-    if glTF.get('bufferViews') is None:
-        glTF['bufferViews'] = []
+    if glTF.buffer_views is None:
+        glTF.buffer_views = []
 
-    bufferViews = glTF['bufferViews']
+    bufferViews = glTF.buffer_views
 
     #
 
@@ -200,7 +197,7 @@ def generate_bufferView(export_settings,
 
     #
 
-    bufferViews.append(bufferView)
+    bufferViews.append(BufferView.from_dict(bufferView))
 
     return len(bufferViews) - 1
 
@@ -268,10 +265,10 @@ def generate_accessor(export_settings,
 
     #
 
-    if glTF.get('accessors') is None:
-        glTF['accessors'] = []
+    if glTF.accessors is None:
+        glTF.accessors = []
 
-    accessors = glTF['accessors']
+    accessors = glTF.accessors
 
     #
 
@@ -316,6 +313,6 @@ def generate_accessor(export_settings,
 
     #
 
-    accessors.append(accessor)
+    accessors.append(Accessor.from_dict(accessor))
 
     return len(accessors) - 1
