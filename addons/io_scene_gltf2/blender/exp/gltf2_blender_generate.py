@@ -41,7 +41,7 @@ from .gltf2_blender_filter import *
 from .gltf2_blender_get import *
 from .gltf2_blender_generate_materials import *
 
-from ...io.com.gltf2_io import Animation, Camera, Mesh, MeshPrimitive, Node, Skin, Image, TextureInfo, Scene, Buffer
+from ...io.com.gltf2_io import Animation, Camera, Mesh, MeshPrimitive, Node, Skin, Image, Texture, Scene, Buffer, Sampler
 
 #
 # Globals
@@ -2344,7 +2344,7 @@ def generate_textures(operator,
             #
             #
 
-            textures.append(TextureInfo.from_dict(texture))
+            textures.append(Texture.from_dict(texture))
 
         else:
             magFilter = 9729
@@ -2359,7 +2359,7 @@ def generate_textures(operator,
             #
             #
 
-            textures.append(TextureInfo.from_dict(texture))
+            textures.append(Texture.from_dict(texture))
 
     #
     #

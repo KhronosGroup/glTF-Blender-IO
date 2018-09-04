@@ -20,7 +20,7 @@ import struct
 
 from ..com.gltf2_io_debug import *
 from ..com.gltf2_io_constants import *
-from ..com.gltf2_io import Asset, Accessor, BufferView
+from ..com.gltf2_io import Asset, Accessor, BufferView, Sampler
 
 #
 # Globals
@@ -98,8 +98,7 @@ def generate_sampler(export_settings,
 
     if len(samplers) == 0:
         sampler = {}
-
-        samplers.append(sampler)
+        samplers.append(Sampler.from_dict(sampler))
 
     if magFilter == 9729 and wrap == 10497:
         return 0
@@ -129,7 +128,7 @@ def generate_sampler(export_settings,
         'wrapT': wrap
     }
 
-    samplers.append(sampler)
+    samplers.append(Sampler.from_dict(sampler))
 
     return len(samplers) - 1
 

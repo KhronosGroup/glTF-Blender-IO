@@ -505,13 +505,13 @@ def generate_materials(operator,
                     #
                     #
 
-                    materials.append(material)
+                    materials.append(Material.from_dict(material))
                     
                 elif isinstance(blender_node, bpy.types.ShaderNodeBsdfPrincipled):
                     
                     generate_materials_principled(operator, context, export_settings, glTF, material, blender_material, blender_node)
                     
-                    materials.append(material)
+                    materials.append(Material.from_dict(material))
 
         else:
 
@@ -606,7 +606,7 @@ def generate_materials(operator,
                 #
                 #
 
-                materials.append(material)
+                materials.append(Material.from_dict(material))
 
             else:
 

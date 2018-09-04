@@ -350,11 +350,12 @@ def get_index(elements, name):
     
     index = 0
     for element in elements:
-        if element.name is None:
-            return -1
-    
-        if element.name == name:
-            return index
+        if isinstance(element, dict):
+            if element.get(name) == name:
+                return index
+        else:
+            if element.name == name:
+                return index
         
         index += 1
     
