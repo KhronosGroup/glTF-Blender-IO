@@ -16,168 +16,21 @@
 # Imports
 #
 
-import base64
 import copy
-import json
-import os
-import shutil
-import struct
-import zlib
 
 import bpy
-
-from ..com.gltf2_blender_image import *
-from ...io.com.gltf2_io_image import *
-
-from ...io.com.gltf2_io_constants import *
-from ...io.com.gltf2_io_debug import *
-
-from ...io.exp.gltf2_io_generate import *
-from ...io.exp.gltf2_io_get import *
 
 from .gltf2_blender_animate import *
 from .gltf2_blender_extract import *
 from .gltf2_blender_filter import *
-from .gltf2_blender_get import *
 from .gltf2_blender_generate_materials import *
 
-from ...io.com.gltf2_io import Animation, Camera, Mesh, MeshPrimitive, Node, Skin, Image, Texture, Scene, Buffer, Sampler
-
-#
-# Globals
-#
-
+from io_scene_gltf2.blender.com import gltf2_blender_json
+from io_scene_gltf2.io.com import gltf2_io
 
 #
 # Functions
 #
-
-class BlenderEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, bpy.types.ID):
-            return dict(
-                name=obj.name,
-                type=obj.__class__.__name__
-            )
-
-        return super(BlenderEncoder, self).default(obj)
-
-
-def _is_json(data):
-    """
-    Test, if a data set can be expressed as JSON.
-    """
-    try:
-        json.dumps(data, cls=BlenderEncoder)
-        return True
-    except:
-        print_console('DEBUG', 'Failed to json.dumps custom properties')
-        return False
-
-
-def create_image_file(context, blender_image, dst_path, file_format):
-    """
-    Creates JPEG or PNG file from a given Blender image.
-    """
-
-    # Check, if source image exists e.g. does not exist if image is packed.
-    file_exists = 1
-    try:
-        src_path = bpy.path.abspath(blender_image.filepath, library=blender_image.library)
-        file = open(src_path)
-    except IOError:
-        file_exists = 0
-    else:
-        file.close()
-
-    if file_exists == 0:
-        # Image does not exist on disk ...
-        blender_image.filepath = dst_path
-        # ... so save it.
-        blender_image.save()
-
-    elif file_format == blender_image.file_format:
-        # Copy source image to destination, keeping original format.
-
-        src_path = bpy.path.abspath(blender_image.filepath, library=blender_image.library)
-
-        # Required for comapre.
-        src_path = src_path.replace('\\', '/')
-        dst_path = dst_path.replace('\\', '/')
-
-        if dst_path != src_path:
-            shutil.copyfile(src_path, dst_path)
-
-    else:
-        # Render a new image to destination, converting to target format.
-
-        # TODO: Reusing the existing scene means settings like exposure are applied on export,
-        # which we don't want, but I'm not sure how to create a new Scene object through the
-        # Python API. See: https://github.com/KhronosGroup/glTF-Blender-Exporter/issues/184.
-
-        context.scene.render.image_settings.file_format = file_format
-        context.scene.render.image_settings.color_depth = '8'
-        blender_image.save_render(dst_path, context.scene)
-
-
-def create_image_data(context, export_settings, blender_image, file_format):
-    """
-    Creates JPEG or PNG byte array from a given Blender image.
-    """
-    if blender_image is None:
-        return None
-
-    if file_format == 'PNG':
-        return _create_png_data(context, export_settings, blender_image)
-    else:
-        return _create_jpg_data(context, export_settings, blender_image)
-
-
-def _create_jpg_data(context, export_settings, blender_image):
-    """
-    Creates a JPEG byte array from a given Blender image.
-    """
-
-    uri = get_image_uri(export_settings, blender_image)
-    path = export_settings['gltf_filedirectory'] + uri
-
-    create_image_file(context, blender_image, path, 'JPEG')
-
-    jpg_data = open(path, 'rb').read()
-    os.remove(path)
-
-    return jpg_data
-
-
-def _create_png_data(context, export_settings, blender_image):
-    """
-    Creates a PNG byte array from a given Blender image.
-    """
-
-    width = blender_image.size[0]
-    height = blender_image.size[1]
-
-    buf = bytearray([int(channel * 255.0) for channel in blender_image.pixels])
-
-    #
-    # Taken from 'blender-thumbnailer.py' in Blender.
-    #
-
-    # reverse the vertical line order and add null bytes at the start
-    width_byte_4 = width * 4
-    raw_data = b"".join(
-        b'\x00' + buf[span:span + width_byte_4] for span in range((height - 1) * width * 4, -1, - width_byte_4))
-
-    def png_pack(png_tag, data):
-        chunk_head = png_tag + data
-        return struct.pack("!I", len(data)) + chunk_head + struct.pack("!I", 0xFFFFFFFF & zlib.crc32(chunk_head))
-
-    return b"".join([
-        b'\x89PNG\r\n\x1a\n',
-        png_pack(b'IHDR', struct.pack("!2I5B", width, height, 8, 6, 0, 0, 0)),
-        png_pack(b'IDAT', zlib.compress(raw_data, 9)),
-        png_pack(b'IEND', b'')])
-
 
 def generate_extras(blender_element):
     """
@@ -215,7 +68,7 @@ def generate_extras(blender_element):
 
         if hasattr(value, "to_dict"):
             value = value.to_dict()
-            add_value = _is_json(value)
+            add_value = gltf2_blender_json.is_json_convertible(value)
 
         if add_value:
             extras[custom_property] = value
@@ -990,7 +843,7 @@ def generate_animations(operator,
             for sampler in animation['samplers']:
                 del sampler['name']
             if len(animation['channels']) > 0:
-                glTF.animations.append(Animation.from_dict(animation))
+                glTF.animations.append(gltf2_io.Animation.from_dict(animation))
 
 
 def compute_bone_matrices(axis_basis_change, blender_bone, blender_object, export_settings):
@@ -1140,7 +993,7 @@ def generate_cameras(export_settings, glTF):
         #
         #
 
-        cameras.append(Camera.from_dict(camera))
+        cameras.append(gltf2_io.Camera.from_dict(camera))
 
     #
     #
@@ -1253,7 +1106,7 @@ def generate_meshes(operator,
 
         primitives = []
 
-        mesh = Mesh(
+        mesh = gltf2_io.Mesh(
             extensions={},
             extras=None,
             name=name,
@@ -1267,7 +1120,7 @@ def generate_meshes(operator,
 
             attributes = {}
 
-            primitive = MeshPrimitive(
+            primitive = gltf2_io.MeshPrimitive(
                 attributes=attributes,
                 extensions={},
                 extras={},
@@ -1663,7 +1516,7 @@ def generate_duplicate_mesh(glTF, blender_object):
         return False
 
     copy_obj = glTF.meshes[mesh_index].to_dict()
-    new_mesh = Mesh.from_dict(copy.deepcopy(copy_obj))  # deep copy
+    new_mesh = gltf2_io.Mesh.from_dict(copy.deepcopy(copy_obj))  # deep copy
 
     #
 
@@ -1739,7 +1592,7 @@ def generate_node_instance(context,
     # Property: node
     #
 
-    node = Node(
+    node = gltf2_io.Node(
         camera=None,
         children=[],
         extensions={},
@@ -1894,7 +1747,7 @@ def generate_nodes(operator,
 
                 #
 
-                node = Node(
+                node = gltf2_io.Node(
                     camera=None,
                     children=[],
                     extensions={},
@@ -1975,7 +1828,7 @@ def generate_nodes(operator,
                         axis_basis_change = mathutils.Matrix.Identity(4)
 
                     if not joints_written:
-                        node = Node(
+                        node = gltf2_io.Node(
                             camera=None,
                             children=[],
                             extensions={},
@@ -2033,7 +1886,7 @@ def generate_nodes(operator,
 
                 #
 
-                skin = Skin(
+                skin = gltf2_io.Skin(
                     extensions=None,
                     extras=None,
                     inverse_bind_matrices=None,
@@ -2296,7 +2149,7 @@ def generate_images(operator,
         #
         #
 
-        images.append(Image.from_dict(image))
+        images.append(gltf2_io.Image.from_dict(image))
 
     #
     #
@@ -2344,7 +2197,7 @@ def generate_textures(operator,
             #
             #
 
-            textures.append(Texture.from_dict(texture))
+            textures.append(gltf2_io.Texture.from_dict(texture))
 
         else:
             magFilter = 9729
@@ -2359,7 +2212,7 @@ def generate_textures(operator,
             #
             #
 
-            textures.append(Texture.from_dict(texture))
+            textures.append(gltf2_io.Texture.from_dict(texture))
 
     #
     #
@@ -2385,7 +2238,7 @@ def generate_scenes(export_settings,
 
         nodes = []
 
-        scene = Scene(
+        scene = gltf2_io.Scene(
             extensions=None,
             extras=None,
             name=blender_scene.name,
@@ -2553,4 +2406,4 @@ def generate_glTF(operator,
 
             buffer['uri'] = uri
 
-        glTF.buffers.append(Buffer.from_dict(buffer))
+        glTF.buffers.append(gltf2_io.Buffer.from_dict(buffer))

@@ -18,13 +18,11 @@
 
 import bpy
 
-from ...io.com.gltf2_io_debug import *
-
 from ...io.exp.gltf2_io_export import *
 from ...io.com.gltf2_io import Gltf
 
-from .gltf2_blender_filter import *
 from .gltf2_blender_generate import *
+from  io_scene_gltf2.blender.com import gltf2_blender_json
 
 #
 # Globals
@@ -123,7 +121,7 @@ def save(operator,
                 o.append(dict_strip_null_keys(v))
         return o
 
-    save_gltf(dict_strip_null_keys(glTF.to_dict()), export_settings, BlenderEncoder)
+    save_gltf(dict_strip_null_keys(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
         
     #
     
