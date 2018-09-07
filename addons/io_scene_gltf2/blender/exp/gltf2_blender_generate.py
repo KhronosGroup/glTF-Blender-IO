@@ -1787,6 +1787,7 @@ def generate_nodes(operator,
             temp_action = None
 
             if export_settings['gltf_bake_skins'] and not export_settings['gltf_animations']:
+                #TODO: this has to be added to the gather animation/ skins
                 if blender_object.animation_data is not None:
                     temp_action = blender_object.animation_data.action
 

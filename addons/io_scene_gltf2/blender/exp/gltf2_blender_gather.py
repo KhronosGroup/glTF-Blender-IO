@@ -18,7 +18,6 @@ import functools
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 
-
 def cached(func):
     """
     Decorator to cache gather functions results. The gather function is only executed if its result isn't in the cache yet
@@ -69,6 +68,8 @@ def __gather_scene(blender_scene, export_settings):
 
     for blender_object in blender_scene.objects:
         if blender_object.parent is None:
-            scene.nodes.append(gltf2_blender_gather_nodes.__gather_node(blender_object, export_settings))
+            node = gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
+            if node is not None:
+                scene.nodes.append(node)
 
     return scene
