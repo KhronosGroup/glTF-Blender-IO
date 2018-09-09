@@ -61,9 +61,9 @@ class BlenderNode():
             # Transforms apply only if this mesh is not skinned
             # See implementation node of gltf2 specification
             if not (pynode.mesh and gltf.data.meshes[pynode.mesh].skin is not None):
-                BlenderNode.set_transforms(pynode, obj, parent)
+                BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)
             pynode.blender_object = obj.name
-            BlenderNode.set_parent(pynode, obj, parent)
+            BlenderNode.set_parent(gltf, pynode, obj, parent)
 
             BlenderMesh.set_mesh(gltf, gltf.data.meshes[pynode.mesh], mesh, obj)
 
@@ -80,9 +80,9 @@ class BlenderNode():
             else:
                 gltf.log.info("Blender create Camera node")
             obj = BlenderCamera.create(gltf, pynode.camera)
-            BlenderNode.set_transforms(pynode, obj, parent) #TODO default rotation of cameras ?
+            BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent) #TODO default rotation of cameras ?
             pynode.blender_object = obj.name
-            BlenderNode.set_parent(pynode, obj, parent)
+            BlenderNode.set_parent(gltf, pynode, obj, parent)
 
             return
 
@@ -114,9 +114,9 @@ class BlenderNode():
             obj = bpy.data.objects.new("Node", None)
         obj.rotation_mode = 'QUATERNION'
         bpy.data.scenes[gltf.blender_scene].objects.link(obj)
-        BlenderNode.set_transforms(pynode, obj, parent)
+        BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)
         pynode.blender_object = obj.name
-        BlenderNode.set_parent(pynode, obj, parent)
+        BlenderNode.set_parent(gltf, pynode, obj, parent)
 
         if pynode.children:
             for child_idx in pynode.children:
@@ -124,7 +124,7 @@ class BlenderNode():
 
 
     @staticmethod
-    def set_parent(pynode, obj, parent):
+    def set_parent(gltf, pynode, obj, parent):
 
         if parent is None:
             return
@@ -152,13 +152,13 @@ class BlenderNode():
         gltf.log.error("ERROR, parent not found")
 
     @staticmethod
-    def set_transforms(pynode, obj, parent):
+    def set_transforms(gltf, node_idx, pynode, obj, parent):
         if parent is None:
             obj.matrix_world =  Conversion.matrix_gltf_to_blender(pynode.transform)
             return
 
-        for node in gltf.data.nodes: # TODO if parent is in another scene
-            if node.index == parent:
+        for idx, node in enumerate(gltf.data.nodes):
+            if idx == parent:
                 if node.is_joint == True:
                     obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
                     return
