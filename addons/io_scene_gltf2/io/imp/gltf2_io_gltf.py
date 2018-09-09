@@ -76,9 +76,12 @@ class glTFImporter():
             return success, txt
 
     def is_node_joint(self, node_idx):
+        if not self.data.skins: # if no skin in gltf file
+            return False, None
+
         is_joint = False
-        for skin in pygltf.skins:
+        for skin_idx, skin in enumerate(self.data.skins):
             if node_idx in skin.joints:
-                return True, skin
+                return True, skin_idx
 
         return is_joint, None

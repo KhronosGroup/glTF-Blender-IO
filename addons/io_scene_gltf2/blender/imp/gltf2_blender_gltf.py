@@ -28,8 +28,7 @@ class BlenderGlTF():
     @staticmethod
     def create(gltf):
 
-        # Blender attributes initialization
-        gltf.blender_scene = None
+        BlenderGlTF.pre_compute(gltf)
 
         for scene_idx, scene in enumerate(gltf.data.scenes):
             BlenderScene.create(gltf, scene_idx)
@@ -72,3 +71,19 @@ class BlenderGlTF():
                 # bone is no more is same direction
                 if (parent.tail - parent.head).normalized().dot(save_parent_direction) < 0.9:
                     parent.tail = save_parent_tail
+
+
+    @staticmethod
+    def pre_compute(gltf):
+
+        # default scene used
+        gltf.blender_scene = None
+
+        # joint management
+        for node_idx, node in enumerate(gltf.data.nodes):
+            is_joint, skin_idx = gltf.is_node_joint(node_idx)
+            if is_joint:
+                node.is_joint = True
+                node.skin_id  = skin
+            else:
+                node.is_joint = False
