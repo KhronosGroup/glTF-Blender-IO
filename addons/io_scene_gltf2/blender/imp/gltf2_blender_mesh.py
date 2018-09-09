@@ -29,10 +29,12 @@ from ..com.gltf2_blender_conversion import *
 class BlenderMesh():
 
     @staticmethod
-    def create(pymesh, parent):
+    def create(gltf, mesh_idx, node_idx, parent):
+        pymesh = gltf.data.meshes[mesh_idx]
+        pynode = gltf.data.nodes[node_idx]
         # Check if the mesh is rigged, and create armature if needed
-        if pymesh.skin:
-            if pymesh.skin.blender_armature_name is None:
+        if pynode.skin is not None:
+            if gltf.data.skins[pymesh.skin].blender_armature_name is None:
                 # Create empty armature for now
                 pymesh.skin.create_blender_armature(parent)
 
@@ -47,7 +49,7 @@ class BlenderMesh():
         edges = []
         faces = []
         for prim in pymesh.primitives:
-            verts, edges, faces = BlenderPrimitive.create(prim, verts, edges, faces)
+            verts, edges, faces = BlenderPrimitive.create(gltf, prim, verts, edges, faces)
 
         mesh.from_pydata(verts, edges, faces)
         mesh.validate()

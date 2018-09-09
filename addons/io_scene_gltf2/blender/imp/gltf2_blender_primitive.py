@@ -29,7 +29,7 @@ from ..com.gltf2_blender_conversion import *
 class BlenderPrimitive():
 
     @staticmethod
-    def create(pyprimitive, verts, edges, faces):
+    def create(gltf, pyprimitive, verts, edges, faces):
 
         pyprimitive.blender_texcoord = {}
 

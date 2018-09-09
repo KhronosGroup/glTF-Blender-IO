@@ -52,7 +52,7 @@ class BlenderNode():
                 else:
                     name = "Object_" + str(node_idx)
 
-            mesh = BlenderMesh.create(gltf, pynode.mesh, parent)
+            mesh = BlenderMesh.create(gltf, pynode.mesh, node_idx, parent)
 
             obj = bpy.data.objects.new(name, mesh)
             obj.rotation_mode = 'QUATERNION'
