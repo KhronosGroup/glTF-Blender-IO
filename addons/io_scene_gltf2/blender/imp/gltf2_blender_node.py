@@ -87,7 +87,7 @@ class BlenderNode():
             return
 
 
-        if pynode.is_joint: #TODO_SPLIT
+        if pynode.is_joint:
             if pynode.name:
                 gltf.log.info("Blender create Bone node " + pynode.name)
             else:
