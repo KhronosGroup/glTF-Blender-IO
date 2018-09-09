@@ -24,6 +24,7 @@ from bpy.types import Operator
 
 from .io.com.gltf2_io_debug import *
 from .io.imp.gltf2_io_gltf_old import *
+from .io.imp.gltf2_io_gltf import *
 from .blender.imp.gltf2_blender_gltf import *
 
 from bpy.props import (CollectionProperty,
@@ -502,14 +503,15 @@ class ImportglTF2(Operator, ImportHelper):
 
     def import_gltf2(self, context):
         bpy.context.scene.render.engine = 'CYCLES'
-        success, self.gltf, txt = glTFImporter_old.importer(self.filepath, self.loglevel)
+        self.gltf_importer = glTFImporter(self.filepath, self.loglevel)
+        success, txt = self.gltf_importer.read()
         if not success:
             self.report({'ERROR'}, txt)
             return {'CANCELLED'}
-        self.gltf.log.critical("Data are loaded, start creating Blender stuff")
-        BlenderGlTF.create(self.gltf)
-        self.gltf.log.critical("glTF import is now finished")
-        self.gltf.log.removeHandler(self.gltf.log_handler)
+        self.gltf_importer.log.critical("Data are loaded, start creating Blender stuff")
+        BlenderGlTF.create(self.gltf_importer)
+        self.gltf_importer.log.critical("glTF import is now finished")
+        self.gltf_importer.log.removeHandler(self.gltf.log_handler)
 
         # Switch to newly created main scene
         bpy.context.screen.scene = bpy.data.scenes[self.gltf.blender_scene]
