@@ -31,14 +31,13 @@ class BlenderNode():
     @staticmethod
     def create(gltf, node_idx, parent):
 
-
         pynode = gltf.data.nodes[node_idx]
 
         # Blender attributes initialization
         pynode.blender_object = ""
         pynode.parent = parent
 
-        if pynode.mesh:
+        if pynode.mesh is not None:
             if pynode.name:
                 gltf.log.info("Blender create Mesh node " + pynode.name)
             else:
@@ -74,7 +73,7 @@ class BlenderNode():
             return
 
 
-        if pynode.camera:
+        if pynode.camera is not None:
             if pynode.name:
                 gltf.log.info("Blender create Camera node " + pynode.name)
             else:
@@ -129,8 +128,8 @@ class BlenderNode():
         if parent is None:
             return
 
-        for node in gltf.scene.nodes.values(): # TODO if parent is in another scene
-            if node.index == parent:
+        for node_idx, node in enumerate(gltf.data.nodes):
+            if node_idx == parent:
                 if node.is_joint == True:
                     bpy.ops.object.select_all(action='DESELECT')
                     bpy.data.objects[node.blender_armature_name].select = True
