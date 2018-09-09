@@ -42,7 +42,7 @@ class BlenderMesh():
         if pymesh.name:
             mesh_name = pymesh.name
         else:
-            mesh_name = "Mesh_" + str(pymesh.index)
+            mesh_name = "Mesh_" + str(mesh_idx)
 
         mesh = bpy.data.meshes.new(mesh_name)
         verts = []
