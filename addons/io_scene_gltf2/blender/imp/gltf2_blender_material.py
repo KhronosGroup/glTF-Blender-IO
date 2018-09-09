@@ -32,8 +32,6 @@ class BlenderMaterial():
     @staticmethod
     def create(pymaterial):
 
-        pymaterial.blender_material = None
-
         if pymaterial.name is not None:
             name = pymaterial.name
         else:

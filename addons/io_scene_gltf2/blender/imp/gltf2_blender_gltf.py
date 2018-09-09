@@ -80,6 +80,11 @@ class BlenderGlTF():
         # default scene used
         gltf.blender_scene = None
 
+        # Blender material
+        if gltf.data.materials:
+            for material in gltf.data.materials:
+                material.blender_material = None
+
         # transform management
         for node_idx, node in enumerate(gltf.data.nodes):
             if node.matrix:
