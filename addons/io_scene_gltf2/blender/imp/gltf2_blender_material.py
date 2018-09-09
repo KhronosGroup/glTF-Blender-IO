@@ -42,11 +42,11 @@ class BlenderMaterial():
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material = mat.name
 
-        if hasattr(pymaterial, 'KHR_materials_pbrSpecularGlossiness'):
+        if hasattr(pymaterial, 'KHR_materials_pbrSpecularGlossiness'): #TODO_SPLIT
             BlenderKHR_materials_pbrSpecularGlossiness.create(pymaterial.KHR_materials_pbrSpecularGlossiness, mat.name)
         else:
             # create pbr material
-            BlenderPbr.create(pymaterial.pbr, mat.name)
+            BlenderPbr.create(gltf, pymaterial.pbr_metallic_roughness, mat.name)
 
         # add emission map if needed
         if pymaterial.emissivemap:

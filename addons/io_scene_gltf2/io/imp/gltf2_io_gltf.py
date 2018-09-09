@@ -37,6 +37,10 @@ class glTFImporter():
         self.log = log.logger
         self.log_handler = log.hdlr
 
+        self.SIMPLE  = 1
+        self.TEXTURE = 2
+        self.TEXTURE_FACTOR = 3
+
         #TODO : merge with io_constants
         self.fmt_char_dict = {}
         self.fmt_char_dict[5120] = 'b' # Byte

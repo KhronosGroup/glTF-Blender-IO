@@ -29,14 +29,14 @@ class BlenderPbr():
     def use_vertex_color(pypbr):
         pypbr.vertex_color = True
 
-    def create(pypbr, mat_name):
+    def create(gltf, pypbr, mat_name):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderPbr.create_cycles(pypbr, mat_name)
+            BlenderPbr.create_cycles(gltf, pypbr, mat_name)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_cycles(pypbr, mat_name):
+    def create_cycles(gltf, pypbr, mat_name):
         material = bpy.data.materials[mat_name]
         material.use_nodes = True
         node_tree = material.node_tree
@@ -53,14 +53,14 @@ class BlenderPbr():
         principled = node_tree.nodes.new('ShaderNodeBsdfPrincipled')
         principled.location = 0,0
 
-        if pypbr.color_type == pypbr.SIMPLE:
+        if pypbr.color_type == gltf.SIMPLE:
 
             if not pypbr.vertex_color:
 
                 # change input values
-                principled.inputs[0].default_value = pypbr.baseColorFactor
-                principled.inputs[5].default_value = pypbr.metallicFactor #TODO : currently set metallic & specular in same way
-                principled.inputs[7].default_value = pypbr.roughnessFactor
+                principled.inputs[0].default_value = pypbr.base_color_factor
+                principled.inputs[5].default_value = pypbr.metallic_factor #TODO : currently set metallic & specular in same way
+                principled.inputs[7].default_value = pypbr.roughness_factor
 
             else:
                 # Create attribute node to get COLOR_0 data
@@ -68,13 +68,13 @@ class BlenderPbr():
                 attribute_node.attribute_name = 'COLOR_0'
                 attribute_node.location = -500,0
 
-                principled.inputs[5].default_value = pypbr.metallicFactor #TODO : currently set metallic & specular in same way
-                principled.inputs[7].default_value = pypbr.roughnessFactor
+                principled.inputs[5].default_value = pypbr.metallic_factor #TODO : currently set metallic & specular in same way
+                principled.inputs[7].default_value = pypbr.roughness_factor
 
                 # links
                 node_tree.links.new(principled.inputs[0], attribute_node.outputs[1])
 
-        elif pypbr.color_type == pypbr.TEXTURE_FACTOR:
+        elif pypbr.color_type == gltf.TEXTURE_FACTOR:
 
             #TODO alpha ?
             if pypbr.vertex_color:
@@ -106,17 +106,17 @@ class BlenderPbr():
             math_R  = node_tree.nodes.new('ShaderNodeMath')
             math_R.location = -500, 750
             math_R.operation = 'MULTIPLY'
-            math_R.inputs[1].default_value = pypbr.baseColorFactor[0]
+            math_R.inputs[1].default_value = pypbr.base_color_factor[0]
 
             math_G  = node_tree.nodes.new('ShaderNodeMath')
             math_G.location = -500, 500
             math_G.operation = 'MULTIPLY'
-            math_G.inputs[1].default_value = pypbr.baseColorFactor[1]
+            math_G.inputs[1].default_value = pypbr.base_color_factor[1]
 
             math_B  = node_tree.nodes.new('ShaderNodeMath')
             math_B.location = -500, 250
             math_B.operation = 'MULTIPLY'
-            math_B.inputs[1].default_value = pypbr.baseColorFactor[2]
+            math_B.inputs[1].default_value = pypbr.base_color_factor[2]
 
             separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
             separate.location = -750, 500
@@ -159,7 +159,7 @@ class BlenderPbr():
 
             node_tree.links.new(principled.inputs[0], combine.outputs[0])
 
-        elif pypbr.color_type == pypbr.TEXTURE:
+        elif pypbr.color_type == gltf.TEXTURE:
 
             BlenderTexture.create(pypbr.baseColorTexture)
 
@@ -244,9 +244,9 @@ class BlenderPbr():
 
 
         # Says metallic, but it means metallic & Roughness values
-        if pypbr.metallic_type == pypbr.SIMPLE:
-            principled.inputs[4].default_value = pypbr.metallicFactor
-            principled.inputs[7].default_value = pypbr.roughnessFactor
+        if pypbr.metallic_type == gltf.SIMPLE:
+            principled.inputs[4].default_value = pypbr.metallic_factor
+            principled.inputs[7].default_value = pypbr.roughness_factor
 
         elif pypbr.metallic_type == pypbr.TEXTURE:
             BlenderTexture.create(pypbr.metallicRoughnessTexture)
@@ -273,7 +273,7 @@ class BlenderPbr():
             node_tree.links.new(metallic_mapping.inputs[0], metallic_uvmap.outputs[0])
             node_tree.links.new(metallic_text.inputs[0], metallic_mapping.outputs[0])
 
-        elif pypbr.metallic_type == pypbr.TEXTURE_FACTOR:
+        elif pypbr.metallic_type == gltf.TEXTURE_FACTOR:
 
             BlenderTexture.create(pypbr.metallicRoughnessTexture)
 
@@ -287,12 +287,12 @@ class BlenderPbr():
 
             metallic_math     = node_tree.nodes.new('ShaderNodeMath')
             metallic_math.operation = 'MULTIPLY'
-            metallic_math.inputs[1].default_value = pypbr.metallicFactor
+            metallic_math.inputs[1].default_value = pypbr.metallic_factor
             metallic_math.location = -250,100
 
             roughness_math = node_tree.nodes.new('ShaderNodeMath')
             roughness_math.operation = 'MULTIPLY'
-            roughness_math.inputs[1].default_value = pypbr.roughnessFactor
+            roughness_math.inputs[1].default_value = pypbr.roughness_factor
             roughness_math.location = -250,-100
 
             metallic_mapping = node_tree.nodes.new('ShaderNodeMapping')
