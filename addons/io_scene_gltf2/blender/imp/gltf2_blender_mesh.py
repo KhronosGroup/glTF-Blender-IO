@@ -62,7 +62,7 @@ class BlenderMesh():
         # Normals
         offset = 0
         for prim in pymesh.primitives:
-            offset = BlenderPrimitive.set_normals(prim, mesh, offset)
+            offset = BlenderPrimitive.set_normals(gltf, prim, mesh, offset)
 
         mesh.update()
 
@@ -84,7 +84,7 @@ class BlenderMesh():
         bm.from_mesh(obj.data)
         bm.faces.ensure_lookup_table()
         for prim in pymesh.primitives:
-            offset, cpt_index_mat = BlenderPrimitive.assign_material(prim, obj, bm, offset, cpt_index_mat)
+            offset, cpt_index_mat = BlenderPrimitive.assign_material(gltf, prim, obj, bm, offset, cpt_index_mat)
 
         bm.to_mesh(obj.data)
         bm.free()

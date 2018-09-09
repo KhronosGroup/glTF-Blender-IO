@@ -30,7 +30,9 @@ from .gltf2_blender_map_occlusion import *
 class BlenderMaterial():
 
     @staticmethod
-    def create(pymaterial):
+    def create(gltf, material_idx):
+
+        pymaterial = gltf.data.materials[material_idx]
 
         if pymaterial.name is not None:
             name = pymaterial.name

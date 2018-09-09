@@ -52,22 +52,23 @@ class BlenderPrimitive():
         pyprimitive.faces_length = len(prim_faces)
 
         # manage material of primitive
-        if pyprimitive.material:
+        if pyprimitive.material is not None:
 
             # Create Blender material
-            if pyprimitive.material.blender_material is None:
-                BlenderMaterial.create(pyprimitive.material)
+            if gltf.data.materials[pyprimitive.material].blender_material is None:
+                BlenderMaterial.create(gltf, pyprimitive.material)
 
         return verts, edges, faces
 
-    def set_normals(pyprimitive, mesh, offset):
+    def set_normals(gltf, pyprimitive, mesh, offset):
         if 'NORMAL' in pyprimitive.attributes.keys():
             for poly in mesh.polygons:
                 for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                     vert_idx = mesh.loops[loop_idx].vertex_index
                     if vert_idx in range(offset, offset + pyprimitive.vertices_length):
                         cpt_vert = vert_idx - offset
-                        mesh.vertices[vert_idx].normal = pyprimitive.attributes['NORMAL']['result'][cpt_vert]
+                        normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
+                        mesh.vertices[vert_idx].normal = normal_data[cpt_vert]
         offset = offset + pyprimitive.vertices_length
         return offset
 
@@ -102,10 +103,10 @@ class BlenderPrimitive():
             if pyprimitive.material and pyprimitive.material.pbr.metallic_type in [pyprimitive.material.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
                 BlenderMaterial.set_uvmap(pyprimitive.material, pyprimitive, obj)
 
-    def assign_material(pyprimitive, obj, bm, offset, cpt_index_mat):
+    def assign_material(gltf, pyprimitive, obj, bm, offset, cpt_index_mat):
         #TODO_SPLIT default material ????
         if pyprimitive.material is not None:
-            obj.data.materials.append(bpy.data.materials[pyprimitive.material.blender_material])
+            obj.data.materials.append(bpy.data.materials[gltf.data.materials[pyprimitive.material].blender_material])
             for vert in bm.verts:
                 if vert.index in range(offset, offset + pyprimitive.vertices_length):
                     for loop in vert.link_loops:
