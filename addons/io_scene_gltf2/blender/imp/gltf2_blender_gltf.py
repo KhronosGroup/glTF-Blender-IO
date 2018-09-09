@@ -31,11 +31,10 @@ class BlenderGlTF():
         # Blender attributes initialization
         gltf.blender_scene = None
 
-        BlenderScene.create(gltf.scene)
+        for scene in gltf.data.scenes:
+            BlenderScene.create(gltf, scene)
 
-        for scene in gltf.other_scenes:
-            BlenderScene.create(scene)
-
+        #TODO_SPLIT: seems it will work unchanged, but need to be check
         # Armature correction
         # Try to detect bone chains, and set bone lengths
         # To detect if a bone is in a chain, we try to detect if a bone head is aligned
