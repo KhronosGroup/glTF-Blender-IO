@@ -25,7 +25,7 @@ from .gltf2_io_scene import *
 from .gltf2_io_animation import *
 import logging
 
-class glTFImporter():
+class glTFImporter_old():
 
     @staticmethod
     def load_glb(pygltf):
@@ -37,9 +37,9 @@ class glTFImporter():
         # TODO check json type for chunk 0, and BIN type for next ones
 
         # json
-        type, str_json, offset = glTFImporter.load_chunk(pygltf, offset)
+        type, str_json, offset = glTFImporter_old.load_chunk(pygltf, offset)
         try:
-            pygltf.json = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
+            pygltf.json = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter_old.bad_json_value)
         except ValueError as e:
             return False, e.args[0]
 
@@ -47,7 +47,7 @@ class glTFImporter():
         # binary data
         chunk_cpt = 0
         while offset < len(pygltf.content):
-            type, data, offset = glTFImporter.load_chunk(pygltf, offset)
+            type, data, offset = glTFImporter_old.load_chunk(pygltf, offset)
 
             pygltf.buffers[chunk_cpt] = Buffer(chunk_cpt, pygltf.json['buffers'][chunk_cpt], pygltf)
             pygltf.buffers[chunk_cpt].data = data #TODO .length
@@ -82,14 +82,14 @@ class glTFImporter():
             with open(pygltf.filename, 'r') as f:
                 content = f.read()
                 try:
-                    pygltf.json = json.loads(content, parse_constant=glTFImporter.bad_json_value)
+                    pygltf.json = json.loads(content, parse_constant=glTFImporter_old.bad_json_value)
                     return True, None
                 except ValueError as e:
                     return False, e.args[0]
 
         else:
             # Parsing glb file
-            success, txt = glTFImporter.load_glb(pygltf)
+            success, txt = glTFImporter_old.load_glb(pygltf)
             return success, txt
 
     @staticmethod
@@ -109,7 +109,7 @@ class glTFImporter():
         if not check_version:
             return False, txt
 
-        idx, scene = glTFImporter.get_root_scene(pygltf)
+        idx, scene = glTFImporter_old.get_root_scene(pygltf)
         if not scene:
             return False, "Error reading root scene"
 
@@ -146,14 +146,14 @@ class glTFImporter():
 
         # Set bone type on all joints
         for node in pygltf.scene.nodes.values():
-            is_joint, skin = glTFImporter.is_node_joint(pygltf, node.index)
+            is_joint, skin = glTFImporter_old.is_node_joint(pygltf, node.index)
             if is_joint:
                 node.is_joint = True
                 node.skin_id     = skin
 
         for scene in pygltf.other_scenes:
             for node in scene.nodes.values():
-                is_joint, skin = glTFImporter.is_node_joint(pygltf, node.index)
+                is_joint, skin = glTFImporter_old.is_node_joint(pygltf, node.index)
                 if is_joint:
                     node.is_joint = True
                     node.skin_id     = skin
@@ -172,8 +172,8 @@ class glTFImporter():
     @staticmethod
     def importer(filename, loglevel=logging.ERROR):
         pygltf = PyglTF(filename, loglevel=loglevel)
-        success, txt = glTFImporter.load(pygltf)
+        success, txt = glTFImporter_old.load(pygltf)
         if success:
-            success, txt = glTFImporter.read(pygltf)
+            success, txt = glTFImporter_old.read(pygltf)
 
         return success, pygltf, txt
