@@ -514,7 +514,7 @@ class ImportglTF2(Operator, ImportHelper):
         self.gltf_importer.log.removeHandler(self.gltf_importer.log_handler)
 
         # Switch to newly created main scene
-        bpy.context.screen.scene = bpy.data.scenes[self.gltf.blender_scene]
+        bpy.context.screen.scene = bpy.data.scenes[self.gltf_importer.blender_scene]
 
         return {'FINISHED'}
 
