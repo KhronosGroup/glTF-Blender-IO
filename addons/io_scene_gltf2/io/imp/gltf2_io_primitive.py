@@ -21,7 +21,7 @@
  """
 
 from ..com.gltf2_io_primitive import *
-from .gltf2_io_accessor import *
+from .gltf2_io_accessor_old import *
 from .gltf2_io_material import *
 
 class PrimitiveImporter():

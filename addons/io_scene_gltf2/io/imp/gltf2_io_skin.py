@@ -21,7 +21,7 @@
  """
 
 from ..com.gltf2_io_skin import *
-from .gltf2_io_accessor import *
+from .gltf2_io_accessor_old import *
 
 class SkinImporter():
 
