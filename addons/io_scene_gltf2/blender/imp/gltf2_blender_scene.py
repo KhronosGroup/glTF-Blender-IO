@@ -23,7 +23,6 @@
 import bpy
 from math import sqrt
 from mathutils import Quaternion
-from ...io.com.gltf2_io_scene import *
 from .gltf2_blender_node import *
 from .gltf2_blender_skin import *
 from .gltf2_blender_animation import *
@@ -31,7 +30,7 @@ from .gltf2_blender_animation import *
 class BlenderScene():
 
     @staticmethod
-    def create(pyscene):
+    def create(gltf, pyscene):
 
         # Create Yup2Zup empty
         obj_rotation = bpy.data.objects.new("Yup2Zup", None)
@@ -48,29 +47,30 @@ class BlenderScene():
                 scene = bpy.context.scene
             scene.render.engine = "CYCLES"
 
-            pyscene.gltf.blender_scene = scene.name
+            gltf.blender_scene = scene.name
         else:
-            pyscene.gltf.blender_scene = pyscene.name
+            gltf.blender_scene = pyscene.name
 
-        for node in pyscene.root_nodes_idx:
-            BlenderNode.create(pyscene.nodes[node], None) # None => No parent
+        for node_idx in pyscene.nodes:
+            BlenderNode.create(gltf, gltf.data.nodes[node_idx], None) # None => No parent
 
+        #TODO_SPLIT will be manage later
         # Now that all mesh / bones are created, create vertex groups on mesh
-        for armature in pyscene.gltf.skins.values():
-            BlenderSkin.create_vertex_groups(armature)
-
-        for armature in pyscene.gltf.skins.values():
-            BlenderSkin.assign_vertex_groups(armature)
-
-        for armature in pyscene.gltf.skins.values():
-            BlenderSkin.create_armature_modifiers(armature)
-
-        for node in pyscene.root_nodes_idx:
-            BlenderAnimation.anim(pyscene.nodes[node].animation)
+        # for armature in pyscene.gltf.skins.values():
+        #     BlenderSkin.create_vertex_groups(armature)
+        #
+        # for armature in pyscene.gltf.skins.values():
+        #     BlenderSkin.assign_vertex_groups(armature)
+        #
+        # for armature in pyscene.gltf.skins.values():
+        #     BlenderSkin.create_armature_modifiers(armature)
+        #
+        # for node in pyscene.root_nodes_idx:
+        #     BlenderAnimation.anim(pyscene.nodes[node].animation)
 
 
         # Parent root node to rotation object
-        bpy.data.scenes[pyscene.gltf.blender_scene].objects.link(obj_rotation)
+        bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
         obj_rotation.hide = True
-        for node in pyscene.root_nodes_idx:
-            bpy.data.objects[pyscene.nodes[node].blender_object].parent = obj_rotation
+        for node_idx in pyscene.nodes:
+            bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation
