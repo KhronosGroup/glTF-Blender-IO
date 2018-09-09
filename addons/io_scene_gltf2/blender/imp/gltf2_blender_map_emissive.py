@@ -37,7 +37,7 @@ class BlenderEmissiveMap():
         material = bpy.data.materials[mat_name]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(pymap.texture)
+        BlenderTextureInfo.create(gltf, pymap)
 
         # retrieve principled node and output node
         if len([node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"]) != 0:
@@ -59,10 +59,10 @@ class BlenderEmissiveMap():
         mapping.location = -1500, 1000
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
         uvmap.location = -2000,1000
-        uvmap["gltf2_texcoord"] = pymap.texCoord # Set custom flag to retrieve TexCoord
+        uvmap["gltf2_texcoord"] = pymap.tex_coord # Set custom flag to retrieve TexCoord
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[pymap.texture.image.blender_image_name]
+        text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymap.index].source].blender_image_name]
         text.location = -1000,1000
         add = node_tree.nodes.new('ShaderNodeAddShader')
         add.location = 500,500

@@ -34,7 +34,7 @@ class BlenderOcclusionMap():
             pass #TODO for internal / Eevee in future 2.8
 
     def create_cycles(gltf, pymap, mat_name):
-        BlenderTextureInfo.create(pymap.texture)
+        BlenderTextureInfo.create(gltf, pymap)
 
         # Pack texture, but doesn't use it for now. Occlusion is calculated from Cycles.
-        bpy.data.images[pymap.texture.image.blender_image_name].use_fake_user = True
+        bpy.data.images[gltf.data.images[gltf.data.textures[pymap.index].source].blender_image_name].use_fake_user = True

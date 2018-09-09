@@ -37,7 +37,7 @@ class BlenderNormalMap():
         material = bpy.data.materials[mat_name]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(pymap.texture)
+        BlenderTextureInfo.create(gltf, pymap)
 
         # retrieve principled node and output node
         principled = None
@@ -55,10 +55,10 @@ class BlenderNormalMap():
         mapping.location = -1000,-500
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
         uvmap.location = -1500, -500
-        uvmap["gltf2_texcoord"] = pymap.texCoord # Set custom flag to retrieve TexCoord
+        uvmap["gltf2_texcoord"] = pymap.tex_coord # Set custom flag to retrieve TexCoord
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[pymap.texture.image.blender_image_name]
+        text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymap.index].source].blender_image_name]
         text.color_space = 'NONE'
         text.location = -500, -500
 

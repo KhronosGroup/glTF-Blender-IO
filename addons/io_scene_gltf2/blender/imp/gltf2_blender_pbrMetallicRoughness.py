@@ -93,11 +93,11 @@ class BlenderPbr():
                 math_vc_B = node_tree.nodes.new('ShaderNodeMath')
                 math_vc_B.operation = 'MULTIPLY'
 
-            BlenderTextureInfo.create(pypbr.baseColorTexture)
+            BlenderTextureInfo.create(gltf, pypbr.base_color_texture)
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[pypbr.baseColorTexture.image.blender_image_name]
+            text_node.image = bpy.data.images[pypbr.base_color_texture.image.blender_image_name]
             text_node.location = -1000,500
 
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
@@ -126,7 +126,7 @@ class BlenderPbr():
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             uvmap.location = -2000, 500
-            uvmap["gltf2_texcoord"] = pypbr.baseColorTexture.texcoord # Set custom flag to retrieve TexCoord
+            uvmap["gltf2_texcoord"] = pypbr.base_color_texture.tex_coord # Set custom flag to retrieve TexCoord
             # UV Map will be set after object/UVMap creation
 
             # Create links
@@ -194,7 +194,7 @@ class BlenderPbr():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[pypbr.baseColorTexture.image.blender_image_name]
+            text_node.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.base_color_texture.index].source].blender_image_name]
             if pypbr.vertex_color:
                 text_node.location = -2000,500
             else:
@@ -211,7 +211,7 @@ class BlenderPbr():
                 uvmap.location = -3000,500
             else:
                 uvmap.location = -2000,500
-            uvmap["gltf2_texcoord"] = pypbr.baseColorTexture.texcoord # Set custom flag to retrieve TexCoord
+            uvmap["gltf2_texcoord"] = pypbr.base_color_texture.tex_coord # Set custom flag to retrieve TexCoord
             # UV Map will be set after object/UVMap creation
 
             # Create links
@@ -248,10 +248,10 @@ class BlenderPbr():
             principled.inputs[4].default_value = pypbr.metallic_factor
             principled.inputs[7].default_value = pypbr.roughness_factor
 
-        elif pypbr.metallic_type == pypbr.TEXTURE:
-            BlenderTextureInfo.create(pypbr.metallicRoughnessTexture)
+        elif pypbr.metallic_type == gltf.TEXTURE:
+            BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture)
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
-            metallic_text.image = bpy.data.images[pypbr.metallicRoughnessTexture.image.blender_image_name]
+            metallic_text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.metallic_roughness_texture.index].source].blender_image_name]
             metallic_text.color_space = 'NONE'
             metallic_text.location = -500,0
 
@@ -263,7 +263,7 @@ class BlenderPbr():
 
             metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             metallic_uvmap.location = -1500,0
-            metallic_uvmap["gltf2_texcoord"] = pypbr.metallicRoughnessTexture.texcoord # Set custom flag to retrieve TexCoord
+            metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord # Set custom flag to retrieve TexCoord
 
             # links
             node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
@@ -275,10 +275,10 @@ class BlenderPbr():
 
         elif pypbr.metallic_type == gltf.TEXTURE_FACTOR:
 
-            BlenderTextureInfo.create(pypbr.metallicRoughnessTexture)
+            BlenderTextureInfo.create(pypbr.metallic_roughness_texture)
 
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
-            metallic_text.image = bpy.data.images[pypbr.metallicRoughnessTexture.image.blender_image_name]
+            metallic_text.image = bpy.data.images[pypbr.metallic_roughness_texture.image.blender_image_name]
             metallic_text.color_space = 'NONE'
             metallic_text.location = -1000,0
 
@@ -300,7 +300,7 @@ class BlenderPbr():
 
             metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             metallic_uvmap.location = -1500,0
-            metallic_uvmap["gltf2_texcoord"] = pypbr.metallicRoughnessTexture.texcoord # Set custom flag to retrieve TexCoord
+            metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord # Set custom flag to retrieve TexCoord
 
 
             # links

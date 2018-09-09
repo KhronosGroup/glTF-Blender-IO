@@ -24,6 +24,8 @@ import bpy
 import os
 import tempfile
 
+from ...io.imp.gltf2_io_binary import *
+
 # Note that Image is not a glTF2.0 object
 class BlenderImage():
 
@@ -36,11 +38,12 @@ class BlenderImage():
 
         # Create a temp image, pack, and delete image
         tmp_image = tempfile.NamedTemporaryFile(delete=False)
-        tmp_image.write(img.data)
+        img_data, img_name = BinaryData.get_image_data(gltf, img_idx)
+        tmp_image.write(img_data)
         tmp_image.close()
 
         blender_image = bpy.data.images.load(tmp_image.name)
         blender_image.pack()
-        blender_image.name = img.image_name
+        blender_image.name = img_name
         img.blender_image_name = blender_image.name
         os.remove(tmp_image.name)
