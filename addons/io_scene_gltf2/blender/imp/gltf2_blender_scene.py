@@ -30,7 +30,9 @@ from .gltf2_blender_animation import *
 class BlenderScene():
 
     @staticmethod
-    def create(gltf, pyscene):
+    def create(gltf, scene_idx):
+
+        pyscene = gltf.data.scenes[scene_idx]
 
         # Create Yup2Zup empty
         obj_rotation = bpy.data.objects.new("Yup2Zup", None)
@@ -52,7 +54,7 @@ class BlenderScene():
             gltf.blender_scene = pyscene.name
 
         for node_idx in pyscene.nodes:
-            BlenderNode.create(gltf, gltf.data.nodes[node_idx], None) # None => No parent
+            BlenderNode.create(gltf, node_idx, None) # None => No parent
 
         #TODO_SPLIT will be manage later
         # Now that all mesh / bones are created, create vertex groups on mesh

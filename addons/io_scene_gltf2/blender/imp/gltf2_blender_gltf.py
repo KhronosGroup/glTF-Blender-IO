@@ -31,8 +31,8 @@ class BlenderGlTF():
         # Blender attributes initialization
         gltf.blender_scene = None
 
-        for scene in gltf.data.scenes:
-            BlenderScene.create(gltf, scene)
+        for scene_idx, scene in enumerate(gltf.data.scenes):
+            BlenderScene.create(gltf, scene_idx)
 
         #TODO_SPLIT: seems it will work unchanged, but need to be check
         # Armature correction

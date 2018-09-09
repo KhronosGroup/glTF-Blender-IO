@@ -74,3 +74,11 @@ class glTFImporter():
             # Parsing glb file
             success, txt = self.load_glb()
             return success, txt
+
+    def is_node_joint(self, node_idx):
+        is_joint = False
+        for skin in pygltf.skins:
+            if node_idx in skin.joints:
+                return True, skin
+
+        return is_joint, None
