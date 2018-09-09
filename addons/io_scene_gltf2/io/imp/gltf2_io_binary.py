@@ -21,6 +21,8 @@
  """
 
 import struct
+import base64
+from os.path import dirname, join, isfile, basename
 
 class BinaryData():
 
@@ -124,3 +126,44 @@ class BinaryData():
             offset += stride
 
         return data
+
+    @staticmethod
+    def get_image_data(gltf, img_idx):
+
+        pyimage = gltf.data.images[img_idx]
+
+        image_name = "Image_" + str(img_idx)
+
+        if pyimage.uri:
+            sep = ';base64,'
+            if pyimage.uri[:5] == 'data:':
+                idx = pyimage.uri.find(sep)
+                if idx != -1:
+                    data = pyimage.uri[idx+len(sep):]
+                    return base64.b64decode(data), image_name
+
+            if isfile(join(dirname(gltf.filename), pyimage.uri)):
+                with open(join(dirname(gltf.filename), pyimage.uri), 'rb') as f_:
+                    return f_.read(), basename(join(dirname(gltf.filename), pyimage.uri))
+            else:
+                pyimage.gltf.log.error("Missing file (index " + str(pyimage.index) + "): " + pyimage.uri)
+                return None, None
+
+        if pyimage.buffer_view is None:
+            return None, None
+
+        bufferView = gltf.data.buffer_views[pyimage.buffer_view]
+
+        if bufferView.buffer in gltf.buffers.keys():
+            buffer = gltf.buffers[bufferView.buffer]
+        else:
+            # load buffer
+            gltf.load_buffer(bufferView.buffer)
+            buffer = gltf.buffers[bufferView.buffer]
+
+        bufferview_offset = bufferView.byte_offset
+
+        if bufferview_offset is None:
+            bufferview_offset = 0
+
+        return buffer[bufferview_offset:bufferview_offset+bufferView.byte_length], image_name
