@@ -88,7 +88,7 @@ class BlenderGlTF():
         # transform management
         for node_idx, node in enumerate(gltf.data.nodes):
             if node.matrix:
-                node.transform = matrix
+                node.transform = node.matrix
 
             #No matrix, but TRS
             mat = [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0] #init
