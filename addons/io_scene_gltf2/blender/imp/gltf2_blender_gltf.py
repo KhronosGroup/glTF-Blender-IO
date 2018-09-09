@@ -85,6 +85,37 @@ class BlenderGlTF():
             for material in gltf.data.materials:
                 material.blender_material = None
 
+                if material.pbr_metallic_roughness:
+                    # Init
+                    material.pbr_metallic_roughness.color_type = gltf.SIMPLE
+                    material.pbr_metallic_roughness.vertex_color = False
+                    material.pbr_metallic_roughness.metallic_type = gltf.SIMPLE
+
+                    if material.pbr_metallic_roughness.base_color_texture:
+                        material.pbr_metallic_roughness.color_type = gltf.TEXTURE
+
+                    if material.pbr_metallic_roughness.metallic_roughness_texture:
+                        material.pbr_metallic_roughness.metallic_type = gltf.TEXTURE
+
+                    if material.pbr_metallic_roughness.base_color_factor:
+                        if material.pbr_metallic_roughness.color_type == gltf.TEXTURE and material.pbr_metallic_roughness.base_color_factor != [1.0,1.0,1.0]:
+                            material.pbr_metallic_roughness.color_type = gltf.TEXTURE_FACTOR
+                    else:
+                        material.pbr_metallic_roughness.base_color_factor = [1.0,1.0,1.0]
+
+                    if material.pbr_metallic_roughness.metallic_factor:
+                        if material.pbr_metallic_roughness.metallic_type == gltf.TEXTURE and material.pbr_metallic_roughness.mettalic_factor != 1.0:
+                            material.pbr_metallic_roughness.metallic_type = gltf.TEXTURE_FACTOR
+                    else:
+                        material.pbr_metallic_roughness.metallic_factor = 1.0
+
+                    if material.pbr_metallic_roughness.roughness_factor:
+                        if material.pbr_metallic_roughness.metallic_type == gltf.TEXTURE and material.pbr_metallic_roughness.roughness_factor != 1.0:
+                            material.pbr_metallic_roughness.metallic_type = gltf.TEXTURE_FACTOR
+                    else:
+                        material.pbr_metallic_roughness.roughness_factor = 1.0
+
+
         # transform management
         for node_idx, node in enumerate(gltf.data.nodes):
             if node.matrix:
