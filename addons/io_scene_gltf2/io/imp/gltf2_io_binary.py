@@ -39,6 +39,11 @@ class BinaryData():
         accessor_offset   = accessor.byte_offset
         bufferview_offset = bufferView.byte_offset
 
+        if accessor_offset is None:
+            accessor_offset = 0
+        if bufferview_offset is None:
+            bufferview_offset = 0
+
         return buffer[accessor_offset+bufferview_offset:accessor_offset+bufferview_offset+bufferView.byte_length]
 
 
