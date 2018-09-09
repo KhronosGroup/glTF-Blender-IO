@@ -25,6 +25,7 @@ from mathutils import Vector
 
 from .gltf2_blender_material import *
 from ..com.gltf2_blender_conversion import *
+from ...io.imp.gltf2_io_binary import *
 
 class BlenderPrimitive():
 
@@ -35,25 +36,27 @@ class BlenderPrimitive():
 
         # TODO mode of primitive 4 for now.
         current_length = len(verts)
-        prim_verts = [Conversion.loc_gltf_to_blender(vert) for vert in pyprimitive.attributes['POSITION']['result']]
+        indices = BinaryData.get_data_from_accessor(gltf, pyprimitive.indices)
+        pos = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['POSITION'])
+        prim_verts = [Conversion.loc_gltf_to_blender(vert) for vert in pos]
         pyprimitive.vertices_length = len(prim_verts)
         verts.extend(prim_verts)
         prim_faces = []
-        for i in range(0, len(pyprimitive.indices), 3):
-            vals = pyprimitive.indices[i:i+3]
+        for i in range(0, len(indices), 3):
+            vals = indices[i:i+3]
             new_vals = []
             for y in vals:
-                new_vals.append(y+current_length)
+                new_vals.append(y[0]+current_length)
             prim_faces.append(tuple(new_vals))
         faces.extend(prim_faces)
         pyprimitive.faces_length = len(prim_faces)
 
         # manage material of primitive
-        if pyprimitive.mat:
+        if pyprimitive.material:
 
             # Create Blender material
-            if not hasattr(pyprimitive.mat, "blender_material"):
-                BlenderMaterial.create(pyprimitive.mat)
+            if pyprimitive.material.blender_material is None:
+                BlenderMaterial.create(pyprimitive.material)
 
         return verts, edges, faces
 
@@ -84,27 +87,30 @@ class BlenderPrimitive():
         return offset
 
     def set_UV_in_mat(pyprimitive, obj):
-        if hasattr(pyprimitive.mat, "KHR_materials_pbrSpecularGlossiness"):
-            if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.diffuse_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
-                BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
-            else:
-                if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.specgloss_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
-                    BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
-
+        #TODO_SPLIT
+        # if pyprimitive.material.extensions "KHR_materials_pbrSpecularGlossiness"):
+        #     if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.diffuse_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
+        #         BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
+        #     else:
+        #         if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.specgloss_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
+        #             BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
+        #
+        # else:
+        if pyprimitive.material and pyprimitive.material.pbr.color_type in [pyprimitive.mat.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
+            BlenderMaterial.set_uvmap(pyprimitive.material, pyprimitive, obj)
         else:
-            if pyprimitive.mat.pbr.color_type in [pyprimitive.mat.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
-                BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
-            else:
-                if pyprimitive.mat.pbr.metallic_type in [pyprimitive.mat.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
-                    BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
+            if pyprimitive.material and pyprimitive.material.pbr.metallic_type in [pyprimitive.material.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
+                BlenderMaterial.set_uvmap(pyprimitive.material, pyprimitive, obj)
 
     def assign_material(pyprimitive, obj, bm, offset, cpt_index_mat):
-        obj.data.materials.append(bpy.data.materials[pyprimitive.mat.blender_material])
-        for vert in bm.verts:
-            if vert.index in range(offset, offset + pyprimitive.vertices_length):
-                for loop in vert.link_loops:
-                    face = loop.face.index
-                    bm.faces[face].material_index = cpt_index_mat
-        cpt_index_mat += 1
+        #TODO_SPLIT default material ????
+        if pyprimitive.material is not None:
+            obj.data.materials.append(bpy.data.materials[pyprimitive.material.blender_material])
+            for vert in bm.verts:
+                if vert.index in range(offset, offset + pyprimitive.vertices_length):
+                    for loop in vert.link_loops:
+                        face = loop.face.index
+                        bm.faces[face].material_index = cpt_index_mat
+            cpt_index_mat += 1
         offset = offset + pyprimitive.vertices_length
         return offset, cpt_index_mat

@@ -57,7 +57,7 @@ class BlenderMesh():
         return mesh
 
     @staticmethod
-    def set_mesh(pymesh, mesh, obj):
+    def set_mesh(gltf, pymesh, mesh, obj):
 
         # Normals
         offset = 0
@@ -92,8 +92,9 @@ class BlenderMesh():
         # Create shapekeys if needed
         max_shape_to_create = 0
         for prim in pymesh.primitives:
-            if len(prim.targets) > max_shape_to_create:
-                max_shape_to_create = len(prim.targets)
+            if prim.targets:
+                if len(prim.targets) > max_shape_to_create:
+                    max_shape_to_create = len(prim.targets)
 
         # Create basis shape key
         if max_shape_to_create > 0:
