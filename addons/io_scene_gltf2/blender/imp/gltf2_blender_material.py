@@ -49,17 +49,17 @@ class BlenderMaterial():
             BlenderPbr.create(gltf, pymaterial.pbr_metallic_roughness, mat.name)
 
         # add emission map if needed
-        if pymaterial.emissivemap:
-            BlenderEmissiveMap.create(pymaterial.emissivemap, mat.name)
+        if pymaterial.emissive_texture:
+            BlenderEmissiveMap.create(gltf, pymaterial.emissive_texture, mat.name)
 
         # add normal map if needed
-        if pymaterial.normalmap:
-            BlenderNormalMap.create(pymaterial.normalmap, mat.name)
+        if pymaterial.normal_texture:
+            BlenderNormalMap.create(gltf, pymaterial.normal_texture, mat.name)
 
         # add occlusion map if needed
         # will be pack, but not used
-        if pymaterial.occlusionmap:
-            BlenderOcclusionMap.create(pymaterial.occlusionmap, mat.name)
+        if pymaterial.occlusion_texture:
+            BlenderOcclusionMap.create(gltf, pymaterial.occlusion_texture, mat.name)
 
     @staticmethod
     def set_uvmap(pymaterial, prim, obj):

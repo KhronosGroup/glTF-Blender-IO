@@ -26,14 +26,14 @@ from .gltf2_blender_texture import *
 class BlenderNormalMap():
 
     @staticmethod
-    def create(pymap, mat_name):
+    def create(gltf, pymap, mat_name):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderNormalMap.create_cycles(pymap, mat_name)
+            BlenderNormalMap.create_cycles(gltf, pymap, mat_name)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_cycles(pymap, mat_name):
+    def create_cycles(gltf, pymap, mat_name):
         material = bpy.data.materials[mat_name]
         node_tree = material.node_tree
 
