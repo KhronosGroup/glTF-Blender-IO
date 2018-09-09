@@ -22,6 +22,7 @@
 
 import bpy
 from .gltf2_blender_scene import *
+from ...io.com.gltf2_io_trs import *
 
 class BlenderGlTF():
 
@@ -78,6 +79,27 @@ class BlenderGlTF():
 
         # default scene used
         gltf.blender_scene = None
+
+        # transform management
+        for node_idx, node in enumerate(gltf.data.nodes):
+            if node.matrix:
+                node.transform = matrix
+
+            #No matrix, but TRS
+            mat = [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0] #init
+
+            if node.scale:
+                mat = TRS.scale_to_matrix(node.scale)
+
+            if node.rotation:
+                q_mat = TRS.quaternion_to_matrix(node.rotation)
+                mat = TRS.matrix_multiply(q_mat, mat)
+
+            if node.translation:
+                loc_mat = TRS.translation_to_matrix(node.translation)
+                mat = TRS.matrix_multiply(loc_mat, mat)
+
+            node.transform = mat
 
         # joint management
         for node_idx, node in enumerate(gltf.data.nodes):
