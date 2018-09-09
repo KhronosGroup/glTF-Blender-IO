@@ -91,7 +91,7 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
                 math_vc_B = node_tree.nodes.new('ShaderNodeMath')
                 math_vc_B.operation = 'MULTIPLY'
 
-            BlenderTexture.create(pyext.diffuseTexture)
+            BlenderTextureInfo.create(pyext.diffuseTexture)
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
@@ -159,7 +159,7 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
         elif pyext.diffuse_type == pyext.TEXTURE:
 
-            BlenderTexture.create(pyext.diffuseTexture)
+            BlenderTextureInfo.create(pyext.diffuseTexture)
 
             #TODO alpha ?
             if pyext.vertex_color:
@@ -252,7 +252,7 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             node_tree.links.new(glossy.inputs[0], combine.outputs[0])
 
         elif pyext.specgloss_type == pyext.TEXTURE:
-            BlenderTexture.create(pyext.specularGlossinessTexture)
+            BlenderTextureInfo.create(pyext.specularGlossinessTexture)
             spec_text = node_tree.nodes.new('ShaderNodeTexImage')
             spec_text.image = bpy.data.images[pyext.specularGlossinessTexture.image.blender_image_name]
             spec_text.color_space = 'NONE'
@@ -274,7 +274,7 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
         elif pyext.specgloss_type == pyext.TEXTURE_FACTOR:
 
-            BlenderTexture.create(pyext.specularGlossinessTexture)
+            BlenderTextureInfo.create(pyext.specularGlossinessTexture)
 
             spec_text = node_tree.nodes.new('ShaderNodeTexImage')
             spec_text.image = bpy.data.images[pyext.specularGlossinessTexture.image.blender_image_name]

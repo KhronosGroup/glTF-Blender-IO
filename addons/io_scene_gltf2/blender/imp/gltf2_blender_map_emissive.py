@@ -37,7 +37,7 @@ class BlenderEmissiveMap():
         material = bpy.data.materials[mat_name]
         node_tree = material.node_tree
 
-        BlenderTexture.create(pymap.texture)
+        BlenderTextureInfo.create(pymap.texture)
 
         # retrieve principled node and output node
         if len([node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"]) != 0:

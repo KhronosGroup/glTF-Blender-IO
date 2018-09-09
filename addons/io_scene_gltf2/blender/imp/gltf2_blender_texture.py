@@ -22,8 +22,15 @@
 
 from .gltf2_blender_image import *
 
+class BlenderTextureInfo():
+
+    @staticmethod
+    def create(gltf, pytextureinfo):
+        BlenderTexture.create(gltf, pytextureinfo.index)
+
 class BlenderTexture():
 
     @staticmethod
-    def create(pytexture):
-        BlenderImage.create(pytexture.image)
+    def create(gltf, pytexture_idx):
+        pytexture = gltf.data.textures[pytexture_idx]
+        BlenderImage.create(gltf, pytexture.source)

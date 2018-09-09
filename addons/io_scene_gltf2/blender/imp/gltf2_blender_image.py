@@ -28,7 +28,9 @@ import tempfile
 class BlenderImage():
 
     @staticmethod
-    def create(img):
+    def create(gltf, img_idx):
+
+        img = gltf.data.images[img_idx]
 
         img.blender_image_name = None
 

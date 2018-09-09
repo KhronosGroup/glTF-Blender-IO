@@ -37,7 +37,7 @@ class BlenderNormalMap():
         material = bpy.data.materials[mat_name]
         node_tree = material.node_tree
 
-        BlenderTexture.create(pymap.texture)
+        BlenderTextureInfo.create(pymap.texture)
 
         # retrieve principled node and output node
         principled = None
