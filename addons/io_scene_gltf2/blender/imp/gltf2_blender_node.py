@@ -69,7 +69,7 @@ class BlenderNode():
 
             if pynode.children:
                 for child_idx in pynode.children:
-                    BlenderNode.create(gltf, gltf.data.nodes[child], child, node_idx)
+                    BlenderNode.create(gltf, child_idx, node_idx)
 
             return
 
@@ -100,7 +100,7 @@ class BlenderNode():
 
             if pynode.children:
                 for child_idx in pynode.children:
-                    BlenderNode.create(gltf, gltf.data.nodes[child_idx], child_idx, node_idx)
+                    BlenderNode.create(gltf, child_idx, node_idx)
 
             return
 
@@ -120,7 +120,7 @@ class BlenderNode():
 
         if pynode.children:
             for child_idx in pynode.children:
-                BlenderNode.create(gltf, gltf.data.nodes[child_idx], child_idx, node_idx)
+                BlenderNode.create(gltf, child_idx, node_idx)
 
 
     @staticmethod
