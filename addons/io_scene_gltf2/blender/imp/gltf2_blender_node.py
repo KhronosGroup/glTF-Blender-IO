@@ -67,8 +67,9 @@ class BlenderNode():
 
             BlenderMesh.set_mesh(gltf, gltf.data.meshes[pynode.mesh], mesh, obj)
 
-            for child_idx in pynode.children:
-                BlenderNode.create(gltf, gltf.data.nodes[child], child, node_idx)
+            if pynode.children:
+                for child_idx in pynode.children:
+                    BlenderNode.create(gltf, gltf.data.nodes[child], child, node_idx)
 
             return
 
