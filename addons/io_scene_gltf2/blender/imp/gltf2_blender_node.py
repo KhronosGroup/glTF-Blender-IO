@@ -98,8 +98,9 @@ class BlenderNode():
 
             BlenderSkin.create_bone(gktf, gltf.skins[pynode.skin_id], pynode, node_idx, parent)
 
-            for child_idx in pynode.children:
-                BlenderNode.create(gltf, gltf.data.nodes[child_idx], child_idx, node_idx)
+            if pynode.children:
+                for child_idx in pynode.children:
+                    BlenderNode.create(gltf, gltf.data.nodes[child_idx], child_idx, node_idx)
 
             return
 
@@ -117,8 +118,9 @@ class BlenderNode():
         pynode.blender_object = obj.name
         BlenderNode.set_parent(pynode, obj, parent)
 
-        for child_idx in pynode.children:
-            BlenderNode.create(gltf, gltf.data.nodes[child_idx], child_idx, node_idx)
+        if pynode.children:
+            for child_idx in pynode.children:
+                BlenderNode.create(gltf, gltf.data.nodes[child_idx], child_idx, node_idx)
 
 
     @staticmethod
