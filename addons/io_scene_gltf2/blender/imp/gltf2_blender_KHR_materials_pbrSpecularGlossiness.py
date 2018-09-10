@@ -124,7 +124,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             uvmap.location = -2000, 500
-            uvmap["gltf2_texcoord"] = pyext.diffuseTexture.texcoord # Set custom flag to retrieve TexCoord
+            if pyext.diffuseTexture.texcoord is not None:
+                uvmap["gltf2_texcoord"] = pyext.diffuseTexture.texcoord # Set custom flag to retrieve TexCoord
+            else:
+                uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
             # UV Map will be set after object/UVMap creation
 
             # Create links
@@ -209,7 +212,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
                 uvmap.location = -3000,500
             else:
                 uvmap.location = -2000,500
-            uvmap["gltf2_texcoord"] = pyext.diffuseTexture.texcoord # Set custom flag to retrieve TexCoord
+            if pyext.diffuseTexture.texcoord is not None:
+                uvmap["gltf2_texcoord"] = pyext.diffuseTexture.texcoord # Set custom flag to retrieve TexCoord
+            else:
+                uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
             # UV Map will be set after object/UVMap creation
 
             # Create links
@@ -263,7 +269,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             spec_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             spec_uvmap.location = -1500,0
-            spec_uvmap["gltf2_texcoord"] = pyext.specularGlossinessTexture.texcoord # Set custom flag to retrieve TexCoord
+            if pyext.specularGlossinessTexture.texcoord is not None:
+                spec_uvmap["gltf2_texcoord"] = pyext.specularGlossinessTexture.texcoord # Set custom flag to retrieve TexCoord
+            else:
+                spec_uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
 
             # links
             node_tree.links.new(glossy.inputs[0], spec_text.outputs[0])
@@ -291,7 +300,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             spec_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             spec_uvmap.location = -1500,0
-            spec_uvmap["gltf2_texcoord"] = pyext.specularGlossinessTexture.texcoord # Set custom flag to retrieve TexCoord
+            if pyext.specularGlossinessTexture.texcoord is not None:
+                spec_uvmap["gltf2_texcoord"] = pyext.specularGlossinessTexture.texcoord # Set custom flag to retrieve TexCoord
+            else:
+                spec_uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
 
 
             # links

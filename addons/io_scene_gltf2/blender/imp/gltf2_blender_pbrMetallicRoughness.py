@@ -126,7 +126,10 @@ class BlenderPbr():
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             uvmap.location = -2000, 500
-            uvmap["gltf2_texcoord"] = pypbr.base_color_texture.tex_coord # Set custom flag to retrieve TexCoord
+            if pypbr.base_color_texture.tex_coord is not None:
+                uvmap["gltf2_texcoord"] = pypbr.base_color_texture.tex_coord # Set custom flag to retrieve TexCoord
+            else:
+                uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
             # UV Map will be set after object/UVMap creation
 
             # Create links
@@ -211,7 +214,10 @@ class BlenderPbr():
                 uvmap.location = -3000,500
             else:
                 uvmap.location = -2000,500
-            uvmap["gltf2_texcoord"] = pypbr.base_color_texture.tex_coord # Set custom flag to retrieve TexCoord
+            if pypbr.base_color_texture.tex_coord is not None:
+                uvmap["gltf2_texcoord"] = pypbr.base_color_texture.tex_coord # Set custom flag to retrieve TexCoord
+            else:
+                uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
             # UV Map will be set after object/UVMap creation
 
             # Create links
@@ -263,7 +269,10 @@ class BlenderPbr():
 
             metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             metallic_uvmap.location = -1500,0
-            metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord # Set custom flag to retrieve TexCoord
+            if pypbr.metallic_roughness_texture.tex_coord is not None:
+                metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord # Set custom flag to retrieve TexCoord
+            else:
+                metallic_uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
 
             # links
             node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
@@ -300,7 +309,10 @@ class BlenderPbr():
 
             metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             metallic_uvmap.location = -1500,0
-            metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord # Set custom flag to retrieve TexCoord
+            if pypbr.metallic_roughness_texture.tex_coord is not None:
+                metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord # Set custom flag to retrieve TexCoord
+            else:
+                metallic_uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
 
 
             # links

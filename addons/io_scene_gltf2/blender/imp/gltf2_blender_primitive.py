@@ -88,7 +88,7 @@ class BlenderPrimitive():
         offset = offset + pyprimitive.vertices_length
         return offset
 
-    def set_UV_in_mat(pyprimitive, obj):
+    def set_UV_in_mat(gltf, pyprimitive, obj):
         #TODO_SPLIT
         # if pyprimitive.material.extensions "KHR_materials_pbrSpecularGlossiness"):
         #     if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.diffuse_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
@@ -98,11 +98,11 @@ class BlenderPrimitive():
         #             BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
         #
         # else:
-        if pyprimitive.material and pyprimitive.material.pbr.color_type in [pyprimitive.mat.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
-            BlenderMaterial.set_uvmap(pyprimitive.material, pyprimitive, obj)
+        if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.color_type in [gltf.TEXTURE, gltf.TEXTURE_FACTOR] :
+            BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
         else:
-            if pyprimitive.material and pyprimitive.material.pbr.metallic_type in [pyprimitive.material.pbr.TEXTURE, pyprimitive.mat.pbr.TEXTURE_FACTOR] :
-                BlenderMaterial.set_uvmap(pyprimitive.material, pyprimitive, obj)
+            if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.metallic_type in [gltf.TEXTURE, gltf.TEXTURE_FACTOR] :
+                BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
 
     def assign_material(gltf, pyprimitive, obj, bm, offset, cpt_index_mat):
         #TODO_SPLIT default material ????

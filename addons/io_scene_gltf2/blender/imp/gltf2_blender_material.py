@@ -62,9 +62,11 @@ class BlenderMaterial():
             BlenderOcclusionMap.create(gltf, material_idx)
 
     @staticmethod
-    def set_uvmap(pymaterial, prim, obj):
+    def set_uvmap(gltf, material_idx, prim, obj):
+        pymaterial = gltf.data.materials[material_idx]
+
         node_tree = bpy.data.materials[pymaterial.blender_material].node_tree
-        uvmap_nodes =  [node for node in node_tree.nodes if node.type == 'UVMAP']
+        uvmap_nodes =  [node for node in node_tree.nodes if node.type in ['UVMAP', 'NORMAL_MAP']]
         for uvmap_node in uvmap_nodes:
             if uvmap_node["gltf2_texcoord"] in prim.blender_texcoord.keys():
                 uvmap_node.uv_map = prim.blender_texcoord[uvmap_node["gltf2_texcoord"]]
