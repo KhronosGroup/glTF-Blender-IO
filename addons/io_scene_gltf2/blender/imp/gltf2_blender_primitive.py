@@ -36,8 +36,15 @@ class BlenderPrimitive():
 
         # TODO mode of primitive 4 for now.
         current_length = len(verts)
-        indices = BinaryData.get_data_from_accessor(gltf, pyprimitive.indices)
         pos = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['POSITION'])
+        if pyprimitive.indices is not None:
+            indices = BinaryData.get_data_from_accessor(gltf, pyprimitive.indices)
+        else:
+            indices = []
+            indices_ = range(0, len(pos))
+            for i in indices_:
+                indices.append((i,))
+
         prim_verts = [Conversion.loc_gltf_to_blender(vert) for vert in pos]
         pyprimitive.vertices_length = len(prim_verts)
         verts.extend(prim_verts)
