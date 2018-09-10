@@ -72,17 +72,18 @@ class BlenderPrimitive():
         offset = offset + pyprimitive.vertices_length
         return offset
 
-    def set_UV(pyprimitive, obj, mesh, offset):
+    def set_UV(gltf, pyprimitive, obj, mesh, offset):
         for texcoord in [attr for attr in pyprimitive.attributes.keys() if attr[:9] == "TEXCOORD_"]:
             if not texcoord in mesh.uv_textures:
                 mesh.uv_textures.new(texcoord)
                 pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
 
+            texcoord_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes[texcoord])
             for poly in mesh.polygons:
                 for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                     vert_idx = mesh.loops[loop_idx].vertex_index
                     if vert_idx in range(offset, offset + pyprimitive.vertices_length):
-                        obj.data.uv_layers[texcoord].data[loop_idx].uv = Vector((pyprimitive.attributes[texcoord]['result'][vert_idx-offset][0], 1-pyprimitive.attributes[texcoord]['result'][vert_idx-offset][1]))
+                        obj.data.uv_layers[texcoord].data[loop_idx].uv = Vector((texcoord_data[vert_idx-offset][0], 1-texcoord_data[vert_idx-offset][1]))
 
         offset = offset + pyprimitive.vertices_length
         return offset

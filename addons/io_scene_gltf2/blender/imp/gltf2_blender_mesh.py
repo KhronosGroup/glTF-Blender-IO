@@ -69,7 +69,7 @@ class BlenderMesh():
         # manage UV
         offset = 0
         for prim in pymesh.primitives:
-            offset = BlenderPrimitive.set_UV(prim, obj, mesh, offset)
+            offset = BlenderPrimitive.set_UV(gltf, prim, obj, mesh, offset)
 
         mesh.update()
 
