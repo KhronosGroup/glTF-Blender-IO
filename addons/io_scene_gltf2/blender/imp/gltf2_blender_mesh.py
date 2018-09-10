@@ -114,12 +114,15 @@ class BlenderMesh():
 
                 shape_layer = bm.verts.layers.shape[i+1]
 
+                pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
+
                 for vert in bm.verts:
                     if not vert.index in range(offset_idx, offset_idx + prim.vertices_length):
                         continue
 
                     shape = vert[shape_layer]
-                    co = Conversion.loc_gltf_to_blender(list(prim.targets[i]['POSITION']['result'][vert.index - offset_idx]))
+
+                    co = Conversion.loc_gltf_to_blender(list(pos[vert.index - offset_idx]))
                     shape.x = obj.data.vertices[vert.index].co.x + co[0]
                     shape.y = obj.data.vertices[vert.index].co.y + co[1]
                     shape.z = obj.data.vertices[vert.index].co.z + co[2]
@@ -130,10 +133,10 @@ class BlenderMesh():
 
         # set default weights for shape keys, and names
         for i in range(max_shape_to_create):
-            if i < len(pymesh.target_weights):
-                obj.data.shape_keys.key_blocks[i+1].value = pymesh.target_weights[i]
-                if pymesh.primitives[0].targets[i]['POSITION']['accessor'].name:
-                   obj.data.shape_keys.key_blocks[i+1].name  = pymesh.primitives[0].targets[i]['POSITION']['accessor'].name
+            if i < len(pymesh.weights):
+                obj.data.shape_keys.key_blocks[i+1].value = pymesh.weights[i]
+                if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
+                   obj.data.shape_keys.key_blocks[i+1].name  = gltf.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
 
 
         # Apply vertex color.
