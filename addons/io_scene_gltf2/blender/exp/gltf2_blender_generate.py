@@ -25,6 +25,8 @@ from .gltf2_blender_extract import *
 from .gltf2_blender_filter import *
 from .gltf2_blender_generate_materials import *
 
+from ..com.gltf2_blender_image_util import *
+
 from io_scene_gltf2.blender.com import gltf2_blender_json
 from io_scene_gltf2.io.com import gltf2_io
 
