@@ -77,8 +77,8 @@ class BinaryData():
             offset += stride
 
         if accessor.sparse:
-            sparse_indices_data  = BinaryData.get_binary_from_sparse(gltf, accessor.sparse, "indices")
-            sparse_values_values = BinaryData.get_binary_from_sparse(gltf, accessor.sparse, "values", accessor.type)
+            sparse_indices_data  = BinaryData.get_data_from_sparse(gltf, accessor.sparse, "indices")
+            sparse_values_values = BinaryData.get_data_from_sparse(gltf, accessor.sparse, "values", accessor.type)
 
             # apply sparse
             for cpt_idx, idx in enumerate(sparse_indices_data):
@@ -105,7 +105,7 @@ class BinaryData():
             gltf.load_buffer(bufferView.buffer)
             buffer = gltf.buffers[bufferView.buffer]
 
-        bin_data =  buffer[offset:offset+bufferVview.byte_length]
+        bin_data =  buffer[offset:offset+bufferView.byte_length]
 
 
         fmt_char = gltf.fmt_char_dict[sparse.indices.component_type]
@@ -119,6 +119,7 @@ class BinaryData():
         else:
             stride = stride_
 
+        data = []
         offset = 0
         while len(data) < sparse.count:
             element = struct.unpack_from(fmt, bin_data , offset)
