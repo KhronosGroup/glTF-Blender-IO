@@ -26,18 +26,21 @@ from .gltf2_blender_texture import *
 class BlenderEmissiveMap():
 
     @staticmethod
-    def create(gltf, pymap, mat_name):
+    def create(gltf, material_idx):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderEmissiveMap.create_cycles(gltf, pymap, mat_name)
+            BlenderEmissiveMap.create_cycles(gltf, material_idx)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_cycles(gltf, pymap, mat_name):
-        material = bpy.data.materials[mat_name]
+    def create_cycles(gltf, material_idx):
+
+        pymaterial = gltf.data.materials[material_idx]
+
+        material = bpy.data.materials[pymaterial.blender_material]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(gltf, pymap)
+        BlenderTextureInfo.create(gltf, pymaterial.emissive_texture)
 
         # retrieve principled node and output node
         if len([node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"]) != 0:
@@ -59,10 +62,10 @@ class BlenderEmissiveMap():
         mapping.location = -1500, 1000
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
         uvmap.location = -2000,1000
-        uvmap["gltf2_texcoord"] = pymap.tex_coord # Set custom flag to retrieve TexCoord
+        uvmap["gltf2_texcoord"] = pymaterial.emissive_texture.tex_coord # Set custom flag to retrieve TexCoord
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymap.index].source].blender_image_name]
+        text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.emissive_texture.index].source].blender_image_name]
         text.location = -1000,1000
         add = node_tree.nodes.new('ShaderNodeAddShader')
         add.location = 500,500
@@ -70,17 +73,17 @@ class BlenderEmissiveMap():
         math_R  = node_tree.nodes.new('ShaderNodeMath')
         math_R.location = -500, 1500
         math_R.operation = 'MULTIPLY'
-        math_R.inputs[1].default_value = pymap.factor[0]
+        math_R.inputs[1].default_value = pymaterial.emissive_factor[0]
 
         math_G  = node_tree.nodes.new('ShaderNodeMath')
         math_G.location = -500, 1250
         math_G.operation = 'MULTIPLY'
-        math_G.inputs[1].default_value = pymap.factor[1]
+        math_G.inputs[1].default_value = pymaterial.emissive_factor[1]
 
         math_B  = node_tree.nodes.new('ShaderNodeMath')
         math_B.location = -500, 1000
         math_B.operation = 'MULTIPLY'
-        math_B.inputs[1].default_value = pymap.factor[2]
+        math_B.inputs[1].default_value = pymaterial.emissive_factor[2]
 
         # create links
         node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])

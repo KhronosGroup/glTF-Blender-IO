@@ -26,18 +26,21 @@ from .gltf2_blender_texture import *
 class BlenderNormalMap():
 
     @staticmethod
-    def create(gltf, pymap, mat_name):
+    def create(gltf, material_idx):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderNormalMap.create_cycles(gltf, pymap, mat_name)
+            BlenderNormalMap.create_cycles(gltf, material_idx)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_cycles(gltf, pymap, mat_name):
-        material = bpy.data.materials[mat_name]
+    def create_cycles(gltf, material_idx):
+
+        pymaterial = gltf.data.materials[material_idx]
+
+        material = bpy.data.materials[pymaterial.blender_material]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(gltf, pymap)
+        BlenderTextureInfo.create(gltf, pymaterial.normal_texture)
 
         # retrieve principled node and output node
         principled = None
@@ -55,10 +58,10 @@ class BlenderNormalMap():
         mapping.location = -1000,-500
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
         uvmap.location = -1500, -500
-        uvmap["gltf2_texcoord"] = pymap.tex_coord # Set custom flag to retrieve TexCoord
+        uvmap["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord # Set custom flag to retrieve TexCoord
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymap.index].source].blender_image_name]
+        text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.normal_texture.index].source].blender_image_name]
         text.color_space = 'NONE'
         text.location = -500, -500
 
