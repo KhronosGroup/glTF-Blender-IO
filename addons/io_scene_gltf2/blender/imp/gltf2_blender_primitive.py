@@ -62,12 +62,12 @@ class BlenderPrimitive():
 
     def set_normals(gltf, pyprimitive, mesh, offset):
         if 'NORMAL' in pyprimitive.attributes.keys():
+            normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
             for poly in mesh.polygons:
                 for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                     vert_idx = mesh.loops[loop_idx].vertex_index
                     if vert_idx in range(offset, offset + pyprimitive.vertices_length):
                         cpt_vert = vert_idx - offset
-                        normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
                         mesh.vertices[vert_idx].normal = normal_data[cpt_vert]
         offset = offset + pyprimitive.vertices_length
         return offset
