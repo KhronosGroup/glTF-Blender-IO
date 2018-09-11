@@ -1047,12 +1047,28 @@ def generate_lights(operator,
 
             light['spot'] = spot
 
-        light['color'] = [blender_light.color[0], blender_light.color[1], blender_light.color[2]]
+        light_color = [blender_light.color[0], blender_light.color[1], blender_light.color[2]]
+        light_intensity = blender_light.energy
 
-        # Blender Render lamps have no real-world units, while glTF lights use candela
-        # (for punctual lights) and lux (for ambient and directional lights). For lack
-        # of a better conversion, use the unitless energy value here.
-        light['intensity'] = blender_light.energy
+        if blender_light.use_nodes and blender_light.node_tree:
+            for currentNode in blender_light.node_tree.nodes:
+                if isinstance(currentNode, bpy.types.ShaderNodeOutputLamp):
+                    if not currentNode.is_active_output:
+                        continue
+                    emission_node = get_emission_node_from_lamp_output_node(currentNode)
+                    if emission_node is None:
+                        continue
+                    emission_color = emission_node.inputs["Color"].default_value
+                    emission_strength = emission_node.inputs["Strength"].default_value
+                    light_color = [emission_color[0], emission_color[1], emission_color[2]]
+                    # 1.0 W/m2 = 683.002 lumen/m2 at wavelength = 555nm (green)
+                    #light_intensity = emission_strength * 683.002
+                    light_intensity = emission_strength
+                    break
+
+
+        light['color'] = light_color
+        light['intensity'] = light_intensity
 
         #
 

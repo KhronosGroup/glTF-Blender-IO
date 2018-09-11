@@ -142,6 +142,25 @@ def get_image_material_usage_to_socket(shader_image, socket_name):
         
     return -6
 
+def get_emission_node_from_lamp_output_node(lamp_node):
+    if lamp_node is None:
+        return None
+
+    if not isinstance(lamp_node, bpy.types.ShaderNodeOutputLamp):
+        return None
+
+    if lamp_node.inputs.get('Surface') is None:
+        return None
+
+    if len(lamp_node.inputs.get('Surface').links) == 0:
+        return None
+
+    from_node = lamp_node.inputs.get('Surface').links[0].from_node
+    if isinstance(from_node, bpy.types.ShaderNodeEmission):
+        return from_node
+
+    return None
+
 
 def get_shader_image_from_shader_node(name, shader_node):
     
