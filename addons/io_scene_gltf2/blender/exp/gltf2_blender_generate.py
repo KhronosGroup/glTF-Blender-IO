@@ -17,6 +17,7 @@
 #
 
 import copy
+import math
 
 import bpy
 
@@ -1065,12 +1066,10 @@ def generate_lights(operator,
                             print_console('WARNING',
                                           'No quadratic light falloff node attached to emission strength property')
                             continue
-                        emission_strength = quadratic_falloff_node.inputs["Strength"].default_value
+                        emission_strength = quadratic_falloff_node.inputs["Strength"].default_value / (math.pi * 4.0)
                     else:
                         emission_strength = emission_node.inputs["Strength"].default_value
                     light_color = [emission_color[0], emission_color[1], emission_color[2]]
-                    # 1.0 W/m2 = 683.002 lumen/m2 at wavelength = 555nm (green)
-                    #light_intensity = emission_strength * 683.002
                     light_intensity = emission_strength
                     break
 
