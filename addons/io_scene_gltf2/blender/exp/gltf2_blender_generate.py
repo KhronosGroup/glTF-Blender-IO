@@ -1482,12 +1482,12 @@ def generate_meshes(operator,
                             weights.append(blender_shape_key.value)
                             target_names.append(blender_shape_key.name)
 
-                    mesh['weights'] = weights
+                    mesh.weights = weights
 
-                    if not 'extras' in mesh:
-                        mesh['extras'] = {}
+                    if not mesh.extras:
+                        mesh.extras = {}
 
-                    mesh['extras']['targetNames'] = target_names
+                    mesh.extras['targetNames'] = target_names
 
         #
         #
