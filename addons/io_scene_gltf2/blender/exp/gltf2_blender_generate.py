@@ -1653,13 +1653,26 @@ def generate_node_instance(context,
                 if camera >= 0:
                     if export_settings['gltf_yup']:
                         # Add correction node for camera, as default direction is different to Blender.
-                        correction_node = {}
+                        correction_node = gltf2_io.Node(
+                            camera=None,
+                            children=[],
+                            extensions={},
+                            extras=None,
+                            matrix=[],
+                            mesh=None,
+                            name=None,
+                            rotation=None,
+                            scale=None,
+                            skin=None,
+                            translation=None,
+                            weights=None
+                        )
 
-                        correction_node['name'] = 'Correction_' + blender_object.name
-                        correction_node['rotation'] = [correction_quaternion[1], correction_quaternion[2],
+                        correction_node.name  = 'Correction_' + blender_object.name
+                        correction_node.rotation = [correction_quaternion[1], correction_quaternion[2],
                                                        correction_quaternion[3], correction_quaternion[0]]
 
-                        correction_node['camera'] = camera
+                        correction_node.camera = camera
 
                         nodes.append(correction_node)
                     else:
@@ -1674,13 +1687,26 @@ def generate_node_instance(context,
 
                     if export_settings['gltf_yup']:
                         # Add correction node for light, as default direction is different to Blender.
-                        correction_node = {}
+                        correction_node = gltf2_io.Node(
+                            camera=None,
+                            children=[],
+                            extensions={},
+                            extras=None,
+                            matrix=[],
+                            mesh=None,
+                            name=None,
+                            rotation=None,
+                            scale=None,
+                            skin=None,
+                            translation=None,
+                            weights=None
+                        )
 
-                        correction_node['name'] = 'Correction_' + blender_object.name
-                        correction_node['rotation'] = [correction_quaternion[1], correction_quaternion[2],
+                        correction_node.name = 'Correction_' + blender_object.name
+                        correction_node.rotation = [correction_quaternion[1], correction_quaternion[2],
                                                        correction_quaternion[3], correction_quaternion[0]]
 
-                        correction_node['extensions'] = extensions
+                        correction_node.extensions = extensions
 
                         nodes.append(correction_node)
                     else:
