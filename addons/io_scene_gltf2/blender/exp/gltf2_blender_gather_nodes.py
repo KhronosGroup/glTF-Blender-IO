@@ -20,7 +20,7 @@ from io_scene_gltf2.io.com import gltf2_io
 
 @cached
 def gather_node(blender_object, export_settings):
-    if not __filter_node(blender_object, export_settings)
+    if not __filter_node(blender_object, export_settings):
         return None
 
     node = gltf2_io.Node(
