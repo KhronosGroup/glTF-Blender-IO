@@ -37,7 +37,7 @@ class BlenderMaterial():
         if pymaterial.name is not None:
             name = pymaterial.name
         else:
-            name = "Material_" + str(pymaterial.index)
+            name = "Material_" + str(material_idx)
 
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material = mat.name
