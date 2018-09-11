@@ -1058,8 +1058,12 @@ def generate_lights(operator,
                     emission_node = get_emission_node_from_lamp_output_node(currentNode)
                     if emission_node is None:
                         continue
+                    quadratic_falloff_node = get_ligth_falloff_node_from_emission_node(emission_node, 'Quadratic')
+                    if quadratic_falloff_node is None:
+                        print_console('WARNING', 'No quadratic light falloff node attached to emission strength property')
+                        continue
                     emission_color = emission_node.inputs["Color"].default_value
-                    emission_strength = emission_node.inputs["Strength"].default_value
+                    emission_strength = quadratic_falloff_node.inputs["Strength"].default_value
                     light_color = [emission_color[0], emission_color[1], emission_color[2]]
                     # 1.0 W/m2 = 683.002 lumen/m2 at wavelength = 555nm (green)
                     #light_intensity = emission_strength * 683.002
