@@ -84,6 +84,14 @@ class BinaryData():
             for cpt_idx, idx in enumerate(sparse_indices_data):
                 data[idx[0]] = sparse_values_values[cpt_idx]
 
+        # Normalization
+        if accessor.normalized:
+            for idx, tuple in enumerate(data):
+                new_tuple = ()
+                for i in tuple:
+                    new_tuple += (float(i),)
+                data[idx] = new_tuple
+
         return data
 
     @staticmethod
