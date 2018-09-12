@@ -120,6 +120,7 @@ class BlenderGlTF():
         for node_idx, node in enumerate(gltf.data.nodes):
             if node.matrix:
                 node.transform = node.matrix
+                continue
 
             #No matrix, but TRS
             mat = [1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0] #init
