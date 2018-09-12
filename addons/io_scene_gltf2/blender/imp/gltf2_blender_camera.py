@@ -25,7 +25,10 @@ import bpy
 class BlenderCamera():
 
     @staticmethod
-    def create(pycamera):
+    def create(gltf, camera_id):
+
+        pycamera = gltf.data.cameras[camera_id]
+
         if not pycamera.name:
             pycamera.name = "Camera"
 
@@ -35,6 +38,7 @@ class BlenderCamera():
         if pycamera.type == "orthographic":
             cam.type = "ORTHO"
 
+        #TODO: lot's of work for camera here...
         if hasattr(pycamera, "znear"):
             cam.clip_start = pycamera.znear
 
@@ -43,5 +47,5 @@ class BlenderCamera():
 
 
         obj = bpy.data.objects.new(pycamera.name, cam)
-        bpy.data.scenes[pycamera.gltf.blender_scene].objects.link(obj)
+        bpy.data.scenes[gltf.blender_scene].objects.link(obj)
         return obj
