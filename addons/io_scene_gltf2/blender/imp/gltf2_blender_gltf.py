@@ -145,3 +145,8 @@ class BlenderGlTF():
                 node.skin_id  = skin
             else:
                 node.is_joint = False
+
+        for skin_id, skin in enumerate(gtlf.data.skins):
+            if skin.skeleton not in skin.joints:
+                gltf.data.nodes[skin.skeleton].is_joint = True
+                gltf.data.nodes[skin.skeleton].skin_id  = skin_id
