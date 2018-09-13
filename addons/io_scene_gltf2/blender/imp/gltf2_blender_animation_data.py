@@ -27,13 +27,14 @@ class BlenderAnimationData():
 
     @staticmethod
     def set_interpolation(interpolation, kf):
-        if interpolation == "LINEAR":
-            kf.interpolation = 'LINEAR'
-        elif interpolation == "STEP":
-            kf.interpolation = 'CONSTANT'
-        elif interpolation == "CATMULLROMSPLINE":
-            kf.interpolation = 'BEZIER' #TODO
-        elif interpolation == "CUBICSPLINE":
-            kf.interpolation = 'BEZIER' #TODO
-        else:
-            kf.interpolation = 'BEZIER'
+        pass #TODO_SPLIT
+        # if interpolation == "LINEAR":
+        #     kf.interpolation = 'LINEAR'
+        # elif interpolation == "STEP":
+        #     kf.interpolation = 'CONSTANT'
+        # elif interpolation == "CATMULLROMSPLINE":
+        #     kf.interpolation = 'BEZIER' #TODO
+        # elif interpolation == "CUBICSPLINE":
+        #     kf.interpolation = 'BEZIER' #TODO
+        # else:
+        #     kf.interpolation = 'BEZIER'

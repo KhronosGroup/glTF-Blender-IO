@@ -67,8 +67,10 @@ class BlenderScene():
         # for armature in pyscene.gltf.skins.values():
         #     BlenderSkin.create_armature_modifiers(armature)
         #
-        # for node in pyscene.root_nodes_idx:
-        #     BlenderAnimation.anim(pyscene.nodes[node].animation)
+
+        for anim_idx, anim in enumerate(gltf.data.animations):
+            for node_idx, node in enumerate(pyscene.nodes):
+                BlenderAnimation.anim(gltf, anim_idx, node_idx)
 
 
         # Parent root node to rotation object

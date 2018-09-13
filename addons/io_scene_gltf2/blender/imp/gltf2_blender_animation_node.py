@@ -23,68 +23,91 @@
 import bpy
 from mathutils import Quaternion, Matrix, Vector
 
-from .gltf2_blender_animation_data import *
+from .gltf2_blender_animation import *
 from ..com.gltf2_blender_conversion import *
+from ...io.imp.gltf2_io_binary import *
 
 class BlenderNodeAnim():
 
     @staticmethod
-    def anim(pyanim):
-        obj = bpy.data.objects[pyanim.animation.node.blender_object]
+    def set_interpolation(interpolation, kf):
+        if interpolation == "LINEAR":
+            kf.interpolation = 'LINEAR'
+        elif interpolation == "STEP":
+            kf.interpolation = 'CONSTANT'
+        elif interpolation == "CATMULLROMSPLINE":
+            kf.interpolation = 'BEZIER' #TODO
+        elif interpolation == "CUBICSPLINE":
+            kf.interpolation = 'BEZIER' #TODO
+        else:
+            kf.interpolation = 'BEZIER'
+
+    @staticmethod
+    def anim(gltf, anim_idx, node_idx):
+
+        node = gltf.data.nodes[node_idx]
+        obj = bpy.data.objects[node.blender_object]
         fps = bpy.context.scene.render.fps
 
-        for anim in pyanim.animation.anims.keys():
-            if pyanim.animation.gltf.animations[anim].name:
-                name = pyanim.animation.gltf.animations[anim].name + "_" + obj.name
-            else:
-                name = "pyanim.animation_" + str(pyanim.animation.gltf.animations[anim].index) + "_" + obj.name
-            action = bpy.data.actions.new(name)
-            if not obj.animation_data:
-                obj.animation_data_create()
-            obj.animation_data.action = bpy.data.actions[action.name]
+        if anim_idx not in node.animations.keys():
+            return
 
-            for channel in pyanim.animation.anims[anim]:
-                if channel.path in ['translation', 'rotation', 'scale']:
+        animation = gltf.data.animations[anim_idx]
 
-                    if channel.path == "translation":
-                        blender_path = "location"
-                        for key in channel.data:
-                           obj.location = Vector(Conversion.loc_gltf_to_blender(list(key[1])))
-                           obj.keyframe_insert(blender_path, frame = key[0] * fps, group='location')
+        if animation.name:
+            name = animation.name + "_" + obj.name
+        else:
+            name = "Animation_" + str(anim_idx) + "_" + obj.name
+        action = bpy.data.actions.new(name)
+        if not obj.animation_data:
+            obj.animation_data_create()
+        obj.animation_data.action = bpy.data.actions[action.name]
 
-                        # Setting interpolation
-                        for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "rotation"]:
-                            for kf in fcurve.keyframe_points:
-                                BlenderAnimationData.set_interpolation(channel.interpolation, kf)
+        for channel_idx in node.animations[anim_idx]:
+            channel = animation.channels[channel_idx]
 
-                    elif channel.path == "rotation":
-                        blender_path = "rotation_quaternion"
-                        for key in channel.data:
-                            obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(key[1])
-                            obj.keyframe_insert(blender_path, frame = key[0] * fps, group='rotation')
+            keys   = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
+            values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
 
-                        # Setting interpolation
-                        for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "rotation"]:
-                            for kf in fcurve.keyframe_points:
-                                BlenderAnimationData.set_interpolation(channel.interpolation, kf)
+            if channel.target.path in ['translation', 'rotation', 'scale']:
+
+                if channel.target.path == "translation":
+                    blender_path = "location"
+                    for idx, key in enumerate(keys):
+                       obj.location = Vector(Conversion.loc_gltf_to_blender(list(values[idx])))
+                       obj.keyframe_insert(blender_path, frame = key[0] * fps, group='location')
+
+                    # Setting interpolation
+                    for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "rotation"]:
+                        for kf in fcurve.keyframe_points:
+                            BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
+
+                elif channel.target.path == "rotation":
+                    blender_path = "rotation_quaternion"
+                    for idx, key in enumerate(keys):
+                        obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(values[idx])
+                        obj.keyframe_insert(blender_path, frame = key[0] * fps, group='rotation')
+
+                    # Setting interpolation
+                    for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "rotation"]:
+                        for kf in fcurve.keyframe_points:
+                            BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
 
 
-                    elif channel.path == "scale":
-                        blender_path = "scale"
-                        for key in channel.data:
-                            obj.scale = Vector(Conversion.scale_gltf_to_blender(list(key[1])))
-                            obj.keyframe_insert(blender_path, frame = key[0] * fps, group='scale')
+                elif channel.target.path == "scale":
+                    blender_path = "scale"
+                    for idx, key in enumerate(keys):
+                        obj.scale = Vector(Conversion.scale_gltf_to_blender(list(values[idx])))
+                        obj.keyframe_insert(blender_path, frame = key[0] * fps, group='scale')
 
-                        # Setting interpolation
-                        for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "rotation"]:
-                            for kf in fcurve.keyframe_points:
-                                BlenderAnimationData.set_interpolation(channel.interpolation, kf)
+                    # Setting interpolation
+                    for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "rotation"]:
+                        for kf in fcurve.keyframe_points:
+                            BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
 
-                elif channel.path == 'weights':
-                    cpt_sk = 0
-                    for sk in channel.data:
-                        for key in sk:
-                            obj.data.shape_keys.key_blocks[cpt_sk+1].value = key[1]
-                            obj.data.shape_keys.key_blocks[cpt_sk+1].keyframe_insert("value", frame=key[0] * fps, group='ShapeKeys')
-
-                        cpt_sk += 1
+            elif channel.target.path == 'weights':
+                for idx, key in enumerate(keys):
+                    print(key)
+                    # for key in sk:
+                    #     obj.data.shape_keys.key_blocks[cpt_sk+1].value = key[1]
+                    #     obj.data.shape_keys.key_blocks[cpt_sk+1].keyframe_insert("value", frame=key[0] * fps, group='ShapeKeys')
