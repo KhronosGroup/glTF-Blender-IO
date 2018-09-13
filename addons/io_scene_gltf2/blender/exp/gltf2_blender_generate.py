@@ -17,6 +17,7 @@
 #
 
 import copy
+import math
 
 import bpy
 
@@ -1047,12 +1048,34 @@ def generate_lights(operator,
 
             light['spot'] = spot
 
-        light['color'] = [blender_light.color[0], blender_light.color[1], blender_light.color[2]]
+        light_color = [blender_light.color[0], blender_light.color[1], blender_light.color[2]]
+        light_intensity = blender_light.energy
 
-        # Blender Render lamps have no real-world units, while glTF lights use candela
-        # (for punctual lights) and lux (for ambient and directional lights). For lack
-        # of a better conversion, use the unitless energy value here.
-        light['intensity'] = blender_light.energy
+        if blender_light.use_nodes and blender_light.node_tree:
+            for currentNode in blender_light.node_tree.nodes:
+                if isinstance(currentNode, bpy.types.ShaderNodeOutputLamp):
+                    if not currentNode.is_active_output:
+                        continue
+                    emission_node = get_emission_node_from_lamp_output_node(currentNode)
+                    if emission_node is None:
+                        continue
+                    emission_color = emission_node.inputs["Color"].default_value
+                    if blender_light.type != 'SUN':
+                        quadratic_falloff_node = get_ligth_falloff_node_from_emission_node(emission_node, 'Quadratic')
+                        if quadratic_falloff_node is None:
+                            print_console('WARNING',
+                                          'No quadratic light falloff node attached to emission strength property')
+                            continue
+                        emission_strength = quadratic_falloff_node.inputs["Strength"].default_value / (math.pi * 4.0)
+                    else:
+                        emission_strength = emission_node.inputs["Strength"].default_value
+                    light_color = [emission_color[0], emission_color[1], emission_color[2]]
+                    light_intensity = emission_strength
+                    break
+
+
+        light['color'] = light_color
+        light['intensity'] = light_intensity
 
         #
 
@@ -1482,12 +1505,12 @@ def generate_meshes(operator,
                             weights.append(blender_shape_key.value)
                             target_names.append(blender_shape_key.name)
 
-                    mesh['weights'] = weights
+                    mesh.weights = weights
 
-                    if not 'extras' in mesh:
-                        mesh['extras'] = {}
+                    if not mesh.extras:
+                        mesh.extras = {}
 
-                    mesh['extras']['targetNames'] = target_names
+                    mesh.extras['targetNames'] = target_names
 
         #
         #
@@ -1522,7 +1545,7 @@ def generate_duplicate_mesh(glTF, blender_object):
 
     #
 
-    primitives = new_mesh['primitives']
+    primitives = new_mesh.primitives
 
     primitive_index = 0
     for blender_material_slot in blender_object.material_slots:
@@ -1531,7 +1554,7 @@ def generate_duplicate_mesh(glTF, blender_object):
 
             # Meshes/primitives without material are allowed.
             if material >= 0:
-                primitives[primitive_index]['material'] = material
+                primitives[primitive_index].material = material
             else:
                 print_console('WARNING',
                               'Material ' + blender_material_slot.material.name + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
@@ -1653,13 +1676,26 @@ def generate_node_instance(context,
                 if camera >= 0:
                     if export_settings['gltf_yup']:
                         # Add correction node for camera, as default direction is different to Blender.
-                        correction_node = {}
+                        correction_node = gltf2_io.Node(
+                            camera=None,
+                            children=[],
+                            extensions={},
+                            extras=None,
+                            matrix=[],
+                            mesh=None,
+                            name=None,
+                            rotation=None,
+                            scale=None,
+                            skin=None,
+                            translation=None,
+                            weights=None
+                        )
 
-                        correction_node['name'] = 'Correction_' + blender_object.name
-                        correction_node['rotation'] = [correction_quaternion[1], correction_quaternion[2],
+                        correction_node.name  = 'Correction_' + blender_object.name
+                        correction_node.rotation = [correction_quaternion[1], correction_quaternion[2],
                                                        correction_quaternion[3], correction_quaternion[0]]
 
-                        correction_node['camera'] = camera
+                        correction_node.camera = camera
 
                         nodes.append(correction_node)
                     else:
@@ -1674,13 +1710,26 @@ def generate_node_instance(context,
 
                     if export_settings['gltf_yup']:
                         # Add correction node for light, as default direction is different to Blender.
-                        correction_node = {}
+                        correction_node = gltf2_io.Node(
+                            camera=None,
+                            children=[],
+                            extensions={},
+                            extras=None,
+                            matrix=[],
+                            mesh=None,
+                            name=None,
+                            rotation=None,
+                            scale=None,
+                            skin=None,
+                            translation=None,
+                            weights=None
+                        )
 
-                        correction_node['name'] = 'Correction_' + blender_object.name
-                        correction_node['rotation'] = [correction_quaternion[1], correction_quaternion[2],
+                        correction_node.name = 'Correction_' + blender_object.name
+                        correction_node.rotation = [correction_quaternion[1], correction_quaternion[2],
                                                        correction_quaternion[3], correction_quaternion[0]]
 
-                        correction_node['extensions'] = extensions
+                        correction_node.extensions = extensions
 
                         nodes.append(correction_node)
                     else:

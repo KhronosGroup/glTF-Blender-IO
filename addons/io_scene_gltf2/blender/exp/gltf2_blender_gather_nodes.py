@@ -12,6 +12,7 @@
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 
@@ -20,7 +21,7 @@ from io_scene_gltf2.io.com import gltf2_io
 
 @cached
 def gather_node(blender_object, export_settings):
-    if not __filter_node(blender_object, export_settings)
+    if not __filter_node(blender_object, export_settings):
         return None
 
     node = gltf2_io.Node(
@@ -56,7 +57,7 @@ def __filter_node(blender_object, export_settings):
 
 
 def __gather_camera(blender_object, export_settings):
-    return None
+    return gltf2_blender_gather_cameras.gather_camera(blender_object, export_settings)
 
 
 def __gather_children(blender_object, export_settings):
@@ -67,7 +68,7 @@ def __gather_children(blender_object, export_settings):
         if node is not None:
             children.append(node)
     # blender dupli objects
-    if blender_object.dupli_type ==  'GROUP' and blender_object.dupli_group:
+    if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
         for dupli_object in blender_object.dupli_group.objects:
             node = gather_node(dupli_object, export_settings)
             if node is not None:
@@ -85,6 +86,7 @@ def __gather_extras(blender_object, export_settings):
 
 
 def __gather_matrix(blender_object, export_settings):
+    # return blender_object.matrix_local
     return []
 
 
