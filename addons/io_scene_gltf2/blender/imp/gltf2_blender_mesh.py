@@ -136,7 +136,7 @@ class BlenderMesh():
             if i < len(pymesh.weights):
                 obj.data.shape_keys.key_blocks[i+1].value = pymesh.weights[i]
                 if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
-                   obj.data.shape_keys.key_blocks[i+1].name  = gltf.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
+                   obj.data.shape_keys.key_blocks[i+1].name  = gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
 
 
         # Apply vertex color.
