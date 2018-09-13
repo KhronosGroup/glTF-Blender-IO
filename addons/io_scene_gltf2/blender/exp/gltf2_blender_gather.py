@@ -18,6 +18,7 @@ import functools
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 
+
 def cached(func):
     """
     Decorator to cache gather functions results. The gather function is only executed if its result isn't in the cache yet

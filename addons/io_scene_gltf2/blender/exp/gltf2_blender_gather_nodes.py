@@ -67,7 +67,7 @@ def __gather_children(blender_object, export_settings):
         if node is not None:
             children.append(node)
     # blender dupli objects
-    if blender_object.dupli_type ==  'GROUP' and blender_object.dupli_group:
+    if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
         for dupli_object in blender_object.dupli_group.objects:
             node = gather_node(dupli_object, export_settings)
             if node is not None:
