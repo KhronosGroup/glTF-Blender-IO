@@ -12,6 +12,7 @@
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 
@@ -56,7 +57,7 @@ def __filter_node(blender_object, export_settings):
 
 
 def __gather_camera(blender_object, export_settings):
-    return None
+    return gltf2_blender_gather_cameras.gather_camera(blender_object, export_settings)
 
 
 def __gather_children(blender_object, export_settings):
