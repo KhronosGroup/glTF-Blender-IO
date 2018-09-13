@@ -106,8 +106,15 @@ class BlenderNodeAnim():
                             BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
 
             elif channel.target.path == 'weights':
+
+                # retrieve number of targets
+                nb_targets = 0
+                for prim in gltf.data.meshes[gltf.data.nodes[node_idx].mesh].primitives:
+                    if prim.targets:
+                        if len(prim.targets) > nb_targets:
+                            nb_targets = len(prim.targets)
+
                 for idx, key in enumerate(keys):
-                    print(key)
-                    # for key in sk:
-                    #     obj.data.shape_keys.key_blocks[cpt_sk+1].value = key[1]
-                    #     obj.data.shape_keys.key_blocks[cpt_sk+1].keyframe_insert("value", frame=key[0] * fps, group='ShapeKeys')
+                    for sk in range(nb_targets):
+                        obj.data.shape_keys.key_blocks[sk+1].value = values[idx*nb_targets+sk][0]
+                        obj.data.shape_keys.key_blocks[sk+1].keyframe_insert("value", frame=key[0] * fps, group='ShapeKeys')
