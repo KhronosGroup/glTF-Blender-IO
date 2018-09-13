@@ -24,6 +24,7 @@ from ..com.gltf2_io import *
 from ..com.gltf2_io_debug import *
 import logging
 import json
+import struct
 import base64
 from os.path import dirname, join
 
@@ -64,8 +65,30 @@ class glTFImporter():
         raise ValueError('Json contains some unauthorized values')
 
     def load_glb(self):
-        #TODO_SPLIT
-        # glb files will be done later
+        header = struct.unpack_from('<I4s', self.content)
+        self.version = header[1]
+
+        offset = 12 # header size = 12
+
+        # TODO check json type for chunk 0, and BIN type for next ones
+
+        # json
+        type, str_json, offset = self.load_chunk(offset)
+        try:
+            json_ = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
+            self.data = gltf_from_dict(json_)
+        except ValueError as e:
+            return False, e.args[0]
+
+        # binary data
+        chunk_cpt = 0
+        while offset < len(self.content):
+            type, data, offset = self.load_chunk(offset)
+
+            self.buffers[chunk_cpt] = data
+            chunk_cpt += 1
+
+        self.content = None
         return True, None
 
     def load_chunk(self, offset):
