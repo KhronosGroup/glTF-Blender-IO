@@ -152,3 +152,14 @@ class BlenderGlTF():
                 if skin.skeleton not in skin.joints:
                     gltf.data.nodes[skin.skeleton].is_joint = True
                     gltf.data.nodes[skin.skeleton].skin_id  = skin_id
+
+        # Dispatch animation
+        if gltf.data.animations:
+            for node_idx, node in enumerate(gltf.data.nodes):
+                node.animations = {}
+
+            for anim_idx, anim in enumerate(gltf.data.animations):
+                for channel_idx, channel in enumerate(anim.channels):
+                    if anim_idx not in gltf.data.nodes[channel.target.node].animations.keys():
+                        gltf.data.nodes[channel.target.node].animations[anim_idx] = []
+                    gltf.data.nodes[channel.target.node].animations[anim_idx].append(channel_idx)
