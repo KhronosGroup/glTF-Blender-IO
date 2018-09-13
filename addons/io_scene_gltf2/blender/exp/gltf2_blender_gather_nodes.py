@@ -85,6 +85,7 @@ def __gather_extras(blender_object, export_settings):
 
 
 def __gather_matrix(blender_object, export_settings):
+    # return blender_object.matrix_local
     return []
 
 

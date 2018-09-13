@@ -52,7 +52,7 @@ def gather_joint(blender_bone, export_settings):
     # finally add to the joints array containing all the joints in the hierarchy
     return gltf2_io.Node(
         camera=None,
-        children=[],
+        children=children,
         extensions={},
         extras=None,
         matrix=[],
