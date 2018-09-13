@@ -1,0 +1,32 @@
+FROM ubuntu:bionic
+
+ENV DART_VERSION 2.0.0
+
+RUN \
+  apt-get -q update && apt-get install --no-install-recommends -y -q \
+    apt-transport-https bzip2 curl git gnupg ca-certificates libfreetype6 libgl1-mesa-dev libglu1-mesa libxi6 libxrender1 openssh-client && \
+  curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+  curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
+  curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_unstable.list > /etc/apt/sources.list.d/dart_unstable.list && \
+  apt-get update && \
+  apt-get install dart=$DART_VERSION-1 && \
+  rm -rf /var/lib/apt/lists/*
+
+ENV DART_SDK /usr/lib/dart
+ENV PATH $DART_SDK/bin:$PATH
+
+
+ENV BLENDER_URL https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
+ENV BLENDER_VERSION 2.79
+
+RUN mkdir /usr/local/blender && \
+	curl -SL "$BLENDER_URL" -o blender.tar.bz2 && \
+	tar -jxvf blender.tar.bz2 -C /usr/local/blender --strip-components=1 && \
+	rm blender.tar.bz2
+
+WORKDIR /opt
+RUN git clone https://github.com/KhronosGroup/glTF-Validator
+RUN cd glTF-Validator && pub get && pub global activate --source path ./
+ENV PATH $PATH:/root/.pub-cache/bin:/usr/local/blender
+
+ADD addons/io_scene_gltf2 /usr/local/blender/$BLENDER_VERSION/scripts/addons/io_scene_gltf2

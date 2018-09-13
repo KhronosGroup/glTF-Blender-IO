@@ -1,0 +1,5 @@
+FROM blender-gltf-testenv
+
+ADD . /tests
+WORKDIR /tests
+ENV PATH /tests:$PATH

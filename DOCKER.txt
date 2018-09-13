@@ -1,0 +1,11 @@
+# To build docker image:
+./docker_build.sh
+
+# To run tests:
+docker run --rm -t gltf-io-test run_tests.sh
+
+# To open blender shell:
+docker run -i -t gltf-io-test blender -b --addons io_scene_gltf2 --python-console
+
+# To display blender help:
+docker run --rm gltf-io-test blender -b --help

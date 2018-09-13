@@ -1,0 +1,7 @@
+.git
+.project
+.idea
+.pydevproject
+__pycache__
+docs
+misc
