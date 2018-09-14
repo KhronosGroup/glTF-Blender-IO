@@ -34,7 +34,7 @@ class BlenderMesh():
         pynode = gltf.data.nodes[node_idx]
         # Check if the mesh is rigged, and create armature if needed
         if pynode.skin is not None:
-            if gltf.data.skins[pymesh.skin].blender_armature_name is None:
+            if gltf.data.skins[pynode.skin].blender_armature_name is None:
                 # Create empty armature for now
                 pymesh.skin.create_blender_armature(parent)
 

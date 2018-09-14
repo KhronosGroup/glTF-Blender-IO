@@ -93,10 +93,10 @@ class BlenderNode():
             else:
                 gltf.log.info("Blender create Bone node")
             # Check if corresponding armature is already created, create it if needed
-            if not hasattr(gltf.skins[pynode.skin_id], "blender_armature_name"):
-                BlenderSkin.create_armature(gltf, gltf.data.skins[pynode.skin_id], pynode.skin_id, parent)
+            if gltf.data.skins[pynode.skin_id].blender_armature_name is None:
+                BlenderSkin.create_armature(gltf, pynode.skin_id, parent)
 
-            BlenderSkin.create_bone(gktf, gltf.skins[pynode.skin_id], pynode, node_idx, parent)
+            BlenderSkin.create_bone(gltf, pynode.skin_id, node_idx, parent)
 
             if pynode.children:
                 for child_idx in pynode.children:

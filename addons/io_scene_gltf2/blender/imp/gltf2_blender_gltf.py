@@ -34,7 +34,6 @@ class BlenderGlTF():
         for scene_idx, scene in enumerate(gltf.data.scenes):
             BlenderScene.create(gltf, scene_idx)
 
-        #TODO_SPLIT: seems it will work unchanged, but need to be check
         # Armature correction
         # Try to detect bone chains, and set bone lengths
         # To detect if a bone is in a chain, we try to detect if a bone head is aligned
@@ -45,6 +44,8 @@ class BlenderGlTF():
         ##          If < threshold --> In a chain
         ## Based on an idea of @Menithal, but added alignement detection to avoid some bad cases
 
+
+        #TODO_SPLIT: seems that it is not working anymore for now
         threshold = 0.001
         for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
             bpy.context.scene.objects.active = armobj
@@ -143,12 +144,14 @@ class BlenderGlTF():
             is_joint, skin_idx = gltf.is_node_joint(node_idx)
             if is_joint:
                 node.is_joint = True
-                node.skin_id  = skin
+                node.skin_id  = skin_idx
             else:
                 node.is_joint = False
 
         if gltf.data.skins:
             for skin_id, skin in enumerate(gltf.data.skins):
+                # init blender values
+                skin.blender_armature_name = None
                 if skin.skeleton not in skin.joints:
                     gltf.data.nodes[skin.skeleton].is_joint = True
                     gltf.data.nodes[skin.skeleton].skin_id  = skin_id

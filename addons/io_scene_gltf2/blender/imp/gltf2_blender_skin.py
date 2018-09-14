@@ -28,9 +28,9 @@ from ..com.gltf2_blender_conversion import *
 class BlenderSkin():
 
     @staticmethod
-    def create_armature(pyskin, parent):
+    def create_armature(gltf, skin_id, parent):
 
-        pyskin.blender_armature_name = None
+        pyskin = gltf.data.skins[skin_id]
 
         if pyskin.name is not None:
             name = pyskin.name
@@ -39,26 +39,30 @@ class BlenderSkin():
 
         armature = bpy.data.armatures.new(name)
         obj = bpy.data.objects.new(name, armature)
-        bpy.data.scenes[pyskin.gltf.blender_scene].objects.link(obj)
+        bpy.data.scenes[gltf.blender_scene].objects.link(obj)
         pyskin.blender_armature_name = obj.name
         if parent:
-            obj.parent = bpy.data.objects[pyskin.gltf.scene.nodes[parent].blender_object]
+            obj.parent = bpy.data.objects[gltf.data.nodes[parent].blender_object]
 
     @staticmethod
-    def set_bone_transforms(pyskin, bone, node, parent):
+    def set_bone_transforms(gltf, skin_id, bone, node_id, parent):
+
+        pyskin = gltf.data.skins[skin_id]
+        pynode = gltf.data.nodes[node_id]
+
         obj   = bpy.data.objects[pyskin.blender_armature_name]
 
         mat = Matrix()
         if parent is None:
-            transform = Conversion.matrix_gltf_to_blender(node.transform)
+            transform = Conversion.matrix_gltf_to_blender(pynode.transform)
             mat = transform
         else:
-            if not pyskin.gltf.scene.nodes[parent].is_joint: # TODO if Node in another scene
-                transform  = Conversion.matrix_gltf_to_blender(node.transform)
+            if not gltf.data.nodes[parent].is_joint:
+                transform  = Conversion.matrix_gltf_to_blender(pynode.transform)
                 mat = transform
             else:
-                transform = Conversion.matrix_gltf_to_blender(node.transform)
-                parent_mat = obj.data.edit_bones[pyskin.gltf.scene.nodes[parent].blender_bone_name].matrix # Node in another scene
+                transform = Conversion.matrix_gltf_to_blender(pynode.transform)
+                parent_mat = obj.data.edit_bones[gltf.data.nodes[parent].blender_bone_name].matrix
 
                 mat = (parent_mat.to_quaternion() * transform.to_quaternion()).to_matrix().to_4x4()
                 mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * transform.to_translation() )) * mat
@@ -68,29 +72,33 @@ class BlenderSkin():
         return bone.matrix
 
     @staticmethod
-    def create_bone(pyskin, node, parent):
-        scene = bpy.data.scenes[pyskin.gltf.blender_scene]
+    def create_bone(gltf, skin_id, node_id, parent):
+
+        pyskin = gltf.data.skins[skin_id]
+        pynode = gltf.data.nodes[node_id]
+
+        scene = bpy.data.scenes[gltf.blender_scene]
         obj   = bpy.data.objects[pyskin.blender_armature_name]
 
         bpy.context.screen.scene = scene
         scene.objects.active = obj
         bpy.ops.object.mode_set(mode="EDIT")
 
-        if node.name:
-            name = node.name
+        if pynode.name:
+            name = pynode.name
         else:
-            name = "Bone_" + str(node.index)
+            name = "Bone_" + str(node_id)
 
         bone = obj.data.edit_bones.new(name)
-        node.blender_bone_name = bone.name
-        node.blender_armature_name = pyskin.blender_armature_name
+        pynode.blender_bone_name = bone.name
+        pynode.blender_armature_name = pyskin.blender_armature_name
         bone.tail = Vector((0.0,1.0,0.0)) # Needed to keep bone alive
-        mat = BlenderSkin.set_bone_transforms(pyskin, bone, node, parent)
-        node.blender_bone_matrix = mat
+        mat = BlenderSkin.set_bone_transforms(gltf, skin_id, bone, node_id, parent)
+        pynode.blender_bone_matrix = mat
 
         # Set parent
-        if parent is not None and hasattr(pyskin.gltf.scene.nodes[parent], "blender_bone_name"):
-            bone.parent = obj.data.edit_bones[pyskin.gltf.scene.nodes[parent].blender_bone_name] #TODO if in another scene
+        if parent is not None and hasattr(gltf.data.nodes[parent], "blender_bone_name"):
+            bone.parent = obj.data.edit_bones[gltf.data.nodes[parent].blender_bone_name]
 
         bpy.ops.object.mode_set(mode="OBJECT")
 
