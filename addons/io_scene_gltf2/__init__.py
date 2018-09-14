@@ -23,7 +23,6 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
 
 from .io.com.gltf2_io_debug import *
-from .io.imp.gltf2_io_gltf_old import *
 from .io.imp.gltf2_io_gltf import *
 from .blender.imp.gltf2_blender_gltf import *
 
