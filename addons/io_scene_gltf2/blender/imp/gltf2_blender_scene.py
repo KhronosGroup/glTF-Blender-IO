@@ -61,13 +61,12 @@ class BlenderScene():
         for skin_id, skin in enumerate(gltf.data.skins):
             BlenderSkin.create_vertex_groups(gltf, skin_id)
 
-        #TODO_SPLIT will be manage later
-        # for armature in pyscene.gltf.skins.values():
-        #     BlenderSkin.assign_vertex_groups(armature)
-        #
-        # for armature in pyscene.gltf.skins.values():
-        #     BlenderSkin.create_armature_modifiers(armature)
-        #
+        for skin_id, skin in enumerate(gltf.data.skins):
+            BlenderSkin.assign_vertex_groups(gltf, skin_id)
+
+        for skin_id, skin in enumerate(gltf.data.skins):
+            BlenderSkin.create_armature_modifiers(gltf, skin_id)
+
 
         for anim_idx, anim in enumerate(gltf.data.animations):
             for node_idx, node in enumerate(pyscene.nodes):
