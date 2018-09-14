@@ -117,8 +117,14 @@ class BlenderGlTF():
                         material.pbr_metallic_roughness.roughness_factor = 1.0
 
 
-        # transform management
+
         for node_idx, node in enumerate(gltf.data.nodes):
+
+            # skin management
+            if node.skin is not None and node.mesh is not None:
+                gltf.data.skins[node.skin].node_id = node_idx
+
+            # transform management
             if node.matrix:
                 node.transform = node.matrix
                 continue

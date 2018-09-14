@@ -103,10 +103,12 @@ class BlenderSkin():
         bpy.ops.object.mode_set(mode="OBJECT")
 
     @staticmethod
-    def create_vertex_groups(pyskin):
-        obj = bpy.data.objects[pyskin.gltf.scene.nodes[pyskin.mesh_id].blender_object]
-        for bone in pyskin.bones:
-            obj.vertex_groups.new(pyskin.gltf.scene.nodes[bone].blender_bone_name)
+    def create_vertex_groups(gltf, skin_id):
+        pyskin = gltf.data.skins[skin_id]
+        obj = bpy.data.objects[gltf.data.nodes[pyskin.node_id].blender_object]
+        for bone in pyskin.joints:
+            print(gltf.data.nodes[bone].blender_bone_name)
+            obj.vertex_groups.new(gltf.data.nodes[bone].blender_bone_name)
 
     @staticmethod
     def assign_vertex_groups(pyskin):

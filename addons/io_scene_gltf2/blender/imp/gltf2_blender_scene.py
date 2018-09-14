@@ -56,11 +56,12 @@ class BlenderScene():
         for node_idx in pyscene.nodes:
             BlenderNode.create(gltf, node_idx, None) # None => No parent
 
-        #TODO_SPLIT will be manage later
+
         # Now that all mesh / bones are created, create vertex groups on mesh
-        # for armature in pyscene.gltf.skins.values():
-        #     BlenderSkin.create_vertex_groups(armature)
-        #
+        for skin_id, skin in enumerate(gltf.data.skins):
+            BlenderSkin.create_vertex_groups(gltf, skin_id)
+
+        #TODO_SPLIT will be manage later
         # for armature in pyscene.gltf.skins.values():
         #     BlenderSkin.assign_vertex_groups(armature)
         #
