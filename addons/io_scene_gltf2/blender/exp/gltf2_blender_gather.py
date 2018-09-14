@@ -55,7 +55,7 @@ def gather_gltf2(operator, context, export_settings):
     animations = []  # unfortunately animations in gltf2 are just as 'root' as scenes.
     for blender_scene in bpy.data.scenes:
         scenes.append(__gather_scene(blender_scene, export_settings))
-        animations += __gather_animation(blender_scene, export_settings)
+        animations += __gather_animations(blender_scene, export_settings)
 
     return scenes
 
@@ -78,13 +78,12 @@ def __gather_scene(blender_scene, export_settings):
     # TODO: materials, textures, images
     # TODO: animations
     # TODO: lights
-    # TODO: meshes
-    # TODO: asset?
+     # TODO: asset?
 
     return scene
 
 
 @cached
-def __gather_animation(blender_scene, export_settings):
+def __gather_animations(blender_scene, export_settings):
     for blender_object in blender_scene.objects:
-        return gltf2_blender_gather_animations.gather_animation(blender_object, export_settings)
+        return gltf2_blender_gather_animations.gather_animations(blender_object, export_settings)
