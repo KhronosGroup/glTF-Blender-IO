@@ -28,8 +28,7 @@ class BlenderAnimation():
     @staticmethod
     def anim(gltf, anim_idx, node_idx):
         if gltf.data.nodes[node_idx].is_joint:
-            #BlenderBoneAnim.anim(pyanim.bone_anim)
-            pass #TODO_SPLIT
+            BlenderBoneAnim.anim(gltf, anim_idx, node_idx)
         else:
             BlenderNodeAnim.anim(gltf, anim_idx, node_idx)
 
