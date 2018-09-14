@@ -78,8 +78,7 @@ def __gather_scene(blender_scene, export_settings):
     # TODO: materials, textures, images
     # TODO: animations
     # TODO: lights
-    # TODO: meshes
-    # TODO: asset?
+     # TODO: asset?
 
     return scene
 
