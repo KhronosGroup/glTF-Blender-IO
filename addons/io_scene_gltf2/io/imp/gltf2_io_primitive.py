@@ -86,11 +86,8 @@ class PrimitiveImporter():
                 pyprimitive.mat = MaterialImporter.importer(None, None, pyprimitive.gltf)
                 MaterialImporter.use_vertex_color(pyprimitive.mat)
             else:
-                # No material, use default one
-                if pyprimitive.gltf.default_material is None:
-                    pyprimitive.gltf.default_material = MaterialImporter.importer(None, None, pyprimitive.gltf)
-
-                pyprimitive.mat = pyprimitive.gltf.default_material
+                # No material
+                pass
 
         # reading targets (shapekeys) if any
         if 'targets' in pyprimitive.json.keys():

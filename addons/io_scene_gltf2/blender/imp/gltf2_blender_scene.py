@@ -58,19 +58,20 @@ class BlenderScene():
 
 
         # Now that all mesh / bones are created, create vertex groups on mesh
-        for skin_id, skin in enumerate(gltf.data.skins):
-            BlenderSkin.create_vertex_groups(gltf, skin_id)
+        if gltf.data.skins:
+            for skin_id, skin in enumerate(gltf.data.skins):
+                BlenderSkin.create_vertex_groups(gltf, skin_id)
 
-        for skin_id, skin in enumerate(gltf.data.skins):
-            BlenderSkin.assign_vertex_groups(gltf, skin_id)
+            for skin_id, skin in enumerate(gltf.data.skins):
+                BlenderSkin.assign_vertex_groups(gltf, skin_id)
 
-        for skin_id, skin in enumerate(gltf.data.skins):
-            BlenderSkin.create_armature_modifiers(gltf, skin_id)
+            for skin_id, skin in enumerate(gltf.data.skins):
+                BlenderSkin.create_armature_modifiers(gltf, skin_id)
 
-
-        for anim_idx, anim in enumerate(gltf.data.animations):
-            for node_idx, node in enumerate(pyscene.nodes):
-                BlenderAnimation.anim(gltf, anim_idx, node_idx)
+        if gltf.data.animations:
+            for anim_idx, anim in enumerate(gltf.data.animations):
+                for node_idx, node in enumerate(pyscene.nodes):
+                    BlenderAnimation.anim(gltf, anim_idx, node_idx)
 
 
         # Parent root node to rotation object

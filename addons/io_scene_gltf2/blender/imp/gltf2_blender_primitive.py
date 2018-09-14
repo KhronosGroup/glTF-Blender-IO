@@ -112,7 +112,6 @@ class BlenderPrimitive():
                 BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
 
     def assign_material(gltf, pyprimitive, obj, bm, offset, cpt_index_mat):
-        #TODO_SPLIT default material ????
         if pyprimitive.material is not None:
             obj.data.materials.append(bpy.data.materials[gltf.data.materials[pyprimitive.material].blender_material])
             for vert in bm.verts:
