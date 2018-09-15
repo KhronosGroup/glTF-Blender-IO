@@ -44,8 +44,6 @@ class BlenderGlTF():
         ##          If < threshold --> In a chain
         ## Based on an idea of @Menithal, but added alignement detection to avoid some bad cases
 
-
-        #TODO_SPLIT: seems that it is not working anymore for now
         threshold = 0.001
         for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
             bpy.context.scene.objects.active = armobj
@@ -61,18 +59,18 @@ class BlenderGlTF():
                 if (bone.head - parent.head).length < threshold:
                     continue
 
-            u = (parent.tail - parent.head).normalized()
-            point = bone.head
-            distance = ((point - parent.head).cross(u)).length / u.length
-            if distance < threshold:
-                save_parent_direction = (parent.tail - parent.head).normalized().copy()
-                save_parent_tail = parent.tail.copy()
-                parent.tail = bone.head
+                u = (parent.tail - parent.head).normalized()
+                point = bone.head
+                distance = ((point - parent.head).cross(u)).length / u.length
+                if distance < threshold:
+                    save_parent_direction = (parent.tail - parent.head).normalized().copy()
+                    save_parent_tail = parent.tail.copy()
+                    parent.tail = bone.head
 
-                # case where 2 bones are aligned (not in chain, same head)
-                # bone is no more is same direction
-                if (parent.tail - parent.head).normalized().dot(save_parent_direction) < 0.9:
-                    parent.tail = save_parent_tail
+                    # case where 2 bones are aligned (not in chain, same head)
+                    # bone is no more is same direction
+                    if (parent.tail - parent.head).normalized().dot(save_parent_direction) < 0.9:
+                        parent.tail = save_parent_tail
 
 
     @staticmethod
