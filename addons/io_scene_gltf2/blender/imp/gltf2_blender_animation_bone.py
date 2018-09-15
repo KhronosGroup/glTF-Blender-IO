@@ -23,7 +23,6 @@
 import bpy
 from mathutils import Quaternion, Matrix
 
-from .gltf2_blender_animation_data import *
 from ..com.gltf2_blender_conversion import *
 from ...io.imp.gltf2_io_binary import *
 
