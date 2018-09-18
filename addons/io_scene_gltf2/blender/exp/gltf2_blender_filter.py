@@ -147,7 +147,7 @@ def filter_apply(export_settings):
                         print_console('WARNING', 'Auto smooth and shape keys cannot be exported in parallel. Falling back to non auto smooth.')
                 
                 if export_settings['gltf_apply'] or use_auto_smooth:
-                    
+                    # TODO: maybe add to new exporter
                     if not export_settings['gltf_apply']:
                         current_blender_object.modifiers.clear()
                     
