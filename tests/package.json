@@ -1,0 +1,13 @@
+{
+  "name": "gltftest",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "mochawesome": "^3.0.3"
+  },
+  "scripts": {
+    "test": "mocha --reporter mochawesome"
+  }
+}

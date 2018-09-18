@@ -4,7 +4,9 @@ ENV DART_VERSION 2.0.0
 
 RUN \
   apt-get -q update && apt-get install --no-install-recommends -y -q \
-    apt-transport-https bzip2 curl git gnupg ca-certificates libfreetype6 libgl1-mesa-dev libglu1-mesa libxi6 libxrender1 openssh-client && \
+    apt-transport-https bzip2 curl git gnupg ca-certificates libfreetype6 \
+    libgl1-mesa-dev libglu1-mesa libxi6 libxrender1 openssh-client \
+    nodejs npm && \
   curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
   curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
   curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_unstable.list > /etc/apt/sources.list.d/dart_unstable.list && \
@@ -30,3 +32,8 @@ RUN cd glTF-Validator && pub get && pub global activate --source path ./
 ENV PATH $PATH:/root/.pub-cache/bin:/opt/blender
 
 ADD addons/io_scene_gltf2 /opt/blender/$BLENDER_VERSION/scripts/addons/io_scene_gltf2
+
+ADD tests/package.json /tests/
+WORKDIR /tests
+
+RUN npm install
