@@ -1,5 +1,7 @@
 FROM blender-gltf-testenv
 
-ADD . /tests
+ADD addons/io_scene_gltf2 /opt/blender/$BLENDER_VERSION/scripts/addons/io_scene_gltf2
+
+ADD tests /tests
 WORKDIR /tests
 ENV PATH /tests:$PATH
