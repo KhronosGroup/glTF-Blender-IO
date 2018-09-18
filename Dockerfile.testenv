@@ -31,6 +31,11 @@ RUN git clone https://github.com/KhronosGroup/glTF-Validator
 RUN cd glTF-Validator && pub get && pub global activate --source path ./
 ENV PATH $PATH:/root/.pub-cache/bin:/opt/blender
 
+# RUN git clone https://github.com/KhronosGroup/glTF-Sample-Models
+
+# TODO: setup snaphsot to be on path
+RUN cd glTF-Validator && pub run grinder snapshot-app
+
 ADD addons/io_scene_gltf2 /opt/blender/$BLENDER_VERSION/scripts/addons/io_scene_gltf2
 
 ADD tests/package.json /tests/
