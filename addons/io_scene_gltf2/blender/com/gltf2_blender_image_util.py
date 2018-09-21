@@ -35,7 +35,9 @@ def create_image_file(context, blender_image, dst_path, file_format):
         src_path = src_path.replace('\\', '/')
         dst_path = dst_path.replace('\\', '/')
 
-        if dst_path != src_path:
+        # Check that source and destination path are not the same using os.path.abspath
+        # because bpy.path.abspath seems to not always return an absolute path
+        if os.path.abspath(dst_path) != os.path.abspath(src_path):
             shutil.copyfile(src_path, dst_path)
 
     else:
