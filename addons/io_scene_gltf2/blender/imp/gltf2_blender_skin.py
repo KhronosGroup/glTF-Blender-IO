@@ -36,7 +36,7 @@ class BlenderSkin():
         if pyskin.name is not None:
             name = pyskin.name
         else:
-            name = "Armature_" + str(pyskin.index)
+            name = "Armature_" + str(skin_id)
 
         armature = bpy.data.armatures.new(name)
         obj = bpy.data.objects.new(name, armature)
