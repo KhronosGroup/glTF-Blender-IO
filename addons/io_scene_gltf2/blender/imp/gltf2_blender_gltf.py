@@ -139,6 +139,9 @@ class BlenderGlTF():
                     else:
                         material.extensions['KHR_materials_pbrSpecularGlossiness']['specularFactor'] = [1.0,1.0,1.0]
 
+                    if 'glossinessFactor' not in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
+                        material.extensions['KHR_materials_pbrSpecularGlossiness']['glossinessFactor'] = 1.0
+
 
         for node_idx, node in enumerate(gltf.data.nodes):
 
