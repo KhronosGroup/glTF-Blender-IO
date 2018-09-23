@@ -155,7 +155,7 @@ class BinaryData():
                 with open(join(dirname(gltf.filename), pyimage.uri), 'rb') as f_:
                     return f_.read(), basename(join(dirname(gltf.filename), pyimage.uri))
             else:
-                pyimage.gltf.log.error("Missing file (index " + str(pyimage.index) + "): " + pyimage.uri)
+                pyimage.gltf.log.error("Missing file (index " + str(img_idx) + "): " + pyimage.uri)
                 return None, None
 
         if pyimage.buffer_view is None:
