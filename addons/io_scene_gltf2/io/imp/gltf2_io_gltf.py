@@ -78,9 +78,10 @@ class glTFImporter():
                     return False, "Extension " + extension + " is not available on this addon version"
 
         if self.data.extensions_used is not None:
-            if extension not in self.extensions_managed:
-                # Non blocking error #TODO log
-                pass
+            for extension in self.data.extensions_used:
+                if extension not in self.extensions_managed:
+                    # Non blocking error #TODO log
+                    pass
 
         return True, None
 
