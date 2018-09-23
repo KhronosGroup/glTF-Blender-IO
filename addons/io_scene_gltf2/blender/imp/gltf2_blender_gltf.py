@@ -183,7 +183,7 @@ class BlenderGlTF():
             for skin_id, skin in enumerate(gltf.data.skins):
                 # init blender values
                 skin.blender_armature_name = None
-                if skin.skeleton not in skin.joints:
+                if skin.skeleton and skin.skeleton not in skin.joints:
                     gltf.data.nodes[skin.skeleton].is_joint = True
                     gltf.data.nodes[skin.skeleton].skin_id  = skin_id
 
