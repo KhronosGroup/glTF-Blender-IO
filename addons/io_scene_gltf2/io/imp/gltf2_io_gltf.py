@@ -42,6 +42,11 @@ class glTFImporter():
         self.TEXTURE = 2
         self.TEXTURE_FACTOR = 3
 
+        # TODO: move to a com place?
+        self.extensions_managed = [
+            'KHR_materials_pbrSpecularGlossiness'
+        ]
+
         #TODO : merge with io_constants
         self.fmt_char_dict = {}
         self.fmt_char_dict[5120] = 'b' # Byte
@@ -63,6 +68,21 @@ class glTFImporter():
     @staticmethod
     def bad_json_value(val):
         raise ValueError('Json contains some unauthorized values')
+
+    def checks(self):
+        if self.data.extensions_required is not None:
+            for extension in self.data.extensions_required:
+                if extension not in self.data.extensions_used:
+                    return False, "Extension required must be in Extension Used too"
+                if extension not in self.extensions_managed:
+                    return False, "Extension " + extension + " is not available on this addon version"
+
+        if self.data.extensions_used is not None:
+            if extension not in self.extensions_managed:
+                # Non blocking error #TODO log
+                pass
+
+        return True, None
 
     def load_glb(self):
         header = struct.unpack_from('<I4s', self.content)
