@@ -100,7 +100,7 @@ class BlenderPrimitive():
         return offset
 
     def set_UV_in_mat(gltf, pyprimitive, obj):
-        if "KHR_materials_pbrSpecularGlossiness" in gltf.data.materials[pyprimitive.material].extensions.keys():
+        if gltf.data.materials[pyprimitive.material].extensions and "KHR_materials_pbrSpecularGlossiness" in gltf.data.materials[pyprimitive.material].extensions.keys():
             if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].extensions['KHR_materials_pbrSpecularGlossiness']['diffuse_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
                 BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
             else:
