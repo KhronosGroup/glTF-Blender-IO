@@ -37,7 +37,7 @@ class BlenderOcclusionMap():
 
         pymaterial = gltf.data.materials[material_idx]
 
-        BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture)
+        BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture.index)
 
         # Pack texture, but doesn't use it for now. Occlusion is calculated from Cycles.
         bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.occlusion_texture.index].source].blender_image_name].use_fake_user = True

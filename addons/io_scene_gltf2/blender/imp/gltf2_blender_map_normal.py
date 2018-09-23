@@ -40,7 +40,7 @@ class BlenderNormalMap():
         material = bpy.data.materials[pymaterial.blender_material]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(gltf, pymaterial.normal_texture)
+        BlenderTextureInfo.create(gltf, pymaterial.normal_texture.index)
 
         # retrieve principled node and output node
         principled = None
@@ -73,7 +73,7 @@ class BlenderNormalMap():
         if pymaterial.normal_texture.tex_coord is not None:
             normalmap_node["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord # Set custom flag to retrieve TexCoord
         else:
-            normalmap_node["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here 
+            normalmap_node["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
 
 
         # create links

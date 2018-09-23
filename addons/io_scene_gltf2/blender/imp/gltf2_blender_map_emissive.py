@@ -40,7 +40,7 @@ class BlenderEmissiveMap():
         material = bpy.data.materials[pymaterial.blender_material]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(gltf, pymaterial.emissive_texture)
+        BlenderTextureInfo.create(gltf, pymaterial.emissive_texture.index)
 
         # retrieve principled node and output node
         if len([node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"]) != 0:

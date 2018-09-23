@@ -25,18 +25,14 @@ from .gltf2_blender_texture import *
 
 class BlenderPbr():
 
-    @staticmethod
-    def use_vertex_color(pypbr):
-        pypbr.vertex_color = True
-
-    def create(gltf, pypbr, mat_name):
+    def create(gltf, pypbr, mat_name, vertex_color):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderPbr.create_cycles(gltf, pypbr, mat_name)
+            BlenderPbr.create_cycles(gltf, pypbr, mat_name, vertex_color)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_cycles(gltf, pypbr, mat_name):
+    def create_cycles(gltf, pypbr, mat_name, vertex_color):
         material = bpy.data.materials[mat_name]
         material.use_nodes = True
         node_tree = material.node_tree
@@ -55,7 +51,7 @@ class BlenderPbr():
 
         if pypbr.color_type == gltf.SIMPLE:
 
-            if not pypbr.vertex_color:
+            if not vertex_color:
 
                 # change input values
                 principled.inputs[0].default_value = pypbr.base_color_factor
@@ -77,7 +73,7 @@ class BlenderPbr():
         elif pypbr.color_type == gltf.TEXTURE_FACTOR:
 
             #TODO alpha ?
-            if pypbr.vertex_color:
+            if vertex_color:
                 # TODO tree locations
                 # Create attribute / separate / math nodes
                 attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
@@ -93,11 +89,11 @@ class BlenderPbr():
                 math_vc_B = node_tree.nodes.new('ShaderNodeMath')
                 math_vc_B.operation = 'MULTIPLY'
 
-            BlenderTextureInfo.create(gltf, pypbr.base_color_texture)
+            BlenderTextureInfo.create(gltf, pypbr.base_color_texture.index)
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[pypbr.base_color_texture.image.blender_image_name]
+            text_node.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.base_color_texture.index].source].blender_image_name]
             text_node.location = -1000,500
 
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
@@ -133,7 +129,7 @@ class BlenderPbr():
             # UV Map will be set after object/UVMap creation
 
             # Create links
-            if pypbr.vertex_color:
+            if vertex_color:
                 node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
                 node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
                 node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
@@ -164,10 +160,10 @@ class BlenderPbr():
 
         elif pypbr.color_type == gltf.TEXTURE:
 
-            BlenderTextureInfo.create(gltf, pypbr.base_color_texture)
+            BlenderTextureInfo.create(gltf, pypbr.base_color_texture.index)
 
             #TODO alpha ?
-            if pypbr.vertex_color:
+            if vertex_color:
                 # Create attribute / separate / math nodes
                 attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
                 attribute_node.attribute_name = 'COLOR_0'
@@ -198,19 +194,19 @@ class BlenderPbr():
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
             text_node.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.base_color_texture.index].source].blender_image_name]
-            if pypbr.vertex_color:
+            if vertex_color:
                 text_node.location = -2000,500
             else:
                 text_node.location = -500,500
 
             mapping = node_tree.nodes.new('ShaderNodeMapping')
-            if pypbr.vertex_color:
+            if vertex_color:
                 mapping.location = -2500,500
             else:
                 mapping.location = -1500,500
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            if pypbr.vertex_color:
+            if vertex_color:
                 uvmap.location = -3000,500
             else:
                 uvmap.location = -2000,500
@@ -221,7 +217,7 @@ class BlenderPbr():
             # UV Map will be set after object/UVMap creation
 
             # Create links
-            if pypbr.vertex_color:
+            if vertex_color:
                 node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
 
                 node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
@@ -255,7 +251,7 @@ class BlenderPbr():
             principled.inputs[7].default_value = pypbr.roughness_factor
 
         elif pypbr.metallic_type == gltf.TEXTURE:
-            BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture)
+            BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture.index)
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
             metallic_text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.metallic_roughness_texture.index].source].blender_image_name]
             metallic_text.color_space = 'NONE'
@@ -284,10 +280,10 @@ class BlenderPbr():
 
         elif pypbr.metallic_type == gltf.TEXTURE_FACTOR:
 
-            BlenderTextureInfo.create(pypbr.metallic_roughness_texture)
+            BlenderTextureInfo.create(pypbr.metallic_roughness_texture.index)
 
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
-            metallic_text.image = bpy.data.images[pypbr.metallic_roughness_texture.image.blender_image_name]
+            metallic_text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.metallic_roughness_texture.index].source].blender_image_name]
             metallic_text.color_space = 'NONE'
             metallic_text.location = -1000,0
 

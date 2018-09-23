@@ -114,6 +114,30 @@ class BlenderGlTF():
                     else:
                         material.pbr_metallic_roughness.roughness_factor = 1.0
 
+                # pre compute material for KHR_materials_pbrSpecularGlossiness
+                if material.extensions is not None and 'KHR_materials_pbrSpecularGlossiness' in material.extensions.keys():
+                    # Init
+                    material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuse_type'] = gltf.SIMPLE
+                    material.extensions['KHR_materials_pbrSpecularGlossiness']['vertex_color'] = False
+                    material.extensions['KHR_materials_pbrSpecularGlossiness']['specgloss_type'] = gltf.SIMPLE
+
+                    if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
+                        material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuse_type'] = gltf.TEXTURE
+
+                    if 'diffuseFactor' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
+                        if material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuse_type'] == gltf.TEXTURE and material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseFactor'] != [1.0,1.0,1.0,1.0]:
+                            material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuse_type'] = gltf.TEXTURE_FACTOR
+                    else:
+                        material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseFactor'] = [1.0,1.0,1.0,1.0]
+
+                    if 'specularGlossinessTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
+                        material.extensions['KHR_materials_pbrSpecularGlossiness']['specgloss_type'] = gltf.TEXTURE
+
+                    if 'specularFactor' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
+                        if material.extensions['KHR_materials_pbrSpecularGlossiness']['specgloss_type'] == gltf.TEXTURE and material.extensions['KHR_materials_pbrSpecularGlossiness']['specularFactor'] != [1.0,1.0,1.0]:
+                            material.extensions['KHR_materials_pbrSpecularGlossiness']['specgloss_type'] = gltf.TEXTURE_FACTOR
+                    else:
+                        material.extensions['KHR_materials_pbrSpecularGlossiness']['specularFactor'] = [1.0,1.0,1.0]
 
 
         for node_idx, node in enumerate(gltf.data.nodes):

@@ -62,8 +62,12 @@ class BlenderPrimitive():
         if pyprimitive.material is not None:
 
             # Create Blender material
+            # TODO, a same material can have difference COLOR_0 multiplicator
             if gltf.data.materials[pyprimitive.material].blender_material is None:
-                BlenderMaterial.create(gltf, pyprimitive.material)
+                vertex_color = None
+                if 'COLOR_0' in pyprimitive.attributes.keys():
+                    vertex_color = pyprimitive.attributes['COLOR_0']
+                BlenderMaterial.create(gltf, pyprimitive.material, vertex_color)
 
         return verts, edges, faces
 
@@ -96,20 +100,19 @@ class BlenderPrimitive():
         return offset
 
     def set_UV_in_mat(gltf, pyprimitive, obj):
-        #TODO_SPLIT
-        # if pyprimitive.material.extensions "KHR_materials_pbrSpecularGlossiness"):
-        #     if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.diffuse_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
-        #         BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
-        #     else:
-        #         if pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.specgloss_type in [pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE, pyprimitive.mat.KHR_materials_pbrSpecularGlossiness.TEXTURE_FACTOR]:
-        #             BlenderMaterial.set_uvmap(pyprimitive.mat, pyprimitive, obj)
-        #
-        # else:
-        if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.color_type in [gltf.TEXTURE, gltf.TEXTURE_FACTOR] :
-            BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
-        else:
-            if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.metallic_type in [gltf.TEXTURE, gltf.TEXTURE_FACTOR] :
+        if "KHR_materials_pbrSpecularGlossiness" in gltf.data.materials[pyprimitive.material].extensions.keys():
+            if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].extensions['KHR_materials_pbrSpecularGlossiness']['diffuse_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
                 BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
+            else:
+                if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].extensions['KHR_materials_pbrSpecularGlossiness']['specgloss_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
+                    BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
+
+        else:
+            if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.color_type in [gltf.TEXTURE, gltf.TEXTURE_FACTOR] :
+                BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
+            else:
+                if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.metallic_type in [gltf.TEXTURE, gltf.TEXTURE_FACTOR] :
+                    BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
 
     def assign_material(gltf, pyprimitive, obj, bm, offset, cpt_index_mat):
         if pyprimitive.material is not None:

@@ -30,7 +30,7 @@ from .gltf2_blender_map_occlusion import *
 class BlenderMaterial():
 
     @staticmethod
-    def create(gltf, material_idx):
+    def create(gltf, material_idx, vertex_color):
 
         pymaterial = gltf.data.materials[material_idx]
 
@@ -42,11 +42,11 @@ class BlenderMaterial():
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material = mat.name
 
-        if hasattr(pymaterial, 'KHR_materials_pbrSpecularGlossiness'): #TODO_SPLIT
-            BlenderKHR_materials_pbrSpecularGlossiness.create(pymaterial.KHR_materials_pbrSpecularGlossiness, mat.name)
+        if pymaterial.extensions is not None and 'KHR_materials_pbrSpecularGlossiness' in pymaterial.extensions.keys():
+            BlenderKHR_materials_pbrSpecularGlossiness.create(gltf, pymaterial.extensions['KHR_materials_pbrSpecularGlossiness'], mat.name, vertex_color)
         else:
             # create pbr material
-            BlenderPbr.create(gltf, pymaterial.pbr_metallic_roughness, mat.name)
+            BlenderPbr.create(gltf, pymaterial.pbr_metallic_roughness, mat.name, vertex_color)
 
         # add emission map if needed
         if pymaterial.emissive_texture is not None:
