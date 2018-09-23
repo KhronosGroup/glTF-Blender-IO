@@ -24,6 +24,7 @@ import bpy
 import bmesh
 
 from .gltf2_blender_primitive import *
+from .gltf2_blender_skin import *
 from ..com.gltf2_blender_conversion import *
 
 class BlenderMesh():
@@ -36,7 +37,7 @@ class BlenderMesh():
         if pynode.skin is not None:
             if gltf.data.skins[pynode.skin].blender_armature_name is None:
                 # Create empty armature for now
-                pymesh.skin.create_blender_armature(parent)
+                BlenderSkin.create_armature(gltf, pynode.skin, parent)
 
         # Geometry
         if pymesh.name:
