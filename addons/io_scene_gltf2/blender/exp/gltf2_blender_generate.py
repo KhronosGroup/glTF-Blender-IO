@@ -1645,7 +1645,7 @@ def generate_node_instance(context,
         #
         #
 
-        if blender_object.type == 'MESH' or blender_object.type == 'CURVE':
+        if blender_object.type in ('MESH', 'CURVE', 'FONT'):
             mesh = get_mesh_index(glTF, blender_object.data.name)
 
             if mesh >= 0:
