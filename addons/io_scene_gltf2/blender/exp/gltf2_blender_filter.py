@@ -187,7 +187,7 @@ def filter_apply(export_settings):
             
             current_blender_object = blender_object
             
-            if current_blender_object.type != 'CURVE':
+            if current_blender_object.type not in ('CURVE', 'FONT'):
                 continue
             
             if current_blender_object.data == current_blender_curve:
