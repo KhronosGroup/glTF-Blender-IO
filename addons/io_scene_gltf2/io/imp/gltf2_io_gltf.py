@@ -148,12 +148,11 @@ class glTFImporter():
         if not self.data.skins: # if no skin in gltf file
             return False, None
 
-        is_joint = False
         for skin_idx, skin in enumerate(self.data.skins):
             if node_idx in skin.joints:
                 return True, skin_idx
 
-        return is_joint, None
+        return False, None
 
     def load_buffer(self, buffer_idx):
         buffer = self.data.buffers[buffer_idx]
