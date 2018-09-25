@@ -54,7 +54,6 @@ class BlenderMesh():
 
     @staticmethod
     def set_mesh(gltf, pymesh, mesh, obj):
-
         # Normals
         offset = 0
         for prim in pymesh.primitives:
@@ -102,6 +101,8 @@ class BlenderMesh():
 
             offset_idx = 0
             for prim in pymesh.primitives:
+                if prim.targets is None:
+                    continue
                 if i >= len(prim.targets):
                     continue
 
@@ -128,11 +129,12 @@ class BlenderMesh():
                 offset_idx += prim.vertices_length
 
         # set default weights for shape keys, and names
-        for i in range(max_shape_to_create):
-            if i < len(pymesh.weights):
-                obj.data.shape_keys.key_blocks[i+1].value = pymesh.weights[i]
-                if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
-                   obj.data.shape_keys.key_blocks[i+1].name  = gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
+        if pymesh.weights is not None:
+            for i in range(max_shape_to_create):
+                if i < len(pymesh.weights):
+                    obj.data.shape_keys.key_blocks[i+1].value = pymesh.weights[i]
+                    if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
+                       obj.data.shape_keys.key_blocks[i+1].name  = gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
 
 
         # Apply vertex color.
