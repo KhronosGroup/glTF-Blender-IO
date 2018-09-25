@@ -54,10 +54,11 @@ class BlenderEmissiveMap():
         # add nodes
         emit = node_tree.nodes.new('ShaderNodeEmission')
         emit.location = 0,1000
-        separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-        separate.location = -750, 1000
-        combine = node_tree.nodes.new('ShaderNodeCombineRGB')
-        combine.location = -250, 1000
+        if pymaterial.emissive_factor != [1.0,1.0,1.0]:
+            separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
+            separate.location = -750, 1000
+            combine = node_tree.nodes.new('ShaderNodeCombineRGB')
+            combine.location = -250, 1000
         mapping = node_tree.nodes.new('ShaderNodeMapping')
         mapping.location = -1500, 1000
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
@@ -73,32 +74,36 @@ class BlenderEmissiveMap():
         add = node_tree.nodes.new('ShaderNodeAddShader')
         add.location = 500,500
 
-        math_R  = node_tree.nodes.new('ShaderNodeMath')
-        math_R.location = -500, 1500
-        math_R.operation = 'MULTIPLY'
-        math_R.inputs[1].default_value = pymaterial.emissive_factor[0]
+        if pymaterial.emissive_factor != [1.0,1.0,1.0]:
+            math_R  = node_tree.nodes.new('ShaderNodeMath')
+            math_R.location = -500, 1500
+            math_R.operation = 'MULTIPLY'
+            math_R.inputs[1].default_value = pymaterial.emissive_factor[0]
 
-        math_G  = node_tree.nodes.new('ShaderNodeMath')
-        math_G.location = -500, 1250
-        math_G.operation = 'MULTIPLY'
-        math_G.inputs[1].default_value = pymaterial.emissive_factor[1]
+            math_G  = node_tree.nodes.new('ShaderNodeMath')
+            math_G.location = -500, 1250
+            math_G.operation = 'MULTIPLY'
+            math_G.inputs[1].default_value = pymaterial.emissive_factor[1]
 
-        math_B  = node_tree.nodes.new('ShaderNodeMath')
-        math_B.location = -500, 1000
-        math_B.operation = 'MULTIPLY'
-        math_B.inputs[1].default_value = pymaterial.emissive_factor[2]
+            math_B  = node_tree.nodes.new('ShaderNodeMath')
+            math_B.location = -500, 1000
+            math_B.operation = 'MULTIPLY'
+            math_B.inputs[1].default_value = pymaterial.emissive_factor[2]
 
         # create links
         node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
         node_tree.links.new(text.inputs[0], mapping.outputs[0])
-        node_tree.links.new(separate.inputs[0], text.outputs[0])
-        node_tree.links.new(math_R.inputs[0], separate.outputs[0])
-        node_tree.links.new(math_G.inputs[0], separate.outputs[1])
-        node_tree.links.new(math_B.inputs[0], separate.outputs[2])
-        node_tree.links.new(combine.inputs[0], math_R.outputs[0])
-        node_tree.links.new(combine.inputs[1], math_G.outputs[0])
-        node_tree.links.new(combine.inputs[2], math_B.outputs[0])
-        node_tree.links.new(emit.inputs[0], combine.outputs[0])
+        if pymaterial.emissive_factor != [1.0,1.0,1.0]:
+            node_tree.links.new(separate.inputs[0], text.outputs[0])
+            node_tree.links.new(math_R.inputs[0], separate.outputs[0])
+            node_tree.links.new(math_G.inputs[0], separate.outputs[1])
+            node_tree.links.new(math_B.inputs[0], separate.outputs[2])
+            node_tree.links.new(combine.inputs[0], math_R.outputs[0])
+            node_tree.links.new(combine.inputs[1], math_G.outputs[0])
+            node_tree.links.new(combine.inputs[2], math_B.outputs[0])
+            node_tree.links.new(emit.inputs[0], combine.outputs[0])
+        else:
+            node_tree.links.new(emit.inputs[0], text.outputs[0])
 
         # following  links will modify PBR node tree
         node_tree.links.new(add.inputs[0], emit.outputs[0])
