@@ -27,15 +27,15 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
 
     @staticmethod
-    def create(pyext, mat_name):
+    def create(gltf, pbrSG, mat_name, vertex_color):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderKHR_materials_pbrSpecularGlossiness.create_cycles(pyext, mat_name)
+            BlenderKHR_materials_pbrSpecularGlossiness.create_cycles(gltf, pbrSG, mat_name, vertex_color)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
     @staticmethod
-    def create_cycles(pyext, mat_name):
+    def create_cycles(gltf, pbrSG, mat_name, vertex_color):
         material = bpy.data.materials[mat_name]
         material.use_nodes = True
         node_tree = material.node_tree
@@ -56,12 +56,12 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
         mix        = node_tree.nodes.new('ShaderNodeMixShader')
         mix.location     = 500,0
 
-        glossy.inputs[1].default_value = 1 - pyext.glossinessFactor
+        glossy.inputs[1].default_value = 1 - pbrSG['glossinessFactor']
 
-        if pyext.diffuse_type == pyext.SIMPLE:
-            if not pyext.vertex_color:
+        if pbrSG['diffuse_type'] == gltf.SIMPLE:
+            if not vertex_color:
                 # change input values
-                diffuse.inputs[0].default_value = pyext.diffuseFactor
+                diffuse.inputs[0].default_value = pbrSG['diffuseFactor']
 
             else:
                 # Create attribute node to get COLOR_0 data
@@ -72,10 +72,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
                 # links
                 node_tree.links.new(diffuse.inputs[0], attribute_node.outputs[1])
 
-        elif pyext.diffuse_type == pyext.TEXTURE_FACTOR:
+        elif pbrSG['diffuse_type'] == gltf.TEXTURE_FACTOR:
 
             #TODO alpha ?
-            if pyext.vertex_color:
+            if vertex_color:
                 # TODO tree locations
                 # Create attribute / separate / math nodes
                 attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
@@ -91,11 +91,11 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
                 math_vc_B = node_tree.nodes.new('ShaderNodeMath')
                 math_vc_B.operation = 'MULTIPLY'
 
-            BlenderTexture.create(pyext.diffuseTexture)
+            BlenderTextureInfo.create(gltf, pbrSG['diffuseTexture']['index'])
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[pyext.diffuseTexture.image.blender_image_name]
+            text_node.image = bpy.data.images[gltf.data.images[gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name]
             text_node.location = -1000,500
 
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
@@ -104,17 +104,17 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             math_R  = node_tree.nodes.new('ShaderNodeMath')
             math_R.location = -500, 750
             math_R.operation = 'MULTIPLY'
-            math_R.inputs[1].default_value = pyext.diffuseFactor[0]
+            math_R.inputs[1].default_value = pbrSG['diffuseFactor'][0]
 
             math_G  = node_tree.nodes.new('ShaderNodeMath')
             math_G.location = -500, 500
             math_G.operation = 'MULTIPLY'
-            math_G.inputs[1].default_value = pyext.diffuseFactor[1]
+            math_G.inputs[1].default_value = pbrSG['diffuseFactor'][1]
 
             math_B  = node_tree.nodes.new('ShaderNodeMath')
             math_B.location = -500, 250
             math_B.operation = 'MULTIPLY'
-            math_B.inputs[1].default_value = pyext.diffuseFactor[2]
+            math_B.inputs[1].default_value = pbrSG['diffuseFactor'][2]
 
             separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
             separate.location = -750, 500
@@ -124,11 +124,14 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             uvmap.location = -2000, 500
-            uvmap["gltf2_texcoord"] = pyext.diffuseTexture.texcoord # Set custom flag to retrieve TexCoord
+            if 'texCoord' in pbrSG['diffuseTexture'].keys():
+                uvmap["gltf2_texcoord"] = pbrSG['diffuseTexture']['texCoord'] # Set custom flag to retrieve TexCoord
+            else:
+                uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
             # UV Map will be set after object/UVMap creation
 
             # Create links
-            if pyext.vertex_color:
+            if vertex_color:
                 node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
                 node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
                 node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
@@ -157,12 +160,12 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             node_tree.links.new(diffuse.inputs[0], combine.outputs[0])
 
-        elif pyext.diffuse_type == pyext.TEXTURE:
+        elif pbrSG['diffuse_type'] == gltf.TEXTURE:
 
-            BlenderTexture.create(pyext.diffuseTexture)
+            BlenderTextureInfo.create(gltf, pbrSG['diffuseTexture']['index'])
 
             #TODO alpha ?
-            if pyext.vertex_color:
+            if vertex_color:
                 # Create attribute / separate / math nodes
                 attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
                 attribute_node.attribute_name = 'COLOR_0'
@@ -192,28 +195,31 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[pyext.diffuseTexture.image.blender_image_name]
-            if pyext.vertex_color:
+            text_node.image = bpy.data.images[gltf.data.images[gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name]
+            if vertex_color:
                 text_node.location = -2000,500
             else:
                 text_node.location = -500,500
 
             mapping = node_tree.nodes.new('ShaderNodeMapping')
-            if pyext.vertex_color:
+            if vertex_color:
                 mapping.location = -2500,500
             else:
                 mapping.location = -1500,500
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            if pyext.vertex_color:
+            if vertex_color:
                 uvmap.location = -3000,500
             else:
                 uvmap.location = -2000,500
-            uvmap["gltf2_texcoord"] = pyext.diffuseTexture.texcoord # Set custom flag to retrieve TexCoord
+            if 'texCoord' in pbrSG['diffuseTexture'].keys():
+                uvmap["gltf2_texcoord"] = pbrSG['diffuseTexture']['texCoord'] # Set custom flag to retrieve TexCoord
+            else:
+                uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
             # UV Map will be set after object/UVMap creation
 
             # Create links
-            if pyext.vertex_color:
+            if vertex_color:
                 node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
 
                 node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
@@ -241,20 +247,20 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             node_tree.links.new(text_node.inputs[0], mapping.outputs[0])
 
 
-        if pyext.specgloss_type == pyext.SIMPLE:
+        if pbrSG['specgloss_type'] == gltf.SIMPLE:
 
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
-            combine.inputs[0].default_value = pyext.specularFactor[0]
-            combine.inputs[1].default_value = pyext.specularFactor[1]
-            combine.inputs[2].default_value = pyext.specularFactor[2]
+            combine.inputs[0].default_value = pbrSG['specularFactor'][0]
+            combine.inputs[1].default_value = pbrSG['specularFactor'][1]
+            combine.inputs[2].default_value = pbrSG['specularFactor'][2]
 
             # links
             node_tree.links.new(glossy.inputs[0], combine.outputs[0])
 
-        elif pyext.specgloss_type == pyext.TEXTURE:
-            BlenderTexture.create(pyext.specularGlossinessTexture)
+        elif pbrSG['specgloss_type'] == gltf.TEXTURE:
+            BlenderTextureInfo.create(gltf, pbrSG['specularGlossinessTexture']['index'])
             spec_text = node_tree.nodes.new('ShaderNodeTexImage')
-            spec_text.image = bpy.data.images[pyext.specularGlossinessTexture.image.blender_image_name]
+            spec_text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source].blender_image_name]
             spec_text.color_space = 'NONE'
             spec_text.location = -500,0
 
@@ -263,7 +269,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             spec_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             spec_uvmap.location = -1500,0
-            spec_uvmap["gltf2_texcoord"] = pyext.specularGlossinessTexture.texcoord # Set custom flag to retrieve TexCoord
+            if 'texCoord' in pbrSG['specularGlossinessTexture'].keys():
+                spec_uvmap["gltf2_texcoord"] = pbrSG['specularGlossinessTexture']['texCoord'] # Set custom flag to retrieve TexCoord
+            else:
+                spec_uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
 
             # links
             node_tree.links.new(glossy.inputs[0], spec_text.outputs[0])
@@ -272,18 +281,18 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             node_tree.links.new(spec_mapping.inputs[0], spec_uvmap.outputs[0])
             node_tree.links.new(spec_text.inputs[0], spec_mapping.outputs[0])
 
-        elif pyext.specgloss_type == pyext.TEXTURE_FACTOR:
+        elif pbrSG['specgloss_type'] == gltf.TEXTURE_FACTOR:
 
-            BlenderTexture.create(pyext.specularGlossinessTexture)
+            BlenderTextureInfo.create(gltf, pbrSG['specularGlossinessTexture']['index'])
 
             spec_text = node_tree.nodes.new('ShaderNodeTexImage')
-            spec_text.image = bpy.data.images[pyext.specularGlossinessTexture.image.blender_image_name]
+            spec_text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source].blender_image_name]
             spec_text.color_space = 'NONE'
             spec_text.location = -1000,0
 
             spec_math     = node_tree.nodes.new('ShaderNodeMath')
             spec_math.operation = 'MULTIPLY'
-            spec_math.inputs[0].default_value = pyext.glossinessFactor
+            spec_math.inputs[0].default_value = pbrSG['glossinessFactor']
             spec_math.location = -250,100
 
             spec_mapping = node_tree.nodes.new('ShaderNodeMapping')
@@ -291,7 +300,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             spec_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             spec_uvmap.location = -1500,0
-            spec_uvmap["gltf2_texcoord"] = pyext.specularGlossinessTexture.texcoord # Set custom flag to retrieve TexCoord
+            if 'texCoord' in pbrSG['specularGlossinessTexture'].keys():
+                spec_uvmap["gltf2_texcoord"] = pbrSG['specularGlossinessTexture']['texCoord'] # Set custom flag to retrieve TexCoord
+            else:
+                spec_uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
 
 
             # links

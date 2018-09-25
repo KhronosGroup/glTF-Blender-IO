@@ -19,161 +19,153 @@
  *
  * ***** END GPL LICENSE BLOCK *****
  """
-from ..com.gltf2_io_gltf import *
-from .gltf2_io_asset import *
-from .gltf2_io_scene import *
-from .gltf2_io_animation import *
+
+from ..com.gltf2_io import *
+from ..com.gltf2_io_debug import *
 import logging
+import json
+import struct
+import base64
+from os.path import dirname, join
 
 class glTFImporter():
 
+    def __init__(self, filename, loglevel=logging.ERROR):
+        self.filename = filename
+        self.buffers  = {}
+
+        log = Log(loglevel)
+        self.log = log.logger
+        self.log_handler = log.hdlr
+
+        self.SIMPLE  = 1
+        self.TEXTURE = 2
+        self.TEXTURE_FACTOR = 3
+
+        # TODO: move to a com place?
+        self.extensions_managed = [
+            'KHR_materials_pbrSpecularGlossiness'
+        ]
+
+        #TODO : merge with io_constants
+        self.fmt_char_dict = {}
+        self.fmt_char_dict[5120] = 'b' # Byte
+        self.fmt_char_dict[5121] = 'B' # Unsigned Byte
+        self.fmt_char_dict[5122] = 'h' # Short
+        self.fmt_char_dict[5123] = 'H' # Unsigned Short
+        self.fmt_char_dict[5125] = 'I' # Unsigned Int
+        self.fmt_char_dict[5126] = 'f' # Float
+
+        self.component_nb_dict = {}
+        self.component_nb_dict['SCALAR'] = 1
+        self.component_nb_dict['VEC2']   = 2
+        self.component_nb_dict['VEC3']   = 3
+        self.component_nb_dict['VEC4']   = 4
+        self.component_nb_dict['MAT2']   = 4
+        self.component_nb_dict['MAT3']   = 9
+        self.component_nb_dict['MAT4']   = 16
+
     @staticmethod
-    def load_glb(pygltf):
-        header = struct.unpack_from('<I4s', pygltf.content)
-        pygltf.version = header[1]
+    def bad_json_value(val):
+        raise ValueError('Json contains some unauthorized values')
+
+    def checks(self):
+        if self.data.extensions_required is not None:
+            for extension in self.data.extensions_required:
+                if extension not in self.data.extensions_used:
+                    return False, "Extension required must be in Extension Used too"
+                if extension not in self.extensions_managed:
+                    return False, "Extension " + extension + " is not available on this addon version"
+
+        if self.data.extensions_used is not None:
+            for extension in self.data.extensions_used:
+                if extension not in self.extensions_managed:
+                    # Non blocking error #TODO log
+                    pass
+
+        return True, None
+
+    def load_glb(self):
+        header = struct.unpack_from('<I4s', self.content)
+        self.version = header[1]
 
         offset = 12 # header size = 12
 
         # TODO check json type for chunk 0, and BIN type for next ones
 
         # json
-        type, str_json, offset = glTFImporter.load_chunk(pygltf, offset)
+        type, str_json, offset = self.load_chunk(offset)
         try:
-            pygltf.json = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
+            json_ = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
+            self.data = gltf_from_dict(json_)
         except ValueError as e:
             return False, e.args[0]
 
-
         # binary data
         chunk_cpt = 0
-        while offset < len(pygltf.content):
-            type, data, offset = glTFImporter.load_chunk(pygltf, offset)
+        while offset < len(self.content):
+            type, data, offset = self.load_chunk(offset)
 
-            pygltf.buffers[chunk_cpt] = Buffer(chunk_cpt, pygltf.json['buffers'][chunk_cpt], pygltf)
-            pygltf.buffers[chunk_cpt].data = data #TODO .length
+            self.buffers[chunk_cpt] = data
             chunk_cpt += 1
 
-        pygltf.content = None
+        self.content = None
         return True, None
 
-    @staticmethod
-    def load_chunk(pygltf, offset):
-        chunk_header = struct.unpack_from('<I4s', pygltf.content, offset)
+    def load_chunk(self, offset):
+        chunk_header = struct.unpack_from('<I4s', self.content, offset)
         data_length  = chunk_header[0]
         data_type    = chunk_header[1]
-        data         = pygltf.content[offset + 8 : offset + 8 + data_length]
+        data         = self.content[offset + 8 : offset + 8 + data_length]
 
         return data_type, data, offset + 8 + data_length
 
-    @staticmethod
-    def bad_json_value(val):
-        raise ValueError('Json contains some unauthorized values')
+    def read(self):
+        # Check if file is gltf or glb
+        with open(self.filename, 'rb') as f:
+            self.content = f.read()
 
-    @staticmethod
-    def load(pygltf):
-        with open(pygltf.filename, 'rb') as f:
-            pygltf.content = f.read()
+        self.is_glb_format = self.content[:4] == b'glTF'
 
-
-        pygltf.is_glb_format = pygltf.content[:4] == b'glTF'
-
-        if not pygltf.is_glb_format:
-            pygltf.content = None
-            with open(pygltf.filename, 'r') as f:
+        # glTF file
+        if not self.is_glb_format:
+            self.content = None
+            with open(self.filename, 'r') as f:
                 content = f.read()
                 try:
-                    pygltf.json = json.loads(content, parse_constant=glTFImporter.bad_json_value)
+                    self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
                     return True, None
                 except ValueError as e:
                     return False, e.args[0]
 
+        # glb file
         else:
             # Parsing glb file
-            success, txt = glTFImporter.load_glb(pygltf)
+            success, txt = self.load_glb()
             return success, txt
 
-    @staticmethod
-    def get_root_scene(pygltf):
-        if 'scene' in pygltf.json.keys():
-            return pygltf.json['scene'], pygltf.json['scenes'][pygltf.json['scene']]
-        return 0, pygltf.json['scenes'][0]
+    def is_node_joint(self, node_idx):
+        if not self.data.skins: # if no skin in gltf file
+            return False, None
 
-    @staticmethod
-    def read(pygltf):
-        if 'asset' in pygltf.json.keys():
-            pygltf.asset = AssetImporter.importer(pygltf.json['asset'], pygltf)
-        else:
-            return False, "asset is mandatory"
+        for skin_idx, skin in enumerate(self.data.skins):
+            if node_idx in skin.joints:
+                return True, skin_idx
 
-        check_version, txt = AssetImporter.check_version(pygltf.asset)
-        if not check_version:
-            return False, txt
+        return False, None
 
-        idx, scene = glTFImporter.get_root_scene(pygltf)
-        if not scene:
-            return False, "Error reading root scene"
+    def load_buffer(self, buffer_idx):
+        buffer = self.data.buffers[buffer_idx]
 
-        if 'extensionsRequired' in pygltf.json.keys():
-            for ext in pygltf.json['extensionsRequired']:
-                if ext not in pygltf.extensions_managed:
-                    return False, "Extension " + ext + " is not available on this addon version"
-
-        if 'extensionsUsed' in pygltf.json.keys():
-            for ext in pygltf.json['extensionsUsed']:
-                if ext not in pygltf.extensions_managed:
-                    pygltf.log.error("Extension " + ext + " is not available on this addon version")
-                    # Non blocking error
-
-        pygltf.scene = SceneImporter.importer(idx, scene, pygltf)
-
-        # manage all scenes (except root scene that is already managed)
-        scene_idx = 0
-        for scene_it in pygltf.json['scenes']:
-            if scene_idx == idx:
-                continue
-            scene = SceneImporter.importer(scene_idx, pygltf.json['scenes'][scene_idx] , pygltf)
-            scene_idx += 1
-            pygltf.other_scenes.append(scene)
+        if buffer.uri:
+            sep = ';base64,'
+            if buffer.uri[:5] == 'data:':
+                idx = buffer.uri.find(sep)
+                if idx != -1:
+                    data = buffer.uri[idx+len(sep):]
+                    self.buffers[buffer_idx] = base64.b64decode(data)
+                    return
 
 
-        # manage animations
-        if 'animations' in pygltf.json.keys():
-            anim_idx = 0
-            for anim in pygltf.json['animations']:
-                animation = AnimationImporter.importer(anim_idx, pygltf.json['animations'][anim_idx], pygltf)
-                pygltf.animations[animation.index] = animation
-                anim_idx += 1
-
-        # Set bone type on all joints
-        for node in pygltf.scene.nodes.values():
-            is_joint, skin = glTFImporter.is_node_joint(pygltf, node.index)
-            if is_joint:
-                node.is_joint = True
-                node.skin_id     = skin
-
-        for scene in pygltf.other_scenes:
-            for node in scene.nodes.values():
-                is_joint, skin = glTFImporter.is_node_joint(pygltf, node.index)
-                if is_joint:
-                    node.is_joint = True
-                    node.skin_id     = skin
-
-        return True, None # Success
-
-    @staticmethod
-    def is_node_joint(pygltf, node_id):
-        is_joint = False
-        for skin in pygltf.skins.values():
-            if node_id in skin.bones:
-                return True, skin.index
-
-        return is_joint, None
-
-    @staticmethod
-    def importer(filename, loglevel=logging.ERROR):
-        pygltf = PyglTF(filename, loglevel=loglevel)
-        success, txt = glTFImporter.load(pygltf)
-        if success:
-            success, txt = glTFImporter.read(pygltf)
-
-        return success, pygltf, txt
+            with open(join(dirname(self.filename), buffer.uri), 'rb') as f_:
+                self.buffers[buffer_idx] = f_.read()

@@ -30,41 +30,43 @@ from .gltf2_blender_map_occlusion import *
 class BlenderMaterial():
 
     @staticmethod
-    def create(pymaterial):
+    def create(gltf, material_idx, vertex_color):
 
-        pymaterial.blender_material = None
+        pymaterial = gltf.data.materials[material_idx]
 
         if pymaterial.name is not None:
             name = pymaterial.name
         else:
-            name = "Material_" + str(pymaterial.index)
+            name = "Material_" + str(material_idx)
 
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material = mat.name
 
-        if hasattr(pymaterial, 'KHR_materials_pbrSpecularGlossiness'):
-            BlenderKHR_materials_pbrSpecularGlossiness.create(pymaterial.KHR_materials_pbrSpecularGlossiness, mat.name)
+        if pymaterial.extensions is not None and 'KHR_materials_pbrSpecularGlossiness' in pymaterial.extensions.keys():
+            BlenderKHR_materials_pbrSpecularGlossiness.create(gltf, pymaterial.extensions['KHR_materials_pbrSpecularGlossiness'], mat.name, vertex_color)
         else:
             # create pbr material
-            BlenderPbr.create(pymaterial.pbr, mat.name)
+            BlenderPbr.create(gltf, pymaterial.pbr_metallic_roughness, mat.name, vertex_color)
 
         # add emission map if needed
-        if pymaterial.emissivemap:
-            BlenderEmissiveMap.create(pymaterial.emissivemap, mat.name)
+        if pymaterial.emissive_texture is not None:
+            BlenderEmissiveMap.create(gltf, material_idx)
 
         # add normal map if needed
-        if pymaterial.normalmap:
-            BlenderNormalMap.create(pymaterial.normalmap, mat.name)
+        if pymaterial.normal_texture is not None:
+            BlenderNormalMap.create(gltf, material_idx)
 
         # add occlusion map if needed
         # will be pack, but not used
-        if pymaterial.occlusionmap:
-            BlenderOcclusionMap.create(pymaterial.occlusionmap, mat.name)
+        if pymaterial.occlusion_texture is not None:
+            BlenderOcclusionMap.create(gltf, material_idx)
 
     @staticmethod
-    def set_uvmap(pymaterial, prim, obj):
+    def set_uvmap(gltf, material_idx, prim, obj):
+        pymaterial = gltf.data.materials[material_idx]
+
         node_tree = bpy.data.materials[pymaterial.blender_material].node_tree
-        uvmap_nodes =  [node for node in node_tree.nodes if node.type == 'UVMAP']
+        uvmap_nodes =  [node for node in node_tree.nodes if node.type in ['UVMAP', 'NORMAL_MAP']]
         for uvmap_node in uvmap_nodes:
             if uvmap_node["gltf2_texcoord"] in prim.blender_texcoord.keys():
                 uvmap_node.uv_map = prim.blender_texcoord[uvmap_node["gltf2_texcoord"]]

@@ -26,11 +26,12 @@ from .gltf2_blender_animation_node import *
 class BlenderAnimation():
 
     @staticmethod
-    def anim(pyanim):
-        if pyanim.node.is_joint:
-            BlenderBoneAnim.anim(pyanim.bone_anim)
+    def anim(gltf, anim_idx, node_idx):
+        if gltf.data.nodes[node_idx].is_joint:
+            BlenderBoneAnim.anim(gltf, anim_idx, node_idx)
         else:
-            BlenderNodeAnim.anim(pyanim.node_anim)
+            BlenderNodeAnim.anim(gltf, anim_idx, node_idx)
 
-        for child in pyanim.node.children:
-            BlenderAnimation.anim(child.animation)
+        if gltf.data.nodes[node_idx].children:
+            for child in gltf.data.nodes[node_idx].children:
+                BlenderAnimation.anim(gltf, anim_idx, child)

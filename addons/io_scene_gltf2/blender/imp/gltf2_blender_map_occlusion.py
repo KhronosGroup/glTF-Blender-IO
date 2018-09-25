@@ -26,22 +26,18 @@ from .gltf2_blender_texture import *
 class BlenderOcclusionMap():
 
     @staticmethod
-    def create(pymap, mat_name):
+    def create(gltf, material_idx):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderNormalMap.create_cycles(pymap, mat_name)
+            BlenderOcclusionMap.create_cycles(gltf, material_idx)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create(pymap, mat_name):
-        engine = bpy.context.scene.render.engine
-        if engine == 'CYCLES':
-            BlenderOcclusionMap.create_cycles(pymap, mat_name)
-        else:
-            pass #TODO for internal / Eevee in future 2.8
+    def create_cycles(gltf, material_idx):
 
-    def create_cycles(pymap, mat_name):
-        BlenderTexture.create(pymap.texture)
+        pymaterial = gltf.data.materials[material_idx]
+
+        BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture.index)
 
         # Pack texture, but doesn't use it for now. Occlusion is calculated from Cycles.
-        bpy.data.images[pymap.texture.image.blender_image_name].use_fake_user = True
+        bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.occlusion_texture.index].source].blender_image_name].use_fake_user = True
