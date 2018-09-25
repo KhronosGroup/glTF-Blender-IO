@@ -153,6 +153,14 @@ class BlenderSkin():
     def create_armature_modifiers(gltf, skin_id):
 
         pyskin = gltf.data.skins[skin_id]
+
+        if pyskin.blender_armature_name is None:
+            # TODO seems something is wrong
+            # For example, some joints are in skin 0, and are in another skin too
+            # Not sure this is glTF compliant, will check it
+            return
+
+
         node = gltf.data.nodes[pyskin.node_id]
         obj = bpy.data.objects[node.blender_object]
 
