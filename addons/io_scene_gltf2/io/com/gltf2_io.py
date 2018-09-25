@@ -21,19 +21,9 @@ def from_union(fs, x):
     assert False
 
 
-def from_float(x):
-    assert isinstance(x, (float, int)) and not isinstance(x, bool)
-    return float(x)
-
-
 def from_dict(f, x):
     assert isinstance(x, dict)
     return {k: f(v) for (k, v) in x.items()}
-
-
-def to_float(x):
-    assert isinstance(x, float)
-    return x
 
 
 def to_class(c, x):
@@ -46,14 +36,23 @@ def from_list(f, x):
     return [f(y) for y in x]
 
 
+def from_float(x):
+    assert isinstance(x, (float, int)) and not isinstance(x, bool)
+    return float(x)
+
+
 def from_str(x):
-    res = isinstance(x, str) or isinstance(x, unicode)
-    assert res
+    assert isinstance(x, str)
     return x
 
 
 def from_bool(x):
     assert isinstance(x, bool)
+    return x
+
+
+def to_float(x):
+    assert isinstance(x, float)
     return x
 
 
@@ -76,7 +75,7 @@ class AccessorSparseIndices:
         assert isinstance(obj, dict)
         buffer_view = from_int(obj.get("bufferView"))
         byte_offset = from_union([from_int, from_none], obj.get("byteOffset"))
-        component_type = from_union([from_float, from_int], obj.get("componentType"))
+        component_type = from_int(obj.get("componentType"))
         extensions = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
                                 obj.get("extensions"))
         extras = obj.get("extras")
@@ -86,7 +85,7 @@ class AccessorSparseIndices:
         result = {}
         result["bufferView"] = from_int(self.buffer_view)
         result["byteOffset"] = from_union([from_int, from_none], self.byte_offset)
-        result["componentType"] = from_union([to_float, from_int], self.component_type)
+        result["componentType"] = from_int(self.component_type)
         result["extensions"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
                                           self.extensions)
         result["extras"] = self.extras
@@ -186,7 +185,7 @@ class Accessor:
         assert isinstance(obj, dict)
         buffer_view = from_union([from_int, from_none], obj.get("bufferView"))
         byte_offset = from_union([from_int, from_none], obj.get("byteOffset"))
-        component_type = from_union([from_float, from_int], obj.get("componentType"))
+        component_type = from_int(obj.get("componentType"))
         count = from_int(obj.get("count"))
         extensions = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
                                 obj.get("extensions"))
@@ -204,7 +203,7 @@ class Accessor:
         result = {}
         result["bufferView"] = from_union([from_int, from_none], self.buffer_view)
         result["byteOffset"] = from_union([from_int, from_none], self.byte_offset)
-        result["componentType"] = from_union([to_float, from_int], self.component_type)
+        result["componentType"] = from_int(self.component_type)
         result["count"] = from_int(self.count)
         result["extensions"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
                                           self.extensions)
@@ -404,7 +403,7 @@ class BufferView:
                                 obj.get("extensions"))
         extras = obj.get("extras")
         name = from_union([from_str, from_none], obj.get("name"))
-        target = from_union([from_float, from_int, from_none], obj.get("target"))
+        target = from_union([from_int, from_none], obj.get("target"))
         return BufferView(buffer, byte_length, byte_offset, byte_stride, extensions, extras, name, target)
 
     def to_dict(self):
@@ -417,7 +416,7 @@ class BufferView:
                                           self.extensions)
         result["extras"] = self.extras
         result["name"] = from_union([from_str, from_none], self.name)
-        result["target"] = from_union([to_float, from_int, from_none], self.target)
+        result["target"] = from_union([from_int, from_none], self.target)
         return result
 
 
@@ -829,7 +828,7 @@ class MeshPrimitive:
         extras = obj.get("extras")
         indices = from_union([from_int, from_none], obj.get("indices"))
         material = from_union([from_int, from_none], obj.get("material"))
-        mode = from_union([from_float, from_int, from_none], obj.get("mode"))
+        mode = from_union([from_int, from_none], obj.get("mode"))
         targets = from_union([lambda x: from_list(lambda x: from_dict(from_int, x), x), from_none], obj.get("targets"))
         return MeshPrimitive(attributes, extensions, extras, indices, material, mode, targets)
 
@@ -841,7 +840,7 @@ class MeshPrimitive:
         result["extras"] = self.extras
         result["indices"] = from_union([from_int, from_none], self.indices)
         result["material"] = from_union([from_int, from_none], self.material)
-        result["mode"] = from_union([to_float, from_int, from_none], self.mode)
+        result["mode"] = from_union([from_int, from_none], self.mode)
         result["targets"] = from_union([lambda x: from_list(lambda x: from_dict(from_int, x), x), from_none],
                                        self.targets)
         return result
@@ -962,11 +961,11 @@ class Sampler:
         extensions = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
                                 obj.get("extensions"))
         extras = obj.get("extras")
-        mag_filter = from_union([from_float, from_int, from_none], obj.get("magFilter"))
-        min_filter = from_union([from_float, from_int, from_none], obj.get("minFilter"))
+        mag_filter = from_union([from_int, from_none], obj.get("magFilter"))
+        min_filter = from_union([from_int, from_none], obj.get("minFilter"))
         name = from_union([from_str, from_none], obj.get("name"))
-        wrap_s = from_union([from_float, from_int, from_none], obj.get("wrapS"))
-        wrap_t = from_union([from_float, from_int, from_none], obj.get("wrapT"))
+        wrap_s = from_union([from_int, from_none], obj.get("wrapS"))
+        wrap_t = from_union([from_int, from_none], obj.get("wrapT"))
         return Sampler(extensions, extras, mag_filter, min_filter, name, wrap_s, wrap_t)
 
     def to_dict(self):
@@ -974,11 +973,11 @@ class Sampler:
         result["extensions"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
                                           self.extensions)
         result["extras"] = self.extras
-        result["magFilter"] = from_union([to_float, from_int, from_none], self.mag_filter)
-        result["minFilter"] = from_union([to_float, from_int, from_none], self.min_filter)
+        result["magFilter"] = from_union([from_int, from_none], self.mag_filter)
+        result["minFilter"] = from_union([from_int, from_none], self.min_filter)
         result["name"] = from_union([from_str, from_none], self.name)
-        result["wrapS"] = from_union([to_float, from_int, from_none], self.wrap_s)
-        result["wrapT"] = from_union([to_float, from_int, from_none], self.wrap_t)
+        result["wrapS"] = from_union([from_int, from_none], self.wrap_s)
+        result["wrapT"] = from_union([from_int, from_none], self.wrap_t)
         return result
 
 
