@@ -277,7 +277,7 @@ class BlenderPbr():
 
         elif pypbr.metallic_type == gltf.TEXTURE_FACTOR:
 
-            BlenderTextureInfo.create(pypbr.metallic_roughness_texture.index)
+            BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture.index)
 
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
             metallic_text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.metallic_roughness_texture.index].source].blender_image_name]
