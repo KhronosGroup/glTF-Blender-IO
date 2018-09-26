@@ -65,7 +65,12 @@ class BlenderPbr():
                 principled.inputs[7].default_value = pypbr.roughness_factor
 
                 # links
-                node_tree.links.new(principled.inputs[0], attribute_node.outputs[1])
+                rgb_node = node_tree.nodes.new('ShaderNodeMixRGB')
+                rgb_node.blend_type = 'MULTIPLY'
+                rgb_node.inputs['Fac'].default_value = 1.0
+                rgb_node.inputs['Color1'].default_value = pypbr.base_color_factor
+                node_tree.links.new(rgb_node.inputs['Color2'], attribute_node.outputs[0])
+                node_tree.links.new(principled.inputs[0], rgb_node.outputs[0])
 
         elif pypbr.color_type == gltf.TEXTURE_FACTOR:
 
