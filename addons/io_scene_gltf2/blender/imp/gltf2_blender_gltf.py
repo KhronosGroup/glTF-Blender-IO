@@ -139,7 +139,10 @@ class BlenderGlTF():
 
             # skin management
             if node.skin is not None and node.mesh is not None:
-                gltf.data.skins[node.skin].node_id = node_idx
+                if not hasattr(gltf.data.skins[node.skin], "node_ids"):
+                    gltf.data.skins[node.skin].node_ids = []
+
+                gltf.data.skins[node.skin].node_ids.append(node_idx)
 
             # transform management
             if node.matrix:
