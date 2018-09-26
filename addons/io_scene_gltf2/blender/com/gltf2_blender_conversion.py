@@ -33,3 +33,10 @@ class Conversion():
     @staticmethod
     def quaternion_gltf_to_blender(q):
         return Quaternion([q[3], q[0], q[1], q[2]])
+
+    def scale_to_matrix(scale):
+        mat = Matrix()
+        for i in range(3):
+            mat[i][i] = scale[i]
+
+        return mat
