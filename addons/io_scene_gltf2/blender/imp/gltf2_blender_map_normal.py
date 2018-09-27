@@ -57,6 +57,7 @@ class BlenderNormalMap():
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
         text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.normal_texture.index].source].blender_image_name]
+        text.label = 'NORMALMAP'
         text.color_space = 'NONE'
         text.location = -500, -500
 
