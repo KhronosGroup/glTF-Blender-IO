@@ -1,0 +1,28 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ux3d/gltf-blender-io
+    steps:
+      - checkout
+      - run:
+          name: Install Blender Plugin
+          command: cp -r addons/io_scene_gltf2 /opt/blender/$BLENDER_VERSION/scripts/addons/io_scene_gltf2
+      - run:
+          name: Prepare Tests
+          command: cd tests && npm install
+      - run:
+          name: Run Tests
+          command: cd tests && npm test
+      - run:
+          name: Store Results
+          when: always
+          command: cp -r tests/mochawesome-report /tmp/report
+      - run:
+          name: Store Scenes
+          when: always
+          command: cp -r tests/scenes /tmp/scenes
+      - store_artifacts:
+          path: /tmp/report
+      - store_artifacts:
+          path: /tmp/scenes
