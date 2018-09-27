@@ -25,18 +25,14 @@ from .gltf2_blender_texture import *
 
 class BlenderPbr():
 
-    @staticmethod
-    def use_vertex_color(pypbr):
-        pypbr.vertex_color = True
-
-    def create(pypbr, mat_name):
+    def create(gltf, pypbr, mat_name, vertex_color):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderPbr.create_cycles(pypbr, mat_name)
+            BlenderPbr.create_cycles(gltf, pypbr, mat_name, vertex_color)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_cycles(pypbr, mat_name):
+    def create_cycles(gltf, pypbr, mat_name, vertex_color):
         material = bpy.data.materials[mat_name]
         material.use_nodes = True
         node_tree = material.node_tree
@@ -53,14 +49,14 @@ class BlenderPbr():
         principled = node_tree.nodes.new('ShaderNodeBsdfPrincipled')
         principled.location = 0,0
 
-        if pypbr.color_type == pypbr.SIMPLE:
+        if pypbr.color_type == gltf.SIMPLE:
 
-            if not pypbr.vertex_color:
+            if not vertex_color:
 
                 # change input values
-                principled.inputs[0].default_value = pypbr.baseColorFactor
-                principled.inputs[5].default_value = pypbr.metallicFactor #TODO : currently set metallic & specular in same way
-                principled.inputs[7].default_value = pypbr.roughnessFactor
+                principled.inputs[0].default_value = pypbr.base_color_factor
+                principled.inputs[5].default_value = pypbr.metallic_factor #TODO : currently set metallic & specular in same way
+                principled.inputs[7].default_value = pypbr.roughness_factor
 
             else:
                 # Create attribute node to get COLOR_0 data
@@ -68,16 +64,16 @@ class BlenderPbr():
                 attribute_node.attribute_name = 'COLOR_0'
                 attribute_node.location = -500,0
 
-                principled.inputs[5].default_value = pypbr.metallicFactor #TODO : currently set metallic & specular in same way
-                principled.inputs[7].default_value = pypbr.roughnessFactor
+                principled.inputs[5].default_value = pypbr.metallic_factor #TODO : currently set metallic & specular in same way
+                principled.inputs[7].default_value = pypbr.roughness_factor
 
                 # links
                 node_tree.links.new(principled.inputs[0], attribute_node.outputs[1])
 
-        elif pypbr.color_type == pypbr.TEXTURE_FACTOR:
+        elif pypbr.color_type == gltf.TEXTURE_FACTOR:
 
             #TODO alpha ?
-            if pypbr.vertex_color:
+            if vertex_color:
                 # TODO tree locations
                 # Create attribute / separate / math nodes
                 attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
@@ -93,11 +89,11 @@ class BlenderPbr():
                 math_vc_B = node_tree.nodes.new('ShaderNodeMath')
                 math_vc_B.operation = 'MULTIPLY'
 
-            BlenderTexture.create(pypbr.baseColorTexture)
+            BlenderTextureInfo.create(gltf, pypbr.base_color_texture.index)
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[pypbr.baseColorTexture.image.blender_image_name]
+            text_node.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.base_color_texture.index].source].blender_image_name]
             text_node.location = -1000,500
 
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
@@ -106,17 +102,17 @@ class BlenderPbr():
             math_R  = node_tree.nodes.new('ShaderNodeMath')
             math_R.location = -500, 750
             math_R.operation = 'MULTIPLY'
-            math_R.inputs[1].default_value = pypbr.baseColorFactor[0]
+            math_R.inputs[1].default_value = pypbr.base_color_factor[0]
 
             math_G  = node_tree.nodes.new('ShaderNodeMath')
             math_G.location = -500, 500
             math_G.operation = 'MULTIPLY'
-            math_G.inputs[1].default_value = pypbr.baseColorFactor[1]
+            math_G.inputs[1].default_value = pypbr.base_color_factor[1]
 
             math_B  = node_tree.nodes.new('ShaderNodeMath')
             math_B.location = -500, 250
             math_B.operation = 'MULTIPLY'
-            math_B.inputs[1].default_value = pypbr.baseColorFactor[2]
+            math_B.inputs[1].default_value = pypbr.base_color_factor[2]
 
             separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
             separate.location = -750, 500
@@ -126,11 +122,14 @@ class BlenderPbr():
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             uvmap.location = -2000, 500
-            uvmap["gltf2_texcoord"] = pypbr.baseColorTexture.texcoord # Set custom flag to retrieve TexCoord
+            if pypbr.base_color_texture.tex_coord is not None:
+                uvmap["gltf2_texcoord"] = pypbr.base_color_texture.tex_coord # Set custom flag to retrieve TexCoord
+            else:
+                uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
             # UV Map will be set after object/UVMap creation
 
             # Create links
-            if pypbr.vertex_color:
+            if vertex_color:
                 node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
                 node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
                 node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
@@ -159,12 +158,12 @@ class BlenderPbr():
 
             node_tree.links.new(principled.inputs[0], combine.outputs[0])
 
-        elif pypbr.color_type == pypbr.TEXTURE:
+        elif pypbr.color_type == gltf.TEXTURE:
 
-            BlenderTexture.create(pypbr.baseColorTexture)
+            BlenderTextureInfo.create(gltf, pypbr.base_color_texture.index)
 
             #TODO alpha ?
-            if pypbr.vertex_color:
+            if vertex_color:
                 # Create attribute / separate / math nodes
                 attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
                 attribute_node.attribute_name = 'COLOR_0'
@@ -194,28 +193,31 @@ class BlenderPbr():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[pypbr.baseColorTexture.image.blender_image_name]
-            if pypbr.vertex_color:
+            text_node.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.base_color_texture.index].source].blender_image_name]
+            if vertex_color:
                 text_node.location = -2000,500
             else:
                 text_node.location = -500,500
 
             mapping = node_tree.nodes.new('ShaderNodeMapping')
-            if pypbr.vertex_color:
+            if vertex_color:
                 mapping.location = -2500,500
             else:
                 mapping.location = -1500,500
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            if pypbr.vertex_color:
+            if vertex_color:
                 uvmap.location = -3000,500
             else:
                 uvmap.location = -2000,500
-            uvmap["gltf2_texcoord"] = pypbr.baseColorTexture.texcoord # Set custom flag to retrieve TexCoord
+            if pypbr.base_color_texture.tex_coord is not None:
+                uvmap["gltf2_texcoord"] = pypbr.base_color_texture.tex_coord # Set custom flag to retrieve TexCoord
+            else:
+                uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
             # UV Map will be set after object/UVMap creation
 
             # Create links
-            if pypbr.vertex_color:
+            if vertex_color:
                 node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
 
                 node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
@@ -244,14 +246,14 @@ class BlenderPbr():
 
 
         # Says metallic, but it means metallic & Roughness values
-        if pypbr.metallic_type == pypbr.SIMPLE:
-            principled.inputs[4].default_value = pypbr.metallicFactor
-            principled.inputs[7].default_value = pypbr.roughnessFactor
+        if pypbr.metallic_type == gltf.SIMPLE:
+            principled.inputs[4].default_value = pypbr.metallic_factor
+            principled.inputs[7].default_value = pypbr.roughness_factor
 
-        elif pypbr.metallic_type == pypbr.TEXTURE:
-            BlenderTexture.create(pypbr.metallicRoughnessTexture)
+        elif pypbr.metallic_type == gltf.TEXTURE:
+            BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture.index)
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
-            metallic_text.image = bpy.data.images[pypbr.metallicRoughnessTexture.image.blender_image_name]
+            metallic_text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.metallic_roughness_texture.index].source].blender_image_name]
             metallic_text.color_space = 'NONE'
             metallic_text.location = -500,0
 
@@ -263,7 +265,10 @@ class BlenderPbr():
 
             metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             metallic_uvmap.location = -1500,0
-            metallic_uvmap["gltf2_texcoord"] = pypbr.metallicRoughnessTexture.texcoord # Set custom flag to retrieve TexCoord
+            if pypbr.metallic_roughness_texture.tex_coord is not None:
+                metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord # Set custom flag to retrieve TexCoord
+            else:
+                metallic_uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
 
             # links
             node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
@@ -273,12 +278,12 @@ class BlenderPbr():
             node_tree.links.new(metallic_mapping.inputs[0], metallic_uvmap.outputs[0])
             node_tree.links.new(metallic_text.inputs[0], metallic_mapping.outputs[0])
 
-        elif pypbr.metallic_type == pypbr.TEXTURE_FACTOR:
+        elif pypbr.metallic_type == gltf.TEXTURE_FACTOR:
 
-            BlenderTexture.create(pypbr.metallicRoughnessTexture)
+            BlenderTextureInfo.create(pypbr.metallic_roughness_texture.index)
 
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
-            metallic_text.image = bpy.data.images[pypbr.metallicRoughnessTexture.image.blender_image_name]
+            metallic_text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pypbr.metallic_roughness_texture.index].source].blender_image_name]
             metallic_text.color_space = 'NONE'
             metallic_text.location = -1000,0
 
@@ -287,12 +292,12 @@ class BlenderPbr():
 
             metallic_math     = node_tree.nodes.new('ShaderNodeMath')
             metallic_math.operation = 'MULTIPLY'
-            metallic_math.inputs[1].default_value = pypbr.metallicFactor
+            metallic_math.inputs[1].default_value = pypbr.metallic_factor
             metallic_math.location = -250,100
 
             roughness_math = node_tree.nodes.new('ShaderNodeMath')
             roughness_math.operation = 'MULTIPLY'
-            roughness_math.inputs[1].default_value = pypbr.roughnessFactor
+            roughness_math.inputs[1].default_value = pypbr.roughness_factor
             roughness_math.location = -250,-100
 
             metallic_mapping = node_tree.nodes.new('ShaderNodeMapping')
@@ -300,7 +305,10 @@ class BlenderPbr():
 
             metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             metallic_uvmap.location = -1500,0
-            metallic_uvmap["gltf2_texcoord"] = pypbr.metallicRoughnessTexture.texcoord # Set custom flag to retrieve TexCoord
+            if pypbr.metallic_roughness_texture.tex_coord is not None:
+                metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord # Set custom flag to retrieve TexCoord
+            else:
+                metallic_uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
 
 
             # links

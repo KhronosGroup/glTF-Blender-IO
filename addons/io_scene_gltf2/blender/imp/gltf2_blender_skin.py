@@ -24,41 +24,46 @@
 import bpy
 from mathutils import Vector, Matrix, Quaternion
 from ..com.gltf2_blender_conversion import *
+from ...io.imp.gltf2_io_binary import *
 
 class BlenderSkin():
 
     @staticmethod
-    def create_armature(pyskin, parent):
+    def create_armature(gltf, skin_id, parent):
 
-        pyskin.blender_armature_name = None
+        pyskin = gltf.data.skins[skin_id]
 
         if pyskin.name is not None:
             name = pyskin.name
         else:
-            name = "Armature_" + str(pyskin.index)
+            name = "Armature_" + str(skin_id)
 
         armature = bpy.data.armatures.new(name)
         obj = bpy.data.objects.new(name, armature)
-        bpy.data.scenes[pyskin.gltf.blender_scene].objects.link(obj)
+        bpy.data.scenes[gltf.blender_scene].objects.link(obj)
         pyskin.blender_armature_name = obj.name
-        if parent:
-            obj.parent = bpy.data.objects[pyskin.gltf.scene.nodes[parent].blender_object]
+        if parent is not None:
+            obj.parent = bpy.data.objects[gltf.data.nodes[parent].blender_object]
 
     @staticmethod
-    def set_bone_transforms(pyskin, bone, node, parent):
+    def set_bone_transforms(gltf, skin_id, bone, node_id, parent):
+
+        pyskin = gltf.data.skins[skin_id]
+        pynode = gltf.data.nodes[node_id]
+
         obj   = bpy.data.objects[pyskin.blender_armature_name]
 
         mat = Matrix()
         if parent is None:
-            transform = Conversion.matrix_gltf_to_blender(node.transform)
+            transform = Conversion.matrix_gltf_to_blender(pynode.transform)
             mat = transform
         else:
-            if not pyskin.gltf.scene.nodes[parent].is_joint: # TODO if Node in another scene
-                transform  = Conversion.matrix_gltf_to_blender(node.transform)
+            if not gltf.data.nodes[parent].is_joint:
+                transform  = Conversion.matrix_gltf_to_blender(pynode.transform)
                 mat = transform
             else:
-                transform = Conversion.matrix_gltf_to_blender(node.transform)
-                parent_mat = obj.data.edit_bones[pyskin.gltf.scene.nodes[parent].blender_bone_name].matrix # Node in another scene
+                transform = Conversion.matrix_gltf_to_blender(pynode.transform)
+                parent_mat = obj.data.edit_bones[gltf.data.nodes[parent].blender_bone_name].matrix
 
                 mat = (parent_mat.to_quaternion() * transform.to_quaternion()).to_matrix().to_4x4()
                 mat = Matrix.Translation(parent_mat.to_translation() + ( parent_mat.to_quaternion() * transform.to_translation() )) * mat
@@ -68,50 +73,56 @@ class BlenderSkin():
         return bone.matrix
 
     @staticmethod
-    def create_bone(pyskin, node, parent):
-        scene = bpy.data.scenes[pyskin.gltf.blender_scene]
+    def create_bone(gltf, skin_id, node_id, parent):
+
+        pyskin = gltf.data.skins[skin_id]
+        pynode = gltf.data.nodes[node_id]
+
+        scene = bpy.data.scenes[gltf.blender_scene]
         obj   = bpy.data.objects[pyskin.blender_armature_name]
 
         bpy.context.screen.scene = scene
         scene.objects.active = obj
         bpy.ops.object.mode_set(mode="EDIT")
 
-        if node.name:
-            name = node.name
+        if pynode.name:
+            name = pynode.name
         else:
-            name = "Bone_" + str(node.index)
+            name = "Bone_" + str(node_id)
 
         bone = obj.data.edit_bones.new(name)
-        node.blender_bone_name = bone.name
-        node.blender_armature_name = pyskin.blender_armature_name
+        pynode.blender_bone_name = bone.name
+        pynode.blender_armature_name = pyskin.blender_armature_name
         bone.tail = Vector((0.0,1.0,0.0)) # Needed to keep bone alive
-        mat = BlenderSkin.set_bone_transforms(pyskin, bone, node, parent)
-        node.blender_bone_matrix = mat
+        mat = BlenderSkin.set_bone_transforms(gltf, skin_id, bone, node_id, parent)
+        pynode.blender_bone_matrix = mat
 
         # Set parent
-        if parent is not None and hasattr(pyskin.gltf.scene.nodes[parent], "blender_bone_name"):
-            bone.parent = obj.data.edit_bones[pyskin.gltf.scene.nodes[parent].blender_bone_name] #TODO if in another scene
+        if parent is not None and hasattr(gltf.data.nodes[parent], "blender_bone_name"):
+            bone.parent = obj.data.edit_bones[gltf.data.nodes[parent].blender_bone_name]
 
         bpy.ops.object.mode_set(mode="OBJECT")
 
     @staticmethod
-    def create_vertex_groups(pyskin):
-        obj = bpy.data.objects[pyskin.gltf.scene.nodes[pyskin.mesh_id].blender_object]
-        for bone in pyskin.bones:
-            obj.vertex_groups.new(pyskin.gltf.scene.nodes[bone].blender_bone_name)
+    def create_vertex_groups(gltf, skin_id):
+        pyskin = gltf.data.skins[skin_id]
+        obj = bpy.data.objects[gltf.data.nodes[pyskin.node_id].blender_object]
+        for bone in pyskin.joints:
+            obj.vertex_groups.new(gltf.data.nodes[bone].blender_bone_name)
 
     @staticmethod
-    def assign_vertex_groups(pyskin):
-        node = pyskin.gltf.scene.nodes[pyskin.mesh_id]
+    def assign_vertex_groups(gltf, skin_id):
+        pyskin = gltf.data.skins[skin_id]
+        node = gltf.data.nodes[pyskin.node_id]
         obj = bpy.data.objects[node.blender_object]
 
         offset = 0
-        for prim in node.mesh.primitives:
+        for prim in gltf.data.meshes[node.mesh].primitives:
             idx_already_done = {}
 
             if 'JOINTS_0' in prim.attributes.keys() and 'WEIGHTS_0' in prim.attributes.keys():
-                joint_ = prim.attributes['JOINTS_0']['result']
-                weight_ = prim.attributes['WEIGHTS_0']['result']
+                joint_ = BinaryData.get_data_from_accessor(gltf, prim.attributes['JOINTS_0'])
+                weight_ = BinaryData.get_data_from_accessor(gltf, prim.attributes['WEIGHTS_0'])
 
                 for poly in obj.data.polygons:
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
@@ -129,7 +140,7 @@ class BlenderSkin():
                                 weight_val = weight_[tab_index][cpt]
                                 if weight_val != 0.0:   # It can be a problem to assign weights of 0
                                                         # for bone index 0, if there is always 4 indices in joint_ tuple
-                                    group = obj.vertex_groups[pyskin.gltf.scene.nodes[pyskin.bones[joint_idx]].blender_bone_name]
+                                    group = obj.vertex_groups[gltf.data.nodes[pyskin.joints[joint_idx]].blender_bone_name]
                                     group.add([vert_idx], weight_val, 'REPLACE')
                                 cpt += 1
             else:
@@ -139,8 +150,18 @@ class BlenderSkin():
             offset = offset + prim.vertices_length
 
     @staticmethod
-    def create_armature_modifiers(pyskin):
-        node = pyskin.gltf.scene.nodes[pyskin.mesh_id]
+    def create_armature_modifiers(gltf, skin_id):
+
+        pyskin = gltf.data.skins[skin_id]
+
+        if pyskin.blender_armature_name is None:
+            # TODO seems something is wrong
+            # For example, some joints are in skin 0, and are in another skin too
+            # Not sure this is glTF compliant, will check it
+            return
+
+
+        node = gltf.data.nodes[pyskin.node_id]
         obj = bpy.data.objects[node.blender_object]
 
         for obj_sel in bpy.context.scene.objects:

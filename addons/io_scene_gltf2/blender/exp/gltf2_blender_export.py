@@ -105,7 +105,7 @@ def save(operator,
 
     #
 
-    def dict_strip_null_keys(obj):
+    def dict_strip(obj):
         o = obj
         if isinstance(obj, dict):
             o = {}
@@ -114,14 +114,18 @@ def save(operator,
                     continue
                 elif isinstance(v, list) and len(v) == 0:
                     continue
-                o[k] = dict_strip_null_keys(v)
+                o[k] = dict_strip(v)
         elif isinstance(obj, list):
             o = []
             for v in obj:
-                o.append(dict_strip_null_keys(v))
+                o.append(dict_strip(v))
+        elif isinstance(obj, float):
+            # force floats to int, if they are integers (prevent INTEGER_WRITTEN_AS_FLOAT validator warnings)
+            if int(obj) == obj:
+                return int(obj)
         return o
 
-    save_gltf(dict_strip_null_keys(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
+    save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
         
     #
     
