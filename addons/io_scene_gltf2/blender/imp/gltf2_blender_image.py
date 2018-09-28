@@ -23,6 +23,7 @@
 import bpy
 import os
 import tempfile
+from os.path import dirname, join, isfile
 
 from ...io.imp.gltf2_io_binary import *
 
@@ -30,11 +31,47 @@ from ...io.imp.gltf2_io_binary import *
 class BlenderImage():
 
     @staticmethod
+    def get_image_path(gltf, img_idx):
+        pyimage = gltf.data.images[img_idx]
+
+        image_name = "Image_" + str(img_idx)
+
+        if pyimage.uri:
+            sep = ';base64,'
+            if pyimage.uri[:5] == 'data:':
+                idx = pyimage.uri.find(sep)
+                if idx != -1:
+                    return False, None, None
+
+            if isfile(join(dirname(gltf.filename), pyimage.uri)):
+                return True, join(dirname(gltf.filename), pyimage.uri), image_name
+            else:
+                pyimage.gltf.log.error("Missing file (index " + str(img_idx) + "): " + pyimage.uri)
+                return False, None, None
+
+        if pyimage.buffer_view is None:
+            return False, None, None
+
+        return False, None, None
+
+    @staticmethod
     def create(gltf, img_idx):
 
         img = gltf.data.images[img_idx]
 
         img.blender_image_name = None
+
+        if gltf.import_settings['pack_images'] == False:
+
+            # Images are not packed (if image is a real file)
+            real, path, img_name = BlenderImage.get_image_path(gltf, img_idx)
+
+            if real == True:
+
+                blender_image = bpy.data.images.load(path)
+                blender_image.name = img_name
+                img.blender_image_name = blender_image.name
+                return
 
         # Create a temp image, pack, and delete image
         tmp_image = tempfile.NamedTemporaryFile(delete=False)
