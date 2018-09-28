@@ -26,7 +26,7 @@ import logging
 import json
 import struct
 import base64
-from os.path import dirname, join
+from os.path import dirname, join, getsize
 
 class glTFImporter():
 
@@ -86,15 +86,28 @@ class glTFImporter():
         return True, None
 
     def load_glb(self):
-        header = struct.unpack_from('<I4s', self.content)
+        header = struct.unpack_from('<4sII', self.content)
+        self.format  = header[0]
         self.version = header[1]
+        self.file_size = header[2]
+
+        if self.format != b'glTF':
+            return False, "This file is not a glTF/glb file"
+
+        if self.version != 2:
+            return False, "glTF version doesn't match to 2"
+
+        if self.file_size != getsize(self.filename):
+            return False, "File size doesn't match"
 
         offset = 12 # header size = 12
 
         # TODO check json type for chunk 0, and BIN type for next ones
 
         # json
-        type, str_json, offset = self.load_chunk(offset)
+        type, len_, str_json, offset = self.load_chunk(offset)
+        if len_ != len(str_json):
+            return False, "Length of json part doesn't match"
         try:
             json_ = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
             self.data = gltf_from_dict(json_)
@@ -104,7 +117,9 @@ class glTFImporter():
         # binary data
         chunk_cpt = 0
         while offset < len(self.content):
-            type, data, offset = self.load_chunk(offset)
+            type, len_, data, offset = self.load_chunk(offset)
+            if len_ != len(data):
+                return False, "Length of bin buffer " + str(chunk_cpt) + " doesn't match"
 
             self.buffers[chunk_cpt] = data
             chunk_cpt += 1
@@ -118,7 +133,7 @@ class glTFImporter():
         data_type    = chunk_header[1]
         data         = self.content[offset + 8 : offset + 8 + data_length]
 
-        return data_type, data, offset + 8 + data_length
+        return data_type, data_length, data, offset + 8 + data_length
 
     def read(self):
         # Check if file is gltf or glb
