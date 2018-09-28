@@ -37,7 +37,7 @@ def generate_asset(export_settings,
 
     asset = Asset(
         version='2.0',
-        generator='Khronos Blender glTF 2.0 exporter',
+        generator='Khronos Blender glTF 2.0 I/O',
         copyright=None,
         extensions=None,
         extras=None,
