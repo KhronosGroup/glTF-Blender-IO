@@ -492,7 +492,6 @@ class ImportglTF2(Operator, ImportHelper):
     bl_idname = 'import_scene.gltf'
     bl_label  = "glTF 2.0 (.gltf/.glb)"
 
-    filename_ext = ".gltf"
     filter_glob = StringProperty(default="*.gltf;*.glb", options={'HIDDEN'})
 
     loglevel = bpy.props.EnumProperty(items=Log.getLevels(), description="Log Level", default=Log.default())
