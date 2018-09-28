@@ -30,11 +30,15 @@ from os.path import dirname, join, getsize
 
 class glTFImporter():
 
-    def __init__(self, filename, loglevel=logging.ERROR):
+    def __init__(self, filename, import_settings):
         self.filename = filename
+        self.import_settings = import_settings
         self.buffers  = {}
 
-        log = Log(loglevel)
+        if 'loglevel' not in self.import_settings.keys():
+            self.import_settings['loglevel'] = logging.ERROR
+
+        log = Log(import_settings['loglevel'])
         self.log = log.logger
         self.log_handler = log.hdlr
 

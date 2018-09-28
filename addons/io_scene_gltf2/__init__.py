@@ -496,12 +496,23 @@ class ImportglTF2(Operator, ImportHelper):
 
     loglevel = bpy.props.EnumProperty(items=Log.getLevels(), description="Log Level", default=Log.default())
 
+    import_pack_images = BoolProperty(
+            name='Pack images',
+            description='',
+            default=True
+    )
+
     def execute(self, context):
         return self.import_gltf2(context)
 
     def import_gltf2(self, context):
         bpy.context.scene.render.engine = 'CYCLES'
-        self.gltf_importer = glTFImporter(self.filepath, self.loglevel)
+
+        import_settings = {}
+        import_settings['loglevel'] = self.loglevel
+        import_settings['pack_images'] = self.import_pack_images
+
+        self.gltf_importer = glTFImporter(self.filepath, import_settings)
         success, txt = self.gltf_importer.read()
         if not success:
             self.report({'ERROR'}, txt)
