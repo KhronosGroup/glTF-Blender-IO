@@ -70,6 +70,10 @@ class glTFImporter():
         raise ValueError('Json contains some unauthorized values')
 
     def checks(self):
+
+        if self.data.asset.version != "2.0":
+            return False, "glTF version must be 2"
+
         if self.data.extensions_required is not None:
             for extension in self.data.extensions_required:
                 if extension not in self.data.extensions_used:
