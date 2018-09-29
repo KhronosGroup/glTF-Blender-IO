@@ -75,11 +75,35 @@ class BlenderPrimitive():
         if 'NORMAL' in pyprimitive.attributes.keys():
             normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
             for poly in mesh.polygons:
+                calc_norm_vertices = []
                 for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                     vert_idx = mesh.loops[loop_idx].vertex_index
                     if vert_idx in range(offset, offset + pyprimitive.vertices_length):
                         cpt_vert = vert_idx - offset
                         mesh.vertices[vert_idx].normal = normal_data[cpt_vert]
+                        calc_norm_vertices.append(vert_idx)
+
+                if gltf.import_settings['shading'] == "NORMALS":
+                    # Calcul normal
+                    vert0 = mesh.vertices[calc_norm_vertices[0]].co
+                    vert1 = mesh.vertices[calc_norm_vertices[1]].co
+                    vert2 = mesh.vertices[calc_norm_vertices[2]].co
+                    calc_normal = (vert1 - vert0).cross(vert2 - vert0).normalized()
+
+                    # Compare normal to vertex normal
+                    for i in calc_norm_vertices:
+                        cpt_vert = vert_idx - offset
+                        vec = Vector((normal_data[cpt_vert][0], normal_data[cpt_vert][1], normal_data[cpt_vert][2]))
+                        if not calc_normal.dot(vec) > 0.9999999:
+                            poly.use_smooth = True
+                            break
+                elif gltf.import_settings['shading'] == "FLAT":
+                    poly.use_smooth = False
+                elif gltf.import_settings['shading'] == "SMOOTH":
+                    poly.use_smooth = True
+                else:
+                    pass # Should not happend
+
         offset = offset + pyprimitive.vertices_length
         return offset
 

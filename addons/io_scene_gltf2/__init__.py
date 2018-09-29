@@ -502,6 +502,14 @@ class ImportglTF2(Operator, ImportHelper):
             default=True
     )
 
+    import_shading_items = [
+    	("NORMALS", "Use Normal Data", "", 1),
+    	("FLAT", "Flat Shading", "", 2),
+        ("SMOOTH", "Smooth Shading", "", 3),
+    ]
+
+    import_shading = bpy.props.EnumProperty(items=import_shading_items, name="Shading", default="NORMALS")
+
     def execute(self, context):
         return self.import_gltf2(context)
 
@@ -511,6 +519,7 @@ class ImportglTF2(Operator, ImportHelper):
         import_settings = {}
         import_settings['loglevel'] = self.loglevel
         import_settings['pack_images'] = self.import_pack_images
+        import_settings['shading'] = self.import_shading
 
         self.gltf_importer = glTFImporter(self.filepath, import_settings)
         success, txt = self.gltf_importer.read()
