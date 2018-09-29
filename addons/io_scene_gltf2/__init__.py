@@ -494,7 +494,7 @@ class ImportglTF2(Operator, ImportHelper):
 
     filter_glob = StringProperty(default="*.gltf;*.glb", options={'HIDDEN'})
 
-    loglevel = bpy.props.EnumProperty(items=Log.getLevels(), description="Log Level", default=Log.default())
+    loglevel = bpy.props.EnumProperty(items=Log.getLevels(), name="Log Level", default=Log.default())
 
     import_pack_images = BoolProperty(
             name='Pack images',
