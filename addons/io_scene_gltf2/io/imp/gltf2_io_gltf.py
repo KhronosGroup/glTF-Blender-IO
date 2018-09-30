@@ -26,7 +26,7 @@ import logging
 import json
 import struct
 import base64
-from os.path import dirname, join, getsize
+from os.path import dirname, join, getsize, isfile
 
 class glTFImporter():
 
@@ -144,6 +144,11 @@ class glTFImporter():
         return data_type, data_length, data, offset + 8 + data_length
 
     def read(self):
+
+        # Check this is a file
+        if not isfile(self.filename):
+            return False, "Please select a file"
+
         # Check if file is gltf or glb
         with open(self.filename, 'rb') as f:
             self.content = f.read()
