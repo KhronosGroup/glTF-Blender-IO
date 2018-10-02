@@ -197,3 +197,8 @@ class BlenderGlTF():
                     if anim_idx not in gltf.data.nodes[channel.target.node].animations.keys():
                         gltf.data.nodes[channel.target.node].animations[anim_idx] = []
                     gltf.data.nodes[channel.target.node].animations[anim_idx].append(channel_idx)
+
+        # Meshes
+        if gltf.data.meshes:
+            for mesh in gltf.data.meshes:
+                mesh.blender_name = None

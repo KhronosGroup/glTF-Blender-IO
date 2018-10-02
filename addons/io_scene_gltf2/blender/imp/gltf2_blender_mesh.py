@@ -50,6 +50,8 @@ class BlenderMesh():
         mesh.from_pydata(verts, edges, faces)
         mesh.validate()
 
+        pymesh.blender_name = mesh.name
+
         return mesh
 
     @staticmethod
