@@ -2254,12 +2254,10 @@ def generate_textures(operator,
         else:
             magFilter = 9729
             wrap = 10497
-            if blender_texture.texture.extension == 'CLIP':
-                wrap = 33071
 
             texture['sampler'] = generate_sampler(export_settings, glTF, magFilter, wrap)
 
-            texture['source'] = get_image_index(glTF, blender_texture.texture.image.name)
+            texture['source'] = get_image_index(glTF, blender_texture.name)
 
             #
             #

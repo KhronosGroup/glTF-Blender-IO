@@ -42,8 +42,7 @@ def from_float(x):
 
 
 def from_str(x):
-    res = isinstance(x, str) or isinstance(x, unicode)
-    assert res
+    assert isinstance(x, str)
     return x
 
 

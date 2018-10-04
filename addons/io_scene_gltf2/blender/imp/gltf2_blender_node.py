@@ -38,10 +38,17 @@ class BlenderNode():
         pynode.parent = parent
 
         if pynode.mesh is not None:
-            if pynode.name:
-                gltf.log.info("Blender create Mesh node " + pynode.name)
+
+            if gltf.data.meshes[pynode.mesh].blender_name is not None:
+                # Mesh is already created, only create instance
+                mesh = bpy.data.meshes[gltf.data.meshes[pynode.mesh].blender_name]
             else:
-                gltf.log.info("Blender create Mesh node")
+                if pynode.name:
+                    gltf.log.info("Blender create Mesh node " + pynode.name)
+                else:
+                    gltf.log.info("Blender create Mesh node")
+
+                mesh = BlenderMesh.create(gltf, pynode.mesh, node_idx, parent)
 
             if pynode.name:
                 name = pynode.name
@@ -51,8 +58,6 @@ class BlenderNode():
                     name = gltf.data.meshes[pynode.mesh].name
                 else:
                     name = "Object_" + str(node_idx)
-
-            mesh = BlenderMesh.create(gltf, pynode.mesh, node_idx, parent)
 
             obj = bpy.data.objects.new(name, mesh)
             obj.rotation_mode = 'QUATERNION'
