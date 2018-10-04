@@ -12,7 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mathutils
-
-from io_scene_gltf2.blender.exp.gltf2_blender_gather import cached
-from io_scene_gltf2.io.com import gltf2_io

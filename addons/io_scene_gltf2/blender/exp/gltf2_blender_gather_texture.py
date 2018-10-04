@@ -14,8 +14,10 @@
 
 import bpy
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp.gltf2_blender_gather import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_sampler
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_image
+
 
 @cached
 def gather_texture(blender_shader_node, export_settings):
@@ -54,4 +56,5 @@ def __gather_sampler(blender_shader_node , export_settings):
 
 
 def __gather_source(blender_shader_node , export_settings):
-    return None
+    blender_image = blender_shader_node.image
+    return gltf2_blender_gather_image.gather_image(blender_image, export_settings)

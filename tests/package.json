@@ -8,6 +8,7 @@
     "mochawesome": "^3.0.3"
   },
   "scripts": {
-    "test": "mocha --reporter mochawesome"
+    "test": "mocha --reporter mochawesome",
+    "test-bail": "mocha -b --reporter mochawesome"
   }
 }

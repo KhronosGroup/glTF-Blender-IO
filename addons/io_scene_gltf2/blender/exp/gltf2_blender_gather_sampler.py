@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import bpy
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp.gltf2_blender_gather import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
 
 def gather_sampler(blender_shader_node, export_settings):

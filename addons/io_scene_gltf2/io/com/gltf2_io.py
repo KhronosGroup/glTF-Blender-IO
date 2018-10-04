@@ -2,6 +2,11 @@
 ## command used:
 ##	quicktype --src glTF.schema.json --src-lang schema -t gltf --lang python --python-version 3.5
 
+#TODO: REMOVE
+import sys
+import traceback
+from io_scene_gltf2.io.com import gltf2_io_debug
+
 def from_int(x):
     assert isinstance(x, int) and not isinstance(x, bool)
     return x
@@ -13,11 +18,19 @@ def from_none(x):
 
 
 def from_union(fs, x):
+    tracebacks = []
     for f in fs:
         try:
             return f(x)
-        except:
-            pass
+        except Exception as e:
+            _, _, tb = sys.exc_info()
+            tracebacks.append(tb)
+    for tb in tracebacks:
+        traceback.print_tb(tb)  # Fixed format
+        tb_info = traceback.extract_tb(tb)
+        for tbi in tb_info:
+            filename, line, func, text = tbi
+            gltf2_io_debug.print_console('ERROR', 'An error occurred on line {} in statement {}'.format(line, text))
     assert False
 
 
