@@ -1048,7 +1048,6 @@ class Skin:
 
 class Texture:
     """A texture and its sampler."""
-
     def __init__(self, extensions, extras, name, sampler, source):
         self.extensions = extensions
         self.extras = extras
@@ -1059,22 +1058,20 @@ class Texture:
     @staticmethod
     def from_dict(obj):
         assert isinstance(obj, dict)
-        extensions = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
-                                obj.get("extensions"))
+        extensions = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], obj.get("extensions"))
         extras = obj.get("extras")
         name = from_union([from_str, from_none], obj.get("name"))
         sampler = from_union([from_int, from_none], obj.get("sampler"))
-        source = from_union([from_int, from_none], obj.get("source"))
+        source = from_int(obj.get("source"))
         return Texture(extensions, extras, name, sampler, source)
 
     def to_dict(self):
         result = {}
-        result["extensions"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
-                                          self.extensions)
+        result["extensions"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], self.extensions)
         result["extras"] = self.extras
         result["name"] = from_union([from_str, from_none], self.name)
         result["sampler"] = from_union([from_int, from_none], self.sampler)
-        result["source"] = from_union([from_int, from_none], self.source)
+        result["source"] = from_int(self.source)
         return result
 
 

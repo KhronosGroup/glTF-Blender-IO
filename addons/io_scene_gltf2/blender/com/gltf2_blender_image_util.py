@@ -60,7 +60,7 @@ def create_image_data(context, export_settings, blender_image, file_format):
         return None
 
     if file_format == 'PNG':
-        return _create_png_data(context, export_settings, blender_image)
+        return _create_png_data(blender_image)
     else:
         return _create_jpg_data(context, export_settings, blender_image)
 
@@ -81,7 +81,7 @@ def _create_jpg_data(context, export_settings, blender_image):
     return jpg_data
 
 
-def _create_png_data(context, export_settings, blender_image):
+def _create_png_data(blender_image):
     """
     Creates a PNG byte array from a given Blender image.
     """

@@ -55,6 +55,11 @@ class Image():
             png_pack(b'IDAT', zlib.compress(raw_data, 9)),
             png_pack(b'IEND', b'')])
 
+    def to_image_data(self, mime_type):
+        if mime_type == 'image/png':
+            return self.to_png_data()
+        raise ValueError("Unsupported image file type {}".format(mime_type))
+
     def save_png(self, dst_path):
         data = self.to_png_data()
         with open(dst_path, 'wb') as f:

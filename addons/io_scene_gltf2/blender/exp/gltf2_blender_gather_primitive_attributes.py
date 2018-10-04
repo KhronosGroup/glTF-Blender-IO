@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 
@@ -36,11 +36,19 @@ def __gather_position(blender_primitive, export_settings):
     position = blender_primitive["attributes"]["POSITION"]
     componentType = gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT
     return {
-        "POSITION": gltf2_io_binary_data.BinaryData(
-            position,
-            componentType,
-            gltf2_io_constants.GLTF_DATA_TYPE_VEC3,
-            group_label="primitives_attributes"
+        "POSITION": gltf2_io.Accessor(
+            buffer_view=gltf2_io_binary_data.BinaryData(position),
+            byte_offset=None,
+            component_type=componentType,
+            count=None,
+            extensions=None,
+            extras=None,
+            max=None,
+            min=None,
+            name=None,
+            normalized=None,
+            sparse=None,
+            type=gltf2_io_constants.GLTF_DATA_TYPE_VEC3
         )
     }
 
@@ -49,11 +57,19 @@ def __gather_normal(blender_primitive, export_settings):
     if export_settings['gltf_normals']:
         normal = blender_primitive["attributes"]['NORMAL']
         return {
-            "NORMAL": gltf2_io_binary_data.BinaryData(
-                normal,
-                gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
-                gltf2_io_constants.GLTF_DATA_TYPE_VEC3,
-                group_label="primitives_attributes"
+            "NORMAL": gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData(normal),
+                byte_offset=None,
+                component_type=gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
+                count=None,
+                extensions=None,
+                extras=None,
+                max=None,
+                min=None,
+                name=None,
+                normalized=None,
+                sparse=None,
+                type=gltf2_io_constants.GLTF_DATA_TYPE_VEC3
             )
         }
     return {}
@@ -64,13 +80,22 @@ def __gather_tangent(blender_primitive, export_settings):
         if blender_primitive["attributes"].get('TANGENT') is not None:
             tangent = blender_primitive["attributes"]['TANGENT']
             return {
-                "TANGENT": gltf2_io_binary_data.BinaryData(
-                    tangent,
-                    gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
-                    gltf2_io_constants.GLTF_DATA_TYPE_VEC3,
-                    group_label="primitives_attributes"
+                "TANGENT": gltf2_io.Accessor(
+                    buffer_view=gltf2_io_binary_data.BinaryData(tangent),
+                    byte_offset=None,
+                    component_type=gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
+                    count=None,
+                    extensions=None,
+                    extras=None,
+                    max=None,
+                    min=None,
+                    name=None,
+                    normalized=None,
+                    sparse=None,
+                    type=gltf2_io_constants.GLTF_DATA_TYPE_VEC3
                 )
             }
+
     return {}
 
 
@@ -81,11 +106,19 @@ def __gather_texcoord(blender_primitive, export_settings):
         texcoord_id = 'TEXCOORD_' + str(texcoord_index)
         while blender_primitive["attributes"].get(texcoord_id) is not None:
             texcoord = blender_primitive["attributes"][texcoord_id]
-            attributes[texcoord_id] = gltf2_io_binary_data.BinaryData(
-                texcoord,
-                gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
-                gltf2_io_constants.GLTF_DATA_TYPE_VEC2,
-                group_label="primitives_attributes"
+            attributes[texcoord_id] = gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData(texcoord),
+                byte_offset=None,
+                component_type=gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
+                count=None,
+                extensions=None,
+                extras=None,
+                max=None,
+                min=None,
+                name=None,
+                normalized=None,
+                sparse=None,
+                type=gltf2_io_constants.GLTF_DATA_TYPE_VEC2
             )
             texcoord_index += 1
             texcoord_id = 'TEXCOORD_' + str(texcoord_index)
@@ -99,11 +132,19 @@ def __gather_colors(blender_primitive, export_settings):
         color_id = 'COLOR_' + str(color_index)
         while blender_primitive["attributes"].get(color_id) is not None:
             internal_color = blender_primitive["attributes"][color_id]
-            attributes[color_id] = gltf2_io_binary_data.BinaryData(
-                internal_color,
-                gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
-                gltf2_io_constants.GLTF_DATA_TYPE_VEC4,
-                group_label="primitives_attributes"
+            attributes[color_id] = gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData(internal_color),
+                byte_offset=None,
+                component_type=gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
+                count=None,
+                extensions=None,
+                extras=None,
+                max=None,
+                min=None,
+                name=None,
+                normalized=None,
+                sparse=None,
+                type=gltf2_io_constants.GLTF_DATA_TYPE_VEC4
             )
             color_index += 1
             color_id = 'COLOR_' + str(color_index)
@@ -120,12 +161,20 @@ def __gather_skins(blender_primitive, export_settings):
 
             # joints
             internal_joint = blender_primitive["attributes"][joint_id]
-            joint = gltf2_io_binary_data.BinaryData(
-                internal_joint,
-                gltf2_io_constants.GLTF_COMPONENT_TYPE_UNSIGNED_SHORT,
-                gltf2_io_constants.GLTF_DATA_TYPE_VEC4,
-                group_label="primitives_attributes"
-            ),
+            joint = gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData(internal_joint),
+                byte_offset=None,
+                component_type=gltf2_io_constants.GLTF_COMPONENT_TYPE_UNSIGNED_SHORT,
+                count=None,
+                extensions=None,
+                extras=None,
+                max=None,
+                min=None,
+                name=None,
+                normalized=None,
+                sparse=None,
+                type=gltf2_io_constants.GLTF_DATA_TYPE_VEC4
+            )
             if joint < 0:
                 # gltf2_io_debug('ERROR', 'Could not create accessor for ' + joint_id)
                 break
@@ -133,11 +182,19 @@ def __gather_skins(blender_primitive, export_settings):
 
             # weights
             internal_weight = blender_primitive["attributes"][weight_id]
-            weight = gltf2_io_binary_data.BinaryData(
-                internal_weight,
-                gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
-                gltf2_io_constants.GLTF_DATA_TYPE_VEC4,
-                group_label="primitives_attributes"
+            weight = gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData(internal_weight),
+                byte_offset=None,
+                component_type=gltf2_io_constants.GLTF_COMPONENT_TYPE_FLOAT,
+                count=None,
+                extensions=None,
+                extras=None,
+                max=None,
+                min=None,
+                name=None,
+                normalized=None,
+                sparse=None,
+                type=gltf2_io_constants.GLTF_DATA_TYPE_VEC4
             )
             if weight < 0:
                 # print_console('ERROR', 'Could not create accessor for ' + weight_id)

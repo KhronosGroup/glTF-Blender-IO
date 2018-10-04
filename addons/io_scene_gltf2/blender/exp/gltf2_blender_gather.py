@@ -75,7 +75,6 @@ def __gather_scene(blender_scene, export_settings):
             if node is not None:
                 scene.nodes.append(node)
 
-    # TODO: materials, textures, images
     # TODO: animations
     # TODO: lights
      # TODO: asset?
