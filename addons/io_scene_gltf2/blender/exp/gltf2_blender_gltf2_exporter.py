@@ -14,6 +14,7 @@
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
+from io_scene_gltf2.io.exp import gltf2_io_binary_data
 
 class GlTF2Exporter():
     """
@@ -84,7 +85,7 @@ class GlTF2Exporter():
             gltf2_io.MaterialOcclusionTextureInfoClass
         ]
 
-    def add_scene(self, scene):
+    def add_scene(self, scene, active=True):
         """
         Add a scene to the glTF. The scene should be built up with the generated glTF classes
         :param scene: gltf2_io.Scene type. Root node of the scene graph
@@ -94,9 +95,11 @@ class GlTF2Exporter():
             gltf2_io_debug.print_console("ERROR", "Tried to add non scene type to glTF")
             return
 
-        for node in scene.nodes:
-            self.__traverse(node)
-        self.__traverse(scene)
+        # for node in scene.nodes:
+        #     self.__traverse(node)
+        scene_num = self.__traverse(scene)
+        if active:
+            self.gltf.scene = scene_num
 
     @staticmethod
     def __append_unique(gltf_list, obj):
@@ -133,9 +136,18 @@ class GlTF2Exporter():
                 node[i] = self.__traverse(node[i])
             return node
 
+        if isinstance(node, dict):
+            for key in node.keys():
+                node[key] = self.__traverse(node[key])
+            return node
+
         # traverse into any other property
         if type(node) in self.__propertyTypeLookup:
             node = traverse_all_members(node)
+
+        if isinstance(node, gltf2_io_binary_data.BinaryData):
+            # TODO: append to binary buffer and create a buffer view
+            node = None
 
         # do nothing for any type that does not match a glTF schema (primitives)
         return node

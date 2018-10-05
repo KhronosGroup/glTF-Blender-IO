@@ -151,6 +151,7 @@ def save(operator,
             filename, line, func, text = tbi
             print_console('ERROR','An error occurred on line {} in statement {}'.format(line, text))
         print_console('ERROR', str(e))
+        raise e
 
     #
 

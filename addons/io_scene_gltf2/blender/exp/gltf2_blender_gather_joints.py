@@ -41,13 +41,20 @@ def gather_joint(blender_bone, export_settings):
         gltf2_io_debug.print_console("WARNING", "glTF bake skins not supported")
         # matrix_basis = blender_object.convert_space(blender_bone, blender_bone.matrix, from_space='POSE',
         #                                             to_space='LOCAL')
-    translation, rotation, scale = gltf2_blender_extract.decompose_transition(correction_matrix_local * matrix_basis,
+    trans, rot, sca = gltf2_blender_extract.decompose_transition(correction_matrix_local * matrix_basis,
                                                                               'JOINT', export_settings)
+    translation, rotation, scale = (None, None, None)
+    if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
+        translation = [trans[0], trans[1], trans[2]]
+    if rot[0] != 0.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 1.0:
+        rotation = [rot[0], rot[1], rot[2], rot[3]]
+    if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
+        scale = [sca[0], sca[1], sca[2]]
 
     # traverse into children
     children = []
     for bone in blender_bone.children:
-        children.append(gather_joint(bone))
+        children.append(gather_joint(bone, export_settings))
 
     # finally add to the joints array containing all the joints in the hierarchy
     return gltf2_io.Node(

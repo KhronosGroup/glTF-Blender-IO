@@ -119,7 +119,9 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
 
 def __gather_skin(blender_object, export_settings):
-    return gltf2_blender_gather_skins.gather_skin(blender_object, export_settings)
+    if "Armature" in blender_object.modifiers:
+        # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
+        return gltf2_blender_gather_skins.gather_skin(blender_object.modifiers["Armature"].object, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):
