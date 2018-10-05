@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mathutils
-
-from io_scene_gltf2.blender.exp.gltf2_blender_gather import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
 
@@ -77,11 +75,11 @@ def __gather_indices(blender_primitive, export_settings):
     indices = blender_primitive['indices']
 
     max_index = max(indices)
-    if max_index < 256:
+    if max_index < (1 << 8):
         component_type = gltf2_io_constants.GLTF_COMPONENT_TYPE_UNSIGNED_BYTE
-    elif max_index < 65536:
+    elif max_index < (1 << 16):
         component_type = gltf2_io_constants.GLTF_COMPONENT_TYPE_UNSIGNED_SHORT
-    elif max_index < 4294967296:
+    elif max_index < (1 << 32):
         component_type = gltf2_io_constants.GLTF_COMPONENT_TYPE_UNSIGNED_INT
     else:
         gltf2_io_debug.print_console('ERROR', 'Invalid max_index: ' + str(max_index))

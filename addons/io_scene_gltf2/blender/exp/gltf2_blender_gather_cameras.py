@@ -9,7 +9,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 
 import bpy
@@ -52,7 +52,7 @@ def __gather_name(blender_object, export_settings):
 
 
 def __gather_orthographic(blender_object, export_settings):
-    if __gather_type(blender_object) == "orthographic":
+    if __gather_type(blender_object, export_settings) == "orthographic":
         orthographic = gltf2_io.CameraOrthographic(
             extensions=None,
             extras=None,
@@ -74,7 +74,7 @@ def __gather_orthographic(blender_object, export_settings):
 
 
 def __gather_perspective(blender_object, export_settings):
-    if __gather_type(blender_object) == "perspective":
+    if __gather_type(blender_object, export_settings) == "perspective":
         perspective = gltf2_io.CameraPerspective(
             aspect_ratio=None,
             extensions=None,

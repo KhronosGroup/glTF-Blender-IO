@@ -17,10 +17,7 @@ class BinaryData:
     """
 
     """
-    def __init__(self, data, component_type, element_type, normalized=False, group_label=None):
-
+    def __init__(self, data: bytes):
+        if not isinstance(data, bytes):
+            raise TypeError("Data is not a bytes array")
         self.data = data
-        self.component_type = component_type
-        self.element_type = element_type
-        self.normalized = normalized
-        self.group_label = group_label

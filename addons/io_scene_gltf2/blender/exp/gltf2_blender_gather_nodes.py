@@ -13,9 +13,10 @@
 # limitations under the License.
 
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
 
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 
@@ -94,7 +95,7 @@ def __gather_matrix(blender_object, export_settings):
 
 
 def __gather_mesh(blender_object, export_settings):
-    return None
+    return gltf2_blender_gather_mesh.gather_mesh(blender_object, export_settings)
 
 
 def __gather_name(blender_object, export_settings):
@@ -104,10 +105,17 @@ def __gather_name(blender_object, export_settings):
 
 
 def __gather_trans_rot_scale(blender_object, export_settings):
-    trans, rot, scale = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, 'NODE', None)
+    trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, 'NODE', export_settings)
     if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
         trans = -gltf2_blender_extract.convert_swizzle_location(blender_object.dupli_group.dupli_offset, export_settings)
-    return trans, rot, scale
+    translation, rotation, scale = (None, None, None)
+    if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
+        translation = [trans[0], trans[1], trans[2]]
+    if rot[0] != 0.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 1.0:
+        rotation = [rot[0], rot[1], rot[2], rot[3]]
+    if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
+        scale = [sca[0], sca[1], sca[2]]
+    return translation, rotation, scale
 
 
 def __gather_skin(blender_object, export_settings):
@@ -116,3 +124,4 @@ def __gather_skin(blender_object, export_settings):
 
 def __gather_weights(blender_object, export_settings):
     return None
+

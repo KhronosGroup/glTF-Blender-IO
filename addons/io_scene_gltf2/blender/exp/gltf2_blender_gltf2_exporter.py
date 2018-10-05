@@ -20,11 +20,19 @@ class GlTF2Exporter():
     The glTF exporter flattens a scene graph to a glTF serializable format.
     Any child properties are replaced with references where necessary
     """
-    def __init__(self):
-        self.__gltf = gltf2_io.Gltf(
+    def __init__(self, copyright=None):
+        asset = gltf2_io.Asset(
+            copyright=copyright,
+            extensions=None,
+            extras=None,
+            generator='Khronos Blender glTF 2.0 I/O (Exp)',
+            min_version=None,
+            version='2.0')
+
+        self.gltf = gltf2_io.Gltf(
             accessors=[],
             animations=[],
-            asset=None,
+            asset=asset,
             buffers=[],
             buffer_views=[],
             cameras=[],
@@ -44,19 +52,19 @@ class GlTF2Exporter():
         )
         # mapping of all glTFChildOfRootProperty types to their corresponding root level arrays
         self.__childOfRootPropertyTypeLookup = {
-            gltf2_io.Accessor: self.__gltf.accessors,
-            gltf2_io.Animation: self.__gltf.animations,
-            gltf2_io.Buffer: self.__gltf.buffers,
-            gltf2_io.BufferView: self.__gltf.buffer_views,
-            gltf2_io.Camera: self.__gltf.cameras,
-            gltf2_io.Image: self.__gltf.images,
-            gltf2_io.Material: self.__gltf.materials,
-            gltf2_io.Mesh: self.__gltf.meshes,
-            gltf2_io.Node: self.__gltf.nodes,
-            gltf2_io.Sampler: self.__gltf.samplers,
-            gltf2_io.Scene: self.__gltf.scenes,
-            gltf2_io.Skin: self.__gltf.skins,
-            gltf2_io.Texture: self.__gltf.textures
+            gltf2_io.Accessor: self.gltf.accessors,
+            gltf2_io.Animation: self.gltf.animations,
+            gltf2_io.Buffer: self.gltf.buffers,
+            gltf2_io.BufferView: self.gltf.buffer_views,
+            gltf2_io.Camera: self.gltf.cameras,
+            gltf2_io.Image: self.gltf.images,
+            gltf2_io.Material: self.gltf.materials,
+            gltf2_io.Mesh: self.gltf.meshes,
+            gltf2_io.Node: self.gltf.nodes,
+            gltf2_io.Sampler: self.gltf.samplers,
+            gltf2_io.Scene: self.gltf.scenes,
+            gltf2_io.Skin: self.gltf.skins,
+            gltf2_io.Texture: self.gltf.textures
         }
 
         self.__propertyTypeLookup = [
@@ -86,6 +94,8 @@ class GlTF2Exporter():
             gltf2_io_debug.print_console("ERROR", "Tried to add non scene type to glTF")
             return
 
+        for node in scene.nodes:
+            self.__traverse(node)
         self.__traverse(scene)
 
     @staticmethod
@@ -108,10 +118,11 @@ class GlTF2Exporter():
             for member_name in [a for a in dir(node) if not a.startswith('__') and not callable(getattr(node, a))]:
                 new_value = self.__traverse(getattr(node, member_name))
                 setattr(node, member_name, new_value) # usually this is the same as before
+            return node
 
         # traverse nodes of a child of root property type and add them to the glTF root
         if type(node) in self.__childOfRootPropertyTypeLookup:
-            traverse_all_members(node)
+            node = traverse_all_members(node)
             idx = self.__append_unique(self.__childOfRootPropertyTypeLookup[type(node)], node)
             # child of root properties are only present at root level --> replace with index in upper level
             return idx
@@ -124,7 +135,7 @@ class GlTF2Exporter():
 
         # traverse into any other property
         if type(node) in self.__propertyTypeLookup:
-            traverse_all_members(node)
+            node = traverse_all_members(node)
 
         # do nothing for any type that does not match a glTF schema (primitives)
         return node

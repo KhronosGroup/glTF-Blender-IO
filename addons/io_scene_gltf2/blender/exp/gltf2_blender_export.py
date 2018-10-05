@@ -24,6 +24,9 @@ from ...io.com.gltf2_io import Gltf
 from .gltf2_blender_generate import *
 from  io_scene_gltf2.blender.com import gltf2_blender_json
 
+from io_scene_gltf2.blender.exp import gltf2_blender_gather
+from io_scene_gltf2.blender.exp import gltf2_blender_gltf2_exporter
+
 #
 # Globals
 #
@@ -72,11 +75,11 @@ def save(operator,
     print_console('INFO', 'Starting glTF 2.0 export')
     bpy.context.window_manager.progress_begin(0, 100)
     bpy.context.window_manager.progress_update(0)
-    
+
     #
-    
+
     prepare(export_settings)
-    
+
     #
 
     glTF = Gltf(
@@ -101,10 +104,20 @@ def save(operator,
         textures=[]
     )
 
-    generate_glTF(operator, context, export_settings, glTF)
+    if export_settings['gltf_experimental']:
+        scenes = gltf2_blender_gather.gather_gltf2(export_settings)
+        if not export_settings['gltf_copyright']:
+            export_settings['gltf_copyright'] = None
+        exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(copyright=export_settings['gltf_copyright'])
+        for scene in scenes:
+            exporter.add_scene(scene)
+        glTF = exporter.gltf
+    else:
+        generate_glTF(operator, context, export_settings, glTF)
 
     #
 
+    # TODO: move into JSON encoder
     def dict_strip(obj):
         o = obj
         if isinstance(obj, dict):
@@ -125,12 +138,24 @@ def save(operator,
                 return int(obj)
         return o
 
-    save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
-        
+    import sys
+    import traceback
+
+    try:
+        save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
+    except AssertionError as e:
+        _, _, tb = sys.exc_info()
+        traceback.print_tb(tb)  # Fixed format
+        tb_info = traceback.extract_tb(tb)
+        for tbi in tb_info:
+            filename, line, func, text = tbi
+            print_console('ERROR','An error occurred on line {} in statement {}'.format(line, text))
+        print_console('ERROR', str(e))
+
     #
-    
+
     finish(export_settings)
-    
+
     #
 
     print_console('INFO', 'Finished glTF 2.0 export')
