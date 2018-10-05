@@ -111,7 +111,8 @@ def save(operator,
         exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(copyright=export_settings['gltf_copyright'])
         for scene in scenes:
             exporter.add_scene(scene)
-        glTF = exporter.gltf
+        exporter.finalize_buffer(export_settings['gltf_filedirectory'], export_settings['gltf_binaryfilename'])
+        glTF = exporter.glTF
     else:
         generate_glTF(operator, context, export_settings, glTF)
 

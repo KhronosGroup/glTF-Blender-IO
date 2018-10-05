@@ -32,3 +32,6 @@ class BinaryData:
         format_char = gltf2_io_constants.ComponentType.to_type_code(gltf_component_type)
         return BinaryData(array.array(format_char, lst).tobytes())
 
+    @property
+    def byte_length(self):
+        return len(self.data)
