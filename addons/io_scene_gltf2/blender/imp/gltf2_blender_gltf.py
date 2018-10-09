@@ -64,6 +64,8 @@ class BlenderGlTF():
                     if (parent.tail - parent.head).normalized().dot(save_parent_direction) < 0.9:
                         parent.tail = save_parent_tail
 
+        bpy.ops.object.mode_set(mode="OBJECT")
+
 
     @staticmethod
     def pre_compute(gltf):
