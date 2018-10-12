@@ -15,7 +15,10 @@
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_normal_texture_info_class
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_occlusion_texture_info_class
+
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 
@@ -87,7 +90,7 @@ def __gather_emmissive_factor(blender_material, export_settings):
 
 def __gather_emissive_texture(blender_material, export_settings):
     emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
-    return gltf2_blender_gather_texture.gather_texture([emissive], export_settings)
+    return gltf2_blender_gather_texture_info.gather_texture_info((emissive,), export_settings)
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -105,12 +108,16 @@ def __gather_name(blender_material, export_settings):
 
 def __gather_normal_texture(blender_material, export_settings):
     normal = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Normal")
-    return gltf2_blender_gather_texture.gather_texture([normal], export_settings)
+    return gltf2_blender_gather_material_normal_texture_info_class.gather_material_normal_texture_info_class(
+        (normal,),
+        export_settings)
 
 
 def __gather_occlusion_texture(blender_material, export_settings):
     emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Occlusion")
-    return gltf2_blender_gather_texture.gather_texture([emissive], export_settings)
+    return gltf2_blender_gather_material_occlusion_texture_info_class.gather_material_occlusion_texture_info_class(
+        (emissive,),
+        export_settings)
 
 
 def __gather_pbr_metallic_roughness(blender_material, export_settings):

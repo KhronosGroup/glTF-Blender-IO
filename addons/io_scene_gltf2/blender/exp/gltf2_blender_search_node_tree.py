@@ -77,7 +77,7 @@ def from_socket(start_socket: bpy.types.NodeSocket,
     def __search_from_socket(start_socket: bpy.types.NodeSocket,
                              shader_node_filter: typing.Union[Filter, typing.Callable],
                              search_path: typing.List[bpy.types.NodeLink]) -> typing.List[NodeTreeSearchResult]:
-        results: typing.List[NodeTreeSearchResult] = []
+        results = []
 
         for link in start_socket.links:
             # follow the link to a shader node
@@ -89,7 +89,7 @@ def from_socket(start_socket: bpy.types.NodeSocket,
                 results.append(NodeTreeSearchResult(linked_node, search_path))
             # traverse into inputs of the node
             for input_socket in linked_node.inputs:
-                results += __search_from_socket(input_socket, shader_node_filter)
+                results += __search_from_socket(input_socket, shader_node_filter, search_path)
 
         return results
 

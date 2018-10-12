@@ -13,10 +13,13 @@
 # limitations under the License.
 
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
+
+@cached
 def gather_material_pbr_metallic_roughness(blender_material, export_settings):
     if not __filter_pbr_material(blender_material, export_settings):
         return None
@@ -45,7 +48,9 @@ def __gather_base_color_factor(blender_material, export_settings):
 
 def __gather_base_color_texture(blender_material, export_settings):
     base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Base Color")
-    return gltf2_blender_gather_texture.gather_texture([base_color_socket], export_settings)
+    if base_color_socket is None:
+        base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "BaseColor")
+    return gltf2_blender_gather_texture_info.gather_texture_info((base_color_socket,), export_settings)
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -65,7 +70,13 @@ def __gather_metallic_roughness_texture(blender_material, export_settings):
     metallic_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Metallic")
     roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Roughness")
 
-    return gltf2_blender_gather_texture.gather_texture([metallic_socket, roughness_socket], export_settings)
+    if metallic_socket is None and roughness_socket is None:
+        metallic_roughness = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "MetallicRoughness")
+        texture_input = (metallic_roughness,)
+    else:
+        texture_input = (metallic_socket, roughness_socket)
+
+    return gltf2_blender_gather_texture_info.gather_texture_info(texture_input, export_settings)
 
 
 def __gather_roughness_factor(blender_material, export_settings):

@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
+
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
 from io_scene_gltf2.blender.exp import gltf2_blender_utils
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -53,23 +56,8 @@ def gather_primitives(blender_object, export_settings):
 
 
 def __gather_materials(blender_primitive, export_settings):
-    # if export_settings['gltf_materials']:
-    #     material = get_material_index(glTF, internal_primitive['material'])
-    #
-    #     if get_material_requires_texcoords(glTF, material) and not export_settings['gltf_texcoords']:
-    #         material = -1
-    #
-    #     if get_material_requires_normals(glTF, material) and not export_settings['gltf_normals']:
-    #         material = -1
-    #
-    #     # Meshes/primitives without material are allowed.
-    #     if material >= 0:
-    #         primitive.material = material
-    #     else:
-    #         print_console('WARNING', 'Material ' + internal_primitive[
-    #             'material'] + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
-
-    return None
+    material = bpy.data.materials[blender_primitive['material']]
+    return gltf2_blender_gather_materials.gather_material(material, export_settings)
 
 
 def __gather_indices(blender_primitive, export_settings):
