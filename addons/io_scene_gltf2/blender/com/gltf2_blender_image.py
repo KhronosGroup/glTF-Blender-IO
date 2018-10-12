@@ -1,4 +1,4 @@
-# Copyright (c) 2017 The Khronos Group Inc.
+# Copyright 2018 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ def create_img_from_blender_image(blender_image):
     Create a new image object using the given blender image.
     Returns the created image object.
     """
-    
+
     if blender_image is None:
         return None
 

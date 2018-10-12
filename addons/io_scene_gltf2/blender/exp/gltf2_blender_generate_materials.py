@@ -1,4 +1,4 @@
-# Copyright (c) 2017 The Khronos Group Inc.
+# Copyright 2018 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,26 +46,26 @@ def generate_texture_transform(operator,
     if export_settings['gltf_texture_transform']:
 
         image_node = get_shader_image_from_shader_node(name, blender_node)
-        
+
         input_node = get_shader_mapping_from_shader_image(image_node)
-        
+
         if input_node is not None:
 
             texture_transform = {
             }
-            
+
             if input_node.vector_type == 'TEXTURE':
-            
+
                 texture_transform["offset"] = [-input_node.translation[0], -input_node.translation[1]]
                 texture_transform["rotation"] = -input_node.rotation[2]
                 texture_transform["scale"] = [1.0 / input_node.scale[0], 1.0 / input_node.scale[1]]
 
             elif input_node.vector_type == 'POINT':
-            
+
                 texture_transform["offset"] = [input_node.translation[0], input_node.translation[1]]
                 texture_transform["rotation"] = input_node.rotation[2]
                 texture_transform["scale"] = [input_node.scale[0], input_node.scale[1]]
-            
+
             #
 
             generate_extensionsUsed(export_settings, glTF, 'KHR_texture_transform')
@@ -73,9 +73,9 @@ def generate_texture_transform(operator,
 
             if texture.get('extensions') is None:
                 texture['extensions'] = {}
-    
+
             extensions = texture['extensions']
-    
+
             extensions['KHR_texture_transform'] = texture_transform
 
 
@@ -86,7 +86,7 @@ def generate_materials_principled(operator,
                                   material,
                                   blender_material,
                                   blender_node):
-    
+
     material['pbrMetallicRoughness'] = {}
 
     pbrMetallicRoughness = material['pbrMetallicRoughness']
@@ -96,9 +96,9 @@ def generate_materials_principled(operator,
     #
     # BaseColorFactor or BaseColorTexture
     #
-    
+
     if len(blender_node.inputs['Base Color'].links) > 0:
-        
+
         index = get_texture_index_from_shader_node(export_settings, glTF, 'Base Color', blender_node)
         if index >= 0:
             baseColorTexture = {
@@ -110,13 +110,13 @@ def generate_materials_principled(operator,
                 baseColorTexture['texCoord'] = texCoord
 
             pbrMetallicRoughness['baseColorTexture'] = baseColorTexture
-            
+
             generate_texture_transform(operator, context, export_settings, glTF, baseColorTexture, 'Base Color', blender_node)
-        
+
     else:
-        
+
         baseColorFactor = get_vec4(blender_node.inputs['Base Color'].default_value, [1.0, 1.0, 1.0, 1.0])
-        
+
         if baseColorFactor[0] != 1.0 or baseColorFactor[1] != 1.0 or baseColorFactor[2] != 1.0 or baseColorFactor[3] != 1.0:
             pbrMetallicRoughness['baseColorFactor'] = baseColorFactor
             alpha = baseColorFactor[3]
@@ -124,12 +124,12 @@ def generate_materials_principled(operator,
     #
     # MetallicFactor or Metallic texture
     #
-    
+
     metallic_name = ""
     img = find_shader_image_from_shader_socket(blender_node.inputs['Metallic'])
     if img is not None and img.image is not None:
         metallic_name = img.image.name
-    else:     
+    else:
         metallicFactor = get_scalar(blender_node.inputs['Metallic'].default_value, 1.0)
         if metallicFactor != 1.0:
             pbrMetallicRoughness['metallicFactor'] = metallicFactor
@@ -157,11 +157,11 @@ def generate_materials_principled(operator,
                 'index': metallicRoughnessIndex
             }
     #
-    
+
     print_console('DEBUG', '# TODO: Check transmission links')
-    
+
     if len(blender_node.inputs['Normal'].links) > 0:
-        
+
         index = get_texture_index_from_shader_node(export_settings, glTF, 'Normal', blender_node)
         if index >= 0:
             normalTexture = {
@@ -173,61 +173,61 @@ def generate_materials_principled(operator,
                 normalTexture['texCoord'] = texCoord
 
             material['normalTexture'] = normalTexture
-            
+
             generate_texture_transform(operator, context, export_settings, glTF, normalTexture, 'Normal', blender_node)
-            
+
     #
-    
+
     shader_add = get_shader_add_to_shader_node(blender_node)
-    
+
     if shader_add is not None:
 
         shader_emission = get_shader_emission_from_shader_add(shader_add)
-        
+
         if shader_emission is not None:
-                                     
+
             #
             # EmissiveFactor or Emissive texture
             #
-            
+
             if len(shader_emission.inputs['Color'].links) > 0:
-                
+
                 index = get_texture_index_from_shader_node(export_settings, glTF, 'Color', shader_emission)
                 if index >= 0:
                     emissiveTexture = {
                         'index': index
                     }
-        
+
                     texCoord = get_texcoord_index_from_shader_node(glTF, 'Color', shader_emission)
                     if texCoord > 0:
                         emissiveTexture['texCoord'] = texCoord
-        
+
                     material['emissiveTexture'] = emissiveTexture
-                    
+
                     generate_texture_transform(operator, context, export_settings, glTF, emissiveTexture, 'Color', shader_emission)
-                    
+
                     if len(shader_emission.inputs['Strength'].links) == 0:
                         emissiveStrength = get_scalar(shader_emission.inputs['Strength'].default_value, 1.0)
-                        
+
                         if emissiveStrength != 1.0:
                             material['emissiveFactor'] = [emissiveStrength, emissiveStrength, emissiveStrength]
-                
+
             else:
-                
+
                 emissiveFactor = get_vec3(shader_emission.inputs['Color'].default_value, [0.0, 0.0, 0.0])
 
                 if len(shader_emission.inputs['Strength'].links) == 0:
                     emissiveStrength = get_scalar(shader_emission.inputs['Strength'].default_value, 1.0)
-                    
+
                     emissiveFactor[0] *= emissiveStrength
                     emissiveFactor[1] *= emissiveStrength
                     emissiveFactor[2] *= emissiveStrength
-                
+
                 if emissiveFactor[0] != 0.0 or emissiveFactor[1] != 0.0 or emissiveFactor[2] != 0.0:
                     material['emissiveFactor'] = emissiveFactor
-    
+
     #
-            
+
     material['name'] = blender_material.name
 
 
@@ -506,11 +506,11 @@ def generate_materials(operator,
                     #
 
                     materials.append(Material.from_dict(material))
-                    
+
                 elif isinstance(blender_node, bpy.types.ShaderNodeBsdfPrincipled):
-                    
+
                     generate_materials_principled(operator, context, export_settings, glTF, material, blender_material, blender_node)
-                    
+
                     materials.append(Material.from_dict(material))
 
         else:

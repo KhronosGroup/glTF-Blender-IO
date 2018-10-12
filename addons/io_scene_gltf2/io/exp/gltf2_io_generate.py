@@ -1,4 +1,4 @@
-# Copyright (c) 2017 The Khronos Group Inc.
+# Copyright 2018 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@ def generate_bufferView(export_settings,
     bufferView['byteOffset'] = len(binary)
     binary.extend(data_buffer)
 
-    # Only have one buffer. 
+    # Only have one buffer.
     bufferView['buffer'] = 0
 
     #

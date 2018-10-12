@@ -1,4 +1,4 @@
-# Copyright (c) 2017 The Khronos Group Inc.
+# Copyright 2018 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,25 +36,25 @@ def get_material_requires_texcoords(glTF, index):
 
     if glTF.materials is None:
         return False
-    
+
     materials = glTF.materials
-    
+
     if index < 0 or index >= len(materials):
         return False
 
     material = materials[index]
-    
+
     # General
-    
+
     if material.emissive_texture is not None:
         return True
-    
+
     if material.normal_texture is not None:
         return True
-    
+
     if material.occlusion_texture is not None:
         return True
-    
+
     # Metallic roughness
 
     if material.pbr_metallic_roughness is not None and material.pbr_metallic_roughness.base_color_texture is not None:
@@ -89,7 +89,7 @@ def get_material_index(glTF, name):
     for material in glTF.materials:
         if material.name == name:
             return index
-        
+
         index += 1
 
     return -1
@@ -107,7 +107,7 @@ def get_mesh_index(glTF, name):
     for mesh in glTF.meshes:
         if mesh.name == name:
             return index
-        
+
         index += 1
 
     return -1
@@ -120,14 +120,14 @@ def get_skin_index(glTF, name, index_offset):
 
     if glTF.skins is None:
         return -1
-    
+
     skeleton = get_node_index(glTF, name)
 
     index = 0
     for skin in glTF.skins:
         if skin.skeleton == skeleton:
             return index + index_offset
-        
+
         index += 1
 
     return -1
@@ -145,7 +145,7 @@ def get_camera_index(glTF, name):
     for camera in glTF.cameras:
         if camera.name == name:
             return index
-        
+
         index += 1
 
     return -1
@@ -158,12 +158,12 @@ def get_light_index(glTF, name):
 
     if glTF.extensions is None:
         return -1
-    
+
     extensions = glTF.extensions
-        
+
     if extensions.get('KHR_lights_punctual') is None:
         return -1
-    
+
     khr_lights_punctual = extensions['KHR_lights_punctual']
 
     if khr_lights_punctual.get('lights') is None:
@@ -175,7 +175,7 @@ def get_light_index(glTF, name):
     for light in lights:
         if light['name'] == name:
             return index
-        
+
         index += 1
 
     return -1
@@ -193,7 +193,7 @@ def get_node_index(glTF, name):
     for node in glTF.nodes:
         if node.name == name:
             return index
-        
+
         index += 1
 
     return -1
@@ -211,7 +211,7 @@ def get_scene_index(glTF, name):
     for scene in glTF.scenes:
         if scene.name == name:
             return index
-        
+
         index += 1
 
     return -1
@@ -224,7 +224,7 @@ def get_texture_index(glTF, filename):
 
     if glTF.textures is None:
         return -1
-    
+
     image_index = get_image_index(glTF, filename)
 
     if image_index == -1:
@@ -233,7 +233,7 @@ def get_texture_index(glTF, filename):
     for texture_index, texture in enumerate(glTF.textures):
         if image_index == texture.source:
             return texture_index
-        
+
     return -1
 
 
@@ -272,7 +272,7 @@ def get_scalar(default_value, init_value = 0.0):
     if default_value is None:
         return return_value
 
-    return_value = default_value 
+    return_value = default_value
 
     return return_value
 
@@ -289,7 +289,7 @@ def get_vec2(default_value, init_value = [0.0, 0.0]):
 
     index = 0
     for number in default_value:
-        return_value[index] = number 
+        return_value[index] = number
 
         index += 1
         if index == 2:
@@ -310,7 +310,7 @@ def get_vec3(default_value, init_value = [0.0, 0.0, 0.0]):
 
     index = 0
     for number in default_value:
-        return_value[index] = number 
+        return_value[index] = number
 
         index += 1
         if index == 3:
@@ -331,7 +331,7 @@ def get_vec4(default_value, init_value = [0.0, 0.0, 0.0, 1.0]):
 
     index = 0
     for number in default_value:
-        return_value[index] = number 
+        return_value[index] = number
 
         index += 1
         if index == 4:
@@ -347,7 +347,7 @@ def get_index(elements, name):
 
     if elements is None or name is None:
         return -1
-    
+
     index = 0
     for element in elements:
         if isinstance(element, dict):
@@ -356,8 +356,8 @@ def get_index(elements, name):
         else:
             if element.name == name:
                 return index
-        
+
         index += 1
-    
+
     return -1
 
