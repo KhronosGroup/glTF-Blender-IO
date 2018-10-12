@@ -109,7 +109,7 @@ def __get_image_data(sockets_or_slots):
                 pixels = result.shader_node.image.pixels
 
             image_data = gltf2_io_image_data.ImageData(
-                socket.name,
+                socket.node.name + "_" + socket.name,
                 result.shader_node.image.size[0],
                 result.shader_node.image.size[1],
                 pixels)

@@ -185,7 +185,7 @@ class GlTF2Exporter:
         # TODO: we need to know the image url at this point already --> maybe add all options to the constructor of the
         # exporter
         # TODO: allow embedding of images (base64)
-        return image.name
+        return image.name + ".png"
 
     def __traverse(self, node):
         """
