@@ -20,7 +20,7 @@ import bpy
 import typing
 
 
-class Filter():
+class Filter:
     """
     Base class for all node tree filter operations
     """
@@ -40,6 +40,7 @@ class FilterByName(Filter):
     """
     def __init__(self, name):
         self.name = name
+        super(FilterByName, self).__init__()
 
     def __call__(self, shader_node):
         return shader_node.name == self.name
@@ -51,24 +52,45 @@ class FilterByType(Filter):
     """
     def __init__(self, type):
         self.type = type
+        super(FilterByType, self).__init__()
 
     def __call__(self, shader_node):
         return isinstance(shader_node, self.type)
 
 
-def gather_from_socket(start_socket: bpy.types.NodeSocket,
-                       shader_node_filter: typing.Union[Filter, typing.Callable]):
+class NodeTreeSearchResult:
+    def __init__(self, shader_node: bpy.types.Node, path: typing.List[bpy.types.NodeLink]):
+        self.shader_node = shader_node
+        self.path = path
+
+
+# TODO: cache these searches
+def from_socket(start_socket: bpy.types.NodeSocket,
+                shader_node_filter: typing.Union[Filter, typing.Callable]) -> typing.List[NodeTreeSearchResult]:
     """
     Find shader nodes where the filter expression is true.
     :param start_socket: the beginning of the traversal
     :param shader_node_filter: should be a function(x: shader_node) -> bool
     :return: a list of shader nodes for which filter is true
     """
-    results = []
-    for link in start_socket.links:
-        linked_node = link.from_node
-        if shader_node_filter(linked_node):
-            results.append(linked_node)
-        for input_socket in linked_node.inputs:
-            results += gather_from_socket(input_socket, shader_node_filter)
-    return results
+    # hide implementation (especially the search path
+    def __search_from_socket(start_socket: bpy.types.NodeSocket,
+                             shader_node_filter: typing.Union[Filter, typing.Callable],
+                             search_path: typing.List[bpy.types.NodeLink]) -> typing.List[NodeTreeSearchResult]:
+        results: typing.List[NodeTreeSearchResult] = []
+
+        for link in start_socket.links:
+            # follow the link to a shader node
+            linked_node = link.from_node
+            # add the link to the current path
+            search_path.append(link)
+            # check if the node matches the filter
+            if shader_node_filter(linked_node):
+                results.append(NodeTreeSearchResult(linked_node, search_path))
+            # traverse into inputs of the node
+            for input_socket in linked_node.inputs:
+                results += __search_from_socket(input_socket, shader_node_filter)
+
+        return results
+
+    return __search_from_socket(start_socket, shader_node_filter, [])

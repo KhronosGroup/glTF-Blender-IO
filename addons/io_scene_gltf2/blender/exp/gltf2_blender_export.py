@@ -112,13 +112,14 @@ def save(operator,
         for scene in scenes:
             exporter.add_scene(scene)
         exporter.finalize_buffer(export_settings['gltf_filedirectory'], export_settings['gltf_binaryfilename'])
+        exporter.finalize_images(export_settings['gltf_filedirectory'])
         glTF = exporter.glTF
     else:
         generate_glTF(operator, context, export_settings, glTF)
 
     #
 
-    # TODO: move into JSON encoder
+    # TODO: move to custom JSON encoder
     def dict_strip(obj):
         o = obj
         if isinstance(obj, dict):

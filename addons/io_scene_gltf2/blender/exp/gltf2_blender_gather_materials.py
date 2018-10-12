@@ -15,8 +15,9 @@
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
-
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
+from io_scene_gltf2.blender.exp import gltf2_blender_get
 
 @cached
 def gather_material(blender_material, export_settings):
@@ -85,20 +86,8 @@ def __gather_emmissive_factor(blender_material, export_settings):
 
 
 def __gather_emissive_texture(blender_material, export_settings):
-    if blender_material.node_tree and blender_material.use_nodes:
-        emissive_link = [link for link in blender_material.node_tree.links if link.to_socket.name == "Emissive"]
-        if not emissive_link:
-            return None
-        emissive_socket = emissive_link[0].to_socket
-        # search the node tree for textures, beginning from the 'emissive' socket in the material
-        emissive_tex_nodes = gltf2_blender_search_node_tree.gather_from_socket(
-            emissive_socket,
-            gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-
-    else:
-        # TODO: gather texture from tex node
-        pass
-    return None
+    emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
+    return gltf2_blender_gather_texture.gather_texture([emissive], export_settings)
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -115,14 +104,16 @@ def __gather_name(blender_material, export_settings):
 
 
 def __gather_normal_texture(blender_material, export_settings):
-    return None
+    normal = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Normal")
+    return gltf2_blender_gather_texture.gather_texture([normal], export_settings)
 
 
 def __gather_occlusion_texture(blender_material, export_settings):
-    return None
+    emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Occlusion")
+    return gltf2_blender_gather_texture.gather_texture([emissive], export_settings)
 
 
 def __gather_pbr_metallic_roughness(blender_material, export_settings):
-    # TODO
-    return None
-
+    return gltf2_blender_gather_materials_pbr_metallic_roughness.gather_material_pbr_metallic_roughness(
+        blender_material,
+        export_settings)

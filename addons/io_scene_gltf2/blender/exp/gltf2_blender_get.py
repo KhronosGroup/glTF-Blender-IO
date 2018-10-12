@@ -30,6 +30,23 @@ from ...io.exp.gltf2_io_get import *
 # Functions
 #
 
+def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
+    """
+    For a given material input name, retrieve the corresponding node tree socket or blender render texture slot
+    :param blender_material: a blender material for which to get the socket/slot
+    :param name: the name of the socket/slot
+    :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
+    """
+    if blender_material.node_tree and blender_material.use_nodes:
+        links = [link for link in blender_material.node_tree.links if link.to_socket.name == name]
+        if not links:
+            return None
+        return links[0].to_socket
+    else:
+        # TODO
+        raise NotImplementedError()
+        # return None
+
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     """
      returns the first ShaderNodeTexImage found in the path from the socket

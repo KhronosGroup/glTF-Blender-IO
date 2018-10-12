@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import typing
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
+from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
 
 
@@ -57,6 +59,7 @@ class GlTF2Exporter:
         )
 
         self.__buffer = gltf2_io_buffer.Buffer()
+        self.__images = []
 
         # mapping of all glTFChildOfRootProperty types to their corresponding root level arrays
         self.__childOfRootPropertyTypeLookup = {
@@ -124,18 +127,27 @@ class GlTF2Exporter:
         )
         self.__gltf.buffers.append(buffer)
 
+
         self.__finalized = True
 
-    def add_scene(self, scene, active=True):
+    def finalize_images(self, output_path):
+        """
+        Write all images. Due to a current limitation the output_path must be the same as that of the glTF file
+        :param output_path:
+        :return:
+        """
+        for image in self.__images:
+            uri = output_path + image.name + ".png"
+            with open(uri, 'wb') as f:
+                f.write(image.to_png_data())
+
+    def add_scene(self, scene: gltf2_io.Scene, active: bool = True):
         """
         Add a scene to the glTF. The scene should be built up with the generated glTF classes
         :param scene: gltf2_io.Scene type. Root node of the scene graph
+        :param active: If true, sets the glTD.scene index to the added scene
         :return: nothing
         """
-        if not isinstance(scene, gltf2_io.Scene):
-            gltf2_io_debug.print_console("ERROR", "Tried to add non scene type to glTF")
-            return
-
         if self.__finalized:
             raise RuntimeError("Tried to add scene to finalized glTF file")
 
@@ -145,14 +157,35 @@ class GlTF2Exporter:
         if active:
             self.__gltf.scene = scene_num
 
-    def __append_unique(self, obj):
-        gltf_list = self.__childOfRootPropertyTypeLookup[type(obj)]
-        if obj in gltf_list:
-            return gltf_list.index(obj)
+    def __to_reference(self, property):
+        """
+        Append a child of root property to its respective list and return a reference into said list.
+        If the property is not child of root, the property itself is returned.
+        :param property: A property type object that should be converted to a reference
+        :return: a reference or the object itself if it is not child or root
+        """
+        gltf_list = self.__childOfRootPropertyTypeLookup.get(type(property), None)
+        if gltf_list is None:
+            # The object is not of a child of root --> don't convert to reference
+            return property
+
+        return self.__append_unique_and_get_index(gltf_list, property)
+
+    @staticmethod
+    def __append_unique_and_get_index(target: list, obj):
+        if obj in target:
+            return target.index(obj)
         else:
-            index = len(gltf_list)
-            gltf_list.append(obj)
+            index = len(target)
+            target.append(obj)
             return index
+
+    def __add_image(self, image: gltf2_io_image_data.ImageData):
+        self.__images.append(image)
+        # TODO: we need to know the image url at this point already --> maybe add all options to the constructor of the
+        # exporter
+        # TODO: allow embedding of images (base64)
+        return image.name
 
     def __traverse(self, node):
         """
@@ -170,7 +203,7 @@ class GlTF2Exporter:
         # traverse nodes of a child of root property type and add them to the glTF root
         if type(node) in self.__childOfRootPropertyTypeLookup:
             node = traverse_all_members(node)
-            idx = self.__append_unique(node)
+            idx = self.__to_reference(node)
             # child of root properties are only present at root level --> replace with index in upper level
             return idx
 
@@ -187,11 +220,16 @@ class GlTF2Exporter:
 
         # traverse into any other property
         if type(node) in self.__propertyTypeLookup:
-            node = traverse_all_members(node)
+            return traverse_all_members(node)
 
+        # binary data needs to be moved to a buffer and referenced with a buffer view
         if isinstance(node, gltf2_io_binary_data.BinaryData):
             buffer_view = self.__buffer.add_and_get_view(node)
-            node = self.__append_unique(buffer_view)
+            return self.__to_reference(buffer_view)
+
+        # image data needs to be saved to file
+        if isinstance(node, gltf2_io_image_data.ImageData):
+            return self.__add_image(node)
 
         # do nothing for any type that does not match a glTF schema (primitives)
         return node
