@@ -103,7 +103,7 @@ class BlenderGlTF():
                         material.pbr_metallic_roughness.base_color_factor = [1.0,1.0,1.0,1.0]
 
                     if material.pbr_metallic_roughness.metallic_factor:
-                        if material.pbr_metallic_roughness.metallic_type == gltf.TEXTURE and material.pbr_metallic_roughness.mettalic_factor != 1.0:
+                        if material.pbr_metallic_roughness.metallic_type == gltf.TEXTURE and material.pbr_metallic_roughness.metallic_factor != 1.0:
                             material.pbr_metallic_roughness.metallic_type = gltf.TEXTURE_FACTOR
                     else:
                         material.pbr_metallic_roughness.metallic_factor = 1.0
