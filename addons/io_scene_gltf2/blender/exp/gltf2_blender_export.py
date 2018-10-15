@@ -111,7 +111,10 @@ def save(operator,
         exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(copyright=export_settings['gltf_copyright'])
         for scene in scenes:
             exporter.add_scene(scene)
-        exporter.finalize_buffer(export_settings['gltf_filedirectory'], export_settings['gltf_binaryfilename'])
+        if export_settings['gltf_format'] == 'ASCII':
+            exporter.finalize_buffer(export_settings['gltf_filedirectory'], export_settings['gltf_binaryfilename'])
+        else:
+            exporter.finalize_buffer(export_settings['gltf_filedirectory'])
         exporter.finalize_images(export_settings['gltf_filedirectory'])
         glTF = exporter.glTF
     else:
