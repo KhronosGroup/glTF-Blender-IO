@@ -1,4 +1,4 @@
-# Copyright (c) 2017 The Khronos Group Inc.
+# Copyright 2018 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,14 +53,14 @@ def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     """
     if shader_socket is None:
         return None
-    
+
     if max_hops <= 0:
         return None
 
     for link in shader_socket.links:
         if isinstance(link.from_node, bpy.types.ShaderNodeTexImage):
             return link.from_node
-        
+
         for socket in link.from_node.inputs.values():
             image = find_shader_image_from_shader_socket(shader_socket=socket, max_hops=max_hops - 1)
             if image is not None:
@@ -86,22 +86,22 @@ def get_shader_add_to_shader_node(shader_node):
 #
 
 def get_shader_emission_from_shader_add(shader_add):
-    
+
     if shader_add is None:
         return None
-    
+
     if not isinstance(shader_add, bpy.types.ShaderNodeAddShader):
         return None
 
     from_node = None
 
     for input in shader_add.inputs:
-        
+
         if len(input.links) == 0:
             continue
-        
+
         from_node = input.links[0].from_node
-        
+
         if isinstance(from_node, bpy.types.ShaderNodeEmission):
             break
 
@@ -109,32 +109,32 @@ def get_shader_emission_from_shader_add(shader_add):
 
 
 def get_shader_mapping_from_shader_image(shader_image):
-    
+
     if shader_image is None:
         return None
-    
+
     if not isinstance(shader_image, bpy.types.ShaderNodeTexImage):
         return None
 
     if shader_image.inputs.get('Vector') is None:
         return None
-    
+
     if len(shader_image.inputs['Vector'].links) == 0:
         return None
-    
+
     from_node = shader_image.inputs['Vector'].links[0].from_node
-    
+
     #
 
     if not isinstance(from_node, bpy.types.ShaderNodeMapping):
         return None
 
     return from_node
-    
+
 def get_image_material_usage_to_socket(shader_image, socket_name):
     if shader_image is None:
         return -1
-    
+
     if not isinstance(shader_image, bpy.types.ShaderNodeTexImage):
         return -2
 
@@ -156,7 +156,7 @@ def get_image_material_usage_to_socket(shader_image, socket_name):
             for link in separate_rgb.outputs.get(channel).links:
                 if socket_name == link.to_socket.name:
                     return i
-        
+
     return -6
 
 def get_emission_node_from_lamp_output_node(lamp_node):
@@ -209,23 +209,23 @@ def get_ligth_falloff_node_from_emission_node(emission_node, type):
 
 
 def get_shader_image_from_shader_node(name, shader_node):
-    
+
     if shader_node is None:
         return None
-    
+
     if not isinstance(shader_node, bpy.types.ShaderNodeGroup) and not isinstance(shader_node, bpy.types.ShaderNodeBsdfPrincipled) and not isinstance(shader_node, bpy.types.ShaderNodeEmission):
         return None
 
     if shader_node.inputs.get(name) is None:
         return None
-    
+
     if len(shader_node.inputs[name].links) == 0:
         return None
-    
+
     from_node = shader_node.inputs[name].links[0].from_node
-    
+
     #
-    
+
     if isinstance(from_node, bpy.types.ShaderNodeNormalMap):
 
         name = 'Color'
@@ -234,7 +234,7 @@ def get_shader_image_from_shader_node(name, shader_node):
             return None
 
         from_node = from_node.inputs[name].links[0].from_node
-    
+
     #
 
     if not isinstance(from_node, bpy.types.ShaderNodeTexImage):
@@ -274,34 +274,34 @@ def get_texcoord_index_from_shader_node(glTF, name, shader_node):
 
     if from_node is None:
         return 0
-    
+
     #
-    
+
     if len(from_node.inputs['Vector'].links) == 0:
         return 0
 
     input_node = from_node.inputs['Vector'].links[0].from_node
-    
+
     #
-    
+
     if isinstance(input_node, bpy.types.ShaderNodeMapping):
 
         if len(input_node.inputs['Vector'].links) == 0:
             return 0
-        
+
         input_node = input_node.inputs['Vector'].links[0].from_node
-    
+
     #
 
     if not isinstance(input_node, bpy.types.ShaderNodeUVMap):
         return 0
-    
+
     if input_node.uv_map == '':
         return 0
-    
+
     #
 
-    # Try to gather map index.   
+    # Try to gather map index.
     for blender_mesh in bpy.data.meshes:
         texCoordIndex = blender_mesh.uv_textures.find(input_node.uv_map)
         if texCoordIndex >= 0:
@@ -361,8 +361,8 @@ def get_data_path(data_path):
     """
 
     index = data_path.rfind('.')
-    
+
     if index == -1:
         return data_path
-    
+
     return data_path[(index + 1):]
