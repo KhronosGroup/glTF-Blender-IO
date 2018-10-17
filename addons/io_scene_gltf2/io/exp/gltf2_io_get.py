@@ -351,7 +351,7 @@ def get_index(elements, name):
     index = 0
     for element in elements:
         if isinstance(element, dict):
-            if element.get(name) == name:
+            if element.get('name') == name:
                 return index
         else:
             if element.name == name:
