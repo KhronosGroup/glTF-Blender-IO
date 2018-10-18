@@ -63,9 +63,9 @@ def gather_joint(blender_bone, export_settings):
     return gltf2_io.Node(
         camera=None,
         children=children,
-        extensions={},
+        extensions=None,
         extras=None,
-        matrix=[],
+        matrix=None,
         mesh=None,
         name=blender_bone.name,
         rotation=rotation,

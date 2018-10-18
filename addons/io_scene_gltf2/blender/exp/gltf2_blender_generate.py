@@ -19,6 +19,8 @@
 import copy
 import bpy
 
+import base64
+
 from .gltf2_blender_animate import *
 from .gltf2_blender_extract import *
 from .gltf2_blender_filter import *
@@ -1083,11 +1085,11 @@ def generate_meshes(operator,
         primitives = []
 
         mesh = gltf2_io.Mesh(
-            extensions={},
+            extensions=None,
             extras=None,
             name=name,
             primitives=primitives,
-            weights=[]
+            weights=None
         )
 
         #
@@ -1098,12 +1100,12 @@ def generate_meshes(operator,
 
             primitive = gltf2_io.MeshPrimitive(
                 attributes=attributes,
-                extensions={},
-                extras={},
+                extensions=None,
+                extras=None,
                 indices=None,
                 material=None,
                 mode=None,
-                targets=[]
+                targets=None
             )
 
             #
@@ -1570,10 +1572,10 @@ def generate_node_instance(context,
 
     node = gltf2_io.Node(
         camera=None,
-        children=[],
-        extensions={},
+        children=None,
+        extensions=None,
         extras=None,
-        matrix=[],
+        matrix=None,
         mesh=None,
         name=None,
         rotation=None,
@@ -1629,10 +1631,10 @@ def generate_node_instance(context,
                         # Add correction node for camera, as default direction is different to Blender.
                         correction_node = gltf2_io.Node(
                             camera=None,
-                            children=[],
-                            extensions={},
+                            children=None,
+                            extensions=None,
                             extras=None,
-                            matrix=[],
+                            matrix=None,
                             mesh=None,
                             name=None,
                             rotation=None,
@@ -1663,10 +1665,10 @@ def generate_node_instance(context,
                         # Add correction node for light, as default direction is different to Blender.
                         correction_node = gltf2_io.Node(
                             camera=None,
-                            children=[],
-                            extensions={},
+                            children=None,
+                            extensions=None,
                             extras=None,
-                            matrix=[],
+                            matrix=None,
                             mesh=None,
                             name=None,
                             rotation=None,
@@ -1751,8 +1753,8 @@ def generate_nodes(operator,
 
                 node = gltf2_io.Node(
                     camera=None,
-                    children=[],
-                    extensions={},
+                    children=None,
+                    extensions=None,
                     extras=None,
                     matrix=[],
                     mesh=None,
@@ -1833,10 +1835,10 @@ def generate_nodes(operator,
                     if not joints_written:
                         node = gltf2_io.Node(
                             camera=None,
-                            children=[],
-                            extensions={},
+                            children=None,
+                            extensions=None,
                             extras=None,
-                            matrix=[],
+                            matrix=None,
                             mesh=None,
                             name=None,
                             rotation=None,
@@ -1893,7 +1895,7 @@ def generate_nodes(operator,
                     extensions=None,
                     extras=None,
                     inverse_bind_matrices=None,
-                    joints=[],
+                    joints=None,
                     name=None,
                     skeleton=None
                 )

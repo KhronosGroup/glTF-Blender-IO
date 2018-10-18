@@ -43,8 +43,8 @@ def gather_primitives(blender_object, export_settings):
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=__gather_attributes(internal_primitive, export_settings),
-            extensions={},
-            extras={},
+            extensions=None,
+            extras=None,
             indices=__gather_indices(internal_primitive, export_settings),
             material=__gather_materials(internal_primitive, export_settings),
             mode=None,
