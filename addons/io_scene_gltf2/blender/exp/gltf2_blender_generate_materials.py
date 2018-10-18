@@ -25,6 +25,7 @@ from ...io.exp.gltf2_io_generate import *
 from ...io.exp.gltf2_io_get import *
 
 from .gltf2_blender_get import *
+from .gltf2_blender_generate_extras import generate_extras
 
 #
 # Globals

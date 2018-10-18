@@ -17,8 +17,6 @@
 #
 
 import copy
-import math
-
 import bpy
 
 from .gltf2_blender_animate import *
@@ -28,59 +26,12 @@ from .gltf2_blender_generate_materials import *
 
 from ..com.gltf2_blender_image_util import *
 
-from io_scene_gltf2.blender.com import gltf2_blender_json
 from io_scene_gltf2.io.com import gltf2_io
+from .gltf2_blender_generate_extras import generate_extras
 
 #
 # Functions
 #
-
-def generate_extras(blender_element):
-    """
-    Filters and creates a custom property, which is stored in the glTF extra field.
-    """
-    if not blender_element:
-        return None
-
-    extras = {}
-
-    # Custom properties, which are in most cases present and should not be exported.
-    black_list = ['cycles', 'cycles_visibility', 'cycles_curves', '_RNA_UI']
-
-    count = 0
-    for custom_property in blender_element.keys():
-        if custom_property in black_list:
-            continue
-
-        value = blender_element[custom_property]
-
-        add_value = False
-
-        if isinstance(value, bpy.types.ID):
-            add_value = True
-
-        if isinstance(value, str):
-            add_value = True
-
-        if isinstance(value, (int, float)):
-            add_value = True
-
-        if hasattr(value, "to_list"):
-            value = value.to_list()
-            add_value = True
-
-        if hasattr(value, "to_dict"):
-            value = value.to_dict()
-            add_value = gltf2_blender_json.is_json_convertible(value)
-
-        if add_value:
-            extras[custom_property] = value
-            count += 1
-
-    if count == 0:
-        return None
-
-    return extras
 
 
 def generate_animations_parameter(
