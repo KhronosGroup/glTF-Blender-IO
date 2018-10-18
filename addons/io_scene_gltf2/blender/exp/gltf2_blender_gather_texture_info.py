@@ -89,8 +89,10 @@ def __gather_tex_coord(blender_shader_sockets_or_texture_slots, export_settings)
                 return texCoordIndex
 
         return 0
+    elif isinstance(blender_shader_sockets_or_texture_slots[0], bpy.types.MaterialTextureSlot):
+        # TODO: implement for texture slots
+        return 0
     else:
-        #TODO: implement for texture slots
         raise NotImplementedError()
 
 

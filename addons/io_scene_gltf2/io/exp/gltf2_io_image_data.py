@@ -28,7 +28,7 @@ class ImageData:
         self.width = width
         self.height = height
 
-    def append(self, image_data):
+    def add_to_image(self, image_data):
         if self.width != image_data.width or self.height != image_data.height:
             raise ValueError("Image dimensions do not match")
         if len(self.channels) + len(image_data.channels) > 4:

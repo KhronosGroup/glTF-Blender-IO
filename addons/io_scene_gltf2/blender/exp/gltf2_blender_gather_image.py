@@ -87,6 +87,8 @@ def __gather_uri(sockets_or_slots, export_settings):
 def __is_socket(sockets_or_slots):
     return isinstance(sockets_or_slots[0], bpy.types.NodeSocket)
 
+def __is_slot(sockets_or_slots):
+    return isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot)
 
 def __get_image_data(sockets_or_slots):
     # For shared ressources, such as images, we just store the portion of data that is needed in the glTF property
@@ -120,9 +122,19 @@ def __get_image_data(sockets_or_slots):
             if image is None:
                 image = image_data
             else:
-                image.append(image_data)
+                image.add_to_image(image_data)
 
         return image
+    elif __is_slot(sockets_or_slots):
+        texture = __get_tex_from_slot(sockets_or_slots[0])
+        pixels = texture.image.pixels
+
+        image_data = gltf2_io_image_data.ImageData(
+            texture.name,
+            texture.image.size[0],
+            texture.image.size[1],
+            pixels)
+        return image_data
     else:
         # Texture slots
         raise NotImplementedError()
@@ -135,3 +147,6 @@ def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket):
     if not result:
         return None
     return result[0]
+
+def __get_tex_from_slot(blender_texture_slot: bpy.types.MaterialTextureSlot):
+    return blender_texture_slot.texture
