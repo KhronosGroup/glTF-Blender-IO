@@ -85,6 +85,7 @@ def __gather_double_sided(blender_material, export_settings):
 
 
 def __gather_emmissive_factor(blender_material, export_settings):
+    # TODO
     return None
 
 
@@ -103,6 +104,7 @@ def __gather_extras(blender_material, export_setttings):
 
 
 def __gather_name(blender_material, export_settings):
+
     return None
 
 

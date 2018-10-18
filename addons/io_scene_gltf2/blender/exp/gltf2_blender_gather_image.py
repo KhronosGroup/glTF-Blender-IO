@@ -120,6 +120,9 @@ def __get_image_data(sockets_or_slots):
                 image.append(image_data)
 
         return image
+    else:
+        # Texture slots
+        raise NotImplementedError()
 
 
 def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket):

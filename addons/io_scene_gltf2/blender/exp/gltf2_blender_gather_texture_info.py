@@ -62,7 +62,7 @@ def __gather_index(blender_shader_sockets_or_texture_slots, export_settings):
 
 
 def __gather_tex_coord(blender_shader_sockets_or_texture_slots, export_settings):
-    if __is_socket(blender_shader_sockets_or_texture_slots):
+    if isinstance(blender_shader_sockets_or_texture_slots[0], bpy.types.NodeSocket):
         blender_shader_node = __get_tex_from_socket(blender_shader_sockets_or_texture_slots[0]).shader_node
         if len(blender_shader_node.inputs['Vector'].links) == 0:
             return 0
@@ -90,11 +90,8 @@ def __gather_tex_coord(blender_shader_sockets_or_texture_slots, export_settings)
 
         return 0
     else:
+        #TODO: implement for texture slots
         raise NotImplementedError()
-
-
-def __is_socket(sockets_or_slots):
-    return isinstance(sockets_or_slots[0], bpy.types.NodeSocket)
 
 
 def __get_tex_from_socket(socket):

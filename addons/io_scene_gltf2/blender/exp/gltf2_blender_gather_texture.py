@@ -33,7 +33,7 @@ def gather_texture(
     :param export_settings: configuration of the export
     :return: a glTF 2.0 texture with sampler and source embedded (will be converted to references by the exporter)
     """
-    # TODO: extend to non node tree materials
+    # TODO: extend to texture slots
     if not __filter_texture(blender_shader_sockets_or_texture_slots, export_settings):
         return None
 
@@ -63,12 +63,16 @@ def __gather_name(blender_shader_sockets , export_settings):
 
 
 def __gather_sampler(blender_shader_sockets_or_texture_slots , export_settings):
-    shader_nodes = [__get_tex_from_socket(socket).shader_node for socket in blender_shader_sockets_or_texture_slots]
-    if len(shader_nodes) > 1:
-        gltf2_io_debug.print_console("WARNING", "More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.")
-    return gltf2_blender_gather_sampler.gather_sampler(
-        shader_nodes[0],
-        export_settings)
+    if isinstance(blender_shader_sockets_or_texture_slots[0], bpy.types.NodeSocket):
+        shader_nodes = [__get_tex_from_socket(socket).shader_node for socket in blender_shader_sockets_or_texture_slots]
+        if len(shader_nodes) > 1:
+            gltf2_io_debug.print_console("WARNING", "More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.")
+        return gltf2_blender_gather_sampler.gather_sampler(
+            shader_nodes[0],
+            export_settings)
+    else:
+        #TODO: implement texture slot sampler
+        raise NotImplementedError()
 
 
 def __gather_source(blender_shader_sockets_or_texture_slots, export_settings):
