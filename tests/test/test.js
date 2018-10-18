@@ -60,7 +60,35 @@ describe('General', function() {
 });
 
 describe('Exporter', function() {
-    describe('blender_export_experimental', function() {
+    describe('blender_export', function() {
+        blenderSampleScenes.forEach((scene) => {
+            it(scene, function(done) {
+                var blenderPath = `scenes/${scene}.blend`;
+                var gltfPath = `scenes/${scene}.gltf`;
+                blenderFileToGltf(blenderPath, (error) => {
+                    if (error)
+                        return done(error);
+
+                    validateGltf(gltfPath, done);
+                });
+            });
+        });
+    });
+    describe('blender_export_glb', function() {
+        blenderSampleScenes.forEach((scene) => {
+            it(scene, function(done) {
+                var blenderPath = `scenes/${scene}.blend`;
+                var glbPath = `scenes/glb/${scene}.glb`;
+                blenderFileToGltf(blenderPath, (error) => {
+                    if (error)
+                        return done(error);
+
+                    validateGltf(glbPath, done);
+                }, '--glb');
+            });
+        });
+    });
+    /*describe('blender_export_experimental', function() {
         blenderSampleScenes.forEach((scene) => {
             it(scene, function(done) {
                 var blenderPath = `scenes/${scene}.blend`;
@@ -87,5 +115,5 @@ describe('Exporter', function() {
                 }, '--experimental --glb');
             });
         });
-    });
+    });*/
 });
