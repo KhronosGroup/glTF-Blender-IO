@@ -62,7 +62,7 @@ class BlenderScene():
 
         if gltf.data.animations:
             for anim_idx, anim in enumerate(gltf.data.animations):
-                for node_idx, node in enumerate(pyscene.nodes):
+                for node_idx in pyscene.nodes:
                     BlenderAnimation.anim(gltf, anim_idx, node_idx)
 
 
