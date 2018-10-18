@@ -41,7 +41,7 @@ def save_gltf(glTF,
         # The comma is typically followed by a newline, so no trailing whitespace is needed on it.
         separators = separators=(',', ' : ')
 
-    glTF_encoded = json.dumps(glTF, indent=indent, separators=separators, sort_keys=True, cls=encoder)
+    glTF_encoded = json.dumps(glTF, indent=indent, separators=separators, sort_keys=True, cls=encoder, allow_nan=False)
 
     #
 
