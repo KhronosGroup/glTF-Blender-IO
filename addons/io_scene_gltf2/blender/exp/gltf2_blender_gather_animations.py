@@ -12,20 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import mathutils
+import typing
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 
 
-@cached
-def gather_animations(blender_object, export_settings):
+def gather_animations(blender_object: bpy.types.Object, export_settings) -> typing.List[gltf2_io.Animation]:
     """
     Gather all animations which contribute to the objects property
     :param blender_object: The blender object which is animated
     :param export_settings:
     :return: A list of glTF2 animations
     """
+
+    if blender_object.animation_data is None:
+        return []
+
+    animations = []
+
+    # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
+    blender_actions = __get_blender_actions(blender_object)
+
+    # Export all collected actions.
+    for blender_action in blender_actions:
+        animation = __gather_animation(blender_object, blender_action, export_settings)
+        if animation is not None:
+            animations.append(animation)
+
+    return animations
+
+
+def __gather_animation(blender_object: bpy.types.Object, blender_action: bpy.types.Action, export_settings):
     if not __filter_animation(blender_object, export_settings):
         return None
 
@@ -38,7 +58,7 @@ def gather_animations(blender_object, export_settings):
     )
 
 
-def __filter_animation(blender_object, export_settings):
+def __filter_animation(blender_object, export_settings) -> bool:
     if blender_object.animation_data is None:
         return False
 
@@ -65,37 +85,24 @@ def __gather_samples(blender_object, export_settings):
     return None
 
 
-def __gather_actions(blender_object, export_settings):
+def __get_blender_actions(blender_object: bpy.types.Object) -> typing.List[bpy.types.Action]:
+    blender_actions = []
 
-    animation_data = blender_object.animation_data
+    # Collect active action.
+    if blender_object.animation_data.action is not None:
+        blender_actions.append(blender_object.animation_data.action)
+    # Collect associated strips from NLA tracks.
+    for track in blender_object.animation_data.nla_tracks:
+        # Multi-strip tracks do not export correctly yet (they need to be baked),
+        # so skip them for now and only write single-strip tracks.
+        if track.strips is None or len(track.strips) != 1:
+            continue
+        for strip in track.strips:
+            blender_actions.append(strip.action)
+    # Remove duplicate actions.
+    blender_actions = list(set(blender_actions))
 
-    if animation_data is not None:
-        object_actions = []
-
-        # Collect active action.
-        if animation_data.action:
-            object_actions.append(animation_data.action)
-
-        # Collect associated strips from NLA tracks.
-        for track in animation_data.nla_tracks:
-            # Multi-strip tracks do not export correctly yet (they need to be baked),
-            # so skip them for now and only write single-strip tracks.
-            if track.strips is None or len(track.strips) != 1:
-                continue
-            for strip in track.strips:
-                object_actions.append(strip.action)
-
-        # Remove duplicate actions.
-        object_actions = list(set(object_actions))
-
-        # Export all collected actions.
-        for action in object_actions:
-            active_action = animation_data.action
-            animation_data.action = action
-
-            __process_object_animations(blender_object, export_settings, action)
-
-            animation_data.action = active_action
+    return blender_actions
 
 
 def __process_object_animations(blender_object, export_settings, action):

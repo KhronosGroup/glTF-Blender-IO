@@ -21,6 +21,8 @@ class ImageData:
     contains channels of an image with raw pixel data.
     """
     def __init__(self, name: str, width: int, height: int, channels: typing.List[typing.List[float]] = None):
+        if width <= 0 or height <=0:
+            raise ValueError("Image data can not have zero width or height")
         self.name = name
         self.channels = channels
         self.width = width
