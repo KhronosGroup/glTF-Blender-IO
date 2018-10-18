@@ -36,8 +36,8 @@ class Buffer:
         self.__data += binary_data.data
 
         # offsets should be a multiple of 4 --> therefore add padding if necessary
-        padding = len(binary_data.data) % 4
-        self.__data += b"00" * padding
+        padding = (4 - (binary_data.byte_length % 4)) % 4
+        self.__data += b"\x00" * padding
 
         buffer_view = gltf2_io.BufferView(
             buffer=self.__buffer_index,
