@@ -73,3 +73,32 @@ def __gather_wrap_t(blender_shader_node, export_settings):
     if blender_shader_node.extension == 'CLIP':
         return 33071
     return None
+
+
+@cached
+def gather_sampler_from_texture_slot(blender_texture: bpy.types.TextureSlot, export_settings):
+    magFilter = 9729
+    wrap = 10497
+    if blender_texture.texture.extension == 'CLIP':
+        wrap = 33071
+
+    minFilter = 9986
+    if magFilter == 9728:
+        minFilter = 9984
+
+    sampler = {
+        'magFilter': magFilter,
+        'minFilter': minFilter,
+        'wrapS': wrap,
+        'wrapT': wrap
+    }
+
+    return gltf2_io.Sampler(
+        extensions=None,
+        extras=None,
+        mag_filter=magFilter,
+        min_filter=minFilter,
+        name=None,
+        wrap_s=wrap,
+        wrap_t=wrap
+    )

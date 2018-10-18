@@ -43,9 +43,18 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
             return None
         return links[0].to_socket
     else:
-        # TODO
-        raise NotImplementedError()
-        # return None
+        if name != 'Base Color':
+            return None
+
+        for blender_texture_slot in blender_material.texture_slots:
+            if blender_texture_slot and blender_texture_slot.texture and blender_texture_slot.texture.type == 'IMAGE' and blender_texture_slot.texture.image is not None:
+                #
+                # Base color texture
+                #
+                if blender_texture_slot.use_map_color_diffuse:
+                    return blender_texture_slot
+
+        return None
 
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     """

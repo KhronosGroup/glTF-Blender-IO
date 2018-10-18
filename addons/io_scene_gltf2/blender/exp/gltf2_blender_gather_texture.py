@@ -25,7 +25,7 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 @cached
 def gather_texture(
         blender_shader_sockets_or_texture_slots: typing.Union[
-            typing.Tuple[bpy.types.NodeSocket], typing.Tuple[bpy.types.Texture]],
+            typing.Tuple[bpy.types.NodeSocket], typing.Tuple[bpy.types.MaterialTextureSlot]],
         export_settings):
     """
     Gather texture sampling information and image channels from a blender shader textu  re attached to a shader socket
@@ -70,6 +70,11 @@ def __gather_sampler(blender_shader_sockets_or_texture_slots , export_settings):
         return gltf2_blender_gather_sampler.gather_sampler(
             shader_nodes[0],
             export_settings)
+    elif isinstance(blender_shader_sockets_or_texture_slots[0], bpy.types.MaterialTextureSlot):
+        return gltf2_blender_gather_sampler.gather_sampler_from_texture_slot(
+            blender_shader_sockets_or_texture_slots[0],
+            export_settings
+        )
     else:
         #TODO: implement texture slot sampler
         raise NotImplementedError()
