@@ -32,6 +32,7 @@ class Image():
         self.channels = 4
         self.pixels = pixels
         self.name = ""
+        self.file_format = "PNG"
 
     def to_png_data(self):
         buf = bytearray([int(channel * 255.0) for channel in self.pixels])

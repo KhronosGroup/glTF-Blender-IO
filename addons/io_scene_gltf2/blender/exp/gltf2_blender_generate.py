@@ -2127,12 +2127,6 @@ def generate_images(operator,
 
                 create_image_file(context, blender_image, path, file_format)
 
-                test_dst = create_img(blender_image.size[0], blender_image.size[1])
-                test_src = create_img_from_blender_image(blender_image)
-
-                copy_img_channel(test_dst, 0, test_src, 0)
-                copy_img_channel(test_dst, 2, test_src, 1)
-
                 # Required
 
                 image['uri'] = uri
@@ -2155,6 +2149,63 @@ def generate_images(operator,
 
         images.append(gltf2_io.Image.from_dict(image))
 
+    filtered_merged_images = export_settings['filtered_merged_images']
+
+    for gltf2_image in filtered_merged_images:
+        #
+        # Property: image
+        #
+
+        image = {'name': get_image_name(gltf2_image.name)}
+
+        # We can only write pngs from blender, so we have to stick to that
+        mime_type = 'image/png'
+
+        #
+
+        if export_settings['gltf_format'] == 'ASCII':
+
+            if export_settings['gltf_embed_images']:
+                # Embed image as Base64.
+
+                image_data = gltf2_image.to_image_data(mime_type)
+
+                # Required
+
+                image['mimeType'] = mime_type
+
+                image['uri'] = 'data:' + mime_type + ';base64,' + base64.b64encode(image_data).decode('ascii')
+
+            else:
+                # Store image external.
+
+                uri = get_image_uri(export_settings, gltf2_image)
+                path = export_settings['gltf_filedirectory'] + uri
+
+                gltf2_image.save_png(path)
+
+                # Required
+
+                image['uri'] = uri
+
+        else:
+            # Store image as glb.
+            # We can only write pngs from blender, so we have to stick to that
+            mime_type = 'image/png'
+            image_data = gltf2_image.to_image_data(mime_type)
+
+            bufferView = generate_bufferView(export_settings, glTF, image_data, 0, 0)
+
+            # Required
+
+            image['mimeType'] = mime_type
+
+            image['bufferView'] = bufferView
+
+        #
+        #
+
+        images.append(gltf2_io.Image.from_dict(image))
     #
     #
 
@@ -2203,7 +2254,23 @@ def generate_textures(operator,
 
             textures.append(gltf2_io.Texture.from_dict(texture))
 
+        elif isinstance(blender_texture, bpy.types.TextureSlot):
+            magFilter = 9729
+            wrap = 10497
+            if blender_texture.texture.extension == 'CLIP':
+                wrap = 33071
+
+            texture['sampler'] = generate_sampler(export_settings, glTF, magFilter, wrap)
+
+            texture['source'] = get_image_index(glTF, blender_texture.texture.image.name)
+
+            #
+            #
+
+            textures.append(gltf2_io.Texture.from_dict(texture))
+
         else:
+            print(blender_texture.name)
             magFilter = 9729
             wrap = 10497
 
