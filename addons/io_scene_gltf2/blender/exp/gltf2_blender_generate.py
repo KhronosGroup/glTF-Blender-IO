@@ -2130,7 +2130,6 @@ def generate_images(operator,
 
                 copy_img_channel(test_dst, 0, test_src, 0)
                 copy_img_channel(test_dst, 2, test_src, 1)
-                test_save_img(test_dst, path + ".test.png")
 
                 # Required
 
