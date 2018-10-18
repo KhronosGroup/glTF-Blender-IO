@@ -68,9 +68,12 @@ def __gather_mime_type(sockets_or_slots, export_settings):
 
 
 def __gather_name(sockets_or_slots, export_settings):
-    node = __get_tex_from_socket(sockets_or_slots[0])
-    if node is not None:
-        return node.shader_node.image.name
+    if __is_socket(sockets_or_slots):
+        node = __get_tex_from_socket(sockets_or_slots[0])
+        if node is not None:
+            return node.shader_node.image.name
+    elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
+        return sockets_or_slots[0].name
     return None
 
 
