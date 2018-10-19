@@ -18,6 +18,7 @@ import typing
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
 
 
 def gather_animations(blender_object: bpy.types.Object, export_settings) -> typing.List[gltf2_io.Animation]:
@@ -31,7 +32,7 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
     if blender_object.animation_data is None:
         return []
 
-    animations = []
+    animations = typing.List[gltf2_io.Animation]()
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object)
@@ -46,43 +47,58 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
 
 
 def __gather_animation(blender_object: bpy.types.Object, blender_action: bpy.types.Action, export_settings):
-    if not __filter_animation(blender_object, export_settings):
+    if not __filter_animation(blender_object, blender_action, export_settings):
         return None
 
-    return gltf2_io.Animation(
-        channels=__gather_channels(blender_object, export_settings),
-        extensions=__gather_extensions(blender_object, export_settings),
-        extras=__gather_extras(blender_object, export_settings),
-        name=__gather_name(blender_object, export_settings),
-        samplers=__gather_samples(blender_object, export_settings)
+    animation = gltf2_io.Animation(
+        channels=__gather_channels(blender_object, blender_action, export_settings),
+        extensions=__gather_extensions(blender_object, blender_action, export_settings),
+        extras=__gather_extras(blender_object, blender_action, export_settings),
+        name=__gather_name(blender_object, blender_action, export_settings),
+        samplers=__gather_samplers(blender_object, blender_action, export_settings)
     )
 
 
-def __filter_animation(blender_object, export_settings) -> bool:
-    if blender_object.animation_data is None:
+def __filter_animation(blender_object, blender_action, export_settings) -> bool:
+    if blender_action.users == 0:
         return False
 
     return True
 
 
-def __gather_channels(blender_object, export_settings):
+def __gather_channels(blender_object, blender_action, export_settings):
+    return gltf2_blender_gather_animation_channels.gather_animation_channels(blender_object, blender_action, export_settings)
+
+
+def __gather_extensions(blender_object, blender_action, export_settings):
     return None
 
 
-def __gather_extensions(blender_object, export_settings):
+def __gather_extras(blender_object, blender_action, export_settings):
     return None
 
 
-def __gather_extras(blender_object, export_settings):
+def __gather_name(blender_object, blender_action, export_settings):
     return None
 
 
-def __gather_name(blender_object, export_settings):
-    return None
+def __gather_samplers(blender_object, blender_action, export_settings):
+    # We need to gather the samplers after gathering all channels --> populate this list in __link_samplers
+    return []
 
 
-def __gather_samples(blender_object, export_settings):
-    return None
+def __link_samplers(animation: gltf2_io.Animation, export_settings):
+    """
+    After gathering, samplers are stored in the channels properties of the animation and need to be moved
+    to their own list while storing an index into this list at the position where they previously were.
+    This behaviour is similar to that of the glTFExporter that traverses all nodes
+    :param animation:
+    :param export_settings:
+    :return:
+    """
+
+
+
 
 
 def __get_blender_actions(blender_object: bpy.types.Object) -> typing.List[bpy.types.Action]:

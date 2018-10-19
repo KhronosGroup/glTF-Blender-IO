@@ -78,6 +78,27 @@ class DataType:
             DataType.Mat4: 16
         }[data_type]
 
+    @classmethod
+    def vec_type_from_num(cls, num_elems):
+        if not (0 < num_elems < 5):
+            raise ValueError("No vector type with {} elements".format(num_elems))
+        return {
+            1: DataType.Scalar,
+            2: DataType.Vec2,
+            3: DataType.Vec3,
+            4: DataType.Vec4
+        }[num_elems]
+
+    @classmethod
+    def mat_type_from_num(cls, num_elems):
+        if not (4 <= num_elems <= 16):
+            raise ValueError("No matrix type with {} elements".format(num_elems))
+        return {
+            4: DataType.Mat2,
+            9: DataType.Mat3,
+            16: DataType.Mat4
+        }[num_elems]
+
 
 #################
 # LEGACY DEFINES

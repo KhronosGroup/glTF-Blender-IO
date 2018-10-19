@@ -23,17 +23,30 @@ def cached(func):
     """
     @functools.wraps(func)
     def wrapper_cached(*args, **kwargs):
-        assert len(args) == 2 and len(kwargs) == 0, "Wrong signature for cached function"
-        blender_obj, export_settings = args
+        assert len(args) >= 2 and 0 <= len(kwargs) <= 1, "Wrong signature for cached function"
+        cache_key_args = args
+        # make a shallow copy of the keyword arguments so that 'export_settings' can be removed
+        cache_key_kwargs = dict(kwargs)
+        if kwargs.get("export_settings"):
+            export_settings = kwargs["export_settings"]
+            # 'export_settings' should not be cached
+            del cache_key_kwargs["export_settings"]
+        else:
+            export_settings = args[-1]
+            cache_key_args = args[:-1]
+
+        # we make a tuple from the function arguments so that they can be used as a key to the cache
+        cache_key = tuple(cache_key_args + tuple(cache_key_kwargs.values()))
+
         # invalidate cache if export settings have changed
         if not hasattr(func, "__export_settings") or export_settings != func.__export_settings:
             func.__cache = {}
             func.__export_settings = export_settings
         # use or fill cache
-        if blender_obj in func.__cache:
-            return func.__cache[blender_obj]
+        if cache_key in func.__cache:
+            return func.__cache[cache_key]
         else:
             result = func(*args)
-            func.__cache[blender_obj] = result
+            func.__cache[cache_key] = result
             return result
     return wrapper_cached
