@@ -1,0 +1,26 @@
+{
+    "uri": "Box.gltf",
+    "mimeType": "model/gltf+json",
+    "validatorVersion": "2.0.0-dev.2.5",
+    "validatedAt": "2018-10-19T09:40:12.253006Z",
+    "issues": {
+        "numErrors": 0,
+        "numWarnings": 0,
+        "numInfos": 0,
+        "numHints": 0,
+        "messages": [],
+        "truncated": false
+    },
+    "info": {
+        "version": "2.0",
+        "generator": "COLLADA2GLTF",
+        "hasAnimations": false,
+        "hasMaterials": true,
+        "hasMorphTargets": false,
+        "hasSkins": false,
+        "hasTextures": false,
+        "hasDefaultScene": true,
+        "primitivesCount": 1,
+        "maxAttributesUsed": 2
+    }
+}

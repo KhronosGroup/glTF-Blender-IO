@@ -14,6 +14,7 @@
 
 import bpy
 import typing
+import os
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
@@ -113,8 +114,10 @@ def __get_image_data(sockets_or_slots):
             else:
                 pixels = result.shader_node.image.pixels
 
+            file_name = os.path.splitext(result.shader_node.image.name)[0]
+
             image_data = gltf2_io_image_data.ImageData(
-                socket.node.name + "_" + socket.name,
+                file_name,
                 result.shader_node.image.size[0],
                 result.shader_node.image.size[1],
                 pixels)

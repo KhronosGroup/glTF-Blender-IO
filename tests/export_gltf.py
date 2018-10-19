@@ -23,14 +23,19 @@ try:
     else:
         argv = []
 
+    extension = '.gltf'
     if '--glb' in argv:
-        path = os.path.splitext(bpy.data.filepath)[0] + ".glb"
-        path_parts = os.path.split(path)
-        glb_dir = os.path.join(path_parts[0], 'glb')
-        if not os.path.exists(glb_dir):
-            os.mkdir(glb_dir)
-        bpy.ops.export_scene.glb(filepath=os.path.join(glb_dir, path_parts[1]), export_experimental=('--experimental' in argv))
+        extension = '.glb'
+
+    path = os.path.splitext(bpy.data.filepath)[0] + extension
+    path_parts = os.path.split(path)
+    output_dir = os.path.join(path_parts[0], argv[0])
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    if extension == '.glb':
+        bpy.ops.export_scene.glb(filepath=os.path.join(output_dir, path_parts[1]), export_experimental=('--experimental' in argv))
     else:
-        bpy.ops.export_scene.gltf(filepath=os.path.splitext(bpy.data.filepath)[0] + ".gltf", export_experimental=('--experimental' in argv))
+        bpy.ops.export_scene.gltf(filepath=os.path.join(output_dir, path_parts[1]), export_experimental=('--experimental' in argv))
 except Exception as err:
+    print(err, file=sys.stderr)
     sys.exit(1)

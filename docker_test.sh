@@ -21,4 +21,5 @@ docker run -t gltf-io-test npm run test
 ID=$(docker ps -l -q)
 docker cp $ID:/tests/mochawesome-report/ . 
 docker cp $ID:/tests/scenes/ .
+docker cp $ID:/tests/roundtrip/ .
 docker rm $ID

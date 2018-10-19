@@ -98,6 +98,8 @@ class BlenderSkin():
     @staticmethod
     def create_vertex_groups(gltf, skin_id):
         pyskin = gltf.data.skins[skin_id]
+        if not hasattr(pyskin, "node_id"): # some skin can be not used
+            return
         obj = bpy.data.objects[gltf.data.nodes[pyskin.node_id].blender_object]
         for bone in pyskin.joints:
             obj.vertex_groups.new(gltf.data.nodes[bone].blender_bone_name)
@@ -105,6 +107,8 @@ class BlenderSkin():
     @staticmethod
     def assign_vertex_groups(gltf, skin_id):
         pyskin = gltf.data.skins[skin_id]
+        if not hasattr(pyskin, "node_id"): # some skin can be not used
+            return
         node = gltf.data.nodes[pyskin.node_id]
         obj = bpy.data.objects[node.blender_object]
 

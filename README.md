@@ -34,3 +34,7 @@ Until this project is ready, please use the separate [export](https://github.com
 Installation
 ------------
 The Khronos glTF 2.0 importer and exporter is not available in the *Add-ons* tab by default, and must be installed manually by copying the `addons/io_scene_gltf2` folder into the `scripts/addons/` directory of the Blender installation, then enabling it under the *Add-ons* tab.
+
+Tests
+-----
+[![CircleCI](https://circleci.com/gh/KhronosGroup/glTF-Blender-IO.svg?style=svg)](https://circleci.com/gh/KhronosGroup/glTF-Blender-IO)
