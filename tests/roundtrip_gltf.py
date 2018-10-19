@@ -13,13 +13,34 @@
 # limitations under the License.
 
 import bpy
+import os
 import sys
 
 try:
     argv = sys.argv
-    argv = argv[argv.index("--") + 1:]  # get all args after "--"
+    if "--" in argv:
+        argv = argv[argv.index("--") + 1:]  # get all args after "--"
+    else:
+        argv = []
+
+    filepath = argv[0]
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=argv[0])
+
+    extension = '.gltf'
+    if '--glb' in argv:
+        extension = '.glb'
+
+    path = os.path.splitext(filepath)[0] + extension
+    path_parts = os.path.split(path)
+    output_dir = os.path.join(path_parts[0], argv[1])
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    if extension == '.glb':
+        bpy.ops.export_scene.glb(filepath=os.path.join(output_dir, path_parts[1]), export_experimental=('--experimental' in argv))
+    else:
+        bpy.ops.export_scene.gltf(filepath=os.path.join(output_dir, path_parts[1]), export_experimental=('--experimental' in argv))
 except Exception as err:
+    print(err, file=sys.stderr)
     sys.exit(1)

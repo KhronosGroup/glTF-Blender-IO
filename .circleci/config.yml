@@ -22,7 +22,13 @@ jobs:
           name: Store Scenes
           when: always
           command: cp -r tests/scenes /tmp/scenes
+      - run:
+          name: Store glTFs
+          when: always
+          command: cp -r tests/roundtrip /tmp/roundtrip
       - store_artifacts:
           path: /tmp/report
       - store_artifacts:
           path: /tmp/scenes
+      - store_artifacts:
+          path: /tmp/roundtrip

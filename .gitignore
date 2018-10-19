@@ -3,3 +3,4 @@ addons/.idea/
 addons/io_scene_gltf2/.idea/
 mochawesome-report
 scenes/
+roundtrip/
