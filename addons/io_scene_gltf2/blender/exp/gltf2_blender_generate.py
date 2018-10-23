@@ -1132,13 +1132,11 @@ def generate_meshes(operator,
 
             indices = internal_primitive['indices']
 
-            componentType = GLTF_COMPONENT_TYPE_UNSIGNED_BYTE
+            componentType = GLTF_COMPONENT_TYPE_UNSIGNED_SHORT
 
             max_index = max(indices)
 
-            if max_index < 256:
-                componentType = GLTF_COMPONENT_TYPE_UNSIGNED_BYTE
-            elif max_index < 65536:
+            if max_index < 65536:
                 componentType = GLTF_COMPONENT_TYPE_UNSIGNED_SHORT
             elif max_index < 4294967296:
                 componentType = GLTF_COMPONENT_TYPE_UNSIGNED_INT
