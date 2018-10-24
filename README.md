@@ -15,7 +15,11 @@ Developed by [UX3D](http://www.ux3d.io/) and [Julien Duroure](http://juliendurou
 
 Introduction
 ------------
-This is the official Khronos Blender glTF 2.0 importer and exporter. Goal is to merge and maintain the Blender glTF importer and exporter in one place. Furthermore, the shared code base is organised in Blender dependent and independent packages:  
+This is the official Khronos Blender glTF 2.0 importer and exporter.  
+
+Major change is, that the Blender glTF importer and exporter code is maintained in one place. Installation is simpler and the user experience regarding the menu functionality the same. On the development side, synergies do exist by sharing common code between the importer and exporter. Having the solution in one place, also allows importing and exporting of glTF files like loading and saving files.
+
+Furthermore, the shared code base is organised in Blender dependent and independent packages:  
 
 ![Packages](docs/packages.png)  
 Package organisation  
