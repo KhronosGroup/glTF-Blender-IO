@@ -35,6 +35,17 @@ Installation
 ------------
 The Khronos glTF 2.0 importer and exporter is not available in the *Add-ons* tab by default, and must be installed manually by copying the `addons/io_scene_gltf2` folder into the `scripts/addons/` directory of the Blender installation, then enabling it under the *Add-ons* tab.
 
-Tests
------
+Continuous Integration Tests
+----------------------------
+
+Several companies, individuals and the whole glTF community are working on the Blender glTF I/O. More functionality is added, and bugs are fixed daily.  
+  
+Hobbyists and professionals are using the Blender glTF I/O and do rely on its reliability and stability for their daily work.  
+  
+Because of this, the Blender glTF I/O does have continuous integration tests enabled. After each commit, following tests are run:  
+-	Export Blender scene and validate using the glTF validator  
+-	Round trip import-export and compare glTF validator results  
+
+These basic sanity checks do improve the maturity of the Blender glTF I/O.  
+
 [![CircleCI](https://circleci.com/gh/KhronosGroup/glTF-Blender-IO.svg?style=svg)](https://circleci.com/gh/KhronosGroup/glTF-Blender-IO)
