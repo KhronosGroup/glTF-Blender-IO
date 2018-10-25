@@ -14,23 +14,24 @@
 
 
 import bpy
+import mathutils
+import math
 import typing
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_animate
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.blender.exp import gltf2_blender_utils
+from io_scene_gltf2.blender.com import gltf2_blender_conversion
 from io_scene_gltf2.io.com import gltf2_io_debug
+from io_scene_gltf2.blender.exp import gltf2_blender_extract
+
 
 @cached
 def gather_animation_sampler(action_group: bpy.types.ActionGroup,
                              blender_object: bpy.types.Object,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
-    if not __filter_sampler(action_group, export_settings):
-        raise RuntimeError("The animation sampler could not be created")
-
     return gltf2_io.AnimationSampler(
         extensions=__gather_extensions(action_group, blender_object, export_settings),
         extras=__gather_extras(action_group, blender_object, export_settings),
@@ -38,13 +39,6 @@ def gather_animation_sampler(action_group: bpy.types.ActionGroup,
         interpolation=__gather_interpolation(action_group, blender_object, export_settings),
         output=__gather_output(action_group, blender_object, export_settings)
     )
-
-
-def __filter_sampler(action_group: bpy.types.ActionGroup,
-                     blender_object: bpy.types.Object,
-                     export_settings
-                     ) -> bool:
-    return True
 
 
 def __gather_extensions(action_group: bpy.types.ActionGroup,
@@ -66,22 +60,18 @@ def __gather_input(action_group: bpy.types.ActionGroup,
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes"""
-    # TODO: replace with cleaner code, once the old exporter is removed
-    interpolation = ""
-    if __needs_baking(action_group, blender_object, export_settings):
-        interpolation = "CONVERSION_NEEDED"
-    # Extract time codes from keyframes
-    keys = gltf2_blender_animate.animate_gather_keys(export_settings, action_group.channels, interpolation)
+    keyframes = __gather_keyframes(action_group, export_settings)
+    times = [k.seconds for k in keyframes]
 
     return gltf2_io.Accessor(
-        buffer_view=gltf2_io_binary_data.BinaryData.from_list(keys, gltf2_io_constants.DataType.Scalar),
+        buffer_view=gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float),
         byte_offset=None,
         component_type=gltf2_io_constants.ComponentType.Float,
-        count=len(keys),
+        count=len(times),
         extensions=None,
         extras=None,
-        max=max(keys),
-        min=min(keys),
+        max=[max(times)],
+        min=[min(times)],
         name=None,
         normalized=None,
         sparse=None,
@@ -93,24 +83,17 @@ def __gather_interpolation(action_group: bpy.types.ActionGroup,
                            blender_object: bpy.types.Object,
                            export_settings
                            ) -> str:
-    if __needs_baking(action_group, blender_object, export_settings):
-        return 'LINEAR'
-
+    if __needs_baking(action_group, export_settings):
+        return 'STEP'
 
     blender_keyframe = action_group.channels[0].keyframe_points[0]
 
-    # Select the interpolation method. Any unsupported method will fallback to LINEAR
-    interpolation_mapping = {
+    # Select the interpolation method. Any unsupported method will fallback to STEP
+    return {
         "BEZIER": "CUBICSPLINE",
         "LINEAR": "LINEAR",
         "CONSTANT": "STEP"
-    }
-    if blender_keyframe.interpolation not in interpolation_mapping:
-        gltf2_io_debug.print_console(
-            "Unsupported animation interpolation method: {}. Falling back to linear".format(blender_keyframe.interpolation)
-        )
-        return "LINEAR"
-
+    }[blender_keyframe.interpolation]
 
 
 def __gather_output(action_group: bpy.types.ActionGroup,
@@ -118,24 +101,40 @@ def __gather_output(action_group: bpy.types.ActionGroup,
                     export_settings
                     ) -> gltf2_io.Accessor:
     """The data of the keyframes"""
-    interpolation = ""
-    if __needs_baking(action_group, blender_object, export_settings):
-        interpolation = "CONVERSION_NEEDED"
-    # Extract time codes from keyframes
-    keys = gltf2_blender_animate.animate_gather_keys(export_settings, action_group.channels, interpolation)
+    keyframes = __gather_keyframes(action_group, export_settings)
 
-    # Iterate all keyframes and evaluate the properties
-    values = typing.List[float]()
-    for key in keys:
-        values += __evaluate_animation(key, action_group, blender_object)
+    # TODO: support bones coordinate system
+    transform = mathutils.Matrix.Identity(4)
+
+    target = action_group.channels[0].data_path.split('.')[-1]
+    transform_func = {
+        "location": __transform_location,
+        "rotation_axis_angle": __transform_rotation,
+        "rotation_euler": __transform_rotation,
+        "rotation_quaternion": __transform_rotation,
+        "scale": __transform_scale,
+        "value": transform_value
+    }.get(target)
+
+    if transform_func is None:
+        raise NotImplementedError("The specified animation target {} is not currently supported by the glTF exporter".format(target))
+
+    values = []
+    for keyframe in keyframes:
+        keyframe_value = list(transform_func(keyframe.value, transform))
+        if keyframe.in_tangent is not None:
+            keyframe_value = list(transform_func(keyframe.in_tangent, transform)) + keyframe_value
+        if keyframe.out_tangent is not None:
+            keyframe_value = keyframe_value + list(transform_func(keyframe.out_tangent, transform))
+        values += keyframe_value
 
     component_type = gltf2_io_constants.ComponentType.Float
-    data_type = gltf2_io_constants.DataType.vec_type_from_num(len(action_group.channels))
+    data_type = gltf2_io_constants.DataType.vec_type_from_num(len(keyframes[0].value))
     return gltf2_io.Accessor(
-        buffer_view=gltf2_io_binary_data.BinaryData.from_list(values, data_type),
+        buffer_view=gltf2_io_binary_data.BinaryData.from_list(values, component_type),
         byte_offset=None,
         component_type=component_type,
-        count=len(values),
+        count=len(values) // gltf2_io_constants.DataType.num_elements(data_type),
         extensions=None,
         extras=None,
         max=None,
@@ -148,32 +147,110 @@ def __gather_output(action_group: bpy.types.ActionGroup,
 
 
 def __needs_baking(action_group: bpy.types.ActionGroup,
-                   blender_object: bpy.types.Object,
                    export_settings
                    ) -> bool:
     """
     Some blender animations need to be baked as they can not directly be expressed in glTF
     """
-    if blender_object.type == "ARMATURE":
-        return True
+    # if blender_object.type == "ARMATURE":
+    #     return True
 
     if export_settings['gltf_force_sampling']:
+        return True
+
+    interpolation = action_group.channels[0].keyframe_points[0].interpolation
+    if interpolation not in ["BEZIER", "LINEAR", "CONSTANT"]:
+        return True
+
+    if any(any(k.interpolation != interpolation for k in c.keyframe_points) for c in action_group.channels):
+        # There are different interpolation methods in one action group
+        return True
+
+    def all_equal(lst): return lst[1:] == lst[:-1]
+    if not all(all_equal( [k.co[0] for k in c.keyframe_points] ) for c in action_group.channels):
+        # The channels have differently located keyframes
         return True
 
     return False
 
 
-def __evaluate_animation(key,
-                         action_group: bpy.types.ActionGroup,
-                         blender_object: bpy.types.Object
-                         ) -> typing.List[float]:
-    def action_group_target(action_group: bpy.types.ActionGroup):
-        return action_group.channels[0].data_path.split(".")[-1]
+# TODO: If blender ever moves to python 3.7 this should be a dataclass
+class Keyframe:
+    def __init__(self):
+        self.seconds = 0.0
+        self.value = None
+        self.in_tangent = None
+        self.out_tangent = None
 
-    return {
-        "location": __evaluate_location
-    }[action_group_target(action_group)](key, action_group)
+    @staticmethod
+    def from_action_group(action_group: bpy.types.ActionGroup, time: float):
+        key = Keyframe()
+        key.seconds = time / bpy.context.scene.render.fps
+        values = [c.evaluate(time) for c in action_group.channels]
+        key.value = gltf2_blender_conversion.list_to_mathutils(values, action_group.channels[0].data_path)
+        return key
 
 
-def __evaluate_location(key, action_group: bpy.types.ActionGroup) -> typing.List[float]:
-    return []
+def __transform_location(location: mathutils.Vector, transform: mathutils.Matrix = mathutils.Matrix.Identity(4)) -> mathutils.Vector:
+    m = mathutils.Matrix.Translation(location)
+    m = transform * m
+    return m.to_translation()
+
+
+def __transform_rotation(rotation: mathutils.Quaternion, transform: mathutils.Matrix = mathutils.Matrix.Identity(4)) -> mathutils.Quaternion:
+    m = rotation.to_matrix().to_4x4()
+    m = transform * m
+    return m.to_quaternion()
+
+
+def __transform_scale(scale: mathutils.Vector, transform: mathutils.Matrix = mathutils.Matrix.Identity(4)) -> mathutils.Vector:
+    m = mathutils.Matrix()
+    m[0][0] = scale.x
+    m[1][1] = scale.y
+    m[2][2] = scale.z
+    m = transform * m
+    return m.to_scale()
+
+
+def transform_value(value: mathutils.Vector, transform: mathutils.Matrix = mathutils.Matrix.Identity(4)) -> mathutils.Vector:
+    return value
+
+
+# cache for performance reasons
+@cached
+def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
+        -> typing.List[Keyframe]:
+    """
+    Convert the blender action groups' fcurves to keyframes for use in glTF
+    """
+
+    # Find the start and end of the whole action group
+    start = min([channel.range()[0] for channel in action_group.channels])
+    end = max([channel.range()[1] for channel in action_group.channels])
+
+    keyframes = []
+    if __needs_baking(action_group, export_settings):
+        # Bake the animation, by evaluating it at a high frequency
+        time = start
+        # TODO: make user controllable
+        step = 1.0 / bpy.context.scene.render.fps
+        while time <= end:
+            key = Keyframe.from_action_group(action_group, time)
+            keyframes.append(key)
+            time += step
+    else:
+        # Just use the keyframes as they are specified in blender
+        times = [ keyframe.co[0] for keyframe in action_group.channels[0].keyframe_points]
+        for i, time in enumerate(times):
+            key = Keyframe.from_action_group(action_group, time)
+            # compute tangents for cubic spline interpolation
+            if action_group.channels[0].keyframe_points[0].interpolation == "BEZIER":
+                if time != start:
+                    in_tangent = [3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]) / (time - times[i-1]) for c in action_group.channels]
+                    key.in_tangent = gltf2_blender_conversion.list_to_mathutils(in_tangent, action_group.channels[0].data_path)
+                if time != end:
+                    out_tangent = [3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (times[i+1] - time) for c in action_group.channels]
+                    key.out_tangent = gltf2_blender_conversion.list_to_mathutils(out_tangent, action_group.channels[0].data_path)
+            keyframes.append(key)
+
+    return keyframes

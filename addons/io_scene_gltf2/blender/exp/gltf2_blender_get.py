@@ -30,6 +30,11 @@ from ...io.exp.gltf2_io_get import *
 # Functions
 #
 
+
+def get_animation_target(action_group: bpy.types.ActionGroup):
+    return action_group.channels[0].data_path.split('.')[-1]
+
+
 def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
     """
     For a given material input name, retrieve the corresponding node tree socket or blender render texture slot

@@ -157,6 +157,18 @@ class GlTF2Exporter:
         if active:
             self.__gltf.scene = scene_num
 
+    def add_animation(self, animation: gltf2_io.Animation):
+        """
+        Add an animation to the glTF.
+        :param animation: glTF animation, with python style references (names)
+        :return: nothing
+        """
+        if self.__finalized:
+            raise RuntimeError("Tried to add animation to finalized glTF file")
+
+        self.__traverse(animation)
+
+
     def __to_reference(self, property):
         """
         Append a child of root property to its respective list and return a reference into said list.

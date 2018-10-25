@@ -25,12 +25,12 @@ def gather_gltf2(export_settings):
     :return: list of scene graphs to be added to the glTF export
     """
     scenes = []
-    #animations = []  # unfortunately animations in gltf2 are just as 'root' as scenes.
+    animations = []  # unfortunately animations in gltf2 are just as 'root' as scenes.
     for blender_scene in bpy.data.scenes:
         scenes.append(__gather_scene(blender_scene, export_settings))
-        #animations += __gather_animations(blender_scene, export_settings)
+        animations += __gather_animations(blender_scene, export_settings)
 
-    return scenes
+    return scenes, animations
 
 
 @cached
@@ -48,9 +48,10 @@ def __gather_scene(blender_scene, export_settings):
             if node is not None:
                 scene.nodes.append(node)
 
+
     # TODO: animations
     # TODO: lights
-     # TODO: asset?
+    # TODO: asset?
 
     return scene
 

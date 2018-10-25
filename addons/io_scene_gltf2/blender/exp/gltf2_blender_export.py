@@ -105,12 +105,15 @@ def save(operator,
     )
 
     if export_settings['gltf_experimental']:
-        scenes = gltf2_blender_gather.gather_gltf2(export_settings)
+        scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
         if not export_settings['gltf_copyright']:
             export_settings['gltf_copyright'] = None
         exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(copyright=export_settings['gltf_copyright'])
         for scene in scenes:
             exporter.add_scene(scene)
+        for animation in animations:
+            exporter.add_animation(animation)
+
         if export_settings['gltf_format'] == 'ASCII':
             exporter.finalize_buffer(export_settings['gltf_filedirectory'], export_settings['gltf_binaryfilename'])
         else:

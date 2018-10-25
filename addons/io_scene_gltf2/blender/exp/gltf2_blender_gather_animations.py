@@ -19,6 +19,7 @@ import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_samplers
 
 
 def gather_animations(blender_object: bpy.types.Object, export_settings) -> typing.List[gltf2_io.Animation]:
@@ -32,7 +33,7 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
     if blender_object.animation_data is None:
         return []
 
-    animations = typing.List[gltf2_io.Animation]()
+    animations = []
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object)
@@ -46,43 +47,69 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
     return animations
 
 
-def __gather_animation(blender_object: bpy.types.Object, blender_action: bpy.types.Action, export_settings):
-    if not __filter_animation(blender_object, blender_action, export_settings):
+def __gather_animation(blender_action: bpy.types.Action,
+                       blender_object: bpy.types.Object,
+                       export_settings
+                       ) -> typing.Optional[gltf2_io.Animation]:
+    if not __filter_animation(blender_action, blender_object, export_settings):
         return None
 
     animation = gltf2_io.Animation(
-        channels=__gather_channels(blender_object, blender_action, export_settings),
-        extensions=__gather_extensions(blender_object, blender_action, export_settings),
-        extras=__gather_extras(blender_object, blender_action, export_settings),
-        name=__gather_name(blender_object, blender_action, export_settings),
-        samplers=__gather_samplers(blender_object, blender_action, export_settings)
+        channels=__gather_channels(blender_action, blender_object, export_settings),
+        extensions=__gather_extensions(blender_action, blender_object, export_settings),
+        extras=__gather_extras(blender_action, blender_object, export_settings),
+        name=__gather_name(blender_action, blender_object, export_settings),
+        samplers=__gather_samplers(blender_action, blender_object, export_settings)
     )
 
+    # To allow reuse of samplers in one animation,
+    __link_samplers(animation, export_settings)
 
-def __filter_animation(blender_object, blender_action, export_settings) -> bool:
+    return animation
+
+
+def __filter_animation(blender_action: bpy.types.Action,
+                       blender_object: bpy.types.Object,
+                       export_settings
+                       ) -> bool:
     if blender_action.users == 0:
         return False
 
     return True
 
 
-def __gather_channels(blender_object, blender_action, export_settings):
+def __gather_channels(blender_action: bpy.types.Action,
+                      blender_object: bpy.types.Object,
+                      export_settings
+                      ) -> typing.List[gltf2_io.AnimationChannel]:
     return gltf2_blender_gather_animation_channels.gather_animation_channels(blender_object, blender_action, export_settings)
 
 
-def __gather_extensions(blender_object, blender_action, export_settings):
+def __gather_extensions(blender_action: bpy.types.Action,
+                        blender_object: bpy.types.Object,
+                        export_settings
+                        ) -> typing.Any:
     return None
 
 
-def __gather_extras(blender_object, blender_action, export_settings):
+def __gather_extras(blender_action: bpy.types.Action,
+                    blender_object: bpy.types.Object,
+                    export_settings
+                    ) -> typing.Any:
     return None
 
 
-def __gather_name(blender_object, blender_action, export_settings):
-    return None
+def __gather_name(blender_action: bpy.types.Action,
+                  blender_object: bpy.types.Object,
+                  export_settings
+                  ) -> typing.Optional[str]:
+    return blender_action.name
 
 
-def __gather_samplers(blender_object, blender_action, export_settings):
+def __gather_samplers(blender_action: bpy.types.Action,
+                      blender_object: bpy.types.Object,
+                      export_settings
+                      ) -> typing.List[gltf2_io.AnimationSampler]:
     # We need to gather the samplers after gathering all channels --> populate this list in __link_samplers
     return []
 
@@ -97,11 +124,22 @@ def __link_samplers(animation: gltf2_io.Animation, export_settings):
     :return:
     """
 
+    # TODO: move this to some util module and update gltf2 exporter also
+    T = typing.TypeVar('T')
+    def __append_unique_and_get_index(l: typing.List[T], item: T):
+        if item in l:
+            return l.index(item)
+        else:
+            index = len(l)
+            l.append(item)
+            return index
+
+    for i, channel in enumerate(animation.channels):
+        animation.channels[i].sampler = __append_unique_and_get_index(animation.samplers, channel.sampler)
 
 
-
-
-def __get_blender_actions(blender_object: bpy.types.Object) -> typing.List[bpy.types.Action]:
+def __get_blender_actions(blender_object: bpy.types.Object
+                          ) -> typing.List[bpy.types.Action]:
     blender_actions = []
 
     # Collect active action.
@@ -119,119 +157,3 @@ def __get_blender_actions(blender_object: bpy.types.Object) -> typing.List[bpy.t
     blender_actions = list(set(blender_actions))
 
     return blender_actions
-
-
-def __process_object_animations(blender_object, export_settings, action):
-    correction_matrix_local = blender_object.matrix_parent_inverse
-    matrix_basis = mathutils.Matrix.Identity(4)
-
-    #
-
-    if export_settings['gltf_bake_skins']:
-        blender_action = bake_action(export_settings, blender_object, blender_action)
-
-    #
-
-    if blender_action.name not in animations:
-        animations[blender_action.name] = {
-            'name': blender_action.name,
-            'channels': [],
-            'samplers': []
-        }
-
-    channels = animations[blender_action.name]['channels']
-    samplers = animations[blender_action.name]['samplers']
-
-    # Add entry to joint cache. Current action may not need skinnning,
-    # but there are too many places to check for and add it later.
-    gltf_joint_cache = export_settings['gltf_joint_cache']
-    if not gltf_joint_cache.get(blender_action.name):
-        gltf_joint_cache[blender_action.name] = {}
-
-    #
-
-    generate_animations_parameter(
-        operator,
-        context,
-        export_settings,
-        glTF,
-        blender_action,
-        channels,
-        samplers,
-        blender_object.name,
-        None,
-        blender_object.rotation_mode,
-        correction_matrix_local,
-        matrix_basis,
-        False
-    )
-
-    if export_settings['gltf_skins']:
-        if blender_object.type == 'ARMATURE' and len(blender_object.pose.bones) > 0:
-
-            #
-
-            if export_settings['gltf_yup']:
-                axis_basis_change = mathutils.Matrix(
-                    ((1.0, 0.0, 0.0, 0.0),
-                     (0.0, 0.0, 1.0, 0.0),
-                     (0.0, -1.0, 0.0, 0.0),
-                     (0.0, 0.0, 0.0, 1.0))
-                )
-            else:
-                axis_basis_change = mathutils.Matrix.Identity(4)
-
-            # Precalculate joint animation data.
-
-            start, end = compute_action_range(export_settings, [blender_action])
-
-            # Iterate over frames in export range
-            for frame in range(int(start), int(end) + 1):
-                bpy.context.scene.frame_set(frame)
-
-                # Iterate over object's bones
-                for blender_bone in blender_object.pose.bones:
-
-                    correction_matrix_local, matrix_basis = compute_bone_matrices(
-                        axis_basis_change,
-                        blender_bone,
-                        blender_object,
-                        export_settings
-                    )
-
-                    if not gltf_joint_cache[blender_action.name].get(blender_bone.name):
-                        gltf_joint_cache[blender_action.name][blender_bone.name] = {}
-
-                    matrix = correction_matrix_local * matrix_basis
-
-                    tmp_location, tmp_rotation, tmp_scale = matrix.decompose()
-
-                    gltf_joint_cache[blender_action.name][blender_bone.name][float(frame)] = [tmp_location,
-                                                                                              tmp_rotation,
-                                                                                              tmp_scale]
-
-            #
-
-            for blender_bone in blender_object.pose.bones:
-                correction_matrix_local, matrix_basis = compute_bone_matrices(
-                    axis_basis_change,
-                    blender_bone,
-                    blender_object,
-                    export_settings
-                )
-
-                generate_animations_parameter(
-                    operator,
-                    context,
-                    export_settings,
-                    glTF,
-                    blender_action,
-                    channels,
-                    samplers,
-                    blender_object.name,
-                    blender_bone.name,
-                    blender_bone.rotation_mode,
-                    correction_matrix_local,
-                    matrix_basis,
-                    False
-                )
