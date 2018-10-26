@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import typing
-import math
 from mathutils import Matrix, Vector, Quaternion, Euler
 
 class Conversion():
@@ -35,24 +33,3 @@ class Conversion():
     @staticmethod
     def quaternion_gltf_to_blender(q):
         return Quaternion([q[3], q[0], q[1], q[2]])
-
-
-def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Union[Vector, Quaternion, Euler]:
-    target = data_path.split('.')[-1]
-
-    if target == 'location':
-        return Vector(values)
-    if target == 'rotation_axis_angle':
-        angle = values[0]
-        axis = values[1:]
-        return Quaternion(axis, math.radians(angle))
-    if target == 'rotation_euler':
-        return Euler(values).to_quaternion()
-    if target == 'rotation_quaternion':
-        return Quaternion(values)
-    if target == 'scale':
-        return Vector(values)
-    if target == 'value':
-        return Vector(values)
-
-    return Vector(values)

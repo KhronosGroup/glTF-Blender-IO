@@ -15,16 +15,14 @@
 
 import bpy
 import mathutils
-import math
+
 import typing
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.blender.exp import gltf2_blender_animate
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.blender.com import gltf2_blender_conversion
+from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.blender.exp import gltf2_blender_extract
 
 
 @cached
@@ -106,26 +104,24 @@ def __gather_output(action_group: bpy.types.ActionGroup,
     # TODO: support bones coordinate system
     transform = mathutils.Matrix.Identity(4)
 
-    target = action_group.channels[0].data_path.split('.')[-1]
-    transform_func = {
-        "location": __transform_location,
-        "rotation_axis_angle": __transform_rotation,
-        "rotation_euler": __transform_rotation,
-        "rotation_quaternion": __transform_rotation,
-        "scale": __transform_scale,
-        "value": transform_value
-    }.get(target)
-
-    if transform_func is None:
-        raise NotImplementedError("The specified animation target {} is not currently supported by the glTF exporter".format(target))
+    target_datapath = action_group.channels[0].data_path
 
     values = []
     for keyframe in keyframes:
-        keyframe_value = list(transform_func(keyframe.value, transform))
+        value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform)
+        if export_settings['gltf_yup']:
+            value = gltf2_blender_math.swizzle_yup(value, target_datapath)
+        keyframe_value = gltf2_blender_math.mathutils_to_gltf(value)
         if keyframe.in_tangent is not None:
-            keyframe_value = list(transform_func(keyframe.in_tangent, transform)) + keyframe_value
+            in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform)
+            if export_settings['gltf_yup']:
+                in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
+            keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value
         if keyframe.out_tangent is not None:
-            keyframe_value = keyframe_value + list(transform_func(keyframe.out_tangent, transform))
+            out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform)
+            if export_settings['gltf_yup']:
+                out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
+            keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)
         values += keyframe_value
 
     component_type = gltf2_io_constants.ComponentType.Float
@@ -174,7 +170,6 @@ def __needs_baking(action_group: bpy.types.ActionGroup,
     return False
 
 
-# TODO: If blender ever moves to python 3.7 this should be a dataclass
 class Keyframe:
     def __init__(self):
         self.seconds = 0.0
@@ -187,33 +182,8 @@ class Keyframe:
         key = Keyframe()
         key.seconds = time / bpy.context.scene.render.fps
         values = [c.evaluate(time) for c in action_group.channels]
-        key.value = gltf2_blender_conversion.list_to_mathutils(values, action_group.channels[0].data_path)
+        key.value = gltf2_blender_math.list_to_mathutils(values, action_group.channels[0].data_path)
         return key
-
-
-def __transform_location(location: mathutils.Vector, transform: mathutils.Matrix = mathutils.Matrix.Identity(4)) -> mathutils.Vector:
-    m = mathutils.Matrix.Translation(location)
-    m = transform * m
-    return m.to_translation()
-
-
-def __transform_rotation(rotation: mathutils.Quaternion, transform: mathutils.Matrix = mathutils.Matrix.Identity(4)) -> mathutils.Quaternion:
-    m = rotation.to_matrix().to_4x4()
-    m = transform * m
-    return m.to_quaternion()
-
-
-def __transform_scale(scale: mathutils.Vector, transform: mathutils.Matrix = mathutils.Matrix.Identity(4)) -> mathutils.Vector:
-    m = mathutils.Matrix()
-    m[0][0] = scale.x
-    m[1][1] = scale.y
-    m[2][2] = scale.z
-    m = transform * m
-    return m.to_scale()
-
-
-def transform_value(value: mathutils.Vector, transform: mathutils.Matrix = mathutils.Matrix.Identity(4)) -> mathutils.Vector:
-    return value
 
 
 # cache for performance reasons
@@ -256,7 +226,7 @@ def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
                         3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]) / (time - times[i - 1])
                         for c in action_group.channels
                     ]
-                key.in_tangent = gltf2_blender_conversion.list_to_mathutils(in_tangent, action_group.channels[0].data_path)
+                key.in_tangent = gltf2_blender_math.list_to_mathutils(in_tangent, action_group.channels[0].data_path)
                 # Construct the out tangent
                 if time == end:
                     # end out-tangent has zero length
@@ -267,7 +237,7 @@ def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
                         3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (times[i+1] - time)
                         for c in action_group.channels
                     ]
-                key.out_tangent = gltf2_blender_conversion.list_to_mathutils(out_tangent, action_group.channels[0].data_path)
+                key.out_tangent = gltf2_blender_math.list_to_mathutils(out_tangent, action_group.channels[0].data_path)
 
             keyframes.append(key)
 
