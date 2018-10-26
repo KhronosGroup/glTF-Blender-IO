@@ -19,6 +19,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animations
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
+
 def gather_gltf2(export_settings):
     """
     Gather glTF properties from the current state of blender
@@ -48,15 +49,14 @@ def __gather_scene(blender_scene, export_settings):
             if node is not None:
                 scene.nodes.append(node)
 
-
-    # TODO: animations
     # TODO: lights
     # TODO: asset?
 
     return scene
 
 
-@cached
 def __gather_animations(blender_scene, export_settings):
+    animations = []
     for blender_object in blender_scene.objects:
-        return gltf2_blender_gather_animations.gather_animations(blender_object, export_settings)
+        animations += gltf2_blender_gather_animations.gather_animations(blender_object, export_settings)
+    return animations

@@ -167,7 +167,7 @@ def __needs_baking(action_group: bpy.types.ActionGroup,
         return True
 
     def all_equal(lst): return lst[1:] == lst[:-1]
-    if not all(all_equal( [k.co[0] for k in c.keyframe_points] ) for c in action_group.channels):
+    if not all(all_equal(key_times) for key_times in zip([[k.co[0] for k in c.keyframe_points] for c in action_group.channels])):
         # The channels have differently located keyframes
         return True
 
@@ -243,14 +243,32 @@ def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
         times = [ keyframe.co[0] for keyframe in action_group.channels[0].keyframe_points]
         for i, time in enumerate(times):
             key = Keyframe.from_action_group(action_group, time)
+
             # compute tangents for cubic spline interpolation
             if action_group.channels[0].keyframe_points[0].interpolation == "BEZIER":
-                if time != start:
-                    in_tangent = [3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]) / (time - times[i-1]) for c in action_group.channels]
-                    key.in_tangent = gltf2_blender_conversion.list_to_mathutils(in_tangent, action_group.channels[0].data_path)
-                if time != end:
-                    out_tangent = [3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (times[i+1] - time) for c in action_group.channels]
-                    key.out_tangent = gltf2_blender_conversion.list_to_mathutils(out_tangent, action_group.channels[0].data_path)
+                # Construct the in tangent
+                if time == start:
+                    # start in-tangent has zero length
+                    in_tangent = [ 0.0 for _ in action_group.channels]
+                else:
+                    # otherwise construct a in tangent from the keyframes control points
+                    in_tangent = [
+                        3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]) / (time - times[i - 1])
+                        for c in action_group.channels
+                    ]
+                key.in_tangent = gltf2_blender_conversion.list_to_mathutils(in_tangent, action_group.channels[0].data_path)
+                # Construct the out tangent
+                if time == end:
+                    # end out-tangent has zero length
+                    out_tangent = [0.0 for _ in action_group.channels]
+                else:
+                    # otherwise construct a in tangent from the keyframes control points
+                    out_tangent = [
+                        3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (times[i+1] - time)
+                        for c in action_group.channels
+                    ]
+                key.out_tangent = gltf2_blender_conversion.list_to_mathutils(out_tangent, action_group.channels[0].data_path)
+
             keyframes.append(key)
 
     return keyframes
