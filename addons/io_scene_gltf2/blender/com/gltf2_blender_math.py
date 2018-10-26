@@ -132,11 +132,7 @@ def transform_scale(scale: Vector, transform: Matrix = Matrix.Identity(4)) -> Ve
     m[2][2] = scale.z
     m = transform * m
 
-    scale = m.to_scale()
-    # # scale[0] = scale[0]
-    # scale[1] = -scale[1]
-    # # scale[2] = -scale[2]
-    return scale
+    return m.to_scale()
 
 
 def transform_value(value: Vector, transform: Matrix = Matrix.Identity(4)) -> Vector:

@@ -171,20 +171,58 @@ def __needs_baking(action_group: bpy.types.ActionGroup,
 
 
 class Keyframe:
-    def __init__(self):
-        self.seconds = 0.0
-        self.value = None
-        self.in_tangent = None
-        self.out_tangent = None
+    def __init__(self, action_group: bpy.types.ActionGroup, time: float):
+        self.seconds = time / bpy.context.scene.render.fps
+        self.__target = action_group.channels[0].data_path.split('.')[-1]
+        self.__indices = [c.array_index for c in action_group.channels]
 
-    @staticmethod
-    def from_action_group(action_group: bpy.types.ActionGroup, time: float):
-        key = Keyframe()
-        key.seconds = time / bpy.context.scene.render.fps
-        values = [c.evaluate(time) for c in action_group.channels]
-        key.value = gltf2_blender_math.list_to_mathutils(values, action_group.channels[0].data_path)
-        return key
+        # Data holders for virtual properties
+        self.__value = None
+        self.__in_tangent = None
+        self.__out_tangent = None
 
+    def __get_target_len(self):
+        return {
+            "location": 3,
+            "rotation_axis_angle": 4,
+            "rotation_euler": 3,
+            "rotation_quaternion": 4,
+            "scale": 3,
+            "value": 1
+        }.get(self.__target, 1)
+
+    def __set_indexed(self, value):
+        # Sometimes blender animations only reference a subset of components of a data target. Keyframe should always
+        # contain a complete Vector/ Quaternion
+        result = [0.0] * self.__get_target_len()
+        for i, v in zip(self.__indices, value):
+            result[i] = v
+        result = gltf2_blender_math.list_to_mathutils(result, self.__target)
+        return result
+
+    @property
+    def value(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
+        return self.__value
+
+    @value.setter
+    def value(self, value: typing.List[float]):
+        self.__value = self.__set_indexed(value)
+
+    @property
+    def in_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
+        return self.__in_tangent
+
+    @in_tangent.setter
+    def in_tangent(self, value: typing.List[float]):
+        self.__in_tangent = self.__set_indexed(value)
+
+    @property
+    def out_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
+        return self.__in_tangent
+
+    @out_tangent.setter
+    def out_tangent(self, value: typing.List[float]):
+        self.__out_tangent = self.__set_indexed(value)
 
 # cache for performance reasons
 @cached
@@ -205,40 +243,38 @@ def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
         # TODO: make user controllable
         step = 1.0 / bpy.context.scene.render.fps
         while time <= end:
-            key = Keyframe.from_action_group(action_group, time)
+            key = Keyframe(action_group, time)
+            key.value = [c.evaluate(time) for c in action_group.channels]
             keyframes.append(key)
             time += step
     else:
         # Just use the keyframes as they are specified in blender
         times = [ keyframe.co[0] for keyframe in action_group.channels[0].keyframe_points]
         for i, time in enumerate(times):
-            key = Keyframe.from_action_group(action_group, time)
-
+            key = Keyframe(action_group, time)
+            key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
             # compute tangents for cubic spline interpolation
             if action_group.channels[0].keyframe_points[0].interpolation == "BEZIER":
                 # Construct the in tangent
                 if time == start:
                     # start in-tangent has zero length
-                    in_tangent = [ 0.0 for _ in action_group.channels]
+                    key.in_tangent = [0.0 for _ in action_group.channels]
                 else:
                     # otherwise construct a in tangent from the keyframes control points
-                    in_tangent = [
+                    key.in_tangent = [
                         3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]) / (time - times[i - 1])
                         for c in action_group.channels
                     ]
-                key.in_tangent = gltf2_blender_math.list_to_mathutils(in_tangent, action_group.channels[0].data_path)
                 # Construct the out tangent
                 if time == end:
                     # end out-tangent has zero length
-                    out_tangent = [0.0 for _ in action_group.channels]
+                    key.out_tangent = [0.0 for _ in action_group.channels]
                 else:
                     # otherwise construct a in tangent from the keyframes control points
-                    out_tangent = [
+                    key.out_tangent = [
                         3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (times[i+1] - time)
                         for c in action_group.channels
                     ]
-                key.out_tangent = gltf2_blender_math.list_to_mathutils(out_tangent, action_group.channels[0].data_path)
-
             keyframes.append(key)
 
     return keyframes
