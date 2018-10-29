@@ -102,12 +102,12 @@ def __get_image_data(sockets_or_slots):
             # rudimentarily try follow the node tree to find the correct image data.
             channel = None
             for elem in result.path:
-                if isinstance(elem.to_node, bpy.types.ShaderNodeSeparateRGB):
+                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
                     channel = {
                         'R': 0,
                         'G': 1,
                         'B': 2
-                    }[elem.to_socket.name]
+                    }[elem.from_socket.name]
 
             if channel is not None:
                 pixels = [result.shader_node.image.pixels[channel]]

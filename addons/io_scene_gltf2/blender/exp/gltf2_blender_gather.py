@@ -50,7 +50,6 @@ def __gather_scene(blender_scene, export_settings):
                 scene.nodes.append(node)
 
     # TODO: lights
-    # TODO: asset?
 
     return scene
 
