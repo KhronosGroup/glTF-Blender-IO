@@ -17,6 +17,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 import mathutils
 
 
@@ -142,6 +143,4 @@ def __gather_name(blender_object, export_settings):
 
 def __gather_skeleton(blender_object, export_settings):
     # In the future support the result of https://github.com/KhronosGroup/glTF/pull/1195
-    return None
-
-
+    return None #gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)

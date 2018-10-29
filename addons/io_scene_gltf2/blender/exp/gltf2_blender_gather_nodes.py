@@ -44,6 +44,9 @@ def gather_node(blender_object, export_settings):
     )
     node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
 
+    if node.skin is not None:
+        node.children.append(node.skin.joints[0])
+        #node.skin.skeleton = node
     return node
 
 
@@ -82,7 +85,7 @@ def __gather_children(blender_object, export_settings):
 
 
 def __gather_extensions(blender_object, export_settings):
-    return {}
+    return None
 
 
 def __gather_extras(blender_object, export_settings):

@@ -101,13 +101,13 @@ def __gather_output(action_group: bpy.types.ActionGroup,
     """The data of the keyframes"""
     keyframes = __gather_keyframes(action_group, export_settings)
 
-    # TODO: support bones coordinate system
-    transform = mathutils.Matrix.Identity(4)
-
     target_datapath = action_group.channels[0].data_path
+
+    transform = mathutils.Matrix.Identity(4)
 
     values = []
     for keyframe in keyframes:
+        # Transform the data and extract
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform)
         if export_settings['gltf_yup']:
             value = gltf2_blender_math.swizzle_yup(value, target_datapath)
@@ -182,14 +182,19 @@ class Keyframe:
         self.__out_tangent = None
 
     def __get_target_len(self):
-        return {
+        length = {
             "location": 3,
             "rotation_axis_angle": 4,
             "rotation_euler": 3,
             "rotation_quaternion": 4,
             "scale": 3,
             "value": 1
-        }.get(self.__target, 1)
+        }.get(self.__target)
+
+        if length is None:
+            raise RuntimeError("Unknown target type {}".format(self.__target))
+
+        return length
 
     def __set_indexed(self, value):
         # Sometimes blender animations only reference a subset of components of a data target. Keyframe should always
@@ -224,6 +229,7 @@ class Keyframe:
     def out_tangent(self, value: typing.List[float]):
         self.__out_tangent = self.__set_indexed(value)
 
+
 # cache for performance reasons
 @cached
 def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
@@ -239,6 +245,7 @@ def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
     keyframes = []
     if __needs_baking(action_group, export_settings):
         # Bake the animation, by evaluating it at a high frequency
+        # TODO: maybe baking can also be done with FCurve.convert_to_samples
         time = start
         # TODO: make user controllable
         step = 1.0 / bpy.context.scene.render.fps
@@ -252,7 +259,9 @@ def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
         times = [ keyframe.co[0] for keyframe in action_group.channels[0].keyframe_points]
         for i, time in enumerate(times):
             key = Keyframe(action_group, time)
-            key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
+            #key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
+            key.value = [c.evaluate(time) for c in action_group.channels]
+
             # compute tangents for cubic spline interpolation
             if action_group.channels[0].keyframe_points[0].interpolation == "BEZIER":
                 # Construct the in tangent

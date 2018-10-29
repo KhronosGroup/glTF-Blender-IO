@@ -18,6 +18,7 @@ import typing
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 
 
 @cached
@@ -51,6 +52,11 @@ def __gather_node(action_group: bpy.types.ActionGroup,
                   blender_object: bpy.types.Object,
                   export_settings
                   ) -> gltf2_io.Node:
+    if blender_object.type == "ARMATURE":
+        # TODO: get joint from fcurve data_path and gather_joint
+        blender_bone = blender_object.path_resolve(action_group.channels[0].data_path.rsplit('.', 1)[0])
+        return gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
+
     return gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
 
 

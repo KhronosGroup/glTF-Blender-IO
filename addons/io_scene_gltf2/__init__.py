@@ -42,7 +42,7 @@ from bpy_extras.io_utils import (ExportHelper)
 
 bl_info = {
     'name': 'glTF 2.0 format',
-    'author': 'Julien Duroure & Norbert Nopper',
+    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann & Moritz Becher',
     'blender': (2, 79, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
