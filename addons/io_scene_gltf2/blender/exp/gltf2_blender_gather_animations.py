@@ -40,7 +40,7 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
 
     # Export all collected actions.
     for blender_action in blender_actions:
-        animation = __gather_animation(blender_object, blender_action, export_settings)
+        animation = __gather_animation(blender_action, blender_object, export_settings)
         if animation is not None:
             animations.append(animation)
 
@@ -65,6 +65,9 @@ def __gather_animation(blender_action: bpy.types.Action,
     # To allow reuse of samplers in one animation,
     __link_samplers(animation, export_settings)
 
+    if not animation.channels:
+        return None
+
     return animation
 
 
@@ -82,7 +85,7 @@ def __gather_channels(blender_action: bpy.types.Action,
                       blender_object: bpy.types.Object,
                       export_settings
                       ) -> typing.List[gltf2_io.AnimationChannel]:
-    return gltf2_blender_gather_animation_channels.gather_animation_channels(blender_object, blender_action, export_settings)
+    return gltf2_blender_gather_animation_channels.gather_animation_channels(blender_action, blender_object, export_settings)
 
 
 def __gather_extensions(blender_action: bpy.types.Action,
@@ -145,6 +148,13 @@ def __get_blender_actions(blender_object: bpy.types.Object
     # Collect active action.
     if blender_object.animation_data.action is not None:
         blender_actions.append(blender_object.animation_data.action)
+
+    if blender_object.type == "MESH"\
+            and blender_object.data is not None \
+            and blender_object.data.shape_keys is not None \
+            and blender_object.data.shape_keys.animation_data is not None:
+        blender_actions.append(blender_object.data.shape_keys.animation_data.action)
+
     # Collect associated strips from NLA tracks.
     for track in blender_object.animation_data.nla_tracks:
         # Multi-strip tracks do not export correctly yet (they need to be baked),

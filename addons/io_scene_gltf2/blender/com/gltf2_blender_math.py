@@ -33,9 +33,9 @@ def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Unio
     if target == 'scale':
         return Vector(values)
     if target == 'value':
-        return Vector(values)
+        return values
 
-    return Vector(values)
+    return values
 
 
 def datapath_to_target(data_path: str) -> str:

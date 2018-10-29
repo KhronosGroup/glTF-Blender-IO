@@ -27,63 +27,75 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                               ) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-    for action_group in blender_action.groups:
-        channel = __gather_animation_channel(action_group, blender_object, export_settings)
+    for channel_group in __get_channel_groups(blender_action):
+        channel = __gather_animation_channel(channel_group, blender_object, export_settings)
         if channel is not None:
             channels.append(channel)
 
     return channels
 
 
-def __gather_animation_channel(action_group: bpy.types.ActionGroup,
+def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                blender_object: bpy.types.Object,
                                export_settings
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
-    if not __filter_animation_channel(action_group, blender_object, export_settings):
+    if not __filter_animation_channel(channels, blender_object, export_settings):
         return None
 
     return gltf2_io.AnimationChannel(
-        extensions=__gather_extensions(action_group, blender_object, export_settings),
-        extras=__gather_extras(action_group, blender_object, export_settings),
-        sampler=__gather_sampler(action_group, blender_object, export_settings),
-        target=__gather_target(action_group, blender_object, export_settings)
+        extensions=__gather_extensions(channels, blender_object, export_settings),
+        extras=__gather_extras(channels, blender_object, export_settings),
+        sampler=__gather_sampler(channels, blender_object, export_settings),
+        target=__gather_target(channels, blender_object, export_settings)
     )
 
 
-def __filter_animation_channel(action_group: bpy.types.ActionGroup,
+def __filter_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                blender_object: bpy.types.Object,
                                export_settings
                                ) -> bool:
     return True
 
 
-def __gather_extensions(action_group: bpy.types.ActionGroup,
+def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
                         blender_object: bpy.types.Object,
                         export_settings
                         ) -> typing.Any:
     return None
 
 
-def __gather_extras(action_group: bpy.types.ActionGroup,
+def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
                     export_settings
                     ) -> typing.Any:
     return None
 
 
-def __gather_sampler(action_group: bpy.types.ActionGroup,
+def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
                      blender_object: bpy.types.Object,
                      export_settings
                      ) -> gltf2_io.AnimationSampler:
     return gltf2_blender_gather_animation_samplers.gather_animation_sampler(
-        action_group,
+        channels,
         blender_object,
         export_settings
     )
 
 
-def __gather_target(action_group: bpy.types.ActionGroup,
+def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
                     export_settings
                     ) -> gltf2_io.AnimationChannelTarget:
-    return gltf2_blender_gather_animation_channel_target.gather_animation_channel_target(action_group, blender_object, export_settings)
+    return gltf2_blender_gather_animation_channel_target.gather_animation_channel_target(channels, blender_object, export_settings)
+
+
+
+def __get_channel_groups(blender_action: bpy.types.Action):
+    groups = {}
+    for fcurve in blender_action.fcurves:
+        data_path = fcurve.data_path
+        channels = groups.get(data_path, [])
+        channels.append(fcurve)
+        groups[data_path] = channels
+
+    return [tuple(g) for g in groups.values()]

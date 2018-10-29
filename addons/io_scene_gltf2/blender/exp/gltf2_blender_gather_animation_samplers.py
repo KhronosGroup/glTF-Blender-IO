@@ -26,39 +26,39 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 
 
 @cached
-def gather_animation_sampler(action_group: bpy.types.ActionGroup,
+def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              blender_object: bpy.types.Object,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
     return gltf2_io.AnimationSampler(
-        extensions=__gather_extensions(action_group, blender_object, export_settings),
-        extras=__gather_extras(action_group, blender_object, export_settings),
-        input=__gather_input(action_group, blender_object, export_settings),
-        interpolation=__gather_interpolation(action_group, blender_object, export_settings),
-        output=__gather_output(action_group, blender_object, export_settings)
+        extensions=__gather_extensions(channels, blender_object, export_settings),
+        extras=__gather_extras(channels, blender_object, export_settings),
+        input=__gather_input(channels, blender_object, export_settings),
+        interpolation=__gather_interpolation(channels, blender_object, export_settings),
+        output=__gather_output(channels, blender_object, export_settings)
     )
 
 
-def __gather_extensions(action_group: bpy.types.ActionGroup,
+def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
                         blender_object: bpy.types.Object,
                         export_settings
                         ) -> typing.Any:
     return None
 
 
-def __gather_extras(action_group: bpy.types.ActionGroup,
+def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
                     export_settings
                     ) -> typing.Any:
     return None
 
 
-def __gather_input(action_group: bpy.types.ActionGroup,
+def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    blender_object: bpy.types.Object,
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes"""
-    keyframes = __gather_keyframes(action_group, export_settings)
+    keyframes = __gather_keyframes(channels, export_settings)
     times = [k.seconds for k in keyframes]
 
     return gltf2_io.Accessor(
@@ -77,14 +77,14 @@ def __gather_input(action_group: bpy.types.ActionGroup,
     )
 
 
-def __gather_interpolation(action_group: bpy.types.ActionGroup,
+def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
                            blender_object: bpy.types.Object,
                            export_settings
                            ) -> str:
-    if __needs_baking(action_group, export_settings):
+    if __needs_baking(channels, export_settings):
         return 'STEP'
 
-    blender_keyframe = action_group.channels[0].keyframe_points[0]
+    blender_keyframe = channels[0].keyframe_points[0]
 
     # Select the interpolation method. Any unsupported method will fallback to STEP
     return {
@@ -94,14 +94,14 @@ def __gather_interpolation(action_group: bpy.types.ActionGroup,
     }[blender_keyframe.interpolation]
 
 
-def __gather_output(action_group: bpy.types.ActionGroup,
+def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
                     export_settings
                     ) -> gltf2_io.Accessor:
     """The data of the keyframes"""
-    keyframes = __gather_keyframes(action_group, export_settings)
+    keyframes = __gather_keyframes(channels, export_settings)
 
-    target_datapath = action_group.channels[0].data_path
+    target_datapath = channels[0].data_path
 
     transform = mathutils.Matrix.Identity(4)
 
@@ -142,7 +142,7 @@ def __gather_output(action_group: bpy.types.ActionGroup,
     )
 
 
-def __needs_baking(action_group: bpy.types.ActionGroup,
+def __needs_baking(channels: typing.Tuple[bpy.types.FCurve],
                    export_settings
                    ) -> bool:
     """
@@ -154,16 +154,16 @@ def __needs_baking(action_group: bpy.types.ActionGroup,
     if export_settings['gltf_force_sampling']:
         return True
 
-    interpolation = action_group.channels[0].keyframe_points[0].interpolation
+    interpolation = channels[0].keyframe_points[0].interpolation
     if interpolation not in ["BEZIER", "LINEAR", "CONSTANT"]:
         return True
 
-    if any(any(k.interpolation != interpolation for k in c.keyframe_points) for c in action_group.channels):
+    if any(any(k.interpolation != interpolation for k in c.keyframe_points) for c in channels):
         # There are different interpolation methods in one action group
         return True
 
     def all_equal(lst): return lst[1:] == lst[:-1]
-    if not all(all_equal(key_times) for key_times in zip([[k.co[0] for k in c.keyframe_points] for c in action_group.channels])):
+    if not all(all_equal(key_times) for key_times in zip([[k.co[0] for k in c.keyframe_points] for c in channels])):
         # The channels have differently located keyframes
         return True
 
@@ -171,10 +171,10 @@ def __needs_baking(action_group: bpy.types.ActionGroup,
 
 
 class Keyframe:
-    def __init__(self, action_group: bpy.types.ActionGroup, time: float):
+    def __init__(self, channels: typing.Tuple[bpy.types.FCurve], time: float):
         self.seconds = time / bpy.context.scene.render.fps
-        self.__target = action_group.channels[0].data_path.split('.')[-1]
-        self.__indices = [c.array_index for c in action_group.channels]
+        self.__target = channels[0].data_path.split('.')[-1]
+        self.__indices = [c.array_index for c in channels]
 
         # Data holders for virtual properties
         self.__value = None
@@ -232,57 +232,57 @@ class Keyframe:
 
 # cache for performance reasons
 @cached
-def __gather_keyframes(action_group: bpy.types.ActionGroup, export_settings) \
+def __gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings) \
         -> typing.List[Keyframe]:
     """
     Convert the blender action groups' fcurves to keyframes for use in glTF
     """
 
     # Find the start and end of the whole action group
-    start = min([channel.range()[0] for channel in action_group.channels])
-    end = max([channel.range()[1] for channel in action_group.channels])
+    start = min([channel.range()[0] for channel in channels])
+    end = max([channel.range()[1] for channel in channels])
 
     keyframes = []
-    if __needs_baking(action_group, export_settings):
+    if __needs_baking(channels, export_settings):
         # Bake the animation, by evaluating it at a high frequency
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
         time = start
         # TODO: make user controllable
         step = 1.0 / bpy.context.scene.render.fps
         while time <= end:
-            key = Keyframe(action_group, time)
-            key.value = [c.evaluate(time) for c in action_group.channels]
+            key = Keyframe(channels, time)
+            key.value = [c.evaluate(time) for c in channels]
             keyframes.append(key)
             time += step
     else:
         # Just use the keyframes as they are specified in blender
-        times = [ keyframe.co[0] for keyframe in action_group.channels[0].keyframe_points]
+        times = [ keyframe.co[0] for keyframe in channels[0].keyframe_points]
         for i, time in enumerate(times):
-            key = Keyframe(action_group, time)
+            key = Keyframe(channels, time)
             #key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
-            key.value = [c.evaluate(time) for c in action_group.channels]
+            key.value = [c.evaluate(time) for c in channels]
 
             # compute tangents for cubic spline interpolation
-            if action_group.channels[0].keyframe_points[0].interpolation == "BEZIER":
+            if channels[0].keyframe_points[0].interpolation == "BEZIER":
                 # Construct the in tangent
                 if time == start:
                     # start in-tangent has zero length
-                    key.in_tangent = [0.0 for _ in action_group.channels]
+                    key.in_tangent = [0.0 for _ in channels]
                 else:
                     # otherwise construct a in tangent from the keyframes control points
                     key.in_tangent = [
                         3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]) / (time - times[i - 1])
-                        for c in action_group.channels
+                        for c in channels
                     ]
                 # Construct the out tangent
                 if time == end:
                     # end out-tangent has zero length
-                    key.out_tangent = [0.0 for _ in action_group.channels]
+                    key.out_tangent = [0.0 for _ in channels]
                 else:
                     # otherwise construct a in tangent from the keyframes control points
                     key.out_tangent = [
                         3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (times[i+1] - time)
-                        for c in action_group.channels
+                        for c in channels
                     ]
             keyframes.append(key)
 
