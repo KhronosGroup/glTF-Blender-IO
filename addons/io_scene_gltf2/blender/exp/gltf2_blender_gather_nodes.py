@@ -44,9 +44,9 @@ def gather_node(blender_object, export_settings):
     )
     node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
 
-    if node.skin is not None:
-        node.children.append(node.skin.joints[0])
-        #node.skin.skeleton = node
+    # if node.skin is not None:
+    #     node.children.append(node.skin.joints[0])
+    #     #node.skin.skeleton = node
     return node
 
 
@@ -129,9 +129,11 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
 
 def __gather_skin(blender_object, export_settings):
-    if "Armature" in blender_object.modifiers:
+    modifiers = {m.type: m for m in blender_object.modifiers}
+
+    if "ARMATURE" in modifiers:
         # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-        return gltf2_blender_gather_skins.gather_skin(blender_object.modifiers["Armature"].object, export_settings)
+        return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 from io_scene_gltf2.io.com import gltf2_io_constants
 
 
@@ -39,7 +40,7 @@ def max_components(l: list, data_type: gltf2_io_constants.DataType) -> list:
     :return: a list with length num_elements(data_type) containing the maximum per component along the list
     """
     components_lists = split_list_by_data_type(l, data_type)
-    result = [0.0] * gltf2_io_constants.DataType.num_elements(data_type)
+    result = [-math.inf] * gltf2_io_constants.DataType.num_elements(data_type)
     for components in components_lists:
         for i, c in enumerate(components):
             result[i] = max(result[i], c)
@@ -54,7 +55,7 @@ def min_components(l: list, data_type: gltf2_io_constants.DataType) -> list:
         :return: a list with length num_elements(data_type) containing the minimum per component along the list
         """
     components_lists = split_list_by_data_type(l, data_type)
-    result = [0.0] * gltf2_io_constants.DataType.num_elements(data_type)
+    result = [math.inf] * gltf2_io_constants.DataType.num_elements(data_type)
     for components in components_lists:
         for i, c in enumerate(components):
             result[i] = min(result[i], c)
