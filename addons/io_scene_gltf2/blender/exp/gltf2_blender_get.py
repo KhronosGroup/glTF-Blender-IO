@@ -43,6 +43,13 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
     :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
     """
     if blender_material.node_tree and blender_material.use_nodes:
+        if name == "Emissive":
+            # Emissive is a special case as  the input node in the 'Emission' shader node is named 'Color' and only the
+            # output is named 'Emission'
+            links = [link for link in blender_material.node_tree.links if link.from_socket.name == 'Emission']
+            if not links:
+                return None
+            return links[0].to_socket
         links = [link for link in blender_material.node_tree.links if link.to_socket.name == name]
         if not links:
             return None
