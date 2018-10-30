@@ -104,7 +104,9 @@ def save(operator,
         textures=[]
     )
 
-    if export_settings['gltf_experimental']:
+    if export_settings['gltf_legacy']:
+        generate_glTF(operator, context, export_settings, glTF)
+    else:
         scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
         if not export_settings['gltf_copyright']:
             export_settings['gltf_copyright'] = None
@@ -120,8 +122,6 @@ def save(operator,
             exporter.finalize_buffer(export_settings['gltf_filedirectory'])
         exporter.finalize_images(export_settings['gltf_filedirectory'])
         glTF = exporter.glTF
-    else:
-        generate_glTF(operator, context, export_settings, glTF)
 
     #
 

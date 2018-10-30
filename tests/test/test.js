@@ -82,9 +82,7 @@ describe('General', function() {
 describe('Exporter', function() {
     let variants = [
         ['', ''],
-        ['_glb', '--glb'],
-        ['_experimental', '--experimental'],
-        ['_experimental_glb', '--experimental --glb']
+        ['_glb', '--glb']
     ];
 
     variants.forEach(function(variant) {
@@ -110,10 +108,8 @@ describe('Exporter', function() {
 
 describe('Importer / Exporter (Roundtrip)', function() {
     let variants = [
-        // ['', ''],
-        // ['_glb', '--glb'],
-        ['_experimental', '--experimental'],
-        ['_experimental_glb', '--experimental --glb']
+        ['', ''],
+        ['_glb', '--glb']
     ];
 
     variants.forEach(function(variant) {
