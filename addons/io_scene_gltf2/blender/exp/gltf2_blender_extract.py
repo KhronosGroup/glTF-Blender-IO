@@ -538,11 +538,6 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
         else:
             primitive = material_name_to_primitives[blender_mesh.materials[blender_polygon.material_index].name]
             vertex_index_to_new_indices = material_map[blender_mesh.materials[blender_polygon.material_index].name]
-
-            #
-
-            if blender_mesh.materials[blender_polygon.material_index].name in export_settings['gltf_use_no_color']:
-                export_color = False
         #
 
         attributes = primitive['attributes']
@@ -672,10 +667,6 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
 
                     joint_index = 0
                     joint_weight = 0.0
-
-                    if export_settings['group_index'].get(vertex_group_name) is not None:
-                        joint_index = export_settings['group_index'][vertex_group_name]
-                        joint_weight = group_element.weight
 
                     #
 
@@ -918,8 +909,6 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
 
     for material_name, primitive in material_name_to_primitives.items():
         export_color = True
-        if material_name in export_settings['gltf_use_no_color']:
-            export_color = False
 
         #
 

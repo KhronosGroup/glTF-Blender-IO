@@ -78,12 +78,6 @@ class ExportGLTF2_Base():
             default=''
     )
 
-    export_legacy = BoolProperty(
-        name='Enable legacy exporter',
-        description='',
-        default=False
-    )
-
     export_embed_buffers = BoolProperty(
             name='Embed buffers',
             description='',
@@ -319,7 +313,6 @@ class ExportGLTF2_Base():
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_copyright'] = self.export_copyright
-        export_settings['gltf_legacy'] = self.export_legacy
         export_settings['gltf_embed_buffers'] = self.export_embed_buffers
         export_settings['gltf_embed_images'] = self.export_embed_images
         export_settings['gltf_strip'] = self.export_strip
@@ -446,7 +439,6 @@ class ExportGLTF2_Base():
             col.label(text='Experimental:')#, icon='RADIO')
             col.prop(self, 'export_lights')
             col.prop(self, 'export_displacement')
-            col.prop(self, 'export_legacy')
 
         row = layout.row()
         row.operator(

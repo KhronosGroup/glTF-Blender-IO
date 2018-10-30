@@ -62,8 +62,6 @@ def __gather_extras(sockets_or_slots, export_settings):
 
 
 def __gather_mime_type(sockets_or_slots, export_settings):
-    if export_settings['filtered_images_use_alpha'].get(__gather_name(sockets_or_slots, export_settings)):
-        return 'image/png'
     return 'image/png'
     #return 'image/jpeg'
 

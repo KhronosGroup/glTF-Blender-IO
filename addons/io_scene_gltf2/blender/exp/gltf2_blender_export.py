@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#
-# Imports
-#
-
 import bpy
 
 from ...io.exp.gltf2_io_export import *
@@ -26,43 +22,6 @@ from  io_scene_gltf2.blender.com import gltf2_blender_json
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather
 from io_scene_gltf2.blender.exp import gltf2_blender_gltf2_exporter
-
-#
-# Globals
-#
-
-#
-# Functions
-#
-
-def prepare(export_settings):
-    """
-    Stores current state of Blender and prepares for export, depending on the current export settings.
-    """
-    if bpy.context.active_object is not None and bpy.context.active_object.mode != 'OBJECT':
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-    #filter_apply(export_settings)
-
-    export_settings['gltf_original_frame'] = bpy.context.scene.frame_current
-
-    export_settings['gltf_use_no_color'] = []
-
-    export_settings['gltf_joint_cache'] = {}
-
-    if not export_settings['gltf_current_frame']:
-        bpy.context.scene.frame_set(0)
-
-#
-# def finish(export_settings):
-#     """
-#     Brings back Blender into its original state before export and cleans up temporary objects.
-#     """
-#     if export_settings['temporary_meshes'] is not None:
-#         for temporary_mesh in export_settings['temporary_meshes']:
-#             bpy.data.meshes.remove(temporary_mesh)
-#
-#     bpy.context.scene.frame_set(export_settings['gltf_original_frame'])
 
 
 def save(operator,
@@ -75,10 +34,6 @@ def save(operator,
     print_console('INFO', 'Starting glTF 2.0 export')
     bpy.context.window_manager.progress_begin(0, 100)
     bpy.context.window_manager.progress_update(0)
-
-    #
-
-    prepare(export_settings)
 
     #
 
@@ -104,9 +59,6 @@ def save(operator,
         textures=[]
     )
 
-    # if export_settings['gltf_legacy']:
-    #     generate_glTF(operator, context, export_settings, glTF)
-    # else:
     scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
     if not export_settings['gltf_copyright']:
         export_settings['gltf_copyright'] = None
@@ -160,12 +112,6 @@ def save(operator,
             print_console('ERROR','An error occurred on line {} in statement {}'.format(line, text))
         print_console('ERROR', str(e))
         raise e
-
-    #
-
-    # finish(export_settings)
-
-    #
 
     print_console('INFO', 'Finished glTF 2.0 export')
     bpy.context.window_manager.progress_end()

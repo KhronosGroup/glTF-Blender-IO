@@ -18,8 +18,8 @@ ENV DART_SDK /usr/lib/dart
 ENV PATH $DART_SDK/bin:$PATH
 
 
-ENV BLENDER_URL https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
-ENV BLENDER_VERSION 2.79
+ENV BLENDER_URL https://builder.blender.org/download/blender-2.80-5e091de0dc6-linux-glibc224-x86_64.tar.bz2
+ENV BLENDER_VERSION 2.80
 
 RUN mkdir /opt/blender && \
 	curl -SL "$BLENDER_URL" -o blender.tar.bz2 && \
