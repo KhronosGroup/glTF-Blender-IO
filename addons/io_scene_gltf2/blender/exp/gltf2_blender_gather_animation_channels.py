@@ -93,9 +93,9 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 def __get_channel_groups(blender_action: bpy.types.Action):
     groups = {}
     for fcurve in blender_action.fcurves:
-        data_path = fcurve.data_path
-        channels = groups.get(data_path, [])
+        target = fcurve.data_path.rsplit('.', 1)[-1]
+        channels = groups.get(target, [])
         channels.append(fcurve)
-        groups[data_path] = channels
+        groups[target] = channels
 
     return [tuple(g) for g in groups.values()]

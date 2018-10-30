@@ -27,7 +27,7 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 
 
 @cached
-def gather_primitives(blender_object, export_settings):
+def gather_primitives(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
     """
     Extract the mesh primitives from a blender object
     :param blender_object: the mesh object
@@ -35,9 +35,7 @@ def gather_primitives(blender_object, export_settings):
     :return: a list of glTF2 primitives
     """
     primitives = []
-    blender_mesh = blender_object.data
-    blender_vertex_groups = blender_object.vertex_groups
-    blender_primitives = gltf2_blender_extract.extract_primitives(None, blender_mesh, blender_vertex_groups, export_settings)
+    blender_primitives = gltf2_blender_extract.extract_primitives(None, blender_mesh, vertex_groups, export_settings)
 
     for internal_primitive in blender_primitives:
 
@@ -48,7 +46,7 @@ def gather_primitives(blender_object, export_settings):
             indices=__gather_indices(internal_primitive, export_settings),
             material=__gather_materials(internal_primitive, export_settings),
             mode=None,
-            targets=__gather_targets(internal_primitive, blender_object, export_settings)
+            targets=__gather_targets(internal_primitive, blender_mesh, export_settings)
         )
         primitives.append(primitive)
 
@@ -56,6 +54,9 @@ def gather_primitives(blender_object, export_settings):
 
 
 def __gather_materials(blender_primitive, export_settings):
+    if not blender_primitive['material']:
+        # TODO: fix 'extract_promitives' so that the value of 'material' is None and not empty string
+        return None
     material = bpy.data.materials[blender_primitive['material']]
     return gltf2_blender_gather_materials.gather_material(material, export_settings)
 
@@ -99,10 +100,9 @@ def __gather_attributes(blender_primitive, export_settings):
     return gltf2_blender_gather_primitive_attributes.gather_primitive_attributes(blender_primitive, export_settings)
 
 
-def __gather_targets(blender_primitive, blender_object, export_settings):
+def __gather_targets(blender_primitive, blender_mesh, export_settings):
     if export_settings['gltf_morph']:
         targets = []
-        blender_mesh = blender_object.data
         if blender_mesh.shape_keys is not None:
             morph_index = 0
             for blender_shape_key in blender_mesh.shape_keys.key_blocks:

@@ -125,7 +125,12 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
         values += keyframe_value
 
     component_type = gltf2_io_constants.ComponentType.Float
-    data_type = gltf2_io_constants.DataType.vec_type_from_num(len(keyframes[0].value))
+    if gltf2_blender_math.datapath_to_target(target_datapath) == "value":
+        # channels with 'weight' targets must have scalar accessors
+        data_type = gltf2_io_constants.DataType.Scalar
+    else:
+        data_type = gltf2_io_constants.DataType.vec_type_from_num(len(keyframes[0].value))
+
     return gltf2_io.Accessor(
         buffer_view=gltf2_io_binary_data.BinaryData.from_list(values, component_type),
         byte_offset=None,
@@ -197,8 +202,12 @@ class Keyframe:
         return length
 
     def __set_indexed(self, value):
+        # 'value' targets don't use keyframe.array_index
+        if self.__target == "value":
+            return value
         # Sometimes blender animations only reference a subset of components of a data target. Keyframe should always
-        # contain a complete Vector/ Quaternion
+        # contain a complete Vector/ Quaternion --> use the array_index value of the keyframe to set components in such
+        # structures
         result = [0.0] * self.__get_target_len()
         for i, v in zip(self.__indices, value):
             result[i] = v

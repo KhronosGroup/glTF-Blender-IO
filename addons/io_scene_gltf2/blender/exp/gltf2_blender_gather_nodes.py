@@ -98,7 +98,14 @@ def __gather_matrix(blender_object, export_settings):
 
 
 def __gather_mesh(blender_object, export_settings):
-    return gltf2_blender_gather_mesh.gather_mesh(blender_object, export_settings)
+    if blender_object.type == "MESH":
+        # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
+        vertex_groups = blender_object.vertex_groups
+        if len(vertex_groups) == 0:
+            vertex_groups = None
+        return gltf2_blender_gather_mesh.gather_mesh(blender_object.data, vertex_groups, export_settings)
+    else:
+        return None
 
 
 def __gather_name(blender_object, export_settings):

@@ -29,10 +29,6 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
     :param export_settings:
     :return: A list of glTF2 animations
     """
-
-    if blender_object.animation_data is None:
-        return []
-
     animations = []
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
@@ -145,9 +141,19 @@ def __get_blender_actions(blender_object: bpy.types.Object
                           ) -> typing.List[bpy.types.Action]:
     blender_actions = []
 
-    # Collect active action.
-    if blender_object.animation_data.action is not None:
-        blender_actions.append(blender_object.animation_data.action)
+    if blender_object.animation_data is not None:
+        # Collect active action.
+        if blender_object.animation_data.action is not None:
+            blender_actions.append(blender_object.animation_data.action)
+
+        # Collect associated strips from NLA tracks.
+        for track in blender_object.animation_data.nla_tracks:
+            # Multi-strip tracks do not export correctly yet (they need to be baked),
+            # so skip them for now and only write single-strip tracks.
+            if track.strips is None or len(track.strips) != 1:
+                continue
+            for strip in track.strips:
+                blender_actions.append(strip.action)
 
     if blender_object.type == "MESH"\
             and blender_object.data is not None \
@@ -155,14 +161,6 @@ def __get_blender_actions(blender_object: bpy.types.Object
             and blender_object.data.shape_keys.animation_data is not None:
         blender_actions.append(blender_object.data.shape_keys.animation_data.action)
 
-    # Collect associated strips from NLA tracks.
-    for track in blender_object.animation_data.nla_tracks:
-        # Multi-strip tracks do not export correctly yet (they need to be baked),
-        # so skip them for now and only write single-strip tracks.
-        if track.strips is None or len(track.strips) != 1:
-            continue
-        for strip in track.strips:
-            blender_actions.append(strip.action)
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))
 
