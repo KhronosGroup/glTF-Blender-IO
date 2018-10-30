@@ -1,0 +1,60 @@
+{
+    "uri": "scenes/out/04_lenna.gltf",
+    "mimeType": "model/gltf+json",
+    "validatorVersion": "2.0.0-dev.2.5",
+    "validatedAt": "2018-10-29T16:02:23.045275Z",
+    "issues": {
+        "numErrors": 0,
+        "numWarnings": 0,
+        "numInfos": 2,
+        "numHints": 0,
+        "messages": [
+            {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/0"
+            },
+            {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/2"
+            }
+        ],
+        "truncated": false
+    },
+    "info": {
+        "version": "2.0",
+        "generator": "Khronos Blender glTF 2.0 I/O",
+        "resources": [
+            {
+                "pointer": "/buffers/0",
+                "mimeType": "application/gltf-buffer",
+                "storage": "external",
+                "uri": "04_lenna.bin",
+                "byteLength": 1188
+            },
+            {
+                "pointer": "/images/0",
+                "mimeType": "image/png",
+                "storage": "external",
+                "uri": "04_crate.png",
+                "image": {
+                    "width": 512,
+                    "height": 512,
+                    "format": "RGBA",
+                    "bits": 8
+                }
+            }
+        ],
+        "hasAnimations": false,
+        "hasMaterials": true,
+        "hasMorphTargets": false,
+        "hasSkins": false,
+        "hasTextures": true,
+        "hasDefaultScene": true,
+        "primitivesCount": 1,
+        "maxAttributesUsed": 4
+    }
+}

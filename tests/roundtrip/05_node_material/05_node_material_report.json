@@ -1,0 +1,54 @@
+{
+    "uri": "scenes/out/05_node_material.gltf",
+    "mimeType": "model/gltf+json",
+    "validatorVersion": "2.0.0-dev.2.5",
+    "validatedAt": "2018-10-29T16:02:25.752461Z",
+    "issues": {
+        "numErrors": 0,
+        "numWarnings": 0,
+        "numInfos": 3,
+        "numHints": 0,
+        "messages": [
+            {
+                "code": "MESH_PRIMITIVE_UNUSED_TEXCOORD",
+                "message": "Material does not use texture coordinates sets with indices (0).",
+                "severity": 2,
+                "pointer": "/meshes/0/primitives/0/material"
+            },
+            {
+                "code": "MESH_PRIMITIVE_UNUSED_TEXCOORD",
+                "message": "Material does not use texture coordinates sets with indices (0).",
+                "severity": 2,
+                "pointer": "/meshes/1/primitives/0/material"
+            },
+            {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/0"
+            }
+        ],
+        "truncated": false
+    },
+    "info": {
+        "version": "2.0",
+        "generator": "Khronos Blender glTF 2.0 I/O",
+        "resources": [
+            {
+                "pointer": "/buffers/0",
+                "mimeType": "application/gltf-buffer",
+                "storage": "external",
+                "uri": "05_node_material.bin",
+                "byteLength": 29712
+            }
+        ],
+        "hasAnimations": false,
+        "hasMaterials": true,
+        "hasMorphTargets": false,
+        "hasSkins": false,
+        "hasTextures": false,
+        "hasDefaultScene": true,
+        "primitivesCount": 2,
+        "maxAttributesUsed": 4
+    }
+}

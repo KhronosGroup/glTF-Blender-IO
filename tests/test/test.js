@@ -110,8 +110,8 @@ describe('Exporter', function() {
 
 describe('Importer / Exporter (Roundtrip)', function() {
     let variants = [
-        ['', ''],
-        ['_glb', '--glb'],
+        // ['', ''],
+        // ['_glb', '--glb'],
         ['_experimental', '--experimental'],
         ['_experimental_glb', '--experimental --glb']
     ];
@@ -141,7 +141,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                             let gltfDstReportPath = gltfDstPath.substr(0, gltfDstPath.lastIndexOf('.')) + '_report.json';
                             let gltfDstReport = JSON.parse(fs.readFileSync(gltfDstReportPath, 'utf8'));
 
-                            const info_keys = ['version', 'hasAnimations', 'hasMaterials', 'hasMorphTargets', 'hasSkins', 'hasTextures', 'hasDefaultScene', 'primitivesCount', 'maxAttributesUsed'];
+                            const info_keys = ['version', 'hasAnimations', 'hasMaterials', 'hasMorphTargets', 'hasSkins', 'hasTextures', 'hasDefaultScene', 'primitivesCount'/*, 'maxAttributesUsed'*/];
                             let reduceKeys = function(raw, allowed) {
                                 return Object.keys(raw)
                                   .filter(key => allowed.includes(key))

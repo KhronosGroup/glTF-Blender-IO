@@ -1,0 +1,230 @@
+{
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5121,
+            "count" : 6,
+            "max" : [
+                3
+            ],
+            "min" : [
+                0
+            ],
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 4,
+            "max" : [
+                1,
+                0,
+                1
+            ],
+            "min" : [
+                -1,
+                0,
+                -1
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 4,
+            "max" : [
+                0,
+                1,
+                0
+            ],
+            "min" : [
+                0,
+                1,
+                0
+            ],
+            "type" : "VEC3"
+        }
+    ],
+    "asset" : {
+        "generator" : "Khronos Blender glTF 2.0 I/O",
+        "version" : "2.0"
+    },
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 6,
+            "byteOffset" : 0,
+            "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 8,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 56,
+            "target" : 34962
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 104,
+            "uri" : "04_lights.bin"
+        }
+    ],
+    "extensions" : {},
+    "materials" : [
+        {
+            "name" : "Plane",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.800000011920929,
+                    0.800000011920929,
+                    0.800000011920929,
+                    1
+                ],
+                "metallicFactor" : 0
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Plane",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1
+                    },
+                    "indices" : 0,
+                    "material" : 0
+                }
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "name" : "Camera",
+            "rotation" : [
+                0.5730898976325989,
+                0,
+                0,
+                0.8194926381111145
+            ],
+            "translation" : [
+                0,
+                12,
+                30
+            ]
+        },
+        {
+            "name" : "Directional",
+            "rotation" : [
+                0.2588190734386444,
+                0,
+                0,
+                0.965925931930542
+            ],
+            "translation" : [
+                -8,
+                4,
+                8
+            ]
+        },
+        {
+            "mesh" : 0,
+            "name" : "Plane",
+            "scale" : [
+                10,
+                10,
+                10
+            ]
+        },
+        {
+            "name" : "Point_Constant",
+            "translation" : [
+                -8,
+                4,
+                0
+            ]
+        },
+        {
+            "name" : "Point_Linear",
+            "translation" : [
+                0,
+                4,
+                0
+            ]
+        },
+        {
+            "name" : "Point_Quadratic",
+            "translation" : [
+                8,
+                4,
+                0
+            ]
+        },
+        {
+            "name" : "Spot_Constant",
+            "rotation" : [
+                -0.2588190734386444,
+                0,
+                0,
+                0.965925931930542
+            ],
+            "translation" : [
+                -8,
+                4,
+                -8
+            ]
+        },
+        {
+            "name" : "Spot_Linear",
+            "rotation" : [
+                -0.2588190734386444,
+                0,
+                0,
+                0.965925931930542
+            ],
+            "translation" : [
+                0,
+                4,
+                -8
+            ]
+        },
+        {
+            "name" : "Spot_Quadratic",
+            "rotation" : [
+                -0.2588190734386444,
+                0,
+                0,
+                0.965925931930542
+            ],
+            "translation" : [
+                8,
+                4,
+                -8
+            ]
+        }
+    ],
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                8,
+                7,
+                6,
+                5,
+                4,
+                3,
+                2,
+                1,
+                0
+            ]
+        }
+    ]
+}
