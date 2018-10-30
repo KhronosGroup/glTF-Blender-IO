@@ -25,7 +25,7 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 @cached
 def gather_texture(
         blender_shader_sockets_or_texture_slots: typing.Union[
-            typing.Tuple[bpy.types.NodeSocket], typing.Tuple[bpy.types.MaterialTextureSlot]],
+            typing.Tuple[bpy.types.NodeSocket], typing.Tuple[typing.Any]],
         export_settings):
     """
     Gather texture sampling information and image channels from a blender shader textu  re attached to a shader socket

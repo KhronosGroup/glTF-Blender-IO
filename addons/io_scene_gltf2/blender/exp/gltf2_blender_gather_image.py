@@ -151,5 +151,5 @@ def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket):
         return None
     return result[0]
 
-def __get_tex_from_slot(blender_texture_slot: bpy.types.MaterialTextureSlot):
+def __get_tex_from_slot(blender_texture_slot):
     return blender_texture_slot.texture

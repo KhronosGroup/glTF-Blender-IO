@@ -18,6 +18,7 @@
 
 import bpy
 import os
+# import bl_ui
 
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator
@@ -43,7 +44,7 @@ from bpy_extras.io_utils import (ExportHelper)
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann & Moritz Becher',
-    'blender': (2, 79, 0),
+    'blender': (2, 80, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
@@ -381,7 +382,7 @@ class ExportGLTF2_Base():
         #
 
         col = layout.box().column()
-        col.label('Embedding:', icon='PACKAGE')
+        col.label(text='Embedding:')#, icon='PACKAGE')
         col.prop(self, 'export_copyright')
         if self.export_format == 'ASCII':
             col.prop(self, 'export_embed_buffers')
@@ -389,20 +390,20 @@ class ExportGLTF2_Base():
             col.prop(self, 'export_strip')
 
         col = layout.box().column()
-        col.label('Nodes:', icon='OOPS')
+        col.label(text='Nodes:')#, icon='OOPS')
         col.prop(self, 'export_selected')
         col.prop(self, 'export_layers')
         col.prop(self, 'export_extras')
         col.prop(self, 'export_yup')
 
         col = layout.box().column()
-        col.label('Meshes:', icon='MESH_DATA')
+        col.label(text='Meshes:')#, icon='MESH_DATA')
         col.prop(self, 'export_apply')
         col.prop(self, 'export_indices')
         col.prop(self, 'export_force_indices')
 
         col = layout.box().column()
-        col.label('Attributes:', icon='SURFACE_DATA')
+        col.label(text='Attributes:')#, icon='SURFACE_DATA')
         col.prop(self, 'export_texcoords')
         col.prop(self, 'export_normals')
         if self.export_normals:
@@ -410,18 +411,18 @@ class ExportGLTF2_Base():
         col.prop(self, 'export_colors')
 
         col = layout.box().column()
-        col.label('Objects:', icon='OBJECT_DATA')
+        col.label(text='Objects:')#, icon='OBJECT_DATA')
         col.prop(self, 'export_cameras')
         if self.export_cameras:
             col.prop(self, 'export_camera_infinite')
 
         col = layout.box().column()
-        col.label('Materials:', icon='MATERIAL_DATA')
+        col.label(text='Materials:')#, icon='MATERIAL_DATA')
         col.prop(self, 'export_materials')
         col.prop(self, 'export_texture_transform')
 
         col = layout.box().column()
-        col.label('Animation:', icon='OUTLINER_DATA_POSE')
+        col.label(text='Animation:')#, icon='OUTLINER_DATA_POSE')
         col.prop(self, 'export_animations')
         if self.export_animations:
             col.prop(self, 'export_frame_range')
@@ -442,7 +443,7 @@ class ExportGLTF2_Base():
         addon_prefs = context.user_preferences.addons[__name__].preferences
         if addon_prefs.experimental:
             col = layout.box().column()
-            col.label('Experimental:', icon='RADIO')
+            col.label(text='Experimental:')#, icon='RADIO')
             col.prop(self, 'export_lights')
             col.prop(self, 'export_displacement')
             col.prop(self, 'export_legacy')
@@ -450,7 +451,7 @@ class ExportGLTF2_Base():
         row = layout.row()
         row.operator(
             GLTF2ExportSettings.bl_idname,
-            GLTF2ExportSettings.bl_label,
+            text=GLTF2ExportSettings.bl_label,
             icon="%s" % "PINNED" if self.will_save_settings else "UNPINNED")
 
 
@@ -553,19 +554,41 @@ def menu_func_import(self, context):
     self.layout.operator(ImportglTF2.bl_idname, text=ImportglTF2.bl_label)
 
 
+classes = (
+        GLTF2ExportSettings,
+        ExportGLTF2_GLTF,
+        ExportGLTF2_GLB,
+        ExportGLTF2_AddonPreferences,
+        ImportglTF2
+    )
+
 def register():
-    bpy.utils.register_module(__name__)
 
-    bpy.types.INFO_MT_file_export.append(menu_func_export_gltf)
-    bpy.types.INFO_MT_file_export.append(menu_func_export_glb)
+    for c in classes:
+        bpy.utils.register_class(c)
+    # bpy.utils.register_module(__name__)
 
-    bpy.types.INFO_MT_file_import.append(menu_func_import)
-
+    # add to the export / import menu
+    if bpy.app.version < (2, 80, 0):
+        bpy.types.INFO_MT_file_export.append(menu_func_export_gltf)
+        bpy.types.INFO_MT_file_export.append(menu_func_export_glb)
+        bpy.types.INFO_MT_file_import.append(menu_func_import)
+    else:
+        bpy.types.TOPBAR_MT_file_export.append(menu_func_export_gltf)
+        bpy.types.TOPBAR_MT_file_export.append(menu_func_export_glb)
+        bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
+    for c in classes:
+        bpy.utils.unregister_class(c)
+    # bpy.utils.unregister_module(__name__)
 
-    bpy.types.INFO_MT_file_export.remove(menu_func_export_gltf)
-    bpy.types.INFO_MT_file_export.remove(menu_func_export_glb)
-
-    bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    # remove from the export / import menu
+    if bpy.app.version < (2, 80, 0):
+        bpy.types.INFO_MT_file_export.remove(menu_func_export_gltf)
+        bpy.types.INFO_MT_file_export.remove(menu_func_export_glb)
+        bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    else:
+        bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_gltf)
+        bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_glb)
+        bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)

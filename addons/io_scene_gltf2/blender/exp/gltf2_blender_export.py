@@ -42,7 +42,7 @@ def prepare(export_settings):
     if bpy.context.active_object is not None and bpy.context.active_object.mode != 'OBJECT':
         bpy.ops.object.mode_set(mode='OBJECT')
 
-    filter_apply(export_settings)
+    #filter_apply(export_settings)
 
     export_settings['gltf_original_frame'] = bpy.context.scene.frame_current
 
@@ -53,16 +53,16 @@ def prepare(export_settings):
     if not export_settings['gltf_current_frame']:
         bpy.context.scene.frame_set(0)
 
-
-def finish(export_settings):
-    """
-    Brings back Blender into its original state before export and cleans up temporary objects.
-    """
-    if export_settings['temporary_meshes'] is not None:
-        for temporary_mesh in export_settings['temporary_meshes']:
-            bpy.data.meshes.remove(temporary_mesh)
-
-    bpy.context.scene.frame_set(export_settings['gltf_original_frame'])
+#
+# def finish(export_settings):
+#     """
+#     Brings back Blender into its original state before export and cleans up temporary objects.
+#     """
+#     if export_settings['temporary_meshes'] is not None:
+#         for temporary_mesh in export_settings['temporary_meshes']:
+#             bpy.data.meshes.remove(temporary_mesh)
+#
+#     bpy.context.scene.frame_set(export_settings['gltf_original_frame'])
 
 
 def save(operator,
@@ -104,24 +104,24 @@ def save(operator,
         textures=[]
     )
 
-    if export_settings['gltf_legacy']:
-        generate_glTF(operator, context, export_settings, glTF)
-    else:
-        scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
-        if not export_settings['gltf_copyright']:
-            export_settings['gltf_copyright'] = None
-        exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(copyright=export_settings['gltf_copyright'])
-        for scene in scenes:
-            exporter.add_scene(scene)
-        for animation in animations:
-            exporter.add_animation(animation)
+    # if export_settings['gltf_legacy']:
+    #     generate_glTF(operator, context, export_settings, glTF)
+    # else:
+    scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
+    if not export_settings['gltf_copyright']:
+        export_settings['gltf_copyright'] = None
+    exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(copyright=export_settings['gltf_copyright'])
+    for scene in scenes:
+        exporter.add_scene(scene)
+    for animation in animations:
+        exporter.add_animation(animation)
 
-        if export_settings['gltf_format'] == 'ASCII':
-            exporter.finalize_buffer(export_settings['gltf_filedirectory'], export_settings['gltf_binaryfilename'])
-        else:
-            exporter.finalize_buffer(export_settings['gltf_filedirectory'])
-        exporter.finalize_images(export_settings['gltf_filedirectory'])
-        glTF = exporter.glTF
+    if export_settings['gltf_format'] == 'ASCII':
+        exporter.finalize_buffer(export_settings['gltf_filedirectory'], export_settings['gltf_binaryfilename'])
+    else:
+        exporter.finalize_buffer(export_settings['gltf_filedirectory'])
+    exporter.finalize_images(export_settings['gltf_filedirectory'])
+    glTF = exporter.glTF
 
     #
 
@@ -163,7 +163,7 @@ def save(operator,
 
     #
 
-    finish(export_settings)
+    # finish(export_settings)
 
     #
 
