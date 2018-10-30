@@ -12,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import typing
 import math
 from mathutils import Matrix, Vector, Quaternion, Euler
 
+def multiply(a, b):
+    if bpy.app.version < (2, 80, 0):
+        return a * b
+    else:
+        return a @ b
 
 def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Union[Vector, Quaternion, Euler]:
     target = datapath_to_target(data_path)
@@ -115,13 +121,13 @@ def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Ma
 
 def transform_location(location: Vector, transform: Matrix = Matrix.Identity(4)) -> Vector:
     m = Matrix.Translation(location)
-    m = transform * m
+    m = multiply(transform, m)
     return m.to_translation()
 
 
 def transform_rotation(rotation: Quaternion, transform: Matrix = Matrix.Identity(4)) -> Quaternion:
     m = rotation.to_matrix().to_4x4()
-    m = transform * m
+    m = multiply(transform, m)
     return m.to_quaternion()
 
 
@@ -130,7 +136,7 @@ def transform_scale(scale: Vector, transform: Matrix = Matrix.Identity(4)) -> Ve
     m[0][0] = scale.x
     m[1][1] = scale.y
     m[2][2] = scale.z
-    m = transform * m
+    m = multiply(transform, m)
 
     return m.to_scale()
 

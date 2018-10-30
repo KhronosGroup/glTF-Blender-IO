@@ -21,15 +21,26 @@ ENV PATH $DART_SDK/bin:$PATH
 ENV BLENDER_URL https://builder.blender.org/download/blender-2.80-5e091de0dc6-linux-glibc224-x86_64.tar.bz2
 ENV BLENDER_VERSION 2.80
 
-RUN mkdir /opt/blender && \
-	curl -SL "$BLENDER_URL" -o blender.tar.bz2 && \
-	tar -jxvf blender.tar.bz2 -C /opt/blender --strip-components=1 && \
-	rm blender.tar.bz2
+RUN mkdir /opt/blender28 && \
+	curl -SL "$BLENDER_URL" -o blender28.tar.bz2 && \
+	tar -jxvf blender28.tar.bz2 -C /opt/blender28 --strip-components=1 && \
+	rm blender28.tar.bz2
+
+ENV BLENDER_URL https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
+ENV BLENDER_VERSION 2.79b
+
+RUN mkdir /opt/blender279b && \
+	curl -SL "$BLENDER_URL" -o blender279b.tar.bz2 && \
+	tar -jxvf blender279b.tar.bz2 -C /opt/blender279b --strip-components=1 && \
+	rm blender279b.tar.bz2
+
+RUN ln -s /opt/blender28/blender /opt/blender28/blender28 && \
+  ln -s /opt/blender279b/blender/opt/blender279b/blender279b
 
 WORKDIR /opt
 RUN git clone https://github.com/KhronosGroup/glTF-Validator
 RUN cd glTF-Validator && pub get && pub global activate --source path ./
-ENV PATH $PATH:/root/.pub-cache/bin:/opt/blender
+ENV PATH $PATH:/root/.pub-cache/bin:/opt/blender28:/opt/blender279b
 
 # RUN git clone https://github.com/KhronosGroup/glTF-Sample-Models
 

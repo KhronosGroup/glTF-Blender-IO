@@ -18,7 +18,7 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 
 import mathutils
-
+from io_scene_gltf2.blender.com import gltf2_blender_math
 
 @cached
 def gather_joint(blender_bone, export_settings):
@@ -36,15 +36,15 @@ def gather_joint(blender_bone, export_settings):
 
     # extract bone transform
     if blender_bone.parent is None:
-        correction_matrix_local = axis_basis_change * blender_bone.bone.matrix_local
+        correction_matrix_local = gltf2_blender_math.multiply(axis_basis_change, blender_bone.bone.matrix_local)
     else:
-        correction_matrix_local = blender_bone.parent.bone.matrix_local.inverted() * blender_bone.bone.matrix_local
+        correction_matrix_local = gltf2_blender_math.multiply(blender_bone.parent.bone.matrix_local.inverted(), blender_bone.bone.matrix_local)
     matrix_basis = blender_bone.matrix_basis
     if export_settings['gltf_bake_skins']:
         gltf2_io_debug.print_console("WARNING", "glTF bake skins not supported")
         # matrix_basis = blender_object.convert_space(blender_bone, blender_bone.matrix, from_space='POSE',
         #                                             to_space='LOCAL')
-    trans, rot, sca = gltf2_blender_extract.decompose_transition(correction_matrix_local * matrix_basis,
+    trans, rot, sca = gltf2_blender_extract.decompose_transition(gltf2_blender_math.multiply(correction_matrix_local, matrix_basis),
                                                                               'JOINT', export_settings)
     translation, rotation, scale = (None, None, None)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:

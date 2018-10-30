@@ -18,6 +18,7 @@ from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
+from io_scene_gltf2.blender.com import gltf2_blender_math
 import mathutils
 
 
@@ -75,10 +76,10 @@ def __gather_inverse_bind_matrices(blender_object, export_settings):
 
     #
     for blender_bone in blender_object.pose.bones:
-        inverse_bind_matrix = axis_basis_change * blender_bone.bone.matrix_local
-        bind_shape_matrix = axis_basis_change * blender_object.matrix_world.inverted() * axis_basis_change.inverted()
+        inverse_bind_matrix = gltf2_blender_math.multiply(axis_basis_change, blender_bone.bone.matrix_local)
+        bind_shape_matrix = gltf2_blender_math.multiply(gltf2_blender_math.multiply(axis_basis_change, blender_object.matrix_world.inverted()), axis_basis_change.inverted())
 
-        inverse_bind_matrix = inverse_bind_matrix.inverted() * bind_shape_matrix
+        inverse_bind_matrix = gltf2_blender_math.multiply(inverse_bind_matrix.inverted(), bind_shape_matrix)
         for column in range(0, 4):
             for row in range(0, 4):
                 inverse_matrices.append(inverse_bind_matrix[row][column])
