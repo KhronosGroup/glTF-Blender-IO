@@ -163,7 +163,7 @@ class BlenderSkin():
                     gltf.log.error("No Skinning ?????") #TODO
 
 
-            offset = offset + prim.vertices_length
+                offset = offset + prim.vertices_length
 
     @staticmethod
     def create_armature_modifiers(gltf, skin_id):

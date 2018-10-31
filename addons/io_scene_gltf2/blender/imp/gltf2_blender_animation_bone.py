@@ -79,7 +79,7 @@ class BlenderBoneAnim():
         for idx, key in enumerate(keys):
             quat_keyframe = Conversion.quaternion_gltf_to_blender(values[idx])
             if not node.parent:
-                bone.scale =  bind_scale.inverted() * scale_mat
+                bone.rotation_quaternion =  bind_rotation.inverted() * quat_keyframe.to_matrix().to_4x4()
             else:
                 if not gltf.data.nodes[node.parent].is_joint: # TODO if Node in another scene
                     parent_mat = bpy.data.objects[gltf.data.nodes[node.parent].blender_object].matrix_world
