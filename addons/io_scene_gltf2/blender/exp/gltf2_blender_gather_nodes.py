@@ -17,6 +17,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 
@@ -44,9 +45,6 @@ def gather_node(blender_object, export_settings):
     )
     node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
 
-    # if node.skin is not None:
-    #     node.children.append(node.skin.joints[0])
-    #     #node.skin.skeleton = node
     return node
 
 
@@ -80,6 +78,12 @@ def __gather_children(blender_object, export_settings):
             node = gather_node(dupli_object, export_settings)
             if node is not None:
                 children.append(node)
+
+    # blender bones
+    if blender_object.type == "ARMATURE":
+        for blender_bone in blender_object.pose.bones:
+            if not blender_bone.parent:
+                children.append(gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings))
 
     return children
 
