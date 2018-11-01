@@ -1136,9 +1136,9 @@ def generate_meshes(operator,
 
             max_index = max(indices)
 
-            if max_index < 65536:
+            if max_index < 65535:
                 componentType = GLTF_COMPONENT_TYPE_UNSIGNED_SHORT
-            elif max_index < 4294967296:
+            elif max_index < 4294967295:
                 componentType = GLTF_COMPONENT_TYPE_UNSIGNED_INT
             else:
                 print_console('ERROR', 'Invalid max_index: ' + str(max_index))
