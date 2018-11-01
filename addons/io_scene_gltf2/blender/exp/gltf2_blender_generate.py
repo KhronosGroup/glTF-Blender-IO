@@ -1141,7 +1141,7 @@ def generate_meshes(operator,
             elif max_index < 4294967295:
                 componentType = GLTF_COMPONENT_TYPE_UNSIGNED_INT
             else:
-                print_console('ERROR', 'Invalid max_index: ' + str(max_index))
+                print_console('ERROR', 'A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
                 continue
 
             if export_settings['gltf_force_indices']:
