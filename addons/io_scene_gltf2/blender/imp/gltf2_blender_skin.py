@@ -186,6 +186,8 @@ class BlenderSkin():
             bpy.context.scene.objects.active = obj
 
             #bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-            #obj.parent = bpy.data.objects[pyskin.blender_armature_name]
+            # Reparent skinned mesh to it's armature to avoid breaking
+            # skinning with interleaved transforms
+            obj.parent = bpy.data.objects[pyskin.blender_armature_name]
             arma = obj.modifiers.new(name="Armature", type="ARMATURE")
             arma.object = bpy.data.objects[pyskin.blender_armature_name]
