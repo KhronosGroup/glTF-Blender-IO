@@ -19,6 +19,7 @@ from .gltf2_blender_map_emissive import *
 from .gltf2_blender_map_normal import *
 from .gltf2_blender_map_occlusion import *
 from ..com.gltf2_blender_material_helpers import *
+from ...io.com.gltf2_io import *
 
 class BlenderMaterial():
 
@@ -39,6 +40,16 @@ class BlenderMaterial():
             BlenderKHR_materials_pbrSpecularGlossiness.create(gltf, pymaterial.extensions['KHR_materials_pbrSpecularGlossiness'], mat.name, vertex_color)
         else:
             # create pbr material
+            if pymaterial.pbr_metallic_roughness is None:
+                # If no pbr material is set, we need to apply all default of pbr
+                pbr = {}
+                pbr["baseColorFactor"] = [1.0, 1.0, 1.0, 1.0]
+                pbr["metallicFactor"] = 1.0
+                pbr["roughnessFactor"] = 1.0
+                pymaterial.pbr_metallic_roughness = MaterialPBRMetallicRoughness.from_dict(pbr)
+                pymaterial.pbr_metallic_roughness.color_type = gltf.SIMPLE
+                pymaterial.pbr_metallic_roughness.metallic_type = gltf.SIMPLE
+
             BlenderPbr.create(gltf, pymaterial.pbr_metallic_roughness, mat.name, vertex_color)
 
         # add emission map if needed
