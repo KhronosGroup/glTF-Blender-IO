@@ -21,11 +21,11 @@ class BlenderOcclusionMap():
     def create(gltf, material_idx):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderOcclusionMap.create_cycles(gltf, material_idx)
+            BlenderOcclusionMap.create_nodetree(gltf, material_idx)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_cycles(gltf, material_idx):
+    def create_nodetree(gltf, material_idx):
 
         pymaterial = gltf.data.materials[material_idx]
 

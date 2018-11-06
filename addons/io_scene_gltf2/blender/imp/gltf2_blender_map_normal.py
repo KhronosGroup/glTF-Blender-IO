@@ -21,11 +21,11 @@ class BlenderNormalMap():
     def create(gltf, material_idx):
         engine = bpy.context.scene.render.engine
         if engine == 'CYCLES':
-            BlenderNormalMap.create_cycles(gltf, material_idx)
+            BlenderNormalMap.create_nodetree(gltf, material_idx)
         else:
             pass #TODO for internal / Eevee in future 2.8
 
-    def create_cycles(gltf, material_idx):
+    def create_nodetree(gltf, material_idx):
 
         pymaterial = gltf.data.materials[material_idx]
 
