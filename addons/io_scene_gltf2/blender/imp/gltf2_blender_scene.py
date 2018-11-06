@@ -52,13 +52,16 @@ class BlenderScene():
         # Now that all mesh / bones are created, create vertex groups on mesh
         if gltf.data.skins:
             for skin_id, skin in enumerate(gltf.data.skins):
-                BlenderSkin.create_vertex_groups(gltf, skin_id)
+                if hasattr(skin, "node_ids"):
+                    BlenderSkin.create_vertex_groups(gltf, skin_id)
 
             for skin_id, skin in enumerate(gltf.data.skins):
-                BlenderSkin.assign_vertex_groups(gltf, skin_id)
+                if hasattr(skin, "node_ids"):
+                    BlenderSkin.assign_vertex_groups(gltf, skin_id)
 
             for skin_id, skin in enumerate(gltf.data.skins):
-                BlenderSkin.create_armature_modifiers(gltf, skin_id)
+                if hasattr(skin, "node_ids"):
+                    BlenderSkin.create_armature_modifiers(gltf, skin_id)
 
         if gltf.data.animations:
             for anim_idx, anim in enumerate(gltf.data.animations):
