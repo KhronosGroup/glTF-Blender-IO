@@ -35,6 +35,10 @@ class BlenderEmissiveMap():
 
         BlenderTextureInfo.create(gltf, pymaterial.emissive_texture.index)
 
+        # check if there is some emssive_factor on material
+        if pymaterial.emissive_factor is None:
+            pymaterial.emissive_factor = [1.0,1.0,1.0]
+
         # retrieve principled node and output node
         principled = get_preoutput_node_output(node_tree)
         output = [node for node in node_tree.nodes if node.type == 'OUTPUT_MATERIAL'][0]
