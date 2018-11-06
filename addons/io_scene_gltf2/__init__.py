@@ -511,6 +511,15 @@ class ImportglTF2(Operator, ImportHelper):
 
     import_shading = bpy.props.EnumProperty(items=import_shading_items, name="Shading", default="NORMALS")
 
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.prop(self, 'loglevel')
+        layout.prop(self, 'import_pack_images')
+        layout.prop(self, 'import_shading')
+
+
     def execute(self, context):
         return self.import_gltf2(context)
 
