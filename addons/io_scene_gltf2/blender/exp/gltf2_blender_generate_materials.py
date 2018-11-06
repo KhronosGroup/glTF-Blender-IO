@@ -16,14 +16,9 @@
 # Imports
 #
 
-import bpy
-
-from ...io.com.gltf2_io_debug import *
+from . import export_keys
 from ...io.com.gltf2_io import Material
-
 from ...io.exp.gltf2_io_generate import *
-from ...io.exp.gltf2_io_get import *
-
 from .gltf2_blender_get import *
 from .gltf2_blender_generate_extras import generate_extras
 
@@ -36,6 +31,7 @@ from .gltf2_blender_generate_extras import generate_extras
 # Functions
 #
 
+
 def generate_texture_transform(operator,
                                context,
                                export_settings,
@@ -44,7 +40,7 @@ def generate_texture_transform(operator,
                                name,
                                blender_node):
 
-    if export_settings['gltf_texture_transform']:
+    if export_settings[export_keys.TEXTURE_TRANSFORM]:
 
         image_node = get_shader_image_from_shader_node(name, blender_node)
 
@@ -92,8 +88,6 @@ def generate_materials_principled(operator,
 
     pbrMetallicRoughness = material['pbrMetallicRoughness']
 
-    alpha = 1.0
-
     #
     # BaseColorFactor or BaseColorTexture
     #
@@ -112,15 +106,15 @@ def generate_materials_principled(operator,
 
             pbrMetallicRoughness['baseColorTexture'] = baseColorTexture
 
-            generate_texture_transform(operator, context, export_settings, glTF, baseColorTexture, 'Base Color', blender_node)
+            generate_texture_transform(operator, context, export_settings,
+                                       glTF, baseColorTexture, 'Base Color', blender_node)
 
     else:
 
         baseColorFactor = get_vec4(blender_node.inputs['Base Color'].default_value, [1.0, 1.0, 1.0, 1.0])
 
-        if baseColorFactor[0] != 1.0 or baseColorFactor[1] != 1.0 or baseColorFactor[2] != 1.0 or baseColorFactor[3] != 1.0:
+        if any(f != 1.0 for f in baseColorFactor):
             pbrMetallicRoughness['baseColorFactor'] = baseColorFactor
-            alpha = baseColorFactor[3]
 
     #
     # MetallicFactor or Metallic texture
@@ -155,8 +149,8 @@ def generate_materials_principled(operator,
 
     if metallicRoughnessIndex >= 0:
         pbrMetallicRoughness['metallicRoughnessTexture'] = {
-                'index': metallicRoughnessIndex
-            }
+            'index': metallicRoughnessIndex
+        }
     #
 
     print_console('DEBUG', '# TODO: Check transmission links')
@@ -205,7 +199,8 @@ def generate_materials_principled(operator,
 
                     material['emissiveTexture'] = emissiveTexture
 
-                    generate_texture_transform(operator, context, export_settings, glTF, emissiveTexture, 'Color', shader_emission)
+                    generate_texture_transform(operator, context, export_settings,
+                                               glTF, emissiveTexture, 'Color', shader_emission)
 
                     if len(shader_emission.inputs['Strength'].links) == 0:
                         emissiveStrength = get_scalar(shader_emission.inputs['Strength'].default_value, 1.0)
@@ -240,7 +235,7 @@ def generate_materials(operator,
     Generates the top level materials entry.
     """
 
-    filtered_materials = export_settings['filtered_materials']
+    filtered_materials = export_settings[export_keys.FILTERED_MATERIALS]
 
     materials = []
 
@@ -322,7 +317,8 @@ def generate_materials(operator,
                         #
                         # Metallic roughness texture
                         #
-                        index = get_texture_index_from_shader_node(export_settings, glTF, 'MetallicRoughness', blender_node)
+                        index = get_texture_index_from_shader_node(
+                            export_settings, glTF, 'MetallicRoughness', blender_node)
                         if index >= 0:
                             metallicRoughnessTexture = {
                                 'index': index
@@ -489,11 +485,11 @@ def generate_materials(operator,
                     #
 
                     if get_scalar(blender_node.inputs['Use COLOR_0'].default_value, 0.0) < 0.5:
-                        export_settings['gltf_use_no_color'].append(blender_material.name)
+                        export_settings[export_keys.USE_NO_COLOR].append(blender_material.name)
 
                     #
 
-                    if export_settings['gltf_extras']:
+                    if export_settings[export_keys.EXTRAS]:
                         extras = generate_extras(blender_material)
 
                         if extras is not None:
@@ -510,7 +506,8 @@ def generate_materials(operator,
 
                 elif isinstance(blender_node, bpy.types.ShaderNodeBsdfPrincipled):
 
-                    generate_materials_principled(operator, context, export_settings, glTF, material, blender_material, blender_node)
+                    generate_materials_principled(operator, context, export_settings,
+                                                  glTF, material, blender_material, blender_node)
 
                     materials.append(Material.from_dict(material))
 
@@ -520,6 +517,9 @@ def generate_materials(operator,
             # Blender Render.
             #
 
+            red = blender_material.diffuse_color[0] * blender_material.diffuse_intensity
+            green = blender_material.diffuse_color[1] * blender_material.diffuse_intensity
+            blue = blender_material.diffuse_color[2] * blender_material.diffuse_intensity
             if blender_material.use_shadeless:
                 KHR_materials_unlit_Used = True
 
@@ -529,7 +529,7 @@ def generate_materials(operator,
 
                 material['extensions'] = {'KHR_materials_unlit': {}}
 
-                if not 'pbrMetallicRoughness' in material:
+                if 'pbrMetallicRoughness' not in material:
                     material['pbrMetallicRoughness'] = {}
 
                 pbrMetallicRoughness = material['pbrMetallicRoughness']
@@ -543,10 +543,7 @@ def generate_materials(operator,
                     else:
                         alphaMode = 'BLEND'
 
-                pbrMetallicRoughness['baseColorFactor'] = [blender_material.diffuse_color[0] * blender_material.diffuse_intensity,
-                                           blender_material.diffuse_color[1] * blender_material.diffuse_intensity,
-                                           blender_material.diffuse_color[2] * blender_material.diffuse_intensity,
-                                           alpha]
+                pbrMetallicRoughness['baseColorFactor'] = [red, green, blue, alpha]
 
                 pbrMetallicRoughness['metallicFactor'] = 0.0
                 pbrMetallicRoughness['roughnessFactor'] = 0.9
@@ -557,7 +554,9 @@ def generate_materials(operator,
                 #
 
                 for blender_texture_slot in blender_material.texture_slots:
-                    if blender_texture_slot and blender_texture_slot.texture and blender_texture_slot.texture.type == 'IMAGE' and blender_texture_slot.texture.image is not None:
+                    if blender_texture_slot and blender_texture_slot.texture and \
+                            blender_texture_slot.texture.type == 'IMAGE' and \
+                            blender_texture_slot.texture.image is not None:
                         #
                         # Base color texture
                         #
@@ -572,7 +571,7 @@ def generate_materials(operator,
                         #
                         # Displacement textue
                         #
-                        if export_settings['gltf_displacement']:
+                        if export_settings[export_keys.DISPLACEMENT]:
                             if blender_texture_slot.use_map_displacement:
                                 index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                                 if index >= 0:
@@ -594,7 +593,7 @@ def generate_materials(operator,
 
                 #
 
-                if export_settings['gltf_extras']:
+                if export_settings[export_keys.EXTRAS]:
                     extras = generate_extras(blender_material)
 
                     if extras is not None:
@@ -612,7 +611,8 @@ def generate_materials(operator,
             else:
 
                 #
-                # A minimal export of basic material properties that didn't get picked up any other way to a pbrMetallicRoughness glTF material
+                # A minimal export of basic material properties that didn't get picked up
+                # any other way to a pbrMetallicRoughness glTF material
                 #
                 material['pbrMetallicRoughness'] = {}
 
@@ -631,7 +631,9 @@ def generate_materials(operator,
                     material['alphaMode'] = alphaMode
 
                 for blender_texture_slot in blender_material.texture_slots:
-                    if blender_texture_slot and blender_texture_slot.texture and blender_texture_slot.texture.type == 'IMAGE' and blender_texture_slot.texture.image is not None:
+                    if blender_texture_slot and blender_texture_slot.texture and \
+                            blender_texture_slot.texture.type == 'IMAGE' and \
+                            blender_texture_slot.texture.image is not None:
                         #
                         # Diffuse texture becmomes baseColorTexture
                         #
@@ -679,7 +681,7 @@ def generate_materials(operator,
                         #
                         # Displacement textue
                         #
-                        if export_settings['gltf_displacement']:
+                        if export_settings[export_keys.DISPLACEMENT]:
                             if blender_texture_slot.use_map_displacement:
                                 index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
                                 if index >= 0:
@@ -702,9 +704,7 @@ def generate_materials(operator,
                 #
                 # Base color factor
                 #
-                baseColorFactor = [blender_material.diffuse_color[0] * blender_material.diffuse_intensity,
-                                   blender_material.diffuse_color[1] * blender_material.diffuse_intensity,
-                                   blender_material.diffuse_color[2] * blender_material.diffuse_intensity, alpha]
+                baseColorFactor = [red, green, blue, alpha]
                 if baseColorFactor[0] != 1.0 or baseColorFactor[1] != 1.0 or baseColorFactor[2] != 1.0 or \
                         baseColorFactor[3] != 1.0:
                     pbrMetallicRoughness['baseColorFactor'] = baseColorFactor
@@ -726,7 +726,7 @@ def generate_materials(operator,
 
                 #
 
-                if export_settings['gltf_extras']:
+                if export_settings[export_keys.EXTRAS]:
                     extras = generate_extras(blender_material)
 
                     if extras is not None:

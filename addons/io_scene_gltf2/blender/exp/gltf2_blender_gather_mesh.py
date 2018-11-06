@@ -18,6 +18,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
 
+
 @cached
 def gather_mesh(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
     if not __filter_mesh(blender_mesh, vertex_groups, export_settings):

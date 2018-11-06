@@ -18,8 +18,7 @@
 
 import bpy
 
-from ...io.com.gltf2_io_debug import *
-
+from . import export_keys
 from ...io.exp.gltf2_io_get import *
 
 #
@@ -54,12 +53,14 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
         if not links:
             return None
         return links[0].to_socket
-    elif bpy.app.version < (2, 80, 0): # blender 2.8 removed texture_slots
+    elif bpy.app.version < (2, 80, 0):  # blender 2.8 removed texture_slots
         if name != 'Base Color':
             return None
 
         for blender_texture_slot in blender_material.texture_slots:
-            if blender_texture_slot and blender_texture_slot.texture and blender_texture_slot.texture.type == 'IMAGE' and blender_texture_slot.texture.image is not None:
+            if blender_texture_slot and blender_texture_slot.texture and \
+                    blender_texture_slot.texture.type == 'IMAGE' and \
+                    blender_texture_slot.texture.image is not None:
                 #
                 # Base color texture
                 #
@@ -69,6 +70,7 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
         return None
     else:
         return None
+
 
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     """
@@ -91,6 +93,7 @@ def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
 
     return None
 
+
 def get_shader_add_to_shader_node(shader_node):
 
     if shader_node is None:
@@ -107,6 +110,7 @@ def get_shader_add_to_shader_node(shader_node):
     return to_node
 
 #
+
 
 def get_shader_emission_from_shader_add(shader_add):
 
@@ -154,6 +158,7 @@ def get_shader_mapping_from_shader_image(shader_image):
 
     return from_node
 
+
 def get_image_material_usage_to_socket(shader_image, socket_name):
     if shader_image is None:
         return -1
@@ -181,6 +186,7 @@ def get_image_material_usage_to_socket(shader_image, socket_name):
                     return i
 
     return -6
+
 
 def get_emission_node_from_lamp_output_node(lamp_node):
     if lamp_node is None:
@@ -236,7 +242,9 @@ def get_shader_image_from_shader_node(name, shader_node):
     if shader_node is None:
         return None
 
-    if not isinstance(shader_node, bpy.types.ShaderNodeGroup) and not isinstance(shader_node, bpy.types.ShaderNodeBsdfPrincipled) and not isinstance(shader_node, bpy.types.ShaderNodeEmission):
+    if not isinstance(shader_node, bpy.types.ShaderNodeGroup) and \
+            not isinstance(shader_node, bpy.types.ShaderNodeBsdfPrincipled) and \
+            not isinstance(shader_node, bpy.types.ShaderNodeEmission):
         return None
 
     if shader_node.inputs.get(name) is None:
@@ -283,10 +291,12 @@ def get_texture_index_from_shader_node(export_settings, glTF, name, shader_node)
 
     return get_texture_index(glTF, from_node.image.name)
 
+
 def get_texture_index_from_export_settings(export_settings, name):
     """
     Return the texture index in the glTF array
     """
+
 
 def get_texcoord_index_from_shader_node(glTF, name, shader_node):
     """
@@ -352,7 +362,7 @@ def get_image_format(export_settings, blender_image):
     if blender_image.file_format in ['PNG', 'JPEG']:
         return blender_image.file_format
 
-    use_alpha = export_settings['filtered_images_use_alpha'].get(blender_image.name)
+    use_alpha = export_settings[export_keys.FILTERED_IMAGES_USE_ALPHA].get(blender_image.name)
 
     return 'PNG' if use_alpha else 'JPEG'
 

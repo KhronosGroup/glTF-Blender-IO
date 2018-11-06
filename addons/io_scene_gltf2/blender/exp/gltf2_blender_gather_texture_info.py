@@ -19,10 +19,11 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
+
 @cached
 def gather_texture_info(blender_shader_sockets_or_texture_slots: typing.Union[
-            typing.Tuple[bpy.types.NodeSocket], typing.Tuple[bpy.types.Texture]],
-                        export_settings):
+    typing.Tuple[bpy.types.NodeSocket], typing.Tuple[bpy.types.Texture]],
+        export_settings):
     if not __filter_texture_info(blender_shader_sockets_or_texture_slots, export_settings):
         return None
 

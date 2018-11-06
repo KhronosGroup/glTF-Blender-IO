@@ -15,15 +15,17 @@
 import bpy
 import typing
 import os
+
+from . import export_keys
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 
 
 def gather_image(
-        blender_shader_sockets_or_texture_slots: typing.Union[typing.Tuple[bpy.types.NodeSocket], typing.Tuple[bpy.types.Texture]],
+        blender_shader_sockets_or_texture_slots: typing.Union[typing.Tuple[bpy.types.NodeSocket],
+                                                              typing.Tuple[bpy.types.Texture]],
         export_settings):
     if not __filter_image(blender_shader_sockets_or_texture_slots, export_settings):
         return None
@@ -45,7 +47,7 @@ def __filter_image(sockets_or_slots, export_settings):
 
 
 def __gather_buffer_view(sockets_or_slots, export_settings):
-    if export_settings['gltf_format'] != 'ASCII':
+    if export_settings[export_keys.FORMAT] != 'ASCII':
 
         image = __get_image_data(sockets_or_slots)
         return gltf2_io_binary_data.BinaryData(
@@ -63,7 +65,7 @@ def __gather_extras(sockets_or_slots, export_settings):
 
 def __gather_mime_type(sockets_or_slots, export_settings):
     return 'image/png'
-    #return 'image/jpeg'
+    # return 'image/jpeg'
 
 
 def __gather_name(sockets_or_slots, export_settings):
@@ -77,7 +79,7 @@ def __gather_name(sockets_or_slots, export_settings):
 
 
 def __gather_uri(sockets_or_slots, export_settings):
-    if export_settings['gltf_format'] == 'ASCII':
+    if export_settings[export_keys.FORMAT] == 'ASCII':
         # as usual we just store the data in place instead of already resolving the references
         return __get_image_data(sockets_or_slots)
     return None
@@ -86,8 +88,10 @@ def __gather_uri(sockets_or_slots, export_settings):
 def __is_socket(sockets_or_slots):
     return isinstance(sockets_or_slots[0], bpy.types.NodeSocket)
 
+
 def __is_slot(sockets_or_slots):
     return isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot)
+
 
 def __get_image_data(sockets_or_slots):
     # For shared ressources, such as images, we just store the portion of data that is needed in the glTF property
@@ -148,6 +152,7 @@ def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket):
     if not result:
         return None
     return result[0]
+
 
 def __get_tex_from_slot(blender_texture_slot):
     return blender_texture_slot.texture

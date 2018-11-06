@@ -17,12 +17,12 @@ import bpy
 import mathutils
 
 import typing
+from . import export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.com import gltf2_blender_math
-from io_scene_gltf2.io.com import gltf2_io_debug
 
 
 @cached
@@ -109,17 +109,17 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     for keyframe in keyframes:
         # Transform the data and extract
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform)
-        if export_settings['gltf_yup']:
+        if export_settings[export_keys.YUP]:
             value = gltf2_blender_math.swizzle_yup(value, target_datapath)
         keyframe_value = gltf2_blender_math.mathutils_to_gltf(value)
         if keyframe.in_tangent is not None:
             in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform)
-            if export_settings['gltf_yup']:
+            if export_settings[export_keys.YUP]:
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
             keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value
         if keyframe.out_tangent is not None:
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform)
-            if export_settings['gltf_yup']:
+            if export_settings[export_keys.YUP]:
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
             keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)
         values += keyframe_value
@@ -156,7 +156,7 @@ def __needs_baking(channels: typing.Tuple[bpy.types.FCurve],
     # if blender_object.type == "ARMATURE":
     #     return True
 
-    if export_settings['gltf_force_sampling']:
+    if export_settings[export_keys.FORCE_SAMPLING]:
         return True
 
     interpolation = channels[0].keyframe_points[0].interpolation
@@ -167,7 +167,9 @@ def __needs_baking(channels: typing.Tuple[bpy.types.FCurve],
         # There are different interpolation methods in one action group
         return True
 
-    def all_equal(lst): return lst[1:] == lst[:-1]
+    def all_equal(lst):
+        return lst[1:] == lst[:-1]
+
     if not all(all_equal(key_times) for key_times in zip([[k.co[0] for k in c.keyframe_points] for c in channels])):
         # The channels have differently located keyframes
         return True
@@ -265,10 +267,10 @@ def __gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings
             time += step
     else:
         # Just use the keyframes as they are specified in blender
-        times = [ keyframe.co[0] for keyframe in channels[0].keyframe_points]
+        times = [keyframe.co[0] for keyframe in channels[0].keyframe_points]
         for i, time in enumerate(times):
             key = Keyframe(channels, time)
-            #key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
+            # key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
             key.value = [c.evaluate(time) for c in channels]
 
             # compute tangents for cubic spline interpolation
@@ -280,7 +282,8 @@ def __gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings
                 else:
                     # otherwise construct a in tangent from the keyframes control points
                     key.in_tangent = [
-                        3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]) / (time - times[i - 1])
+                        3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]
+                               ) / (time - times[i - 1])
                         for c in channels
                     ]
                 # Construct the out tangent
@@ -290,7 +293,8 @@ def __gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings
                 else:
                     # otherwise construct a in tangent from the keyframes control points
                     key.out_tangent = [
-                        3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (times[i+1] - time)
+                        3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]
+                               ) / (times[i + 1] - time)
                         for c in channels
                     ]
             keyframes.append(key)

@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import typing
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
@@ -127,7 +125,6 @@ class GlTF2Exporter:
         )
         self.__gltf.buffers.append(buffer)
 
-
         self.__finalized = True
 
     def finalize_images(self, output_path):
@@ -167,7 +164,6 @@ class GlTF2Exporter:
             raise RuntimeError("Tried to add animation to finalized glTF file")
 
         self.__traverse(animation)
-
 
     def __to_reference(self, property):
         """
@@ -209,7 +205,7 @@ class GlTF2Exporter:
         def traverse_all_members(node):
             for member_name in [a for a in dir(node) if not a.startswith('__') and not callable(getattr(node, a))]:
                 new_value = self.__traverse(getattr(node, member_name))
-                setattr(node, member_name, new_value) # usually this is the same as before
+                setattr(node, member_name, new_value)  # usually this is the same as before
             return node
 
         # traverse nodes of a child of root property type and add them to the glTF root

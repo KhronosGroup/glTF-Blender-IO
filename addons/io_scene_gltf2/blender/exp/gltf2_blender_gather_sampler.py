@@ -86,13 +86,6 @@ def gather_sampler_from_texture_slot(blender_texture: bpy.types.TextureSlot, exp
     if magFilter == 9728:
         minFilter = 9984
 
-    sampler = {
-        'magFilter': magFilter,
-        'minFilter': minFilter,
-        'wrapS': wrap,
-        'wrapT': wrap
-    }
-
     return gltf2_io.Sampler(
         extensions=None,
         extras=None,

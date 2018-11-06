@@ -14,7 +14,6 @@
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
@@ -29,9 +28,9 @@ def gather_material_pbr_metallic_roughness(blender_material, export_settings):
         base_color_texture=__gather_base_color_texture(blender_material, export_settings),
         extensions=__gather_extensions(blender_material, export_settings),
         extras=__gather_extras(blender_material, export_settings),
-        metallic_factor= __gather_metallic_factor(blender_material, export_settings),
+        metallic_factor=__gather_metallic_factor(blender_material, export_settings),
         metallic_roughness_texture=__gather_metallic_roughness_texture(blender_material, export_settings),
-        roughness_factor= __gather_roughness_factor(blender_material, export_settings)
+        roughness_factor=__gather_roughness_factor(blender_material, export_settings)
     )
 
     return material

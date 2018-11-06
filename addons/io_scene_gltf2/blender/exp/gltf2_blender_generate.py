@@ -17,23 +17,20 @@
 #
 
 import copy
-import bpy
-
 import base64
 
 from .gltf2_blender_animate import *
 from .gltf2_blender_extract import *
-from .gltf2_blender_filter import *
 from .gltf2_blender_generate_materials import *
-
-from ..com.gltf2_blender_image_util import *
-
-from io_scene_gltf2.io.com import gltf2_io
 from .gltf2_blender_generate_extras import generate_extras
+from ..com.gltf2_blender_image_util import *
+from io_scene_gltf2.io.com import gltf2_io
 
 #
 # Functions
 #
+FRAME_STEP = 'gltf_frame_step'
+JOINT_CACHE = 'gltf_joint_cache'
 
 
 def generate_animations_parameter(
@@ -144,7 +141,7 @@ def generate_animations_parameter(
             final_keys = []
 
             key_offset = 0.0
-            if len(keys) > 0 and export_settings['gltf_move_keyframes']:
+            if len(keys) > 0 and export_settings[export_keys.MOVE_KEYFRAMES]:
                 key_offset = bpy.context.scene.frame_start / bpy.context.scene.render.fps
 
             for key in keys:
@@ -245,7 +242,7 @@ def generate_animations_parameter(
         final_keys = []
 
         key_offset = 0.0
-        if len(keys) > 0 and export_settings['gltf_move_keyframes']:
+        if len(keys) > 0 and export_settings[export_keys.MOVE_KEYFRAMES]:
             key_offset = bpy.context.scene.frame_start / bpy.context.scene.render.fps
 
         for key in keys:
@@ -349,7 +346,7 @@ def generate_animations_parameter(
             final_keys = []
 
             key_offset = 0.0
-            if len(keys) > 0 and export_settings['gltf_move_keyframes']:
+            if len(keys) > 0 and export_settings[export_keys.MOVE_KEYFRAMES]:
                 key_offset = bpy.context.scene.frame_start / bpy.context.scene.render.fps
 
             for key in keys:
@@ -437,7 +434,7 @@ def generate_animations_parameter(
             final_keys = []
 
             key_offset = 0.0
-            if len(keys) > 0 and export_settings['gltf_move_keyframes']:
+            if len(keys) > 0 and export_settings[export_keys.MOVE_KEYFRAMES]:
                 key_offset = bpy.context.scene.frame_start / bpy.context.scene.render.fps
 
             for key in keys:
@@ -578,7 +575,7 @@ def generate_animations(operator,
 
         #
 
-        if export_settings['gltf_bake_skins']:
+        if export_settings[export_keys.BAKE_SKINS]:
             blender_action = bake_action(export_settings, blender_object, blender_action)
 
         #
@@ -595,7 +592,7 @@ def generate_animations(operator,
 
         # Add entry to joint cache. Current action may not need skinnning,
         # but there are too many places to check for and add it later.
-        gltf_joint_cache = export_settings['gltf_joint_cache']
+        gltf_joint_cache = export_settings[export_keys.JOINT_CACHE]
         if not gltf_joint_cache.get(blender_action.name):
             gltf_joint_cache[blender_action.name] = {}
 
@@ -617,12 +614,12 @@ def generate_animations(operator,
             False
         )
 
-        if export_settings['gltf_skins']:
+        if export_settings[export_keys.SKINS]:
             if blender_object.type == 'ARMATURE' and len(blender_object.pose.bones) > 0:
 
                 #
 
-                if export_settings['gltf_yup']:
+                if export_settings[export_keys.YUP]:
                     axis_basis_change = mathutils.Matrix(
                         ((1.0, 0.0, 0.0, 0.0),
                          (0.0, 0.0, 1.0, 0.0),
@@ -692,7 +689,7 @@ def generate_animations(operator,
     #
     #
 
-    filtered_objects = export_settings['filtered_objects']
+    filtered_objects = export_settings[export_keys.FILTERED_OBJECTS]
 
     #
     #
@@ -702,7 +699,7 @@ def generate_animations(operator,
     def process_mesh_object(blender_object, blender_action):
         blender_mesh = blender_object.data
 
-        if not blender_action.name in processed_meshes:
+        if blender_action.name not in processed_meshes:
             processed_meshes[blender_action.name] = []
 
         if blender_mesh in processed_meshes[blender_action.name]:
@@ -766,10 +763,11 @@ def generate_animations(operator,
         #
 
         # Export shape keys.
-        if (blender_object.type != 'MESH'
-                or blender_object.data is None
-                or blender_object.data.shape_keys is None
-                or blender_object.data.shape_keys.animation_data is None):
+        is_mesh = blender_object.type == 'MESH'
+        has_data = blender_object.data is not None
+        has_shape_keys = blender_object.data.shape_keys is not None
+        has_animation_data = blender_object.data.shape_keys.animation_data is not None
+        if not (is_mesh and has_data and has_shape_keys and has_animation_data):
             continue
 
         shape_keys = blender_object.data.shape_keys
@@ -812,7 +810,7 @@ def compute_bone_matrices(axis_basis_change, blender_bone, blender_object, expor
         # Transform matrix by parent bone's matrix
         correction_matrix_local = blender_bone.parent.bone.matrix_local.inverted() * blender_bone.bone.matrix_local
 
-    if export_settings['gltf_bake_skins']:
+    if export_settings[export_keys.BAKE_SKINS]:
         matrix_basis = blender_object.convert_space(
             blender_bone,
             blender_bone.matrix,
@@ -825,7 +823,7 @@ def compute_bone_matrices(axis_basis_change, blender_bone, blender_object, expor
 
 def bake_action(export_settings, blender_object, blender_action):
     start, end = compute_action_range(export_settings, [blender_action])
-    step = export_settings['gltf_frame_step']
+    step = export_settings[export_keys.FRAME_STEP]
 
     #
 
@@ -859,7 +857,7 @@ def compute_action_range(export_settings, actions):
                 end = current_blender_fcurve.range()[1]
             else:
                 end = max(end, current_blender_fcurve.range()[1])
-    if start is None or end is None or export_settings['gltf_frame_range']:
+    if start is None or end is None or export_settings[export_keys.FRAME_RANGE]:
         start = bpy.context.scene.frame_start
         end = bpy.context.scene.frame_end
     return start, end
@@ -875,7 +873,7 @@ def generate_cameras(export_settings, glTF):
     #
     #
 
-    filtered_cameras = export_settings['filtered_cameras']
+    filtered_cameras = export_settings[export_keys.FILTERED_CAMERAS]
 
     for blender_camera in filtered_cameras:
 
@@ -904,20 +902,20 @@ def generate_cameras(export_settings, glTF):
 
             if width >= height:
                 if blender_camera.sensor_fit != 'VERTICAL':
-                    yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / aspectRatio);
+                    yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / aspectRatio)
                 else:
                     yfov = blender_camera.angle
             else:
                 if blender_camera.sensor_fit != 'HORIZONTAL':
                     yfov = blender_camera.angle
                 else:
-                    yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / aspectRatio);
+                    yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / aspectRatio)
 
             perspective['yfov'] = yfov
 
             perspective['znear'] = blender_camera.clip_start
 
-            if not export_settings['gltf_camera_infinite']:
+            if not export_settings[export_keys.CAMERA_INFINITE]:
                 perspective['zfar'] = blender_camera.clip_end
 
             #
@@ -972,7 +970,7 @@ def generate_lights(operator,
     #
     #
 
-    filtered_lights = export_settings['filtered_lights']
+    filtered_lights = export_settings[export_keys.FILTERED_LIGHTS]
 
     for blender_light in filtered_lights:
 
@@ -1026,7 +1024,6 @@ def generate_lights(operator,
                     light_intensity = emission_strength
                     break
 
-
         light['color'] = light_color
         light['intensity'] = light_intensity
 
@@ -1067,9 +1064,9 @@ def generate_meshes(operator,
     #
     #
 
-    filtered_meshes = export_settings['filtered_meshes']
+    filtered_meshes = export_settings[export_keys.FILTERED_MESHES]
 
-    filtered_vertex_groups = export_settings['filtered_vertex_groups']
+    filtered_vertex_groups = export_settings[export_keys.FILTERED_VERTEX_GROUPS]
 
     for name, blender_mesh in filtered_meshes.items():
 
@@ -1111,21 +1108,23 @@ def generate_meshes(operator,
             #
             #
 
-            if export_settings['gltf_materials']:
+            if export_settings[export_keys.MATERIALS]:
                 material = get_material_index(glTF, internal_primitive['material'])
 
-                if get_material_requires_texcoords(glTF, material) and not export_settings['gltf_texcoords']:
+                if get_material_requires_texcoords(glTF, material) and not export_settings[export_keys.TEX_COORDS]:
                     material = -1
 
-                if get_material_requires_normals(glTF, material) and not export_settings['gltf_normals']:
+                if get_material_requires_normals(glTF, material) and not export_settings[export_keys.NORMALS]:
                     material = -1
 
                 # Meshes/primitives without material are allowed.
                 if material >= 0:
                     primitive.material = material
                 else:
-                    print_console('WARNING', 'Material ' + internal_primitive[
-                        'material'] + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
+                    message = "Material {} not found. " \
+                              "Please assign glTF 2.0 material or enable Blinn-Phong material in export." \
+                        .format(internal_primitive['material'])
+                    print_console('WARNING', message)
 
             #
             #
@@ -1141,11 +1140,13 @@ def generate_meshes(operator,
             elif max_index < 4294967295:
                 componentType = GLTF_COMPONENT_TYPE_UNSIGNED_INT
             else:
-                print_console('ERROR', 'A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
+                message = "A mesh contains too many vertices ({}) and needs to be split before export." \
+                    .format(str(max_index))
+                print_console('ERROR', message)
                 continue
 
-            if export_settings['gltf_force_indices']:
-                componentType = export_settings['gltf_indices']
+            if export_settings[export_keys.FORCE_INDICES]:
+                componentType = export_settings[export_keys.INDICES]
 
             count = len(indices)
 
@@ -1184,7 +1185,7 @@ def generate_meshes(operator,
 
             #
 
-            if export_settings['gltf_normals']:
+            if export_settings[export_keys.NORMALS]:
                 internal_normal = internal_attributes['NORMAL']
 
                 count = len(internal_normal) // 3
@@ -1201,7 +1202,7 @@ def generate_meshes(operator,
 
             #
 
-            if export_settings['gltf_tangents']:
+            if export_settings[export_keys.TANGENTS]:
                 if internal_attributes.get('TANGENT') is not None:
                     internal_tangent = internal_attributes['TANGENT']
 
@@ -1219,7 +1220,7 @@ def generate_meshes(operator,
 
             #
 
-            if export_settings['gltf_texcoords']:
+            if export_settings[export_keys.TEX_COORDS]:
                 texcoord_index = 0
 
                 process_texcoord = True
@@ -1248,7 +1249,7 @@ def generate_meshes(operator,
 
             #
 
-            if export_settings['gltf_colors']:
+            if export_settings[export_keys.COLORS]:
                 color_index = 0
 
                 process_color = True
@@ -1277,7 +1278,7 @@ def generate_meshes(operator,
 
             #
 
-            if export_settings['gltf_skins']:
+            if export_settings[export_keys.SKINS]:
                 bone_index = 0
 
                 process_bone = True
@@ -1334,7 +1335,7 @@ def generate_meshes(operator,
 
             #
 
-            if export_settings['gltf_morph']:
+            if export_settings[export_keys.MORPH]:
                 if blender_mesh.shape_keys is not None:
                     targets = []
 
@@ -1373,8 +1374,8 @@ def generate_meshes(operator,
 
                                 #
 
-                                if export_settings['gltf_normals'] and export_settings[
-                                    'gltf_morph_normal'] and internal_attributes.get(target_normal_id) is not None:
+                                if export_settings[export_keys.NORMALS] and export_settings[export_keys.MORPH_NORMAL] \
+                                        and internal_attributes.get(target_normal_id) is not None:
 
                                     internal_target_normal = internal_attributes[target_normal_id]
 
@@ -1397,8 +1398,8 @@ def generate_meshes(operator,
                                     target['NORMAL'] = target_normal
                                 #
 
-                                if export_settings['gltf_tangents'] and export_settings[
-                                    'gltf_morph_tangent'] and internal_attributes.get(target_tangent_id) is not None:
+                                if export_settings[export_keys.TANGENTS] and export_settings[export_keys.MORPH_TANGENT]\
+                                        and internal_attributes.get(target_tangent_id) is not None:
 
                                     internal_target_tangent = internal_attributes[target_tangent_id]
 
@@ -1436,7 +1437,7 @@ def generate_meshes(operator,
 
         #
 
-        if export_settings['gltf_extras']:
+        if export_settings[export_keys.EXTRAS]:
             extras = generate_extras(blender_mesh)
 
             if extras is not None:
@@ -1444,7 +1445,7 @@ def generate_meshes(operator,
 
         #
 
-        if export_settings['gltf_morph']:
+        if export_settings[export_keys.MORPH]:
             if blender_mesh.shape_keys is not None:
                 morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
                 if morph_max > 0:
@@ -1507,8 +1508,10 @@ def generate_duplicate_mesh(glTF, blender_object):
             if material >= 0:
                 primitives[primitive_index].material = material
             else:
-                print_console('WARNING',
-                              'Material ' + blender_material_slot.material.name + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
+                message = "Material {} not found." \
+                          "Please assign glTF 2.0 material or enable Blinn-Phong material in export." \
+                    .format(blender_material_slot.material.name)
+                print_console('WARNING', message)
 
         primitive_index += 1
 
@@ -1591,7 +1594,7 @@ def generate_node_instance(context,
     #
     #
 
-    if export_settings['gltf_layers'] or blender_object.layers[0] or force_visible:
+    if export_settings[export_keys.LAYERS] or blender_object.layers[0] or force_visible:
 
         #
         #
@@ -1620,12 +1623,12 @@ def generate_node_instance(context,
         #
         #
 
-        if export_settings['gltf_cameras']:
+        if export_settings[export_keys.CAMERAS]:
             if blender_object.type == 'CAMERA':
                 camera = get_camera_index(glTF, blender_object.data.name)
 
                 if camera >= 0:
-                    if export_settings['gltf_yup']:
+                    if export_settings[export_keys.YUP]:
                         # Add correction node for camera, as default direction is different to Blender.
                         correction_node = gltf2_io.Node(
                             camera=None,
@@ -1642,9 +1645,9 @@ def generate_node_instance(context,
                             weights=None
                         )
 
-                        correction_node.name  = 'Correction_' + blender_object.name
+                        correction_node.name = 'Correction_' + blender_object.name
                         correction_node.rotation = [correction_quaternion[1], correction_quaternion[2],
-                                                       correction_quaternion[3], correction_quaternion[0]]
+                                                    correction_quaternion[3], correction_quaternion[0]]
 
                         correction_node.camera = camera
 
@@ -1652,14 +1655,14 @@ def generate_node_instance(context,
                     else:
                         node.camera = camera
 
-        if export_settings['gltf_lights']:
+        if export_settings[export_keys.LIGHTS]:
             if blender_object.type == 'LAMP':
                 light = get_light_index(glTF, blender_object.data.name)
                 if light >= 0:
                     khr_lights_punctual = {'light': light}
                     extensions = {'KHR_lights_punctual': khr_lights_punctual}
 
-                    if export_settings['gltf_yup']:
+                    if export_settings[export_keys.YUP]:
                         # Add correction node for light, as default direction is different to Blender.
                         correction_node = gltf2_io.Node(
                             camera=None,
@@ -1678,7 +1681,7 @@ def generate_node_instance(context,
 
                         correction_node.name = 'Correction_' + blender_object.name
                         correction_node.rotation = [correction_quaternion[1], correction_quaternion[2],
-                                                       correction_quaternion[3], correction_quaternion[0]]
+                                                    correction_quaternion[3], correction_quaternion[0]]
 
                         correction_node.extensions = extensions
 
@@ -1688,7 +1691,7 @@ def generate_node_instance(context,
 
     #
 
-    if export_settings['gltf_extras']:
+    if export_settings[export_keys.EXTRAS]:
         extras = generate_extras(blender_object)
 
         if extras is not None:
@@ -1718,7 +1721,7 @@ def generate_nodes(operator,
     #
     #
 
-    filtered_objects = export_settings['filtered_objects']
+    filtered_objects = export_settings[export_keys.FILTERED_OBJECTS]
 
     for blender_object in filtered_objects:
         node = generate_node_instance(context, export_settings, glTF, nodes, blender_object, False)
@@ -1732,9 +1735,10 @@ def generate_nodes(operator,
     #
 
     for blender_object in filtered_objects:
-        if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group != None:
+        if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group is not None:
 
-            if export_settings['gltf_layers'] or (blender_object.layers[0] and blender_object.dupli_group.layers[0]):
+            if export_settings[export_keys.LAYERS] or \
+                    (blender_object.layers[0] and blender_object.dupli_group.layers[0]):
 
                 for blender_dupli_object in blender_object.dupli_group.objects:
                     node = generate_node_instance(context, export_settings, glTF, nodes, blender_dupli_object,
@@ -1781,15 +1785,15 @@ def generate_nodes(operator,
     #
     #
 
-    if export_settings['gltf_skins']:
+    if export_settings[export_keys.SKINS]:
         for blender_object in filtered_objects:
             if blender_object.type != 'ARMATURE' or len(blender_object.pose.bones) == 0:
                 continue
 
             temp_action = None
 
-            if export_settings['gltf_bake_skins'] and not export_settings['gltf_animations']:
-                #TODO: this has to be added to the gather animation/ skins
+            if export_settings[export_keys.BAKE_SKINS] and not export_settings[export_keys.ANIMATIONS]:
+                # TODO: this has to be added to the gather animation/ skins
                 if blender_object.animation_data is not None:
                     temp_action = blender_object.animation_data.action
 
@@ -1824,7 +1828,7 @@ def generate_nodes(operator,
 
                 for blender_bone in blender_object.pose.bones:
 
-                    if export_settings['gltf_yup']:
+                    if export_settings[export_keys.YUP]:
                         axis_basis_change = mathutils.Matrix(
                             ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
                     else:
@@ -1849,11 +1853,12 @@ def generate_nodes(operator,
                         if blender_bone.parent is None:
                             correction_matrix_local = axis_basis_change * blender_bone.bone.matrix_local
                         else:
-                            correction_matrix_local = blender_bone.parent.bone.matrix_local.inverted() * blender_bone.bone.matrix_local
+                            inverted_parent = blender_bone.parent.bone.matrix_local.inverted()
+                            correction_matrix_local = inverted_parent * blender_bone.bone.matrix_local
 
                         matrix_basis = blender_bone.matrix_basis
 
-                        if export_settings['gltf_bake_skins']:
+                        if export_settings[export_keys.BAKE_SKINS]:
                             matrix_basis = blender_object.convert_space(blender_bone, blender_bone.matrix,
                                                                         from_space='POSE', to_space='LOCAL')
 
@@ -1873,10 +1878,11 @@ def generate_nodes(operator,
                     #
                     #
 
+                    world_inverted = blender_object.matrix_world.inverted()
+                    child_world = blender_object_child.matrix_world
+                    bind_shape_matrix = axis_basis_change * world_inverted * child_world * axis_basis_change.inverted()
+
                     inverse_bind_matrix = axis_basis_change * blender_bone.bone.matrix_local
-
-                    bind_shape_matrix = axis_basis_change * blender_object.matrix_world.inverted() * blender_object_child.matrix_world * axis_basis_change.inverted()
-
                     inverse_bind_matrix = inverse_bind_matrix.inverted() * bind_shape_matrix
 
                     for column in range(0, 4):
@@ -1904,7 +1910,6 @@ def generate_nodes(operator,
 
                 #
                 count = len(inverse_matrices) // 16
-                type = "MAT4"
 
                 inverseBindMatrices = generate_accessor(
                     export_settings,
@@ -1944,7 +1949,7 @@ def generate_nodes(operator,
 
         #
 
-        if export_settings['gltf_skins']:
+        if export_settings[export_keys.SKINS]:
             blender_armature = blender_object.find_armature()
             if blender_armature is not None:
 
@@ -1971,14 +1976,14 @@ def generate_nodes(operator,
         children = []
 
         # Camera
-        if export_settings['gltf_cameras']:
+        if export_settings[export_keys.CAMERAS]:
             if blender_object.type == 'CAMERA':
                 child_index = get_node_index(glTF, 'Correction_' + blender_object.name)
                 if child_index >= 0:
                     children.append(child_index)
 
         # Light
-        if export_settings['gltf_lights']:
+        if export_settings[export_keys.LIGHTS]:
             if blender_object.type == 'LAMP':
                 child_index = get_node_index(glTF, 'Correction_' + blender_object.name)
                 if child_index >= 0:
@@ -1988,7 +1993,7 @@ def generate_nodes(operator,
         for blender_child_node in blender_object.children:
             child_index = get_node_index(glTF, blender_child_node.name)
 
-            if blender_child_node.parent_type == 'BONE' and export_settings['gltf_skins']:
+            if blender_child_node.parent_type == 'BONE' and export_settings[export_keys.SKINS]:
                 continue
 
             if child_index < 0:
@@ -2019,7 +2024,7 @@ def generate_nodes(operator,
 
                 #
 
-        if export_settings['gltf_skins']:
+        if export_settings[export_keys.SKINS]:
             # Joint
             if blender_object.type == 'ARMATURE' and len(blender_object.pose.bones) > 0:
 
@@ -2027,7 +2032,7 @@ def generate_nodes(operator,
 
                 blender_object_to_bone = {}
 
-                if export_settings['gltf_skins']:
+                if export_settings[export_keys.SKINS]:
                     for blender_child_node in blender_object.children:
                         if blender_child_node.parent_type == 'BONE':
                             blender_object_to_bone[blender_child_node.name] = blender_child_node.parent_bone
@@ -2085,7 +2090,7 @@ def generate_images(operator,
     Generates the top level images entry.
     """
 
-    filtered_images = export_settings['filtered_images']
+    filtered_images = export_settings[export_keys.FILTERED_IMAGES]
 
     images = []
 
@@ -2104,9 +2109,9 @@ def generate_images(operator,
 
         #
 
-        if export_settings['gltf_format'] == 'ASCII':
+        if export_settings[export_keys.FORMAT] == 'ASCII':
 
-            if export_settings['gltf_embed_images']:
+            if export_settings[export_keys.EMBED_IMAGES]:
                 # Embed image as Base64.
 
                 image_data = create_image_data(context, export_settings, blender_image, file_format)
@@ -2121,7 +2126,7 @@ def generate_images(operator,
                 # Store image external.
 
                 uri = get_image_uri(export_settings, blender_image)
-                path = export_settings['gltf_filedirectory'] + uri
+                path = export_settings[export_keys.FILEDIRECTORY] + uri
 
                 create_image_file(context, blender_image, path, file_format)
 
@@ -2147,7 +2152,7 @@ def generate_images(operator,
 
         images.append(gltf2_io.Image.from_dict(image))
 
-    filtered_merged_images = export_settings['filtered_merged_images']
+    filtered_merged_images = export_settings[export_keys.FILTERED_MERGED_IMAGES]
 
     for gltf2_image in filtered_merged_images:
         #
@@ -2161,9 +2166,9 @@ def generate_images(operator,
 
         #
 
-        if export_settings['gltf_format'] == 'ASCII':
+        if export_settings[export_keys.FORMAT] == 'ASCII':
 
-            if export_settings['gltf_embed_images']:
+            if export_settings[export_keys.EMBED_IMAGES]:
                 # Embed image as Base64.
 
                 image_data = gltf2_image.to_image_data(mime_type)
@@ -2178,7 +2183,7 @@ def generate_images(operator,
                 # Store image external.
 
                 uri = get_image_uri(export_settings, gltf2_image)
-                path = export_settings['gltf_filedirectory'] + uri
+                path = export_settings[export_keys.FILEDIRECTORY] + uri
 
                 gltf2_image.save_png(path)
 
@@ -2219,7 +2224,7 @@ def generate_textures(operator,
     Generates the top level textures entry.
     """
 
-    filtered_textures = export_settings['filtered_textures']
+    filtered_textures = export_settings[export_keys.FILTERED_TEXTURES]
 
     textures = []
 
@@ -2323,7 +2328,7 @@ def generate_scenes(export_settings,
 
         #
 
-        if export_settings['gltf_lights']:
+        if export_settings[export_keys.LIGHTS]:
             light = get_light_index(glTF, 'Ambient_' + blender_scene.name)
             if light >= 0:
                 khr_lights_punctual = {'light': light}
@@ -2332,7 +2337,7 @@ def generate_scenes(export_settings,
 
         #
 
-        if export_settings['gltf_extras']:
+        if export_settings[export_keys.EXTRAS]:
             extras = generate_extras(blender_scene.world)
 
             if extras is not None:
@@ -2381,7 +2386,7 @@ def generate_glTF(operator,
 
     #
 
-    if export_settings['gltf_materials']:
+    if export_settings[export_keys.MATERIALS]:
         profile_start()
         generate_images(operator, context, export_settings, glTF)
         profile_end('images')
@@ -2401,13 +2406,13 @@ def generate_glTF(operator,
 
     #
 
-    if export_settings['gltf_cameras']:
+    if export_settings[export_keys.CAMERAS]:
         profile_start()
         generate_cameras(export_settings, glTF)
         profile_end('cameras')
         bpy.context.window_manager.progress_update(40)
 
-    if export_settings['gltf_lights']:
+    if export_settings[export_keys.LIGHTS]:
         profile_start()
         generate_lights(operator, context, export_settings, glTF)
         profile_end('lights')
@@ -2431,7 +2436,7 @@ def generate_glTF(operator,
 
     #
 
-    if export_settings['gltf_animations']:
+    if export_settings[export_keys.ANIMATIONS]:
         profile_start()
         generate_animations(operator, context, export_settings, glTF)
         profile_end('animations')
@@ -2455,7 +2460,7 @@ def generate_glTF(operator,
 
     #
 
-    byteLength = len(export_settings['gltf_binary'])
+    byteLength = len(export_settings[export_keys.BINARY])
 
     if byteLength > 0:
         glTF.buffers = []
@@ -2464,12 +2469,12 @@ def generate_glTF(operator,
             'byteLength': byteLength
         }
 
-        if export_settings['gltf_format'] == 'ASCII':
-            uri = export_settings['gltf_binaryfilename']
+        if export_settings[export_keys.FORMAT] == 'ASCII':
+            uri = export_settings[export_keys.BINARY_FILENAME]
 
-            if export_settings['gltf_embed_buffers']:
-                uri = 'data:application/octet-stream;base64,' + base64.b64encode(export_settings['gltf_binary']).decode(
-                    'ascii')
+            if export_settings[export_keys.EMBED_BUFFERS]:
+                uri = 'data:application/octet-stream;base64,' + base64.b64encode(
+                    export_settings[export_keys.BINARY]).decode('ascii')
 
             buffer['uri'] = uri
 

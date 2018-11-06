@@ -17,7 +17,8 @@ import functools
 
 def cached(func):
     """
-    Decorator to cache gather functions results. The gather function is only executed if its result isn't in the cache yet
+    Decorator to cache gather functions results.
+    The gather function is only executed if its result isn't in the cache yet
 
     :param func: the function to be decorated. It will have a static __cache member afterwards
     :return:
@@ -51,6 +52,7 @@ def cached(func):
             func.__cache[cache_key] = result
             return result
     return wrapper_cached
+
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
 call_or_fetch = cached

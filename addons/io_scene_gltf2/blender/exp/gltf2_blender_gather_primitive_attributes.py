@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from . import export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.blender.exp import gltf2_blender_utils
+
 
 def gather_primitive_attributes(blender_primitive, export_settings):
     """
@@ -54,7 +56,7 @@ def __gather_position(blender_primitive, export_settings):
 
 
 def __gather_normal(blender_primitive, export_settings):
-    if export_settings['gltf_normals']:
+    if export_settings[export_keys.NORMALS]:
         normal = blender_primitive["attributes"]['NORMAL']
         return {
             "NORMAL": gltf2_io.Accessor(
@@ -76,12 +78,13 @@ def __gather_normal(blender_primitive, export_settings):
 
 
 def __gather_tangent(blender_primitive, export_settings):
-    if export_settings['gltf_tangents']:
+    if export_settings[export_keys.TANGENTS]:
         if blender_primitive["attributes"].get('TANGENT') is not None:
             tangent = blender_primitive["attributes"]['TANGENT']
             return {
                 "TANGENT": gltf2_io.Accessor(
-                    buffer_view=gltf2_io_binary_data.BinaryData.from_list(tangent, gltf2_io_constants.ComponentType.Float),
+                    buffer_view=gltf2_io_binary_data.BinaryData.from_list(
+                        tangent, gltf2_io_constants.ComponentType.Float),
                     byte_offset=None,
                     component_type=gltf2_io_constants.ComponentType.Float,
                     count=len(tangent) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Vec4),
@@ -101,16 +104,17 @@ def __gather_tangent(blender_primitive, export_settings):
 
 def __gather_texcoord(blender_primitive, export_settings):
     attributes = {}
-    if export_settings['gltf_texcoords']:
-        texcoord_index = 0
-        texcoord_id = 'TEXCOORD_' + str(texcoord_index)
-        while blender_primitive["attributes"].get(texcoord_id) is not None:
-            texcoord = blender_primitive["attributes"][texcoord_id]
-            attributes[texcoord_id] = gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData.from_list(texcoord, gltf2_io_constants.ComponentType.Float),
+    if export_settings[export_keys.TEX_COORDS]:
+        tex_coord_index = 0
+        tex_coord_id = 'TEXCOORD_' + str(tex_coord_index)
+        while blender_primitive["attributes"].get(tex_coord_id) is not None:
+            tex_coord = blender_primitive["attributes"][tex_coord_id]
+            attributes[tex_coord_id] = gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData.from_list(
+                    tex_coord, gltf2_io_constants.ComponentType.Float),
                 byte_offset=None,
                 component_type=gltf2_io_constants.ComponentType.Float,
-                count=len(texcoord) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Vec2),
+                count=len(tex_coord) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Vec2),
                 extensions=None,
                 extras=None,
                 max=None,
@@ -120,20 +124,21 @@ def __gather_texcoord(blender_primitive, export_settings):
                 sparse=None,
                 type=gltf2_io_constants.DataType.Vec2
             )
-            texcoord_index += 1
-            texcoord_id = 'TEXCOORD_' + str(texcoord_index)
+            tex_coord_index += 1
+            tex_coord_id = 'TEXCOORD_' + str(tex_coord_index)
     return attributes
 
 
 def __gather_colors(blender_primitive, export_settings):
     attributes = {}
-    if export_settings['gltf_colors']:
+    if export_settings[export_keys.COLORS]:
         color_index = 0
         color_id = 'COLOR_' + str(color_index)
         while blender_primitive["attributes"].get(color_id) is not None:
             internal_color = blender_primitive["attributes"][color_id]
             attributes[color_id] = gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData.from_list(internal_color, gltf2_io_constants.ComponentType.Float),
+                buffer_view=gltf2_io_binary_data.BinaryData.from_list(
+                    internal_color, gltf2_io_constants.ComponentType.Float),
                 byte_offset=None,
                 component_type=gltf2_io_constants.ComponentType.Float,
                 count=len(internal_color) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Vec4),
@@ -153,7 +158,7 @@ def __gather_colors(blender_primitive, export_settings):
 
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
-    if export_settings['gltf_skins']:
+    if export_settings[export_keys.SKINS]:
         bone_index = 0
         joint_id = 'JOINTS_' + str(bone_index)
         weight_id = 'WEIGHTS_' + str(bone_index)
@@ -162,7 +167,8 @@ def __gather_skins(blender_primitive, export_settings):
             # joints
             internal_joint = blender_primitive["attributes"][joint_id]
             joint = gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData.from_list(internal_joint, gltf2_io_constants.ComponentType.UnsignedShort),
+                buffer_view=gltf2_io_binary_data.BinaryData.from_list(
+                    internal_joint, gltf2_io_constants.ComponentType.UnsignedShort),
                 byte_offset=None,
                 component_type=gltf2_io_constants.ComponentType.UnsignedShort,
                 count=len(internal_joint) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Vec4),
@@ -180,10 +186,12 @@ def __gather_skins(blender_primitive, export_settings):
             # weights
             internal_weight = blender_primitive["attributes"][weight_id]
             weight = gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData.from_list(internal_weight, gltf2_io_constants.ComponentType.Float),
+                buffer_view=gltf2_io_binary_data.BinaryData.from_list(
+                    internal_weight, gltf2_io_constants.ComponentType.Float),
                 byte_offset=None,
                 component_type=gltf2_io_constants.ComponentType.Float,
-                count=len(internal_weight) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Vec4),
+                count=len(internal_weight) // gltf2_io_constants.DataType.num_elements(
+                    gltf2_io_constants.DataType.Vec4),
                 extensions=None,
                 extras=None,
                 max=None,

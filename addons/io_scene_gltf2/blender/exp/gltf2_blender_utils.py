@@ -16,7 +16,7 @@ import math
 from io_scene_gltf2.io.com import gltf2_io_constants
 
 
-#TODO: we could apply functional programming to these problems (currently we only have a single use case)
+# TODO: we could apply functional programming to these problems (currently we only have a single use case)
 
 def split_list_by_data_type(l: list, data_type: gltf2_io_constants.DataType):
     """
@@ -34,7 +34,8 @@ def split_list_by_data_type(l: list, data_type: gltf2_io_constants.DataType):
 
 def max_components(l: list, data_type: gltf2_io_constants.DataType) -> list:
     """
-    Find the maximum components in a flat list, as for example is required for the glTF2.0 accessor min and max properties
+    Find the maximum components in a flat list, as for example
+    is required for the glTF2.0 accessor min and max properties
     :param l: the flat list of components
     :param data_type: the data type of the list (determines the length of the result)
     :return: a list with length num_elements(data_type) containing the maximum per component along the list
@@ -49,7 +50,8 @@ def max_components(l: list, data_type: gltf2_io_constants.DataType) -> list:
 
 def min_components(l: list, data_type: gltf2_io_constants.DataType) -> list:
     """
-        Find the minimum components in a flat list, as for example is required for the glTF2.0 accessor min and max properties
+        Find the minimum components in a flat list, as for example
+        is required for the glTF2.0 accessor min and max properties
         :param l: the flat list of components
         :param data_type: the data type of the list (determines the length of the result)
         :return: a list with length num_elements(data_type) containing the minimum per component along the list
@@ -60,6 +62,3 @@ def min_components(l: list, data_type: gltf2_io_constants.DataType) -> list:
         for i, c in enumerate(components):
             result[i] = min(result[i], c)
     return result
-
-
-

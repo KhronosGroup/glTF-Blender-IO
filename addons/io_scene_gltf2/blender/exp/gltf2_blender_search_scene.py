@@ -14,7 +14,6 @@
 
 import bpy
 import typing
-from abc import ABC
 
 
 class Filter:
