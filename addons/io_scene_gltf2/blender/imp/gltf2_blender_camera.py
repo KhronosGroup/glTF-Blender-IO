@@ -39,5 +39,8 @@ class BlenderCamera():
 
 
         obj = bpy.data.objects.new(pycamera.name, cam)
-        bpy.data.scenes[gltf.blender_scene].objects.link(obj)
+        if bpy.app.version < (2, 80, 0):
+            bpy.data.scenes[gltf.blender_scene].objects.link(obj)
+        else:
+            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
         return obj

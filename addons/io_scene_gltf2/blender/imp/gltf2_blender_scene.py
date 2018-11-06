@@ -39,7 +39,10 @@ class BlenderScene():
                 scene = bpy.data.scenes.new(pyscene.name)
             else:
                 scene = bpy.context.scene
-            scene.render.engine = "CYCLES"
+            if bpy.app.version < (2, 80, 0):
+                scene.render.engine = "CYCLES"
+            else:
+                scene.render.engine = "BLENDER_EEVEE"
 
             gltf.blender_scene = scene.name
         else:
@@ -70,7 +73,12 @@ class BlenderScene():
 
 
         # Parent root node to rotation object
-        bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
-        obj_rotation.hide = True
+        if bpy.app.version < (2, 80, 0):
+            bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
+            obj_rotation.hide = True
+        else:
+            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj_rotation)
+            obj_rotation.hide_viewport = True
+
         for node_idx in pyscene.nodes:
             bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation

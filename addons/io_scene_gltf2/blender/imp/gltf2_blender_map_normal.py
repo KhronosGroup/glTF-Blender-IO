@@ -20,10 +20,8 @@ class BlenderNormalMap():
     @staticmethod
     def create(gltf, material_idx):
         engine = bpy.context.scene.render.engine
-        if engine == 'CYCLES':
+        if engine in ['CYCLES', 'BLENDER_EEVEE']:
             BlenderNormalMap.create_nodetree(gltf, material_idx)
-        else:
-            pass #TODO for internal / Eevee in future 2.8
 
     def create_nodetree(gltf, material_idx):
 

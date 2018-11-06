@@ -21,10 +21,8 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
     @staticmethod
     def create(gltf, pbrSG, mat_name, vertex_color):
         engine = bpy.context.scene.render.engine
-        if engine == 'CYCLES':
+        if engine in ['CYCLES', 'BLENDER_EEVEE']:
             BlenderKHR_materials_pbrSpecularGlossiness.create_nodetree(gltf, pbrSG, mat_name, vertex_color)
-        else:
-            pass #TODO for internal / Eevee in future 2.8
 
     @staticmethod
     def create_nodetree(gltf, pbrSG, mat_name, vertex_color):

@@ -40,8 +40,12 @@ class BlenderBoneAnim():
 
         keys   = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
-        inv_bind_matrix = node.blender_bone_matrix.to_quaternion().to_matrix().to_4x4().inverted() \
-                          * Matrix.Translation(node.blender_bone_matrix.to_translation()).inverted()
+        if bpy.app.version < (2, 80, 0):
+            inv_bind_matrix = node.blender_bone_matrix.to_quaternion().to_matrix().to_4x4().inverted() \
+                              * Matrix.Translation(node.blender_bone_matrix.to_translation()).inverted()
+        else:
+            inv_bind_matrix = node.blender_bone_matrix.to_quaternion().to_matrix().to_4x4().inverted() \
+                              @ Matrix.Translation(node.blender_bone_matrix.to_translation()).inverted()
 
         for idx, key in enumerate(keys):
             translation_keyframe = Conversion.loc_gltf_to_blender(values[idx])
@@ -55,8 +59,12 @@ class BlenderBoneAnim():
 
             # Pose is in object (armature) space and it's value if the offset from the bind pose (which is also in object space)
             # Scale is not taken into account
-            final_trans = (parent_mat * Matrix.Translation(translation_keyframe)).to_translation()
-            bone.location = inv_bind_matrix * final_trans
+            if bpy.app.version < (2, 80, 0):
+                final_trans = (parent_mat * Matrix.Translation(translation_keyframe)).to_translation()
+                bone.location = inv_bind_matrix * final_trans
+            else:
+                final_trans = (parent_mat @ Matrix.Translation(translation_keyframe)).to_translation()
+                bone.location = inv_bind_matrix @ final_trans
             bone.keyframe_insert(blender_path, frame = key[0] * fps, group="location")
 
         for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "location"]:
@@ -79,7 +87,10 @@ class BlenderBoneAnim():
         for idx, key in enumerate(keys):
             quat_keyframe = Conversion.quaternion_gltf_to_blender(values[idx])
             if not node.parent:
-                bone.rotation_quaternion = bind_rotation.inverted() * quat_keyframe
+                if bpy.app.version < (2, 80, 0):
+                    bone.rotation_quaternion = bind_rotation.inverted() * quat_keyframe
+                else:
+                    bone.rotation_quaternion = bind_rotation.inverted() @ quat_keyframe
             else:
                 if not gltf.data.nodes[node.parent].is_joint: # TODO if Node in another scene
                     parent_mat = Matrix()
@@ -87,7 +98,10 @@ class BlenderBoneAnim():
                     parent_mat = gltf.data.nodes[node.parent].blender_bone_matrix
 
                 if parent_mat != parent_mat.inverted():
-                    final_rot = (parent_mat * quat_keyframe.to_matrix().to_4x4()).to_quaternion()
+                    if bpy.app.version < (2, 80, 0):
+                        final_rot = (parent_mat * quat_keyframe.to_matrix().to_4x4()).to_quaternion()
+                    else:
+                        final_rot = (parent_mat @ quat_keyframe.to_matrix().to_4x4()).to_quaternion()
                     bone.rotation_quaternion = bind_rotation.rotation_difference(final_rot).to_euler().to_quaternion()
                 else:
                     bone.rotation_quaternion = bind_rotation.rotation_difference(quat_keyframe)
@@ -110,14 +124,20 @@ class BlenderBoneAnim():
         for idx, key in enumerate(keys):
             scale_mat = Conversion.scale_to_matrix(Conversion.loc_gltf_to_blender(values[idx]))
             if not node.parent:
-                bone.scale = (bind_scale.inverted() * scale_mat).to_scale()
+                if bpy.app.version < (2, 80, 0):
+                    bone.scale = (bind_scale.inverted() * scale_mat).to_scale()
+                else:
+                    bone.scale = (bind_scale.inverted() @ scale_mat).to_scale()
             else:
                 if not gltf.data.nodes[node.parent].is_joint: # TODO if Node in another scene
                     parent_mat = Matrix()
                 else:
                     parent_mat = gltf.data.nodes[node.parent].blender_bone_matrix
 
-                bone.scale = (bind_scale.inverted() * Conversion.scale_to_matrix(parent_mat.to_scale()) * scale_mat).to_scale()
+                if bpy.app.version < (2, 80, 0):
+                    bone.scale = (bind_scale.inverted() * Conversion.scale_to_matrix(parent_mat.to_scale()) * scale_mat).to_scale()
+                else:
+                    bone.scale = (bind_scale.inverted() @ Conversion.scale_to_matrix(parent_mat.to_scale()) @ scale_mat).to_scale()
 
             bone.keyframe_insert(blender_path, frame = key[0] * fps, group='scale')
 

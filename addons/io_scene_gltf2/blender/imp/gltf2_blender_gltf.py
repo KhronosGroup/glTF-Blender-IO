@@ -38,7 +38,10 @@ class BlenderGlTF():
 
         threshold = 0.001
         for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
-            bpy.context.scene.objects.active = armobj
+            if bpy.app.version < (2, 80, 0):
+                bpy.context.scene.objects.active = armobj
+            else:
+                bpy.context.view_layer.objects.active = armobj
             armature = armobj.data
             bpy.ops.object.mode_set(mode="EDIT")
             for bone in armature.edit_bones:

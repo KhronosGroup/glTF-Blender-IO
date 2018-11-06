@@ -19,10 +19,8 @@ class BlenderPbr():
 
     def create(gltf, pypbr, mat_name, vertex_color):
         engine = bpy.context.scene.render.engine
-        if engine == 'CYCLES':
+        if engine in ['CYCLES', 'BLENDER_EEVEE']:
             BlenderPbr.create_nodetree(gltf, pypbr, mat_name, vertex_color)
-        else:
-            pass #TODO for internal / Eevee in future 2.8
 
     def create_nodetree(gltf, pypbr, mat_name, vertex_color):
         material = bpy.data.materials[mat_name]
