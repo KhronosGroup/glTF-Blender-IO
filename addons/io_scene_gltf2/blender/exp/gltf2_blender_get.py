@@ -18,9 +18,8 @@
 
 import bpy
 
-from ...io.com.gltf2_io_debug import *
-
-from ...io.exp.gltf2_io_get import *
+from . import export_keys
+from ...io.exp import gltf2_io_get
 
 #
 # Globals
@@ -37,7 +36,8 @@ def get_animation_target(action_group: bpy.types.ActionGroup):
 
 def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
     """
-    For a given material input name, retrieve the corresponding node tree socket or blender render texture slot
+    For a given material input name, retrieve the corresponding node tree socket or blender render texture slot.
+
     :param blender_material: a blender material for which to get the socket/slot
     :param name: the name of the socket/slot
     :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
@@ -54,12 +54,14 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
         if not links:
             return None
         return links[0].to_socket
-    elif bpy.app.version < (2, 80, 0): # blender 2.8 removed texture_slots
+    elif bpy.app.version < (2, 80, 0):  # blender 2.8 removed texture_slots
         if name != 'Base Color':
             return None
 
         for blender_texture_slot in blender_material.texture_slots:
-            if blender_texture_slot and blender_texture_slot.texture and blender_texture_slot.texture.type == 'IMAGE' and blender_texture_slot.texture.image is not None:
+            if blender_texture_slot and blender_texture_slot.texture and \
+                    blender_texture_slot.texture.type == 'IMAGE' and \
+                    blender_texture_slot.texture.image is not None:
                 #
                 # Base color texture
                 #
@@ -70,10 +72,9 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
     else:
         return None
 
+
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
-    """
-     returns the first ShaderNodeTexImage found in the path from the socket
-    """
+    """Find any ShaderNodeTexImage in the path from the socket."""
     if shader_socket is None:
         return None
 
@@ -91,6 +92,7 @@ def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
 
     return None
 
+
 def get_shader_add_to_shader_node(shader_node):
 
     if shader_node is None:
@@ -107,6 +109,7 @@ def get_shader_add_to_shader_node(shader_node):
     return to_node
 
 #
+
 
 def get_shader_emission_from_shader_add(shader_add):
 
@@ -154,6 +157,7 @@ def get_shader_mapping_from_shader_image(shader_image):
 
     return from_node
 
+
 def get_image_material_usage_to_socket(shader_image, socket_name):
     if shader_image is None:
         return -1
@@ -181,6 +185,7 @@ def get_image_material_usage_to_socket(shader_image, socket_name):
                     return i
 
     return -6
+
 
 def get_emission_node_from_lamp_output_node(lamp_node):
     if lamp_node is None:
@@ -236,7 +241,9 @@ def get_shader_image_from_shader_node(name, shader_node):
     if shader_node is None:
         return None
 
-    if not isinstance(shader_node, bpy.types.ShaderNodeGroup) and not isinstance(shader_node, bpy.types.ShaderNodeBsdfPrincipled) and not isinstance(shader_node, bpy.types.ShaderNodeEmission):
+    if not isinstance(shader_node, bpy.types.ShaderNodeGroup) and \
+            not isinstance(shader_node, bpy.types.ShaderNodeBsdfPrincipled) and \
+            not isinstance(shader_node, bpy.types.ShaderNodeEmission):
         return None
 
     if shader_node.inputs.get(name) is None:
@@ -267,10 +274,7 @@ def get_shader_image_from_shader_node(name, shader_node):
 
 
 def get_texture_index_from_shader_node(export_settings, glTF, name, shader_node):
-    """
-    Return the texture index in the glTF array.
-    """
-
+    """Return the texture index in the glTF array."""
     from_node = get_shader_image_from_shader_node(name, shader_node)
 
     if from_node is None:
@@ -281,18 +285,15 @@ def get_texture_index_from_shader_node(export_settings, glTF, name, shader_node)
     if from_node.image is None or from_node.image.size[0] == 0 or from_node.image.size[1] == 0:
         return -1
 
-    return get_texture_index(glTF, from_node.image.name)
+    return gltf2_io_get.get_texture_index(glTF, from_node.image.name)
+
 
 def get_texture_index_from_export_settings(export_settings, name):
-    """
-    Return the texture index in the glTF array
-    """
+    """Return the texture index in the glTF array."""
+
 
 def get_texcoord_index_from_shader_node(glTF, name, shader_node):
-    """
-    Return the texture coordinate index, if assigend and used.
-    """
-
+    """Return the texture coordinate index, if assigned and used."""
     from_node = get_shader_image_from_shader_node(name, shader_node)
 
     if from_node is None:
@@ -334,34 +335,29 @@ def get_texcoord_index_from_shader_node(glTF, name, shader_node):
 
 
 def get_image_uri(export_settings, blender_image):
-    """
-    Return the final URI depending on a filepath.
-    """
-
+    """Return the final URI depending on a file path."""
     file_format = get_image_format(export_settings, blender_image)
     extension = '.jpg' if file_format == 'JPEG' else '.png'
 
-    return get_image_name(blender_image.name) + extension
+    return gltf2_io_get.get_image_name(blender_image.name) + extension
 
 
 def get_image_format(export_settings, blender_image):
     """
-    Return the final output format of the given image. Only PNG and JPEG are
-    supported as outputs - all other formats must be converted.
+    Return the final output format of the given image.
+
+    Only PNG and JPEG are supported as outputs - all other formats must be converted.
     """
     if blender_image.file_format in ['PNG', 'JPEG']:
         return blender_image.file_format
 
-    use_alpha = export_settings['filtered_images_use_alpha'].get(blender_image.name)
+    use_alpha = export_settings[export_keys.FILTERED_IMAGES_USE_ALPHA].get(blender_image.name)
 
     return 'PNG' if use_alpha else 'JPEG'
 
 
 def get_node(data_path):
-    """
-    Return Blender node on a given Blender data path.
-    """
-
+    """Return Blender node on a given Blender data path."""
     if data_path is None:
         return None
 
@@ -379,10 +375,7 @@ def get_node(data_path):
 
 
 def get_data_path(data_path):
-    """
-    Return Blender data path.
-    """
-
+    """Return Blender data path."""
     index = data_path.rfind('.')
 
     if index == -1:

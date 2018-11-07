@@ -20,6 +20,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_samplers
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channel_target
 
+
 @cached
 def gather_animation_channels(blender_action: bpy.types.Action,
                               blender_object: bpy.types.Object,
@@ -86,8 +87,8 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
                     export_settings
                     ) -> gltf2_io.AnimationChannelTarget:
-    return gltf2_blender_gather_animation_channel_target.gather_animation_channel_target(channels, blender_object, export_settings)
-
+    return gltf2_blender_gather_animation_channel_target.gather_animation_channel_target(
+        channels, blender_object, export_settings)
 
 
 def __get_channel_groups(blender_action: bpy.types.Action):

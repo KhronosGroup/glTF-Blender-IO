@@ -13,18 +13,16 @@
 # limitations under the License.
 
 import bpy
-import mathutils
 import typing
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_samplers
 
 
 def gather_animations(blender_object: bpy.types.Object, export_settings) -> typing.List[gltf2_io.Animation]:
     """
-    Gather all animations which contribute to the objects property
+    Gather all animations which contribute to the objects property.
+
     :param blender_object: The blender object which is animated
     :param export_settings:
     :return: A list of glTF2 animations
@@ -81,7 +79,8 @@ def __gather_channels(blender_action: bpy.types.Action,
                       blender_object: bpy.types.Object,
                       export_settings
                       ) -> typing.List[gltf2_io.AnimationChannel]:
-    return gltf2_blender_gather_animation_channels.gather_animation_channels(blender_action, blender_object, export_settings)
+    return gltf2_blender_gather_animation_channels.gather_animation_channels(
+        blender_action, blender_object, export_settings)
 
 
 def __gather_extensions(blender_action: bpy.types.Action,
@@ -115,6 +114,8 @@ def __gather_samplers(blender_action: bpy.types.Action,
 
 def __link_samplers(animation: gltf2_io.Animation, export_settings):
     """
+    Move animation samplers to their own list and store their indices at their previous locations.
+
     After gathering, samplers are stored in the channels properties of the animation and need to be moved
     to their own list while storing an index into this list at the position where they previously were.
     This behaviour is similar to that of the glTFExporter that traverses all nodes
@@ -122,9 +123,9 @@ def __link_samplers(animation: gltf2_io.Animation, export_settings):
     :param export_settings:
     :return:
     """
-
     # TODO: move this to some util module and update gltf2 exporter also
     T = typing.TypeVar('T')
+
     def __append_unique_and_get_index(l: typing.List[T], item: T):
         if item in l:
             return l.index(item)

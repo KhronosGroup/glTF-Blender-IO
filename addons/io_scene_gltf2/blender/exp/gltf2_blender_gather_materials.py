@@ -22,10 +22,12 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_occlusion_t
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 
+
 @cached
 def gather_material(blender_material, export_settings):
     """
-    Gather the material used by the blender primitive
+    Gather the material used by the blender primitive.
+
     :param blender_material: the blender material used in the glTF primitive
     :param export_settings:
     :return: a glTF material

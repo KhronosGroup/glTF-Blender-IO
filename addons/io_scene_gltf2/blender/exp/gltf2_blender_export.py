@@ -13,66 +13,42 @@
 # limitations under the License.
 
 import bpy
+import sys
+import traceback
 
-from ...io.exp.gltf2_io_export import *
-from ...io.com.gltf2_io import Gltf
-
-from .gltf2_blender_generate import *
-from  io_scene_gltf2.blender.com import gltf2_blender_json
-
-from io_scene_gltf2.blender.exp import gltf2_blender_gather
-from io_scene_gltf2.blender.exp import gltf2_blender_gltf2_exporter
+from . import export_keys
+from . import gltf2_blender_gather
+from .gltf2_blender_gltf2_exporter import GlTF2Exporter
+from ..com import gltf2_blender_json
+from ...io.exp import gltf2_io_export
+from ...io.com.gltf2_io_debug import print_console, print_newline
 
 
 def save(operator,
          context,
          export_settings):
-    """
-    Starts the glTF 2.0 export and saves to content either to a .gltf or .glb file.
-    """
-
+    """Start the glTF 2.0 export and saves to content either to a .gltf or .glb file."""
     print_console('INFO', 'Starting glTF 2.0 export')
     bpy.context.window_manager.progress_begin(0, 100)
     bpy.context.window_manager.progress_update(0)
 
     #
 
-    glTF = Gltf(
-        accessors=[],
-        animations=[],
-        asset=None,
-        buffers=[],
-        buffer_views=[],
-        cameras=[],
-        extensions={},
-        extensions_required=[],
-        extensions_used=[],
-        extras=None,
-        images=[],
-        materials=[],
-        meshes=[],
-        nodes=[],
-        samplers=[],
-        scene=-1,
-        scenes=[],
-        skins=[],
-        textures=[]
-    )
-
     scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
-    if not export_settings['gltf_copyright']:
-        export_settings['gltf_copyright'] = None
-    exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(copyright=export_settings['gltf_copyright'])
+    if not export_settings[export_keys.COPYRIGHT]:
+        export_settings[export_keys.COPYRIGHT] = None
+    exporter = GlTF2Exporter(copyright=export_settings[export_keys.COPYRIGHT])
     for scene in scenes:
         exporter.add_scene(scene)
     for animation in animations:
         exporter.add_animation(animation)
 
-    if export_settings['gltf_format'] == 'ASCII':
-        exporter.finalize_buffer(export_settings['gltf_filedirectory'], export_settings['gltf_binaryfilename'])
+    if export_settings[export_keys.FORMAT] == 'ASCII':
+        exporter.finalize_buffer(export_settings[export_keys.FILE_DIRECTORY],
+                                 export_settings[export_keys.BINARY_FILENAME])
     else:
-        exporter.finalize_buffer(export_settings['gltf_filedirectory'])
-    exporter.finalize_images(export_settings['gltf_filedirectory'])
+        exporter.finalize_buffer(export_settings[export_keys.FILE_DIRECTORY])
+    exporter.finalize_images(export_settings[export_keys.FILE_DIRECTORY])
     glTF = exporter.glTF
 
     #
@@ -98,18 +74,15 @@ def save(operator,
                 return int(obj)
         return o
 
-    import sys
-    import traceback
-
     try:
-        save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
+        gltf2_io_export.save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
     except AssertionError as e:
         _, _, tb = sys.exc_info()
         traceback.print_tb(tb)  # Fixed format
         tb_info = traceback.extract_tb(tb)
         for tbi in tb_info:
             filename, line, func, text = tbi
-            print_console('ERROR','An error occurred on line {} in statement {}'.format(line, text))
+            print_console('ERROR', 'An error occurred on line {} in statement {}'.format(line, text))
         print_console('ERROR', str(e))
         raise e
 

@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from . import export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
-
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
-
 from io_scene_gltf2.io.com import gltf2_io
 
 
@@ -51,9 +49,9 @@ def gather_node(blender_object, export_settings):
 def __filter_node(blender_object, export_settings):
     if blender_object.users == 0:
         return False
-    if export_settings['gltf_selected'] and not blender_object.select:
+    if export_settings[export_keys.SELECTED] and not blender_object.select:
         return False
-    if not export_settings['gltf_layers'] and not blender_object.layers[0]:
+    if not export_settings[export_keys.LAYERS] and not blender_object.layers[0]:
         return False
     if blender_object.dupli_group is not None and not blender_object.dupli_group.layers[0]:
         return False
@@ -114,14 +112,15 @@ def __gather_mesh(blender_object, export_settings):
 
 def __gather_name(blender_object, export_settings):
     if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
-        return  "Duplication_Offset_" + blender_object.name
+        return "Duplication_Offset_" + blender_object.name
     return blender_object.name
 
 
 def __gather_trans_rot_scale(blender_object, export_settings):
     trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, 'NODE', export_settings)
     if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
-        trans = -gltf2_blender_extract.convert_swizzle_location(blender_object.dupli_group.dupli_offset, export_settings)
+        trans = -gltf2_blender_extract.convert_swizzle_location(
+            blender_object.dupli_group.dupli_offset, export_settings)
     translation, rotation, scale = (None, None, None)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
         translation = [trans[0], trans[1], trans[2]]
@@ -142,4 +141,3 @@ def __gather_skin(blender_object, export_settings):
 
 def __gather_weights(blender_object, export_settings):
     return None
-

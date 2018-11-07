@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import typing
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
@@ -23,8 +21,10 @@ from io_scene_gltf2.io.exp import gltf2_io_buffer
 class GlTF2Exporter:
     """
     The glTF exporter flattens a scene graph to a glTF serializable format.
+
     Any child properties are replaced with references where necessary
     """
+
     def __init__(self, copyright=None):
         self.__finalized = False
 
@@ -103,11 +103,11 @@ class GlTF2Exporter:
 
     def finalize_buffer(self, output_path=None, buffer_name=None):
         """
-        Finalize the glTF and write buffers
+        Finalize the glTF and write buffers.
+
         :param buffer_path:
         :return:
         """
-
         if self.__finalized:
             raise RuntimeError("Tried to finalize buffers for finalized glTF file")
 
@@ -127,12 +127,13 @@ class GlTF2Exporter:
         )
         self.__gltf.buffers.append(buffer)
 
-
         self.__finalized = True
 
     def finalize_images(self, output_path):
         """
-        Write all images. Due to a current limitation the output_path must be the same as that of the glTF file
+        Write all images.
+
+        Due to a current limitation the output_path must be the same as that of the glTF file
         :param output_path:
         :return:
         """
@@ -143,7 +144,9 @@ class GlTF2Exporter:
 
     def add_scene(self, scene: gltf2_io.Scene, active: bool = True):
         """
-        Add a scene to the glTF. The scene should be built up with the generated glTF classes
+        Add a scene to the glTF.
+
+        The scene should be built up with the generated glTF classes
         :param scene: gltf2_io.Scene type. Root node of the scene graph
         :param active: If true, sets the glTD.scene index to the added scene
         :return: nothing
@@ -160,6 +163,7 @@ class GlTF2Exporter:
     def add_animation(self, animation: gltf2_io.Animation):
         """
         Add an animation to the glTF.
+
         :param animation: glTF animation, with python style references (names)
         :return: nothing
         """
@@ -168,10 +172,10 @@ class GlTF2Exporter:
 
         self.__traverse(animation)
 
-
     def __to_reference(self, property):
         """
         Append a child of root property to its respective list and return a reference into said list.
+
         If the property is not child of root, the property itself is returned.
         :param property: A property type object that should be converted to a reference
         :return: a reference or the object itself if it is not child or root
@@ -201,7 +205,7 @@ class GlTF2Exporter:
 
     def __traverse(self, node):
         """
-        Recursively traverse a scene graph consisting of gltf compatible elements
+        Recursively traverse a scene graph consisting of gltf compatible elements.
 
         The tree is traversed downwards until a primitive is reached. Then any ChildOfRoot property
         is stored in the according list in the glTF and replaced with a index reference in the upper level.
@@ -209,7 +213,7 @@ class GlTF2Exporter:
         def traverse_all_members(node):
             for member_name in [a for a in dir(node) if not a.startswith('__') and not callable(getattr(node, a))]:
                 new_value = self.__traverse(getattr(node, member_name))
-                setattr(node, member_name, new_value) # usually this is the same as before
+                setattr(node, member_name, new_value)  # usually this is the same as before
             return node
 
         # traverse nodes of a child of root property type and add them to the glTF root

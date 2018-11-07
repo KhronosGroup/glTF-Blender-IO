@@ -14,24 +14,23 @@
 
 import bpy
 import typing
-from abc import ABC
 
 
 class Filter:
-    """
-    Base class for all node tree filter operations
-    """
+    """Base class for all node tree filter operations."""
+
     def __call__(self, obj: bpy.types.Object):
         return True
 
 
 class ByName(Filter):
     """
-    Filter the objects by name
+    Filter the objects by name.
 
     example usage:
     find_objects(FilterByName("Cube"))
     """
+
     def __init__(self, name):
         self.name = name
 
@@ -40,9 +39,8 @@ class ByName(Filter):
 
 
 class ByDataType(Filter):
-    """
-    Filter the scene objects by their data type
-    """
+    """Filter the scene objects by their data type."""
+
     def __init__(self, data_type: str):
         self.type = data_type
 
@@ -51,9 +49,8 @@ class ByDataType(Filter):
 
 
 class ByDataInstance(Filter):
-    """
-    Filter the scene objects by a specific ID instance
-    """
+    """Filter the scene objects by a specific ID instance."""
+
     def __init__(self, data_instance: bpy.types.ID):
         self.data = data_instance
 
@@ -64,6 +61,7 @@ class ByDataInstance(Filter):
 def find_objects(object_filter: typing.Union[Filter, typing.Callable]):
     """
     Find objects in the scene where the filter expression is true.
+
     :param object_filter: should be a function(x: object) -> bool
     :return: a list of shader nodes for which filter is true
     """
@@ -76,7 +74,8 @@ def find_objects(object_filter: typing.Union[Filter, typing.Callable]):
 
 def find_objects_from(obj: bpy.types.Object, object_filter: typing.Union[Filter, typing.Callable]):
     """
-    Search for objects matching a filter function below a specified object
+    Search for objects matching a filter function below a specified object.
+
     :param obj: the starting point of the search
     :param object_filter: a function(x: object) -> bool
     :return: a list of objects which passed the filter

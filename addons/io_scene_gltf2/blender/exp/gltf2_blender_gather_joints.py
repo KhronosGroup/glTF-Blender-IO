@@ -12,25 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import mathutils
+
+from . import export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
-
-import mathutils
 from io_scene_gltf2.blender.com import gltf2_blender_math
+
 
 @cached
 def gather_joint(blender_bone, export_settings):
     """
-    Generate a glTF2 node from a blender bone, as joints in glTF2 are simply nodes
+    Generate a glTF2 node from a blender bone, as joints in glTF2 are simply nodes.
+
     :param blender_bone: a blender PoseBone
     :param export_settings: the settings for this export
     :return: a glTF2 node (acting as a joint)
     """
-
     axis_basis_change = mathutils.Matrix.Identity(4)
-    if export_settings['gltf_yup']:
+    if export_settings[export_keys.YUP]:
         axis_basis_change = mathutils.Matrix(
             ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
@@ -38,14 +40,15 @@ def gather_joint(blender_bone, export_settings):
     if blender_bone.parent is None:
         correction_matrix_local = gltf2_blender_math.multiply(axis_basis_change, blender_bone.bone.matrix_local)
     else:
-        correction_matrix_local = gltf2_blender_math.multiply(blender_bone.parent.bone.matrix_local.inverted(), blender_bone.bone.matrix_local)
+        correction_matrix_local = gltf2_blender_math.multiply(
+            blender_bone.parent.bone.matrix_local.inverted(), blender_bone.bone.matrix_local)
     matrix_basis = blender_bone.matrix_basis
-    if export_settings['gltf_bake_skins']:
+    if export_settings[export_keys.BAKE_SKINS]:
         gltf2_io_debug.print_console("WARNING", "glTF bake skins not supported")
         # matrix_basis = blender_object.convert_space(blender_bone, blender_bone.matrix, from_space='POSE',
         #                                             to_space='LOCAL')
-    trans, rot, sca = gltf2_blender_extract.decompose_transition(gltf2_blender_math.multiply(correction_matrix_local, matrix_basis),
-                                                                              'JOINT', export_settings)
+    trans, rot, sca = gltf2_blender_extract.decompose_transition(
+        gltf2_blender_math.multiply(correction_matrix_local, matrix_basis), 'JOINT', export_settings)
     translation, rotation, scale = (None, None, None)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
         translation = [trans[0], trans[1], trans[2]]

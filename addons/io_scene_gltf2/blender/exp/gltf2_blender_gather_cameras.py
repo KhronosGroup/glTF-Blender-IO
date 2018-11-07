@@ -12,24 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from . import export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 
 import bpy
 import math
 
+
 @cached
-def gather_camera(blender_obect, export_settings):
-    if not __filter_camera(blender_obect, export_settings):
+def gather_camera(blender_object, export_settings):
+    if not __filter_camera(blender_object, export_settings):
         return None
 
     return gltf2_io.Camera(
-        extensions=__gather_extensions(blender_obect, export_settings),
-        extras=__gather_extras(blender_obect, export_settings),
-        name=__gather_name(blender_obect, export_settings),
-        orthographic=__gather_orthographic(blender_obect, export_settings),
-        perspective=__gather_perspective(blender_obect, export_settings),
-        type=__gather_type(blender_obect, export_settings)
+        extensions=__gather_extensions(blender_object, export_settings),
+        extras=__gather_extras(blender_object, export_settings),
+        name=__gather_name(blender_object, export_settings),
+        orthographic=__gather_orthographic(blender_object, export_settings),
+        perspective=__gather_perspective(blender_object, export_settings),
+        type=__gather_type(blender_object, export_settings)
     )
 
 
@@ -105,7 +107,7 @@ def __gather_perspective(blender_object, export_settings):
 
         perspective.znear = blender_camera.clip_start
 
-        if not export_settings['gltf_camera_infinite']:
+        if not export_settings[export_keys.CAMERA_INFINITE]:
             perspective.zfar = blender_camera.clip_end
 
         return perspective
@@ -119,4 +121,3 @@ def __gather_type(blender_object, export_settings):
     elif camera.type == 'ORTHO':
         return "orthographic"
     return None
-
