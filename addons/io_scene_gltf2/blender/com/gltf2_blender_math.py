@@ -17,11 +17,13 @@ import typing
 import math
 from mathutils import Matrix, Vector, Quaternion, Euler
 
+
 def multiply(a, b):
     if bpy.app.version < (2, 80, 0):
         return a * b
     else:
         return a @ b
+
 
 def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Union[Vector, Quaternion, Euler]:
     target = datapath_to_target(data_path)
@@ -102,7 +104,8 @@ def swizzle_yup_value(value: typing.Any) -> typing.Any:
     return value
 
 
-def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Matrix = Matrix.Identity(4)) -> typing.Union[Vector, Quaternion]:
+def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Matrix = Matrix.Identity(4)) -> typing \
+        .Union[Vector, Quaternion]:
     target = datapath_to_target(data_path)
     transform_func = {
         "location": transform_location,

@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 def get_output_node(node_tree):
     output = [node for node in node_tree.nodes if node.type == 'OUTPUT_MATERIAL'][0]
     return output
 
+
 def get_output_surface_input(node_tree):
     output_node = get_output_node(node_tree)
     return output_node.inputs['Surface']
+
 
 def get_diffuse_texture(node_tree):
     for node in node_tree.nodes:
@@ -27,6 +30,7 @@ def get_diffuse_texture(node_tree):
             return node
 
     return None
+
 
 def get_preoutput_node_output(node_tree):
     output_node = get_output_node(node_tree)
@@ -42,7 +46,7 @@ def get_preoutput_node_output(node_tree):
 
 
 def get_base_color_node(node_tree):
-    """ returns the last node of the diffuse block """
+    """Returns the last node of the diffuse block."""
     for node in node_tree.nodes:
         if node.label == 'BASE COLOR':
             return node
