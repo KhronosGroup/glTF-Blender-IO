@@ -29,7 +29,8 @@ def gather_texture(
             typing.Tuple[bpy.types.NodeSocket], typing.Tuple[typing.Any]],
         export_settings):
     """
-    Gather texture sampling information and image channels from a blender shader textu  re attached to a shader socket
+    Gather texture sampling information and image channels from a blender shader textu  re attached to a shader socket.
+
     :param blender_shader_sockets: The sockets of the material which should contribute to the texture
     :param export_settings: configuration of the export
     :return: a glTF 2.0 texture with sampler and source embedded (will be converted to references by the exporter)

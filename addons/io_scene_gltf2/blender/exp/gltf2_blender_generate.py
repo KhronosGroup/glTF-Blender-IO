@@ -65,10 +65,7 @@ def generate_animations_parameter(
         matrix_basis,
         is_morph_data
 ):
-    """
-    Helper function for storing animation parameters.
-    """
-
+    """Generate animation parameters."""
     name = blender_node_name
 
     prefix = ""
@@ -583,10 +580,7 @@ def generate_animations(operator,
                         context,
                         export_settings,
                         glTF):
-    """
-    Generates the top level animations entry.
-    """
-
+    """Generate the top level animations entry."""
     def process_object_animations(blender_object, blender_action):
         correction_matrix_local = blender_object.matrix_parent_inverse
         matrix_basis = Matrix.Identity(4)
@@ -882,10 +876,7 @@ def compute_action_range(export_settings, actions):
 
 
 def generate_cameras(export_settings, glTF):
-    """
-    Generates the top level cameras entry.
-    """
-
+    """Generate the top level cameras entry."""
     cameras = []
 
     #
@@ -979,10 +970,10 @@ def generate_lights(operator,
                     export_settings,
                     glTF):
     """
-    Generates the top level lights entry.
+    Generate the top level lights entry.
+
     Note: This is currently an experimental feature.
     """
-
     lights = []
 
     #
@@ -1074,10 +1065,7 @@ def generate_meshes(operator,
                     context,
                     export_settings,
                     glTF):
-    """
-    Generates the top level meshes entry.
-    """
-
+    """Generate the top level meshes entry."""
     meshes = []
 
     #
@@ -1501,10 +1489,7 @@ def generate_meshes(operator,
 
 
 def generate_duplicate_mesh(glTF, blender_object):
-    """
-    Helper function for dublicating meshes with linked object materials.
-    """
-
+    """Duplicate meshes with linked object materials."""
     if blender_object is None:
         return -1
 
@@ -1556,10 +1541,7 @@ def generate_node_parameter(
         node,
         node_type
 ):
-    """
-    Helper function for storing node parameters.
-    """
-
+    """Generate node parameters."""
     translation, rotation, scale = gltf2_blender_extract.decompose_transition(matrix, node_type, export_settings)
 
     #
@@ -1584,10 +1566,7 @@ def generate_node_instance(context,
                            nodes,
                            blender_object,
                            force_visible):
-    """
-    Helper function for storing node instances.
-    """
-
+    """Generate node instance."""
     correction_quaternion = gltf2_blender_extract.convert_swizzle_rotation(
         Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)), export_settings)
 
@@ -1734,10 +1713,7 @@ def generate_nodes(operator,
                    context,
                    export_settings,
                    glTF):
-    """
-    Generates the top level nodes entry.
-    """
-
+    """Generate the top level nodes entry."""
     nodes = []
 
     skins = []
@@ -2114,10 +2090,7 @@ def generate_images(operator,
                     context,
                     export_settings,
                     glTF):
-    """
-    Generates the top level images entry.
-    """
-
+    """Generate the top level images entry."""
     filtered_images = export_settings[export_keys.FILTERED_IMAGES]
 
     images = []
@@ -2250,10 +2223,7 @@ def generate_textures(operator,
                       context,
                       export_settings,
                       glTF):
-    """
-    Generates the top level textures entry.
-    """
-
+    """Generate the top level textures entry."""
     filtered_textures = export_settings[export_keys.FILTERED_TEXTURES]
 
     textures = []
@@ -2323,12 +2293,8 @@ def generate_textures(operator,
         glTF.textures = textures
 
 
-def generate_scenes(export_settings,
-                    glTF):
-    """
-    Generates the top level scenes entry.
-    """
-
+def generate_scenes(export_settings, glTF):
+    """Generate the top level scenes entry."""
     scenes = []
 
     #
@@ -2388,10 +2354,7 @@ def generate_scenes(export_settings,
 
 
 def generate_scene(glTF):
-    """
-    Generates the top level scene entry.
-    """
-
+    """Generate the top level scene entry."""
     index = gltf2_io_get.get_scene_index(glTF, bpy.context.screen.scene.name)
 
     #
@@ -2405,10 +2368,7 @@ def generate_glTF(operator,
                   context,
                   export_settings,
                   glTF):
-    """
-    Generates the main glTF structure.
-    """
-
+    """Generate the main glTF structure."""
     gltf2_io_debug.profile_start()
     gltf2_io_generate.generate_asset(export_settings, glTF)
     gltf2_io_debug.profile_end('asset')

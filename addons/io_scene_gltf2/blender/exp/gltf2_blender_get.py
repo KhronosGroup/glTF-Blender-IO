@@ -36,7 +36,8 @@ def get_animation_target(action_group: bpy.types.ActionGroup):
 
 def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
     """
-    For a given material input name, retrieve the corresponding node tree socket or blender render texture slot
+    For a given material input name, retrieve the corresponding node tree socket or blender render texture slot.
+
     :param blender_material: a blender material for which to get the socket/slot
     :param name: the name of the socket/slot
     :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
@@ -73,9 +74,7 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
 
 
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
-    """
-     returns the first ShaderNodeTexImage found in the path from the socket
-    """
+    """Find any ShaderNodeTexImage in the path from the socket."""
     if shader_socket is None:
         return None
 
@@ -275,10 +274,7 @@ def get_shader_image_from_shader_node(name, shader_node):
 
 
 def get_texture_index_from_shader_node(export_settings, glTF, name, shader_node):
-    """
-    Return the texture index in the glTF array.
-    """
-
+    """Return the texture index in the glTF array."""
     from_node = get_shader_image_from_shader_node(name, shader_node)
 
     if from_node is None:
@@ -293,16 +289,11 @@ def get_texture_index_from_shader_node(export_settings, glTF, name, shader_node)
 
 
 def get_texture_index_from_export_settings(export_settings, name):
-    """
-    Return the texture index in the glTF array
-    """
+    """Return the texture index in the glTF array."""
 
 
 def get_texcoord_index_from_shader_node(glTF, name, shader_node):
-    """
-    Return the texture coordinate index, if assigend and used.
-    """
-
+    """Return the texture coordinate index, if assigned and used."""
     from_node = get_shader_image_from_shader_node(name, shader_node)
 
     if from_node is None:
@@ -344,10 +335,7 @@ def get_texcoord_index_from_shader_node(glTF, name, shader_node):
 
 
 def get_image_uri(export_settings, blender_image):
-    """
-    Return the final URI depending on a filepath.
-    """
-
+    """Return the final URI depending on a file path."""
     file_format = get_image_format(export_settings, blender_image)
     extension = '.jpg' if file_format == 'JPEG' else '.png'
 
@@ -356,8 +344,9 @@ def get_image_uri(export_settings, blender_image):
 
 def get_image_format(export_settings, blender_image):
     """
-    Return the final output format of the given image. Only PNG and JPEG are
-    supported as outputs - all other formats must be converted.
+    Return the final output format of the given image.
+
+    Only PNG and JPEG are supported as outputs - all other formats must be converted.
     """
     if blender_image.file_format in ['PNG', 'JPEG']:
         return blender_image.file_format
@@ -368,10 +357,7 @@ def get_image_format(export_settings, blender_image):
 
 
 def get_node(data_path):
-    """
-    Return Blender node on a given Blender data path.
-    """
-
+    """Return Blender node on a given Blender data path."""
     if data_path is None:
         return None
 
@@ -389,10 +375,7 @@ def get_node(data_path):
 
 
 def get_data_path(data_path):
-    """
-    Return Blender data path.
-    """
-
+    """Return Blender data path."""
     index = data_path.rfind('.')
 
     if index == -1:

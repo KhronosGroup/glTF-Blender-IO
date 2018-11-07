@@ -22,7 +22,8 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
 def gather_gltf2(export_settings):
     """
-    Gather glTF properties from the current state of blender
+    Gather glTF properties from the current state of blender.
+
     :return: list of scene graphs to be added to the glTF export
     """
     scenes = []

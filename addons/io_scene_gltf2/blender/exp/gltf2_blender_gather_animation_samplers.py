@@ -57,7 +57,7 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    blender_object: bpy.types.Object,
                    export_settings
                    ) -> gltf2_io.Accessor:
-    """Gather the key time codes"""
+    """Gather the key time codes."""
     keyframes = __gather_keyframes(channels, export_settings)
     times = [k.seconds for k in keyframes]
 
@@ -98,7 +98,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
                     export_settings
                     ) -> gltf2_io.Accessor:
-    """The data of the keyframes"""
+    """Gather the data of the keyframes."""
     keyframes = __gather_keyframes(channels, export_settings)
 
     target_datapath = channels[0].data_path
@@ -151,7 +151,9 @@ def __needs_baking(channels: typing.Tuple[bpy.types.FCurve],
                    export_settings
                    ) -> bool:
     """
-    Some blender animations need to be baked as they can not directly be expressed in glTF
+    Check if baking is needed.
+
+    Some blender animations need to be baked as they can not directly be expressed in glTF.
     """
     # if blender_object.type == "ARMATURE":
     #     return True
@@ -245,10 +247,7 @@ class Keyframe:
 @cached
 def __gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings) \
         -> typing.List[Keyframe]:
-    """
-    Convert the blender action groups' fcurves to keyframes for use in glTF
-    """
-
+    """Convert the blender action groups' fcurves to keyframes for use in glTF."""
     # Find the start and end of the whole action group
     start = min([channel.range()[0] for channel in channels])
     end = max([channel.range()[1] for channel in channels])

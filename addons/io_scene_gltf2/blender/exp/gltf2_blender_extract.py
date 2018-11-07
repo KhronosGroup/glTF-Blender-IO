@@ -61,9 +61,7 @@ class ShapeKey:
 #
 
 def convert_swizzle_location(loc, export_settings):
-    """
-    Converts a location from Blender coordinate system to glTF coordinate system.
-    """
+    """Convert a location from Blender coordinate system to glTF coordinate system."""
     if export_settings[export_keys.YUP]:
         return Vector((loc[0], loc[2], -loc[1]))
     else:
@@ -71,10 +69,7 @@ def convert_swizzle_location(loc, export_settings):
 
 
 def convert_swizzle_tangent(tan, export_settings):
-    """
-    Converts a tangent from Blender coordinate system to glTF coordinate system.
-    """
-
+    """Convert a tangent from Blender coordinate system to glTF coordinate system."""
     if tan[0] == 0.0 and tan[1] == 0.0 and tan[2] == 0.0:
         print_console('WARNING', 'Tangent has zero length.')
 
@@ -86,7 +81,8 @@ def convert_swizzle_tangent(tan, export_settings):
 
 def convert_swizzle_rotation(rot, export_settings):
     """
-    Converts a quaternion rotation from Blender coordinate system to glTF coordinate system.
+    Convert a quaternion rotation from Blender coordinate system to glTF coordinate system.
+
     'w' is still at first position.
     """
     if export_settings[export_keys.YUP]:
@@ -96,9 +92,7 @@ def convert_swizzle_rotation(rot, export_settings):
 
 
 def convert_swizzle_scale(scale, export_settings):
-    """
-    Converts a scale from Blender coordinate system to glTF coordinate system.
-    """
+    """Convert a scale from Blender coordinate system to glTF coordinate system."""
     if export_settings[export_keys.YUP]:
         return Vector((scale[0], scale[2], scale[1]))
     else:
@@ -107,10 +101,7 @@ def convert_swizzle_scale(scale, export_settings):
 
 def decompose_transition(matrix, context, export_settings):
     translation, rotation, scale = matrix.decompose()
-    """
-    Decompose a matrix depending if it is associated to a joint or node.
-    """
-
+    """Decompose a matrix depending if it is associated to a joint or node."""
     if context == 'NODE':
         translation = convert_swizzle_location(translation, export_settings)
         rotation = convert_swizzle_rotation(rotation, export_settings)
@@ -124,7 +115,8 @@ def decompose_transition(matrix, context, export_settings):
 
 def color_srgb_to_scene_linear(c):
     """
-    Convert from sRGB to scene linear colorspace.
+    Convert from sRGB to scene linear color space.
+
     Source: Cycles addon implementation, node_color.h.
     """
     if c < 0.04045:
@@ -134,10 +126,7 @@ def color_srgb_to_scene_linear(c):
 
 
 def extract_primitive_floor(a, indices, use_tangents):
-    """
-    Shift indices, that the first one starts with 0. It is assumed, that the indices are packed.
-    """
-
+    """Shift indices, that the first one starts with 0. It is assumed, that the indices are packed."""
     attributes = {
         POSITION_ATTRIBUTE: [],
         NORMAL_ATTRIBUTE: []
@@ -270,10 +259,7 @@ def extract_primitive_floor(a, indices, use_tangents):
 
 
 def extract_primitive_pack(a, indices, use_tangents):
-    """
-    Packs indices, that the first one starts with 0. Current indices can have gaps.
-    """
-
+    """Pack indices, that the first one starts with 0. Current indices can have gaps."""
     attributes = {
         POSITION_ATTRIBUTE: [],
         NORMAL_ATTRIBUTE: []
@@ -417,11 +403,11 @@ def extract_primitive_pack(a, indices, use_tangents):
 
 def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_settings):
     """
-    Extracting primitives from a mesh. Polygons are triangulated and sorted by material.
+    Extract primitives from a mesh. Polygons are triangulated and sorted by material.
+
     Furthermore, primitives are split up, if the indices range is exceeded.
     Finally, triangles are also split up/duplicated, if face normals are used instead of vertex normals.
     """
-
     print_console('INFO', 'Extracting primitive')
 
     use_tangents = False

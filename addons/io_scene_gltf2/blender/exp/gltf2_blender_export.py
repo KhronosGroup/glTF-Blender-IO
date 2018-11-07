@@ -27,10 +27,7 @@ from ...io.com.gltf2_io_debug import print_console, print_newline
 def save(operator,
          context,
          export_settings):
-    """
-    Starts the glTF 2.0 export and saves to content either to a .gltf or .glb file.
-    """
-
+    """Start the glTF 2.0 export and saves to content either to a .gltf or .glb file."""
     print_console('INFO', 'Starting glTF 2.0 export')
     bpy.context.window_manager.progress_begin(0, 100)
     bpy.context.window_manager.progress_update(0)

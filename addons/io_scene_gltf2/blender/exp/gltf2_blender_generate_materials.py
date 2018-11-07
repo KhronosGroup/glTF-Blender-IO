@@ -239,10 +239,7 @@ def generate_materials(operator,
                        context,
                        export_settings,
                        glTF):
-    """
-    Generates the top level materials entry.
-    """
-
+    """Generate the top level materials entry."""
     filtered_materials = export_settings[export_keys.FILTERED_MATERIALS]
 
     materials = []

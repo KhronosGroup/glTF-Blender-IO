@@ -25,12 +25,12 @@ from io_scene_gltf2.blender.com import gltf2_blender_math
 @cached
 def gather_joint(blender_bone, export_settings):
     """
-    Generate a glTF2 node from a blender bone, as joints in glTF2 are simply nodes
+    Generate a glTF2 node from a blender bone, as joints in glTF2 are simply nodes.
+
     :param blender_bone: a blender PoseBone
     :param export_settings: the settings for this export
     :return: a glTF2 node (acting as a joint)
     """
-
     axis_basis_change = mathutils.Matrix.Identity(4)
     if export_settings[export_keys.YUP]:
         axis_basis_change = mathutils.Matrix(

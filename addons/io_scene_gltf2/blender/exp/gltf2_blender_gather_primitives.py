@@ -31,7 +31,8 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 @cached
 def gather_primitives(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
     """
-    Extract the mesh primitives from a blender object
+    Extract the mesh primitives from a blender object.
+
     :param blender_object: the mesh object
     :param export_settings:
     :return: a list of glTF2 primitives

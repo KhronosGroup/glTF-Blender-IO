@@ -62,10 +62,7 @@ def filter_merge_image(export_settings, blender_image):
 
 
 def filter_used_materials():
-    """
-    Gathers and returns all unfiltered, valid Blender materials.
-    """
-
+    """Gather and return all unfiltered, valid Blender materials."""
     materials = []
 
     for blender_material in bpy.data.materials:
@@ -87,6 +84,7 @@ def filter_used_materials():
 def filter_apply(export_settings):
     """
     Gathers and filters the objects and assets to export.
+
     Also filters out invalid, deleted and not exportable elements.
     """
     filtered_objects = []

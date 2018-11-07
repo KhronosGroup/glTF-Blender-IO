@@ -21,9 +21,8 @@ import typing
 
 
 class Filter:
-    """
-    Base class for all node tree filter operations
-    """
+    """Base class for all node tree filter operations."""
+
     def __init__(self):
         pass
 
@@ -33,11 +32,12 @@ class Filter:
 
 class FilterByName(Filter):
     """
-    Filter the material node tree by name
+    Filter the material node tree by name.
 
     example usage:
     find_from_socket(start_socket, ShaderNodeFilterByName("Normal"))
     """
+
     def __init__(self, name):
         self.name = name
         super(FilterByName, self).__init__()
@@ -47,9 +47,8 @@ class FilterByName(Filter):
 
 
 class FilterByType(Filter):
-    """
-    Filter the material node tree by type
-    """
+    """Filter the material node tree by type."""
+
     def __init__(self, type):
         self.type = type
         super(FilterByType, self).__init__()
@@ -69,6 +68,7 @@ def from_socket(start_socket: bpy.types.NodeSocket,
                 shader_node_filter: typing.Union[Filter, typing.Callable]) -> typing.List[NodeTreeSearchResult]:
     """
     Find shader nodes where the filter expression is true.
+
     :param start_socket: the beginning of the traversal
     :param shader_node_filter: should be a function(x: shader_node) -> bool
     :return: a list of shader nodes for which filter is true

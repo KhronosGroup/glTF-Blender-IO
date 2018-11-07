@@ -42,11 +42,11 @@ CONSTANT_INTERPOLATION = 'CONSTANT'
 
 def animate_get_interpolation(export_settings, blender_fcurve_list):
     """
-    Retrieves the glTF interpolation, depending on a fcurve list.
+    Retrieve the glTF interpolation, depending on a fcurve list.
+
     Blender allows mixing and more variations of interpolations.
     In such a case, a conversion is needed.
     """
-
     if export_settings[export_keys.FORCE_SAMPLING]:
         return NEEDS_CONVERSION
 
@@ -111,27 +111,21 @@ def animate_get_interpolation(export_settings, blender_fcurve_list):
 
 
 def animate_convert_rotation_axis_angle(axis_angle):
-    """
-    Converts an axis angle to a quaternion rotation.
-    """
+    """Convert an axis angle to a quaternion rotation."""
     q = Quaternion((axis_angle[1], axis_angle[2], axis_angle[3]), axis_angle[0])
 
     return [q.x, q.y, q.z, q.w]
 
 
 def animate_convert_rotation_euler(euler, rotation_mode):
-    """
-    Converts an euler angle to a quaternion rotation.
-    """
+    """Convert an euler angle to a quaternion rotation."""
     rotation = Euler((euler[0], euler[1], euler[2]), rotation_mode).to_quaternion()
 
     return [rotation.x, rotation.y, rotation.z, rotation.w]
 
 
 def animate_convert_keys(key_list):
-    """
-    Converts Blender key frames to glTF time keys depending on the applied frames per second.
-    """
+    """Convert Blender key frames to glTF time keys depending on the applied frames per second."""
     times = []
 
     for key in key_list:
@@ -142,7 +136,8 @@ def animate_convert_keys(key_list):
 
 def animate_gather_keys(export_settings, fcurve_list, interpolation):
     """
-    Merges and sorts several key frames to one set.
+    Merge and sort several key frames to one set.
+
     If an interpolation conversion is needed, the sample key frames are created as well.
     """
     keys = []
@@ -215,9 +210,7 @@ def animate_gather_keys(export_settings, fcurve_list, interpolation):
 
 def animate_location(export_settings, location, interpolation, node_type, node_name, action_name, matrix_correction,
                      matrix_basis):
-    """
-    Calculates/gathers the key value pairs for location transformations.
-    """
+    """Calculate/gather the key value pairs for location transformations."""
     joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
@@ -299,9 +292,7 @@ def animate_location(export_settings, location, interpolation, node_type, node_n
 
 def animate_rotation_axis_angle(export_settings, rotation_axis_angle, interpolation, node_type, node_name, action_name,
                                 matrix_correction, matrix_basis):
-    """
-    Calculates/gathers the key value pairs for axis angle transformations.
-    """
+    """Calculate/gather the key value pairs for axis angle transformations."""
     joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
@@ -361,9 +352,7 @@ def animate_rotation_axis_angle(export_settings, rotation_axis_angle, interpolat
 
 def animate_rotation_euler(export_settings, rotation_euler, rotation_mode, interpolation, node_type, node_name,
                            action_name, matrix_correction, matrix_basis):
-    """
-    Calculates/gathers the key value pairs for euler angle transformations.
-    """
+    """Calculate/gather the key value pairs for euler angle transformations."""
     joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
@@ -423,9 +412,7 @@ def animate_rotation_euler(export_settings, rotation_euler, rotation_mode, inter
 
 def animate_rotation_quaternion(export_settings, rotation_quaternion, interpolation, node_type, node_name, action_name,
                                 matrix_correction, matrix_basis):
-    """
-    Calculates/gathers the key value pairs for quaternion transformations.
-    """
+    """Calculate/gather the key value pairs for quaternion transformations."""
     joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
@@ -515,9 +502,7 @@ def animate_rotation_quaternion(export_settings, rotation_quaternion, interpolat
 
 def animate_scale(export_settings, scale, interpolation, node_type, node_name, action_name, matrix_correction,
                   matrix_basis):
-    """
-    Calculates/gathers the key value pairs for scale transformations.
-    """
+    """Calculate/gather the key value pairs for scale transformations."""
     joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
@@ -601,9 +586,7 @@ def animate_scale(export_settings, scale, interpolation, node_type, node_name, a
 
 def animate_value(export_settings, value_parameter, interpolation,
                   node_type, node_name, matrix_correction, matrix_basis):
-    """
-    Calculates/gathers the key value pairs for scalar anaimations.
-    """
+    """Calculate/gather the key value pairs for scalar anaimations."""
     keys = animate_gather_keys(export_settings, value_parameter, interpolation)
 
     times = animate_convert_keys(keys)

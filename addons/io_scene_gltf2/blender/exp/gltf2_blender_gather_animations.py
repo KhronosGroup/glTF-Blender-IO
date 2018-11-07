@@ -21,7 +21,8 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
 
 def gather_animations(blender_object: bpy.types.Object, export_settings) -> typing.List[gltf2_io.Animation]:
     """
-    Gather all animations which contribute to the objects property
+    Gather all animations which contribute to the objects property.
+
     :param blender_object: The blender object which is animated
     :param export_settings:
     :return: A list of glTF2 animations
@@ -113,6 +114,8 @@ def __gather_samplers(blender_action: bpy.types.Action,
 
 def __link_samplers(animation: gltf2_io.Animation, export_settings):
     """
+    Move animation samplers to their own list and store their indices at their previous locations.
+
     After gathering, samplers are stored in the channels properties of the animation and need to be moved
     to their own list while storing an index into this list at the position where they previously were.
     This behaviour is similar to that of the glTFExporter that traverses all nodes
@@ -120,7 +123,6 @@ def __link_samplers(animation: gltf2_io.Animation, export_settings):
     :param export_settings:
     :return:
     """
-
     # TODO: move this to some util module and update gltf2 exporter also
     T = typing.TypeVar('T')
 

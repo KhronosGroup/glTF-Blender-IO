@@ -18,9 +18,7 @@ from io_scene_gltf2.blender.com import gltf2_blender_json
 
 
 def generate_extras(blender_element):
-    """
-    Filters and creates a custom property, which is stored in the glTF extra field.
-    """
+    """Filter and create a custom property, which is stored in the glTF extra field."""
     if not blender_element:
         return None
 

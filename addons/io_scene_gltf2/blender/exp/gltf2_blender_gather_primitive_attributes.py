@@ -21,7 +21,8 @@ from io_scene_gltf2.blender.exp import gltf2_blender_utils
 
 def gather_primitive_attributes(blender_primitive, export_settings):
     """
-    Gathers the attributes, such as POSITION, NORMAL, TANGENT from a blender primitive
+    Gathers the attributes, such as POSITION, NORMAL, TANGENT from a blender primitive.
+
     :return: a dictionary of attributes
     """
     attributes = {}

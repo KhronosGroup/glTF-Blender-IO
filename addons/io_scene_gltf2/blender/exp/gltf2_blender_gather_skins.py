@@ -25,7 +25,8 @@ from io_scene_gltf2.blender.com import gltf2_blender_math
 @cached
 def gather_skin(blender_object, export_settings):
     """
-    Gather armatures, bones etc into a glTF2 skin object
+    Gather armatures, bones etc into a glTF2 skin object.
+
     :param blender_object: the object which may contain a skin
     :param export_settings:
     :return: a glTF2 skin object
