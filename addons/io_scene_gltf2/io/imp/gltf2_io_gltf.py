@@ -20,12 +20,15 @@ import struct
 import base64
 from os.path import dirname, join, getsize, isfile
 
+
 class glTFImporter():
+    """glTF Importer class."""
 
     def __init__(self, filename, import_settings):
+        """initialization."""
         self.filename = filename
         self.import_settings = import_settings
-        self.buffers  = {}
+        self.buffers = {}
 
         if 'loglevel' not in self.import_settings.keys():
             self.import_settings['loglevel'] = logging.ERROR
@@ -34,7 +37,7 @@ class glTFImporter():
         self.log = log.logger
         self.log_handler = log.hdlr
 
-        self.SIMPLE  = 1
+        self.SIMPLE = 1
         self.TEXTURE = 2
         self.TEXTURE_FACTOR = 3
 
@@ -43,30 +46,31 @@ class glTFImporter():
             'KHR_materials_pbrSpecularGlossiness'
         ]
 
-        #TODO : merge with io_constants
+        # TODO : merge with io_constants
         self.fmt_char_dict = {}
-        self.fmt_char_dict[5120] = 'b' # Byte
-        self.fmt_char_dict[5121] = 'B' # Unsigned Byte
-        self.fmt_char_dict[5122] = 'h' # Short
-        self.fmt_char_dict[5123] = 'H' # Unsigned Short
-        self.fmt_char_dict[5125] = 'I' # Unsigned Int
-        self.fmt_char_dict[5126] = 'f' # Float
+        self.fmt_char_dict[5120] = 'b'  # Byte
+        self.fmt_char_dict[5121] = 'B'  # Unsigned Byte
+        self.fmt_char_dict[5122] = 'h'  # Short
+        self.fmt_char_dict[5123] = 'H'  # Unsigned Short
+        self.fmt_char_dict[5125] = 'I'  # Unsigned Int
+        self.fmt_char_dict[5126] = 'f'  # Float
 
         self.component_nb_dict = {}
         self.component_nb_dict['SCALAR'] = 1
-        self.component_nb_dict['VEC2']   = 2
-        self.component_nb_dict['VEC3']   = 3
-        self.component_nb_dict['VEC4']   = 4
-        self.component_nb_dict['MAT2']   = 4
-        self.component_nb_dict['MAT3']   = 9
-        self.component_nb_dict['MAT4']   = 16
+        self.component_nb_dict['VEC2'] = 2
+        self.component_nb_dict['VEC3'] = 3
+        self.component_nb_dict['VEC4'] = 4
+        self.component_nb_dict['MAT2'] = 4
+        self.component_nb_dict['MAT3'] = 9
+        self.component_nb_dict['MAT4'] = 16
 
     @staticmethod
     def bad_json_value(val):
+        """Bad Json value."""
         raise ValueError('Json contains some unauthorized values')
 
     def checks(self):
-
+        """Some checks."""
         if self.data.asset.version != "2.0":
             return False, "glTF version must be 2"
 
@@ -86,8 +90,9 @@ class glTFImporter():
         return True, None
 
     def load_glb(self):
+        """Load binary glb."""
         header = struct.unpack_from('<4sII', self.content)
-        self.format  = header[0]
+        self.format = header[0]
         self.version = header[1]
         self.file_size = header[2]
 
@@ -100,7 +105,7 @@ class glTFImporter():
         if self.file_size != getsize(self.filename):
             return False, "File size doesn't match"
 
-        offset = 12 # header size = 12
+        offset = 12  # header size = 12
 
         # TODO check json type for chunk 0, and BIN type for next ones
 
@@ -128,15 +133,16 @@ class glTFImporter():
         return True, None
 
     def load_chunk(self, offset):
+        """Load chunk."""
         chunk_header = struct.unpack_from('<I4s', self.content, offset)
-        data_length  = chunk_header[0]
-        data_type    = chunk_header[1]
-        data         = self.content[offset + 8 : offset + 8 + data_length]
+        data_length = chunk_header[0]
+        data_type = chunk_header[1]
+        data = self.content[offset + 8: offset + 8 + data_length]
 
         return data_type, data_length, data, offset + 8 + data_length
 
     def read(self):
-
+        """Read file."""
         # Check this is a file
         if not isfile(self.filename):
             return False, "Please select a file"
@@ -165,7 +171,8 @@ class glTFImporter():
             return success, txt
 
     def is_node_joint(self, node_idx):
-        if not self.data.skins: # if no skin in gltf file
+        """Check if node is a joint."""
+        if not self.data.skins:  # if no skin in gltf file
             return False, None
 
         for skin_idx, skin in enumerate(self.data.skins):
@@ -175,6 +182,7 @@ class glTFImporter():
         return False, None
 
     def load_buffer(self, buffer_idx):
+        """Load buffer."""
         buffer = self.data.buffers[buffer_idx]
 
         if buffer.uri:
@@ -182,10 +190,9 @@ class glTFImporter():
             if buffer.uri[:5] == 'data:':
                 idx = buffer.uri.find(sep)
                 if idx != -1:
-                    data = buffer.uri[idx+len(sep):]
+                    data = buffer.uri[idx + len(sep):]
                     self.buffers[buffer_idx] = base64.b64decode(data)
                     return
-
 
             with open(join(dirname(self.filename), buffer.uri), 'rb') as f_:
                 self.buffers[buffer_idx] = f_.read()
