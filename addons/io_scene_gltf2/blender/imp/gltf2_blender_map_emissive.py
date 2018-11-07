@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_texture import *
-from ..com.gltf2_blender_material_helpers import *
+from .gltf2_blender_texture import BlenderTextureInfo
+from ..com.gltf2_blender_material_helpers import get_preoutput_node_output
 
 
 class BlenderEmissiveMap():

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .gltf2_blender_animation_bone import *
-from .gltf2_blender_animation_node import *
+from .gltf2_blender_animation_bone import BlenderBoneAnim
+from .gltf2_blender_animation_node import BlenderNodeAnim
 
 
 class BlenderAnimation():

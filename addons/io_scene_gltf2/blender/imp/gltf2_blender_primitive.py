@@ -15,9 +15,9 @@
 import bpy
 from mathutils import Vector
 
-from .gltf2_blender_material import *
-from ..com.gltf2_blender_conversion import *
-from ...io.imp.gltf2_io_binary import *
+from .gltf2_blender_material import BlenderMaterial
+from ..com.gltf2_blender_conversion import Conversion
+from ...io.imp.gltf2_io_binary import BinaryData
 
 
 class BlenderPrimitive():

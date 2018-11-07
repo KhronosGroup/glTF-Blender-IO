@@ -17,7 +17,7 @@ import os
 import tempfile
 from os.path import dirname, join, isfile
 
-from ...io.imp.gltf2_io_binary import *
+from ...io.imp.gltf2_io_binary import BinaryData
 
 
 # Note that Image is not a glTF2.0 object

@@ -15,8 +15,8 @@
 
 import bpy
 from mathutils import Vector, Matrix
-from ..com.gltf2_blender_conversion import *
-from ...io.imp.gltf2_io_binary import *
+from ..com.gltf2_blender_conversion import Conversion
+from ...io.imp.gltf2_io_binary import BinaryData
 
 
 class BlenderSkin():

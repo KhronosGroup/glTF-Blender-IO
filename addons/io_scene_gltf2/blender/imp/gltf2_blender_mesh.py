@@ -15,9 +15,9 @@
 import bpy
 import bmesh
 
-from .gltf2_blender_primitive import *
-from .gltf2_blender_skin import *
-from ..com.gltf2_blender_conversion import *
+from .gltf2_blender_primitive import BlenderPrimitive
+from ...io.imp.gltf2_io_binary import BinaryData
+from ..com.gltf2_blender_conversion import Conversion
 
 
 class BlenderMesh():

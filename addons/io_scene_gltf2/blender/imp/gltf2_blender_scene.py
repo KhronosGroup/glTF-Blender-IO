@@ -15,9 +15,9 @@
 import bpy
 from math import sqrt
 from mathutils import Quaternion
-from .gltf2_blender_node import *
-from .gltf2_blender_skin import *
-from .gltf2_blender_animation import *
+from .gltf2_blender_node import BlenderNode
+from .gltf2_blender_skin import BlenderSkin
+from .gltf2_blender_animation import BlenderAnimation
 
 
 class BlenderScene():

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_texture import *
+from .gltf2_blender_texture import BlenderTextureInfo
 
 
 class BlenderPbr():

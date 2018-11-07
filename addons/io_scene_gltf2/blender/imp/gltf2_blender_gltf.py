@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_scene import *
-from ...io.com.gltf2_io_trs import *
+from .gltf2_blender_scene import BlenderScene
+from ...io.com.gltf2_io_trs import TRS
 
 
 class BlenderGlTF():

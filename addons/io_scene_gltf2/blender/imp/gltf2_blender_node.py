@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_mesh import *
-from .gltf2_blender_camera import *
-from .gltf2_blender_skin import *
-from ..com.gltf2_blender_conversion import *
+from .gltf2_blender_mesh import BlenderMesh
+from .gltf2_blender_camera import BlenderCamera
+from .gltf2_blender_skin import BlenderSkin
+from ..com.gltf2_blender_conversion import Conversion
 
 
 class BlenderNode():

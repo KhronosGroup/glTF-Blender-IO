@@ -13,13 +13,15 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_pbrMetallicRoughness import *
-from .gltf2_blender_KHR_materials_pbrSpecularGlossiness import *
-from .gltf2_blender_map_emissive import *
-from .gltf2_blender_map_normal import *
-from .gltf2_blender_map_occlusion import *
-from ..com.gltf2_blender_material_helpers import *
-from ...io.com.gltf2_io import *
+from .gltf2_blender_pbrMetallicRoughness import BlenderPbr
+from .gltf2_blender_KHR_materials_pbrSpecularGlossiness import BlenderKHR_materials_pbrSpecularGlossiness
+from .gltf2_blender_map_emissive import BlenderEmissiveMap
+from .gltf2_blender_map_normal import BlenderNormalMap
+from .gltf2_blender_map_occlusion import BlenderOcclusionMap
+from ..com.gltf2_blender_material_helpers import get_output_surface_input
+from ..com.gltf2_blender_material_helpers import get_preoutput_node_output
+from ..com.gltf2_blender_material_helpers import get_base_color_node
+from ...io.com.gltf2_io import MaterialPBRMetallicRoughness
 
 
 class BlenderMaterial():

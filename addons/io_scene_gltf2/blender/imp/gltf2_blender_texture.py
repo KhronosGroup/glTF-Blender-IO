@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .gltf2_blender_image import *
+from .gltf2_blender_image import BlenderImage
 
 
 class BlenderTextureInfo():
