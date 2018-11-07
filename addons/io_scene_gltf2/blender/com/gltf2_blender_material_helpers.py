@@ -26,7 +26,7 @@ def get_output_surface_input(node_tree):
 
 
 def get_diffuse_texture(node_tree):
-    """retrieve diffuse texture node."""
+    """Retrieve diffuse texture node."""
     for node in node_tree.nodes:
         print(node.name)
         if node.label == 'BASE COLOR':
