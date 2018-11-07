@@ -15,6 +15,7 @@
 from .gltf2_blender_animation_bone import *
 from .gltf2_blender_animation_node import *
 
+
 class BlenderAnimation():
 
     @staticmethod

@@ -19,6 +19,7 @@ from os.path import dirname, join, isfile
 
 from ...io.imp.gltf2_io_binary import *
 
+
 # Note that Image is not a glTF2.0 object
 class BlenderImage():
 
@@ -53,12 +54,12 @@ class BlenderImage():
 
         img.blender_image_name = None
 
-        if gltf.import_settings['pack_images'] == False:
+        if gltf.import_settings['pack_images'] is False:
 
             # Images are not packed (if image is a real file)
             real, path, img_name = BlenderImage.get_image_path(gltf, img_idx)
 
-            if real == True:
+            if real is True:
 
                 blender_image = bpy.data.images.load(path)
                 blender_image.name = img_name

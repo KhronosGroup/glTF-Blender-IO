@@ -14,11 +14,13 @@
 
 from .gltf2_blender_image import *
 
+
 class BlenderTextureInfo():
 
     @staticmethod
     def create(gltf, pytextureinfo_idx):
         BlenderTexture.create(gltf, pytextureinfo_idx)
+
 
 class BlenderTexture():
 

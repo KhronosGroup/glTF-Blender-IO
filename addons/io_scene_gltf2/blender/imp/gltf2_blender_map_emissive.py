@@ -16,6 +16,7 @@ import bpy
 from .gltf2_blender_texture import *
 from ..com.gltf2_blender_material_helpers import *
 
+
 class BlenderEmissiveMap():
 
     @staticmethod
@@ -35,7 +36,7 @@ class BlenderEmissiveMap():
 
         # check if there is some emssive_factor on material
         if pymaterial.emissive_factor is None:
-            pymaterial.emissive_factor = [1.0,1.0,1.0]
+            pymaterial.emissive_factor = [1.0, 1.0, 1.0]
 
         # retrieve principled node and output node
         principled = get_preoutput_node_output(node_tree)
@@ -43,8 +44,8 @@ class BlenderEmissiveMap():
 
         # add nodes
         emit = node_tree.nodes.new('ShaderNodeEmission')
-        emit.location = 0,1000
-        if pymaterial.emissive_factor != [1.0,1.0,1.0]:
+        emit.location = 0, 1000
+        if pymaterial.emissive_factor != [1.0, 1.0, 1.0]:
             separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
             separate.location = -750, 1000
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
@@ -52,31 +53,33 @@ class BlenderEmissiveMap():
         mapping = node_tree.nodes.new('ShaderNodeMapping')
         mapping.location = -1500, 1000
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-        uvmap.location = -2000,1000
+        uvmap.location = -2000, 1000
         if pymaterial.emissive_texture.tex_coord is not None:
-            uvmap["gltf2_texcoord"] = pymaterial.emissive_texture.tex_coord # Set custom flag to retrieve TexCoord
+            uvmap["gltf2_texcoord"] = pymaterial.emissive_texture.tex_coord  # Set custom flag to retrieve TexCoord
         else:
-            uvmap["gltf2_texcoord"] = 0 #TODO: set in precompute instead of here?
+            uvmap["gltf2_texcoord"] = 0  # TODO: set in precompute instead of here?
 
-        text  = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.emissive_texture.index].source].blender_image_name]
+        text = node_tree.nodes.new('ShaderNodeTexImage')
+        text.image = bpy.data.images[gltf.data.images[
+            gltf.data.textures[pymaterial.emissive_texture.index].source
+        ].blender_image_name]
         text.label = 'EMISSIVE'
-        text.location = -1000,1000
+        text.location = -1000, 1000
         add = node_tree.nodes.new('ShaderNodeAddShader')
-        add.location = 500,500
+        add.location = 500, 500
 
-        if pymaterial.emissive_factor != [1.0,1.0,1.0]:
-            math_R  = node_tree.nodes.new('ShaderNodeMath')
+        if pymaterial.emissive_factor != [1.0, 1.0, 1.0]:
+            math_R = node_tree.nodes.new('ShaderNodeMath')
             math_R.location = -500, 1500
             math_R.operation = 'MULTIPLY'
             math_R.inputs[1].default_value = pymaterial.emissive_factor[0]
 
-            math_G  = node_tree.nodes.new('ShaderNodeMath')
+            math_G = node_tree.nodes.new('ShaderNodeMath')
             math_G.location = -500, 1250
             math_G.operation = 'MULTIPLY'
             math_G.inputs[1].default_value = pymaterial.emissive_factor[1]
 
-            math_B  = node_tree.nodes.new('ShaderNodeMath')
+            math_B = node_tree.nodes.new('ShaderNodeMath')
             math_B.location = -500, 1000
             math_B.operation = 'MULTIPLY'
             math_B.inputs[1].default_value = pymaterial.emissive_factor[2]
@@ -84,7 +87,7 @@ class BlenderEmissiveMap():
         # create links
         node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
         node_tree.links.new(text.inputs[0], mapping.outputs[0])
-        if pymaterial.emissive_factor != [1.0,1.0,1.0]:
+        if pymaterial.emissive_factor != [1.0, 1.0, 1.0]:
             node_tree.links.new(separate.inputs[0], text.outputs[0])
             node_tree.links.new(math_R.inputs[0], separate.outputs[0])
             node_tree.links.new(math_G.inputs[0], separate.outputs[1])

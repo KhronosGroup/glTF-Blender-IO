@@ -19,6 +19,7 @@ from .gltf2_blender_material import *
 from ..com.gltf2_blender_conversion import *
 from ...io.imp.gltf2_io_binary import *
 
+
 class BlenderPrimitive():
 
     @staticmethod
@@ -42,10 +43,10 @@ class BlenderPrimitive():
         verts.extend(prim_verts)
         prim_faces = []
         for i in range(0, len(indices), 3):
-            vals = indices[i:i+3]
+            vals = indices[i:i + 3]
             new_vals = []
             for y in vals:
-                new_vals.append(y[0]+current_length)
+                new_vals.append(y[0] + current_length)
             prim_faces.append(tuple(new_vals))
         faces.extend(prim_faces)
         pyprimitive.faces_length = len(prim_faces)
@@ -86,7 +87,9 @@ class BlenderPrimitive():
                             # Compare normal to vertex normal
                             for i in calc_norm_vertices:
                                 cpt_vert = vert_idx - offset
-                                vec = Vector((normal_data[cpt_vert][0], normal_data[cpt_vert][1], normal_data[cpt_vert][2]))
+                                vec = Vector(
+                                    (normal_data[cpt_vert][0], normal_data[cpt_vert][1], normal_data[cpt_vert][2])
+                                )
                                 if not calc_normal.dot(vec) > 0.9999999:
                                     poly.use_smooth = True
                                     break
@@ -95,7 +98,7 @@ class BlenderPrimitive():
                 elif gltf.import_settings['shading'] == "SMOOTH":
                     poly.use_smooth = True
                 else:
-                    pass # Should not happend
+                    pass  # Should not happend
 
         offset = offset + pyprimitive.vertices_length
         return offset
@@ -103,11 +106,11 @@ class BlenderPrimitive():
     def set_UV(gltf, pyprimitive, obj, mesh, offset):
         for texcoord in [attr for attr in pyprimitive.attributes.keys() if attr[:9] == "TEXCOORD_"]:
             if bpy.app.version < (2, 80, 0):
-                if not texcoord in mesh.uv_textures:
+                if texcoord not in mesh.uv_textures:
                     mesh.uv_textures.new(texcoord)
                     pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
             else:
-                if not texcoord in mesh.uv_layers:
+                if texcoord not in mesh.uv_layers:
                     mesh.uv_layers.new(name=texcoord)
                     pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
 
@@ -116,7 +119,8 @@ class BlenderPrimitive():
                 for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                     vert_idx = mesh.loops[loop_idx].vertex_index
                     if vert_idx in range(offset, offset + pyprimitive.vertices_length):
-                        obj.data.uv_layers[texcoord].data[loop_idx].uv = Vector((texcoord_data[vert_idx-offset][0], 1-texcoord_data[vert_idx-offset][1]))
+                        obj.data.uv_layers[texcoord].data[loop_idx].uv = \
+                            Vector((texcoord_data[vert_idx - offset][0], 1 - texcoord_data[vert_idx - offset][1]))
 
         offset = offset + pyprimitive.vertices_length
         return offset
@@ -124,18 +128,30 @@ class BlenderPrimitive():
     def set_UV_in_mat(gltf, pyprimitive, obj):
         if pyprimitive.material is None:
             return
-        if gltf.data.materials[pyprimitive.material].extensions and "KHR_materials_pbrSpecularGlossiness" in gltf.data.materials[pyprimitive.material].extensions.keys():
-            if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].extensions['KHR_materials_pbrSpecularGlossiness']['diffuse_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
+        if gltf.data.materials[pyprimitive.material].extensions \
+                and "KHR_materials_pbrSpecularGlossiness" in \
+                    gltf.data.materials[pyprimitive.material].extensions.keys():
+            if pyprimitive.material is not None \
+                    and gltf.data.materials[pyprimitive.material].extensions[
+                        'KHR_materials_pbrSpecularGlossiness'
+                    ]['diffuse_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
                 BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
             else:
-                if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].extensions['KHR_materials_pbrSpecularGlossiness']['specgloss_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
+                if pyprimitive.material is not None \
+                        and gltf.data.materials[pyprimitive.material].extensions[
+                            'KHR_materials_pbrSpecularGlossiness'
+                        ]['specgloss_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
                     BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
 
         else:
-            if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.color_type in [gltf.TEXTURE, gltf.TEXTURE_FACTOR] :
+            if pyprimitive.material is not None \
+                    and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.color_type in \
+                    [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
                 BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
             else:
-                if pyprimitive.material is not None and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.metallic_type in [gltf.TEXTURE, gltf.TEXTURE_FACTOR] :
+                if pyprimitive.material is not None \
+                        and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.metallic_type in \
+                        [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
                     BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
 
     def assign_material(gltf, pyprimitive, obj, bm, offset, cpt_index_mat):
