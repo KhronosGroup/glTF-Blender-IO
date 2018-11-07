@@ -16,11 +16,14 @@
 # Imports
 #
 
+import bpy
 from . import export_keys
-from ...io.com.gltf2_io import Material
-from ...io.exp.gltf2_io_generate import *
-from .gltf2_blender_get import *
+from . import gltf2_blender_get
 from .gltf2_blender_generate_extras import generate_extras
+from ...io.com.gltf2_io import Material
+from ...io.com.gltf2_io_debug import print_console
+from ...io.exp.gltf2_io_generate import generate_extensionsUsed, generate_extensionsRequired
+from ...io.exp import gltf2_io_get
 
 #
 # Globals
@@ -42,9 +45,9 @@ def generate_texture_transform(operator,
 
     if export_settings[export_keys.TEXTURE_TRANSFORM]:
 
-        image_node = get_shader_image_from_shader_node(name, blender_node)
+        image_node = gltf2_blender_get.get_shader_image_from_shader_node(name, blender_node)
 
-        input_node = get_shader_mapping_from_shader_image(image_node)
+        input_node = gltf2_blender_get.get_shader_mapping_from_shader_image(image_node)
 
         if input_node is not None:
 
@@ -94,13 +97,13 @@ def generate_materials_principled(operator,
 
     if len(blender_node.inputs['Base Color'].links) > 0:
 
-        index = get_texture_index_from_shader_node(export_settings, glTF, 'Base Color', blender_node)
+        index = gltf2_blender_get.get_texture_index_from_shader_node(export_settings, glTF, 'Base Color', blender_node)
         if index >= 0:
             baseColorTexture = {
                 'index': index
             }
 
-            texCoord = get_texcoord_index_from_shader_node(glTF, 'Base Color', blender_node)
+            texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(glTF, 'Base Color', blender_node)
             if texCoord > 0:
                 baseColorTexture['texCoord'] = texCoord
 
@@ -111,7 +114,8 @@ def generate_materials_principled(operator,
 
     else:
 
-        baseColorFactor = get_vec4(blender_node.inputs['Base Color'].default_value, [1.0, 1.0, 1.0, 1.0])
+        baseColorFactor = gltf2_io_get.get_vec4(
+            blender_node.inputs['Base Color'].default_value, [1.0, 1.0, 1.0, 1.0])
 
         if any(f != 1.0 for f in baseColorFactor):
             pbrMetallicRoughness['baseColorFactor'] = baseColorFactor
@@ -121,11 +125,11 @@ def generate_materials_principled(operator,
     #
 
     metallic_name = ""
-    img = find_shader_image_from_shader_socket(blender_node.inputs['Metallic'])
+    img = gltf2_blender_get.find_shader_image_from_shader_socket(blender_node.inputs['Metallic'])
     if img is not None and img.image is not None:
         metallic_name = img.image.name
     else:
-        metallicFactor = get_scalar(blender_node.inputs['Metallic'].default_value, 1.0)
+        metallicFactor = gltf2_io_get.get_scalar(blender_node.inputs['Metallic'].default_value, 1.0)
         if metallicFactor != 1.0:
             pbrMetallicRoughness['metallicFactor'] = metallicFactor
 
@@ -133,11 +137,11 @@ def generate_materials_principled(operator,
     # RoughnessFactor or Roughness texture
     #
     roughness_name = ""
-    img = find_shader_image_from_shader_socket(blender_node.inputs['Roughness'])
+    img = gltf2_blender_get.find_shader_image_from_shader_socket(blender_node.inputs['Roughness'])
     if img is not None and img.image is not None:
         roughness_name = img.image.name
     else:
-        roughnessFactor = get_scalar(blender_node.inputs['Roughness'].default_value, 1.0)
+        roughnessFactor = gltf2_io_get.get_scalar(blender_node.inputs['Roughness'].default_value, 1.0)
         if roughnessFactor != 1.0:
             pbrMetallicRoughness['roughnessFactor'] = roughnessFactor
 
@@ -145,7 +149,7 @@ def generate_materials_principled(operator,
         metallic_roughness_name = metallic_name + roughness_name
     else:
         metallic_roughness_name = metallic_name
-    metallicRoughnessIndex = get_texture_index(glTF, metallic_roughness_name)
+    metallicRoughnessIndex = gltf2_io_get.get_texture_index(glTF, metallic_roughness_name)
 
     if metallicRoughnessIndex >= 0:
         pbrMetallicRoughness['metallicRoughnessTexture'] = {
@@ -157,13 +161,13 @@ def generate_materials_principled(operator,
 
     if len(blender_node.inputs['Normal'].links) > 0:
 
-        index = get_texture_index_from_shader_node(export_settings, glTF, 'Normal', blender_node)
+        index = gltf2_blender_get.get_texture_index_from_shader_node(export_settings, glTF, 'Normal', blender_node)
         if index >= 0:
             normalTexture = {
                 'index': index
             }
 
-            texCoord = get_texcoord_index_from_shader_node(glTF, 'Normal', blender_node)
+            texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(glTF, 'Normal', blender_node)
             if texCoord > 0:
                 normalTexture['texCoord'] = texCoord
 
@@ -173,11 +177,11 @@ def generate_materials_principled(operator,
 
     #
 
-    shader_add = get_shader_add_to_shader_node(blender_node)
+    shader_add = gltf2_blender_get.get_shader_add_to_shader_node(blender_node)
 
     if shader_add is not None:
 
-        shader_emission = get_shader_emission_from_shader_add(shader_add)
+        shader_emission = gltf2_blender_get.get_shader_emission_from_shader_add(shader_add)
 
         if shader_emission is not None:
 
@@ -187,13 +191,14 @@ def generate_materials_principled(operator,
 
             if len(shader_emission.inputs['Color'].links) > 0:
 
-                index = get_texture_index_from_shader_node(export_settings, glTF, 'Color', shader_emission)
+                index = gltf2_blender_get.get_texture_index_from_shader_node(
+                    export_settings, glTF, 'Color', shader_emission)
                 if index >= 0:
                     emissiveTexture = {
                         'index': index
                     }
 
-                    texCoord = get_texcoord_index_from_shader_node(glTF, 'Color', shader_emission)
+                    texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(glTF, 'Color', shader_emission)
                     if texCoord > 0:
                         emissiveTexture['texCoord'] = texCoord
 
@@ -203,17 +208,20 @@ def generate_materials_principled(operator,
                                                glTF, emissiveTexture, 'Color', shader_emission)
 
                     if len(shader_emission.inputs['Strength'].links) == 0:
-                        emissiveStrength = get_scalar(shader_emission.inputs['Strength'].default_value, 1.0)
+                        emissiveStrength = gltf2_io_get.get_scalar(
+                            shader_emission.inputs['Strength'].default_value, 1.0)
 
                         if emissiveStrength != 1.0:
                             material['emissiveFactor'] = [emissiveStrength, emissiveStrength, emissiveStrength]
 
             else:
 
-                emissiveFactor = get_vec3(shader_emission.inputs['Color'].default_value, [0.0, 0.0, 0.0])
+                emissiveFactor = gltf2_io_get.get_vec3(
+                    shader_emission.inputs['Color'].default_value, [0.0, 0.0, 0.0])
 
                 if len(shader_emission.inputs['Strength'].links) == 0:
-                    emissiveStrength = get_scalar(shader_emission.inputs['Strength'].default_value, 1.0)
+                    emissiveStrength = gltf2_io_get.get_scalar(
+                        shader_emission.inputs['Strength'].default_value, 1.0)
 
                     emissiveFactor[0] *= emissiveStrength
                     emissiveFactor[1] *= emissiveStrength
@@ -278,13 +286,15 @@ def generate_materials(operator,
                         #
                         # Base color texture
                         #
-                        index = get_texture_index_from_shader_node(export_settings, glTF, 'BaseColor', blender_node)
+                        index = gltf2_blender_get.get_texture_index_from_shader_node(
+                            export_settings, glTF, 'BaseColor', blender_node)
                         if index >= 0:
                             baseColorTexture = {
                                 'index': index
                             }
 
-                            texCoord = get_texcoord_index_from_shader_node(glTF, 'BaseColor', blender_node)
+                            texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(
+                                glTF, 'BaseColor', blender_node)
                             if texCoord > 0:
                                 baseColorTexture['texCoord'] = texCoord
 
@@ -293,8 +303,8 @@ def generate_materials(operator,
                         #
                         # Base color factor
                         #
-                        baseColorFactor = get_vec4(blender_node.inputs['BaseColorFactor'].default_value,
-                                                   [1.0, 1.0, 1.0, 1.0])
+                        baseColorFactor = gltf2_io_get.get_vec4(
+                            blender_node.inputs['BaseColorFactor'].default_value, [1.0, 1.0, 1.0, 1.0])
                         if baseColorFactor[0] != 1.0 or baseColorFactor[1] != 1.0 or baseColorFactor[2] != 1.0 or \
                                 baseColorFactor[3] != 1.0:
                             pbrMetallicRoughness['baseColorFactor'] = baseColorFactor
@@ -303,28 +313,31 @@ def generate_materials(operator,
                         #
                         # Metallic factor
                         #
-                        metallicFactor = get_scalar(blender_node.inputs['MetallicFactor'].default_value, 1.0)
+                        metallicFactor = gltf2_io_get.get_scalar(
+                            blender_node.inputs['MetallicFactor'].default_value, 1.0)
                         if metallicFactor != 1.0:
                             pbrMetallicRoughness['metallicFactor'] = metallicFactor
 
                         #
                         # Roughness factor
                         #
-                        roughnessFactor = get_scalar(blender_node.inputs['RoughnessFactor'].default_value, 1.0)
+                        roughnessFactor = gltf2_io_get.get_scalar(
+                            blender_node.inputs['RoughnessFactor'].default_value, 1.0)
                         if roughnessFactor != 1.0:
                             pbrMetallicRoughness['roughnessFactor'] = roughnessFactor
 
                         #
                         # Metallic roughness texture
                         #
-                        index = get_texture_index_from_shader_node(
+                        index = gltf2_blender_get.get_texture_index_from_shader_node(
                             export_settings, glTF, 'MetallicRoughness', blender_node)
                         if index >= 0:
                             metallicRoughnessTexture = {
                                 'index': index
                             }
 
-                            texCoord = get_texcoord_index_from_shader_node(glTF, 'MetallicRoughness', blender_node)
+                            texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(
+                                glTF, 'MetallicRoughness', blender_node)
                             if texCoord > 0:
                                 metallicRoughnessTexture['texCoord'] = texCoord
 
@@ -344,13 +357,15 @@ def generate_materials(operator,
                         #
                         # Diffuse texture
                         #
-                        index = get_texture_index_from_shader_node(export_settings, glTF, 'Diffuse', blender_node)
+                        index = gltf2_blender_get.get_texture_index_from_shader_node(
+                            export_settings, glTF, 'Diffuse', blender_node)
                         if index >= 0:
                             diffuseTexture = {
                                 'index': index
                             }
 
-                            texCoord = get_texcoord_index_from_shader_node(glTF, 'Diffuse', blender_node)
+                            texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(
+                                glTF, 'Diffuse', blender_node)
                             if texCoord > 0:
                                 diffuseTexture['texCoord'] = texCoord
 
@@ -359,8 +374,8 @@ def generate_materials(operator,
                         #
                         # Diffuse factor
                         #
-                        diffuseFactor = get_vec4(blender_node.inputs['DiffuseFactor'].default_value,
-                                                 [1.0, 1.0, 1.0, 1.0])
+                        diffuseFactor = gltf2_io_get.get_vec4(
+                            blender_node.inputs['DiffuseFactor'].default_value, [1.0, 1.0, 1.0, 1.0])
                         if diffuseFactor[0] != 1.0 or diffuseFactor[1] != 1.0 or diffuseFactor[2] != 1.0 or \
                                 diffuseFactor[3] != 1.0:
                             pbrSpecularGlossiness['diffuseFactor'] = diffuseFactor
@@ -369,14 +384,17 @@ def generate_materials(operator,
                         #
                         # Specular texture
                         #
-                        index_a = get_texture_index_from_shader_node(export_settings, glTF, 'Specular', blender_node)
-                        index_b = get_texture_index_from_shader_node(export_settings, glTF, 'Glossiness', blender_node)
+                        index_a = gltf2_blender_get.get_texture_index_from_shader_node(
+                            export_settings, glTF, 'Specular', blender_node)
+                        index_b = gltf2_blender_get.get_texture_index_from_shader_node(
+                            export_settings, glTF, 'Glossiness', blender_node)
                         if index_a >= 0 and index_b >= 0 and index_a == index_b:
                             specularGlossinessTexture = {
                                 'index': index_a
                             }
 
-                            texCoord = get_texcoord_index_from_shader_node(glTF, 'Specular', blender_node)
+                            texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(
+                                glTF, 'Specular', blender_node)
                             if texCoord > 0:
                                 specularGlossinessTexture['texCoord'] = texCoord
 
@@ -385,14 +403,16 @@ def generate_materials(operator,
                         #
                         # Specular factor
                         #
-                        specularFactor = get_vec3(blender_node.inputs['SpecularFactor'].default_value, [1.0, 1.0, 1.0])
+                        specularFactor = gltf2_io_get.get_vec3(
+                            blender_node.inputs['SpecularFactor'].default_value, [1.0, 1.0, 1.0])
                         if specularFactor[0] != 1.0 or specularFactor[1] != 1.0 or specularFactor[2] != 1.0:
                             pbrSpecularGlossiness['specularFactor'] = specularFactor
 
                         #
                         # Glossiness factor
                         #
-                        glossinessFactor = get_scalar(blender_node.inputs['GlossinessFactor'].default_value, 1.0)
+                        glossinessFactor = gltf2_io_get.get_scalar(
+                            blender_node.inputs['GlossinessFactor'].default_value, 1.0)
                         if glossinessFactor != 1.0:
                             pbrSpecularGlossiness['glossinessFactor'] = glossinessFactor
 
@@ -401,13 +421,14 @@ def generate_materials(operator,
                     #
                     # Emissive texture
                     #
-                    index = get_texture_index_from_shader_node(export_settings, glTF, 'Emissive', blender_node)
+                    index = gltf2_blender_get.get_texture_index_from_shader_node(
+                        export_settings, glTF, 'Emissive', blender_node)
                     if index >= 0:
                         emissiveTexture = {
                             'index': index
                         }
 
-                        texCoord = get_texcoord_index_from_shader_node(glTF, 'Emissive', blender_node)
+                        texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(glTF, 'Emissive', blender_node)
                         if texCoord > 0:
                             emissiveTexture['texCoord'] = texCoord
 
@@ -416,24 +437,26 @@ def generate_materials(operator,
                     #
                     # Emissive factor
                     #
-                    emissiveFactor = get_vec3(blender_node.inputs['EmissiveFactor'].default_value, [0.0, 0.0, 0.0])
+                    emissiveFactor = gltf2_io_get.get_vec3(
+                        blender_node.inputs['EmissiveFactor'].default_value, [0.0, 0.0, 0.0])
                     if emissiveFactor[0] != 0.0 or emissiveFactor[1] != 0.0 or emissiveFactor[2] != 0.0:
                         material['emissiveFactor'] = emissiveFactor
 
                     #
                     # Normal texture
                     #
-                    index = get_texture_index_from_shader_node(export_settings, glTF, 'Normal', blender_node)
+                    index = gltf2_blender_get.get_texture_index_from_shader_node(
+                        export_settings, glTF, 'Normal', blender_node)
                     if index >= 0:
                         normalTexture = {
                             'index': index
                         }
 
-                        texCoord = get_texcoord_index_from_shader_node(glTF, 'Normal', blender_node)
+                        texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(glTF, 'Normal', blender_node)
                         if texCoord > 0:
                             normalTexture['texCoord'] = texCoord
 
-                        scale = get_scalar(blender_node.inputs['NormalScale'].default_value, 1.0)
+                        scale = gltf2_io_get.get_scalar(blender_node.inputs['NormalScale'].default_value, 1.0)
 
                         if scale != 1.0:
                             normalTexture['scale'] = scale
@@ -444,17 +467,20 @@ def generate_materials(operator,
                     # Occlusion texture
                     #
                     if len(blender_node.inputs['Occlusion'].links) > 0:
-                        index = get_texture_index_from_shader_node(export_settings, glTF, 'Occlusion', blender_node)
+                        index = gltf2_blender_get.get_texture_index_from_shader_node(
+                            export_settings, glTF, 'Occlusion', blender_node)
                         if index >= 0:
                             occlusionTexture = {
                                 'index': index
                             }
 
-                            texCoord = get_texcoord_index_from_shader_node(glTF, 'Occlusion', blender_node)
+                            texCoord = gltf2_blender_get.get_texcoord_index_from_shader_node(
+                                glTF, 'Occlusion', blender_node)
                             if texCoord > 0:
                                 occlusionTexture['texCoord'] = texCoord
 
-                            strength = get_scalar(blender_node.inputs['OcclusionStrength'].default_value, 1.0)
+                            strength = gltf2_io_get.get_scalar(
+                                blender_node.inputs['OcclusionStrength'].default_value, 1.0)
 
                             if strength != 1.0:
                                 occlusionTexture['strength'] = strength
@@ -464,27 +490,29 @@ def generate_materials(operator,
                     #
                     # Alpha
                     #
-                    index = get_texture_index_from_shader_node(export_settings, glTF, 'Alpha', blender_node)
+                    index = gltf2_blender_get.get_texture_index_from_shader_node(
+                        export_settings, glTF, 'Alpha', blender_node)
                     if index >= 0 or alpha < 1.0:
                         alphaMode = 'BLEND'
-                        if get_scalar(blender_node.inputs['AlphaMode'].default_value, 0.0) >= 0.5:
+                        if gltf2_io_get.get_scalar(blender_node.inputs['AlphaMode'].default_value, 0.0) >= 0.5:
                             alphaMode = 'MASK'
 
-                            material['alphaCutoff'] = get_scalar(blender_node.inputs['AlphaCutoff'].default_value, 0.5)
+                            material['alphaCutoff'] = gltf2_io_get.get_scalar(
+                                blender_node.inputs['AlphaCutoff'].default_value, 0.5)
 
                         material['alphaMode'] = alphaMode
 
                     #
                     # Double sided
                     #
-                    if get_scalar(blender_node.inputs['DoubleSided'].default_value, 0.0) >= 0.5:
+                    if gltf2_io_get.get_scalar(blender_node.inputs['DoubleSided'].default_value, 0.0) >= 0.5:
                         material['doubleSided'] = True
 
                     #
                     # Use Color_0
                     #
 
-                    if get_scalar(blender_node.inputs['Use COLOR_0'].default_value, 0.0) < 0.5:
+                    if gltf2_io_get.get_scalar(blender_node.inputs['Use COLOR_0'].default_value, 0.0) < 0.5:
                         export_settings[export_keys.USE_NO_COLOR].append(blender_material.name)
 
                     #
@@ -561,7 +589,7 @@ def generate_materials(operator,
                         # Base color texture
                         #
                         if blender_texture_slot.use_map_color_diffuse:
-                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
+                            index = gltf2_io_get.get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 baseColorTexture = {
                                     'index': index
@@ -573,7 +601,8 @@ def generate_materials(operator,
                         #
                         if export_settings[export_keys.DISPLACEMENT]:
                             if blender_texture_slot.use_map_displacement:
-                                index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
+                                index = gltf2_io_get.get_texture_index(
+                                    glTF, blender_texture_slot.texture.image.name)
                                 if index >= 0:
                                     extensions = material['extensions']
 
@@ -638,7 +667,7 @@ def generate_materials(operator,
                         # Diffuse texture becmomes baseColorTexture
                         #
                         if blender_texture_slot.use_map_color_diffuse:
-                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
+                            index = gltf2_io_get.get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 baseColorTexture = {
                                     'index': index
@@ -649,7 +678,7 @@ def generate_materials(operator,
                         # Ambient texture becomes occlusionTexture
                         #
                         if blender_texture_slot.use_map_ambient:
-                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
+                            index = gltf2_io_get.get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 ambientTexture = {
                                     'index': index
@@ -660,7 +689,7 @@ def generate_materials(operator,
                         # Emissive texture
                         #
                         if blender_texture_slot.use_map_emit:
-                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
+                            index = gltf2_io_get.get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 emissiveTexture = {
                                     'index': index
@@ -671,7 +700,7 @@ def generate_materials(operator,
                         # Normal texture
                         #
                         if blender_texture_slot.use_map_normal:
-                            index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
+                            index = gltf2_io_get.get_texture_index(glTF, blender_texture_slot.texture.image.name)
                             if index >= 0:
                                 normalTexture = {
                                     'index': index
@@ -683,7 +712,8 @@ def generate_materials(operator,
                         #
                         if export_settings[export_keys.DISPLACEMENT]:
                             if blender_texture_slot.use_map_displacement:
-                                index = get_texture_index(glTF, blender_texture_slot.texture.image.name)
+                                index = gltf2_io_get.get_texture_index(
+                                    glTF, blender_texture_slot.texture.image.name)
                                 if index >= 0:
                                     extensions = material['extensions']
 

@@ -18,10 +18,10 @@
 
 import bpy
 from . import export_keys
-from .gltf2_blender_get import get_image_material_usage_to_socket
-from ..com.gltf2_blender_image import *
+from . import gltf2_blender_get
+from ...io.com.gltf2_io_debug import print_console
+from ..com.gltf2_blender_image import create_img_from_blender_image
 from ...io.com import gltf2_io_image
-from ...io.com.gltf2_io_debug import *
 
 #
 # Globals
@@ -37,8 +37,8 @@ ROUGHNESS = 'glTF Metallic Roughness'
 #
 
 def filter_merge_image(export_settings, blender_image):
-    metallic_channel = get_image_material_usage_to_socket(blender_image, "Metallic")
-    roughness_channel = get_image_material_usage_to_socket(blender_image, "Roughness")
+    metallic_channel = gltf2_blender_get.get_image_material_usage_to_socket(blender_image, "Metallic")
+    roughness_channel = gltf2_blender_get.get_image_material_usage_to_socket(blender_image, "Roughness")
 
     if metallic_channel < 0 and roughness_channel < 0:
         return False

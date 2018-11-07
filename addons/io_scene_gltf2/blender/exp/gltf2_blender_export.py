@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import sys
 import traceback
-from io_scene_gltf2.blender.com import gltf2_blender_json
-from io_scene_gltf2.blender.exp import gltf2_blender_gather
-from io_scene_gltf2.blender.exp import gltf2_blender_gltf2_exporter
-from .gltf2_blender_generate import *
-from ...io.exp.gltf2_io_export import *
+
+from . import export_keys
+from . import gltf2_blender_gather
+from .gltf2_blender_gltf2_exporter import GlTF2Exporter
+from ..com import gltf2_blender_json
+from ...io.exp import gltf2_io_export
+from ...io.com.gltf2_io_debug import print_console, print_newline
 
 
 def save(operator,
@@ -37,7 +40,7 @@ def save(operator,
     scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
     if not export_settings[export_keys.COPYRIGHT]:
         export_settings[export_keys.COPYRIGHT] = None
-    exporter = gltf2_blender_gltf2_exporter.GlTF2Exporter(copyright=export_settings[export_keys.COPYRIGHT])
+    exporter = GlTF2Exporter(copyright=export_settings[export_keys.COPYRIGHT])
     for scene in scenes:
         exporter.add_scene(scene)
     for animation in animations:
@@ -75,7 +78,7 @@ def save(operator,
         return o
 
     try:
-        save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
+        gltf2_io_export.save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
     except AssertionError as e:
         _, _, tb = sys.exc_info()
         traceback.print_tb(tb)  # Fixed format

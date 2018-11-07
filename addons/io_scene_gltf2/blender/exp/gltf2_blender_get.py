@@ -19,7 +19,7 @@
 import bpy
 
 from . import export_keys
-from ...io.exp.gltf2_io_get import *
+from ...io.exp import gltf2_io_get
 
 #
 # Globals
@@ -289,7 +289,7 @@ def get_texture_index_from_shader_node(export_settings, glTF, name, shader_node)
     if from_node.image is None or from_node.image.size[0] == 0 or from_node.image.size[1] == 0:
         return -1
 
-    return get_texture_index(glTF, from_node.image.name)
+    return gltf2_io_get.get_texture_index(glTF, from_node.image.name)
 
 
 def get_texture_index_from_export_settings(export_settings, name):
@@ -351,7 +351,7 @@ def get_image_uri(export_settings, blender_image):
     file_format = get_image_format(export_settings, blender_image)
     extension = '.jpg' if file_format == 'JPEG' else '.png'
 
-    return get_image_name(blender_image.name) + extension
+    return gltf2_io_get.get_image_name(blender_image.name) + extension
 
 
 def get_image_format(export_settings, blender_image):

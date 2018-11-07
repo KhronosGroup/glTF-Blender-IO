@@ -17,7 +17,9 @@
 #
 
 import bpy
-from .gltf2_blender_extract import *
+from . import export_keys
+from . import gltf2_blender_extract
+from mathutils import Matrix, Quaternion, Euler
 
 
 #
@@ -112,7 +114,7 @@ def animate_convert_rotation_axis_angle(axis_angle):
     """
     Converts an axis angle to a quaternion rotation.
     """
-    q = mathutils.Quaternion((axis_angle[1], axis_angle[2], axis_angle[3]), axis_angle[0])
+    q = Quaternion((axis_angle[1], axis_angle[2], axis_angle[3]), axis_angle[0])
 
     return [q.x, q.y, q.z, q.w]
 
@@ -121,7 +123,7 @@ def animate_convert_rotation_euler(euler, rotation_mode):
     """
     Converts an euler angle to a quaternion rotation.
     """
-    rotation = mathutils.Euler((euler[0], euler[1], euler[2]), rotation_mode).to_quaternion()
+    rotation = Euler((euler[0], euler[1], euler[2]), rotation_mode).to_quaternion()
 
     return [rotation.x, rotation.y, rotation.z, rotation.w]
 
@@ -278,13 +280,13 @@ def animate_location(export_settings, location, interpolation, node_type, node_n
                 channel_index += 1
 
             # handle parent inverse
-            matrix = mathutils.Matrix.Translation(translation)
+            matrix = Matrix.Translation(translation)
             matrix = matrix_correction * matrix
             translation = matrix.to_translation()
 
-            translation = convert_swizzle_location(translation, export_settings)
-            in_tangent = convert_swizzle_location(in_tangent, export_settings)
-            out_tangent = convert_swizzle_location(out_tangent, export_settings)
+            translation = gltf2_blender_extract.convert_swizzle_location(translation, export_settings)
+            in_tangent = gltf2_blender_extract.convert_swizzle_location(in_tangent, export_settings)
+            out_tangent = gltf2_blender_extract.convert_swizzle_location(out_tangent, export_settings)
 
         result[time] = translation
         result_in_tangent[time] = in_tangent
@@ -338,13 +340,14 @@ def animate_rotation_axis_angle(export_settings, rotation_axis_angle, interpolat
             rotation = animate_convert_rotation_axis_angle(axis_angle_rotation)
 
             # handle parent inverse
-            rotation = mathutils.Quaternion((rotation[3], rotation[0], rotation[1], rotation[2]))
+            rotation = Quaternion((rotation[3], rotation[0], rotation[1], rotation[2]))
             matrix = rotation.to_matrix().to_4x4()
             matrix = matrix_correction * matrix
             rotation = matrix.to_quaternion()
 
             # Bring back to internal Quaternion notation.
-            rotation = convert_swizzle_rotation([rotation[0], rotation[1], rotation[2], rotation[3]], export_settings)
+            rotation = gltf2_blender_extract.convert_swizzle_rotation(
+                [rotation[0], rotation[1], rotation[2], rotation[3]], export_settings)
 
         # Bring back to glTF Quaternion notation.
         rotation = [rotation[1], rotation[2], rotation[3], rotation[0]]
@@ -399,13 +402,14 @@ def animate_rotation_euler(export_settings, rotation_euler, rotation_mode, inter
             rotation = animate_convert_rotation_euler(euler_rotation, rotation_mode)
 
             # handle parent inverse
-            rotation = mathutils.Quaternion((rotation[3], rotation[0], rotation[1], rotation[2]))
+            rotation = Quaternion((rotation[3], rotation[0], rotation[1], rotation[2]))
             matrix = rotation.to_matrix().to_4x4()
             matrix = matrix_correction * matrix
             rotation = matrix.to_quaternion()
 
             # Bring back to internal Quaternion notation.
-            rotation = convert_swizzle_rotation([rotation[0], rotation[1], rotation[2], rotation[3]], export_settings)
+            rotation = gltf2_blender_extract.convert_swizzle_rotation(
+                [rotation[0], rotation[1], rotation[2], rotation[3]], export_settings)
 
         # Bring back to glTF Quaternion notation.
         rotation = [rotation[1], rotation[2], rotation[3], rotation[0]]
@@ -482,9 +486,9 @@ def animate_rotation_quaternion(export_settings, rotation_quaternion, interpolat
 
                 channel_index += 1
 
-            rotation = mathutils.Quaternion((rotation[0], rotation[1], rotation[2], rotation[3]))
-            in_tangent = convert_swizzle_rotation(in_tangent, export_settings)
-            out_tangent = convert_swizzle_rotation(out_tangent, export_settings)
+            rotation = Quaternion((rotation[0], rotation[1], rotation[2], rotation[3]))
+            in_tangent = gltf2_blender_extract.convert_swizzle_rotation(in_tangent, export_settings)
+            out_tangent = gltf2_blender_extract.convert_swizzle_rotation(out_tangent, export_settings)
 
             # handle parent inverse
             matrix = rotation.to_matrix().to_4x4()
@@ -492,7 +496,8 @@ def animate_rotation_quaternion(export_settings, rotation_quaternion, interpolat
             rotation = matrix.to_quaternion()
 
             # Bring back to internal Quaternion notation.
-            rotation = convert_swizzle_rotation([rotation[0], rotation[1], rotation[2], rotation[3]], export_settings)
+            rotation = gltf2_blender_extract.convert_swizzle_rotation(
+                [rotation[0], rotation[1], rotation[2], rotation[3]], export_settings)
 
         # Bring to glTF Quaternion notation.
         rotation = [rotation[1], rotation[2], rotation[3], rotation[0]]
@@ -573,12 +578,12 @@ def animate_scale(export_settings, scale, interpolation, node_type, node_name, a
 
                 channel_index += 1
 
-            scale_data = convert_swizzle_scale(scale_data, export_settings)
-            in_tangent = convert_swizzle_scale(in_tangent, export_settings)
-            out_tangent = convert_swizzle_scale(out_tangent, export_settings)
+            scale_data = gltf2_blender_extract.convert_swizzle_scale(scale_data, export_settings)
+            in_tangent = gltf2_blender_extract.convert_swizzle_scale(in_tangent, export_settings)
+            out_tangent = gltf2_blender_extract.convert_swizzle_scale(out_tangent, export_settings)
 
             # handle parent inverse
-            matrix = mathutils.Matrix()
+            matrix = Matrix()
             matrix[0][0] = scale_data.x
             matrix[1][1] = scale_data.y
             matrix[2][2] = scale_data.z
@@ -594,8 +599,8 @@ def animate_scale(export_settings, scale, interpolation, node_type, node_name, a
     return result, result_in_tangent, result_out_tangent
 
 
-def animate_value(export_settings, value_parameter, interpolation, node_type, node_name, matrix_correction,
-                  matrix_basis):
+def animate_value(export_settings, value_parameter, interpolation,
+                  node_type, node_name, matrix_correction, matrix_basis):
     """
     Calculates/gathers the key value pairs for scalar anaimations.
     """

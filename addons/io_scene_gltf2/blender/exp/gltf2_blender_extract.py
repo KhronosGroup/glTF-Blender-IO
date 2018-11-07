@@ -16,11 +16,11 @@
 # Imports
 #
 
-import mathutils
-import mathutils.geometry
+from mathutils import Vector, Quaternion
+from mathutils.geometry import tessellate_polygon
 
 from . import export_keys
-from ...io.com.gltf2_io_debug import *
+from ...io.com.gltf2_io_debug import print_console
 
 #
 # Globals
@@ -65,9 +65,9 @@ def convert_swizzle_location(loc, export_settings):
     Converts a location from Blender coordinate system to glTF coordinate system.
     """
     if export_settings[export_keys.YUP]:
-        return mathutils.Vector((loc[0], loc[2], -loc[1]))
+        return Vector((loc[0], loc[2], -loc[1]))
     else:
-        return mathutils.Vector((loc[0], loc[1], loc[2]))
+        return Vector((loc[0], loc[1], loc[2]))
 
 
 def convert_swizzle_tangent(tan, export_settings):
@@ -79,9 +79,9 @@ def convert_swizzle_tangent(tan, export_settings):
         print_console('WARNING', 'Tangent has zero length.')
 
     if export_settings[export_keys.YUP]:
-        return mathutils.Vector((tan[0], tan[2], -tan[1], 1.0))
+        return Vector((tan[0], tan[2], -tan[1], 1.0))
     else:
-        return mathutils.Vector((tan[0], tan[1], tan[2], 1.0))
+        return Vector((tan[0], tan[1], tan[2], 1.0))
 
 
 def convert_swizzle_rotation(rot, export_settings):
@@ -90,9 +90,9 @@ def convert_swizzle_rotation(rot, export_settings):
     'w' is still at first position.
     """
     if export_settings[export_keys.YUP]:
-        return mathutils.Quaternion((rot[0], rot[1], rot[3], -rot[2]))
+        return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
     else:
-        return mathutils.Quaternion((rot[0], rot[1], rot[2], rot[3]))
+        return Quaternion((rot[0], rot[1], rot[2], rot[3]))
 
 
 def convert_swizzle_scale(scale, export_settings):
@@ -100,9 +100,9 @@ def convert_swizzle_scale(scale, export_settings):
     Converts a scale from Blender coordinate system to glTF coordinate system.
     """
     if export_settings[export_keys.YUP]:
-        return mathutils.Vector((scale[0], scale[2], scale[1]))
+        return Vector((scale[0], scale[2], scale[1]))
     else:
-        return mathutils.Vector((scale[0], scale[1], scale[2]))
+        return Vector((scale[0], scale[1], scale[2]))
 
 
 def decompose_transition(matrix, context, export_settings):
@@ -117,7 +117,7 @@ def decompose_transition(matrix, context, export_settings):
         scale = convert_swizzle_scale(scale, export_settings)
 
     # Put w at the end.
-    rotation = mathutils.Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
+    rotation = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
 
     return translation, rotation, scale
 
@@ -559,8 +559,8 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
         attributes = primitive[ATTRIBUTES_ID]
 
         face_normal = blender_polygon.normal
-        face_tangent = mathutils.Vector((0.0, 0.0, 0.0))
-        face_bitangent = mathutils.Vector((0.0, 0.0, 0.0))
+        face_tangent = Vector((0.0, 0.0, 0.0))
+        face_bitangent = Vector((0.0, 0.0, 0.0))
         if use_tangents:
             for loop_index in blender_polygon.loop_indices:
                 temp_vertex = blender_mesh.loops[loop_index]
@@ -585,9 +585,9 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
             for loop_index in blender_polygon.loop_indices:
                 vertex_index = blender_mesh.loops[loop_index].vertex_index
                 v = blender_mesh.vertices[vertex_index].co
-                polyline.append(mathutils.Vector((v[0], v[1], v[2])))
+                polyline.append(Vector((v[0], v[1], v[2])))
 
-            triangles = mathutils.geometry.tessellate_polygon((polyline,))
+            triangles = tessellate_polygon((polyline,))
 
             for triangle in triangles:
                 loop_index_list.append(blender_polygon.loop_indices[triangle[0]])
@@ -632,9 +632,9 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
                     b = convert_swizzle_location(face_bitangent, export_settings)
 
             if use_tangents:
-                tv = mathutils.Vector((t[0], t[1], t[2]))
-                bv = mathutils.Vector((b[0], b[1], b[2]))
-                nv = mathutils.Vector((n[0], n[1], n[2]))
+                tv = Vector((t[0], t[1], t[2]))
+                bv = Vector((b[0], b[1], b[2]))
+                nv = Vector((n[0], n[1], n[2]))
 
                 if (nv.cross(tv)).dot(bv) < 0.0:
                     t[3] = -1.0
@@ -737,7 +737,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
                     if use_tangents:
                         rotation = n_morph.rotation_difference(n)
 
-                        t_morph = mathutils.Vector((t[0], t[1], t[2]))
+                        t_morph = Vector((t[0], t[1], t[2]))
 
                         t_morph.rotate(rotation)
 
