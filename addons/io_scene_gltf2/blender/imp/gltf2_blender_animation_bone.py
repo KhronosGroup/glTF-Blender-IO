@@ -104,7 +104,7 @@ class BlenderBoneAnim():
                         final_rot = (parent_mat @ quat_keyframe.to_matrix().to_4x4()).to_quaternion()
                     bone.rotation_quaternion = bind_rotation.rotation_difference(final_rot).to_euler().to_quaternion()
                 else:
-                    bone.rotation_quaternion = bind_rotation.rotation_difference(quat_keyframe)
+                    bone.rotation_quaternion = bind_rotation.rotation_difference(quat_keyframe).to_euler().to_quaternion()
 
             bone.keyframe_insert(blender_path, frame = key[0] * fps, group='rotation')
 
