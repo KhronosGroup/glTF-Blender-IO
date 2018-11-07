@@ -20,10 +20,11 @@ from ...io.imp.gltf2_io_binary import BinaryData
 
 
 class BlenderSkin():
+    """Blender Skinning / Armature."""
 
     @staticmethod
     def create_armature(gltf, skin_id, parent):
-
+        """Armature creation."""
         pyskin = gltf.data.skins[skin_id]
 
         if pyskin.name is not None:
@@ -43,7 +44,7 @@ class BlenderSkin():
 
     @staticmethod
     def set_bone_transforms(gltf, skin_id, bone, node_id, parent):
-
+        """Set bone transformations."""
         pyskin = gltf.data.skins[skin_id]
         pynode = gltf.data.nodes[node_id]
 
@@ -120,7 +121,7 @@ class BlenderSkin():
 
     @staticmethod
     def create_bone(gltf, skin_id, node_id, parent):
-
+        """Bone creation."""
         pyskin = gltf.data.skins[skin_id]
         pynode = gltf.data.nodes[node_id]
 
@@ -151,6 +152,7 @@ class BlenderSkin():
 
     @staticmethod
     def create_vertex_groups(gltf, skin_id):
+        """Vertex Group creation."""
         pyskin = gltf.data.skins[skin_id]
         for node_id in pyskin.node_ids:
             obj = bpy.data.objects[gltf.data.nodes[node_id].blender_object]
@@ -159,6 +161,7 @@ class BlenderSkin():
 
     @staticmethod
     def assign_vertex_groups(gltf, skin_id):
+        """Assign vertex groups to vertices."""
         pyskin = gltf.data.skins[skin_id]
         for node_id in pyskin.node_ids:
             node = gltf.data.nodes[node_id]
@@ -201,7 +204,7 @@ class BlenderSkin():
 
     @staticmethod
     def create_armature_modifiers(gltf, skin_id):
-
+        """Create Armature modifier."""
         pyskin = gltf.data.skins[skin_id]
 
         if pyskin.blender_armature_name is None:

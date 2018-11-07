@@ -17,15 +17,17 @@ from .gltf2_blender_texture import BlenderTextureInfo
 
 
 class BlenderNormalMap():
+    """Blender Normal map."""
 
     @staticmethod
     def create(gltf, material_idx):
+        """Creation of Normal map."""
         engine = bpy.context.scene.render.engine
         if engine in ['CYCLES', 'BLENDER_EEVEE']:
             BlenderNormalMap.create_nodetree(gltf, material_idx)
 
     def create_nodetree(gltf, material_idx):
-
+        """Creation of Nodetree."""
         pymaterial = gltf.data.materials[material_idx]
 
         material = bpy.data.materials[pymaterial.blender_material]

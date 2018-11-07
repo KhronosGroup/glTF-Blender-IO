@@ -18,10 +18,11 @@ from ...io.com.gltf2_io_trs import TRS
 
 
 class BlenderGlTF():
+    """Main glTF import class."""
 
     @staticmethod
     def create(gltf):
-
+        """Create glTF main method."""
         BlenderGlTF.pre_compute(gltf)
 
         for scene_idx, scene in enumerate(gltf.data.scenes):
@@ -72,7 +73,7 @@ class BlenderGlTF():
 
     @staticmethod
     def pre_compute(gltf):
-
+        """Pre compute, just before creation."""
         # default scene used
         gltf.blender_scene = None
 

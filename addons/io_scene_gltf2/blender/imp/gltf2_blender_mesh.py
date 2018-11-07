@@ -21,9 +21,11 @@ from ..com.gltf2_blender_conversion import Conversion
 
 
 class BlenderMesh():
+    """Blender Mesh."""
 
     @staticmethod
     def create(gltf, mesh_idx, node_idx, parent):
+        """Mesh creation."""
         pymesh = gltf.data.meshes[mesh_idx]
 
         # Geometry
@@ -48,6 +50,7 @@ class BlenderMesh():
 
     @staticmethod
     def set_mesh(gltf, pymesh, mesh, obj):
+        """Set all data after mesh creation."""
         # Normals
         offset = 0
         for prim in pymesh.primitives:

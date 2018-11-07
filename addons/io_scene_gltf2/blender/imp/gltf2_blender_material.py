@@ -25,10 +25,11 @@ from ...io.com.gltf2_io import MaterialPBRMetallicRoughness
 
 
 class BlenderMaterial():
+    """Blender Material."""
 
     @staticmethod
     def create(gltf, material_idx, vertex_color):
-
+        """Material creation."""
         pymaterial = gltf.data.materials[material_idx]
 
         if pymaterial.name is not None:
@@ -75,6 +76,7 @@ class BlenderMaterial():
 
     @staticmethod
     def set_uvmap(gltf, material_idx, prim, obj):
+        """Set UV Map."""
         pymaterial = gltf.data.materials[material_idx]
 
         node_tree = bpy.data.materials[pymaterial.blender_material].node_tree
@@ -85,6 +87,7 @@ class BlenderMaterial():
 
     @staticmethod
     def blender_alpha(gltf, material_idx):
+        """Set alpha."""
         pymaterial = gltf.data.materials[material_idx]
         material = bpy.data.materials[pymaterial.blender_material]
 

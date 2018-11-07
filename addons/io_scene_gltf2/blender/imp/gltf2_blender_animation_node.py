@@ -20,9 +20,11 @@ from ...io.imp.gltf2_io_binary import BinaryData
 
 
 class BlenderNodeAnim():
+    """Blender Object Animation."""
 
     @staticmethod
     def set_interpolation(interpolation, kf):
+        """Manage interpolation."""
         if interpolation == "LINEAR":
             kf.interpolation = 'LINEAR'
         elif interpolation == "STEP":
@@ -36,7 +38,7 @@ class BlenderNodeAnim():
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):
-
+        """Manage animation."""
         node = gltf.data.nodes[node_idx]
         obj = bpy.data.objects[node.blender_object]
         fps = bpy.context.scene.render.fps

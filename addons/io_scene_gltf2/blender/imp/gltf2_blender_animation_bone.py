@@ -20,9 +20,11 @@ from ...io.imp.gltf2_io_binary import BinaryData
 
 
 class BlenderBoneAnim():
+    """Blender Bone Animation."""
 
     @staticmethod
     def set_interpolation(interpolation, kf):
+        """Set interpolation."""
         if interpolation == "LINEAR":
             kf.interpolation = 'LINEAR'
         elif interpolation == "STEP":
@@ -36,6 +38,7 @@ class BlenderBoneAnim():
 
     @staticmethod
     def parse_translation_channel(gltf, node, obj, bone, channel, animation):
+        """Manage Location animation."""
         fps = bpy.context.scene.render.fps
         blender_path = "location"
 
@@ -75,6 +78,7 @@ class BlenderBoneAnim():
 
     @staticmethod
     def parse_rotation_channel(gltf, node, obj, bone, channel, animation):
+        """Manage rotation animation."""
         # Note: some operations lead to issue with quaternions. Converting to matrix and then back to quaternions breaks
         # quaternion continuity
         # (see antipodal quaternions). Blender interpolates between two antipodal quaternions, which causes glitches in
@@ -120,6 +124,7 @@ class BlenderBoneAnim():
 
     @staticmethod
     def parse_scale_channel(gltf, node, obj, bone, channel, animation):
+        """Manage scaling animation."""
         fps = bpy.context.scene.render.fps
         blender_path = "scale"
 
@@ -157,6 +162,7 @@ class BlenderBoneAnim():
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):
+        """Manage animation."""
         node = gltf.data.nodes[node_idx]
         obj = bpy.data.objects[gltf.data.skins[node.skin_id].blender_armature_name]
         bone = obj.pose.bones[node.blender_bone_name]

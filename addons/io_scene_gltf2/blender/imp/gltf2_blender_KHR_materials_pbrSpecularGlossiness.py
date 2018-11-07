@@ -17,15 +17,18 @@ from .gltf2_blender_texture import BlenderTextureInfo
 
 
 class BlenderKHR_materials_pbrSpecularGlossiness():
+    """Blender KHR_materials_pbrSpecularGlossiness extension."""
 
     @staticmethod
     def create(gltf, pbrSG, mat_name, vertex_color):
+        """KHR_materials_pbrSpecularGlossiness creation."""
         engine = bpy.context.scene.render.engine
         if engine in ['CYCLES', 'BLENDER_EEVEE']:
             BlenderKHR_materials_pbrSpecularGlossiness.create_nodetree(gltf, pbrSG, mat_name, vertex_color)
 
     @staticmethod
     def create_nodetree(gltf, pbrSG, mat_name, vertex_color):
+        """Node tree creation."""
         material = bpy.data.materials[mat_name]
         material.use_nodes = True
         node_tree = material.node_tree

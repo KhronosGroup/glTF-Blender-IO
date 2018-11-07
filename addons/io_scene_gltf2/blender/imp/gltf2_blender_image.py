@@ -22,9 +22,11 @@ from ...io.imp.gltf2_io_binary import BinaryData
 
 # Note that Image is not a glTF2.0 object
 class BlenderImage():
+    """Manage Image."""
 
     @staticmethod
     def get_image_path(gltf, img_idx):
+        """Return image path."""
         pyimage = gltf.data.images[img_idx]
 
         image_name = "Image_" + str(img_idx)
@@ -49,7 +51,7 @@ class BlenderImage():
 
     @staticmethod
     def create(gltf, img_idx):
-
+        """Image creation."""
         img = gltf.data.images[img_idx]
 
         img.blender_image_name = None

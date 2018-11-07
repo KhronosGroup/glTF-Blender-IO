@@ -20,10 +20,11 @@ from ..com.gltf2_blender_conversion import Conversion
 
 
 class BlenderNode():
+    """Blender Node."""
 
     @staticmethod
     def create(gltf, node_idx, parent):
-
+        """Node creation."""
         pynode = gltf.data.nodes[node_idx]
 
         # Blender attributes initialization
@@ -126,7 +127,7 @@ class BlenderNode():
 
     @staticmethod
     def set_parent(gltf, pynode, obj, parent):
-
+        """Set parent."""
         if parent is None:
             return
 
@@ -190,6 +191,7 @@ class BlenderNode():
 
     @staticmethod
     def set_transforms(gltf, node_idx, pynode, obj, parent):
+        """Set transforms."""
         if parent is None:
             obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
             return

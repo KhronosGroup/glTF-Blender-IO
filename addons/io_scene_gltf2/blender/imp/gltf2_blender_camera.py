@@ -16,10 +16,11 @@ import bpy
 
 
 class BlenderCamera():
+    """Blender Camera."""
 
     @staticmethod
     def create(gltf, camera_id):
-
+        """Camera creation."""
         pycamera = gltf.data.cameras[camera_id]
 
         if not pycamera.name:

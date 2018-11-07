@@ -17,13 +17,16 @@ from .gltf2_blender_texture import BlenderTextureInfo
 
 
 class BlenderPbr():
+    """Blender Pbr."""
 
     def create(gltf, pypbr, mat_name, vertex_color):
+        """Pbr creation."""
         engine = bpy.context.scene.render.engine
         if engine in ['CYCLES', 'BLENDER_EEVEE']:
             BlenderPbr.create_nodetree(gltf, pypbr, mat_name, vertex_color)
 
     def create_nodetree(gltf, pypbr, mat_name, vertex_color):
+        """Nodetree creation."""
         material = bpy.data.materials[mat_name]
         material.use_nodes = True
         node_tree = material.node_tree

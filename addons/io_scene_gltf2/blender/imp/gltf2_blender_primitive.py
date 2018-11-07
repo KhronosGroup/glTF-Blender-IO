@@ -21,10 +21,11 @@ from ...io.imp.gltf2_io_binary import BinaryData
 
 
 class BlenderPrimitive():
+    """Blender Primitive."""
 
     @staticmethod
     def create(gltf, pyprimitive, verts, edges, faces):
-
+        """Primitive creation."""
         pyprimitive.blender_texcoord = {}
 
         # TODO mode of primitive 4 for now.
@@ -65,6 +66,7 @@ class BlenderPrimitive():
         return verts, edges, faces
 
     def set_normals(gltf, pyprimitive, mesh, offset):
+        """Set Normal."""
         if 'NORMAL' in pyprimitive.attributes.keys():
             normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
             for poly in mesh.polygons:
@@ -104,6 +106,7 @@ class BlenderPrimitive():
         return offset
 
     def set_UV(gltf, pyprimitive, obj, mesh, offset):
+        """Set UV Map."""
         for texcoord in [attr for attr in pyprimitive.attributes.keys() if attr[:9] == "TEXCOORD_"]:
             if bpy.app.version < (2, 80, 0):
                 if texcoord not in mesh.uv_textures:
@@ -126,6 +129,7 @@ class BlenderPrimitive():
         return offset
 
     def set_UV_in_mat(gltf, pyprimitive, obj):
+        """After nodetree creation, set UVMap in nodes."""
         if pyprimitive.material is None:
             return
         if gltf.data.materials[pyprimitive.material].extensions \
@@ -155,6 +159,7 @@ class BlenderPrimitive():
                     BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj)
 
     def assign_material(gltf, pyprimitive, obj, bm, offset, cpt_index_mat):
+        """Assign material to faces of primitives."""
         if pyprimitive.material is not None:
             obj.data.materials.append(bpy.data.materials[gltf.data.materials[pyprimitive.material].blender_material])
             for vert in bm.verts:

@@ -17,9 +17,11 @@ from .gltf2_blender_animation_node import BlenderNodeAnim
 
 
 class BlenderAnimation():
+    """Dispatch Animation to bone or object animation."""
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):
+        """Dispatch Animation to bone or object."""
         if gltf.data.nodes[node_idx].is_joint:
             BlenderBoneAnim.anim(gltf, anim_idx, node_idx)
         else:

@@ -21,10 +21,11 @@ from .gltf2_blender_animation import BlenderAnimation
 
 
 class BlenderScene():
+    """Blender Scene."""
 
     @staticmethod
     def create(gltf, scene_idx):
-
+        """Scene creation."""
         pyscene = gltf.data.scenes[scene_idx]
 
         # Create Yup2Zup empty
