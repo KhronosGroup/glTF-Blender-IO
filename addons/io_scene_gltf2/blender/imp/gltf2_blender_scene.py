@@ -39,7 +39,10 @@ class BlenderScene():
                 scene = bpy.data.scenes.new(pyscene.name)
             else:
                 scene = bpy.context.scene
-            scene.render.engine = "CYCLES"
+            if bpy.app.version < (2, 80, 0):
+                scene.render.engine = "CYCLES"
+            else:
+                scene.render.engine = "BLENDER_EEVEE"
 
             gltf.blender_scene = scene.name
         else:
@@ -52,13 +55,16 @@ class BlenderScene():
         # Now that all mesh / bones are created, create vertex groups on mesh
         if gltf.data.skins:
             for skin_id, skin in enumerate(gltf.data.skins):
-                BlenderSkin.create_vertex_groups(gltf, skin_id)
+                if hasattr(skin, "node_ids"):
+                    BlenderSkin.create_vertex_groups(gltf, skin_id)
 
             for skin_id, skin in enumerate(gltf.data.skins):
-                BlenderSkin.assign_vertex_groups(gltf, skin_id)
+                if hasattr(skin, "node_ids"):
+                    BlenderSkin.assign_vertex_groups(gltf, skin_id)
 
             for skin_id, skin in enumerate(gltf.data.skins):
-                BlenderSkin.create_armature_modifiers(gltf, skin_id)
+                if hasattr(skin, "node_ids"):
+                    BlenderSkin.create_armature_modifiers(gltf, skin_id)
 
         if gltf.data.animations:
             for anim_idx, anim in enumerate(gltf.data.animations):
@@ -67,7 +73,12 @@ class BlenderScene():
 
 
         # Parent root node to rotation object
-        bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
-        obj_rotation.hide = True
+        if bpy.app.version < (2, 80, 0):
+            bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
+            obj_rotation.hide = True
+        else:
+            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj_rotation)
+            obj_rotation.hide_viewport = True
+
         for node_idx in pyscene.nodes:
             bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation

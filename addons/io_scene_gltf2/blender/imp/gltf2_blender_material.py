@@ -18,6 +18,8 @@ from .gltf2_blender_KHR_materials_pbrSpecularGlossiness import *
 from .gltf2_blender_map_emissive import *
 from .gltf2_blender_map_normal import *
 from .gltf2_blender_map_occlusion import *
+from ..com.gltf2_blender_material_helpers import *
+from ...io.com.gltf2_io import *
 
 class BlenderMaterial():
 
@@ -38,6 +40,16 @@ class BlenderMaterial():
             BlenderKHR_materials_pbrSpecularGlossiness.create(gltf, pymaterial.extensions['KHR_materials_pbrSpecularGlossiness'], mat.name, vertex_color)
         else:
             # create pbr material
+            if pymaterial.pbr_metallic_roughness is None:
+                # If no pbr material is set, we need to apply all default of pbr
+                pbr = {}
+                pbr["baseColorFactor"] = [1.0, 1.0, 1.0, 1.0]
+                pbr["metallicFactor"] = 1.0
+                pbr["roughnessFactor"] = 1.0
+                pymaterial.pbr_metallic_roughness = MaterialPBRMetallicRoughness.from_dict(pbr)
+                pymaterial.pbr_metallic_roughness.color_type = gltf.SIMPLE
+                pymaterial.pbr_metallic_roughness.metallic_type = gltf.SIMPLE
+
             BlenderPbr.create(gltf, pymaterial.pbr_metallic_roughness, mat.name, vertex_color)
 
         # add emission map if needed
@@ -53,6 +65,9 @@ class BlenderMaterial():
         if pymaterial.occlusion_texture is not None:
             BlenderOcclusionMap.create(gltf, material_idx)
 
+        if pymaterial.alpha_mode != None and pymaterial.alpha_mode != 'OPAQUE':
+            BlenderMaterial.blender_alpha(gltf, material_idx)
+
     @staticmethod
     def set_uvmap(gltf, material_idx, prim, obj):
         pymaterial = gltf.data.materials[material_idx]
@@ -62,3 +77,63 @@ class BlenderMaterial():
         for uvmap_node in uvmap_nodes:
             if uvmap_node["gltf2_texcoord"] in prim.blender_texcoord.keys():
                 uvmap_node.uv_map = prim.blender_texcoord[uvmap_node["gltf2_texcoord"]]
+
+    @staticmethod
+    def blender_alpha(gltf, material_idx):
+        pymaterial = gltf.data.materials[material_idx]
+        material = bpy.data.materials[pymaterial.blender_material]
+
+        node_tree = material.node_tree
+         # Add nodes for basic transparency
+        # Add mix shader between output and Principled BSDF
+        trans = node_tree.nodes.new('ShaderNodeBsdfTransparent')
+        trans.location = 750, -500
+        mix = node_tree.nodes.new('ShaderNodeMixShader')
+        mix.location = 1000, 0
+
+        output_surface_input = get_output_surface_input(node_tree)
+        preoutput_node_output = get_preoutput_node_output(node_tree)
+        pre_output_node = output_surface_input.links[0].from_node
+
+        link = output_surface_input.links[0]
+        node_tree.links.remove(link)
+
+         # PBR => Mix input 1
+        node_tree.links.new(preoutput_node_output, mix.inputs[1])
+
+         # Trans => Mix input 2
+        node_tree.links.new(trans.outputs['BSDF'], mix.inputs[2])
+
+         # Mix => Output
+        node_tree.links.new(mix.outputs['Shader'], output_surface_input)
+
+         # alpha blend factor
+        add = node_tree.nodes.new('ShaderNodeMath')
+        add.operation = 'ADD'
+        add.location = 750, -250
+
+        diffuse_factor = 1.0
+        if pymaterial.extensions is not None and 'KHR_materials_pbrSpecularGlossiness' in pymaterial.extensions:
+            diffuse_factor = pymaterial.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseFactor'][3]
+        elif pymaterial.pbr_metallic_roughness:
+            diffuse_factor = pymaterial.pbr_metallic_roughness.base_color_factor[3]
+
+        add.inputs[0].default_value = abs(1.0 - diffuse_factor)
+        add.inputs[1].default_value = 0.0
+        node_tree.links.new(add.outputs['Value'], mix.inputs[0])
+
+         # Take diffuse texture alpha into account if any
+        diffuse_texture = get_base_color_node(node_tree)
+        if diffuse_texture:
+            inverter = node_tree.nodes.new('ShaderNodeInvert')
+            inverter.location = 250, -250
+            inverter.inputs[1].default_value = (1.0, 1.0, 1.0, 1.0)
+            node_tree.links.new(diffuse_texture.outputs['Alpha'], inverter.inputs[0])
+
+            mult = node_tree.nodes.new('ShaderNodeMath')
+            mult.operation = 'MULTIPLY' if pymaterial.alpha_mode == 'BLEND' else 'GREATER_THAN'
+            mult.location = 500, -250
+            alpha_cutoff = 1.0 if pymaterial.alpha_mode == 'BLEND' else 1.0 - pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
+            mult.inputs[1].default_value = alpha_cutoff
+            node_tree.links.new(inverter.outputs['Color'], mult.inputs[0])
+            node_tree.links.new(mult.outputs['Value'], add.inputs[0])

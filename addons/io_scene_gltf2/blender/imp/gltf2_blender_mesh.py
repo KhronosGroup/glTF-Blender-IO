@@ -87,11 +87,11 @@ class BlenderMesh():
 
         # Create basis shape key
         if max_shape_to_create > 0:
-            obj.shape_key_add("Basis")
+            obj.shape_key_add(name="Basis")
 
         for i in range(max_shape_to_create):
 
-            obj.shape_key_add("target_" + str(i))
+            obj.shape_key_add(name="target_" + str(i))
 
             offset_idx = 0
             for prim in pymesh.primitives:

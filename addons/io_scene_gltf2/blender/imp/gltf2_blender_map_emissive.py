@@ -14,18 +14,17 @@
 
 import bpy
 from .gltf2_blender_texture import *
+from ..com.gltf2_blender_material_helpers import *
 
 class BlenderEmissiveMap():
 
     @staticmethod
     def create(gltf, material_idx):
         engine = bpy.context.scene.render.engine
-        if engine == 'CYCLES':
-            BlenderEmissiveMap.create_cycles(gltf, material_idx)
-        else:
-            pass #TODO for internal / Eevee in future 2.8
+        if engine in ['CYCLES', 'BLENDER_EEVEE']:
+            BlenderEmissiveMap.create_nodetree(gltf, material_idx)
 
-    def create_cycles(gltf, material_idx):
+    def create_nodetree(gltf, material_idx):
 
         pymaterial = gltf.data.materials[material_idx]
 
@@ -34,13 +33,12 @@ class BlenderEmissiveMap():
 
         BlenderTextureInfo.create(gltf, pymaterial.emissive_texture.index)
 
-        # retrieve principled node and output node
-        if len([node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"]) != 0:
-            fix = [node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"][0]
-        else:
-            # No principled, we are coming from an extenstion, probably
-            fix = [node for node in node_tree.nodes if node.type == "MIX_SHADER"][0]
+        # check if there is some emssive_factor on material
+        if pymaterial.emissive_factor is None:
+            pymaterial.emissive_factor = [1.0,1.0,1.0]
 
+        # retrieve principled node and output node
+        principled = get_preoutput_node_output(node_tree)
         output = [node for node in node_tree.nodes if node.type == 'OUTPUT_MATERIAL'][0]
 
         # add nodes
@@ -62,6 +60,7 @@ class BlenderEmissiveMap():
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
         text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.emissive_texture.index].source].blender_image_name]
+        text.label = 'EMISSIVE'
         text.location = -1000,1000
         add = node_tree.nodes.new('ShaderNodeAddShader')
         add.location = 500,500
@@ -99,5 +98,5 @@ class BlenderEmissiveMap():
 
         # following  links will modify PBR node tree
         node_tree.links.new(add.inputs[0], emit.outputs[0])
-        node_tree.links.new(add.inputs[1], fix.outputs[0])
+        node_tree.links.new(add.inputs[1], principled)
         node_tree.links.new(output.inputs[0], add.outputs[0])

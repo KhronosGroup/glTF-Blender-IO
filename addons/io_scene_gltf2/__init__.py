@@ -511,11 +511,23 @@ class ImportglTF2(Operator, ImportHelper):
 
     import_shading = bpy.props.EnumProperty(items=import_shading_items, name="Shading", default="NORMALS")
 
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.prop(self, 'loglevel')
+        layout.prop(self, 'import_pack_images')
+        layout.prop(self, 'import_shading')
+
+
     def execute(self, context):
         return self.import_gltf2(context)
 
     def import_gltf2(self, context):
-        bpy.context.scene.render.engine = 'CYCLES'
+        if bpy.app.version < (2, 80, 0):
+            bpy.context.scene.render.engine = 'CYCLES'
+        else:
+            bpy.context.scene.render.engine = 'BLENDER_EEVEE'
 
         import_settings = {}
         import_settings['loglevel'] = self.loglevel
@@ -537,7 +549,10 @@ class ImportglTF2(Operator, ImportHelper):
         self.gltf_importer.log.removeHandler(self.gltf_importer.log_handler)
 
         # Switch to newly created main scene
-        bpy.context.screen.scene = bpy.data.scenes[self.gltf_importer.blender_scene]
+        if bpy.app.version < (2, 80, 0):
+            bpy.context.screen.scene = bpy.data.scenes[self.gltf_importer.blender_scene]
+        else:
+            bpy.context.window.scene = bpy.data.scenes[self.gltf_importer.blender_scene]
 
         return {'FINISHED'}
 

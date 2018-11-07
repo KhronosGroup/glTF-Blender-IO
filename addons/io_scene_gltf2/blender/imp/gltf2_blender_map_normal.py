@@ -20,12 +20,10 @@ class BlenderNormalMap():
     @staticmethod
     def create(gltf, material_idx):
         engine = bpy.context.scene.render.engine
-        if engine == 'CYCLES':
-            BlenderNormalMap.create_cycles(gltf, material_idx)
-        else:
-            pass #TODO for internal / Eevee in future 2.8
+        if engine in ['CYCLES', 'BLENDER_EEVEE']:
+            BlenderNormalMap.create_nodetree(gltf, material_idx)
 
-    def create_cycles(gltf, material_idx):
+    def create_nodetree(gltf, material_idx):
 
         pymaterial = gltf.data.materials[material_idx]
 
@@ -57,6 +55,7 @@ class BlenderNormalMap():
 
         text  = node_tree.nodes.new('ShaderNodeTexImage')
         text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.normal_texture.index].source].blender_image_name]
+        text.label = 'NORMALMAP'
         text.color_space = 'NONE'
         text.location = -500, -500
 
