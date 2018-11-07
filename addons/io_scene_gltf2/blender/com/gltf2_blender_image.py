@@ -16,14 +16,15 @@
 # Imports
 #
 
-from ...io.com.gltf2_io_image import *
+from ...io.com.gltf2_io_image import create_img_from_pixels
+
 
 def create_img_from_blender_image(blender_image):
     """
     Create a new image object using the given blender image.
+
     Returns the created image object.
     """
-
     if blender_image is None:
         return None
 

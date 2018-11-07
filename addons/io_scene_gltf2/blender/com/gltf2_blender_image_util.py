@@ -19,11 +19,9 @@ import zlib
 import struct
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 
-def create_image_file(context, blender_image, dst_path, file_format):
-    """
-    Creates JPEG or PNG file from a given Blender image.
-    """
 
+def create_image_file(context, blender_image, dst_path, file_format):
+    """Create JPEG or PNG file from a given Blender image."""
     # Check, if source image exists e.g. does not exist if image is packed.
     file_exists = 1
     try:
@@ -67,9 +65,7 @@ def create_image_file(context, blender_image, dst_path, file_format):
 
 
 def create_image_data(context, export_settings, blender_image, file_format):
-    """
-    Creates JPEG or PNG byte array from a given Blender image.
-    """
+    """Create JPEG or PNG byte array from a given Blender image."""
     if blender_image is None:
         return None
 
@@ -80,10 +76,7 @@ def create_image_data(context, export_settings, blender_image, file_format):
 
 
 def _create_jpg_data(context, export_settings, blender_image):
-    """
-    Creates a JPEG byte array from a given Blender image.
-    """
-
+    """Create a JPEG byte array from a given Blender image."""
     uri = gltf2_blender_get.get_image_uri(export_settings, blender_image)
     path = export_settings['gltf_filedirectory'] + uri
 
@@ -96,10 +89,7 @@ def _create_jpg_data(context, export_settings, blender_image):
 
 
 def _create_png_data(blender_image):
-    """
-    Creates a PNG byte array from a given Blender image.
-    """
-
+    """Create a PNG byte array from a given Blender image."""
     width = blender_image.size[0]
     height = blender_image.size[1]
 

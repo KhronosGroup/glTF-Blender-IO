@@ -15,7 +15,10 @@
 import json
 import bpy
 
+
 class BlenderJSONEncoder(json.JSONEncoder):
+    """Blender JSON Encoder."""
+
     def default(self, obj):
         if isinstance(obj, bpy.types.ID):
             return dict(
@@ -24,10 +27,9 @@ class BlenderJSONEncoder(json.JSONEncoder):
             )
         return super(BlenderJSONEncoder, self).default(obj)
 
+
 def is_json_convertible(data):
-    """
-    Test, if a data set can be expressed as JSON.
-    """
+    """Test, if a data set can be expressed as JSON."""
     try:
         json.dumps(data, cls=BlenderJSONEncoder)
         return True
