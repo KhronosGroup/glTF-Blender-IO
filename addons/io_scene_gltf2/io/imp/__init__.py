@@ -13,4 +13,3 @@
 # limitations under the License.
 
 """IO imp package."""
-from .gltf2_io_gltf import *

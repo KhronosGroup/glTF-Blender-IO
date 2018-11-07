@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ..com.gltf2_io import *
-from ..com.gltf2_io_debug import *
+from ..com.gltf2_io import gltf_from_dict
+from ..com.gltf2_io_debug import Log
 import logging
 import json
 import struct
