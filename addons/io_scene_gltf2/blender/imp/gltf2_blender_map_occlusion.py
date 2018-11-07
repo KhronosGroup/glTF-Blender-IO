@@ -13,21 +13,26 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_texture import *
+from .gltf2_blender_texture import BlenderTextureInfo
+
 
 class BlenderOcclusionMap():
+    """Blender Occlusion map."""
 
     @staticmethod
     def create(gltf, material_idx):
+        """Occlusion map creation."""
         engine = bpy.context.scene.render.engine
         if engine in ['CYCLES', 'BLENDER_EEVEE']:
             BlenderOcclusionMap.create_nodetree(gltf, material_idx)
 
     def create_nodetree(gltf, material_idx):
-
+        """Nodetree creation."""
         pymaterial = gltf.data.materials[material_idx]
 
         BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture.index)
 
         # Pack texture, but doesn't use it for now. Occlusion is calculated from Cycles.
-        bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.occlusion_texture.index].source].blender_image_name].use_fake_user = True
+        bpy.data.images[gltf.data.images[gltf.data.textures[
+            pymaterial.occlusion_texture.index
+        ].source].blender_image_name].use_fake_user = True

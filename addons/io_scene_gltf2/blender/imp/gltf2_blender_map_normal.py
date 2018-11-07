@@ -13,18 +13,21 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_texture import *
+from .gltf2_blender_texture import BlenderTextureInfo
+
 
 class BlenderNormalMap():
+    """Blender Normal map."""
 
     @staticmethod
     def create(gltf, material_idx):
+        """Creation of Normal map."""
         engine = bpy.context.scene.render.engine
         if engine in ['CYCLES', 'BLENDER_EEVEE']:
             BlenderNormalMap.create_nodetree(gltf, material_idx)
 
     def create_nodetree(gltf, material_idx):
-
+        """Creation of Nodetree."""
         pymaterial = gltf.data.materials[material_idx]
 
         material = bpy.data.materials[pymaterial.blender_material]
@@ -34,38 +37,40 @@ class BlenderNormalMap():
 
         # retrieve principled node and output node
         principled = None
-        diffuse   = None
-        glossy    = None
+        diffuse = None
+        glossy = None
         if len([node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"]) != 0:
             principled = [node for node in node_tree.nodes if node.type == "BSDF_PRINCIPLED"][0]
         else:
-            #No principled, we are probably coming from extension
+            # No principled, we are probably coming from extension
             diffuse = [node for node in node_tree.nodes if node.type == "BSDF_DIFFUSE"][0]
-            glossy  = [node for node in node_tree.nodes if node.type == "BSDF_GLOSSY"][0]
+            glossy = [node for node in node_tree.nodes if node.type == "BSDF_GLOSSY"][0]
 
         # add nodes
         mapping = node_tree.nodes.new('ShaderNodeMapping')
-        mapping.location = -1000,-500
+        mapping.location = -1000, -500
         uvmap = node_tree.nodes.new('ShaderNodeUVMap')
         uvmap.location = -1500, -500
         if pymaterial.normal_texture.tex_coord is not None:
-            uvmap["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord # Set custom flag to retrieve TexCoord
+            uvmap["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord  # Set custom flag to retrieve TexCoord
         else:
-            uvmap["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
+            uvmap["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
 
-        text  = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[gltf.data.images[gltf.data.textures[pymaterial.normal_texture.index].source].blender_image_name]
+        text = node_tree.nodes.new('ShaderNodeTexImage')
+        text.image = bpy.data.images[gltf.data.images[
+            gltf.data.textures[pymaterial.normal_texture.index].source
+        ].blender_image_name]
         text.label = 'NORMALMAP'
         text.color_space = 'NONE'
         text.location = -500, -500
 
         normalmap_node = node_tree.nodes.new('ShaderNodeNormalMap')
-        normalmap_node.location = -250,-500
+        normalmap_node.location = -250, -500
         if pymaterial.normal_texture.tex_coord is not None:
-            normalmap_node["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord # Set custom flag to retrieve TexCoord
+            # Set custom flag to retrieve TexCoord
+            normalmap_node["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord
         else:
-            normalmap_node["gltf2_texcoord"] = 0 #TODO set in pre_compute instead of here
-
+            normalmap_node["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
 
         # create links
         node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])

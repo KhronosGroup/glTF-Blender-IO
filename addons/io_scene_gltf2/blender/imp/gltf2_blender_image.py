@@ -17,13 +17,16 @@ import os
 import tempfile
 from os.path import dirname, join, isfile
 
-from ...io.imp.gltf2_io_binary import *
+from ...io.imp.gltf2_io_binary import BinaryData
+
 
 # Note that Image is not a glTF2.0 object
 class BlenderImage():
+    """Manage Image."""
 
     @staticmethod
     def get_image_path(gltf, img_idx):
+        """Return image path."""
         pyimage = gltf.data.images[img_idx]
 
         image_name = "Image_" + str(img_idx)
@@ -48,17 +51,17 @@ class BlenderImage():
 
     @staticmethod
     def create(gltf, img_idx):
-
+        """Image creation."""
         img = gltf.data.images[img_idx]
 
         img.blender_image_name = None
 
-        if gltf.import_settings['pack_images'] == False:
+        if gltf.import_settings['pack_images'] is False:
 
             # Images are not packed (if image is a real file)
             real, path, img_name = BlenderImage.get_image_path(gltf, img_idx)
 
-            if real == True:
+            if real is True:
 
                 blender_image = bpy.data.images.load(path)
                 blender_image.name = img_name

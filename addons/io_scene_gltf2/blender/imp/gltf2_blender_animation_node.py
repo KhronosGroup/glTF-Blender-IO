@@ -13,29 +13,32 @@
 # limitations under the License.
 
 import bpy
-from mathutils import Quaternion, Matrix, Vector
+from mathutils import Vector
 
-from ..com.gltf2_blender_conversion import *
-from ...io.imp.gltf2_io_binary import *
+from ..com.gltf2_blender_conversion import Conversion
+from ...io.imp.gltf2_io_binary import BinaryData
+
 
 class BlenderNodeAnim():
+    """Blender Object Animation."""
 
     @staticmethod
     def set_interpolation(interpolation, kf):
+        """Manage interpolation."""
         if interpolation == "LINEAR":
             kf.interpolation = 'LINEAR'
         elif interpolation == "STEP":
             kf.interpolation = 'CONSTANT'
         elif interpolation == "CATMULLROMSPLINE":
-            kf.interpolation = 'BEZIER' #TODO
+            kf.interpolation = 'BEZIER'  # TODO
         elif interpolation == "CUBICSPLINE":
-            kf.interpolation = 'BEZIER' #TODO
+            kf.interpolation = 'BEZIER'  # TODO
         else:
             kf.interpolation = 'BEZIER'
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):
-
+        """Manage animation."""
         node = gltf.data.nodes[node_idx]
         obj = bpy.data.objects[node.blender_object]
         fps = bpy.context.scene.render.fps
@@ -57,7 +60,7 @@ class BlenderNodeAnim():
         for channel_idx in node.animations[anim_idx]:
             channel = animation.channels[channel_idx]
 
-            keys   = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
+            keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
             values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
 
             if channel.target.path in ['translation', 'rotation', 'scale']:
@@ -65,11 +68,12 @@ class BlenderNodeAnim():
                 if channel.target.path == "translation":
                     blender_path = "location"
                     for idx, key in enumerate(keys):
-                       obj.location = Vector(Conversion.loc_gltf_to_blender(list(values[idx])))
-                       obj.keyframe_insert(blender_path, frame = key[0] * fps, group='location')
+                        obj.location = Vector(Conversion.loc_gltf_to_blender(list(values[idx])))
+                        obj.keyframe_insert(blender_path, frame=key[0] * fps, group='location')
 
                     # Setting interpolation
-                    for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "location"]:
+                    for fcurve in [curve for curve in obj.animation_data.action.fcurves
+                                   if curve.group.name == "location"]:
                         for kf in fcurve.keyframe_points:
                             BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
 
@@ -77,19 +81,19 @@ class BlenderNodeAnim():
                     blender_path = "rotation_quaternion"
                     for idx, key in enumerate(keys):
                         obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(values[idx])
-                        obj.keyframe_insert(blender_path, frame = key[0] * fps, group='rotation')
+                        obj.keyframe_insert(blender_path, frame=key[0] * fps, group='rotation')
 
                     # Setting interpolation
-                    for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "rotation"]:
+                    for fcurve in [curve for curve in obj.animation_data.action.fcurves
+                                   if curve.group.name == "rotation"]:
                         for kf in fcurve.keyframe_points:
                             BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
-
 
                 elif channel.target.path == "scale":
                     blender_path = "scale"
                     for idx, key in enumerate(keys):
                         obj.scale = Vector(Conversion.scale_gltf_to_blender(list(values[idx])))
-                        obj.keyframe_insert(blender_path, frame = key[0] * fps, group='scale')
+                        obj.keyframe_insert(blender_path, frame=key[0] * fps, group='scale')
 
                     # Setting interpolation
                     for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "scale"]:
@@ -107,5 +111,9 @@ class BlenderNodeAnim():
 
                 for idx, key in enumerate(keys):
                     for sk in range(nb_targets):
-                        obj.data.shape_keys.key_blocks[sk+1].value = values[idx*nb_targets+sk][0]
-                        obj.data.shape_keys.key_blocks[sk+1].keyframe_insert("value", frame=key[0] * fps, group='ShapeKeys')
+                        obj.data.shape_keys.key_blocks[sk + 1].value = values[idx * nb_targets + sk][0]
+                        obj.data.shape_keys.key_blocks[sk + 1].keyframe_insert(
+                            "value",
+                            frame=key[0] * fps,
+                            group='ShapeKeys'
+                        )

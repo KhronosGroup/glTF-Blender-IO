@@ -12,17 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .gltf2_blender_image import *
+from .gltf2_blender_image import BlenderImage
+
 
 class BlenderTextureInfo():
+    """Blender Texture info."""
 
     @staticmethod
     def create(gltf, pytextureinfo_idx):
+        """Create Texture info."""
         BlenderTexture.create(gltf, pytextureinfo_idx)
 
+
 class BlenderTexture():
+    """Blender Texture."""
 
     @staticmethod
     def create(gltf, pytexture_idx):
+        """Create texture."""
         pytexture = gltf.data.textures[pytexture_idx]
         BlenderImage.create(gltf, pytexture.source)

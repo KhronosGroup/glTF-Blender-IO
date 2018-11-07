@@ -14,11 +14,13 @@
 
 import bpy
 
+
 class BlenderCamera():
+    """Blender Camera."""
 
     @staticmethod
     def create(gltf, camera_id):
-
+        """Camera creation."""
         pycamera = gltf.data.cameras[camera_id]
 
         if not pycamera.name:
@@ -30,13 +32,12 @@ class BlenderCamera():
         if pycamera.type == "orthographic":
             cam.type = "ORTHO"
 
-        #TODO: lot's of work for camera here...
+        # TODO: lot's of work for camera here...
         if hasattr(pycamera, "znear"):
             cam.clip_start = pycamera.znear
 
         if hasattr(pycamera, "zfar"):
             cam.clip_end = pycamera.zfar
-
 
         obj = bpy.data.objects.new(pycamera.name, cam)
         if bpy.app.version < (2, 80, 0):

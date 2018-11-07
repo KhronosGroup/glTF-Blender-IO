@@ -13,16 +13,18 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_mesh import *
-from .gltf2_blender_camera import *
-from .gltf2_blender_skin import *
-from ..com.gltf2_blender_conversion import *
+from .gltf2_blender_mesh import BlenderMesh
+from .gltf2_blender_camera import BlenderCamera
+from .gltf2_blender_skin import BlenderSkin
+from ..com.gltf2_blender_conversion import Conversion
+
 
 class BlenderNode():
+    """Blender Node."""
 
     @staticmethod
     def create(gltf, node_idx, parent):
-
+        """Node creation."""
         pynode = gltf.data.nodes[node_idx]
 
         # Blender attributes initialization
@@ -73,19 +75,17 @@ class BlenderNode():
 
             return
 
-
         if pynode.camera is not None:
             if pynode.name:
                 gltf.log.info("Blender create Camera node " + pynode.name)
             else:
                 gltf.log.info("Blender create Camera node")
             obj = BlenderCamera.create(gltf, pynode.camera)
-            BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent) #TODO default rotation of cameras ?
+            BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)  # TODO default rotation of cameras ?
             pynode.blender_object = obj.name
             BlenderNode.set_parent(gltf, pynode, obj, parent)
 
             return
-
 
         if pynode.is_joint:
             if pynode.name:
@@ -125,16 +125,15 @@ class BlenderNode():
             for child_idx in pynode.children:
                 BlenderNode.create(gltf, child_idx, node_idx)
 
-
     @staticmethod
     def set_parent(gltf, pynode, obj, parent):
-
+        """Set parent."""
         if parent is None:
             return
 
         for node_idx, node in enumerate(gltf.data.nodes):
             if node_idx == parent:
-                if node.is_joint == True:
+                if node.is_joint is True:
                     bpy.ops.object.select_all(action='DESELECT')
                     if bpy.app.version < (2, 80, 0):
                         bpy.data.objects[node.blender_armature_name].select = True
@@ -144,7 +143,8 @@ class BlenderNode():
                         bpy.context.view_layer.objects.active = bpy.data.objects[node.blender_armature_name]
 
                     bpy.ops.object.mode_set(mode='EDIT')
-                    bpy.data.objects[node.blender_armature_name].data.edit_bones.active = bpy.data.objects[node.blender_armature_name].data.edit_bones[node.blender_bone_name]
+                    bpy.data.objects[node.blender_armature_name].data.edit_bones.active = \
+                        bpy.data.objects[node.blender_armature_name].data.edit_bones[node.blender_bone_name]
                     bpy.ops.object.mode_set(mode='OBJECT')
                     bpy.ops.object.select_all(action='DESELECT')
                     if bpy.app.version < (2, 80, 0):
@@ -158,22 +158,28 @@ class BlenderNode():
                     bpy.context.scene.update()
                     bpy.ops.object.parent_set(type='BONE_RELATIVE', keep_transform=True)
                     # From world transform to local (-armature transform -bone transform)
-                    bone_trans = bpy.data.objects[node.blender_armature_name].pose.bones[node.blender_bone_name].matrix.to_translation().copy()
-                    bone_rot = bpy.data.objects[node.blender_armature_name].pose.bones[node.blender_bone_name].matrix.to_quaternion().copy()
+                    bone_trans = bpy.data.objects[node.blender_armature_name] \
+                        .pose.bones[node.blender_bone_name].matrix.to_translation().copy()
+                    bone_rot = bpy.data.objects[node.blender_armature_name] \
+                        .pose.bones[node.blender_bone_name].matrix.to_quaternion().copy()
                     bone_scale_mat = Conversion.scale_to_matrix(node.blender_bone_matrix.to_scale())
                     if bpy.app.version < (2, 80, 0):
                         obj.location = bone_scale_mat * obj.location
                         obj.location = bone_rot * obj.location
                         obj.location += bone_trans
-                        obj.location = bpy.data.objects[node.blender_armature_name].matrix_world.to_quaternion() * obj.location
-                        obj.rotation_quaternion = obj.rotation_quaternion * bpy.data.objects[node.blender_armature_name].matrix_world.to_quaternion()
+                        obj.location = bpy.data.objects[node.blender_armature_name].matrix_world.to_quaternion() \
+                            * obj.location
+                        obj.rotation_quaternion = obj.rotation_quaternion \
+                            * bpy.data.objects[node.blender_armature_name].matrix_world.to_quaternion()
                         obj.scale = bone_scale_mat * obj.scale
                     else:
                         obj.location = bone_scale_mat @ obj.location
                         obj.location = bone_rot @ obj.location
                         obj.location += bone_trans
-                        obj.location = bpy.data.objects[node.blender_armature_name].matrix_world.to_quaternion() @ obj.location
-                        obj.rotation_quaternion = obj.rotation_quaternion @ bpy.data.objects[node.blender_armature_name].matrix_world.to_quaternion()
+                        obj.location = bpy.data.objects[node.blender_armature_name].matrix_world.to_quaternion() \
+                            @ obj.location
+                        obj.rotation_quaternion = obj.rotation_quaternion \
+                            @ bpy.data.objects[node.blender_armature_name].matrix_world.to_quaternion()
                         obj.scale = bone_scale_mat @ obj.scale
 
                     return
@@ -185,13 +191,14 @@ class BlenderNode():
 
     @staticmethod
     def set_transforms(gltf, node_idx, pynode, obj, parent):
+        """Set transforms."""
         if parent is None:
-            obj.matrix_world =  Conversion.matrix_gltf_to_blender(pynode.transform)
+            obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
             return
 
         for idx, node in enumerate(gltf.data.nodes):
             if idx == parent:
-                if node.is_joint == True:
+                if node.is_joint is True:
                     obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
                     return
                 else:

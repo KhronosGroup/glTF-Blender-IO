@@ -15,22 +15,23 @@
 import bpy
 from math import sqrt
 from mathutils import Quaternion
-from .gltf2_blender_node import *
-from .gltf2_blender_skin import *
-from .gltf2_blender_animation import *
+from .gltf2_blender_node import BlenderNode
+from .gltf2_blender_skin import BlenderSkin
+from .gltf2_blender_animation import BlenderAnimation
+
 
 class BlenderScene():
+    """Blender Scene."""
 
     @staticmethod
     def create(gltf, scene_idx):
-
+        """Scene creation."""
         pyscene = gltf.data.scenes[scene_idx]
 
         # Create Yup2Zup empty
         obj_rotation = bpy.data.objects.new("Yup2Zup", None)
         obj_rotation.rotation_mode = 'QUATERNION'
-        obj_rotation.rotation_quaternion = Quaternion((sqrt(2)/2, sqrt(2)/2,0.0,0.0))
-
+        obj_rotation.rotation_quaternion = Quaternion((sqrt(2) / 2, sqrt(2) / 2, 0.0, 0.0))
 
     # Create a new scene only if not already exists in .blend file
     # TODO : put in current scene instead ?
@@ -49,8 +50,7 @@ class BlenderScene():
             gltf.blender_scene = pyscene.name
 
         for node_idx in pyscene.nodes:
-            BlenderNode.create(gltf, node_idx, None) # None => No parent
-
+            BlenderNode.create(gltf, node_idx, None)  # None => No parent
 
         # Now that all mesh / bones are created, create vertex groups on mesh
         if gltf.data.skins:
@@ -70,7 +70,6 @@ class BlenderScene():
             for anim_idx, anim in enumerate(gltf.data.animations):
                 for node_idx in pyscene.nodes:
                     BlenderAnimation.anim(gltf, anim_idx, node_idx)
-
 
         # Parent root node to rotation object
         if bpy.app.version < (2, 80, 0):

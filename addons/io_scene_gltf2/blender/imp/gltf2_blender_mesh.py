@@ -15,16 +15,18 @@
 import bpy
 import bmesh
 
-from .gltf2_blender_primitive import *
-from .gltf2_blender_skin import *
-from ..com.gltf2_blender_conversion import *
+from .gltf2_blender_primitive import BlenderPrimitive
+from ...io.imp.gltf2_io_binary import BinaryData
+from ..com.gltf2_blender_conversion import Conversion
+
 
 class BlenderMesh():
+    """Blender Mesh."""
 
     @staticmethod
     def create(gltf, mesh_idx, node_idx, parent):
+        """Mesh creation."""
         pymesh = gltf.data.meshes[mesh_idx]
-        pynode = gltf.data.nodes[node_idx]
 
         # Geometry
         if pymesh.name:
@@ -48,6 +50,7 @@ class BlenderMesh():
 
     @staticmethod
     def set_mesh(gltf, pymesh, mesh, obj):
+        """Set all data after mesh creation."""
         # Normals
         offset = 0
         for prim in pymesh.primitives:
@@ -103,12 +106,12 @@ class BlenderMesh():
                 bm = bmesh.new()
                 bm.from_mesh(mesh)
 
-                shape_layer = bm.verts.layers.shape[i+1]
+                shape_layer = bm.verts.layers.shape[i + 1]
 
                 pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
 
                 for vert in bm.verts:
-                    if not vert.index in range(offset_idx, offset_idx + prim.vertices_length):
+                    if vert.index not in range(offset_idx, offset_idx + prim.vertices_length):
                         continue
 
                     shape = vert[shape_layer]
@@ -126,10 +129,10 @@ class BlenderMesh():
         if pymesh.weights is not None:
             for i in range(max_shape_to_create):
                 if i < len(pymesh.weights):
-                    obj.data.shape_keys.key_blocks[i+1].value = pymesh.weights[i]
+                    obj.data.shape_keys.key_blocks[i + 1].value = pymesh.weights[i]
                     if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
-                       obj.data.shape_keys.key_blocks[i+1].name  = gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
-
+                        obj.data.shape_keys.key_blocks[i + 1].name = \
+                            gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
 
         # Apply vertex color.
         vertex_color = None
@@ -148,5 +151,5 @@ class BlenderMesh():
                         if vert_idx in range(offset, offset + prim.vertices_length):
                             cpt_idx = vert_idx - offset
                             vertex_color.data[loop_idx].color = color_data[cpt_idx][0:3]
-                            #TODO : no alpha in vertex color
+                            # TODO : no alpha in vertex color
             offset = offset + prim.vertices_length
