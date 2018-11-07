@@ -19,6 +19,7 @@ from mathutils import Matrix, Vector, Quaternion, Euler
 
 
 def multiply(a, b):
+    """Multiplication."""
     if bpy.app.version < (2, 80, 0):
         return a * b
     else:
@@ -26,6 +27,7 @@ def multiply(a, b):
 
 
 def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Union[Vector, Quaternion, Euler]:
+    """Transform a list to blender py object."""
     target = datapath_to_target(data_path)
 
     if target == 'location':
@@ -47,10 +49,12 @@ def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Unio
 
 
 def datapath_to_target(data_path: str) -> str:
+    """Retrieve target."""
     return data_path.split('.')[-1]
 
 
 def mathutils_to_gltf(x: typing.Union[Vector, Quaternion]) -> typing.List[float]:
+    """Transform a py object to glTF list."""
     if isinstance(x, Vector):
         return list(x)
     if isinstance(x, Quaternion):
@@ -61,6 +65,7 @@ def mathutils_to_gltf(x: typing.Union[Vector, Quaternion]) -> typing.List[float]
 
 
 def to_yup() -> Matrix:
+    """Transform to Yup."""
     yup = Matrix.Identity(4)
     # Flip y axis and move to z
     yup[1][1] = 0
@@ -72,6 +77,7 @@ def to_yup() -> Matrix:
 
 
 def swizzle_yup(v: typing.Union[Vector, Quaternion], data_path: str) -> typing.Union[Vector, Quaternion]:
+    """Manage Yup."""
     target = datapath_to_target(data_path)
     swizzle_func = {
         "location": swizzle_yup_location,
@@ -89,23 +95,28 @@ def swizzle_yup(v: typing.Union[Vector, Quaternion], data_path: str) -> typing.U
 
 
 def swizzle_yup_location(loc: Vector) -> Vector:
+    """Manage Yup location."""
     return Vector((loc[0], loc[2], -loc[1]))
 
 
 def swizzle_yup_rotation(rot: Quaternion) -> Quaternion:
+    """Manage Yup rotation."""
     return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
 
 
 def swizzle_yup_scale(scale: Vector) -> Vector:
+    """Manage Yup scale."""
     return Vector((scale[0], scale[2], scale[1]))
 
 
 def swizzle_yup_value(value: typing.Any) -> typing.Any:
+    """Manage Yup value."""
     return value
 
 
 def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Matrix = Matrix.Identity(4)) -> typing \
         .Union[Vector, Quaternion]:
+    """Manage transformations."""
     target = datapath_to_target(data_path)
     transform_func = {
         "location": transform_location,
@@ -123,18 +134,21 @@ def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Ma
 
 
 def transform_location(location: Vector, transform: Matrix = Matrix.Identity(4)) -> Vector:
+    """Transform location."""
     m = Matrix.Translation(location)
     m = multiply(transform, m)
     return m.to_translation()
 
 
 def transform_rotation(rotation: Quaternion, transform: Matrix = Matrix.Identity(4)) -> Quaternion:
+    """Transform rotation."""
     m = rotation.to_matrix().to_4x4()
     m = multiply(transform, m)
     return m.to_quaternion()
 
 
 def transform_scale(scale: Vector, transform: Matrix = Matrix.Identity(4)) -> Vector:
+    """Transform scale."""
     m = Matrix.Identity(4)
     m[0][0] = scale.x
     m[1][1] = scale.y
@@ -145,4 +159,5 @@ def transform_scale(scale: Vector, transform: Matrix = Matrix.Identity(4)) -> Ve
 
 
 def transform_value(value: Vector, transform: Matrix = Matrix.Identity(4)) -> Vector:
+    """Transform value."""
     return value
