@@ -63,6 +63,13 @@ class BlenderImage():
 
             if real is True:
 
+                # Check if image is already loaded
+                for img_ in bpy.data.images:
+                    if img_.filepath == path:
+                        # Already loaded, not needed to reload it
+                        img.blender_image_name = img_.name
+                        return
+
                 blender_image = bpy.data.images.load(path)
                 blender_image.name = img_name
                 img.blender_image_name = blender_image.name
