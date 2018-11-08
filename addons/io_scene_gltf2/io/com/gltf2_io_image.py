@@ -23,6 +23,7 @@ import zlib
 class Image:
     """
     Image object class to represent a 4-channel RGBA image.
+
     Pixel values are expected to be floating point in the range of [0.0 to 1.0]
     """
 
@@ -70,20 +71,20 @@ class Image:
 
 def create_img(width, height, r=0.0, g=0.0, b=0.0, a=1.0):
     """
-    Create a new image object with 4 channels and initialize it with the given default values
-    (if no arguments are given, these default to R=0, G=0, B=0, A=1.0)
-    Returns the created image object.
-    """
+    Create a new image object with 4 channels and initialize it with the given default values.
 
+    (if no arguments are given, these default to R=0, G=0, B=0, A=1.0)
+    Return the created image object.
+    """
     return Image(width, height, [r, g, b, a] * (width * height))
 
 
 def create_img_from_pixels(width, height, pixels):
     """
     Create a new image object with 4 channels and initialize it using the given array of pixel data.
-    Returns the created image object.
-    """
 
+    Return the created image object.
+    """
     if pixels is None or len(pixels) != width * height * 4:
         return None
 
@@ -93,10 +94,10 @@ def create_img_from_pixels(width, height, pixels):
 def copy_img_channel(dst_image, dst_channel, src_image, src_channel):
     """
     Copy a single channel (identified by src_channel) from src_image to dst_image (overwriting dst_channel).
-    src_image and dst_image are expected to be image objects created using create_img.
-    Returns True on success, False otherwise.
-    """
 
+    src_image and dst_image are expected to be image objects created using create_img.
+    Return True on success, False otherwise.
+    """
     if dst_image is None or src_image is None:
         return False
 
@@ -117,9 +118,9 @@ def copy_img_channel(dst_image, dst_channel, src_image, src_channel):
 def test_save_img(image, path):
     """
     Save the given image to a PNG file (specified by path).
-    Returns True on success, False otherwise.
-    """
 
+    Return True on success, False otherwise.
+    """
     if image is None or image.channels != 4:
         return False
 

@@ -18,9 +18,7 @@ import zlib
 
 
 class ImageData:
-    """
-    contains channels of an image with raw pixel data.
-    """
+    """Contains channels of an image with raw pixel data."""
 
     def __init__(self, name: str, width: int, height: int, channels: typing.List[typing.List[float]] = None):
         if width <= 0 or height <= 0:

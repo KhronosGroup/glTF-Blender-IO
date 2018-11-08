@@ -28,10 +28,7 @@ import os
 
 
 def get_material_requires_texcoords(glTF, index):
-    """
-    Query function, if a material "needs" texture coordinates. This is the case, if a texture is present and used.
-    """
-
+    """Query function, if a material "needs" texture coordinates. This is the case, if a texture is present and used."""
     if glTF.materials is None:
         return False
 
@@ -69,16 +66,14 @@ def get_material_requires_texcoords(glTF, index):
 def get_material_requires_normals(glTF, index):
     """
     Query function, if a material "needs" normals. This is the case, if a texture is present and used.
+
     At point of writing, same function as for texture coordinates.
     """
     return get_material_requires_texcoords(glTF, index)
 
 
 def get_material_index(glTF, name):
-    """
-    Return the material index in the glTF array.
-    """
-
+    """Return the material index in the glTF array."""
     if name is None:
         return -1
 
@@ -96,10 +91,7 @@ def get_material_index(glTF, name):
 
 
 def get_mesh_index(glTF, name):
-    """
-    Return the mesh index in the glTF array.
-    """
-
+    """Return the mesh index in the glTF array."""
     if glTF.meshes is None:
         return -1
 
@@ -114,10 +106,7 @@ def get_mesh_index(glTF, name):
 
 
 def get_skin_index(glTF, name, index_offset):
-    """
-    Return the skin index in the glTF array.
-    """
-
+    """Return the skin index in the glTF array."""
     if glTF.skins is None:
         return -1
 
@@ -134,10 +123,7 @@ def get_skin_index(glTF, name, index_offset):
 
 
 def get_camera_index(glTF, name):
-    """
-    Return the camera index in the glTF array.
-    """
-
+    """Return the camera index in the glTF array."""
     if glTF.cameras is None:
         return -1
 
@@ -152,10 +138,7 @@ def get_camera_index(glTF, name):
 
 
 def get_light_index(glTF, name):
-    """
-    Return the light index in the glTF array.
-    """
-
+    """Return the light index in the glTF array."""
     if glTF.extensions is None:
         return -1
 
@@ -182,10 +165,7 @@ def get_light_index(glTF, name):
 
 
 def get_node_index(glTF, name):
-    """
-    Return the node index in the glTF array.
-    """
-
+    """Return the node index in the glTF array."""
     if glTF.nodes is None:
         return -1
 
@@ -200,10 +180,7 @@ def get_node_index(glTF, name):
 
 
 def get_scene_index(glTF, name):
-    """
-    Return the scene index in the glTF array.
-    """
-
+    """Return the scene index in the glTF array."""
     if glTF.scenes is None:
         return -1
 
@@ -218,10 +195,7 @@ def get_scene_index(glTF, name):
 
 
 def get_texture_index(glTF, filename):
-    """
-    Return the texture index in the glTF array by a given filepath.
-    """
-
+    """Return the texture index in the glTF array by a given file path."""
     if glTF.textures is None:
         return -1
 
@@ -238,10 +212,7 @@ def get_texture_index(glTF, filename):
 
 
 def get_image_index(glTF, filename):
-    """
-    Return the image index in the glTF array.
-    """
-
+    """Return the image index in the glTF array."""
     if glTF.images is None:
         return -1
 
@@ -255,18 +226,12 @@ def get_image_index(glTF, filename):
 
 
 def get_image_name(filename):
-    """
-    Return user-facing, extension-agnostic name for image.
-    """
-
+    """Return user-facing, extension-agnostic name for image."""
     return os.path.splitext(filename)[0]
 
 
 def get_scalar(default_value, init_value=0.0):
-    """
-    Return scalar with a given default/fallback value.
-    """
-
+    """Return scalar with a given default/fallback value."""
     return_value = init_value
 
     if default_value is None:
@@ -278,10 +243,7 @@ def get_scalar(default_value, init_value=0.0):
 
 
 def get_vec2(default_value, init_value=[0.0, 0.0]):
-    """
-    Return vec2 with a given default/fallback value.
-    """
-
+    """Return vec2 with a given default/fallback value."""
     return_value = init_value
 
     if default_value is None or len(default_value) < 2:
@@ -299,10 +261,7 @@ def get_vec2(default_value, init_value=[0.0, 0.0]):
 
 
 def get_vec3(default_value, init_value=[0.0, 0.0, 0.0]):
-    """
-    Return vec3 with a given default/fallback value.
-    """
-
+    """Return vec3 with a given default/fallback value."""
     return_value = init_value
 
     if default_value is None or len(default_value) < 3:
@@ -320,10 +279,7 @@ def get_vec3(default_value, init_value=[0.0, 0.0, 0.0]):
 
 
 def get_vec4(default_value, init_value=[0.0, 0.0, 0.0, 1.0]):
-    """
-    Return vec4 with a given default/fallback value.
-    """
-
+    """Return vec4 with a given default/fallback value."""
     return_value = init_value
 
     if default_value is None or len(default_value) < 4:
@@ -341,10 +297,7 @@ def get_vec4(default_value, init_value=[0.0, 0.0, 0.0, 1.0]):
 
 
 def get_index(elements, name):
-    """
-    Return index of a glTF element by a given name.
-    """
-
+    """Return index of a glTF element by a given name."""
     if elements is None or name is None:
         return -1
 

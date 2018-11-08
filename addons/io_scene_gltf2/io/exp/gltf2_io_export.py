@@ -28,10 +28,7 @@ import struct
 #
 
 
-def save_gltf(glTF,
-              export_settings,
-              encoder):
-
+def save_gltf(glTF, export_settings, encoder):
     indent = None
     separators = separators = (',', ':')
 
