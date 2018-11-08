@@ -22,7 +22,7 @@ class Buffer:
     """
     Class representing binary data for use in a glTF file as 'buffer' property
     """
-    def __init__(self, buffer_index = 0):
+    def __init__(self, buffer_index=0):
         self.__data = b""
         self.__buffer_index = buffer_index
 

@@ -16,12 +16,8 @@
 # Imports
 #
 
-import bpy
-import os
-# import bl_ui
-
 from bpy_extras.io_utils import ImportHelper
-from bpy.types import Operator
+from bpy.types import Operator, AddonPreferences
 
 from .io.com.gltf2_io_debug import *
 from .io.imp.gltf2_io_gltf import *
@@ -33,7 +29,6 @@ from bpy.props import (CollectionProperty,
                        EnumProperty,
                        FloatProperty,
                        IntProperty)
-
 
 from bpy_extras.io_utils import (ExportHelper)
 
@@ -53,9 +48,11 @@ bl_info = {
     'support': 'COMMUNITY',
     'category': 'Import-Export'}
 
+
 #
 #  Functions / Classes.
 #
+
 
 class GLTF2ExportSettings(bpy.types.Operator):
     """Save the export settings on export (saved in .blend).
@@ -71,201 +68,202 @@ Toggle off to clear settings"""
             del context.scene[operator.scene_key]
         return {"FINISHED"}
 
-class ExportGLTF2_Base():
+
+class ExportGLTF2_Base:
     export_copyright = StringProperty(
-            name='Copyright',
-            description='',
-            default=''
+        name='Copyright',
+        description='',
+        default=''
     )
 
     export_embed_buffers = BoolProperty(
-            name='Embed buffers',
-            description='',
-            default=False
+        name='Embed buffers',
+        description='',
+        default=False
     )
 
     export_embed_images = BoolProperty(
-            name='Embed images',
-            description='',
-            default=False
+        name='Embed images',
+        description='',
+        default=False
     )
 
     export_strip = BoolProperty(
-            name='Strip delimiters',
-            description='',
-            default=False
+        name='Strip delimiters',
+        description='',
+        default=False
     )
 
     export_indices = EnumProperty(
         name='Maximum indices',
         items=(('UNSIGNED_BYTE', 'Unsigned Byte', ''),
-        ('UNSIGNED_SHORT', 'Unsigned Short', ''),
-        ('UNSIGNED_INT', 'Unsigned Integer', '')),
+               ('UNSIGNED_SHORT', 'Unsigned Short', ''),
+               ('UNSIGNED_INT', 'Unsigned Integer', '')),
         default='UNSIGNED_INT'
     )
 
     export_force_indices = BoolProperty(
-            name='Force maximum indices',
-            description='',
-            default=False
+        name='Force maximum indices',
+        description='',
+        default=False
     )
 
     export_texcoords = BoolProperty(
-            name='Export texture coordinates',
-            description='',
-            default=True
+        name='Export texture coordinates',
+        description='',
+        default=True
     )
 
     export_normals = BoolProperty(
-            name='Export normals',
-            description='',
-            default=True
+        name='Export normals',
+        description='',
+        default=True
     )
 
     export_tangents = BoolProperty(
-            name='Export tangents',
-            description='',
-            default=True
+        name='Export tangents',
+        description='',
+        default=True
     )
 
     export_materials = BoolProperty(
-            name='Export materials',
-            description='',
-            default=True
+        name='Export materials',
+        description='',
+        default=True
     )
 
     export_colors = BoolProperty(
-            name='Export colors',
-            description='',
-            default=True
+        name='Export colors',
+        description='',
+        default=True
     )
 
     export_cameras = BoolProperty(
-            name='Export cameras',
-            description='',
-            default=False
+        name='Export cameras',
+        description='',
+        default=False
     )
 
     export_camera_infinite = BoolProperty(
-            name='Infinite perspective Camera',
-            description='',
-            default=False
+        name='Infinite perspective Camera',
+        description='',
+        default=False
     )
 
     export_selected = BoolProperty(
-            name='Export selected only',
-            description='',
-            default=False
+        name='Export selected only',
+        description='',
+        default=False
     )
 
     export_layers = BoolProperty(
-            name='Export all layers',
-            description='',
-            default=True
+        name='Export all layers',
+        description='',
+        default=True
     )
 
     export_extras = BoolProperty(
-            name='Export extras',
-            description='',
-            default=False
+        name='Export extras',
+        description='',
+        default=False
     )
 
     export_yup = BoolProperty(
-            name='Convert Z up to Y up',
-            description='',
-            default=True
+        name='Convert Z up to Y up',
+        description='',
+        default=True
     )
 
     export_apply = BoolProperty(
-            name='Apply modifiers',
-            description='',
-            default=False
+        name='Apply modifiers',
+        description='',
+        default=False
     )
 
     export_animations = BoolProperty(
-            name='Export animations',
-            description='',
-            default=True
+        name='Export animations',
+        description='',
+        default=True
     )
 
     export_frame_range = BoolProperty(
-            name='Export within playback range',
-            description='',
-            default=True
+        name='Export within playback range',
+        description='',
+        default=True
     )
 
     export_frame_step = IntProperty(
-            name='Frame step size',
-            description='Step size (in frames) for animation export.',
-            default=1,
-            min=1,
-            max=120
+        name='Frame step size',
+        description='Step size (in frames) for animation export.',
+        default=1,
+        min=1,
+        max=120
     )
 
     export_move_keyframes = BoolProperty(
-            name='Keyframes start with 0',
-            description='',
-            default=True
+        name='Keyframes start with 0',
+        description='',
+        default=True
     )
 
     export_force_sampling = BoolProperty(
-            name='Force sample animations',
-            description='',
-            default=False
+        name='Force sample animations',
+        description='',
+        default=False
     )
 
     export_current_frame = BoolProperty(
-            name='Export current frame',
-            description='',
-            default=True
+        name='Export current frame',
+        description='',
+        default=True
     )
 
     export_skins = BoolProperty(
-            name='Export skinning',
-            description='',
-            default=True
+        name='Export skinning',
+        description='',
+        default=True
     )
 
     export_bake_skins = BoolProperty(
-            name='Bake skinning constraints',
-            description='',
-            default=False
+        name='Bake skinning constraints',
+        description='',
+        default=False
     )
 
     export_morph = BoolProperty(
-            name='Export morphing',
-            description='',
-            default=True
+        name='Export morphing',
+        description='',
+        default=True
     )
 
     export_morph_normal = BoolProperty(
-            name='Export morphing normals',
-            description='',
-            default=True
+        name='Export morphing normals',
+        description='',
+        default=True
     )
 
     export_morph_tangent = BoolProperty(
-            name='Export morphing tangents',
-            description='',
-            default=True
+        name='Export morphing tangents',
+        description='',
+        default=True
     )
 
     export_lights = BoolProperty(
-            name='Export KHR_lights_punctual',
-            description='',
-            default=False
+        name='Export KHR_lights_punctual',
+        description='',
+        default=False
     )
 
     export_texture_transform = BoolProperty(
-            name='Export KHR_texture_transform',
-            description='',
-            default=False
+        name='Export KHR_texture_transform',
+        description='',
+        default=False
     )
 
     export_displacement = BoolProperty(
-            name='Export KHR_materials_displacement',
-            description='',
-            default=False
+        name='Export KHR_materials_displacement',
+        description='',
+        default=False
     )
 
     will_save_settings = BoolProperty(default=False)
@@ -280,7 +278,7 @@ class ExportGLTF2_Base():
         self.will_save_settings = False
         if settings:
             try:
-                for (k,v) in settings.items():
+                for (k, v) in settings.items():
                     setattr(self, k, v)
                 self.will_save_settings = True
 
@@ -288,14 +286,13 @@ class ExportGLTF2_Base():
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
 
-
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
         # find all export_ props
         all_props = self.properties
-        export_props = {x:all_props.get(x) for x in dir(all_props)
-            if x.startswith("export_") and all_props.get(x) is not None}
+        export_props = {x: all_props.get(x) for x in dir(all_props)
+                        if x.startswith("export_") and all_props.get(x) is not None}
 
         context.scene[self.scene_key] = export_props
 
@@ -375,7 +372,7 @@ class ExportGLTF2_Base():
         #
 
         col = layout.box().column()
-        col.label(text='Embedding:')#, icon='PACKAGE')
+        col.label(text='Embedding:')  # , icon='PACKAGE')
         col.prop(self, 'export_copyright')
         if self.export_format == 'ASCII':
             col.prop(self, 'export_embed_buffers')
@@ -383,20 +380,20 @@ class ExportGLTF2_Base():
             col.prop(self, 'export_strip')
 
         col = layout.box().column()
-        col.label(text='Nodes:')#, icon='OOPS')
+        col.label(text='Nodes:')  # , icon='OOPS')
         col.prop(self, 'export_selected')
         col.prop(self, 'export_layers')
         col.prop(self, 'export_extras')
         col.prop(self, 'export_yup')
 
         col = layout.box().column()
-        col.label(text='Meshes:')#, icon='MESH_DATA')
+        col.label(text='Meshes:')  # , icon='MESH_DATA')
         col.prop(self, 'export_apply')
         col.prop(self, 'export_indices')
         col.prop(self, 'export_force_indices')
 
         col = layout.box().column()
-        col.label(text='Attributes:')#, icon='SURFACE_DATA')
+        col.label(text='Attributes:')  # , icon='SURFACE_DATA')
         col.prop(self, 'export_texcoords')
         col.prop(self, 'export_normals')
         if self.export_normals:
@@ -404,18 +401,18 @@ class ExportGLTF2_Base():
         col.prop(self, 'export_colors')
 
         col = layout.box().column()
-        col.label(text='Objects:')#, icon='OBJECT_DATA')
+        col.label(text='Objects:')  # , icon='OBJECT_DATA')
         col.prop(self, 'export_cameras')
         if self.export_cameras:
             col.prop(self, 'export_camera_infinite')
 
         col = layout.box().column()
-        col.label(text='Materials:')#, icon='MATERIAL_DATA')
+        col.label(text='Materials:')  # , icon='MATERIAL_DATA')
         col.prop(self, 'export_materials')
         col.prop(self, 'export_texture_transform')
 
         col = layout.box().column()
-        col.label(text='Animation:')#, icon='OUTLINER_DATA_POSE')
+        col.label(text='Animation:')  # , icon='OUTLINER_DATA_POSE')
         col.prop(self, 'export_animations')
         if self.export_animations:
             col.prop(self, 'export_frame_range')
@@ -436,7 +433,7 @@ class ExportGLTF2_Base():
         addon_prefs = context.user_preferences.addons[__name__].preferences
         if addon_prefs.experimental:
             col = layout.box().column()
-            col.label(text='Experimental:')#, icon='RADIO')
+            col.label(text='Experimental:')  # , icon='RADIO')
             col.prop(self, 'export_lights')
             col.prop(self, 'export_displacement')
 
@@ -448,7 +445,7 @@ class ExportGLTF2_Base():
 
 
 class ExportGLTF2_GLTF(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
-    '''Export scene as glTF 2.0 file'''
+    """Export scene as glTF 2.0 file"""
     bl_idname = 'export_scene.gltf'
     bl_label = 'Export glTF 2.0'
 
@@ -459,7 +456,7 @@ class ExportGLTF2_GLTF(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
 
 
 class ExportGLTF2_GLB(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
-    '''Export scene as glTF 2.0 file'''
+    """Export scene as glTF 2.0 file"""
     bl_idname = 'export_scene.glb'
     bl_label = 'Export glTF 2.0 binary'
 
@@ -477,8 +474,6 @@ def menu_func_export_glb(self, context):
     self.layout.operator(ExportGLTF2_GLB.bl_idname, text='glTF 2.0 (.glb)')
 
 
-from bpy.types import AddonPreferences
-
 class ExportGLTF2_AddonPreferences(AddonPreferences):
     bl_idname = __name__
 
@@ -491,26 +486,25 @@ class ExportGLTF2_AddonPreferences(AddonPreferences):
 
 class ImportglTF2(Operator, ImportHelper):
     bl_idname = 'import_scene.gltf'
-    bl_label  = "glTF 2.0 (.gltf/.glb)"
+    bl_label = "glTF 2.0 (.gltf/.glb)"
 
     filter_glob = StringProperty(default="*.gltf;*.glb", options={'HIDDEN'})
 
-    loglevel = bpy.props.EnumProperty(items=Log.getLevels(), name="Log Level", default=Log.default())
+    loglevel = bpy.props.EnumProperty(items=Log.get_levels(), name="Log Level", default=Log.default())
 
     import_pack_images = BoolProperty(
-            name='Pack images',
-            description='',
-            default=True
+        name='Pack images',
+        description='',
+        default=True
     )
 
     import_shading_items = [
-    	("NORMALS", "Use Normal Data", "", 1),
-    	("FLAT", "Flat Shading", "", 2),
+        ("NORMALS", "Use Normal Data", "", 1),
+        ("FLAT", "Flat Shading", "", 2),
         ("SMOOTH", "Smooth Shading", "", 3),
     ]
 
     import_shading = bpy.props.EnumProperty(items=import_shading_items, name="Shading", default="NORMALS")
-
 
     def draw(self, context):
         layout = self.layout
@@ -518,7 +512,6 @@ class ImportglTF2(Operator, ImportHelper):
         layout.prop(self, 'loglevel')
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'import_shading')
-
 
     def execute(self, context):
         return self.import_gltf2(context)
@@ -562,15 +555,15 @@ def menu_func_import(self, context):
 
 
 classes = (
-        GLTF2ExportSettings,
-        ExportGLTF2_GLTF,
-        ExportGLTF2_GLB,
-        ExportGLTF2_AddonPreferences,
-        ImportglTF2
-    )
+    GLTF2ExportSettings,
+    ExportGLTF2_GLTF,
+    ExportGLTF2_GLB,
+    ExportGLTF2_AddonPreferences,
+    ImportglTF2
+)
+
 
 def register():
-
     for c in classes:
         bpy.utils.register_class(c)
     # bpy.utils.register_module(__name__)
@@ -584,6 +577,7 @@ def register():
         bpy.types.TOPBAR_MT_file_export.append(menu_func_export_gltf)
         bpy.types.TOPBAR_MT_file_export.append(menu_func_export_glb)
         bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+
 
 def unregister():
     for c in classes:

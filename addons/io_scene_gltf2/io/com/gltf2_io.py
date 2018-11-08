@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## NOTE: Generated from latest glTF 2.0 JSON Scheme specs using quicktype (https://github.com/quicktype/quicktype)
-## command used:
-##	quicktype --src glTF.schema.json --src-lang schema -t gltf --lang python --python-version 3.5
+# NOTE: Generated from latest glTF 2.0 JSON Scheme specs using quicktype (https://github.com/quicktype/quicktype)
+# command used:
+# quicktype --src glTF.schema.json --src-lang schema -t gltf --lang python --python-version 3.5
 
-#TODO: REMOVE
+# TODO: REMOVE traceback import
 import sys
 import traceback
+
 from io_scene_gltf2.io.com import gltf2_io_debug
+
 
 def from_int(x):
     assert isinstance(x, int) and not isinstance(x, bool)
@@ -1074,6 +1076,7 @@ class Skin:
 
 class Texture:
     """A texture and its sampler."""
+
     def __init__(self, extensions, extras, name, sampler, source):
         self.extensions = extensions
         self.extras = extras
@@ -1084,7 +1087,8 @@ class Texture:
     @staticmethod
     def from_dict(obj):
         assert isinstance(obj, dict)
-        extensions = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], obj.get("extensions"))
+        extensions = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
+                                obj.get("extensions"))
         extras = obj.get("extras")
         name = from_union([from_str, from_none], obj.get("name"))
         sampler = from_union([from_int, from_none], obj.get("sampler"))
@@ -1093,7 +1097,8 @@ class Texture:
 
     def to_dict(self):
         result = {}
-        result["extensions"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none], self.extensions)
+        result["extensions"] = from_union([lambda x: from_dict(lambda x: from_dict(lambda x: x, x), x), from_none],
+                                          self.extensions)
         result["extras"] = self.extras
         result["name"] = from_union([from_str, from_none], self.name)
         result["sampler"] = from_union([from_int, from_none], self.sampler)

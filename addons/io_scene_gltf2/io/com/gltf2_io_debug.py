@@ -35,6 +35,7 @@ g_current_output_level = 'DEBUG'
 # Functions
 #
 
+
 def set_output_level(level):
     """
     Allows to set an output debug level.
@@ -70,7 +71,7 @@ def print_newline():
     print()
 
 
-def print_timestamp(label = None):
+def print_timestamp(label=None):
     """
     Print a timestamp to Blender console.
     """
@@ -98,7 +99,7 @@ def profile_start():
     g_profile_start = time.time()
 
 
-def profile_end(label = None):
+def profile_end(label=None):
     """
     Stops profiling and printing out the delta time since profile start.
     """
@@ -122,9 +123,10 @@ def profile_end(label = None):
 
     print_console('PROFILE', output)
 
+
 # TODO: need to have a unique system for logging importer/exporter
 # TODO: this logger is used for importer, but in io and in blender part, but is written here in a _io_ file
-class Log():
+class Log:
     def __init__(self, loglevel):
         self.logger = logging.getLogger('glTFImporter')
         self.hdlr = logging.StreamHandler()
@@ -133,16 +135,18 @@ class Log():
         self.logger.addHandler(self.hdlr)
         self.logger.setLevel(int(loglevel))
 
-    def getLevels():
+    @staticmethod
+    def get_levels():
         levels = [
-        (str(logging.CRITICAL), "Critical", "", logging.CRITICAL),
-        (str(logging.ERROR), "Error", "", logging.ERROR),
-        (str(logging.WARNING), "Warning", "", logging.WARNING),
-        (str(logging.INFO), "Info", "", logging.INFO),
-        (str(logging.NOTSET), "NotSet", "", logging.NOTSET)
+            (str(logging.CRITICAL), "Critical", "", logging.CRITICAL),
+            (str(logging.ERROR), "Error", "", logging.ERROR),
+            (str(logging.WARNING), "Warning", "", logging.WARNING),
+            (str(logging.INFO), "Info", "", logging.INFO),
+            (str(logging.NOTSET), "NotSet", "", logging.NOTSET)
         ]
 
         return levels
 
+    @staticmethod
     def default():
         return str(logging.ERROR)

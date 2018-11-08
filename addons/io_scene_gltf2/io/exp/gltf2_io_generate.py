@@ -29,8 +29,9 @@ from ..com.gltf2_io import Asset, Accessor, BufferView, Sampler
 #
 # Functions
 #
-def generate_asset(export_settings,
-                glTF):
+
+
+def generate_asset(export_settings, glTF):
     """
     Generates the top level asset entry.
     """
@@ -53,8 +54,7 @@ def generate_asset(export_settings,
     glTF.asset = asset
 
 
-def generate_extensionsUsed(export_settings,
-                          glTF, extension):
+def generate_extensionsUsed(export_settings, glTF, extension):
     """
     Creates and assigns the 'extensionsUsed' property.
     """
@@ -68,8 +68,7 @@ def generate_extensionsUsed(export_settings,
         extensionsUsed.append(extension)
 
 
-def generate_extensionsRequired(export_settings,
-                              glTF, extension):
+def generate_extensionsRequired(export_settings, glTF, extension):
     """
     Creates and assigns the 'extensionsRequired' property.
     """
@@ -83,8 +82,7 @@ def generate_extensionsRequired(export_settings,
         extensionsRequired.append(extension)
 
 
-def generate_sampler(export_settings,
-                   glTF, magFilter, wrap):
+def generate_sampler(export_settings, glTF, magFilter, wrap):
     """
     Creates and appends a sampler with the given parameters.
     """
@@ -134,11 +132,10 @@ def generate_sampler(export_settings,
 
 
 def generate_bufferView(export_settings,
-        glTF,
-        data_buffer,
-        target,
-        alignment
-):
+                        glTF,
+                        data_buffer,
+                        target,
+                        alignment):
     """
     Creates and appends a bufferView with the given parameters.
     :type target: str
@@ -202,13 +199,12 @@ def generate_bufferView(export_settings,
 
 
 def generate_accessor(export_settings,
-        glTF,
-        data,
-        componentType,
-        count,
-        type,
-        target
-):
+                      glTF,
+                      data,
+                      componentType,
+                      count,
+                      type,
+                      target):
     """
     Creates and appends an accessor with the given parameters.
     :type type: str

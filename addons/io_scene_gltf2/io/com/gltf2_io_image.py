@@ -19,12 +19,12 @@
 import struct
 import zlib
 
-class Image():
+
+class Image:
     """
     Image object class to represent a 4-channel RGBA image.
     Pixel values are expected to be floating point in the range of [0.0 to 1.0]
     """
-
 
     def __init__(self, width, height, pixels):
         self.width = width
@@ -44,7 +44,8 @@ class Image():
         # reverse the vertical line order and add null bytes at the start
         width_byte_4 = self.width * 4
         raw_data = b"".join(
-            b'\x00' + buf[span:span + width_byte_4] for span in range((self.height - 1) * self.width * 4, -1, - width_byte_4))
+            b'\x00' + buf[span:span + width_byte_4] for span in range(
+                (self.height - 1) * self.width * 4, -1, - width_byte_4))
 
         def png_pack(png_tag, data):
             chunk_head = png_tag + data
@@ -102,11 +103,13 @@ def copy_img_channel(dst_image, dst_channel, src_image, src_channel):
     if dst_channel < 0 or dst_channel >= dst_image.channels or src_channel < 0 or src_channel >= src_image.channels:
         return False
 
-    if src_image.width != dst_image.width or src_image.height != dst_image.height or src_image.channels != dst_image.channels:
+    if src_image.width != dst_image.width or \
+            src_image.height != dst_image.height or \
+            src_image.channels != dst_image.channels:
         return False
 
     for i in range(0, len(dst_image.pixels), dst_image.channels):
-        dst_image.pixels[i+dst_channel] = src_image.pixels[i+src_channel]
+        dst_image.pixels[i + dst_channel] = src_image.pixels[i + src_channel]
 
     return True
 

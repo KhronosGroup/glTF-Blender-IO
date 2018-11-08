@@ -18,8 +18,6 @@
 
 import os
 
-from ...io.com.gltf2_io_debug import *
-
 #
 # Globals
 #
@@ -57,10 +55,12 @@ def get_material_requires_texcoords(glTF, index):
 
     # Metallic roughness
 
-    if material.pbr_metallic_roughness is not None and material.pbr_metallic_roughness.base_color_texture is not None:
+    if material.pbr_metallic_roughness is not None and \
+            material.pbr_metallic_roughness.base_color_texture is not None:
         return True
 
-    if material.pbr_metallic_roughness is not None and material.pbr_metallic_roughness.metallic_roughness_texture is not None:
+    if material.pbr_metallic_roughness is not None and \
+            material.pbr_metallic_roughness.metallic_roughness_texture is not None:
         return True
 
     return False
@@ -262,7 +262,7 @@ def get_image_name(filename):
     return os.path.splitext(filename)[0]
 
 
-def get_scalar(default_value, init_value = 0.0):
+def get_scalar(default_value, init_value=0.0):
     """
     Return scalar with a given default/fallback value.
     """
@@ -277,7 +277,7 @@ def get_scalar(default_value, init_value = 0.0):
     return return_value
 
 
-def get_vec2(default_value, init_value = [0.0, 0.0]):
+def get_vec2(default_value, init_value=[0.0, 0.0]):
     """
     Return vec2 with a given default/fallback value.
     """
@@ -298,7 +298,7 @@ def get_vec2(default_value, init_value = [0.0, 0.0]):
     return return_value
 
 
-def get_vec3(default_value, init_value = [0.0, 0.0, 0.0]):
+def get_vec3(default_value, init_value=[0.0, 0.0, 0.0]):
     """
     Return vec3 with a given default/fallback value.
     """
@@ -319,7 +319,7 @@ def get_vec3(default_value, init_value = [0.0, 0.0, 0.0]):
     return return_value
 
 
-def get_vec4(default_value, init_value = [0.0, 0.0, 0.0, 1.0]):
+def get_vec4(default_value, init_value=[0.0, 0.0, 0.0, 1.0]):
     """
     Return vec4 with a given default/fallback value.
     """
@@ -360,4 +360,3 @@ def get_index(elements, name):
         index += 1
 
     return -1
-
