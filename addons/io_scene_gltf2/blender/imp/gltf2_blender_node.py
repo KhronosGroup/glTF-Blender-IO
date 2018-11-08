@@ -139,7 +139,7 @@ class BlenderNode():
                         bpy.data.objects[node.blender_armature_name].select = True
                         bpy.context.scene.objects.active = bpy.data.objects[node.blender_armature_name]
                     else:
-                        bpy.data.objects[node.blender_armature_name].select_set('SELECT')
+                        bpy.data.objects[node.blender_armature_name].select_set(True)
                         bpy.context.view_layer.objects.active = bpy.data.objects[node.blender_armature_name]
 
                     bpy.ops.object.mode_set(mode='EDIT')
@@ -152,8 +152,8 @@ class BlenderNode():
                         bpy.data.objects[node.blender_armature_name].select = True
                         bpy.context.scene.objects.active = bpy.data.objects[node.blender_armature_name]
                     else:
-                        obj.select_set('SELECT')
-                        bpy.data.objects[node.blender_armature_name].select_set('SELECT')
+                        obj.select_set(True)
+                        bpy.data.objects[node.blender_armature_name].select_set(True)
                         bpy.context.view_layer.objects.active = bpy.data.objects[node.blender_armature_name]
                     bpy.context.scene.update()
                     bpy.ops.object.parent_set(type='BONE_RELATIVE', keep_transform=True)

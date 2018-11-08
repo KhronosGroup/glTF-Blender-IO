@@ -224,8 +224,8 @@ class BlenderSkin():
                 bpy.context.scene.objects.active = obj
             else:
                 for obj_sel in bpy.context.scene.objects:
-                    obj_sel.select_set('DESELECT')
-                obj.select_set('SELECT')
+                    obj_sel.select_set(False)
+                obj.select_set(True)
                 bpy.context.view_layer.objects.active = obj
 
             # bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
