@@ -19,7 +19,7 @@
 from mathutils import Vector, Quaternion
 from mathutils.geometry import tessellate_polygon
 
-from . import export_keys
+from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
 
 #
@@ -62,7 +62,7 @@ class ShapeKey:
 
 def convert_swizzle_location(loc, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""
-    if export_settings[export_keys.YUP]:
+    if export_settings[gltf2_blender_export_keys.YUP]:
         return Vector((loc[0], loc[2], -loc[1]))
     else:
         return Vector((loc[0], loc[1], loc[2]))
@@ -73,7 +73,7 @@ def convert_swizzle_tangent(tan, export_settings):
     if tan[0] == 0.0 and tan[1] == 0.0 and tan[2] == 0.0:
         print_console('WARNING', 'Tangent has zero length.')
 
-    if export_settings[export_keys.YUP]:
+    if export_settings[gltf2_blender_export_keys.YUP]:
         return Vector((tan[0], tan[2], -tan[1], 1.0))
     else:
         return Vector((tan[0], tan[1], tan[2], 1.0))
@@ -85,7 +85,7 @@ def convert_swizzle_rotation(rot, export_settings):
 
     'w' is still at first position.
     """
-    if export_settings[export_keys.YUP]:
+    if export_settings[gltf2_blender_export_keys.YUP]:
         return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
     else:
         return Quaternion((rot[0], rot[1], rot[2], rot[3]))
@@ -93,7 +93,7 @@ def convert_swizzle_rotation(rot, export_settings):
 
 def convert_swizzle_scale(scale, export_settings):
     """Convert a scale from Blender coordinate system to glTF coordinate system."""
-    if export_settings[export_keys.YUP]:
+    if export_settings[gltf2_blender_export_keys.YUP]:
         return Vector((scale[0], scale[2], scale[1]))
     else:
         return Vector((scale[0], scale[1], scale[2]))
@@ -647,7 +647,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
 
             bone_count = 0
 
-            if vertex.groups is not None and len(vertex.groups) > 0 and export_settings[export_keys.SKINS]:
+            if vertex.groups is not None and len(vertex.groups) > 0 and export_settings[gltf2_blender_export_keys.SKINS]:
                 joint = []
                 weight = []
                 for group_element in vertex.groups:
@@ -685,7 +685,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
 
             #
 
-            if morph_max > 0 and export_settings[export_keys.MORPH]:
+            if morph_max > 0 and export_settings[gltf2_blender_export_keys.MORPH]:
                 for morph_index in range(0, morph_max):
                     blender_shape_key = blender_shape_keys[morph_index]
 
@@ -776,7 +776,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
                                 found = False
                                 break
 
-                if export_settings[export_keys.SKINS]:
+                if export_settings[gltf2_blender_export_keys.SKINS]:
                     for bone_index in range(0, bone_max):
                         joint = joints[bone_index]
                         weight = weights[bone_index]
@@ -791,7 +791,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
                                 found = False
                                 break
 
-                if export_settings[export_keys.MORPH]:
+                if export_settings[gltf2_blender_export_keys.MORPH]:
                     for morph_index in range(0, morph_max):
                         target_position = target_positions[morph_index]
                         target_normal = target_normals[morph_index]
@@ -861,7 +861,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
 
                     attributes[color_id].extend(colors[color_index])
 
-            if export_settings[export_keys.SKINS]:
+            if export_settings[gltf2_blender_export_keys.SKINS]:
                 for bone_index in range(0, bone_max):
                     joint_id = JOINTS_PREFIX + str(bone_index)
 
@@ -877,7 +877,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
 
                     attributes[weight_id].extend(weights[bone_index])
 
-            if export_settings[export_keys.MORPH]:
+            if export_settings[gltf2_blender_export_keys.MORPH]:
                 for morph_index in range(0, morph_max):
                     target_position_id = MORPH_POSITION_PREFIX + str(morph_index)
 
@@ -930,7 +930,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
                 tex_coords.append(primitive[ATTRIBUTES_ID][COLOR_PREFIX + str(color_index)])
         joints = []
         weights = []
-        if export_settings[export_keys.SKINS]:
+        if export_settings[gltf2_blender_export_keys.SKINS]:
             for bone_index in range(0, bone_max):
                 joints.append(primitive[ATTRIBUTES_ID][JOINTS_PREFIX + str(bone_index)])
                 weights.append(primitive[ATTRIBUTES_ID][WEIGHTS_PREFIX + str(bone_index)])
@@ -938,7 +938,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
         target_positions = []
         target_normals = []
         target_tangents = []
-        if export_settings[export_keys.MORPH]:
+        if export_settings[gltf2_blender_export_keys.MORPH]:
             for morph_index in range(0, morph_max):
                 target_positions.append(primitive[ATTRIBUTES_ID][MORPH_POSITION_PREFIX + str(morph_index)])
                 target_normals.append(primitive[ATTRIBUTES_ID][MORPH_NORMAL_PREFIX + str(morph_index)])
@@ -957,9 +957,9 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
         #
 
         range_indices = 65536
-        if export_settings[export_keys.INDICES] == 'UNSIGNED_BYTE':
+        if export_settings[gltf2_blender_export_keys.INDICES] == 'UNSIGNED_BYTE':
             range_indices = 256
-        elif export_settings[export_keys.INDICES] == 'UNSIGNED_INT':
+        elif export_settings[gltf2_blender_export_keys.INDICES] == 'UNSIGNED_INT':
             range_indices = 4294967296
 
         #
@@ -999,7 +999,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
                 for color in colors:
                     pending_attributes[COLOR_PREFIX + str(color_index)] = color
                     color_index += 1
-            if export_settings[export_keys.SKINS]:
+            if export_settings[gltf2_blender_export_keys.SKINS]:
                 joint_index = 0
                 for joint in joints:
                     pending_attributes[JOINTS_PREFIX + str(joint_index)] = joint
@@ -1008,7 +1008,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
                 for weight in weights:
                     pending_attributes[WEIGHTS_PREFIX + str(weight_index)] = weight
                     weight_index += 1
-            if export_settings[export_keys.MORPH]:
+            if export_settings[gltf2_blender_export_keys.MORPH]:
                 morph_index = 0
                 for target_position in target_positions:
                     pending_attributes[MORPH_POSITION_PREFIX + str(morph_index)] = target_position

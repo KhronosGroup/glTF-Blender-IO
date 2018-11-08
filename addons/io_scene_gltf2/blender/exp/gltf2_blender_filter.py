@@ -17,7 +17,7 @@
 #
 
 import bpy
-from . import export_keys
+from . import gltf2_blender_export_keys
 from . import gltf2_blender_get
 from ...io.com.gltf2_io_debug import print_console
 from ..com.gltf2_blender_image import create_img_from_blender_image
@@ -43,7 +43,7 @@ def filter_merge_image(export_settings, blender_image):
     if metallic_channel < 0 and roughness_channel < 0:
         return False
 
-    output = export_settings[export_keys.METALLIC_ROUGHNESS_IMAGE]
+    output = export_settings[gltf2_blender_export_keys.METALLIC_ROUGHNESS_IMAGE]
     if export_settings.get(export_keys.METALLIC_ROUGHNESS_IMAGE) is None:
         width = blender_image.image.size[0]
         height = blender_image.image.size[1]
@@ -95,15 +95,15 @@ def filter_apply(export_settings):
         if blender_object.users == 0:
             continue
 
-        if export_settings[export_keys.SELECTED] and not blender_object.select:
+        if export_settings[gltf2_blender_export_keys.SELECTED] and not blender_object.select:
             continue
 
-        if not export_settings[export_keys.LAYERS] and not blender_object.layers[0]:
+        if not export_settings[gltf2_blender_export_keys.LAYERS] and not blender_object.layers[0]:
             continue
 
         filtered_objects.append(blender_object)
 
-        if export_settings[export_keys.SELECTED] or not export_settings[export_keys.LAYERS]:
+        if export_settings[gltf2_blender_export_keys.SELECTED] or not export_settings[gltf2_blender_export_keys.LAYERS]:
             current_parent = blender_object.parent
             while current_parent:
                 if current_parent not in implicit_filtered_objects:
@@ -111,7 +111,7 @@ def filter_apply(export_settings):
 
                 current_parent = current_parent.parent
 
-    export_settings[export_keys.FILTERED_OBJECTS] = filtered_objects
+    export_settings[gltf2_blender_export_keys.FILTERED_OBJECTS] = filtered_objects
 
     # Meshes
 
@@ -154,9 +154,9 @@ def filter_apply(export_settings):
                                       'Auto smooth and shape keys cannot be exported in parallel. '
                                       'Falling back to non auto smooth.')
 
-                if export_settings[export_keys.APPLY] or use_auto_smooth:
+                if export_settings[gltf2_blender_export_keys.APPLY] or use_auto_smooth:
                     # TODO: maybe add to new exporter
-                    if not export_settings[export_keys.APPLY]:
+                    if not export_settings[gltf2_blender_export_keys.APPLY]:
                         current_blender_object.modifiers.clear()
 
                     if use_auto_smooth:
@@ -204,7 +204,7 @@ def filter_apply(export_settings):
 
                 current_blender_object = current_blender_object.copy()
 
-                if not export_settings[export_keys.APPLY]:
+                if not export_settings[gltf2_blender_export_keys.APPLY]:
                     current_blender_object.modifiers.clear()
 
                 current_blender_mesh = current_blender_object.to_mesh(bpy.context.scene, True, PREVIEW)
@@ -220,9 +220,9 @@ def filter_apply(export_settings):
 
     #
 
-    export_settings[export_keys.FILTERED_MESHES] = filtered_meshes
-    export_settings[export_keys.FILTERED_VERTEX_GROUPS] = filtered_vertex_groups
-    export_settings[export_keys.TEMPORARY_MESHES] = temporary_meshes
+    export_settings[gltf2_blender_export_keys.FILTERED_MESHES] = filtered_meshes
+    export_settings[gltf2_blender_export_keys.FILTERED_VERTEX_GROUPS] = filtered_vertex_groups
+    export_settings[gltf2_blender_export_keys.TEMPORARY_MESHES] = temporary_meshes
 
     #
 
@@ -249,7 +249,7 @@ def filter_apply(export_settings):
                     if blender_material_slot.material not in filtered_materials:
                         filtered_materials.append(blender_material_slot.material)
 
-    export_settings[export_keys.FILTERED_MATERIALS] = filtered_materials
+    export_settings[gltf2_blender_export_keys.FILTERED_MATERIALS] = filtered_materials
 
     #
 
@@ -319,7 +319,7 @@ def filter_apply(export_settings):
                     if blender_texture_slot.use_map_normal:
                         accept = True
 
-                    if export_settings[export_keys.DISPLACEMENT]:
+                    if export_settings[gltf2_blender_export_keys.DISPLACEMENT]:
                         if blender_texture_slot.use_map_displacement:
                             accept = True
 
@@ -327,7 +327,7 @@ def filter_apply(export_settings):
                         filtered_textures.append(blender_texture_slot)
                         temp_filtered_texture_names.append(blender_texture_slot.name)
 
-    export_settings[export_keys.FILTERED_TEXTURES] = filtered_textures
+    export_settings[gltf2_blender_export_keys.FILTERED_TEXTURES] = filtered_textures
 
     #
 
@@ -354,7 +354,7 @@ def filter_apply(export_settings):
 
     for per_material_textures in filtered_merged_textures:
 
-        export_settings[export_keys.METALLIC_ROUGHNESS_IMAGE] = None
+        export_settings[gltf2_blender_export_keys.METALLIC_ROUGHNESS_IMAGE] = None
 
         for blender_texture in per_material_textures:
 
@@ -365,11 +365,11 @@ def filter_apply(export_settings):
         img = export_settings.get(export_keys.METALLIC_ROUGHNESS_IMAGE)
         if img is not None:
             filtered_merged_images.append(img)
-            export_settings[export_keys.FILTERED_TEXTURES].append(img)
+            export_settings[gltf2_blender_export_keys.FILTERED_TEXTURES].append(img)
 
-    export_settings[export_keys.FILTERED_MERGED_IMAGES] = filtered_merged_images
-    export_settings[export_keys.FILTERED_IMAGES] = filtered_images
-    export_settings[export_keys.FILTERED_IMAGES_USE_ALPHA] = filtered_images_use_alpha
+    export_settings[gltf2_blender_export_keys.FILTERED_MERGED_IMAGES] = filtered_merged_images
+    export_settings[gltf2_blender_export_keys.FILTERED_IMAGES] = filtered_images
+    export_settings[gltf2_blender_export_keys.FILTERED_IMAGES_USE_ALPHA] = filtered_images_use_alpha
 
     #
 
@@ -380,13 +380,13 @@ def filter_apply(export_settings):
         if blender_camera.users == 0:
             continue
 
-        if export_settings[export_keys.SELECTED]:
+        if export_settings[gltf2_blender_export_keys.SELECTED]:
             if blender_camera not in filtered_objects:
                 continue
 
         filtered_cameras.append(blender_camera)
 
-    export_settings[export_keys.FILTERED_CAMERAS] = filtered_cameras
+    export_settings[gltf2_blender_export_keys.FILTERED_CAMERAS] = filtered_cameras
 
     #
     #
@@ -398,7 +398,7 @@ def filter_apply(export_settings):
         if blender_light.users == 0:
             continue
 
-        if export_settings[export_keys.SELECTED]:
+        if export_settings[gltf2_blender_export_keys.SELECTED]:
             if blender_light not in filtered_objects:
                 continue
 
@@ -407,7 +407,7 @@ def filter_apply(export_settings):
 
         filtered_lights.append(blender_light)
 
-    export_settings[export_keys.FILTERED_LIGHTS] = filtered_lights
+    export_settings[gltf2_blender_export_keys.FILTERED_LIGHTS] = filtered_lights
 
     #
     #
@@ -422,14 +422,14 @@ def filter_apply(export_settings):
 
     group_index = {}
 
-    if export_settings[export_keys.SKINS]:
+    if export_settings[gltf2_blender_export_keys.SKINS]:
         for blender_object in filtered_objects:
             if blender_object.type != 'ARMATURE' or len(blender_object.pose.bones) == 0:
                 continue
             for blender_bone in blender_object.pose.bones:
                 group_index[blender_bone.name] = len(group_index)
 
-    export_settings[export_keys.GROUP_INDEX] = group_index
+    export_settings[gltf2_blender_export_keys.GROUP_INDEX] = group_index
 
 
 def is_valid_node(blender_node):

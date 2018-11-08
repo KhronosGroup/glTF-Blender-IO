@@ -17,7 +17,7 @@
 #
 
 import bpy
-from . import export_keys
+from . import gltf2_blender_export_keys
 from . import gltf2_blender_extract
 from mathutils import Matrix, Quaternion, Euler
 
@@ -47,7 +47,7 @@ def animate_get_interpolation(export_settings, blender_fcurve_list):
     Blender allows mixing and more variations of interpolations.
     In such a case, a conversion is needed.
     """
-    if export_settings[export_keys.FORCE_SAMPLING]:
+    if export_settings[gltf2_blender_export_keys.FORCE_SAMPLING]:
         return NEEDS_CONVERSION
 
     #
@@ -186,9 +186,9 @@ def animate_gather_keys(export_settings, fcurve_list, interpolation):
 
         key = start
         while key <= end:
-            if not export_settings[export_keys.FRAME_RANGE] or (frame_start <= key <= frame_end):
+            if not export_settings[gltf2_blender_export_keys.FRAME_RANGE] or (frame_start <= key <= frame_end):
                 keys.append(key)
-            key += export_settings[export_keys.FRAME_STEP]
+            key += export_settings[gltf2_blender_export_keys.FRAME_STEP]
 
         keys.sort()
 
@@ -199,7 +199,7 @@ def animate_gather_keys(export_settings, fcurve_list, interpolation):
 
             for blender_keyframe in blender_fcurve.keyframe_points:
                 key = blender_keyframe.co[0]
-                if not export_settings[export_keys.FRAME_RANGE] or (frame_start <= key <= frame_end):
+                if not export_settings[gltf2_blender_export_keys.FRAME_RANGE] or (frame_start <= key <= frame_end):
                     if key not in keys:
                         keys.append(key)
 
@@ -211,7 +211,7 @@ def animate_gather_keys(export_settings, fcurve_list, interpolation):
 def animate_location(export_settings, location, interpolation, node_type, node_name, action_name, matrix_correction,
                      matrix_basis):
     """Calculate/gather the key value pairs for location transformations."""
-    joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
+    joint_cache = export_settings[gltf2_blender_export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
 
@@ -293,7 +293,7 @@ def animate_location(export_settings, location, interpolation, node_type, node_n
 def animate_rotation_axis_angle(export_settings, rotation_axis_angle, interpolation, node_type, node_name, action_name,
                                 matrix_correction, matrix_basis):
     """Calculate/gather the key value pairs for axis angle transformations."""
-    joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
+    joint_cache = export_settings[gltf2_blender_export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
 
@@ -353,7 +353,7 @@ def animate_rotation_axis_angle(export_settings, rotation_axis_angle, interpolat
 def animate_rotation_euler(export_settings, rotation_euler, rotation_mode, interpolation, node_type, node_name,
                            action_name, matrix_correction, matrix_basis):
     """Calculate/gather the key value pairs for euler angle transformations."""
-    joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
+    joint_cache = export_settings[gltf2_blender_export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
 
@@ -413,7 +413,7 @@ def animate_rotation_euler(export_settings, rotation_euler, rotation_mode, inter
 def animate_rotation_quaternion(export_settings, rotation_quaternion, interpolation, node_type, node_name, action_name,
                                 matrix_correction, matrix_basis):
     """Calculate/gather the key value pairs for quaternion transformations."""
-    joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
+    joint_cache = export_settings[gltf2_blender_export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
 
@@ -503,7 +503,7 @@ def animate_rotation_quaternion(export_settings, rotation_quaternion, interpolat
 def animate_scale(export_settings, scale, interpolation, node_type, node_name, action_name, matrix_correction,
                   matrix_basis):
     """Calculate/gather the key value pairs for scale transformations."""
-    joint_cache = export_settings[export_keys.JOINT_CACHE][action_name]
+    joint_cache = export_settings[gltf2_blender_export_keys.JOINT_CACHE][action_name]
     if not joint_cache.get(node_name):
         joint_cache[node_name] = {}
 
