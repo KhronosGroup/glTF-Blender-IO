@@ -17,6 +17,8 @@ import typing
 import math
 from mathutils import Matrix, Vector, Quaternion, Euler
 
+from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name
+
 
 def multiply(a, b):
     """Multiplication."""
@@ -28,7 +30,7 @@ def multiply(a, b):
 
 def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Union[Vector, Quaternion, Euler]:
     """Transform a list to blender py object."""
-    target = datapath_to_target(data_path)
+    target = get_target_property_name(data_path)
 
     if target == 'location':
         return Vector(values)
@@ -46,11 +48,6 @@ def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Unio
         return values
 
     return values
-
-
-def datapath_to_target(data_path: str) -> str:
-    """Retrieve target."""
-    return data_path.split('.')[-1]
 
 
 def mathutils_to_gltf(x: typing.Union[Vector, Quaternion]) -> typing.List[float]:
@@ -78,7 +75,7 @@ def to_yup() -> Matrix:
 
 def swizzle_yup(v: typing.Union[Vector, Quaternion], data_path: str) -> typing.Union[Vector, Quaternion]:
     """Manage Yup."""
-    target = datapath_to_target(data_path)
+    target = get_target_property_name(data_path)
     swizzle_func = {
         "location": swizzle_yup_location,
         "rotation_axis_angle": swizzle_yup_rotation,
@@ -117,7 +114,7 @@ def swizzle_yup_value(value: typing.Any) -> typing.Any:
 def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Matrix = Matrix.Identity(4)) -> typing \
         .Union[Vector, Quaternion]:
     """Manage transformations."""
-    target = datapath_to_target(data_path)
+    target = get_target_property_name(data_path)
     transform_func = {
         "location": transform_location,
         "rotation_axis_angle": transform_rotation,

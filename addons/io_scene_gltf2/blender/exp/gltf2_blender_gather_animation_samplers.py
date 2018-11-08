@@ -15,8 +15,9 @@
 
 import bpy
 import mathutils
-
 import typing
+
+from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -125,7 +126,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
         values += keyframe_value
 
     component_type = gltf2_io_constants.ComponentType.Float
-    if gltf2_blender_math.datapath_to_target(target_datapath) == "value":
+    if get_target_property_name(target_datapath) == "value":
         # channels with 'weight' targets must have scalar accessors
         data_type = gltf2_io_constants.DataType.Scalar
     else:
