@@ -17,8 +17,9 @@ import bpy
 import mathutils
 import typing
 
-from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name
 from . import gltf2_blender_export_keys
+from mathutils import Matrix
+from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name, get_target_object_path
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -105,6 +106,15 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     target_datapath = channels[0].data_path
 
     transform = mathutils.Matrix.Identity(4)
+
+    if blender_object.type == "ARMATURE":
+        bone = blender_object.path_resolve(get_target_object_path(target_datapath))
+
+        if isinstance(bone, bpy.types.PoseBone):
+            transform = bone.bone.matrix_local
+
+            if bone.parent is not None:
+                transform = gltf2_blender_math.multiply(bone.parent.bone.matrix_local.inverted(), transform)
 
     values = []
     for keyframe in keyframes:
