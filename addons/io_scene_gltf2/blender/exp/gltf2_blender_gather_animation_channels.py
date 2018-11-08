@@ -14,9 +14,10 @@
 
 import bpy
 import typing
+
+from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_samplers
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channel_target
 
@@ -28,7 +29,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                               ) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-    for channel_group in __get_channel_groups(blender_action):
+    for channel_group in __get_channel_groups(blender_action, blender_object):
         channel = __gather_animation_channel(channel_group, blender_object, export_settings)
         if channel is not None:
             channels.append(channel)
@@ -91,13 +92,31 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
         channels, blender_object, export_settings)
 
 
-def __get_channel_groups(blender_action: bpy.types.Action):
-    groups = {}
+def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object):
+    targets = {}
     for fcurve in blender_action.fcurves:
-        # todo check if we still need that split for something
-        target = fcurve.data_path#.rsplit('.', 1)[-1]
-        channels = groups.get(target, [])
-        channels.append(fcurve)
-        groups[target] = channels
+        target_property = get_target_property_name(fcurve.data_path)
+        object_path = get_target_object_path(fcurve.data_path)
 
-    return [tuple(g) for g in groups.values()]
+        try:
+            target = blender_object.path_resolve(object_path)
+        except ValueError:
+            if blender_object.type != "MESH":
+                continue
+            # if you need the specific shape key for some reason, this is it:
+            # shape_key = blender_object.data.shape_keys.path_resolve(object_path)
+            target = blender_object.data.shape_keys
+
+        target_properties = targets.get(target, {})
+
+        channels = target_properties.get(target_property, [])
+        channels.append(fcurve)
+
+        target_properties[target_property] = channels
+        targets[target] = target_properties
+
+    groups = []
+    for p in targets.values():
+        groups += list(p.values())
+
+    return map(tuple, groups)
