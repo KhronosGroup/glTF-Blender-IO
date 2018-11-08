@@ -14,10 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+command=test
+if [[ $1 == "--bail" ]]
+then
+	command=test-bail
+fi
+
 docker build -t gltf-io-test -f Dockerfile.tests .
 
 # TODO: find a more elegant way to do this
-docker run -t gltf-io-test npm run test
+docker run -t gltf-io-test npm run $command
 ID=$(docker ps -l -q)
 docker cp $ID:/tests/mochawesome-report/ . 
 docker cp $ID:/tests/scenes/ .
