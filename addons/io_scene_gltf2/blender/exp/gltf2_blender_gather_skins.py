@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import mathutils
-from . import export_keys
+from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -45,7 +45,7 @@ def gather_skin(blender_object, export_settings):
 
 
 def __filter_skin(blender_object, export_settings):
-    if not export_settings[export_keys.SKINS]:
+    if not export_settings[gltf2_blender_export_keys.SKINS]:
         return False
     if blender_object.type != 'ARMATURE' or len(blender_object.pose.bones) == 0:
         return False
@@ -65,7 +65,7 @@ def __gather_inverse_bind_matrices(blender_object, export_settings):
     inverse_matrices = []
 
     axis_basis_change = mathutils.Matrix.Identity(4)
-    if export_settings[export_keys.YUP]:
+    if export_settings[gltf2_blender_export_keys.YUP]:
         axis_basis_change = mathutils.Matrix(
             ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 

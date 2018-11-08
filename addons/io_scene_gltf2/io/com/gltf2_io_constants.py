@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import Enum, IntEnum
+from enum import IntEnum
 
 
 class ComponentType(IntEnum):
@@ -126,5 +126,3 @@ GLTF_DATA_TYPE_VEC4 = "VEC4"
 GLTF_DATA_TYPE_MAT2 = "MAT2"
 GLTF_DATA_TYPE_MAT3 = "MAT3"
 GLTF_DATA_TYPE_MAT4 = "MAT4"
-
-

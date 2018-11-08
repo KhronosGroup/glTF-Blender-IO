@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import export_keys
+from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 
@@ -107,7 +107,7 @@ def __gather_perspective(blender_object, export_settings):
 
         perspective.znear = blender_camera.clip_start
 
-        if not export_settings[export_keys.CAMERA_INFINITE]:
+        if not export_settings[gltf2_blender_export_keys.CAMERA_INFINITE]:
             perspective.zfar = blender_camera.clip_end
 
         return perspective

@@ -16,12 +16,12 @@ import typing
 import struct
 import zlib
 
+
 class ImageData:
-    """
-    contains channels of an image with raw pixel data.
-    """
+    """Contains channels of an image with raw pixel data."""
+
     def __init__(self, name: str, width: int, height: int, channels: typing.List[typing.List[float]] = None):
-        if width <= 0 or height <=0:
+        if width <= 0 or height <= 0:
             raise ValueError("Image data can not have zero width or height")
         self.name = name
         self.channels = channels
@@ -75,7 +75,8 @@ class ImageData:
         # reverse the vertical line order and add null bytes at the start
         width_byte_4 = self.width * 4
         raw_data = b"".join(
-            b'\x00' + buf[span:span + width_byte_4] for span in range((self.height - 1) * self.width * 4, -1, - width_byte_4))
+            b'\x00' + buf[span:span + width_byte_4] for span in range(
+                (self.height - 1) * self.width * 4, -1, - width_byte_4))
 
         def png_pack(png_tag, data):
             chunk_head = png_tag + data

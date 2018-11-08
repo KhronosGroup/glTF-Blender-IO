@@ -14,7 +14,7 @@
 
 import bpy
 
-from . import export_keys
+from .gltf2_blender_export_keys import INDICES, FORCE_INDICES, NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
@@ -25,7 +25,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.io.com import gltf2_io_debug
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
@@ -75,11 +75,11 @@ def __gather_indices(blender_primitive, export_settings):
     elif max_index < (1 << 32):
         component_type = gltf2_io_constants.ComponentType.UnsignedInt
     else:
-        gltf2_io_debug.print_console('ERROR', 'Invalid max_index: ' + str(max_index))
+        print_console('ERROR', 'Invalid max_index: ' + str(max_index))
         return None
 
-    if export_settings[export_keys.FORCE_INDICES]:
-        component_type = gltf2_io_constants.ComponentType.from_legacy_define(export_settings[export_keys.INDICES])
+    if export_settings[FORCE_INDICES]:
+        component_type = gltf2_io_constants.ComponentType.from_legacy_define(export_settings[INDICES])
 
     element_type = gltf2_io_constants.DataType.Scalar
     binary_data = gltf2_io_binary_data.BinaryData.from_list(indices, component_type)
@@ -104,7 +104,7 @@ def __gather_attributes(blender_primitive, export_settings):
 
 
 def __gather_targets(blender_primitive, blender_mesh, export_settings):
-    if export_settings[export_keys.MORPH]:
+    if export_settings[MORPH]:
         targets = []
         if blender_mesh.shape_keys is not None:
             morph_index = 0
@@ -140,8 +140,8 @@ def __gather_targets(blender_primitive, blender_mesh, export_settings):
                             type=gltf2_io_constants.DataType.Vec3
                         )
 
-                        if export_settings[export_keys.NORMALS] \
-                                and export_settings[export_keys.MORPH_NORMAL] \
+                        if export_settings[NORMALS] \
+                                and export_settings[MORPH_NORMAL] \
                                 and blender_primitive["attributes"].get(target_normal_id):
 
                             internal_target_normal = blender_primitive["attributes"][target_normal_id]
@@ -165,8 +165,8 @@ def __gather_targets(blender_primitive, blender_mesh, export_settings):
                                 type=gltf2_io_constants.DataType.Vec3
                             )
 
-                        if export_settings[export_keys.TANGENTS] \
-                                and export_settings[export_keys.MORPH_TANGENT] \
+                        if export_settings[TANGENTS] \
+                                and export_settings[MORPH_TANGENT] \
                                 and blender_primitive["attributes"].get(target_tangent_id):
                             internal_target_tangent = blender_primitive["attributes"][target_tangent_id]
                             binary_data = gltf2_io_binary_data.BinaryData.from_list(

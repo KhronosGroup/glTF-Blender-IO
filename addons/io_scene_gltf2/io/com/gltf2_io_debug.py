@@ -23,57 +23,47 @@ import logging
 # Globals
 #
 
+OUTPUT_LEVELS = ['ERROR', 'WARNING', 'INFO', 'PROFILE', 'DEBUG', 'VERBOSE']
+
+g_current_output_level = 'DEBUG'
 g_profile_started = False
 g_profile_start = 0.0
 g_profile_end = 0.0
 g_profile_delta = 0.0
 
-g_output_levels = ['ERROR', 'WARNING', 'INFO', 'PROFILE', 'DEBUG', 'VERBOSE']
-g_current_output_level = 'DEBUG'
-
 #
 # Functions
 #
 
-def set_output_level(level):
-    """
-    Allows to set an output debug level.
-    """
 
+def set_output_level(level):
+    """Set an output debug level."""
     global g_current_output_level
 
-    if g_output_levels.index(level) < 0:
+    if OUTPUT_LEVELS.index(level) < 0:
         return
 
     g_current_output_level = level
 
 
-def print_console(level,
-                  output):
-    """
-    Prints to Blender console with a given header and output.
-    """
-
-    global g_output_levels
+def print_console(level, output):
+    """Print to Blender console with a given header and output."""
+    global OUTPUT_LEVELS
     global g_current_output_level
 
-    if g_output_levels.index(level) > g_output_levels.index(g_current_output_level):
+    if OUTPUT_LEVELS.index(level) > OUTPUT_LEVELS.index(g_current_output_level):
         return
 
     print(level + ': ' + output)
 
 
 def print_newline():
-    """
-    Prints a new line to Blender console.
-    """
+    """Print a new line to Blender console."""
     print()
 
 
-def print_timestamp(label = None):
-    """
-    Print a timestamp to Blender console.
-    """
+def print_timestamp(label=None):
+    """Print a timestamp to Blender console."""
     output = 'Timestamp: ' + str(time.time())
 
     if label is not None:
@@ -83,9 +73,7 @@ def print_timestamp(label = None):
 
 
 def profile_start():
-    """
-    Start profiling by storing the current time.
-    """
+    """Start profiling by storing the current time."""
     global g_profile_start
     global g_profile_started
 
@@ -98,10 +86,8 @@ def profile_start():
     g_profile_start = time.time()
 
 
-def profile_end(label = None):
-    """
-    Stops profiling and printing out the delta time since profile start.
-    """
+def profile_end(label=None):
+    """Stop profiling and printing out the delta time since profile start."""
     global g_profile_end
     global g_profile_delta
     global g_profile_started
@@ -122,9 +108,10 @@ def profile_end(label = None):
 
     print_console('PROFILE', output)
 
+
 # TODO: need to have a unique system for logging importer/exporter
 # TODO: this logger is used for importer, but in io and in blender part, but is written here in a _io_ file
-class Log():
+class Log:
     def __init__(self, loglevel):
         self.logger = logging.getLogger('glTFImporter')
         self.hdlr = logging.StreamHandler()
@@ -133,16 +120,18 @@ class Log():
         self.logger.addHandler(self.hdlr)
         self.logger.setLevel(int(loglevel))
 
-    def getLevels():
+    @staticmethod
+    def get_levels():
         levels = [
-        (str(logging.CRITICAL), "Critical", "", logging.CRITICAL),
-        (str(logging.ERROR), "Error", "", logging.ERROR),
-        (str(logging.WARNING), "Warning", "", logging.WARNING),
-        (str(logging.INFO), "Info", "", logging.INFO),
-        (str(logging.NOTSET), "NotSet", "", logging.NOTSET)
+            (str(logging.CRITICAL), "Critical", "", logging.CRITICAL),
+            (str(logging.ERROR), "Error", "", logging.ERROR),
+            (str(logging.WARNING), "Warning", "", logging.WARNING),
+            (str(logging.INFO), "Info", "", logging.INFO),
+            (str(logging.NOTSET), "NotSet", "", logging.NOTSET)
         ]
 
         return levels
 
+    @staticmethod
     def default():
         return str(logging.ERROR)

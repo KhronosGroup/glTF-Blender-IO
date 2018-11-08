@@ -19,12 +19,13 @@
 import struct
 import zlib
 
-class Image():
+
+class Image:
     """
     Image object class to represent a 4-channel RGBA image.
+
     Pixel values are expected to be floating point in the range of [0.0 to 1.0]
     """
-
 
     def __init__(self, width, height, pixels):
         self.width = width
@@ -44,7 +45,8 @@ class Image():
         # reverse the vertical line order and add null bytes at the start
         width_byte_4 = self.width * 4
         raw_data = b"".join(
-            b'\x00' + buf[span:span + width_byte_4] for span in range((self.height - 1) * self.width * 4, -1, - width_byte_4))
+            b'\x00' + buf[span:span + width_byte_4] for span in range(
+                (self.height - 1) * self.width * 4, -1, - width_byte_4))
 
         def png_pack(png_tag, data):
             chunk_head = png_tag + data
@@ -69,20 +71,20 @@ class Image():
 
 def create_img(width, height, r=0.0, g=0.0, b=0.0, a=1.0):
     """
-    Create a new image object with 4 channels and initialize it with the given default values
-    (if no arguments are given, these default to R=0, G=0, B=0, A=1.0)
-    Returns the created image object.
-    """
+    Create a new image object with 4 channels and initialize it with the given default values.
 
+    (if no arguments are given, these default to R=0, G=0, B=0, A=1.0)
+    Return the created image object.
+    """
     return Image(width, height, [r, g, b, a] * (width * height))
 
 
 def create_img_from_pixels(width, height, pixels):
     """
     Create a new image object with 4 channels and initialize it using the given array of pixel data.
-    Returns the created image object.
-    """
 
+    Return the created image object.
+    """
     if pixels is None or len(pixels) != width * height * 4:
         return None
 
@@ -92,21 +94,23 @@ def create_img_from_pixels(width, height, pixels):
 def copy_img_channel(dst_image, dst_channel, src_image, src_channel):
     """
     Copy a single channel (identified by src_channel) from src_image to dst_image (overwriting dst_channel).
-    src_image and dst_image are expected to be image objects created using create_img.
-    Returns True on success, False otherwise.
-    """
 
+    src_image and dst_image are expected to be image objects created using create_img.
+    Return True on success, False otherwise.
+    """
     if dst_image is None or src_image is None:
         return False
 
     if dst_channel < 0 or dst_channel >= dst_image.channels or src_channel < 0 or src_channel >= src_image.channels:
         return False
 
-    if src_image.width != dst_image.width or src_image.height != dst_image.height or src_image.channels != dst_image.channels:
+    if src_image.width != dst_image.width or \
+            src_image.height != dst_image.height or \
+            src_image.channels != dst_image.channels:
         return False
 
     for i in range(0, len(dst_image.pixels), dst_image.channels):
-        dst_image.pixels[i+dst_channel] = src_image.pixels[i+src_channel]
+        dst_image.pixels[i + dst_channel] = src_image.pixels[i + src_channel]
 
     return True
 
@@ -114,9 +118,9 @@ def copy_img_channel(dst_image, dst_channel, src_image, src_channel):
 def test_save_img(image, path):
     """
     Save the given image to a PNG file (specified by path).
-    Returns True on success, False otherwise.
-    """
 
+    Return True on success, False otherwise.
+    """
     if image is None or image.channels != 4:
         return False
 

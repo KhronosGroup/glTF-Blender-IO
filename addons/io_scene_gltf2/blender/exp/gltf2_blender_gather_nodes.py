@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import export_keys
+from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
@@ -49,9 +49,9 @@ def gather_node(blender_object, export_settings):
 def __filter_node(blender_object, export_settings):
     if blender_object.users == 0:
         return False
-    if export_settings[export_keys.SELECTED] and not blender_object.select:
+    if export_settings[gltf2_blender_export_keys.SELECTED] and not blender_object.select:
         return False
-    if not export_settings[export_keys.LAYERS] and not blender_object.layers[0]:
+    if not export_settings[gltf2_blender_export_keys.LAYERS] and not blender_object.layers[0]:
         return False
     if blender_object.dupli_group is not None and not blender_object.dupli_group.layers[0]:
         return False

@@ -16,7 +16,7 @@ import bpy
 import typing
 import os
 
-from . import export_keys
+from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -47,7 +47,7 @@ def __filter_image(sockets_or_slots, export_settings):
 
 
 def __gather_buffer_view(sockets_or_slots, export_settings):
-    if export_settings[export_keys.FORMAT] != 'ASCII':
+    if export_settings[gltf2_blender_export_keys.FORMAT] != 'ASCII':
 
         image = __get_image_data(sockets_or_slots)
         return gltf2_io_binary_data.BinaryData(
@@ -79,7 +79,7 @@ def __gather_name(sockets_or_slots, export_settings):
 
 
 def __gather_uri(sockets_or_slots, export_settings):
-    if export_settings[export_keys.FORMAT] == 'ASCII':
+    if export_settings[gltf2_blender_export_keys.FORMAT] == 'ASCII':
         # as usual we just store the data in place instead of already resolving the references
         return __get_image_data(sockets_or_slots)
     return None

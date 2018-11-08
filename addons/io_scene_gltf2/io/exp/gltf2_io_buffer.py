@@ -19,19 +19,14 @@ from io_scene_gltf2.io.exp import gltf2_io_binary_data
 
 
 class Buffer:
-    """
-    Class representing binary data for use in a glTF file as 'buffer' property
-    """
-    def __init__(self, buffer_index = 0):
+    """Class representing binary data for use in a glTF file as 'buffer' property."""
+
+    def __init__(self, buffer_index=0):
         self.__data = b""
         self.__buffer_index = buffer_index
 
     def add_and_get_view(self, binary_data: gltf2_io_binary_data.BinaryData) -> gltf2_io.BufferView:
-        """
-        Add binary data to the buffer. Returns a glTF BufferView
-        :param binary_data:
-        :return: glTF BufferView on the buffer
-        """
+        """Add binary data to the buffer. Return a glTF BufferView."""
         offset = len(self.__data)
         self.__data += binary_data.data
 

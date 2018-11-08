@@ -19,8 +19,6 @@
 import json
 import struct
 
-from ..com.gltf2_io_debug import *
-
 #
 # Globals
 #
@@ -29,17 +27,15 @@ from ..com.gltf2_io_debug import *
 # Functions
 #
 
-def save_gltf(glTF,
-              export_settings,
-              encoder):
 
+def save_gltf(glTF, export_settings, encoder):
     indent = None
-    separators = separators=(',', ':')
+    separators = separators = (',', ':')
 
     if export_settings['gltf_format'] == 'ASCII' and not export_settings['gltf_strip']:
         indent = 4
         # The comma is typically followed by a newline, so no trailing whitespace is needed on it.
-        separators = separators=(',', ' : ')
+        separators = separators = (',', ' : ')
 
     glTF_encoded = json.dumps(glTF, indent=indent, separators=separators, sort_keys=True, cls=encoder, allow_nan=False)
 

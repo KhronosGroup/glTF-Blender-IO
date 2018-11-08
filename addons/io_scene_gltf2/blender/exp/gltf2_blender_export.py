@@ -16,7 +16,7 @@ import bpy
 import sys
 import traceback
 
-from . import export_keys
+from . import gltf2_blender_export_keys
 from . import gltf2_blender_gather
 from .gltf2_blender_gltf2_exporter import GlTF2Exporter
 from ..com import gltf2_blender_json
@@ -35,20 +35,20 @@ def save(operator,
     #
 
     scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
-    if not export_settings[export_keys.COPYRIGHT]:
-        export_settings[export_keys.COPYRIGHT] = None
-    exporter = GlTF2Exporter(copyright=export_settings[export_keys.COPYRIGHT])
+    if not export_settings[gltf2_blender_export_keys.COPYRIGHT]:
+        export_settings[gltf2_blender_export_keys.COPYRIGHT] = None
+    exporter = GlTF2Exporter(copyright=export_settings[gltf2_blender_export_keys.COPYRIGHT])
     for scene in scenes:
         exporter.add_scene(scene)
     for animation in animations:
         exporter.add_animation(animation)
 
-    if export_settings[export_keys.FORMAT] == 'ASCII':
-        exporter.finalize_buffer(export_settings[export_keys.FILE_DIRECTORY],
-                                 export_settings[export_keys.BINARY_FILENAME])
+    if export_settings[gltf2_blender_export_keys.FORMAT] == 'ASCII':
+        exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
+                                 export_settings[gltf2_blender_export_keys.BINARY_FILENAME])
     else:
-        exporter.finalize_buffer(export_settings[export_keys.FILE_DIRECTORY])
-    exporter.finalize_images(export_settings[export_keys.FILE_DIRECTORY])
+        exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
+    exporter.finalize_images(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
     glTF = exporter.glTF
 
     #
