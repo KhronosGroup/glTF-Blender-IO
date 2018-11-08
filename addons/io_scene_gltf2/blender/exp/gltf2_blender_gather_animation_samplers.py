@@ -17,7 +17,7 @@ import bpy
 import mathutils
 
 import typing
-from . import export_keys
+from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -109,17 +109,17 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     for keyframe in keyframes:
         # Transform the data and extract
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform)
-        if export_settings[export_keys.YUP]:
+        if export_settings[gltf2_blender_export_keys.YUP]:
             value = gltf2_blender_math.swizzle_yup(value, target_datapath)
         keyframe_value = gltf2_blender_math.mathutils_to_gltf(value)
         if keyframe.in_tangent is not None:
             in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform)
-            if export_settings[export_keys.YUP]:
+            if export_settings[gltf2_blender_export_keys.YUP]:
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
             keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value
         if keyframe.out_tangent is not None:
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform)
-            if export_settings[export_keys.YUP]:
+            if export_settings[gltf2_blender_export_keys.YUP]:
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
             keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)
         values += keyframe_value
@@ -158,7 +158,7 @@ def __needs_baking(channels: typing.Tuple[bpy.types.FCurve],
     # if blender_object.type == "ARMATURE":
     #     return True
 
-    if export_settings[export_keys.FORCE_SAMPLING]:
+    if export_settings[gltf2_blender_export_keys.FORCE_SAMPLING]:
         return True
 
     interpolation = channels[0].keyframe_points[0].interpolation

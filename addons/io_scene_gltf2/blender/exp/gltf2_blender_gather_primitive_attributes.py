@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import export_keys
+from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -57,7 +57,7 @@ def __gather_position(blender_primitive, export_settings):
 
 
 def __gather_normal(blender_primitive, export_settings):
-    if export_settings[export_keys.NORMALS]:
+    if export_settings[gltf2_blender_export_keys.NORMALS]:
         normal = blender_primitive["attributes"]['NORMAL']
         return {
             "NORMAL": gltf2_io.Accessor(
@@ -79,7 +79,7 @@ def __gather_normal(blender_primitive, export_settings):
 
 
 def __gather_tangent(blender_primitive, export_settings):
-    if export_settings[export_keys.TANGENTS]:
+    if export_settings[gltf2_blender_export_keys.TANGENTS]:
         if blender_primitive["attributes"].get('TANGENT') is not None:
             tangent = blender_primitive["attributes"]['TANGENT']
             return {
@@ -105,7 +105,7 @@ def __gather_tangent(blender_primitive, export_settings):
 
 def __gather_texcoord(blender_primitive, export_settings):
     attributes = {}
-    if export_settings[export_keys.TEX_COORDS]:
+    if export_settings[gltf2_blender_export_keys.TEX_COORDS]:
         tex_coord_index = 0
         tex_coord_id = 'TEXCOORD_' + str(tex_coord_index)
         while blender_primitive["attributes"].get(tex_coord_id) is not None:
@@ -132,7 +132,7 @@ def __gather_texcoord(blender_primitive, export_settings):
 
 def __gather_colors(blender_primitive, export_settings):
     attributes = {}
-    if export_settings[export_keys.COLORS]:
+    if export_settings[gltf2_blender_export_keys.COLORS]:
         color_index = 0
         color_id = 'COLOR_' + str(color_index)
         while blender_primitive["attributes"].get(color_id) is not None:
@@ -159,7 +159,7 @@ def __gather_colors(blender_primitive, export_settings):
 
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
-    if export_settings[export_keys.SKINS]:
+    if export_settings[gltf2_blender_export_keys.SKINS]:
         bone_index = 0
         joint_id = 'JOINTS_' + str(bone_index)
         weight_id = 'WEIGHTS_' + str(bone_index)

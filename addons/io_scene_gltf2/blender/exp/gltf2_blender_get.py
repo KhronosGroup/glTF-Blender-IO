@@ -18,7 +18,7 @@
 
 import bpy
 
-from . import export_keys
+from . import gltf2_blender_export_keys
 from ...io.exp import gltf2_io_get
 
 #
@@ -351,7 +351,7 @@ def get_image_format(export_settings, blender_image):
     if blender_image.file_format in ['PNG', 'JPEG']:
         return blender_image.file_format
 
-    use_alpha = export_settings[export_keys.FILTERED_IMAGES_USE_ALPHA].get(blender_image.name)
+    use_alpha = export_settings[gltf2_blender_export_keys.FILTERED_IMAGES_USE_ALPHA].get(blender_image.name)
 
     return 'PNG' if use_alpha else 'JPEG'
 

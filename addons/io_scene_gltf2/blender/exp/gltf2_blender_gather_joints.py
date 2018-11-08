@@ -14,7 +14,7 @@
 
 import mathutils
 
-from . import export_keys
+from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
@@ -32,7 +32,7 @@ def gather_joint(blender_bone, export_settings):
     :return: a glTF2 node (acting as a joint)
     """
     axis_basis_change = mathutils.Matrix.Identity(4)
-    if export_settings[export_keys.YUP]:
+    if export_settings[gltf2_blender_export_keys.YUP]:
         axis_basis_change = mathutils.Matrix(
             ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
@@ -43,7 +43,7 @@ def gather_joint(blender_bone, export_settings):
         correction_matrix_local = gltf2_blender_math.multiply(
             blender_bone.parent.bone.matrix_local.inverted(), blender_bone.bone.matrix_local)
     matrix_basis = blender_bone.matrix_basis
-    if export_settings[export_keys.BAKE_SKINS]:
+    if export_settings[gltf2_blender_export_keys.BAKE_SKINS]:
         gltf2_io_debug.print_console("WARNING", "glTF bake skins not supported")
         # matrix_basis = blender_object.convert_space(blender_bone, blender_bone.matrix, from_space='POSE',
         #                                             to_space='LOCAL')
