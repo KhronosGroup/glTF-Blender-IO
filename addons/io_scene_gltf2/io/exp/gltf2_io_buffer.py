@@ -26,9 +26,7 @@ class Buffer:
         self.__buffer_index = buffer_index
 
     def add_and_get_view(self, binary_data: gltf2_io_binary_data.BinaryData) -> gltf2_io.BufferView:
-        """
-        Add binary data to the buffer. Return a glTF BufferView.
-        """
+        """Add binary data to the buffer. Return a glTF BufferView."""
         offset = len(self.__data)
         self.__data += binary_data.data
 
