@@ -75,14 +75,24 @@ class BlenderImage():
                 img.blender_image_name = blender_image.name
                 return
 
-        # Create a temp image, pack, and delete image
-        tmp_image = tempfile.NamedTemporaryFile(delete=False)
-        img_data, img_name = BinaryData.get_image_data(gltf, img_idx)
-        tmp_image.write(img_data)
-        tmp_image.close()
+        # Check if the file is already loaded (packed file)
+        file_creation_needed = True
+        for img_ in bpy.data.images:
+            if img_['gltf_index'] == img_idx:
+                file_creation_needed = False
+                img.blender_image_name = img_.name
+                break
 
-        blender_image = bpy.data.images.load(tmp_image.name)
-        blender_image.pack()
-        blender_image.name = img_name
-        img.blender_image_name = blender_image.name
-        os.remove(tmp_image.name)
+        if file_creation_needed is True:
+            # Create a temp image, pack, and delete image
+            tmp_image = tempfile.NamedTemporaryFile(delete=False)
+            img_data, img_name = BinaryData.get_image_data(gltf, img_idx)
+            tmp_image.write(img_data)
+            tmp_image.close()
+
+            blender_image = bpy.data.images.load(tmp_image.name)
+            blender_image.pack()
+            blender_image.name = img_name
+            img.blender_image_name = blender_image.name
+            blender_image['gltf_index'] = img_idx
+            os.remove(tmp_image.name)
