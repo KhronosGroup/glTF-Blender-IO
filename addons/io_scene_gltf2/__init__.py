@@ -16,12 +16,14 @@
 # Imports
 #
 
+import os
+import bpy
 from bpy_extras.io_utils import ImportHelper
 from bpy.types import Operator, AddonPreferences
 
-from .io.com.gltf2_io_debug import *
-from .io.imp.gltf2_io_gltf import *
-from .blender.imp.gltf2_blender_gltf import *
+from .io.com.gltf2_io_debug import print_console, Log
+from .io.imp.gltf2_io_gltf import glTFImporter
+from .blender.imp.gltf2_blender_gltf import BlenderGlTF
 
 from bpy.props import (CollectionProperty,
                        StringProperty,
