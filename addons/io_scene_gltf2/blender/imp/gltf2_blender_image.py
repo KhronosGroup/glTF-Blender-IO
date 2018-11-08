@@ -15,7 +15,7 @@
 import bpy
 import os
 import tempfile
-from os.path import dirname, join, isfile
+from os.path import dirname, join, isfile, basename
 
 from ...io.imp.gltf2_io_binary import BinaryData
 
@@ -39,7 +39,7 @@ class BlenderImage():
                     return False, None, None
 
             if isfile(join(dirname(gltf.filename), pyimage.uri)):
-                return True, join(dirname(gltf.filename), pyimage.uri), image_name
+                return True, join(dirname(gltf.filename), pyimage.uri), basename(join(dirname(gltf.filename), pyimage.uri))
             else:
                 pyimage.gltf.log.error("Missing file (index " + str(img_idx) + "): " + pyimage.uri)
                 return False, None, None
