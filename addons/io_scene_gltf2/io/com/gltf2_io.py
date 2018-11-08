@@ -38,7 +38,7 @@ def from_union(fs, x):
     for f in fs:
         try:
             return f(x)
-        except Exception as e:
+        except AssertionError:
             _, _, tb = sys.exc_info()
             tracebacks.append(tb)
     for tb in tracebacks:
