@@ -668,14 +668,13 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
                     #
 
                     joint_index = 0
-                    if "Armature" in modifiers:
-                        armature = modifiers["Armature"].object
+                    modifiers_dict = {m.type: m for m in modifiers}
+                    if "ARMATURE" in modifiers_dict:
+                        armature = modifiers_dict["ARMATURE"].object
                         skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
                         for index, j in enumerate(skin.joints):
                             if j.name == vertex_group_name:
                                 joint_index = index
-
-                    print_console("DEBUG", "joint index: {}".format(joint_index))
 
                     joint_weight = group_element.weight
 
