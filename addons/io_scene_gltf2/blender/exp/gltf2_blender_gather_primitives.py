@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+import typing
 
 from .gltf2_blender_export_keys import INDICES, FORCE_INDICES, NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
@@ -29,34 +30,38 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
-def gather_primitives(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
+def gather_primitives(
+        blender_mesh: bpy.types.Mesh,
+        vertex_groups: bpy.types.VertexGroups,
+        modifiers: bpy.types.ObjectModifiers,
+        export_settings
+        ) -> typing.List[gltf2_io.MeshPrimitive]:
     """
-    Extract the mesh primitives from a blender object.
+    Extract the mesh primitives from a blender object
 
-    :param blender_object: the mesh object
-    :param export_settings:
     :return: a list of glTF2 primitives
     """
     primitives = []
-    blender_primitives = gltf2_blender_extract.extract_primitives(None, blender_mesh, vertex_groups, export_settings)
+    blender_primitives = gltf2_blender_extract.extract_primitives(
+        None, blender_mesh, vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
 
         primitive = gltf2_io.MeshPrimitive(
-            attributes=__gather_attributes(internal_primitive, export_settings),
+            attributes=__gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
             extensions=None,
             extras=None,
-            indices=__gather_indices(internal_primitive, export_settings),
-            material=__gather_materials(internal_primitive, export_settings),
+            indices=__gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+            material=__gather_materials(internal_primitive, blender_mesh, modifiers, export_settings),
             mode=None,
-            targets=__gather_targets(internal_primitive, blender_mesh, export_settings)
+            targets=__gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
         )
         primitives.append(primitive)
 
     return primitives
 
 
-def __gather_materials(blender_primitive, export_settings):
+def __gather_materials(blender_primitive, blender_mesh, modifiers, export_settings):
     if not blender_primitive['material']:
         # TODO: fix 'extract_promitives' so that the value of 'material' is None and not empty string
         return None
@@ -64,7 +69,7 @@ def __gather_materials(blender_primitive, export_settings):
     return gltf2_blender_gather_materials.gather_material(material, export_settings)
 
 
-def __gather_indices(blender_primitive, export_settings):
+def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings):
     indices = blender_primitive['indices']
 
     max_index = max(indices)
@@ -99,11 +104,11 @@ def __gather_indices(blender_primitive, export_settings):
     )
 
 
-def __gather_attributes(blender_primitive, export_settings):
+def __gather_attributes(blender_primitive, blender_mesh, modifiers, export_settings):
     return gltf2_blender_gather_primitive_attributes.gather_primitive_attributes(blender_primitive, export_settings)
 
 
-def __gather_targets(blender_primitive, blender_mesh, export_settings):
+def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings):
     if export_settings[MORPH]:
         targets = []
         if blender_mesh.shape_keys is not None:

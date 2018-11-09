@@ -13,49 +13,77 @@
 # limitations under the License.
 
 import bpy
-
+import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
 
 
 @cached
-def gather_mesh(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
-    if not __filter_mesh(blender_mesh, vertex_groups, export_settings):
+def gather_mesh(blender_mesh: bpy.types.Mesh,
+                vertex_groups: bpy.types.VertexGroups,
+                modifiers: bpy.types.ObjectModifiers,
+                export_settings
+                ) -> typing.Optional[gltf2_io.Mesh]:
+    if not __filter_mesh(blender_mesh, vertex_groups, modifiers, export_settings):
         return None
 
     mesh = gltf2_io.Mesh(
-        extensions=__gather_extensions(blender_mesh, vertex_groups, export_settings),
-        extras=__gather_extras(blender_mesh, vertex_groups, export_settings),
-        name=__gather_name(blender_mesh, vertex_groups, export_settings),
-        primitives=__gather_primitives(blender_mesh, vertex_groups, export_settings),
-        weights=__gather_weights(blender_mesh, vertex_groups, export_settings)
+        extensions=__gather_extensions(blender_mesh, vertex_groups, modifiers, export_settings),
+        extras=__gather_extras(blender_mesh, vertex_groups, modifiers, export_settings),
+        name=__gather_name(blender_mesh, vertex_groups, modifiers, export_settings),
+        primitives=__gather_primitives(blender_mesh, vertex_groups, modifiers, export_settings),
+        weights=__gather_weights(blender_mesh, vertex_groups, modifiers, export_settings)
     )
 
     return mesh
 
 
-def __filter_mesh(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
+def __filter_mesh(blender_mesh: bpy.types.Mesh,
+                  vertex_groups: bpy.types.VertexGroups,
+                  modifiers: bpy.types.ObjectModifiers,
+                  export_settings
+                  ) -> bool:
     if blender_mesh.users == 0:
         return False
     return True
 
 
-def __gather_extensions(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
+def __gather_extensions(blender_mesh: bpy.types.Mesh,
+                        vertex_groups: bpy.types.VertexGroups,
+                        modifiers: bpy.types.ObjectModifiers,
+                        export_settings
+                        ) -> typing.Any:
     return None
 
 
-def __gather_extras(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
+def __gather_extras(blender_mesh: bpy.types.Mesh,
+                    vertex_groups: bpy.types.VertexGroups,
+                    modifiers: bpy.types.ObjectModifiers,
+                    export_settings
+                    ) -> typing.Optional[typing.Dict[typing.Any, typing.Any]]:
     return None
 
 
-def __gather_name(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
+def __gather_name(blender_mesh: bpy.types.Mesh,
+                  vertex_groups: bpy.types.VertexGroups,
+                  modifiers: bpy.types.ObjectModifiers,
+                  export_settings
+                  ) -> str:
     return blender_mesh.name
 
 
-def __gather_primitives(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
-    return gltf2_blender_gather_primitives.gather_primitives(blender_mesh, vertex_groups, export_settings)
+def __gather_primitives(blender_mesh: bpy.types.Mesh,
+                        vertex_groups: bpy.types.VertexGroups,
+                        modifiers: bpy.types.ObjectModifiers,
+                        export_settings
+                        ) -> typing.List[gltf2_io.MeshPrimitive]:
+    return gltf2_blender_gather_primitives.gather_primitives(blender_mesh, vertex_groups, modifiers, export_settings)
 
 
-def __gather_weights(blender_mesh: bpy.types.Mesh, vertex_groups: bpy.types.VertexGroups, export_settings):
+def __gather_weights(blender_mesh: bpy.types.Mesh,
+                     vertex_groups: bpy.types.VertexGroups,
+                     modifiers: bpy.types.ObjectModifiers,
+                     export_settings
+                     ) -> typing.Optional[typing.List[float]]:
     return None
