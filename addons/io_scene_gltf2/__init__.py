@@ -492,7 +492,7 @@ class ImportglTF2(Operator, ImportHelper):
 
     filter_glob = StringProperty(default="*.gltf;*.glb", options={'HIDDEN'})
 
-    loglevel = bpy.props.EnumProperty(items=Log.get_levels(), name="Log Level", default=Log.default())
+    loglevel = EnumProperty(items=Log.get_levels(), name="Log Level", default=Log.default())
 
     import_pack_images = BoolProperty(
         name='Pack images',
@@ -506,7 +506,7 @@ class ImportglTF2(Operator, ImportHelper):
         ("SMOOTH", "Smooth Shading", "", 3),
     ]
 
-    import_shading = bpy.props.EnumProperty(items=import_shading_items, name="Shading", default="NORMALS")
+    import_shading = EnumProperty(items=import_shading_items, name="Shading", default="NORMALS")
 
     def draw(self, context):
         layout = self.layout
