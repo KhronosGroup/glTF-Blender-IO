@@ -662,7 +662,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
                     #
 
                     joint_index = 0
-                    joint_weight = 0.0
+                    joint_weight = group_element.weight
 
                     #
 
