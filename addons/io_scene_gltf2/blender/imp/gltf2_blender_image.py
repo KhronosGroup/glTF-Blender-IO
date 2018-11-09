@@ -78,7 +78,7 @@ class BlenderImage():
         # Check if the file is already loaded (packed file)
         file_creation_needed = True
         for img_ in bpy.data.images:
-            if img_['gltf_index'] == img_idx:
+            if hasattr(img_, "gltf_index") and img_['gltf_index'] == img_idx:
                 file_creation_needed = False
                 img.blender_image_name = img_.name
                 break
