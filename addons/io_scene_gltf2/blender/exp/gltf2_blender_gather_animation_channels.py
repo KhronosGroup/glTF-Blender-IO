@@ -17,6 +17,7 @@ import typing
 
 from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name
 from io_scene_gltf2.io.com import gltf2_io
+from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_samplers
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channel_target
@@ -98,20 +99,27 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
         target_property = get_target_property_name(fcurve.data_path)
         object_path = get_target_object_path(fcurve.data_path)
 
-        try:
-            target = blender_object.path_resolve(object_path)
-        except ValueError:
-            if blender_object.type != "MESH":
-                continue
-            # if you need the specific shape key for some reason, this is it:
-            # shape_key = blender_object.data.shape_keys.path_resolve(object_path)
-            target = blender_object.data.shape_keys
+        # find the object affected by this action
+        if not object_path:
+            target = blender_object
+        else:
+            try:
+                target = blender_object.path_resolve(object_path)
+            except ValueError:
+                # if the object is a mesh and the action target path can not be resolved, we know that this is a morph
+                # animation.
+                if blender_object.type == "MESH":
+                    # if you need the specific shape key for some reason, this is it:
+                    # shape_key = blender_object.data.shape_keys.path_resolve(object_path)
+                    target = blender_object.data.shape_keys
+                else:
+                    gltf2_io_debug.print_console("WARNING", "Can not export animations with target {}".format(object_path))
+                    continue
 
+        # group channels by target object and affected property of the target
         target_properties = targets.get(target, {})
-
         channels = target_properties.get(target_property, [])
         channels.append(fcurve)
-
         target_properties[target_property] = channels
         targets[target] = target_properties
 
