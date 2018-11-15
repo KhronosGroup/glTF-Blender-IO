@@ -15,6 +15,7 @@
 import bpy
 import typing
 import os
+import numpy as np
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
@@ -97,6 +98,12 @@ def __get_image_data(sockets_or_slots):
     # For shared ressources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # ressources.
+    def split_pixels_by_channels(image: bpy.types.Image) -> typing.Iterable[typing.Iterable[float]]:
+        pixels = np.array(image.pixels)
+        pixels = pixels.reshape((pixels.shape[0] // image.channels, image.channels))
+        channels = np.split(pixels, pixels.shape[1], axis=1)
+        return channels
+
     if __is_socket(sockets_or_slots):
         results = [__get_tex_from_socket(socket) for socket in sockets_or_slots]
         image = None
@@ -112,9 +119,9 @@ def __get_image_data(sockets_or_slots):
                     }[elem.from_socket.name]
 
             if channel is not None:
-                pixels = [result.shader_node.image.pixels[channel]]
+                pixels = [split_pixels_by_channels(result.shader_node.image)[channel]]
             else:
-                pixels = result.shader_node.image.pixels
+                pixels = split_pixels_by_channels(result.shader_node.image)
 
             file_name = os.path.splitext(result.shader_node.image.name)[0]
 

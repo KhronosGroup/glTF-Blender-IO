@@ -15,12 +15,15 @@
 import typing
 import struct
 import zlib
-
+import numpy as np
 
 class ImageData:
     """Contains channels of an image with raw pixel data."""
+    # TODO: refactor to only operate on numpy arrays
+    # FUTURE_WORK: as a method to allow the node graph to be better supported, we could model some of
+    # the node graph elements with numpy functions
 
-    def __init__(self, name: str, width: int, height: int, channels: typing.List[typing.List[float]] = None):
+    def __init__(self, name: str, width: int, height: int, channels: typing.Optional[typing.List[np.ndarray]] = []):
         if width <= 0 or height <= 0:
             raise ValueError("Image data can not have zero width or height")
         self.name = name
@@ -66,7 +69,20 @@ class ImageData:
         raise ValueError("Unsupported image file type {}".format(mime_type))
 
     def to_png_data(self) -> bytes:
-        buf = bytearray([int(channel * 255.0) for channel in self.channels])
+        channels = self.channels
+
+        # if there is no data, create a single pixel image
+        if not channels:
+            channels = np.zeros((1, 1))
+
+        # fill all channels of the png
+        for _ in range(4 - len(channels)):
+            channels.append(np.ones_like(channels[0]))
+
+        image = np.concatenate(self.channels, axis=1)
+        image = image.flatten()
+        image = (image * 255.0).astype(np.uint8)
+        buf = image.tobytes()
 
         #
         # Taken from 'blender-thumbnailer.py' in Blender.
