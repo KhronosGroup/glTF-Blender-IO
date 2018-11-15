@@ -63,14 +63,15 @@ def mathutils_to_gltf(x: typing.Union[Vector, Quaternion]) -> typing.List[float]
 
 def to_yup() -> Matrix:
     """Transform to Yup."""
-    yup = Matrix.Identity(4)
-    # Flip y axis and move to z
-    yup[1][1] = 0
-    yup[1][2] = -1
-    # Move z axis to y
-    yup[2][2] = 0
-    yup[2][1] = 1
-    return yup
+    return Matrix(
+        ((1.0, 0.0, 0.0, 0.0),
+         (0.0, 0.0, 1.0, 0.0),
+         (0.0, -1.0, 0.0, 0.0),
+         (0.0, 0.0, 0.0, 1.0))
+    )
+
+
+to_zup = to_yup
 
 
 def swizzle_yup(v: typing.Union[Vector, Quaternion], data_path: str) -> typing.Union[Vector, Quaternion]:

@@ -16,6 +16,7 @@
 import bpy
 import mathutils
 import typing
+import math
 
 from . import gltf2_blender_export_keys
 from mathutils import Matrix
@@ -110,16 +111,16 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     if blender_object.type == "ARMATURE":
         bone = blender_object.path_resolve(get_target_object_path(target_datapath))
         if isinstance(bone, bpy.types.PoseBone):
-            axis_basis_change = mathutils.Matrix.Identity(4)
-            # if export_settings[gltf2_blender_export_keys.YUP]:
-            #     axis_basis_change = mathutils.Matrix(
-            #         ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-
             transform = bone.bone.matrix_local
-            #transform = gltf2_blender_math.multiply(transform, axis_basis_change)
             if bone.parent is not None:
-                parent_transform = gltf2_blender_math.multiply(axis_basis_change, bone.parent.bone.matrix_local)
+                parent_transform = bone.parent.bone.matrix_local
                 transform = gltf2_blender_math.multiply(parent_transform.inverted(), transform)
+                # if not export_settings[gltf2_blender_export_keys.YUP]:
+                #     transform = gltf2_blender_math.multiply(gltf2_blender_math.to_zup(), transform)
+            else:
+                # only apply the y-up conversion to root bones, as child bones already are in the y-up space
+                if export_settings[gltf2_blender_export_keys.YUP]:
+                    transform = gltf2_blender_math.multiply(gltf2_blender_math.to_yup(), transform)
 
     values = []
     for keyframe in keyframes:
