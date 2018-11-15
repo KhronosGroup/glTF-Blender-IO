@@ -1,6 +1,4 @@
-#!/bin/sh
-#
-# Copyright (c) 2018 The Khronos Group Inc.
+# Copyright 2018 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,18 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-command=test
-if [[ $1 == "--bail" ]]
-then
-	command=test-bail
-fi
 
-docker build -t gltf-io-test -f Dockerfile.tests .
+def get_target_property_name(data_path: str) -> str:
+    """Retrieve target property."""
+    return data_path.rsplit('.', 1)[-1]
 
-# TODO: find a more elegant way to do this
-docker run -t gltf-io-test npm run $command
-ID=$(docker ps -l -q)
-docker cp $ID:/tests/mochawesome-report/ . 
-docker cp $ID:/tests/scenes/ .
-docker cp $ID:/tests/roundtrip/ .
-docker rm $ID
+
+def get_target_object_path(data_path: str) -> str:
+    """Retrieve target object data path without property"""
+    path_split = data_path.rsplit('.', 1)
+    self_targeting = len(path_split) < 2
+    if self_targeting:
+        return ""
+    return path_split[0]

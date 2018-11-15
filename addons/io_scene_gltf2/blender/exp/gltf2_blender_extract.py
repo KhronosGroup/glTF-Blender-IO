@@ -21,6 +21,7 @@ from mathutils.geometry import tessellate_polygon
 
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 #
 # Globals
@@ -401,7 +402,7 @@ def extract_primitive_pack(a, indices, use_tangents):
     return result_primitive
 
 
-def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_settings):
+def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, export_settings):
     """
     Extract primitives from a mesh. Polygons are triangulated and sorted by material.
 
@@ -661,11 +662,23 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, export_setting
 
                     #
 
-                    joint_index = 0
-                    joint_weight = 0.0
+                    vertex_group_index = group_element.group
+                    vertex_group_name = blender_vertex_groups[vertex_group_index].name
 
                     #
 
+                    joint_index = 0
+                    modifiers_dict = {m.type: m for m in modifiers}
+                    if "ARMATURE" in modifiers_dict:
+                        armature = modifiers_dict["ARMATURE"].object
+                        skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
+                        for index, j in enumerate(skin.joints):
+                            if j.name == vertex_group_name:
+                                joint_index = index
+
+                    joint_weight = group_element.weight
+
+                    #
                     joint.append(joint_index)
                     weight.append(joint_weight)
 

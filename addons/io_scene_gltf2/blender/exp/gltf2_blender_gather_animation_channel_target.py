@@ -55,7 +55,8 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
     if blender_object.type == "ARMATURE":
         # TODO: get joint from fcurve data_path and gather_joint
         blender_bone = blender_object.path_resolve(channels[0].data_path.rsplit('.', 1)[0])
-        return gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
+        if isinstance(blender_bone, bpy.types.PoseBone):
+            return gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
 
     return gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
 
