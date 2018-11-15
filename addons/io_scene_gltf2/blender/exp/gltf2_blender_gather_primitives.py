@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import bpy
-import typing
+from typing import List, Optional
 
 from .gltf2_blender_export_keys import INDICES, FORCE_INDICES, NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
@@ -32,10 +32,10 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 @cached
 def gather_primitives(
         blender_mesh: bpy.types.Mesh,
-        vertex_groups: bpy.types.VertexGroups,
-        modifiers: bpy.types.ObjectModifiers,
+        vertex_groups: Optional[bpy.types.VertexGroups],
+        modifiers: Optional[bpy.types.ObjectModifiers],
         export_settings
-        ) -> typing.List[gltf2_io.MeshPrimitive]:
+        ) -> List[gltf2_io.MeshPrimitive]:
     """
     Extract the mesh primitives from a blender object
 

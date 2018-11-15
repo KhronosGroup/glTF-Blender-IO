@@ -106,6 +106,9 @@ def __gather_mesh(blender_object, export_settings):
         modifiers = blender_object.modifiers
         if len(vertex_groups) == 0:
             vertex_groups = None
+        if len(modifiers) == 0:
+            modifiers = None
+
         return gltf2_blender_gather_mesh.gather_mesh(blender_object.data, vertex_groups, modifiers, export_settings)
     else:
         return None
