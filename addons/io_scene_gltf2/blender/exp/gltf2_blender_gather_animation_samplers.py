@@ -292,7 +292,7 @@ def __gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings
             # compute tangents for cubic spline interpolation
             if channels[0].keyframe_points[0].interpolation == "BEZIER":
                 # Construct the in tangent
-                if time == start:
+                if time == times[0]:
                     # start in-tangent has zero length
                     key.in_tangent = [0.0 for _ in channels]
                 else:
@@ -303,7 +303,7 @@ def __gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings
                         for c in channels
                     ]
                 # Construct the out tangent
-                if time == end:
+                if time == times[-1]:
                     # end out-tangent has zero length
                     key.out_tangent = [0.0 for _ in channels]
                 else:
