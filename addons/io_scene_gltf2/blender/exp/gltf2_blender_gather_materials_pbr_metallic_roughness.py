@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
+
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 from io_scene_gltf2.blender.exp import gltf2_blender_get
@@ -41,9 +43,12 @@ def __filter_pbr_material(blender_material, export_settings):
 
 
 def __gather_base_color_factor(blender_material, export_settings):
-    # TODO
+    base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Base Color")
+    if base_color_socket is None:
+        base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "BaseColor")
+    if isinstance(base_color_socket, bpy.types.NodeSocket):
+        return list(base_color_socket.default_value)
     return None
-
 
 def __gather_base_color_texture(blender_material, export_settings):
     base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Base Color")
@@ -61,7 +66,9 @@ def __gather_extras(blender_material, export_settings):
 
 
 def __gather_metallic_factor(blender_material, export_settings):
-    # TODO
+    metallic_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Metallic")
+    if isinstance(metallic_socket, bpy.types.NodeSocket):
+        return metallic_socket.default_value
     return None
 
 
@@ -79,4 +86,7 @@ def __gather_metallic_roughness_texture(blender_material, export_settings):
 
 
 def __gather_roughness_factor(blender_material, export_settings):
+    roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Roughness")
+    if isinstance(roughness_socket, bpy.types.NodeSocket):
+        return roughness_socket.default_value
     return None

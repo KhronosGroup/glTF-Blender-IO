@@ -20,7 +20,7 @@ import bpy
 
 from . import gltf2_blender_export_keys
 from ...io.exp import gltf2_io_get
-
+from io_scene_gltf2.io.com import gltf2_io_debug
 #
 # Globals
 #
@@ -50,13 +50,20 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
             if not links:
                 return None
             return links[0].to_socket
-        links = [link for link in blender_material.node_tree.links if link.to_socket.name == name]
-        if not links:
+        i = [input for input in blender_material.node_tree.inputs]
+        o = [output for output in blender_material.node_tree.outputs]
+        nodes = [node for node in blender_material.node_tree.nodes]
+        nodes = filter(lambda n: isinstance(n, bpy.types.ShaderNodeBsdfPrincipled), nodes)
+        inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
+        if not inputs:
             return None
-        return links[0].to_socket
+        return inputs[0]
     elif bpy.app.version < (2, 80, 0):  # blender 2.8 removed texture_slots
         if name != 'Base Color':
             return None
+
+        gltf2_io_debug.print_console("WARNING", "You are using texture slots, which are deprecated. In future versions"
+                                                "of the glTF exporter they will not be supported any more")
 
         for blender_texture_slot in blender_material.texture_slots:
             if blender_texture_slot and blender_texture_slot.texture and \

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
@@ -87,7 +88,9 @@ def __gather_double_sided(blender_material, export_settings):
 
 
 def __gather_emmissive_factor(blender_material, export_settings):
-    # TODO
+    emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
+    if isinstance(emissive, bpy.types.NodeSocket):
+        return emissive.default_value
     return None
 
 
