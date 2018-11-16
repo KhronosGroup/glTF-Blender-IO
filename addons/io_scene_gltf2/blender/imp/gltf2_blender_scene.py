@@ -49,8 +49,9 @@ class BlenderScene():
         else:
             gltf.blender_scene = pyscene.name
 
-        for node_idx in pyscene.nodes:
-            BlenderNode.create(gltf, node_idx, None)  # None => No parent
+        if pyscene.nodes is not None:
+            for node_idx in pyscene.nodes:
+                BlenderNode.create(gltf, node_idx, None)  # None => No parent
 
         # Now that all mesh / bones are created, create vertex groups on mesh
         if gltf.data.skins:
@@ -79,5 +80,6 @@ class BlenderScene():
             bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj_rotation)
             obj_rotation.hide_viewport = True
 
-        for node_idx in pyscene.nodes:
-            bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation
+        if pyscene.nodes is not None:
+            for node_idx in pyscene.nodes:
+                bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation
