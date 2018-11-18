@@ -32,7 +32,7 @@ class GlTF2Exporter:
             copyright=copyright,
             extensions=None,
             extras=None,
-            generator='Khronos Blender glTF 2.0 I/O (Exp)',
+            generator='Khronos Blender glTF 2.0 I/O',
             min_version=None,
             version='2.0')
 
