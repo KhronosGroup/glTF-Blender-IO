@@ -30,7 +30,7 @@ class BlenderNodeAnim():
         elif interpolation == "STEP":
             kf.interpolation = 'CONSTANT'
         elif interpolation == "CUBICSPLINE":
-            kf.interpolation = 'BEZIER'  # TODO
+            kf.interpolation = 'BEZIER'
         else:
             kf.interpolation = 'BEZIER'
 
@@ -66,7 +66,11 @@ class BlenderNodeAnim():
                 if channel.target.path == "translation":
                     blender_path = "location"
                     for idx, key in enumerate(keys):
-                        obj.location = Vector(Conversion.loc_gltf_to_blender(list(values[idx])))
+                        if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
+                            # TODO manage tangent?
+                            obj.location = Vector(Conversion.loc_gltf_to_blender(list(values[idx * 3 + 1])))
+                        else:
+                            obj.location = Vector(Conversion.loc_gltf_to_blender(list(values[idx])))
                         obj.keyframe_insert(blender_path, frame=key[0] * fps, group='location')
 
                     # Setting interpolation
@@ -78,7 +82,11 @@ class BlenderNodeAnim():
                 elif channel.target.path == "rotation":
                     blender_path = "rotation_quaternion"
                     for idx, key in enumerate(keys):
-                        obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(values[idx])
+                        if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
+                            # TODO manage tangent?
+                            obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(values[idx * 3 + 1])
+                        else:
+                            obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(values[idx])
                         obj.keyframe_insert(blender_path, frame=key[0] * fps, group='rotation')
 
                     # Setting interpolation
@@ -90,7 +98,11 @@ class BlenderNodeAnim():
                 elif channel.target.path == "scale":
                     blender_path = "scale"
                     for idx, key in enumerate(keys):
-                        obj.scale = Vector(Conversion.scale_gltf_to_blender(list(values[idx])))
+                        # TODO manage tangent?
+                        if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
+                            obj.scale = Vector(Conversion.scale_gltf_to_blender(list(values[idx * 3 + 1])))
+                        else:
+                            obj.scale = Vector(Conversion.scale_gltf_to_blender(list(values[idx])))
                         obj.keyframe_insert(blender_path, frame=key[0] * fps, group='scale')
 
                     # Setting interpolation
