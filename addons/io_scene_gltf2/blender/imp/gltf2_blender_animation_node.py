@@ -29,8 +29,6 @@ class BlenderNodeAnim():
             kf.interpolation = 'LINEAR'
         elif interpolation == "STEP":
             kf.interpolation = 'CONSTANT'
-        elif interpolation == "CATMULLROMSPLINE":
-            kf.interpolation = 'BEZIER'  # TODO
         elif interpolation == "CUBICSPLINE":
             kf.interpolation = 'BEZIER'  # TODO
         else:
