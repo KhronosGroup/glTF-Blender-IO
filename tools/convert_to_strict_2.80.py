@@ -66,12 +66,15 @@ for root, dirs, files in walk(INPUT):
                             else:
                                 # else is now finished
                                 erase_mode = False
+                                mode = "IF"
                                 f_output.write(line + "\n")
 
                         elif current_nb_spaces < nb_spaces:
-                            # erase mode is finished
-                            # 2 cases: else is finished, or there is no else
-                            erase_mode = False
+                            if len(line) != 0:
+                                # erase mode is finished
+                                # 2 cases: else is finished, or there is no else
+                                erase_mode = False
+                                mode = "IF"
                             f_output.write(line + "\n")
                         else:
                             if else_mode == "ELSE":
