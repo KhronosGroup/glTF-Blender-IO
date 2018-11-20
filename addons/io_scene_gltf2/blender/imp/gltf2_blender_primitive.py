@@ -22,6 +22,8 @@ from ...io.imp.gltf2_io_binary import BinaryData
 
 class BlenderPrimitive():
     """Blender Primitive."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, pyprimitive, verts, edges, faces):
@@ -70,7 +72,7 @@ class BlenderPrimitive():
         if 'NORMAL' in pyprimitive.attributes.keys():
             normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
             for poly in mesh.polygons:
-                if gltf.import_settings['shading'] == "NORMALS":
+                if gltf.import_settings['import_shading'] == "NORMALS":
                     calc_norm_vertices = []
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                         vert_idx = mesh.loops[loop_idx].vertex_index
@@ -95,9 +97,9 @@ class BlenderPrimitive():
                                 if not calc_normal.dot(vec) > 0.9999999:
                                     poly.use_smooth = True
                                     break
-                elif gltf.import_settings['shading'] == "FLAT":
+                elif gltf.import_settings['import_shading'] == "FLAT":
                     poly.use_smooth = False
-                elif gltf.import_settings['shading'] == "SMOOTH":
+                elif gltf.import_settings['import_shading'] == "SMOOTH":
                     poly.use_smooth = True
                 else:
                     pass  # Should not happend

@@ -19,6 +19,8 @@ from os.path import dirname, join, isfile, basename
 
 class BinaryData():
     """Binary reader."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def get_binary_from_accessor(gltf, accessor_idx):

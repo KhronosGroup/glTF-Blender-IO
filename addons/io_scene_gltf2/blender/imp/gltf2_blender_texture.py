@@ -17,6 +17,8 @@ from .gltf2_blender_image import BlenderImage
 
 class BlenderTextureInfo():
     """Blender Texture info."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, pytextureinfo_idx):
@@ -26,6 +28,8 @@ class BlenderTextureInfo():
 
 class BlenderTexture():
     """Blender Texture."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, pytexture_idx):

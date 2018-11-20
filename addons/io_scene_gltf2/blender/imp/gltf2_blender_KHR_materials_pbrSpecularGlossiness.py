@@ -18,6 +18,8 @@ from .gltf2_blender_texture import BlenderTextureInfo
 
 class BlenderKHR_materials_pbrSpecularGlossiness():
     """Blender KHR_materials_pbrSpecularGlossiness extension."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, pbrSG, mat_name, vertex_color):

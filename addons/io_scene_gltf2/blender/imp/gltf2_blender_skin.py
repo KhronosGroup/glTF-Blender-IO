@@ -21,6 +21,8 @@ from ...io.imp.gltf2_io_binary import BinaryData
 
 class BlenderSkin():
     """Blender Skinning / Armature."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create_armature(gltf, skin_id, parent):

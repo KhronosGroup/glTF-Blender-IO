@@ -21,6 +21,8 @@ from ..com.gltf2_blender_conversion import Conversion
 
 class BlenderNode():
     """Blender Node."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, node_idx, parent):

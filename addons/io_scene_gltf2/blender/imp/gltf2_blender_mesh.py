@@ -22,6 +22,8 @@ from ..com.gltf2_blender_conversion import Conversion
 
 class BlenderMesh():
     """Blender Mesh."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, mesh_idx, node_idx, parent):

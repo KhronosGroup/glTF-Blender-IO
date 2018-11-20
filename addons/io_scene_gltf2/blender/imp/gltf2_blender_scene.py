@@ -22,6 +22,8 @@ from .gltf2_blender_animation import BlenderAnimation
 
 class BlenderScene():
     """Blender Scene."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, scene_idx):

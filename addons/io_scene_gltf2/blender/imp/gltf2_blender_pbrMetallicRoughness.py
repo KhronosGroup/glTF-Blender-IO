@@ -18,6 +18,8 @@ from .gltf2_blender_texture import BlenderTextureInfo
 
 class BlenderPbr():
     """Blender Pbr."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     def create(gltf, pypbr, mat_name, vertex_color):
         """Pbr creation."""

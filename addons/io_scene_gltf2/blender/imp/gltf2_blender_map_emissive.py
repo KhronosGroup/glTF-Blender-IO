@@ -19,6 +19,8 @@ from ..com.gltf2_blender_material_helpers import get_preoutput_node_output
 
 class BlenderEmissiveMap():
     """Blender Emissive Map."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, material_idx):

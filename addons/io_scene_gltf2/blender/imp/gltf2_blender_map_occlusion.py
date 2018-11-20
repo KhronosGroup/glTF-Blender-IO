@@ -18,6 +18,8 @@ from .gltf2_blender_texture import BlenderTextureInfo
 
 class BlenderOcclusionMap():
     """Blender Occlusion map."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, material_idx):

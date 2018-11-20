@@ -19,10 +19,16 @@ from ...io.com.gltf2_io_trs import TRS
 
 class BlenderGlTF():
     """Main glTF import class."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf):
         """Create glTF main method."""
+        if bpy.app.version < (2, 80, 0):
+            bpy.context.scene.render.engine = 'CYCLES'
+        else:
+            bpy.context.scene.render.engine = 'BLENDER_EEVEE'
         BlenderGlTF.pre_compute(gltf)
 
         for scene_idx, scene in enumerate(gltf.data.scenes):

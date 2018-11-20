@@ -23,6 +23,8 @@ from ...io.imp.gltf2_io_binary import BinaryData
 # Note that Image is not a glTF2.0 object
 class BlenderImage():
     """Manage Image."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def get_image_path(gltf, img_idx):
@@ -56,7 +58,7 @@ class BlenderImage():
 
         img.blender_image_name = None
 
-        if gltf.import_settings['pack_images'] is False:
+        if gltf.import_settings['import_pack_images'] is False:
 
             # Images are not packed (if image is a real file)
             real, path, img_name = BlenderImage.get_image_path(gltf, img_idx)

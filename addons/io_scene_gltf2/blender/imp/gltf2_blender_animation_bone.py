@@ -21,6 +21,8 @@ from ...io.imp.gltf2_io_binary import BinaryData
 
 class BlenderBoneAnim():
     """Blender Bone Animation."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def set_interpolation(interpolation, kf):

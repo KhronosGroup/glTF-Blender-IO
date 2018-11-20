@@ -18,6 +18,8 @@ from .gltf2_blender_animation_node import BlenderNodeAnim
 
 class BlenderAnimation():
     """Dispatch Animation to bone or object animation."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):

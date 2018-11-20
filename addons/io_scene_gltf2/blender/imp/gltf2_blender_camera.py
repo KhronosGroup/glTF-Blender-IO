@@ -17,6 +17,8 @@ import bpy
 
 class BlenderCamera():
     """Blender Camera."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
     def create(gltf, camera_id):

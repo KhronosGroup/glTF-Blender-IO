@@ -501,13 +501,12 @@ class ImportglTF2(Operator, ImportHelper):
         default=True
     )
 
-    import_shading_items = [
-        ("NORMALS", "Use Normal Data", "", 1),
-        ("FLAT", "Flat Shading", "", 2),
-        ("SMOOTH", "Smooth Shading", "", 3),
-    ]
-
-    import_shading = EnumProperty(items=import_shading_items, name="Shading", default="NORMALS")
+    import_shading = EnumProperty(
+        name="Shading",
+        items=(("NORMALS", "Use Normal Data", ""),
+               ("FLAT", "Flat Shading", ""),
+               ("SMOOTH", "Smooth Shading", "")),
+        default="NORMALS")
 
     def draw(self, context):
         layout = self.layout
@@ -520,15 +519,7 @@ class ImportglTF2(Operator, ImportHelper):
         return self.import_gltf2(context)
 
     def import_gltf2(self, context):
-        if bpy.app.version < (2, 80, 0):
-            bpy.context.scene.render.engine = 'CYCLES'
-        else:
-            bpy.context.scene.render.engine = 'BLENDER_EEVEE'
-
-        import_settings = {}
-        import_settings['loglevel'] = self.loglevel
-        import_settings['pack_images'] = self.import_pack_images
-        import_settings['shading'] = self.import_shading
+        import_settings = self.as_keywords()
 
         self.gltf_importer = glTFImporter(self.filepath, import_settings)
         success, txt = self.gltf_importer.read()
