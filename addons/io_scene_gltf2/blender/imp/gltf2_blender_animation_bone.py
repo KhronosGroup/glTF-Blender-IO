@@ -15,7 +15,7 @@
 import bpy
 from mathutils import Matrix
 
-from ..com.gltf2_blender_conversion import Conversion
+from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_to_matrix
 from ...io.imp.gltf2_io_binary import BinaryData
 
 
@@ -54,9 +54,9 @@ class BlenderBoneAnim():
         for idx, key in enumerate(keys):
             if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
                 # TODO manage tangent?
-                translation_keyframe = Conversion.loc_gltf_to_blender(values[idx * 3 + 1])
+                translation_keyframe = loc_gltf_to_blender(values[idx * 3 + 1])
             else:
-                translation_keyframe = Conversion.loc_gltf_to_blender(values[idx])
+                translation_keyframe = loc_gltf_to_blender(values[idx])
             if not node.parent:
                 parent_mat = Matrix()
             else:
@@ -100,9 +100,9 @@ class BlenderBoneAnim():
         for idx, key in enumerate(keys):
             if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
                 # TODO manage tangent?
-                quat_keyframe = Conversion.quaternion_gltf_to_blender(values[idx * 3 + 1])
+                quat_keyframe = quaternion_gltf_to_blender(values[idx * 3 + 1])
             else:
-                quat_keyframe = Conversion.quaternion_gltf_to_blender(values[idx])
+                quat_keyframe = quaternion_gltf_to_blender(values[idx])
             if not node.parent:
                 if bpy.app.version < (2, 80, 0):
                     bone.rotation_quaternion = bind_rotation.inverted() * quat_keyframe
@@ -138,14 +138,14 @@ class BlenderBoneAnim():
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
-        bind_scale = Conversion.scale_to_matrix(node.blender_bone_matrix.to_scale())
+        bind_scale = scale_to_matrix(node.blender_bone_matrix.to_scale())
 
         for idx, key in enumerate(keys):
             if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
                 # TODO manage tangent?
-                scale_mat = Conversion.scale_to_matrix(Conversion.loc_gltf_to_blender(values[idx * 3 + 1]))
+                scale_mat = scale_to_matrix(loc_gltf_to_blender(values[idx * 3 + 1]))
             else:
-                scale_mat = Conversion.scale_to_matrix(Conversion.loc_gltf_to_blender(values[idx]))
+                scale_mat = scale_to_matrix(loc_gltf_to_blender(values[idx]))
             if not node.parent:
                 if bpy.app.version < (2, 80, 0):
                     bone.scale = (bind_scale.inverted() * scale_mat).to_scale()
@@ -159,11 +159,11 @@ class BlenderBoneAnim():
 
                 if bpy.app.version < (2, 80, 0):
                     bone.scale = (
-                        bind_scale.inverted() * Conversion.scale_to_matrix(parent_mat.to_scale()) * scale_mat
+                        bind_scale.inverted() * scale_to_matrix(parent_mat.to_scale()) * scale_mat
                     ).to_scale()
                 else:
                     bone.scale = (
-                        bind_scale.inverted() @ Conversion.scale_to_matrix(parent_mat.to_scale()) @ scale_mat
+                        bind_scale.inverted() @ scale_to_matrix(parent_mat.to_scale()) @ scale_mat
                     ).to_scale()
 
             bone.keyframe_insert(blender_path, frame=key[0] * fps, group='scale')

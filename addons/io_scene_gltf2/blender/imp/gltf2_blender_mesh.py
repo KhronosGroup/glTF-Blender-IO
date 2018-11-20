@@ -17,7 +17,7 @@ import bmesh
 
 from .gltf2_blender_primitive import BlenderPrimitive
 from ...io.imp.gltf2_io_binary import BinaryData
-from ..com.gltf2_blender_conversion import Conversion
+from ..com.gltf2_blender_conversion import loc_gltf_to_blender
 
 
 class BlenderMesh():
@@ -118,7 +118,7 @@ class BlenderMesh():
 
                     shape = vert[shape_layer]
 
-                    co = Conversion.loc_gltf_to_blender(list(pos[vert.index - offset_idx]))
+                    co = loc_gltf_to_blender(list(pos[vert.index - offset_idx]))
                     shape.x = obj.data.vertices[vert.index].co.x + co[0]
                     shape.y = obj.data.vertices[vert.index].co.y + co[1]
                     shape.z = obj.data.vertices[vert.index].co.z + co[2]

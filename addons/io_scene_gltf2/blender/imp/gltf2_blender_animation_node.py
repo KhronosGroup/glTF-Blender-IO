@@ -15,7 +15,7 @@
 import bpy
 from mathutils import Vector
 
-from ..com.gltf2_blender_conversion import Conversion
+from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_gltf_to_blender
 from ...io.imp.gltf2_io_binary import BinaryData
 
 
@@ -70,9 +70,9 @@ class BlenderNodeAnim():
                     for idx, key in enumerate(keys):
                         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
                             # TODO manage tangent?
-                            obj.location = Vector(Conversion.loc_gltf_to_blender(list(values[idx * 3 + 1])))
+                            obj.location = Vector(loc_gltf_to_blender(list(values[idx * 3 + 1])))
                         else:
-                            obj.location = Vector(Conversion.loc_gltf_to_blender(list(values[idx])))
+                            obj.location = Vector(loc_gltf_to_blender(list(values[idx])))
                         obj.keyframe_insert(blender_path, frame=key[0] * fps, group='location')
 
                     # Setting interpolation
@@ -86,9 +86,9 @@ class BlenderNodeAnim():
                     for idx, key in enumerate(keys):
                         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
                             # TODO manage tangent?
-                            obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(values[idx * 3 + 1])
+                            obj.rotation_quaternion = quaternion_gltf_to_blender(values[idx * 3 + 1])
                         else:
-                            obj.rotation_quaternion = Conversion.quaternion_gltf_to_blender(values[idx])
+                            obj.rotation_quaternion = quaternion_gltf_to_blender(values[idx])
                         obj.keyframe_insert(blender_path, frame=key[0] * fps, group='rotation')
 
                     # Setting interpolation
@@ -102,9 +102,9 @@ class BlenderNodeAnim():
                     for idx, key in enumerate(keys):
                         # TODO manage tangent?
                         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
-                            obj.scale = Vector(Conversion.scale_gltf_to_blender(list(values[idx * 3 + 1])))
+                            obj.scale = Vector(scale_gltf_to_blender(list(values[idx * 3 + 1])))
                         else:
-                            obj.scale = Vector(Conversion.scale_gltf_to_blender(list(values[idx])))
+                            obj.scale = Vector(scale_gltf_to_blender(list(values[idx])))
                         obj.keyframe_insert(blender_path, frame=key[0] * fps, group='scale')
 
                     # Setting interpolation

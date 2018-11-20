@@ -14,36 +14,28 @@
 
 from mathutils import Matrix, Quaternion
 
+def matrix_gltf_to_blender(mat_input):
+    """Matrix from glTF format to Blender format."""
+    mat = Matrix([mat_input[0:4], mat_input[4:8], mat_input[8:12], mat_input[12:16]])
+    mat.transpose()
+    return mat
 
-class Conversion():
-    """Conversion class."""
+def loc_gltf_to_blender(loc):
+    """Location."""
+    return loc
 
-    @staticmethod
-    def matrix_gltf_to_blender(mat_input):
-        """Matrix from glTF format to Blender format."""
-        mat = Matrix([mat_input[0:4], mat_input[4:8], mat_input[8:12], mat_input[12:16]])
-        mat.transpose()
-        return mat
+def scale_gltf_to_blender(scale):
+    """Scaling."""
+    return scale
 
-    @staticmethod
-    def loc_gltf_to_blender(loc):
-        """Location."""
-        return loc
+def quaternion_gltf_to_blender(q):
+    """Quaternion from glTF to Blender."""
+    return Quaternion([q[3], q[0], q[1], q[2]])
 
-    @staticmethod
-    def scale_gltf_to_blender(scale):
-        """Scaling."""
-        return scale
+def scale_to_matrix(scale):
+    """Scale to matrix."""
+    mat = Matrix()
+    for i in range(3):
+        mat[i][i] = scale[i]
 
-    @staticmethod
-    def quaternion_gltf_to_blender(q):
-        """Quaternion from glTF to Blender."""
-        return Quaternion([q[3], q[0], q[1], q[2]])
-
-    def scale_to_matrix(scale):
-        """Scale to matrix."""
-        mat = Matrix()
-        for i in range(3):
-            mat[i][i] = scale[i]
-
-        return mat
+    return mat

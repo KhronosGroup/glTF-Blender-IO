@@ -15,7 +15,7 @@
 
 import bpy
 from mathutils import Vector, Matrix
-from ..com.gltf2_blender_conversion import Conversion
+from ..com.gltf2_blender_conversion import matrix_gltf_to_blender, scale_to_matrix
 from ...io.imp.gltf2_io_binary import BinaryData
 
 
@@ -58,7 +58,7 @@ class BlenderSkin():
             inverse_bind_matrices = BinaryData.get_data_from_accessor(gltf, pyskin.inverse_bind_matrices)
             # Needed to keep scale in matrix, as bone.matrix seems to drop it
             if index_in_skel < len(inverse_bind_matrices):
-                pynode.blender_bone_matrix = Conversion.matrix_gltf_to_blender(
+                pynode.blender_bone_matrix = matrix_gltf_to_blender(
                     inverse_bind_matrices[index_in_skel]
                 ).inverted()
                 bone.matrix = pynode.blender_bone_matrix
@@ -80,9 +80,9 @@ class BlenderSkin():
         # location is actual bone location minus it's original (bind) location
         bind_location = Matrix.Translation(pynode.blender_bone_matrix.to_translation())
         bind_rotation = pynode.blender_bone_matrix.to_quaternion()
-        bind_scale = Conversion.scale_to_matrix(pynode.blender_bone_matrix.to_scale())
+        bind_scale = scale_to_matrix(pynode.blender_bone_matrix.to_scale())
 
-        location, rotation, scale = Conversion.matrix_gltf_to_blender(pynode.transform).decompose()
+        location, rotation, scale = matrix_gltf_to_blender(pynode.transform).decompose()
         if parent is not None and hasattr(gltf.data.nodes[parent], "blender_bone_matrix"):
             parent_mat = gltf.data.nodes[parent].blender_bone_matrix
 
@@ -103,13 +103,13 @@ class BlenderSkin():
                     (bind_rotation.
                         to_matrix().to_4x4().inverted() * parent_mat * rotation.to_matrix().to_4x4()).to_quaternion()
                 obj.pose.bones[pynode.blender_bone_name].scale = \
-                    (bind_scale.inverted() * parent_mat * Conversion.scale_to_matrix(scale)).to_scale()
+                    (bind_scale.inverted() * parent_mat * scale_to_matrix(scale)).to_scale()
             else:
                 obj.pose.bones[pynode.blender_bone_name].rotation_quaternion = \
                     (bind_rotation.to_matrix().to_4x4().inverted() @ parent_mat @
                         rotation.to_matrix().to_4x4()).to_quaternion()
                 obj.pose.bones[pynode.blender_bone_name].scale = \
-                    (bind_scale.inverted() @ parent_mat @ Conversion.scale_to_matrix(scale)).to_scale()
+                    (bind_scale.inverted() @ parent_mat @ scale_to_matrix(scale)).to_scale()
 
         else:
             if bpy.app.version < (2, 80, 0):

@@ -16,7 +16,7 @@ import bpy
 from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
 from .gltf2_blender_skin import BlenderSkin
-from ..com.gltf2_blender_conversion import Conversion
+from ..com.gltf2_blender_conversion import scale_to_matrix, matrix_gltf_to_blender
 
 
 class BlenderNode():
@@ -164,7 +164,7 @@ class BlenderNode():
                         .pose.bones[node.blender_bone_name].matrix.to_translation().copy()
                     bone_rot = bpy.data.objects[node.blender_armature_name] \
                         .pose.bones[node.blender_bone_name].matrix.to_quaternion().copy()
-                    bone_scale_mat = Conversion.scale_to_matrix(node.blender_bone_matrix.to_scale())
+                    bone_scale_mat = scale_to_matrix(node.blender_bone_matrix.to_scale())
                     if bpy.app.version < (2, 80, 0):
                         obj.location = bone_scale_mat * obj.location
                         obj.location = bone_rot * obj.location
@@ -195,14 +195,14 @@ class BlenderNode():
     def set_transforms(gltf, node_idx, pynode, obj, parent):
         """Set transforms."""
         if parent is None:
-            obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
+            obj.matrix_world = matrix_gltf_to_blender(pynode.transform)
             return
 
         for idx, node in enumerate(gltf.data.nodes):
             if idx == parent:
                 if node.is_joint is True:
-                    obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
+                    obj.matrix_world = matrix_gltf_to_blender(pynode.transform)
                     return
                 else:
-                    obj.matrix_world = Conversion.matrix_gltf_to_blender(pynode.transform)
+                    obj.matrix_world = matrix_gltf_to_blender(pynode.transform)
                     return

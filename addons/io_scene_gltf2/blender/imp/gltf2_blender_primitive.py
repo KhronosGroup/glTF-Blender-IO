@@ -16,7 +16,7 @@ import bpy
 from mathutils import Vector
 
 from .gltf2_blender_material import BlenderMaterial
-from ..com.gltf2_blender_conversion import Conversion
+from ..com.gltf2_blender_conversion import loc_gltf_to_blender
 from ...io.imp.gltf2_io_binary import BinaryData
 
 
@@ -41,7 +41,7 @@ class BlenderPrimitive():
             for i in indices_:
                 indices.append((i,))
 
-        prim_verts = [Conversion.loc_gltf_to_blender(vert) for vert in pos]
+        prim_verts = [loc_gltf_to_blender(vert) for vert in pos]
         pyprimitive.vertices_length = len(prim_verts)
         verts.extend(prim_verts)
         prim_faces = []
