@@ -34,17 +34,17 @@ def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Unio
 
     if target == 'location':
         return Vector(values)
-    if target == 'rotation_axis_angle':
+    elif target == 'rotation_axis_angle':
         angle = values[0]
         axis = values[1:]
         return Quaternion(axis, math.radians(angle))
-    if target == 'rotation_euler':
+    elif target == 'rotation_euler':
         return Euler(values).to_quaternion()
-    if target == 'rotation_quaternion':
+    elif target == 'rotation_quaternion':
         return Quaternion(values)
-    if target == 'scale':
+    elif target == 'scale':
         return Vector(values)
-    if target == 'value':
+    elif target == 'value':
         return values
 
     return values
@@ -156,6 +156,6 @@ def transform_scale(scale: Vector, transform: Matrix = Matrix.Identity(4)) -> Ve
     return m.to_scale()
 
 
-def transform_value(value: Vector, transform: Matrix = Matrix.Identity(4)) -> Vector:
+def transform_value(value: Vector, _: Matrix = Matrix.Identity(4)) -> Vector:
     """Transform value."""
     return value
