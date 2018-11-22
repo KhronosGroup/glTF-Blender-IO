@@ -18,7 +18,7 @@
 
 import os
 import bpy
-from bpy_extras.io_utils import ImportHelper
+from bpy_extras.io_utils import ImportHelper, ExportHelper
 from bpy.types import Operator, AddonPreferences
 
 from .io.com.gltf2_io_debug import print_console, Log
@@ -31,8 +31,6 @@ from bpy.props import (CollectionProperty,
                        EnumProperty,
                        FloatProperty,
                        IntProperty)
-
-from bpy_extras.io_utils import (ExportHelper)
 
 #
 # Globals
@@ -449,6 +447,7 @@ class ExportGLTF2_Base:
             text=GLTF2ExportSettings.bl_label,
             icon="%s" % "PINNED" if self.will_save_settings else "UNPINNED")
 
+# TODO: refactor operators to single operator for both cases
 
 class ExportGLTF2_GLTF(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
