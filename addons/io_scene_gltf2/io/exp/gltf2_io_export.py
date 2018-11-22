@@ -28,7 +28,7 @@ import struct
 #
 
 
-def save_gltf(glTF, export_settings, encoder):
+def save_gltf(glTF, export_settings, encoder, glb_buffer):
     indent = None
     separators = separators = (',', ':')
 
@@ -57,7 +57,7 @@ def save_gltf(glTF, export_settings, encoder):
         file = open(export_settings['gltf_filepath'], "wb")
 
         glTF_data = glTF_encoded.encode()
-        binary = export_settings['gltf_binary']
+        binary = glb_buffer
 
         length_gtlf = len(glTF_data)
         spaces_gltf = (4 - (length_gtlf & 3)) & 3

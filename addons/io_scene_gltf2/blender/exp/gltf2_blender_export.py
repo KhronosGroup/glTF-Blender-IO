@@ -42,11 +42,17 @@ def save(operator,
     for animation in animations:
         exporter.add_animation(animation)
 
+    buffer = bytes()
     if export_settings[gltf2_blender_export_keys.FORMAT] == 'ASCII':
-        exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
-                                 export_settings[gltf2_blender_export_keys.BINARY_FILENAME])
+        # .gltf
+        if export_settings[gltf2_blender_export_keys.EMBED_BUFFERS]:
+            exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
+        else:
+            exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
+                                     export_settings[gltf2_blender_export_keys.BINARY_FILENAME])
     else:
-        exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
+        # .glb
+        buffer = exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY], is_glb=True)
     exporter.finalize_images(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
     glTF = exporter.glTF
 
@@ -74,7 +80,8 @@ def save(operator,
         return o
 
     try:
-        gltf2_io_export.save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder)
+        gltf2_io_export.save_gltf(dict_strip(glTF.to_dict()), export_settings, gltf2_blender_json.BlenderJSONEncoder,
+                                  buffer)
     except AssertionError as e:
         _, _, tb = sys.exc_info()
         traceback.print_tb(tb)  # Fixed format
