@@ -214,6 +214,12 @@ class GlTF2Exporter:
             for member_name in [a for a in dir(node) if not a.startswith('__') and not callable(getattr(node, a))]:
                 new_value = self.__traverse(getattr(node, member_name))
                 setattr(node, member_name, new_value)  # usually this is the same as before
+
+                # TODO: maybe with extensions hooks we can find a more elegant solution
+                if member_name == "extensions" and new_value is not None:
+                    for extension_name in new_value.keys():
+                        self.__append_unique_and_get_index(self.__gltf.extensions_used, extension_name)
+                        self.__append_unique_and_get_index(self.__gltf.extensions_required, extension_name)
             return node
 
         # traverse nodes of a child of root property type and add them to the glTF root
