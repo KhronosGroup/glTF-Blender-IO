@@ -66,13 +66,16 @@ Toggle off to clear settings"""
     def execute(self, context):
         operator = context.active_operator
         operator.will_save_settings = not operator.will_save_settings
-        if not operator.will_save_settings and context.scene.get(operator.scene_key, False):
+        if not operator.will_save_settings:
             # clear settings
-            del context.scene[operator.scene_key]
+            context.scene.pop(operator.scene_key)
         return {"FINISHED"}
 
 
 class ExportGLTF2_Base:
+
+    # TODO: refactor to avoid boilerplate
+
     export_copyright = StringProperty(
         name='Copyright',
         description='',
