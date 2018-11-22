@@ -59,9 +59,15 @@ def create_image_file(context, blender_image, dst_path, file_format):
         # which we don't want, but I'm not sure how to create a new Scene object through the
         # Python API. See: https://github.com/KhronosGroup/glTF-Blender-Exporter/issues/184.
 
+        tmp_file_format = context.scene.render.image_settings.file_format
+        tmp_color_depth = context.scene.render.image_settings.color_depth
+
         context.scene.render.image_settings.file_format = file_format
         context.scene.render.image_settings.color_depth = '8'
         blender_image.save_render(dst_path, context.scene)
+
+        context.scene.render.image_settings.file_format = tmp_file_format
+        context.scene.render.image_settings.color_depth = tmp_color_depth
 
 
 def create_image_data(context, export_settings, blender_image, file_format):
@@ -90,8 +96,7 @@ def _create_jpg_data(context, export_settings, blender_image):
 
 def _create_png_data(blender_image):
     """Create a PNG byte array from a given Blender image."""
-    width = blender_image.size[0]
-    height = blender_image.size[1]
+    width, height = blender_image.size
 
     buf = bytearray([int(channel * 255.0) for channel in blender_image.pixels])
 
