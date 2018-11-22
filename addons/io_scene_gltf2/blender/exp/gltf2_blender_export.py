@@ -29,14 +29,13 @@ def save(operator,
          export_settings):
     """Start the glTF 2.0 export and saves to content either to a .gltf or .glb file."""
     print_console('INFO', 'Starting glTF 2.0 export')
-    bpy.context.window_manager.progress_begin(0, 100)
-    bpy.context.window_manager.progress_update(0)
+    context.window_manager.progress_begin(0, 100)
+    context.window_manager.progress_update(0)
 
-    #
-
-    scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
     if not export_settings[gltf2_blender_export_keys.COPYRIGHT]:
         export_settings[gltf2_blender_export_keys.COPYRIGHT] = None
+
+    scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
     exporter = GlTF2Exporter(copyright=export_settings[gltf2_blender_export_keys.COPYRIGHT])
     for scene in scenes:
         exporter.add_scene(scene)
@@ -87,7 +86,7 @@ def save(operator,
         raise e
 
     print_console('INFO', 'Finished glTF 2.0 export')
-    bpy.context.window_manager.progress_end()
+    context.window_manager.progress_end()
     print_newline()
 
     return {'FINISHED'}
