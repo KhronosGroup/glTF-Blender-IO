@@ -15,6 +15,9 @@
 
 class TRS:
 
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("{} should not be instantiated".format(cls.__name__))
+
     @staticmethod
     def scale_to_matrix(scale):
         # column major !

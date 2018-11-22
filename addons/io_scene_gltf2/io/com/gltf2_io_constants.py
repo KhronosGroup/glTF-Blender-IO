@@ -66,6 +66,9 @@ class DataType:
     Mat3 = "MAT3"
     Mat4 = "MAT4"
 
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("{} should not be instantiated".format(cls.__name__))
+
     @classmethod
     def num_elements(cls, data_type):
         return {
