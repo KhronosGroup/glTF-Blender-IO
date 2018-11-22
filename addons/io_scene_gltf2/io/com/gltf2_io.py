@@ -16,6 +16,8 @@
 # command used:
 # quicktype --src glTF.schema.json --src-lang schema -t gltf --lang python --python-version 3.5
 
+# TODO: add __slots__ to all classes by extending the generator
+
 # TODO: REMOVE traceback import
 import sys
 import traceback
