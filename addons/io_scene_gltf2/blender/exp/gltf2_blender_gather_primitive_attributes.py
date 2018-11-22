@@ -15,6 +15,7 @@
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
+from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.blender.exp import gltf2_blender_utils
 
@@ -164,6 +165,11 @@ def __gather_skins(blender_primitive, export_settings):
         joint_id = 'JOINTS_' + str(bone_index)
         weight_id = 'WEIGHTS_' + str(bone_index)
         while blender_primitive["attributes"].get(joint_id) and blender_primitive["attributes"].get(weight_id):
+            if bone_index >= 4:
+                gltf2_io_debug.print_console("WARNING", "There are more than 4 joint vertex influences."
+                                                        "Consider to apply blenders Limit Total function.")
+                # TODO: add option to stop after 4
+                # break
 
             # joints
             internal_joint = blender_primitive["attributes"][joint_id]
