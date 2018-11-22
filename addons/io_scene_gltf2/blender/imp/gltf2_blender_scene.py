@@ -30,16 +30,16 @@ class BlenderScene():
         """Scene creation."""
         pyscene = gltf.data.scenes[scene_idx]
 
-        # Create Yup2Zup empty
-        obj_rotation = bpy.data.objects.new("Yup2Zup", None)
-        obj_rotation.rotation_mode = 'QUATERNION'
-        obj_rotation.rotation_quaternion = Quaternion((sqrt(2) / 2, sqrt(2) / 2, 0.0, 0.0))
-
     # Create a new scene only if not already exists in .blend file
     # TODO : put in current scene instead ?
         if pyscene.name not in [scene.name for scene in bpy.data.scenes]:
-            if pyscene.name:
-                scene = bpy.data.scenes.new(pyscene.name)
+            # TODO: There is a bug in 2.8 alpha that break CLEAR_KEEP_TRANSFORM
+            # if we are creating a new scene
+            if bpy.app.version < (2, 80, 0):
+                if pyscene.name:
+                    scene = bpy.data.scenes.new(pyscene.name)
+                else:
+                    scene = bpy.context.scene
             else:
                 scene = bpy.context.scene
             if bpy.app.version < (2, 80, 0):
@@ -50,6 +50,16 @@ class BlenderScene():
             gltf.blender_scene = scene.name
         else:
             gltf.blender_scene = pyscene.name
+
+        # Create Yup2Zup empty
+        obj_rotation = bpy.data.objects.new("Yup2Zup", None)
+        obj_rotation.rotation_mode = 'QUATERNION'
+        obj_rotation.rotation_quaternion = Quaternion((sqrt(2) / 2, sqrt(2) / 2, 0.0, 0.0))
+
+        if bpy.app.version < (2, 80, 0):
+            bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
+        else:
+            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj_rotation)
 
         if pyscene.nodes is not None:
             for node_idx in pyscene.nodes:
@@ -75,13 +85,29 @@ class BlenderScene():
                     BlenderAnimation.anim(gltf, anim_idx, node_idx)
 
         # Parent root node to rotation object
-        if bpy.app.version < (2, 80, 0):
-            bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
-            obj_rotation.hide = True
-        else:
-            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj_rotation)
-            obj_rotation.hide_viewport = True
-
         if pyscene.nodes is not None:
             for node_idx in pyscene.nodes:
                 bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation
+
+            if bpy.app.version < (2, 80, 0):
+                for node_idx in pyscene.nodes:
+                    for obj_ in bpy.context.scene.objects:
+                        obj_.select = False
+                    bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select = True
+                    bpy.context.scene.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_object]
+                    bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+
+                # remove object
+                bpy.context.scene.objects.unlink(obj_rotation)
+                bpy.data.objects.remove(obj_rotation)
+            else:
+                for node_idx in pyscene.nodes:
+                    for obj_ in bpy.context.scene.objects:
+                        obj_.select_set(False)
+                    bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select_set(True)
+                    bpy.context.view_layer.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_object]
+
+                    bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+
+                    bpy.context.scene.collection.objects.unlink(obj_rotation)
+                    bpy.data.objects.remove(obj_rotation)
