@@ -102,8 +102,9 @@ def __gather_emissive_texture(blender_material, export_settings):
 def __gather_extensions(blender_material, export_settings):
     extensions = {}
 
-    if blender_material.use_shadeless:
-        extensions["KHR_materials_unlit"] = {}
+    if bpy.app.version < (2, 80, 0):
+        if blender_material.use_shadeless:
+            extensions["KHR_materials_unlit"] = {}
 
     # TODO specular glossiness extension
 
