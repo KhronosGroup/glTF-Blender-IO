@@ -46,7 +46,7 @@ bl_info = {
     'warning': '',
     'wiki_url': ''
                 '',
-    'support': 'COMMUNITY',
+    'support': 'OFFICIAL',
     'category': 'Import-Export'}
 
 
