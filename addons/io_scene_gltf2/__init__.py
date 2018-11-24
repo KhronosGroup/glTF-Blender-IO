@@ -21,9 +21,7 @@ import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from bpy.types import Operator, AddonPreferences
 
-from .io.com.gltf2_io_debug import print_console, Log
-from .io.imp.gltf2_io_gltf import glTFImporter
-from .blender.imp.gltf2_blender_gltf import BlenderGlTF
+from .io.com.gltf2_io_debug import Log
 
 from bpy.props import (CollectionProperty,
                        StringProperty,
@@ -198,7 +196,7 @@ class ExportGLTF2_Base:
 
     export_frame_step = IntProperty(
         name='Frame step size',
-        description='Step size (in frames) for animation export.',
+        description='Step size (in frames) for animation export',
         default=1,
         min=1,
         max=120
@@ -461,9 +459,9 @@ class ExportGLTF2_GLTF(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
 
 
 class ExportGLTF2_GLB(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
-    """Export scene as glTF 2.0 file"""
+    """Export scene as binary glTF 2.0 file"""
     bl_idname = 'export_scene.glb'
-    bl_label = 'Export glTF 2.0 binary'
+    bl_label = 'Export Binary glTF 2.0'
 
     filename_ext = '.glb'
     filter_glob = StringProperty(default='*.glb', options={'HIDDEN'})
@@ -471,12 +469,9 @@ class ExportGLTF2_GLB(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     export_format = 'BINARY'
 
 
-def menu_func_export_gltf(self, context):
+def menu_func_export(self, context):
     self.layout.operator(ExportGLTF2_GLTF.bl_idname, text='glTF 2.0 (.gltf)')
-
-
-def menu_func_export_glb(self, context):
-    self.layout.operator(ExportGLTF2_GLB.bl_idname, text='glTF 2.0 (.glb)')
+    self.layout.operator(ExportGLTF2_GLB.bl_idname, text='Binary glTF 2.0 (.glb)')
 
 
 class ExportGLTF2_AddonPreferences(AddonPreferences):
@@ -521,6 +516,9 @@ class ImportglTF2(Operator, ImportHelper):
         return self.import_gltf2(context)
 
     def import_gltf2(self, context):
+        from .io.imp.gltf2_io_gltf import glTFImporter
+        from .blender.imp.gltf2_blender_gltf import BlenderGlTF
+
         import_settings = self.as_keywords()
 
         self.gltf_importer = glTFImporter(self.filepath, import_settings)
@@ -566,12 +564,10 @@ def register():
 
     # add to the export / import menu
     if bpy.app.version < (2, 80, 0):
-        bpy.types.INFO_MT_file_export.append(menu_func_export_gltf)
-        bpy.types.INFO_MT_file_export.append(menu_func_export_glb)
+        bpy.types.INFO_MT_file_export.append(menu_func_export)
         bpy.types.INFO_MT_file_import.append(menu_func_import)
     else:
-        bpy.types.TOPBAR_MT_file_export.append(menu_func_export_gltf)
-        bpy.types.TOPBAR_MT_file_export.append(menu_func_export_glb)
+        bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
         bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 
@@ -582,10 +578,8 @@ def unregister():
 
     # remove from the export / import menu
     if bpy.app.version < (2, 80, 0):
-        bpy.types.INFO_MT_file_export.remove(menu_func_export_gltf)
-        bpy.types.INFO_MT_file_export.remove(menu_func_export_glb)
+        bpy.types.INFO_MT_file_export.remove(menu_func_export)
         bpy.types.INFO_MT_file_import.remove(menu_func_import)
     else:
-        bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_gltf)
-        bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_glb)
+        bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
         bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
