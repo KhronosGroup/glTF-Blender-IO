@@ -192,6 +192,12 @@ class BlenderBoneAnim():
             action = bpy.data.actions.new(name)
         else:
             action = bpy.data.actions[name]
+            # Check if this action has some users.
+            # If no user (only 1 indeed), that means that this action must be deleted
+            # (is an action from a deleted object)
+            if action.users == 1:
+                bpy.data.actions.remove(action)
+                action = bpy.data.actions.new(name)
         if not obj.animation_data:
             obj.animation_data_create()
         obj.animation_data.action = bpy.data.actions[action.name]
