@@ -95,8 +95,12 @@ def filter_apply(export_settings):
         if blender_object.users == 0:
             continue
 
-        if export_settings[gltf2_blender_export_keys.SELECTED] and not blender_object.select:
-            continue
+        if bpy.app.version < (2, 80, 0):
+            if export_settings[gltf2_blender_export_keys.SELECTED] and not blender_object.select:
+                continue
+        else:
+            if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
+                continue
 
         if not export_settings[gltf2_blender_export_keys.LAYERS] and not blender_object.layers[0]:
             continue
