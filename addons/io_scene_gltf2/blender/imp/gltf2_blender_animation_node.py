@@ -63,6 +63,10 @@ class BlenderNodeAnim():
             obj.animation_data_create()
         obj.animation_data.action = bpy.data.actions[action.name]
 
+        # There is an animation on object
+        # We can't remove Yup2Zup oject
+        gltf.animation_object = True
+
         for channel_idx in node.animations[anim_idx]:
             channel = animation.channels[channel_idx]
 

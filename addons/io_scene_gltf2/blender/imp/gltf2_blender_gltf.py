@@ -83,6 +83,10 @@ class BlenderGlTF():
         # default scene used
         gltf.blender_scene = None
 
+        # Check if there is animation on object
+        # Init is to False, and will be set to True during creation
+        gltf.animation_object = False
+
         # Blender material
         if gltf.data.materials:
             for material in gltf.data.materials:

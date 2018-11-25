@@ -89,26 +89,28 @@ class BlenderScene():
             for node_idx in pyscene.nodes:
                 bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation
 
-            if bpy.app.version < (2, 80, 0):
-                for node_idx in pyscene.nodes:
-                    for obj_ in bpy.context.scene.objects:
-                        obj_.select = False
-                    bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select = True
-                    bpy.context.scene.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_object]
-                    bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+            if gltf.animation_object is False:
 
-                # remove object
-                bpy.context.scene.objects.unlink(obj_rotation)
-                bpy.data.objects.remove(obj_rotation)
-            else:
-                for node_idx in pyscene.nodes:
-                    for obj_ in bpy.context.scene.objects:
-                        obj_.select_set(False)
-                    bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select_set(True)
-                    bpy.context.view_layer.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_object]
+                if bpy.app.version < (2, 80, 0):
+                    for node_idx in pyscene.nodes:
+                        for obj_ in bpy.context.scene.objects:
+                            obj_.select = False
+                        bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select = True
+                        bpy.context.scene.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_object]
+                        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
 
-                    bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+                    # remove object
+                    bpy.context.scene.objects.unlink(obj_rotation)
+                    bpy.data.objects.remove(obj_rotation)
+                else:
+                    for node_idx in pyscene.nodes:
+                        for obj_ in bpy.context.scene.objects:
+                            obj_.select_set(False)
+                        bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select_set(True)
+                        bpy.context.view_layer.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_object]
 
-                # remove object
-                bpy.context.scene.collection.objects.unlink(obj_rotation)
-                bpy.data.objects.remove(obj_rotation)
+                        bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
+
+                    # remove object
+                    bpy.context.scene.collection.objects.unlink(obj_rotation)
+                    bpy.data.objects.remove(obj_rotation)
