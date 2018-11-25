@@ -13,7 +13,14 @@
 #   For example 'test = BoolProperty()'
 
 from os import walk, makedirs
+import argparse
 from os.path import realpath, dirname, isdir, splitext, exists
+from shutil import copyfile
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-r", "--repo", required=False, help="repo path")
+args = vars(ap.parse_args())
+
 
 root = dirname(realpath(__file__))
 INPUT = root + "/../addons/"
@@ -100,3 +107,22 @@ for root, dirs, files in walk(INPUT):
                                     break
                             # Write line
                             f_output.write(line + "\n")
+
+# Now that files are written in 2.80 dir, copy it on blender repo if needed
+if args["repo"] is not None:
+
+    if args["repo"][-1] != "/":
+        args["repo"] += "/"
+
+    for root, dirs, files in walk(OUTPUT):
+        new_dir = args["repo"] + root[len(OUTPUT):]
+
+        if not isdir(new_dir):
+            makedirs(new_dir)
+
+        for file in files:
+            filename, fileext = splitext(file)
+            if fileext != ".py":
+                continue
+
+            copyfile(root + "/" + file, new_dir + "/" + file)
