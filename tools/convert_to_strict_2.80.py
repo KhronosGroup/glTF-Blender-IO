@@ -12,6 +12,10 @@
 #   - '(' just after
 #   For example 'test = BoolProperty()'
 
+# You can use -r to copy newly created file into another directory
+# Example:
+# convert_to_strict_2.80.py -r /home/<user>/blender-git/blender/release/scripts/addons/
+
 from os import walk, makedirs
 import argparse
 from os.path import realpath, dirname, isdir, splitext, exists
