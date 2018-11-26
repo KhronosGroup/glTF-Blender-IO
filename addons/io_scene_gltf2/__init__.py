@@ -331,7 +331,7 @@ class ExportGLTF2_Base:
         else:
             export_settings['gltf_camera_infinite'] = False
         export_settings['gltf_selected'] = self.export_selected
-        export_settings['gltf_layers'] = self.export_layers
+        export_settings['gltf_layers'] = True #self.export_layers
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
         export_settings['gltf_apply'] = self.export_apply
