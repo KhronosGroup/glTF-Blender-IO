@@ -159,11 +159,11 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    export_layers = BoolProperty(
-        name='Export all layers',
-        description='',
-        default=True
-    )
+    # export_layers = BoolProperty(
+    #     name='Export all layers',
+    #     description='',
+    #     default=True
+    # )
 
     export_extras = BoolProperty(
         name='Export extras',
@@ -387,7 +387,7 @@ class ExportGLTF2_Base:
         col = layout.box().column()
         col.label(text='Nodes:')  # , icon='OOPS')
         col.prop(self, 'export_selected')
-        col.prop(self, 'export_layers')
+        #col.prop(self, 'export_layers')
         col.prop(self, 'export_extras')
         col.prop(self, 'export_yup')
 
