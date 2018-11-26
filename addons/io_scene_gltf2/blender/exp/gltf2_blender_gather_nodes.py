@@ -21,7 +21,9 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
 from io_scene_gltf2.io.com import gltf2_io
+from io_scene_gltf2.io.com import gltf2_io_extensions
 
 
 @cached
@@ -93,7 +95,28 @@ def __gather_children(blender_object, export_settings):
 
 
 def __gather_extensions(blender_object, export_settings):
-    return None
+    extensions = {}
+
+    if export_settings["gltf_lights"] and blender_object.type == "LAMP":
+        blender_lamp = blender_object.data
+        light = gltf2_blender_gather_lights.gather_lights_punctual(
+            blender_lamp,
+            export_settings
+        )
+        if light is not None:
+            light_extension = gltf2_io_extensions.ChildOfRootExtension(
+                name="KHR_lights_punctual",
+                path=["lights"],
+                extension=light
+            )
+            extensions["KHR_lights_punctual"] = gltf2_io_extensions.Extension(
+                name="KHR_lights_punctual",
+                extension={
+                    "light": light_extension
+                }
+            )
+
+    return extensions if extensions else None
 
 
 def __gather_extras(blender_object, export_settings):

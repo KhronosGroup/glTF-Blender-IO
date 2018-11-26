@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional, List, Dict
+
 from io_scene_gltf2.io.com import gltf2_io
+from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
@@ -208,6 +211,20 @@ class GlTF2Exporter:
         # TODO: allow embedding of images (base64)
         return image.name + ".png"
 
+    @classmethod
+    def __get_key_path(cls, d: dict, keypath: List[str], default=[]):
+        """Create if necessary and get the element at key path from a dict"""
+        key = keypath.pop(0)
+
+        if len(keypath) == 0:
+            v = d.get(key, default)
+            d[key] = v
+            return v
+
+        d_key = d.get(key, {})
+        d[key] = d_key
+        return cls.__get_key_path(d[key], keypath, default)
+
     def __traverse(self, node):
         """
         Recursively traverse a scene graph consisting of gltf compatible elements.
@@ -215,21 +232,21 @@ class GlTF2Exporter:
         The tree is traversed downwards until a primitive is reached. Then any ChildOfRoot property
         is stored in the according list in the glTF and replaced with a index reference in the upper level.
         """
-        def traverse_all_members(node):
+        def __traverse_property(node):
             for member_name in [a for a in dir(node) if not a.startswith('__') and not callable(getattr(node, a))]:
                 new_value = self.__traverse(getattr(node, member_name))
                 setattr(node, member_name, new_value)  # usually this is the same as before
 
-                # TODO: maybe with extensions hooks we can find a more elegant solution
-                if member_name == "extensions" and new_value is not None:
-                    for extension_name in new_value.keys():
-                        self.__append_unique_and_get_index(self.__gltf.extensions_used, extension_name)
-                        self.__append_unique_and_get_index(self.__gltf.extensions_required, extension_name)
+                # # TODO: maybe with extensions hooks we can find a more elegant solution
+                # if member_name == "extensions" and new_value is not None:
+                #     for extension_name in new_value.keys():
+                #         self.__append_unique_and_get_index(self.__gltf.extensions_used, extension_name)
+                #         self.__append_unique_and_get_index(self.__gltf.extensions_required, extension_name)
             return node
 
         # traverse nodes of a child of root property type and add them to the glTF root
         if type(node) in self.__childOfRootPropertyTypeLookup:
-            node = traverse_all_members(node)
+            node = __traverse_property(node)
             idx = self.__to_reference(node)
             # child of root properties are only present at root level --> replace with index in upper level
             return idx
@@ -247,7 +264,7 @@ class GlTF2Exporter:
 
         # traverse into any other property
         if type(node) in self.__propertyTypeLookup:
-            return traverse_all_members(node)
+            return __traverse_property(node)
 
         # binary data needs to be moved to a buffer and referenced with a buffer view
         if isinstance(node, gltf2_io_binary_data.BinaryData):
@@ -257,6 +274,21 @@ class GlTF2Exporter:
         # image data needs to be saved to file
         if isinstance(node, gltf2_io_image_data.ImageData):
             return self.__add_image(node)
+
+        # extensions
+        if isinstance(node, gltf2_io_extensions.Extension):
+            extension = self.__traverse(node.extension)
+            self.__append_unique_and_get_index(self.__gltf.extensions_used, node.name)
+            self.__append_unique_and_get_index(self.__gltf.extensions_required, node.name)
+
+            # extensions that lie in the root of the glTF.
+            # They need to be converted to a reference at place of occurrence
+            if isinstance(node, gltf2_io_extensions.ChildOfRootExtension):
+                root_extension_list = self.__get_key_path(self.__gltf.extensions, [node.name] + node.path)
+                idx = self.__append_unique_and_get_index(root_extension_list, extension)
+                return idx
+
+            return extension
 
         # do nothing for any type that does not match a glTF schema (primitives)
         return node
