@@ -21,7 +21,7 @@ from io_scene_gltf2.io.com import gltf2_io_lights_punctual
 from io_scene_gltf2.io.com import gltf2_io_debug
 
 
-def gather_light_spot(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[gltf2_io_lights_punctual.LightSpot]:
+def gather_light_spot(blender_lamp, export_settings) -> Optional[gltf2_io_lights_punctual.LightSpot]:
 
     if not __filter_light_spot(blender_lamp, export_settings):
         return None
@@ -33,17 +33,17 @@ def gather_light_spot(blender_lamp: bpy.types.Lamp, export_settings) -> Optional
     return spot
 
 
-def __filter_light_spot(blender_lamp: bpy.types.Lamp, _) -> bool:
+def __filter_light_spot(blender_lamp, _) -> bool:
     if blender_lamp.type != "SPOT":
         return False
 
     return True
 
 
-def __gather_inner_cone_angle(blender_lamp: bpy.types.Lamp, _) -> Optional[float]:
+def __gather_inner_cone_angle(blender_lamp, _) -> Optional[float]:
     angle = blender_lamp.spot_size * 0.5
     return angle - angle * blender_lamp.spot_blend
 
 
-def __gather_outer_cone_angle(blender_lamp: bpy.types.Lamp, _) -> Optional[float]:
+def __gather_outer_cone_angle(blender_lamp, _) -> Optional[float]:
     return blender_lamp.spot_size * 0.5

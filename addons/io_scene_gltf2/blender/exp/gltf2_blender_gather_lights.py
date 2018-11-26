@@ -25,7 +25,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_light_spots
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
 @cached
-def gather_lights_punctual(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[Dict[str, Any]]:
+def gather_lights_punctual(blender_lamp, export_settings) -> Optional[Dict[str, Any]]:
     if not __filter_lights_punctual(blender_lamp, export_settings):
         return None
 
@@ -43,7 +43,7 @@ def gather_lights_punctual(blender_lamp: bpy.types.Lamp, export_settings) -> Opt
     return light.to_dict()
 
 
-def __filter_lights_punctual(blender_lamp: bpy.types.Lamp, export_settings) -> bool:
+def __filter_lights_punctual(blender_lamp, export_settings) -> bool:
     if blender_lamp.type in ["HEMI", "AREA"]:
         gltf2_io_debug.print_console("WARNING", "Unsupported light source {}".format(blender_lamp.type))
         return False
@@ -51,7 +51,7 @@ def __filter_lights_punctual(blender_lamp: bpy.types.Lamp, export_settings) -> b
     return True
 
 
-def __gather_color(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[List[float]]:
+def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
     emission_node = __get_cycles_emission_node(blender_lamp)
     if emission_node is not None:
         return emission_node.inputs["Color"].default_value
@@ -59,7 +59,7 @@ def __gather_color(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[Li
     return list(blender_lamp.color)
 
 
-def __gather_intensity(blender_lamp: bpy.types.Lamp, _) -> Optional[float]:
+def __gather_intensity(blender_lamp, _) -> Optional[float]:
     emission_node = __get_cycles_emission_node(blender_lamp)
     if emission_node is not None:
         if blender_lamp.type != 'SUN':
@@ -82,13 +82,13 @@ def __gather_intensity(blender_lamp: bpy.types.Lamp, _) -> Optional[float]:
     return blender_lamp.energy
 
 
-def __gather_spot(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[gltf2_io_lights_punctual.LightSpot]:
+def __gather_spot(blender_lamp, export_settings) -> Optional[gltf2_io_lights_punctual.LightSpot]:
     if blender_lamp.type == "SPOT":
         return gltf2_blender_gather_light_spots.gather_light_spot(blender_lamp, export_settings)
     return None
 
 
-def __gather_type(blender_lamp: bpy.types.Lamp, _) -> str:
+def __gather_type(blender_lamp, _) -> str:
     return {
         "POINT": "point",
         "SUN": "directional",
@@ -96,25 +96,25 @@ def __gather_type(blender_lamp: bpy.types.Lamp, _) -> str:
     }[blender_lamp.type]
 
 
-def __gather_range(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[float]:
+def __gather_range(blender_lamp, export_settings) -> Optional[float]:
     # TODO: calculate range from
     # https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual#range-property
     return None
 
 
-def __gather_name(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[str]:
+def __gather_name(blender_lamp, export_settings) -> Optional[str]:
     return blender_lamp.name
 
 
-def __gather_extensions(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[dict]:
+def __gather_extensions(blender_lamp, export_settings) -> Optional[dict]:
     return None
 
 
-def __gather_extras(blender_lamp: bpy.types.Lamp, export_settings) -> Optional[Any]:
+def __gather_extras(blender_lamp, export_settings) -> Optional[Any]:
     return None
 
 
-def __get_cycles_emission_node(blender_lamp: bpy.types.Lamp) -> Optional[bpy.types.ShaderNodeEmission]:
+def __get_cycles_emission_node(blender_lamp) -> Optional[bpy.types.ShaderNodeEmission]:
     if blender_lamp.use_nodes and blender_lamp.node_tree:
         for currentNode in blender_lamp.node_tree.nodes:
             if isinstance(currentNode, bpy.types.ShaderNodeOutputLamp):
