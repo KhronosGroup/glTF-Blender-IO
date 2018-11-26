@@ -18,6 +18,7 @@
 
 import os
 import bpy
+import datetime
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from bpy.types import Operator, AddonPreferences
 
@@ -306,6 +307,8 @@ class ExportGLTF2_Base:
 
         # All custom export settings are stored in this container.
         export_settings = {}
+
+        export_settings['timestamp'] = datetime.datetime.now()
 
         export_settings['gltf_filepath'] = bpy.path.ensure_ext(self.filepath, self.filename_ext)
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
