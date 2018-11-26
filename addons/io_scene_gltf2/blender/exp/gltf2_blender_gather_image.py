@@ -98,7 +98,7 @@ def __get_image_data(sockets_or_slots):
     # For shared ressources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # ressources.
-    def split_pixels_by_channels(image: bpy.types.Image) -> typing.Iterable[typing.Iterable[float]]:
+    def split_pixels_by_channels(image: bpy.types.Image) -> typing.List[typing.List[float]]:
         pixels = np.array(image.pixels)
         pixels = pixels.reshape((pixels.shape[0] // image.channels, image.channels))
         channels = np.split(pixels, pixels.shape[1], axis=1)
@@ -139,7 +139,7 @@ def __get_image_data(sockets_or_slots):
         return image
     elif __is_slot(sockets_or_slots):
         texture = __get_tex_from_slot(sockets_or_slots[0])
-        pixels = texture.image.pixels
+        pixels = split_pixels_by_channels(texture.image)
 
         image_data = gltf2_io_image_data.ImageData(
             texture.name,

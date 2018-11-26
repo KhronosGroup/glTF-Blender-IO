@@ -417,6 +417,10 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_texture_transform')
 
         col = layout.box().column()
+        col.label(text='Lights:')  # , icon='LIGHT_DATA')
+        col.prop(self, 'export_lights')
+
+        col = layout.box().column()
         col.label(text='Animation:')  # , icon='OUTLINER_DATA_POSE')
         col.prop(self, 'export_animations')
         if self.export_animations:
@@ -434,13 +438,6 @@ class ExportGLTF2_Base:
             col.prop(self, 'export_morph_normal')
             if self.export_morph_normal:
                 col.prop(self, 'export_morph_tangent')
-
-        addon_prefs = context.user_preferences.addons[__name__].preferences
-        if addon_prefs.experimental:
-            col = layout.box().column()
-            col.label(text='Experimental:')  # , icon='RADIO')
-            col.prop(self, 'export_lights')
-            col.prop(self, 'export_displacement')
 
         row = layout.row()
         row.operator(
@@ -475,16 +472,6 @@ class ExportGLTF2_GLB(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
 def menu_func_export(self, context):
     self.layout.operator(ExportGLTF2_GLTF.bl_idname, text='glTF 2.0 (.gltf)')
     self.layout.operator(ExportGLTF2_GLB.bl_idname, text='Binary glTF 2.0 (.glb)')
-
-
-class ExportGLTF2_AddonPreferences(AddonPreferences):
-    bl_idname = __name__
-
-    experimental = BoolProperty(name='Enable experimental glTF export settings', default=False)
-
-    def draw(self, context):
-        layout = self.layout
-        layout.prop(self, "experimental")
 
 
 class ImportglTF2(Operator, ImportHelper):
@@ -555,7 +542,6 @@ classes = (
     GLTF2ExportSettings,
     ExportGLTF2_GLTF,
     ExportGLTF2_GLB,
-    ExportGLTF2_AddonPreferences,
     ImportglTF2
 )
 
