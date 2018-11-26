@@ -233,6 +233,12 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    export_all_influences = BoolProperty(
+        name='Export all bone influences',
+        description='Export more than four joint vertex influences',
+        default=False
+    )
+
     export_morph = BoolProperty(
         name='Export morphing',
         description='',
@@ -349,8 +355,10 @@ class ExportGLTF2_Base:
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_bake_skins'] = self.export_bake_skins
+            export_settings['gltf_all_vertex_influences'] = self.export_all_influences
         else:
             export_settings['gltf_bake_skins'] = False
+            export_settings['gltf_all_vertex_influences'] = False
         export_settings['gltf_frame_step'] = self.export_frame_step
         export_settings['gltf_morph'] = self.export_morph
         if self.export_morph:
@@ -433,6 +441,7 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_skins')
         if self.export_skins:
             col.prop(self, 'export_bake_skins')
+            col.prop(self, 'export_all_influences')
         col.prop(self, 'export_morph')
         if self.export_morph:
             col.prop(self, 'export_morph_normal')

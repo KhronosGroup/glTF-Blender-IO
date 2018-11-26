@@ -168,8 +168,8 @@ def __gather_skins(blender_primitive, export_settings):
             if bone_index >= 4:
                 gltf2_io_debug.print_console("WARNING", "There are more than 4 joint vertex influences."
                                                         "Consider to apply blenders Limit Total function.")
-                # TODO: add option to stop after 4
-                # break
+                if not export_settings['gltf_all_vertex_influences']:
+                    break
 
             # joints
             internal_joint = blender_primitive["attributes"][joint_id]
