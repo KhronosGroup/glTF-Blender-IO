@@ -62,7 +62,7 @@ for root, dirs, files in walk(INPUT):
                 erase_mode = False
                 mode = "IF"
 
-                for line in tab_:
+                for idx_line, line in enumerate(tab_):
 
 
                     if erase_mode is True:
@@ -86,7 +86,10 @@ for root, dirs, files in walk(INPUT):
                                 # 2 cases: else is finished, or there is no else
                                 erase_mode = False
                                 mode = "IF"
-                            f_output.write(line + "\n")
+                            if idx_line != len(tab_)-1:
+                                f_output.write(line + "\n")
+                            elif idx_line == len(tab_)-1 and line != "":
+                                f_output.write(line + "\n")
                         else:
                             if else_mode == "ELSE":
                                 # write line, but remove 1 indentation level
