@@ -75,203 +75,215 @@ class ExportGLTF2_Base:
 
     export_copyright = StringProperty(
         name='Copyright',
-        description='',
+        description='Legal rights and conditions for the model',
         default=''
     )
 
     export_embed_buffers = BoolProperty(
-        name='Embed buffers',
-        description='',
+        name='Embed Buffers',
+        description='Buffers (mesh, animation, and optionally image data) are' \
+            ' embedded in the asset, rather than in separate (.bin) files.' \
+            ' Total size will be slightly larger than when embedded within a ' \
+            ' binary glTF (.glb) file',
         default=False
     )
 
     export_embed_images = BoolProperty(
-        name='Embed images',
-        description='',
+        name='Embed Images',
+        description='Images are embedded in asset buffers, rather than in' \
+            ' separate image files',
         default=False
     )
 
     export_strip = BoolProperty(
-        name='Strip delimiters',
-        description='',
+        name='Strip Whitespace',
+        description='Makes JSON portion of export more compact, but harder to' \
+            ' read and edit by hand',
         default=False
     )
 
     export_indices = EnumProperty(
-        name='Maximum indices',
+        name='Maximum Indices Type',
         items=(('UNSIGNED_BYTE', 'Unsigned Byte', ''),
                ('UNSIGNED_SHORT', 'Unsigned Short', ''),
                ('UNSIGNED_INT', 'Unsigned Integer', '')),
+        description='Largest data type allowed for indices',
         default='UNSIGNED_INT'
     )
 
     export_force_indices = BoolProperty(
-        name='Force maximum indices',
-        description='',
+        name='Force Maximum Indices',
+        description='Always use the selected indices data type, even if the' \
+            ' size of the mesh does not require it',
         default=False
     )
 
     export_texcoords = BoolProperty(
-        name='Export texture coordinates',
-        description='',
+        name='UVs',
+        description='Export UVs (texture coordinates) with meshes',
         default=True
     )
 
     export_normals = BoolProperty(
-        name='Export normals',
-        description='',
+        name='Normals',
+        description='Export vertex normals with meshes',
         default=True
     )
 
     export_tangents = BoolProperty(
-        name='Export tangents',
-        description='',
+        name='Tangents',
+        description='Export vertex tangents with meshes',
         default=True
     )
 
     export_materials = BoolProperty(
-        name='Export materials',
-        description='',
+        name='Materials',
+        description='Export materials',
         default=True
     )
 
     export_colors = BoolProperty(
-        name='Export colors',
-        description='',
+        name='Vertex Colors',
+        description='Export vertex colors with meshes',
         default=True
     )
 
     export_cameras = BoolProperty(
-        name='Export cameras',
-        description='',
+        name='Cameras',
+        description='Export cameras',
         default=False
     )
 
     export_camera_infinite = BoolProperty(
-        name='Infinite perspective Camera',
-        description='',
+        name='Infinite Perspective',
+        description='Sets perspective cameras to use infinite perspective' \
+            ' projections',
         default=False
     )
 
     export_selected = BoolProperty(
-        name='Export selected only',
-        description='',
+        name='Selected Objects',
+        description='Export selected objects only',
         default=False
     )
 
     # export_layers = BoolProperty(
-    #     name='Export all layers',
-    #     description='',
+    #     name='All layers',
+    #     description='Export all layers, rather than just the first',
     #     default=True
     # )
 
     export_extras = BoolProperty(
-        name='Export extras',
-        description='',
+        name='Custom Properties',
+        description='Export custom properties as glTF extras',
         default=False
     )
 
     export_yup = BoolProperty(
-        name='Convert Z up to Y up',
-        description='',
+        name='+Y Up',
+        description='Export using glTF convention, +Y up',
         default=True
     )
 
     export_apply = BoolProperty(
-        name='Apply modifiers',
-        description='',
+        name='Apply Modifiers',
+        description='Apply modifiers to mesh objects',
         default=False
     )
 
     export_animations = BoolProperty(
-        name='Export animations',
-        description='',
+        name='Animations',
+        description='Exports active actions and NLA tracks as glTF animations',
         default=True
     )
 
     export_frame_range = BoolProperty(
-        name='Export within playback range',
-        description='',
+        name='Limit to Playback Range',
+        description='Clips animations to selected playback range',
         default=True
     )
 
     export_frame_step = IntProperty(
-        name='Frame step size',
-        description='Step size (in frames) for animation export',
+        name='Sampling Rate',
+        description='How often to evaluate animated values (in frames)',
         default=1,
         min=1,
         max=120
     )
 
     export_move_keyframes = BoolProperty(
-        name='Keyframes start with 0',
-        description='',
+        name='Keyframes Start at 0',
+        description='Keyframes start at 0, instead of 1',
         default=True
     )
 
     export_force_sampling = BoolProperty(
-        name='Force sample animations',
-        description='',
+        name='Always Sample Animations',
+        description='Apply sampling to all animations',
         default=False
     )
 
     export_current_frame = BoolProperty(
-        name='Export current frame',
-        description='',
+        name='Use Current Frame',
+        description='Export the scene in the current animation frame',
         default=True
     )
 
     export_skins = BoolProperty(
-        name='Export skinning',
-        description='',
+        name='Skinning',
+        description='Export skinning (armature) data',
         default=True
     )
 
     export_bake_skins = BoolProperty(
-        name='Bake skinning constraints',
-        description='',
+        name='Bake Skinning Constraints',
+        description='Apply skinning constraints to armatures',
         default=False
     )
 
     export_all_influences = BoolProperty(
-        name='Export all bone influences',
-        description='Export more than four joint vertex influences',
+        name='Include All Bone Influences',
+        description='Allow >4 joint vertex influences. Models may appear' \
+            ' incorrectly in many viewers',
         default=False
     )
 
     export_morph = BoolProperty(
-        name='Export morphing',
-        description='',
+        name='Shape Keys',
+        description='Export shape keys (morph targets)',
         default=True
     )
 
     export_morph_normal = BoolProperty(
-        name='Export morphing normals',
-        description='',
+        name='Shape Key Normals',
+        description='Export vertex normals with shape keys (morph targets)',
         default=True
     )
 
     export_morph_tangent = BoolProperty(
-        name='Export morphing tangents',
-        description='',
+        name='Shape Key Tangents',
+        description='Export vertex tangents with shape keys (morph targets)',
         default=True
     )
 
     export_lights = BoolProperty(
-        name='Export punctual lights',
-        description='',
+        name='Punctual Lights',
+        description='Export directional, point, and spot lights. Uses ' \
+            ' "KHR_lights_punctual" glTF extension',
         default=False
     )
 
     export_texture_transform = BoolProperty(
-        name='Export texture transforms',
-        description='',
+        name='Texture Transforms',
+        description='Export texture or UV position, rotation, and scale.' \
+            ' Uses "KHR_texture_transform" glTF extension',
         default=False
     )
 
     export_displacement = BoolProperty(
-        name='Export displacement',
-        description='',
+        name='Displacement Textures (EXPERIMENTAL)',
+        description='EXPERIMENTAL: Export displacement textures. Uses' \
+            ' incomplete "KHR_materials_displacement" glTF extension',
         default=False
     )
 
