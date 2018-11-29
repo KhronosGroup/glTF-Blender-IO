@@ -258,19 +258,19 @@ class ExportGLTF2_Base:
     )
 
     export_lights = BoolProperty(
-        name='Export KHR_lights_punctual',
+        name='Export punctual lights',
         description='',
         default=False
     )
 
     export_texture_transform = BoolProperty(
-        name='Export KHR_texture_transform',
+        name='Export texture transforms',
         description='',
         default=False
     )
 
     export_displacement = BoolProperty(
-        name='Export KHR_materials_displacement',
+        name='Export displacement',
         description='',
         default=False
     )
