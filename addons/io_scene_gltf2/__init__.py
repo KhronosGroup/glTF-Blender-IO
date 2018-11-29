@@ -18,7 +18,6 @@
 
 import os
 import bpy
-import datetime
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from bpy.types import Operator, AddonPreferences
 
@@ -318,6 +317,7 @@ class ExportGLTF2_Base:
         context.scene[self.scene_key] = export_props
 
     def execute(self, context):
+        import datetime
         from .blender.exp import gltf2_blender_export
 
         if self.will_save_settings:
