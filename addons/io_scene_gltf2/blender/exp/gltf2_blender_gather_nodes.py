@@ -61,7 +61,7 @@ def __filter_node(blender_object, export_settings):
             return False
     if not export_settings[gltf2_blender_export_keys.LAYERS] and not blender_object.layers[0]:
         return False
-    if blender_object.dupli_group is not None and not blender_object.dupli_group.layers[0]:
+    if blender_object.instance_collection is not None and not blender_object.instance_collection.layers[0]:
         return False
 
     return True
@@ -79,8 +79,8 @@ def __gather_children(blender_object, export_settings):
         if node is not None:
             children.append(node)
     # blender dupli objects
-    if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
-        for dupli_object in blender_object.dupli_group.objects:
+    if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
+        for dupli_object in blender_object.instance_collection.objects:
             node = gather_node(dupli_object, export_settings)
             if node is not None:
                 children.append(node)
@@ -144,16 +144,16 @@ def __gather_mesh(blender_object, export_settings):
 
 
 def __gather_name(blender_object, export_settings):
-    if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
+    if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
         return "Duplication_Offset_" + blender_object.name
     return blender_object.name
 
 
 def __gather_trans_rot_scale(blender_object, export_settings):
     trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, 'NODE', export_settings)
-    if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
+    if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
         trans = -gltf2_blender_extract.convert_swizzle_location(
-            blender_object.dupli_group.dupli_offset, export_settings)
+            blender_object.instance_collection.instance_offset, export_settings)
     translation, rotation, scale = (None, None, None)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
         translation = [trans[0], trans[1], trans[2]]
