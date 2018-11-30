@@ -12,13 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
-from typing import Optional, List, Any
-
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-
+from typing import Optional
 from io_scene_gltf2.io.com import gltf2_io_lights_punctual
-from io_scene_gltf2.io.com import gltf2_io_debug
 
 
 def gather_light_spot(blender_lamp, export_settings) -> Optional[gltf2_io_lights_punctual.LightSpot]:

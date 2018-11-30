@@ -24,6 +24,7 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_light_spots
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
+
 @cached
 def gather_lights_punctual(blender_lamp, export_settings) -> Optional[Dict[str, Any]]:
     if not __filter_lights_punctual(blender_lamp, export_settings):
