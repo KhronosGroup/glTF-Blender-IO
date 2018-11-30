@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import bpy
+from mathutils import Quaternion
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -46,6 +48,17 @@ def gather_node(blender_object, export_settings):
         weights=__gather_weights(blender_object, export_settings)
     )
     node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
+
+    if blender_object.type == 'LIGHT':
+        correction_node = __get_correction_node(blender_object, export_settings)
+        correction_node.extensions = {"KHR_lights_punctual": node.extensions["KHR_lights_punctual"]}
+        del node.extensions["KHR_lights_punctual"]
+        node.children.append(correction_node)
+    if blender_object.type == 'CAMERA':
+        correction_node = __get_correction_node(blender_object, export_settings)
+        correction_node.camera = node.camera
+        node.camera = None
+        node.children.append(correction_node)
 
     return node
 
@@ -174,3 +187,24 @@ def __gather_skin(blender_object, export_settings):
 
 def __gather_weights(blender_object, export_settings):
     return None
+
+
+def __get_correction_node(blender_object, export_settings):
+    correction_quaternion = gltf2_blender_extract.convert_swizzle_rotation(
+        Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)), export_settings)
+    correction_quaternion = [correction_quaternion[1], correction_quaternion[2],
+                             correction_quaternion[3], correction_quaternion[0]]
+    return gltf2_io.Node(
+        camera=None,
+        children=None,
+        extensions=None,
+        extras=None,
+        matrix=None,
+        mesh=None,
+        name=blender_object.name + '_Orientation',
+        rotation=correction_quaternion,
+        scale=None,
+        skin=None,
+        translation=None,
+        weights=None
+    )
