@@ -94,13 +94,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    export_strip = BoolProperty(
-        name='Strip Whitespace',
-        description='Makes JSON portion of export more compact, but harder to' \
-            ' read and edit by hand',
-        default=False
-    )
-
     export_indices = EnumProperty(
         name='Maximum Indices Type',
         items=(('UNSIGNED_BYTE', 'Unsigned Byte', ''),
@@ -132,7 +125,7 @@ class ExportGLTF2_Base:
     export_tangents = BoolProperty(
         name='Tangents',
         description='Export vertex tangents with meshes',
-        default=True
+        default=False
     )
 
     export_materials = BoolProperty(
@@ -150,13 +143,6 @@ class ExportGLTF2_Base:
     export_cameras = BoolProperty(
         name='Cameras',
         description='Export cameras',
-        default=False
-    )
-
-    export_camera_infinite = BoolProperty(
-        name='Infinite Perspective',
-        description='Sets perspective cameras to use infinite perspective' \
-            ' projections',
         default=False
     )
 
@@ -262,7 +248,7 @@ class ExportGLTF2_Base:
     export_morph_tangent = BoolProperty(
         name='Shape Key Tangents',
         description='Export vertex tangents with shape keys (morph targets)',
-        default=True
+        default=False
     )
 
     export_lights = BoolProperty(
@@ -335,7 +321,6 @@ class ExportGLTF2_Base:
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_embed_buffers'] = self.export_embed_buffers
         export_settings['gltf_embed_images'] = self.export_embed_images
-        export_settings['gltf_strip'] = self.export_strip
         export_settings['gltf_indices'] = self.export_indices
         export_settings['gltf_force_indices'] = self.export_force_indices
         export_settings['gltf_texcoords'] = self.export_texcoords
@@ -344,10 +329,6 @@ class ExportGLTF2_Base:
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
-        if self.export_cameras:
-            export_settings['gltf_camera_infinite'] = self.export_camera_infinite
-        else:
-            export_settings['gltf_camera_infinite'] = False
         export_settings['gltf_selected'] = self.export_selected
         export_settings['gltf_layers'] = True #self.export_layers
         export_settings['gltf_extras'] = self.export_extras
@@ -402,7 +383,6 @@ class ExportGLTF2_Base:
         if self.export_format == 'ASCII':
             col.prop(self, 'export_embed_buffers')
             col.prop(self, 'export_embed_images')
-            col.prop(self, 'export_strip')
 
         col = layout.box().column()
         col.label(text='Nodes:')  # , icon='OOPS')
@@ -428,8 +408,6 @@ class ExportGLTF2_Base:
         col = layout.box().column()
         col.label(text='Objects:')  # , icon='OBJECT_DATA')
         col.prop(self, 'export_cameras')
-        if self.export_cameras:
-            col.prop(self, 'export_camera_infinite')
 
         col = layout.box().column()
         col.label(text='Materials:')  # , icon='MATERIAL_DATA')
