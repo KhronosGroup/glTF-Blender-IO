@@ -42,8 +42,8 @@ bl_info = {
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
-    'wiki_url': ''
-                '',
+    'wiki_url': "https://github.com/KhronosGroup/glTF-Blender-IO",
+    'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",
     'support': 'OFFICIAL',
     'category': 'Import-Export'}
 
