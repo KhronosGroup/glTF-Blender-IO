@@ -106,9 +106,7 @@ def __gather_perspective(blender_object, export_settings):
                 perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspectRatio)
 
         perspective.znear = blender_camera.clip_start
-
-        if not export_settings[gltf2_blender_export_keys.CAMERA_INFINITE]:
-            perspective.zfar = blender_camera.clip_end
+        perspective.zfar = blender_camera.clip_end
 
         return perspective
     return None

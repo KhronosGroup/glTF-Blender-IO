@@ -32,7 +32,7 @@ def save_gltf(glTF, export_settings, encoder, glb_buffer):
     indent = None
     separators = separators = (',', ':')
 
-    if export_settings['gltf_format'] == 'ASCII' and not export_settings['gltf_strip']:
+    if export_settings['gltf_format'] == 'ASCII':
         indent = 4
         # The comma is typically followed by a newline, so no trailing whitespace is needed on it.
         separators = separators = (',', ' : ')
