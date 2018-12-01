@@ -78,6 +78,7 @@ for root, dirs, files in walk(INPUT):
                                 # else is now finished
                                 erase_mode = False
                                 mode = "IF"
+                                last_line = line
                                 f_output.write(line + "\n")
 
                         elif current_nb_spaces < nb_spaces:
@@ -87,12 +88,15 @@ for root, dirs, files in walk(INPUT):
                                 erase_mode = False
                                 mode = "IF"
                             if idx_line != len(tab_)-1:
+                                last_line = line
                                 f_output.write(line + "\n")
                             elif idx_line == len(tab_)-1 and line != "":
+                                last_line = line
                                 f_output.write(line + "\n")
                         else:
                             if else_mode == "ELSE":
                                 # write line, but remove 1 indentation level
+                                last_line = line
                                 f_output.write(line[4:] + "\n")
 
                     else:
@@ -113,7 +117,12 @@ for root, dirs, files in walk(INPUT):
                                     line = line[:line.find(prop)-3] + ": " + line[line.find(prop):]
                                     break
                             # Write line
+                            last_line = line
                             f_output.write(line + "\n")
+
+                if last_line != "":
+                    f_output.write("\n")
+                    pass
 
 # Now that files are written in 2.80 dir, copy it on blender repo if needed
 if args["repo"] is not None:
