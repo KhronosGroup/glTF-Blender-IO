@@ -43,9 +43,9 @@ def save(operator,
         exporter.add_animation(animation)
 
     buffer = bytes()
-    if export_settings[gltf2_blender_export_keys.FORMAT] == 'ASCII':
+    if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLB':
         # .gltf
-        if export_settings[gltf2_blender_export_keys.EMBED_BUFFERS]:
+        if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF':
             exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
         else:
             exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
