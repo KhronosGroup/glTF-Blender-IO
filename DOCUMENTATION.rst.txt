@@ -32,7 +32,8 @@ This importer/exporter supports the following glTF 2.0 features:
 .. note::
 
   Certain features require extensions to the core format specification. The
-  following `glTF 2.0 extensions<https://github.com/KhronosGroup/glTF/tree/master/extensions>`_
+  following `glTF 2.0 extensions
+  <https://github.com/KhronosGroup/glTF/tree/master/extensions>`_
   are supported:
 
    - KHR_lights_punctual
@@ -104,13 +105,87 @@ Properties
 Import
 ------
 
-TODO.
-
+Log Level
+   TODO.
+Pack Images
+   TODO.
+Shading
+   TODO.
 
 Export
 ------
 
-TODO.
+General
+^^^^^^^
+
+Format
+   Output format and embedding options. Binary is most efficient, but JSON (embedded or separate) may be easier to edit later.
+Selected Objects
+   Export selected objects only.
+Apply Modifiers
+   Apply modifiers to mesh objects.
++Y Up
+   Export using glTF convention, +Y up
+Custom Properties
+   Export custom properties as glTF extras.
+Copyright
+   Legal rights and conditions for the model.
+
+Meshes
+^^^^^^
+
+UVs
+   Export UVs (texture coordinates) with meshes.
+Normals
+   Export vertex normals with meshes.
+Tangents
+   Export vertex tangents with meshes.
+Vertex Colors
+   Export vertex colors with meshes.
+
+Objects
+^^^^^^^
+
+Cameras
+   Export cameras.
+Punctual Lights
+   Export directional, point, and spot lights. Uses "KHR_lights_punctual" glTF extension.
+
+Materials
+^^^^^^^^^
+
+Materials
+   Export materials.
+Texture Transforms
+   Export texture or UV position, rotation, and scale. Uses "KHR_texture_transform" glTF extension.
+
+Animation
+^^^^^^^^^
+
+Animations
+   Exports active actions and NLA tracks as glTF animations.
+Limit to Playback Range
+   Clips animations to selected playback range.
+Sampling Rate
+   How often to evaluate animated values (in frames).
+Keyframes Start at 0
+   Keyframes start at 0, instead of 1.
+Always Sample Animations
+   Apply sampling to all animations.
+Use Current Frame
+   Export the scene in the current animation frame.
+Skinning
+   Export skinning (armature) data.
+Bake Skinning Constraints
+   Apply skinning constraints to armatures.
+Include All Bone Influences
+   Allow >4 joint vertex influences. Models may appear.
+Shape Keys
+   Export shape keys (morph targets).
+Shape Key Normals
+   Export vertex normals with shape keys (morph targets).
+Shape Key Tangents
+   Export vertex tangents with shape keys (morph targets).
 
 Contributing
 =============
