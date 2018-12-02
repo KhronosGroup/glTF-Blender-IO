@@ -4,7 +4,7 @@ glTF 2.0
 ********
 
 :Name: glTF 2.0 format
-:Location: :menuselection:`File --> Import/Export --> glTF (.glb, .gltf)`
+:Location: :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
 :Version: 0.0.1
 :Blender: 2.80
 :Category: Import-Export
@@ -69,7 +69,7 @@ Supports Principled BSDF (Metal/Rough PBR) and Emissive (Unlit) materials.
 Complex nodes cannot be exported. For best results when using nodes, prefer
 the following structure:
 
-.. figure:: docs/io_material_principled.png
+.. figure:: /images/addons_io-gltf2-material-principled.png
    :alt: A Principled BSDF node uses multiple Image Texture inputs. Each
          texture takes a Mapping Vector, with a UV Map as its input.
          Roughness must use the (G) channel of its texture, and Metalness
@@ -81,7 +81,7 @@ the following structure:
 
 To create unlit (shadeless) materials, use:
 
-.. figure:: docs/io_material_unlit.png
+.. figure:: /images/addons_io-gltf2-material-unlit.png
    :alt: A Emissive node uses an Image Texture input. The texture takes a
          Mapping Vector, with a UV Map as its input. The output of the
          Emissive node is connected to the Material Output node.
@@ -206,8 +206,8 @@ Contributing
 =============
 
 glTF 2.0 is a relatively new file format. Discussion and development of the
-format occurs on the Khronos Group `GitHub repository
+format occur on the Khronos Group `GitHub repository
 <https://github.com/KhronosGroup/glTF>`_, and feedback there
-is welcome. This importer/exporter is developed via the `glTF-Blender-IO
+is welcome. This importer/exporter is developed through the `glTF-Blender-IO
 repository <https://github.com/KhronosGroup/glTF-Blender-IO>`_, where you can
 file bug reports, submit feature requests, or contribute code.
