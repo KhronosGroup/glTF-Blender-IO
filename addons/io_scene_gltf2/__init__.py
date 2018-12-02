@@ -72,26 +72,19 @@ class ExportGLTF2_Base:
 
     # TODO: refactor to avoid boilerplate
 
+    export_format = EnumProperty(
+        name='Format',
+        items=(('GLB', 'Binary (.glb)', 'Exports a single file, with all data packed in binary form. Most efficient and portable, but more difficult to edit later'),
+               ('GLTF', 'JSON (.gltf)', 'Exports a single file, with all data packed in JSON. Less efficient than binary, but easier to edit later'),
+               ('GLTF_SEPARATE', 'JSON (.gltf + .bin + textures)', 'Exports multiple files, with separate JSON (.gltf), binary (.bin), and texture data. Easiest to edit later')),
+        description='Output format and embedding options. Binary is most efficient, but JSON (embedded or separate) may be easier to edit later',
+        default='GLB'
+    )
+
     export_copyright = StringProperty(
         name='Copyright',
         description='Legal rights and conditions for the model',
         default=''
-    )
-
-    export_embed_buffers = BoolProperty(
-        name='Embed Buffers',
-        description='Buffers (mesh, animation, and optionally image data) are' \
-            ' embedded in the asset, rather than in separate (.bin) files.' \
-            ' Total size will be slightly larger than when embedded within a ' \
-            ' binary glTF (.glb) file',
-        default=False
-    )
-
-    export_embed_images = BoolProperty(
-        name='Embed Images',
-        description='Images are embedded in asset buffers, rather than in' \
-            ' separate image files',
-        default=False
     )
 
     export_texcoords = BoolProperty(
@@ -293,6 +286,11 @@ class ExportGLTF2_Base:
         if self.will_save_settings:
             self.save_settings(context)
 
+        if self.export_format == 'GLB':
+            self.filename_ext = '.glb'
+        else:
+            self.filename_ext = '.gltf'
+
         # All custom export settings are stored in this container.
         export_settings = {}
 
@@ -303,8 +301,6 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_copyright'] = self.export_copyright
-        export_settings['gltf_embed_buffers'] = self.export_embed_buffers
-        export_settings['gltf_embed_images'] = self.export_embed_images
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
@@ -361,9 +357,7 @@ class ExportGLTF2_Base:
 
         col = layout.box().column()
         col.label(text='General:', icon='PREFERENCES')
-        if self.export_format == 'ASCII':
-            col.prop(self, 'export_embed_buffers')
-            col.prop(self, 'export_embed_images')
+        col.prop(self, 'export_format')
         col.prop(self, 'export_selected')
         #col.prop(self, 'export_layers')
         col.prop(self, 'export_apply')
@@ -415,40 +409,26 @@ class ExportGLTF2_Base:
             text=GLTF2ExportSettings.bl_label,
             icon="%s" % "PINNED" if self.will_save_settings else "UNPINNED")
 
-# TODO: refactor operators to single operator for both cases
 
-class ExportGLTF2_GLTF(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
+class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
     bl_idname = 'export_scene.gltf'
-    bl_label = 'Export glTF 2.0'
+    bl_label = 'glTF 2.0 (.glb/.gltf)'
 
-    filename_ext = '.gltf'
-    filter_glob = StringProperty(default='*.gltf', options={'HIDDEN'})
+    filename_ext = ''
 
-    export_format = 'ASCII'
-
-
-class ExportGLTF2_GLB(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
-    """Export scene as binary glTF 2.0 file"""
-    bl_idname = 'export_scene.glb'
-    bl_label = 'Export Binary glTF 2.0'
-
-    filename_ext = '.glb'
-    filter_glob = StringProperty(default='*.glb', options={'HIDDEN'})
-
-    export_format = 'BINARY'
+    filter_glob = StringProperty(default='*.glb;*.gltf', options={'HIDDEN'})
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportGLTF2_GLTF.bl_idname, text='glTF 2.0 (.gltf)')
-    self.layout.operator(ExportGLTF2_GLB.bl_idname, text='Binary glTF 2.0 (.glb)')
+    self.layout.operator(ExportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
-class ImportglTF2(Operator, ImportHelper):
+class ImportGLTF2(Operator, ImportHelper):
     bl_idname = 'import_scene.gltf'
-    bl_label = "glTF 2.0 (.gltf/.glb)"
+    bl_label = 'glTF 2.0 (.glb/.gltf)'
 
-    filter_glob = StringProperty(default="*.gltf;*.glb", options={'HIDDEN'})
+    filter_glob = StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
     loglevel = EnumProperty(items=Log.get_levels(), name="Log Level", default=Log.default())
 
@@ -505,14 +485,13 @@ class ImportglTF2(Operator, ImportHelper):
 
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportglTF2.bl_idname, text=ImportglTF2.bl_label)
+    self.layout.operator(ImportGLTF2.bl_idname, text=ImportGLTF2.bl_label)
 
 
 classes = (
     GLTF2ExportSettings,
-    ExportGLTF2_GLTF,
-    ExportGLTF2_GLB,
-    ImportglTF2
+    ExportGLTF2,
+    ImportGLTF2
 )
 
 
