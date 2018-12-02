@@ -71,10 +71,11 @@ the following structure:
 
 .. figure:: docs/io_material_principled.png
    :alt: A Principled BSDF node uses multiple Image Texture inputs. Each
-   texture takes a Mapping Vector, with a UV Map as its input. Roughness
-   must use the (G) channel of its texture, and Metalness must use the
-   (B) channel.The output of the Principled BSDF node is added to an
-   Emissive node, and the sum is connected to the Material Output node.
+         texture takes a Mapping Vector, with a UV Map as its input.
+         Roughness must use the (G) channel of its texture, and Metalness
+         must use the (B) channel.The output of the Principled BSDF node
+         is added to an Emissive node, and the sum is connected to the
+         Material Output node.
 
    A Principled BSDF material with an Emissive texture.
 
@@ -82,8 +83,8 @@ To create unlit (shadeless) materials, use:
 
 .. figure:: docs/io_material_unlit.png
    :alt: A Emissive node uses an Image Texture input. The texture takes a
-   Mapping Vector, with a UV Map as its input. The output of the Emissive
-   node is connected to the Material Output node.
+         Mapping Vector, with a UV Map as its input. The output of the
+         Emissive node is connected to the Material Output node.
 
    An unlit (shadeless) material.
 
@@ -138,7 +139,7 @@ Selected Objects
    Export selected objects only.
 Apply Modifiers
    Apply modifiers to mesh objects.
-+Y Up
+Y Up
    Export using glTF convention, +Y up
 Custom Properties
    Export custom properties as glTF extras.
