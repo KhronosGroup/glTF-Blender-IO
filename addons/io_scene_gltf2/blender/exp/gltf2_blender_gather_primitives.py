@@ -15,7 +15,7 @@
 import bpy
 from typing import List, Optional
 
-from .gltf2_blender_export_keys import INDICES, FORCE_INDICES, NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
+from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
@@ -82,9 +82,6 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
     else:
         print_console('ERROR', 'Invalid max_index: ' + str(max_index))
         return None
-
-    if export_settings[FORCE_INDICES]:
-        component_type = gltf2_io_constants.ComponentType.from_legacy_define(export_settings[INDICES])
 
     element_type = gltf2_io_constants.DataType.Scalar
     binary_data = gltf2_io_binary_data.BinaryData.from_list(indices, component_type)

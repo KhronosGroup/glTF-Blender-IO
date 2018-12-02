@@ -94,22 +94,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    export_indices = EnumProperty(
-        name='Maximum Indices Type',
-        items=(('UNSIGNED_BYTE', 'Unsigned Byte', ''),
-               ('UNSIGNED_SHORT', 'Unsigned Short', ''),
-               ('UNSIGNED_INT', 'Unsigned Integer', '')),
-        description='Largest data type allowed for indices',
-        default='UNSIGNED_INT'
-    )
-
-    export_force_indices = BoolProperty(
-        name='Force Maximum Indices',
-        description='Always use the selected indices data type, even if the' \
-            ' size of the mesh does not require it',
-        default=False
-    )
-
     export_texcoords = BoolProperty(
         name='UVs',
         description='Export UVs (texture coordinates) with meshes',
@@ -321,8 +305,6 @@ class ExportGLTF2_Base:
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_embed_buffers'] = self.export_embed_buffers
         export_settings['gltf_embed_images'] = self.export_embed_images
-        export_settings['gltf_indices'] = self.export_indices
-        export_settings['gltf_force_indices'] = self.export_force_indices
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
@@ -378,27 +360,19 @@ class ExportGLTF2_Base:
         #
 
         col = layout.box().column()
-        col.label(text='Embedding:')  # , icon='PACKAGE')
-        col.prop(self, 'export_copyright')
+        col.label(text='General:', icon='PREFERENCES')
         if self.export_format == 'ASCII':
             col.prop(self, 'export_embed_buffers')
             col.prop(self, 'export_embed_images')
-
-        col = layout.box().column()
-        col.label(text='Nodes:')  # , icon='OOPS')
         col.prop(self, 'export_selected')
         #col.prop(self, 'export_layers')
-        col.prop(self, 'export_extras')
-        col.prop(self, 'export_yup')
-
-        col = layout.box().column()
-        col.label(text='Meshes:')  # , icon='MESH_DATA')
         col.prop(self, 'export_apply')
-        col.prop(self, 'export_indices')
-        col.prop(self, 'export_force_indices')
+        col.prop(self, 'export_yup')
+        col.prop(self, 'export_extras')
+        col.prop(self, 'export_copyright')
 
         col = layout.box().column()
-        col.label(text='Attributes:')  # , icon='SURFACE_DATA')
+        col.label(text='Meshes:', icon='MESH_DATA')
         col.prop(self, 'export_texcoords')
         col.prop(self, 'export_normals')
         if self.export_normals:
@@ -406,20 +380,17 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_colors')
 
         col = layout.box().column()
-        col.label(text='Objects:')  # , icon='OBJECT_DATA')
+        col.label(text='Objects:', icon='OBJECT_DATA')
         col.prop(self, 'export_cameras')
+        col.prop(self, 'export_lights')
 
         col = layout.box().column()
-        col.label(text='Materials:')  # , icon='MATERIAL_DATA')
+        col.label(text='Materials:', icon='MATERIAL_DATA')
         col.prop(self, 'export_materials')
         col.prop(self, 'export_texture_transform')
 
         col = layout.box().column()
-        col.label(text='Lights:')  # , icon='LIGHT_DATA')
-        col.prop(self, 'export_lights')
-
-        col = layout.box().column()
-        col.label(text='Animation:')  # , icon='OUTLINER_DATA_POSE')
+        col.label(text='Animation:', icon='ARMATURE_DATA')
         col.prop(self, 'export_animations')
         if self.export_animations:
             col.prop(self, 'export_frame_range')

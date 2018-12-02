@@ -970,10 +970,6 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
         #
 
         range_indices = 65536
-        if export_settings[gltf2_blender_export_keys.INDICES] == 'UNSIGNED_BYTE':
-            range_indices = 256
-        elif export_settings[gltf2_blender_export_keys.INDICES] == 'UNSIGNED_INT':
-            range_indices = 4294967296
 
         #
 
