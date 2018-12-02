@@ -475,12 +475,6 @@ class ImportGLTF2(Operator, ImportHelper):
         self.gltf_importer.log.critical("glTF import is now finished")
         self.gltf_importer.log.removeHandler(self.gltf_importer.log_handler)
 
-        # Switch to newly created main scene
-        if bpy.app.version < (2, 80, 0):
-            bpy.context.screen.scene = bpy.data.scenes[self.gltf_importer.blender_scene]
-        else:
-            bpy.context.window.scene = bpy.data.scenes[self.gltf_importer.blender_scene]
-
         return {'FINISHED'}
 
 

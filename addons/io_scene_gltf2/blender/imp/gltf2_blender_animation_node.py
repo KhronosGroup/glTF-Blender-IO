@@ -63,10 +63,6 @@ class BlenderNodeAnim():
             obj.animation_data_create()
         obj.animation_data.action = bpy.data.actions[action.name]
 
-        # There is an animation on object
-        # We can't remove Yup2Zup oject
-        gltf.animation_object = True
-
         for channel_idx in node.animations[anim_idx]:
             channel = animation.channels[channel_idx]
 
@@ -74,6 +70,10 @@ class BlenderNodeAnim():
             values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
 
             if channel.target.path in ['translation', 'rotation', 'scale']:
+
+                # There is an animation on object
+                # We can't remove Yup2Zup oject
+                gltf.animation_object = True
 
                 if channel.target.path == "translation":
                     blender_path = "location"
