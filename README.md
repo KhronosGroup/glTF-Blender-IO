@@ -6,7 +6,7 @@ Blender glTF 2.0 Importer and Exporter
 Version
 -------
 
-Under development
+Beta
 
 Until this project is ready, please use the separate [export](https://github.com/KhronosGroup/glTF-Blender-Exporter) and [import](https://github.com/julienduroure/gltf2-blender-importer) addons.
 
