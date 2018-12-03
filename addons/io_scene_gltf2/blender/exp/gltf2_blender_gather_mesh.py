@@ -17,6 +17,7 @@ from typing import Optional, Dict, List, Any
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
+from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
 
 
 @cached
@@ -62,6 +63,8 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
                     modifiers: Optional[bpy.types.ObjectModifiers],
                     export_settings
                     ) -> Optional[Dict[Any, Any]]:
+    if export_settings['gltf_extras']:
+        return gltf2_blender_generate_extras.generate_extras(blender_mesh)
     return None
 
 

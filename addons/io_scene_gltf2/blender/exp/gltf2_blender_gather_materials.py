@@ -21,6 +21,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_normal_text
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_occlusion_texture_info_class
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
+from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 
 
@@ -76,10 +77,16 @@ def __filter_material(blender_material, export_settings):
 
 
 def __gather_alpha_cutoff(blender_material, export_settings):
+    if blender_material.blend_method == 'CLIP':
+        return blender_material.alpha_threshold
     return None
 
 
 def __gather_alpha_mode(blender_material, export_settings):
+    if blender_material.blend_method == 'CLIP':
+        return 'MASK'
+    elif blender_material.blend_method == 'BLEND':
+        return 'BLEND'
     return None
 
 
@@ -111,13 +118,14 @@ def __gather_extensions(blender_material, export_settings):
     return extensions if extensions else None
 
 
-def __gather_extras(blender_material, export_setttings):
+def __gather_extras(blender_material, export_settings):
+    if export_settings['gltf_extras']:
+        return gltf2_blender_generate_extras.generate_extras(blender_material)
     return None
 
 
 def __gather_name(blender_material, export_settings):
-
-    return None
+    return blender_material.name
 
 
 def __gather_normal_texture(blender_material, export_settings):
