@@ -348,7 +348,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = os.path.splitext(os.path.basename(self.filepath))[0] + '.bin'
 
-        return gltf2_blender_export.save(self, context, export_settings)
+        return gltf2_blender_export.save(context, export_settings)
 
     def draw(self, context):
         layout = self.layout
