@@ -58,8 +58,8 @@ def gather_node(blender_object, export_settings):
     if blender_object.type == 'CAMERA' and export_settings[gltf2_blender_export_keys.CAMERAS]:
         correction_node = __get_correction_node(blender_object, export_settings)
         correction_node.camera = node.camera
-        node.camera = None
         node.children.append(correction_node)
+    node.camera = None
 
     return node
 
