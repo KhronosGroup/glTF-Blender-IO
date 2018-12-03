@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import sys
 import traceback
 
-from . import gltf2_blender_export_keys
-from . import gltf2_blender_gather
-from .gltf2_blender_gltf2_exporter import GlTF2Exporter
-from ..com import gltf2_blender_json
-from ...io.exp import gltf2_io_export
-from ...io.com.gltf2_io_debug import print_console, print_newline
+from io_scene_gltf2.blender.com import gltf2_blender_json
+from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
+from io_scene_gltf2.blender.exp import gltf2_blender_gather
+from io_scene_gltf2.blender.exp.gltf2_blender_gltf2_exporter import GlTF2Exporter
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console, print_newline
+from io_scene_gltf2.io.exp import gltf2_io_export
 
 
 def save(context, export_settings):

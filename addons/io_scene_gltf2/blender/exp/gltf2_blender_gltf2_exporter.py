@@ -105,12 +105,7 @@ class GlTF2Exporter:
         return self.__gltf
 
     def finalize_buffer(self, output_path=None, buffer_name=None, is_glb=False):
-        """
-        Finalize the glTF and write buffers.
-
-        :param buffer_path:
-        :return:
-        """
+        """Finalize the glTF and write buffers."""
         if self.__finalized:
             raise RuntimeError("Tried to finalize buffers for finalized glTF file")
 
