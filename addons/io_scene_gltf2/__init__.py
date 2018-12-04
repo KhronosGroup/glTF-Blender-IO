@@ -78,7 +78,7 @@ class ExportGLTF2_Base:
                ('GLTF_EMBEDDED', 'glTF embedded)', 'Exports a single file, with all data packed in JSON. Less efficient than binary, but easier to edit later'),
                ('GLTF', 'glTF', 'Exports multiple files, with separate JSON (.gltf), binary (.bin), and texture data. Easiest to edit later')),
         description='Output format and embedding options. Binary is most efficient, but JSON (embedded or separate) may be easier to edit later',
-        default='GLB'
+        default='GLTF'
     )
 
     export_copyright = StringProperty(
