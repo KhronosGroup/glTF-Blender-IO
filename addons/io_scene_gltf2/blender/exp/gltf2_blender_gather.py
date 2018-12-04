@@ -62,6 +62,6 @@ def __gather_animations(blender_scene, export_settings):
 
 
 def __gather_extras(blender_object, export_settings):
-    if export_settings['gltf_extras']:
+    if export_settings[gltf2_blender_export_keys.EXTRAS]:
         return gltf2_blender_generate_extras.generate_extras(blender_object)
     return None
