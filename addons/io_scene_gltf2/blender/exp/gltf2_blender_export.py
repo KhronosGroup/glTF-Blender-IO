@@ -61,7 +61,7 @@ def __create_buffer(exporter, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLB':
         buffer = exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY], is_glb=True)
     else:
-        if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF':
+        if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_EMBEDDED':
             exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
         else:
             exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],

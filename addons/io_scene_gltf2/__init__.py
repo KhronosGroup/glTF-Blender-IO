@@ -74,9 +74,9 @@ class ExportGLTF2_Base:
 
     export_format = EnumProperty(
         name='Format',
-        items=(('GLB', 'Binary (.glb)', 'Exports a single file, with all data packed in binary form. Most efficient and portable, but more difficult to edit later'),
-               ('GLTF', 'JSON (.gltf)', 'Exports a single file, with all data packed in JSON. Less efficient than binary, but easier to edit later'),
-               ('GLTF_SEPARATE', 'JSON (.gltf + .bin + textures)', 'Exports multiple files, with separate JSON (.gltf), binary (.bin), and texture data. Easiest to edit later')),
+        items=(('GLB', 'glb', 'Exports a single file, with all data packed in binary form. Most efficient and portable, but more difficult to edit later'),
+               ('GLTF_EMBEDDED', 'glTF embedded)', 'Exports a single file, with all data packed in JSON. Less efficient than binary, but easier to edit later'),
+               ('GLTF', 'glTF', 'Exports multiple files, with separate JSON (.gltf), binary (.bin), and texture data. Easiest to edit later')),
         description='Output format and embedding options. Binary is most efficient, but JSON (embedded or separate) may be easier to edit later',
         default='GLB'
     )
