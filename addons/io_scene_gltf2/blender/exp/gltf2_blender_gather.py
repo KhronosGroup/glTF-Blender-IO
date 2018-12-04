@@ -19,6 +19,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animations
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
+from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 
 
 def gather_gltf2(export_settings):
