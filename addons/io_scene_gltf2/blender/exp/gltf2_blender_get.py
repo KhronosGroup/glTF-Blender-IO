@@ -341,6 +341,31 @@ def get_texcoord_index_from_shader_node(glTF, name, shader_node):
     return 0
 
 
+def get_texture_transform_from_texture_node(texture_node):
+    if not isinstance(texture_node, bpy.types.ShaderNodeTexImage):
+        return None
+
+    mapping_socket = texture_node.inputs["Vector"]
+    if len(mapping_socket.links) == 0:
+        return None
+
+    mapping_node = mapping_socket.links[0].from_node
+    if not isinstance(mapping_node, bpy.types.ShaderNodeMapping):
+        return None
+
+    texture_transform = {}
+    if mapping_node.vector_type == 'TEXTURE':
+        texture_transform["offset"] = [-mapping_node.translation[0], -mapping_node.translation[1]]
+        texture_transform["rotation"] = -mapping_node.rotation[2]
+        texture_transform["scale"] = [1.0 / mapping_node.scale[0], 1.0 / mapping_node.scale[1]]
+    elif mapping_node.vector_type == 'POINT':
+        texture_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
+        texture_transform["rotation"] = mapping_node.rotation[2]
+        texture_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
+
+    return texture_transform
+
+
 def get_image_uri(export_settings, blender_image):
     """Return the final URI depending on a file path."""
     file_format = get_image_format(export_settings, blender_image)
