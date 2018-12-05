@@ -20,6 +20,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 
 
 @cached
@@ -67,7 +68,8 @@ def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings
     texture_node = texture_socket.links[0].from_node
     texture_transform = gltf2_blender_get.get_texture_transform_from_texture_node(texture_node)
 
-    return {"KHR_texture_transform": texture_transform} if texture_transform else None
+    extension = Extension("KHR_texture_transform", texture_transform)
+    return {"KHR_texture_transform": extension}
 
 
 def __gather_extras(blender_shader_sockets_or_texture_slots, export_settings):

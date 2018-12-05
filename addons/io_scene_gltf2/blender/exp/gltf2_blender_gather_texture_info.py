@@ -62,7 +62,6 @@ def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings
         return None
 
     extension = Extension("KHR_texture_transform", texture_transform)
-    print(extension)
     return {"KHR_texture_transform": extension}
 
 
