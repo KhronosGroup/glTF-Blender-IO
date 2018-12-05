@@ -437,11 +437,15 @@ class ImportGLTF2(Operator, ImportHelper):
 
     filter_glob = StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
-    loglevel = EnumProperty(items=Log.get_levels(), name="Log Level", default=Log.default())
+    loglevel = EnumProperty(
+        items=Log.get_levels(),
+        name="Log Level",
+        description="Set level of log to display",
+        default=Log.default())
 
     import_pack_images = BoolProperty(
         name='Pack images',
-        description='',
+        description='Pack all images into .blend file',
         default=True
     )
 
@@ -450,6 +454,7 @@ class ImportGLTF2(Operator, ImportHelper):
         items=(("NORMALS", "Use Normal Data", ""),
                ("FLAT", "Flat Shading", ""),
                ("SMOOTH", "Smooth Shading", "")),
+        description="How normals are computed during import",
         default="NORMALS")
 
     def draw(self, context):
