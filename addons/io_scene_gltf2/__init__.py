@@ -80,7 +80,7 @@ class ExportGLTF2_Base:
                ('GLTF_EMBEDDED', 'glTF Embedded (.gltf)',
                 'Exports a single file, with all data packed in JSON. '
                 'Less efficient than binary, but easier to edit later'),
-               ('GLTF', 'glTF Separate (.gltf + .bin + textures)',
+               ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
                 'Exports multiple files, with separate JSON, binary and texture data. '
                 'Easiest to edit later')),
         description='Output format and embedding options. Binary is most efficient, '
