@@ -77,16 +77,22 @@ def __filter_material(blender_material, export_settings):
 
 
 def __gather_alpha_cutoff(blender_material, export_settings):
-    if blender_material.blend_method == 'CLIP':
-        return blender_material.alpha_threshold
+    if bpy.app.version < (2, 80, 0):
+        return None
+    else:
+        if blender_material.blend_method == 'CLIP':
+            return blender_material.alpha_threshold
     return None
 
 
 def __gather_alpha_mode(blender_material, export_settings):
-    if blender_material.blend_method == 'CLIP':
-        return 'MASK'
-    elif blender_material.blend_method == 'BLEND':
-        return 'BLEND'
+    if bpy.app.version < (2, 80, 0):
+        return None
+    else:
+        if blender_material.blend_method == 'CLIP':
+            return 'MASK'
+        elif blender_material.blend_method == 'BLEND':
+            return 'BLEND'
     return None
 
 
@@ -96,7 +102,7 @@ def __gather_double_sided(blender_material, export_settings):
 
 def __gather_emmissive_factor(blender_material, export_settings):
     emissive_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
-    if isinstance(emissive_socket, bpy.types.NodeSocket):
+    if isinstance(emissive_socket, bpy.types.NodeSocket) and not emissive_socket.is_linked:
         return list(emissive_socket.default_value)[0:3]
     return None
 

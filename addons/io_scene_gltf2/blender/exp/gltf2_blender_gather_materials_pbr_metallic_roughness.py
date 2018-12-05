@@ -46,7 +46,7 @@ def __gather_base_color_factor(blender_material, export_settings):
     base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Base Color")
     if base_color_socket is None:
         base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "BaseColor")
-    if isinstance(base_color_socket, bpy.types.NodeSocket):
+    if isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked:
         return list(base_color_socket.default_value)
     return None
 
@@ -67,7 +67,7 @@ def __gather_extras(blender_material, export_settings):
 
 def __gather_metallic_factor(blender_material, export_settings):
     metallic_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Metallic")
-    if isinstance(metallic_socket, bpy.types.NodeSocket):
+    if isinstance(metallic_socket, bpy.types.NodeSocket) and not metallic_socket.is_linked:
         return metallic_socket.default_value
     return None
 
@@ -87,6 +87,6 @@ def __gather_metallic_roughness_texture(blender_material, export_settings):
 
 def __gather_roughness_factor(blender_material, export_settings):
     roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Roughness")
-    if isinstance(roughness_socket, bpy.types.NodeSocket):
+    if isinstance(roughness_socket, bpy.types.NodeSocket) and not roughness_socket.is_linked:
         return roughness_socket.default_value
     return None
