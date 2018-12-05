@@ -55,8 +55,13 @@ class BlenderMesh():
         """Set all data after mesh creation."""
         # Normals
         offset = 0
+        custom_normals = [[0.0, 0.0, 0.0]] * len(mesh.vertices)
+
+        if gltf.import_settings['import_shading'] == "NORMALS":
+            mesh.create_normals_split()
+
         for prim in pymesh.primitives:
-            offset = BlenderPrimitive.set_normals(gltf, prim, mesh, offset)
+            offset = BlenderPrimitive.set_normals(gltf, prim, mesh, offset, custom_normals)
 
         mesh.update()
 
@@ -66,6 +71,11 @@ class BlenderMesh():
             offset = BlenderPrimitive.set_UV(gltf, prim, obj, mesh, offset)
 
         mesh.update()
+
+        # Normals, now that every update is done
+        if gltf.import_settings['import_shading'] == "NORMALS":
+            mesh.normals_split_custom_set_from_vertices(custom_normals)
+            mesh.use_auto_smooth = True
 
         # Object and UV are now created, we can set UVMap into material
         for prim in pymesh.primitives:

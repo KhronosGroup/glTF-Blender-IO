@@ -67,7 +67,7 @@ class BlenderPrimitive():
 
         return verts, edges, faces
 
-    def set_normals(gltf, pyprimitive, mesh, offset):
+    def set_normals(gltf, pyprimitive, mesh, offset, custom_normals):
         """Set Normal."""
         if 'NORMAL' in pyprimitive.attributes.keys():
             normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
@@ -79,6 +79,7 @@ class BlenderPrimitive():
                         if vert_idx in range(offset, offset + pyprimitive.vertices_length):
                             cpt_vert = vert_idx - offset
                             mesh.vertices[vert_idx].normal = normal_data[cpt_vert]
+                            custom_normals[vert_idx] = list(normal_data[cpt_vert])
                             calc_norm_vertices.append(vert_idx)
 
                         if len(calc_norm_vertices) == 3:
