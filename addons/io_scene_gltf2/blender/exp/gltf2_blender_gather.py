@@ -45,7 +45,7 @@ def __gather_scene(blender_scene, export_settings):
         name=blender_scene.name,
         nodes=[]
     )
-    
+
     for blender_object in blender_scene.objects:
         if blender_object.parent is None:
             node = gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
