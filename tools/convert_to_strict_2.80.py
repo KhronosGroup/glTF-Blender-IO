@@ -76,10 +76,18 @@ for root, dirs, files in walk(INPUT):
                                 # Do not write 'else:' line
                             else:
                                 # else is now finished
-                                erase_mode = False
-                                mode = "IF"
-                                last_line = line
-                                f_output.write(line + "\n")
+
+                                # but we have first to check if we start a new IF
+                                if "bpy.app.version" in line:
+                                    # get indentation of the line
+                                    nb_spaces = len(line) - len(line.lstrip(' '))
+                                    erase_mode = True
+                                    else_mode = "IF"
+                                else:
+                                    erase_mode = False
+                                    mode = "IF"
+                                    last_line = line
+                                    f_output.write(line + "\n")
 
                         elif current_nb_spaces < nb_spaces:
                             if len(line) != 0:
