@@ -121,6 +121,7 @@ def __get_image_data(sockets_or_slots):
                 pixels = [split_pixels_by_channels(result.shader_node.image)[channel]]
             else:
                 pixels = split_pixels_by_channels(result.shader_node.image)
+                channel = 0
 
             file_name = os.path.splitext(result.shader_node.image.name)[0]
 
@@ -128,12 +129,13 @@ def __get_image_data(sockets_or_slots):
                 file_name,
                 result.shader_node.image.size[0],
                 result.shader_node.image.size[1],
+                channel,
                 pixels)
 
             if image is None:
                 image = image_data
             else:
-                image.add_to_image(image_data)
+                image.add_to_image(channel, image_data)
 
         return image
     elif __is_slot(sockets_or_slots):
@@ -144,6 +146,7 @@ def __get_image_data(sockets_or_slots):
             texture.name,
             texture.image.size[0],
             texture.image.size[1],
+            0,
             pixels)
         return image_data
     else:

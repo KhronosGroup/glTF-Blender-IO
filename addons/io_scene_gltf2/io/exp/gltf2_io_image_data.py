@@ -23,21 +23,38 @@ class ImageData:
     # FUTURE_WORK: as a method to allow the node graph to be better supported, we could model some of
     # the node graph elements with numpy functions
 
-    def __init__(self, name: str, width: int, height: int, channels: typing.Optional[typing.List[np.ndarray]] = []):
+    def __init__(self, name: str, width: int, height: int, offset: int, channels: typing.Optional[typing.List[np.ndarray]] = []):
         if width <= 0 or height <= 0:
             raise ValueError("Image data can not have zero width or height")
+        if offset + len(channels) > 4:
+            raise ValueError("Image data can not have more than 4 channels")
+
+        self.channels = []
+        for fill in range(offset): 
+            # Fill before.
+            self.channels.append(np.ones_like(channels[0]))
+        self.channels += channels
+        total_channels = len(self.channels)
+        for fill in range(total_channels, 4):
+            # Fill after.
+            self.channels.append(np.ones_like(channels[0]))
+        
         self.name = name
-        self.channels = channels
         self.width = width
         self.height = height
 
-    def add_to_image(self, image_data):
+    def add_to_image(self, channel, image_data):
         if self.width != image_data.width or self.height != image_data.height:
             raise ValueError("Image dimensions do not match")
-        if len(self.channels) + len(image_data.channels) > 4:
-            raise ValueError("Can't append image: channels full")
+        if channel < 0 or channel > 3:
+            raise ValueError("Can't append image: channels out of bounds")
+        if len(image_data.channels) != 4:
+            raise ValueError("Can't append image: incomplete image")
+
         self.name += image_data.name
-        self.channels += image_data.channels
+
+        # Replace channel.
+        self.channels[channel] = image_data.channels[channel]
 
     @property
     def r(self):
@@ -73,13 +90,13 @@ class ImageData:
 
         # if there is no data, create a single pixel image
         if not channels:
-            channels = np.zeros((1, 1))
+            channels = np.ones((1, 1))
 
-        # fill all channels of the png
-        for _ in range(4 - len(channels)):
-            channels.append(np.ones_like(channels[0]))
+            # fill all channels of the png
+            for _ in range(4 - len(channels)):
+                channels.append(np.ones_like(channels[0]))
 
-        image = np.concatenate(self.channels, axis=1)
+        image = np.concatenate(channels, axis=1)
         image = image.flatten()
         image = (image * 255.0).astype(np.uint8)
         buf = image.tobytes()
