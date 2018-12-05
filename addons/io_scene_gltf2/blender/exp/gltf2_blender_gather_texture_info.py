@@ -18,6 +18,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
+from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 
 
 @cached
@@ -50,7 +51,32 @@ def __filter_texture_info(blender_shader_sockets_or_texture_slots, export_settin
 
 
 def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings):
-    return None
+    if not export_settings[gltf2_blender_export_keys.TEXTURE_TRANSFORM]:
+        return None
+
+    texture_node = blender_shader_sockets_or_texture_slots[0].links[0].from_node
+    if not isinstance(texture_node, bpy.types.ShaderNodeTexImage):
+        return None
+
+    mapping_socket = texture_node.inputs["Vector"]
+    if len(mapping_socket.links) == 0:
+        return None
+
+    mapping_node = mapping_socket.links[0].from_node
+    if not isinstance(mapping_node, bpy.types.ShaderNodeMapping):
+        return None
+
+    texture_transform = {}
+    if mapping_node.vector_type == 'TEXTURE':
+        texture_transform["offset"] = [-mapping_node.translation[0], -mapping_node.translation[1]]
+        texture_transform["rotation"] = -mapping_node.rotation[2]
+        texture_transform["scale"] = [1.0 / mapping_node.scale[0], 1.0 / mapping_node.scale[1]]
+    elif mapping_node.vector_type == 'POINT':
+        texture_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
+        texture_transform["rotation"] = mapping_node.rotation[2]
+        texture_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
+
+    return {"KHR_texture_transform": texture_transform}
 
 
 def __gather_extras(blender_shader_sockets_or_texture_slots, export_settings):
