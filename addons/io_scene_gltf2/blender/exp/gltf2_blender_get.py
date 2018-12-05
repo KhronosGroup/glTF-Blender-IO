@@ -363,6 +363,13 @@ def get_texture_transform_from_texture_node(texture_node):
         texture_transform["rotation"] = mapping_node.rotation[2]
         texture_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
 
+    if all([component == 0 for component in texture_transform["offset"]]):
+        del(texture_transform["offset"])
+    if all([component == 1 for component in texture_transform["scale"]]):
+        del(texture_transform["scale"])
+    if texture_transform["rotation"] == 0:
+        del(texture_transform["rotation"])
+
     return texture_transform
 
 
