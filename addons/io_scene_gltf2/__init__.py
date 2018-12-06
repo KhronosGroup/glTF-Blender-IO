@@ -83,8 +83,10 @@ class ExportGLTF2_Base:
                ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
                 'Exports multiple files, with separate JSON, binary and texture data. '
                 'Easiest to edit later')),
-        description='Output format and embedding options. Binary is most efficient, '
-                    'but JSON (embedded or separate) may be easier to edit later.',
+        description=(
+            'Output format and embedding options. Binary is most efficient, '
+            'but JSON (embedded or separate) may be easier to edit later'
+        ),
         default='GLB'
     )
 
