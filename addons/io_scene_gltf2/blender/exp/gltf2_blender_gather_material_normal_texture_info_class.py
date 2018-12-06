@@ -18,6 +18,9 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
+from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
+from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 
 
 @cached
@@ -51,7 +54,22 @@ def __filter_texture_info(blender_shader_sockets_or_texture_slots, export_settin
 
 
 def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings):
-    return None
+    if not export_settings[gltf2_blender_export_keys.TEXTURE_TRANSFORM]:
+        return None
+
+    normal_map_node = blender_shader_sockets_or_texture_slots[0].links[0].from_node
+    if not isinstance(normal_map_node, bpy.types.ShaderNodeNormalMap):
+        return None
+
+    texture_socket = normal_map_node.inputs["Color"]
+    if len(texture_socket.links) == 0:
+        return None
+
+    texture_node = texture_socket.links[0].from_node
+    texture_transform = gltf2_blender_get.get_texture_transform_from_texture_node(texture_node)
+
+    extension = Extension("KHR_texture_transform", texture_transform)
+    return {"KHR_texture_transform": extension}
 
 
 def __gather_extras(blender_shader_sockets_or_texture_slots, export_settings):
