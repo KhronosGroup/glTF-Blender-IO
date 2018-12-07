@@ -23,7 +23,7 @@ Unity3D and Unreal Engine 4.
 This importer/exporter supports the following glTF 2.0 features:
 
 - Meshes
-- Materials (Principled BSDF and Unlit)
+- Materials (Principled BSDF) and Shadeless (Unlit)
 - Textures
 - Cameras
 - Punctual Lights (point, spot, and directional)
@@ -36,10 +36,10 @@ This importer/exporter supports the following glTF 2.0 features:
   <https://github.com/KhronosGroup/glTF/tree/master/extensions>`_
   are supported:
 
-   - ``KHR_lights_punctual``
-   - ``KHR_materials_pbrSpecularGlossiness``
-   - ``KHR_materials_unlit``
-   - ``KHR_texture_transform``
+   - ``KHR_lights_punctual`` (import + export)
+   - ``KHR_materials_pbrSpecularGlossiness`` (import)
+   - ``KHR_materials_unlit`` (import)
+   - ``KHR_texture_transform`` (import + export)
 
 Materials
 ---------
@@ -47,13 +47,13 @@ Materials
 Import
 ^^^^^^
 
-Supports Principled BSDF (Metal/Rough PBR) , Spec/Gloss PBR, and Shadeless
+Supports Principled BSDF (Metal/Rough PBR), Spec/Gloss PBR, and Shadeless
 (Unlit) materials.
 
 Export
 ^^^^^^
 
-Supports Principled BSDF (Metal/Rough PBR) and Shadeless (Unlit) materials.
+Supports Principled BSDF (Metal/Rough PBR) materials.
 
 .. note::
 
@@ -68,7 +68,7 @@ Supports Principled BSDF (Metal/Rough PBR) and Shadeless (Unlit) materials.
 
 .. note::
 
-  Support for Shadeless (Unlit) materials is still in progress.
+  Support for Shadeless (Unlit) materials is in progress.
 
 Complex nodes cannot be exported. For best results when using nodes, prefer
 the following structure:
@@ -82,15 +82,6 @@ the following structure:
          Material Output node.
 
    A Principled BSDF material with an Emissive texture.
-
-To create unlit (shadeless) materials, use:
-
-.. figure:: /images/addons_io-gltf2-material-unlit.png
-   :alt: A Emissive node uses an Image Texture input. The texture takes a
-         Mapping Vector, with a UV Map as its input. The output of the
-         Emissive node is connected to the Material Output node.
-
-   An unlit (shadeless) material.
 
 Image Texture nodes may be multiplied with a constant color or scalar.
 
