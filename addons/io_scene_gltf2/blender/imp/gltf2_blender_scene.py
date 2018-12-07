@@ -87,8 +87,9 @@ class BlenderScene():
 
         if gltf.data.animations:
             for anim_idx, anim in enumerate(gltf.data.animations):
-                for node_idx in pyscene.nodes:
-                    BlenderAnimation.anim(gltf, anim_idx, node_idx)
+                if pyscene.nodes is not None:
+                    for node_idx in pyscene.nodes:
+                        BlenderAnimation.anim(gltf, anim_idx, node_idx)
 
         # Parent root node to rotation object
         if pyscene.nodes is not None:
