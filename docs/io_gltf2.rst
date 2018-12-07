@@ -36,10 +36,10 @@ This importer/exporter supports the following glTF 2.0 features:
   <https://github.com/KhronosGroup/glTF/tree/master/extensions>`_
   are supported:
 
-   - KHR_lights_punctual
-   - KHR_materials_pbrSpecularGlossiness
-   - KHR_materials_unlit
-   - KHR_texture_transform
+   - ``KHR_lights_punctual``
+   - ``KHR_materials_pbrSpecularGlossiness``
+   - ``KHR_materials_unlit``
+   - ``KHR_texture_transform``
 
 Materials
 ---------
@@ -47,24 +47,28 @@ Materials
 Import
 ^^^^^^
 
-Supports Principled BSDF (Metal/Rough PBR) , Spec/Gloss PBR, and Emissive
+Supports Principled BSDF (Metal/Rough PBR) , Spec/Gloss PBR, and Shadeless
 (Unlit) materials.
 
 Export
 ^^^^^^
 
-Supports Principled BSDF (Metal/Rough PBR) and Emissive (Unlit) materials.
+Supports Principled BSDF (Metal/Rough PBR) and Shadeless (Unlit) materials.
 
 .. note::
 
   Only certain properties of the Principled BSDF material are supported:
 
    - Base Color
-   - Metallic (B channel)
-   - Roughness (G channel)
+   - Metallic (``B`` channel)
+   - Roughness (``G`` channel)
    - Normal
    - Tangent
    - Blend Mode (Opaque, Alpha Blend, Alpha Clip)
+
+.. note::
+
+  Support for Shadeless (Unlit) materials is still in progress.
 
 Complex nodes cannot be exported. For best results when using nodes, prefer
 the following structure:
@@ -72,8 +76,8 @@ the following structure:
 .. figure:: /images/addons_io-gltf2-material-principled.png
    :alt: A Principled BSDF node uses multiple Image Texture inputs. Each
          texture takes a Mapping Vector, with a UV Map as its input.
-         Roughness must use the (G) channel of its texture, and Metalness
-         must use the (B) channel.The output of the Principled BSDF node
+         Roughness must use the ``G`` channel of its texture, and Metalness
+         must use the ``B`` channel. The output of the Principled BSDF node
          is added to an Emissive node, and the sum is connected to the
          Material Output node.
 
@@ -121,11 +125,11 @@ Import
 ------
 
 Log Level
-   TODO.
+   Set level of log to display.
 Pack Images
-   TODO.
+   Pack all images into ``.blend`` file.
 Shading
-   TODO.
+   How normals are computed during import.
 
 Export
 ------
@@ -135,6 +139,15 @@ General
 
 Format
    Output format and embedding options. Binary is most efficient, but JSON (embedded or separate) may be easier to edit later.
+
+   :glTF Binary (``.glb``): Exports a single file, with all data packed in
+           binary form. Most efficient and portable, but more difficult to edit
+           later.
+   :glTF Embedded (``.gltf``): Exports a single file, with all data packed in
+           JSON. Less efficient than binary, but easier to edit later.
+   :glTF Separate (``.gltf`` + ``.bin`` + textures): Exports multiple files,
+           with separate JSON, binary and texture data. Easiest to edit later.
+
 Selected Objects
    Export selected objects only.
 Apply Modifiers
@@ -164,7 +177,7 @@ Objects
 Cameras
    Export cameras.
 Punctual Lights
-   Export directional, point, and spot lights. Uses "KHR_lights_punctual" glTF extension.
+   Export directional, point, and spot lights. Uses ``KHR_lights_punctual`` glTF extension.
 
 Materials
 ^^^^^^^^^
@@ -172,7 +185,7 @@ Materials
 Materials
    Export materials.
 Texture Transforms
-   Export texture or UV position, rotation, and scale. Uses "KHR_texture_transform" glTF extension.
+   Export texture or UV position, rotation, and scale. Uses ``KHR_texture_transform`` glTF extension.
 
 Animation
 ^^^^^^^^^
@@ -184,7 +197,7 @@ Limit to Playback Range
 Sampling Rate
    How often to evaluate animated values (in frames).
 Keyframes Start at 0
-   Keyframes start at 0, instead of 1.
+   Keyframes start at ``0``, instead of ``1``.
 Always Sample Animations
    Apply sampling to all animations.
 Use Current Frame
