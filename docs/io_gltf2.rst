@@ -36,10 +36,10 @@ This importer/exporter supports the following glTF 2.0 features:
   <https://github.com/KhronosGroup/glTF/tree/master/extensions>`_
   are supported:
 
-   - ``KHR_lights_punctual`` (import + export)
-   - ``KHR_materials_pbrSpecularGlossiness`` (import)
-   - ``KHR_materials_unlit`` (import)
-   - ``KHR_texture_transform`` (import + export)
+   - KHR_lights_punctual
+   - KHR_materials_pbrSpecularGlossiness
+   - KHR_materials_unlit
+   - KHR_texture_transform
 
 Materials
 ---------
