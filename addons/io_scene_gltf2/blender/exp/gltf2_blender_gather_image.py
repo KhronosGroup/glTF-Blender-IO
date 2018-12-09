@@ -134,6 +134,7 @@ def __get_image_data(sockets_or_slots, export_settings):
 
             image_data = gltf2_io_image_data.ImageData(
                 file_name,
+                result.shader_node.image.filepath,
                 result.shader_node.image.size[0],
                 result.shader_node.image.size[1],
                 channel,
@@ -151,6 +152,7 @@ def __get_image_data(sockets_or_slots, export_settings):
 
         image_data = gltf2_io_image_data.ImageData(
             texture.name,
+            texture.image.filepath,
             texture.image.size[0],
             texture.image.size[1],
             0,

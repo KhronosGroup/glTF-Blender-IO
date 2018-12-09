@@ -20,6 +20,9 @@ from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
 
+import bpy
+import os
+from shutil import copyfile
 
 class GlTF2Exporter:
     """
@@ -141,9 +144,18 @@ class GlTF2Exporter:
         :return:
         """
         for image in self.__images:
-            uri = output_path + image.name + ".png"
-            with open(uri, 'wb') as f:
-                f.write(image.to_png_data())
+            dst_path = output_path + image.name + ".png"
+            
+            src_path = bpy.path.abspath(image.filepath)
+            if os.path.isfile(src_path):
+                # Source file exists.
+                if os.path.abspath(dst_path) != os.path.abspath(src_path):
+                    # Only copy, if source and destination are not the same. 
+                    copyfile(src_path, dst_path)
+            else:
+                # Source file does not exist e.g. it is packed or has been generated.            
+                with open(dst_path, 'wb') as f:
+                    f.write(image.to_png_data())
 
     def add_scene(self, scene: gltf2_io.Scene, active: bool = True):
         """
