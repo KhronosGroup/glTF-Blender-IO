@@ -28,17 +28,10 @@ class ImageData:
             raise ValueError("Image data can not have zero width or height")
         if offset + len(channels) > 4:
             raise ValueError("Image data can not have more than 4 channels")
-
-        self.channels = []
-        for fill in range(offset): 
-            # Fill before.
-            self.channels.append(np.ones_like(channels[0]))
-        self.channels += channels
-        total_channels = len(self.channels)
-        for fill in range(total_channels, 4):
-            # Fill after.
-            self.channels.append(np.ones_like(channels[0]))
-        
+        self.channels = [None, None, None, None]
+        channels_length = len(channels)
+        for index in range(offset, offset + channels_length):
+            self.channels[index] = channels[index - offset]
         self.name = name
         self.width = width
         self.height = height
@@ -92,10 +85,18 @@ class ImageData:
         # if there is no data, create a single pixel image
         if not channels:
             channels = np.ones((1, 1))
-
             # fill all channels of the png
             for _ in range(4 - len(channels)):
                 channels.append(np.ones_like(channels[0]))
+        else:
+            template_index = None
+            for index in range(0, 4):
+                if channels[index] is not None:
+                    template_index = index
+                    break 
+            for index in range(0, 4):
+                if channels[index] is None:
+                    channels[index] = np.ones_like(channels[template_index]) 
 
         image = np.concatenate(channels, axis=1)
         image = image.flatten()

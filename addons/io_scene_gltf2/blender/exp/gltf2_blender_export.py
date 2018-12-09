@@ -33,6 +33,7 @@ def save(context, export_settings):
 
 
 def __export(export_settings):
+    export_settings['gltf_channelcache'] = dict()
     exporter = GlTF2Exporter(__get_copyright(export_settings))
     __add_root_objects(exporter, export_settings)
     buffer = __create_buffer(exporter, export_settings)

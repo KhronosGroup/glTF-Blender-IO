@@ -49,7 +49,7 @@ def __filter_image(sockets_or_slots, export_settings):
 
 def __gather_buffer_view(sockets_or_slots, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
-        image = __get_image_data(sockets_or_slots)
+        image = __get_image_data(sockets_or_slots, export_settings)
         return gltf2_io_binary_data.BinaryData(
             data=image.to_image_data(__gather_mime_type(sockets_or_slots, export_settings)))
     return None
@@ -81,7 +81,7 @@ def __gather_name(sockets_or_slots, export_settings):
 def __gather_uri(sockets_or_slots, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_SEPARATE':
         # as usual we just store the data in place instead of already resolving the references
-        return __get_image_data(sockets_or_slots)
+        return __get_image_data(sockets_or_slots, export_settings)
     return None
 
 
@@ -93,14 +93,21 @@ def __is_slot(sockets_or_slots):
     return isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot)
 
 
-def __get_image_data(sockets_or_slots):
+def __get_image_data(sockets_or_slots, export_settings):
     # For shared ressources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # ressources.
-    def split_pixels_by_channels(image: bpy.types.Image) -> typing.List[typing.List[float]]:
+    def split_pixels_by_channels(image: bpy.types.Image, export_settings) -> typing.List[typing.List[float]]:
+        channelcache = export_settings['gltf_channelcache']
+        if image.name in channelcache:
+            return channelcache[image.name]
+        
         pixels = np.array(image.pixels)
         pixels = pixels.reshape((pixels.shape[0] // image.channels, image.channels))
         channels = np.split(pixels, pixels.shape[1], axis=1)
+        
+        channelcache[image.name] = channels
+        
         return channels
 
     if __is_socket(sockets_or_slots):
@@ -118,9 +125,9 @@ def __get_image_data(sockets_or_slots):
                     }[elem.from_socket.name]
 
             if channel is not None:
-                pixels = [split_pixels_by_channels(result.shader_node.image)[channel]]
+                pixels = [split_pixels_by_channels(result.shader_node.image, export_settings)[channel]]
             else:
-                pixels = split_pixels_by_channels(result.shader_node.image)
+                pixels = split_pixels_by_channels(result.shader_node.image, export_settings)
                 channel = 0
 
             file_name = os.path.splitext(result.shader_node.image.name)[0]
@@ -140,7 +147,7 @@ def __get_image_data(sockets_or_slots):
         return image
     elif __is_slot(sockets_or_slots):
         texture = __get_tex_from_slot(sockets_or_slots[0])
-        pixels = split_pixels_by_channels(texture.image)
+        pixels = split_pixels_by_channels(texture.image, export_settings)
 
         image_data = gltf2_io_image_data.ImageData(
             texture.name,
