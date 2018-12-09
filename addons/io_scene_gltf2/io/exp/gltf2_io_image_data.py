@@ -51,7 +51,8 @@ class ImageData:
         if len(image_data.channels) != 4:
             raise ValueError("Can't append image: incomplete image")
 
-        self.name += image_data.name
+        if self.name != image_data.name:
+            self.name += image_data.name
 
         # Replace channel.
         self.channels[channel] = image_data.channels[channel]
