@@ -75,7 +75,7 @@ class ExportGLTF2_Base:
         default='GLB'
     )
 
-    ui_tab: EnumProperty(
+    ui_tab = EnumProperty(
         items=(('GENERAL', "General", "General settings"),
                ('MESHES', "Meshes", "Mesh settings"),
                ('OBJECTS', "Objects", "Object settings"),
