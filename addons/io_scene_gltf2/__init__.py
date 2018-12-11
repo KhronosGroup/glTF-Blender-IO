@@ -75,6 +75,16 @@ class ExportGLTF2_Base:
         default='GLB'
     )
 
+    ui_tab: EnumProperty(
+        items=(('GENERAL', "General", "General settings"),
+               ('MESHES', "Meshes", "Mesh settings"),
+               ('OBJECTS', "Objects", "Object settings"),
+               ('MATERIALS', "Materials", "Material settings"),
+               ('ANIMATION', "Animation", "Animation settings")),
+        name="ui_tab",
+        description="Export setting categories",
+    )
+
     export_copyright = StringProperty(
         name='Copyright',
         description='Legal rights and conditions for the model',
@@ -199,8 +209,7 @@ class ExportGLTF2_Base:
 
     export_all_influences = BoolProperty(
         name='Include All Bone Influences',
-        description='Allow >4 joint vertex influences. Models may appear' \
-            ' incorrectly in many viewers',
+        description='Allow >4 joint vertex influences. Models may appear incorrectly in many viewers',
         default=False
     )
 
@@ -224,22 +233,22 @@ class ExportGLTF2_Base:
 
     export_lights = BoolProperty(
         name='Punctual Lights',
-        description='Export directional, point, and spot lights. Uses ' \
-            ' "KHR_lights_punctual" glTF extension',
+        description='Export directional, point, and spot lights. '
+                    'Uses "KHR_lights_punctual" glTF extension',
         default=False
     )
 
     export_texture_transform = BoolProperty(
         name='Texture Transforms',
-        description='Export texture or UV position, rotation, and scale.' \
-            ' Uses "KHR_texture_transform" glTF extension',
+        description='Export texture or UV position, rotation, and scale. '
+                    'Uses "KHR_texture_transform" glTF extension',
         default=False
     )
 
     export_displacement = BoolProperty(
         name='Displacement Textures (EXPERIMENTAL)',
-        description='EXPERIMENTAL: Export displacement textures. Uses' \
-            ' incomplete "KHR_materials_displacement" glTF extension',
+        description='EXPERIMENTAL: Export displacement textures. '
+                    'Uses incomplete "KHR_materials_displacement" glTF extension',
         default=False
     )
 
@@ -345,57 +354,53 @@ class ExportGLTF2_Base:
         return gltf2_blender_export.save(context, export_settings)
 
     def draw(self, context):
-        layout = self.layout
+        self.layout.prop(self, 'ui_tab', expand=True)
+        if self.ui_tab == 'GENERAL':
+            col = self.layout.box().column()
+            col.prop(self, 'export_format')
+            col.prop(self, 'export_selected')
+            col.prop(self, 'export_apply')
+            col.prop(self, 'export_yup')
+            col.prop(self, 'export_extras')
+            col.prop(self, 'export_copyright')
 
-        #
+        elif self.ui_tab == 'MESHES':
+            col = self.layout.box().column()
+            col.prop(self, 'export_texcoords')
+            col.prop(self, 'export_normals')
+            if self.export_normals:
+                col.prop(self, 'export_tangents')
+            col.prop(self, 'export_colors')
 
-        col = layout.box().column()
-        col.label(text='General:', icon='PREFERENCES')
-        col.prop(self, 'export_format')
-        col.prop(self, 'export_selected')
-        #col.prop(self, 'export_layers')
-        col.prop(self, 'export_apply')
-        col.prop(self, 'export_yup')
-        col.prop(self, 'export_extras')
-        col.prop(self, 'export_copyright')
+        elif self.ui_tab == 'OBJECTS':
+            col = self.layout.box().column()
+            col.prop(self, 'export_cameras')
+            col.prop(self, 'export_lights')
 
-        col = layout.box().column()
-        col.label(text='Meshes:', icon='MESH_DATA')
-        col.prop(self, 'export_texcoords')
-        col.prop(self, 'export_normals')
-        if self.export_normals:
-            col.prop(self, 'export_tangents')
-        col.prop(self, 'export_colors')
+        elif self.ui_tab == 'MATERIALS':
+            col = self.layout.box().column()
+            col.prop(self, 'export_materials')
+            col.prop(self, 'export_texture_transform')
 
-        col = layout.box().column()
-        col.label(text='Objects:', icon='OBJECT_DATA')
-        col.prop(self, 'export_cameras')
-        col.prop(self, 'export_lights')
-
-        col = layout.box().column()
-        col.label(text='Materials:', icon='MATERIAL_DATA')
-        col.prop(self, 'export_materials')
-        col.prop(self, 'export_texture_transform')
-
-        col = layout.box().column()
-        col.label(text='Animation:', icon='ARMATURE_DATA')
-        col.prop(self, 'export_animations')
-        if self.export_animations:
-            col.prop(self, 'export_frame_range')
-            col.prop(self, 'export_frame_step')
-            col.prop(self, 'export_move_keyframes')
-            col.prop(self, 'export_force_sampling')
-        else:
-            col.prop(self, 'export_current_frame')
-        col.prop(self, 'export_skins')
-        if self.export_skins:
-            col.prop(self, 'export_bake_skins')
-            col.prop(self, 'export_all_influences')
-        col.prop(self, 'export_morph')
-        if self.export_morph:
-            col.prop(self, 'export_morph_normal')
-            if self.export_morph_normal:
-                col.prop(self, 'export_morph_tangent')
+        elif self.ui_tab == 'ANIMATION':
+            col = self.layout.box().column()
+            col.prop(self, 'export_animations')
+            if self.export_animations:
+                col.prop(self, 'export_frame_range')
+                col.prop(self, 'export_frame_step')
+                col.prop(self, 'export_move_keyframes')
+                col.prop(self, 'export_force_sampling')
+            else:
+                col.prop(self, 'export_current_frame')
+            col.prop(self, 'export_skins')
+            if self.export_skins:
+                col.prop(self, 'export_bake_skins')
+                col.prop(self, 'export_all_influences')
+            col.prop(self, 'export_morph')
+            if self.export_morph:
+                col.prop(self, 'export_morph_normal')
+                if self.export_morph_normal:
+                    col.prop(self, 'export_morph_tangent')
 
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
