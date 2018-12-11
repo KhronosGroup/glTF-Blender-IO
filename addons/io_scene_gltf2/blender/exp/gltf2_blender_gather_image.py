@@ -101,13 +101,13 @@ def __get_image_data(sockets_or_slots, export_settings):
         channelcache = export_settings['gltf_channelcache']
         if image.name in channelcache:
             return channelcache[image.name]
-        
+
         pixels = np.array(image.pixels)
         pixels = pixels.reshape((pixels.shape[0] // image.channels, image.channels))
         channels = np.split(pixels, pixels.shape[1], axis=1)
-        
+
         channelcache[image.name] = channels
-        
+
         return channels
 
     if __is_socket(sockets_or_slots):

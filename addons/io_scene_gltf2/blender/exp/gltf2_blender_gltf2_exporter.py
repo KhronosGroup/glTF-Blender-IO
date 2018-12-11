@@ -145,15 +145,15 @@ class GlTF2Exporter:
         """
         for image in self.__images:
             dst_path = output_path + image.name + ".png"
-            
+
             src_path = bpy.path.abspath(image.filepath)
             if os.path.isfile(src_path):
                 # Source file exists.
                 if os.path.abspath(dst_path) != os.path.abspath(src_path):
-                    # Only copy, if source and destination are not the same. 
+                    # Only copy, if source and destination are not the same.
                     copyfile(src_path, dst_path)
             else:
-                # Source file does not exist e.g. it is packed or has been generated.            
+                # Source file does not exist e.g. it is packed or has been generated.
                 with open(dst_path, 'wb') as f:
                     f.write(image.to_png_data())
 

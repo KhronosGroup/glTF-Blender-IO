@@ -95,10 +95,10 @@ class ImageData:
             for index in range(0, 4):
                 if channels[index] is not None:
                     template_index = index
-                    break 
+                    break
             for index in range(0, 4):
                 if channels[index] is None:
-                    channels[index] = np.ones_like(channels[template_index]) 
+                    channels[index] = np.ones_like(channels[template_index])
 
         image = np.concatenate(channels, axis=1)
         image = image.flatten()
