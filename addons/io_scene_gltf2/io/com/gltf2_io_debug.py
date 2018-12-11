@@ -54,7 +54,7 @@ def print_console(level, output):
     if OUTPUT_LEVELS.index(level) > OUTPUT_LEVELS.index(g_current_output_level):
         return
 
-    print(level + ': ' + output)
+    print(get_timestamp() + " | " + level + ': ' + output)
 
 
 def print_newline():
@@ -62,9 +62,14 @@ def print_newline():
     print()
 
 
+def get_timestamp():
+    current_time = time.gmtime()
+    return time.strftime("%H:%M:%S", current_time)
+
+
 def print_timestamp(label=None):
     """Print a timestamp to Blender console."""
-    output = 'Timestamp: ' + str(time.time())
+    output = 'Timestamp: ' + get_timestamp()
 
     if label is not None:
         output = output + ' (' + label + ')'
