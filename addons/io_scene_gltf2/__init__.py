@@ -53,21 +53,6 @@ bl_info = {
 #
 
 
-class GLTF2ExportSettings(bpy.types.Operator):
-    """Save the export settings on export (saved in .blend). """
-    """Toggle off to clear settings"""
-    bl_label = "Save Settings"
-    bl_idname = "scene.gltf2_export_settings_set"
-
-    def execute(self, context):
-        operator = context.active_operator
-        operator.will_save_settings = not operator.will_save_settings
-        if not operator.will_save_settings:
-            # clear settings
-            context.scene.pop(operator.scene_key)
-        return {"FINISHED"}
-
-
 class ExportGLTF2_Base:
 
     # TODO: refactor to avoid boilerplate
@@ -412,12 +397,6 @@ class ExportGLTF2_Base:
             if self.export_morph_normal:
                 col.prop(self, 'export_morph_tangent')
 
-        row = layout.row()
-        row.operator(
-            GLTF2ExportSettings.bl_idname,
-            text=GLTF2ExportSettings.bl_label,
-            icon="%s" % "PINNED" if self.will_save_settings else "UNPINNED")
-
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
@@ -497,7 +476,6 @@ def menu_func_import(self, context):
 
 
 classes = (
-    GLTF2ExportSettings,
     ExportGLTF2,
     ImportGLTF2
 )
