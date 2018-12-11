@@ -356,51 +356,62 @@ class ExportGLTF2_Base:
     def draw(self, context):
         self.layout.prop(self, 'ui_tab', expand=True)
         if self.ui_tab == 'GENERAL':
-            col = self.layout.box().column()
-            col.prop(self, 'export_format')
-            col.prop(self, 'export_selected')
-            col.prop(self, 'export_apply')
-            col.prop(self, 'export_yup')
-            col.prop(self, 'export_extras')
-            col.prop(self, 'export_copyright')
-
+            self.draw_general_settings()
         elif self.ui_tab == 'MESHES':
-            col = self.layout.box().column()
-            col.prop(self, 'export_texcoords')
-            col.prop(self, 'export_normals')
-            if self.export_normals:
-                col.prop(self, 'export_tangents')
-            col.prop(self, 'export_colors')
-
+            self.draw_mesh_settings()
         elif self.ui_tab == 'OBJECTS':
-            col = self.layout.box().column()
-            col.prop(self, 'export_cameras')
-            col.prop(self, 'export_lights')
-
+            self.draw_object_settings()
         elif self.ui_tab == 'MATERIALS':
-            col = self.layout.box().column()
-            col.prop(self, 'export_materials')
-            col.prop(self, 'export_texture_transform')
-
+            self.draw_material_settings()
         elif self.ui_tab == 'ANIMATION':
-            col = self.layout.box().column()
-            col.prop(self, 'export_animations')
-            if self.export_animations:
-                col.prop(self, 'export_frame_range')
-                col.prop(self, 'export_frame_step')
-                col.prop(self, 'export_move_keyframes')
-                col.prop(self, 'export_force_sampling')
-            else:
-                col.prop(self, 'export_current_frame')
-            col.prop(self, 'export_skins')
-            if self.export_skins:
-                col.prop(self, 'export_bake_skins')
-                col.prop(self, 'export_all_influences')
-            col.prop(self, 'export_morph')
-            if self.export_morph:
-                col.prop(self, 'export_morph_normal')
-                if self.export_morph_normal:
-                    col.prop(self, 'export_morph_tangent')
+            self.draw_animation_settings()
+
+    def draw_general_settings(self):
+        col = self.layout.box().column()
+        col.prop(self, 'export_format')
+        col.prop(self, 'export_selected')
+        col.prop(self, 'export_apply')
+        col.prop(self, 'export_yup')
+        col.prop(self, 'export_extras')
+        col.prop(self, 'export_copyright')
+
+    def draw_mesh_settings(self):
+        col = self.layout.box().column()
+        col.prop(self, 'export_texcoords')
+        col.prop(self, 'export_normals')
+        if self.export_normals:
+            col.prop(self, 'export_tangents')
+        col.prop(self, 'export_colors')
+
+    def draw_object_settings(self):
+        col = self.layout.box().column()
+        col.prop(self, 'export_cameras')
+        col.prop(self, 'export_lights')
+
+    def draw_material_settings(self):
+        col = self.layout.box().column()
+        col.prop(self, 'export_materials')
+        col.prop(self, 'export_texture_transform')
+
+    def draw_animation_settings(self):
+        col = self.layout.box().column()
+        col.prop(self, 'export_animations')
+        if self.export_animations:
+            col.prop(self, 'export_frame_range')
+            col.prop(self, 'export_frame_step')
+            col.prop(self, 'export_move_keyframes')
+            col.prop(self, 'export_force_sampling')
+        else:
+            col.prop(self, 'export_current_frame')
+        col.prop(self, 'export_skins')
+        if self.export_skins:
+            col.prop(self, 'export_bake_skins')
+            col.prop(self, 'export_all_influences')
+        col.prop(self, 'export_morph')
+        if self.export_morph:
+            col.prop(self, 'export_morph_normal')
+            if self.export_morph_normal:
+                col.prop(self, 'export_morph_tangent')
 
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
