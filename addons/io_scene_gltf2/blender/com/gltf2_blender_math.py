@@ -32,7 +32,11 @@ def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Unio
     """Transform a list to blender py object."""
     target = get_target_property_name(data_path)
 
-    if target == 'location':
+    if target == 'delta_location':
+        return Vector(values)  # TODO Should be Vector(values) - Vector(something)?
+    elif target == 'delta_rotation_euler':
+        return Euler(values).to_quaternion()  # TODO Should be multiply(Euler(values).to_quaternion(), something)?
+    elif target == 'location':
         return Vector(values)
     elif target == 'rotation_axis_angle':
         angle = values[0]
@@ -78,6 +82,8 @@ def swizzle_yup(v: typing.Union[Vector, Quaternion], data_path: str) -> typing.U
     """Manage Yup."""
     target = get_target_property_name(data_path)
     swizzle_func = {
+        "delta_location": swizzle_yup_location,
+        "delta_rotation_euler": swizzle_yup_rotation,
         "location": swizzle_yup_location,
         "rotation_axis_angle": swizzle_yup_rotation,
         "rotation_euler": swizzle_yup_rotation,
@@ -117,6 +123,8 @@ def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Ma
     """Manage transformations."""
     target = get_target_property_name(data_path)
     transform_func = {
+        "delta_location": transform_location,
+        "delta_rotation_euler": transform_rotation,
         "location": transform_location,
         "rotation_axis_angle": transform_rotation,
         "rotation_euler": transform_rotation,

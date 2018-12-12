@@ -168,7 +168,10 @@ def __gather_mesh(blender_object, export_settings):
         modifiers = None
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
-        blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
+        if bpy.app.version < (2, 80, 0):
+            blender_mesh = blender_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
+        else:
+            blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
         skip_filter = True
     else:
         blender_mesh = blender_object.data
