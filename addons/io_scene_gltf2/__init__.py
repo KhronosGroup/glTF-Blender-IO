@@ -57,6 +57,8 @@ class ExportGLTF2_Base:
 
     # TODO: refactor to avoid boilerplate
 
+    bl_options = {'UNDO', 'PRESET'}
+
     export_format = EnumProperty(
         name='Format',
         items=(('GLB', 'glTF Binary (.glb)',
