@@ -50,16 +50,17 @@ def gather_node(blender_object, export_settings):
     )
     node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
 
-    if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS]:
-        correction_node = __get_correction_node(blender_object, export_settings)
-        correction_node.extensions = {"KHR_lights_punctual": node.extensions["KHR_lights_punctual"]}
-        del node.extensions["KHR_lights_punctual"]
-        node.children.append(correction_node)
-    if blender_object.type == 'CAMERA' and export_settings[gltf2_blender_export_keys.CAMERAS]:
-        correction_node = __get_correction_node(blender_object, export_settings)
-        correction_node.camera = node.camera
-        node.children.append(correction_node)
-    node.camera = None
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS]:
+            correction_node = __get_correction_node(blender_object, export_settings)
+            correction_node.extensions = {"KHR_lights_punctual": node.extensions["KHR_lights_punctual"]}
+            del node.extensions["KHR_lights_punctual"]
+            node.children.append(correction_node)
+        if blender_object.type == 'CAMERA' and export_settings[gltf2_blender_export_keys.CAMERAS]:
+            correction_node = __get_correction_node(blender_object, export_settings)
+            correction_node.camera = node.camera
+            node.children.append(correction_node)
+        node.camera = None
 
     return node
 
