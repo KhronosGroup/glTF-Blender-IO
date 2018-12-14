@@ -17,6 +17,7 @@ import bpy
 from mathutils import Quaternion
 
 from . import gltf2_blender_export_keys
+from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
@@ -217,6 +218,12 @@ def __gather_trans_rot_scale(blender_object, export_settings):
             trans = -gltf2_blender_extract.convert_swizzle_location(
                 blender_object.instance_collection.instance_offset, export_settings)
     translation, rotation, scale = (None, None, None)
+    trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
+                                   gltf2_blender_math.round_if_near(trans[2], 0.0)
+    rot[0], rot[1], rot[2], rot[3] = gltf2_blender_math.round_if_near(rot[0], 0.0), gltf2_blender_math.round_if_near(rot[1], 0.0), \
+                                     gltf2_blender_math.round_if_near(rot[2], 0.0), gltf2_blender_math.round_if_near(rot[3], 1.0)
+    sca[0], sca[1], sca[2] = gltf2_blender_math.round_if_near(sca[0], 1.0), gltf2_blender_math.round_if_near(sca[1], 1.0), \
+                             gltf2_blender_math.round_if_near(sca[2], 1.0)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
         translation = [trans[0], trans[1], trans[2]]
     if rot[0] != 0.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 1.0:
