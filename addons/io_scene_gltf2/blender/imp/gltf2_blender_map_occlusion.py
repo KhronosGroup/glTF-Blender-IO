@@ -22,13 +22,13 @@ class BlenderOcclusionMap():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, material_idx):
+    def create(gltf, material_idx, vertex_color):
         """Occlusion map creation."""
         engine = bpy.context.scene.render.engine
         if engine in ['CYCLES', 'BLENDER_EEVEE']:
-            BlenderOcclusionMap.create_nodetree(gltf, material_idx)
+            BlenderOcclusionMap.create_nodetree(gltf, material_idx, vertex_color)
 
-    def create_nodetree(gltf, material_idx):
+    def create_nodetree(gltf, material_idx, vertex_color):
         """Nodetree creation."""
         pymaterial = gltf.data.materials[material_idx]
 

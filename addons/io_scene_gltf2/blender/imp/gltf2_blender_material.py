@@ -34,13 +34,19 @@ class BlenderMaterial():
         """Material creation."""
         pymaterial = gltf.data.materials[material_idx]
 
-        if pymaterial.name is not None:
-            name = pymaterial.name
+        if vertex_color is None:
+            if pymaterial.name is not None:
+                name = pymaterial.name
+            else:
+                name = "Material_" + str(material_idx)
         else:
-            name = "Material_" + str(material_idx)
+            if pymaterial.name is not None:
+                name = pymaterial.name + "_" + vertex_color
+            else:
+                name = "Material_" + str(material_idx) + "_" + vertex_color
 
         mat = bpy.data.materials.new(name)
-        pymaterial.blender_material = mat.name
+        pymaterial.blender_material[vertex_color] = mat.name
 
         if pymaterial.extensions is not None and 'KHR_materials_pbrSpecularGlossiness' in pymaterial.extensions.keys():
             BlenderKHR_materials_pbrSpecularGlossiness.create(
@@ -62,36 +68,36 @@ class BlenderMaterial():
 
         # add emission map if needed
         if pymaterial.emissive_texture is not None:
-            BlenderEmissiveMap.create(gltf, material_idx)
+            BlenderEmissiveMap.create(gltf, material_idx, vertex_color)
 
         # add normal map if needed
         if pymaterial.normal_texture is not None:
-            BlenderNormalMap.create(gltf, material_idx)
+            BlenderNormalMap.create(gltf, material_idx, vertex_color)
 
         # add occlusion map if needed
         # will be pack, but not used
         if pymaterial.occlusion_texture is not None:
-            BlenderOcclusionMap.create(gltf, material_idx)
+            BlenderOcclusionMap.create(gltf, material_idx, vertex_color)
 
         if pymaterial.alpha_mode is not None and pymaterial.alpha_mode != 'OPAQUE':
-            BlenderMaterial.blender_alpha(gltf, material_idx)
+            BlenderMaterial.blender_alpha(gltf, material_idx, vertex_color)
 
     @staticmethod
-    def set_uvmap(gltf, material_idx, prim, obj):
+    def set_uvmap(gltf, material_idx, prim, obj, vertex_color):
         """Set UV Map."""
         pymaterial = gltf.data.materials[material_idx]
 
-        node_tree = bpy.data.materials[pymaterial.blender_material].node_tree
+        node_tree = bpy.data.materials[pymaterial.blender_material[vertex_color]].node_tree
         uvmap_nodes = [node for node in node_tree.nodes if node.type in ['UVMAP', 'NORMAL_MAP']]
         for uvmap_node in uvmap_nodes:
             if uvmap_node["gltf2_texcoord"] in prim.blender_texcoord.keys():
                 uvmap_node.uv_map = prim.blender_texcoord[uvmap_node["gltf2_texcoord"]]
 
     @staticmethod
-    def blender_alpha(gltf, material_idx):
+    def blender_alpha(gltf, material_idx, vertex_color):
         """Set alpha."""
         pymaterial = gltf.data.materials[material_idx]
-        material = bpy.data.materials[pymaterial.blender_material]
+        material = bpy.data.materials[pymaterial.blender_material[vertex_color]]
 
         node_tree = material.node_tree
         # Add nodes for basic transparency

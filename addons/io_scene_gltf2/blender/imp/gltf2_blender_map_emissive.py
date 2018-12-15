@@ -23,17 +23,17 @@ class BlenderEmissiveMap():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, material_idx):
+    def create(gltf, material_idx, vertex_color):
         """Create emissive map."""
         engine = bpy.context.scene.render.engine
         if engine in ['CYCLES', 'BLENDER_EEVEE']:
-            BlenderEmissiveMap.create_nodetree(gltf, material_idx)
+            BlenderEmissiveMap.create_nodetree(gltf, material_idx, vertex_color)
 
-    def create_nodetree(gltf, material_idx):
+    def create_nodetree(gltf, material_idx, vertex_color):
         """Create node tree."""
         pymaterial = gltf.data.materials[material_idx]
 
-        material = bpy.data.materials[pymaterial.blender_material]
+        material = bpy.data.materials[pymaterial.blender_material[vertex_color]]
         node_tree = material.node_tree
 
         BlenderTextureInfo.create(gltf, pymaterial.emissive_texture.index)

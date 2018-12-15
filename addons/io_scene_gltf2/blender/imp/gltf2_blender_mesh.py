@@ -79,7 +79,10 @@ class BlenderMesh():
 
         # Object and UV are now created, we can set UVMap into material
         for prim in pymesh.primitives:
-            BlenderPrimitive.set_UV_in_mat(gltf, prim, obj)
+            vertex_color = None
+            if 'COLOR_0' in prim.attributes.keys():
+                vertex_color = 'COLOR_0'
+            BlenderPrimitive.set_UV_in_mat(gltf, prim, obj, vertex_color)
 
         # Assign materials to mesh
         offset = 0
