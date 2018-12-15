@@ -65,7 +65,7 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
                 attribute_node.location = -500, 0
 
                 # links
-                node_tree.links.new(diffuse.inputs[0], attribute_node.outputs[1])
+                node_tree.links.new(diffuse.inputs[0], attribute_node.outputs[0])
 
         elif pbrSG['diffuse_type'] == gltf.TEXTURE_FACTOR:
 
