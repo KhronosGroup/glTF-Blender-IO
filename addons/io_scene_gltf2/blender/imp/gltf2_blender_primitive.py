@@ -119,11 +119,11 @@ class BlenderPrimitive():
             if bpy.app.version < (2, 80, 0):
                 if texcoord not in mesh.uv_textures:
                     mesh.uv_textures.new(texcoord)
-                    pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
+                pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
             else:
                 if texcoord not in mesh.uv_layers:
                     mesh.uv_layers.new(name=texcoord)
-                    pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
+                pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
 
             texcoord_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes[texcoord])
             for poly in mesh.polygons:
