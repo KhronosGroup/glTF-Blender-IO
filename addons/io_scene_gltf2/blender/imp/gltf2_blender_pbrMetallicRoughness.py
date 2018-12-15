@@ -87,15 +87,9 @@ class BlenderPbr():
                 attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
                 attribute_node.attribute_name = 'COLOR_0'
 
-                separate_vertex_color = node_tree.nodes.new('ShaderNodeSeparateRGB')
-                math_vc_R = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_R.operation = 'MULTIPLY'
-
-                math_vc_G = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_G.operation = 'MULTIPLY'
-
-                math_vc_B = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_B.operation = 'MULTIPLY'
+                vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
+                vc_mult_node.blend_type = 'MULTIPLY'
+                vc_mult_node.inputs['Fac'].default_value = 0.5
 
             BlenderTextureInfo.create(gltf, pypbr.base_color_texture.index)
 
@@ -107,26 +101,15 @@ class BlenderPbr():
             text_node.label = 'BASE COLOR'
             text_node.location = -1000, 500
 
-            combine = node_tree.nodes.new('ShaderNodeCombineRGB')
-            combine.location = -250, 500
-
-            math_R = node_tree.nodes.new('ShaderNodeMath')
-            math_R.location = -500, 750
-            math_R.operation = 'MULTIPLY'
-            math_R.inputs[1].default_value = pypbr.base_color_factor[0]
-
-            math_G = node_tree.nodes.new('ShaderNodeMath')
-            math_G.location = -500, 500
-            math_G.operation = 'MULTIPLY'
-            math_G.inputs[1].default_value = pypbr.base_color_factor[1]
-
-            math_B = node_tree.nodes.new('ShaderNodeMath')
-            math_B.location = -500, 250
-            math_B.operation = 'MULTIPLY'
-            math_B.inputs[1].default_value = pypbr.base_color_factor[2]
-
-            separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-            separate.location = -750, 500
+            mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
+            mult_node.blend_type = 'MULTIPLY'
+            mult_node.inputs['Fac'].default_value = 0.5
+            mult_node.inputs['Color2'].default_value = [
+                                                        pypbr.base_color_factor[0],
+                                                        pypbr.base_color_factor[1],
+                                                        pypbr.base_color_factor[2],
+                                                        pypbr.base_color_factor[3],
+                                                        ]
 
             mapping = node_tree.nodes.new('ShaderNodeMapping')
             mapping.location = -1500, 500
@@ -141,32 +124,17 @@ class BlenderPbr():
 
             # Create links
             if vertex_color:
-                node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
-                node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
-                node_tree.links.new(math_vc_B.inputs[1], separate_vertex_color.outputs[2])
-                node_tree.links.new(math_vc_R.inputs[0], math_R.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[0], math_G.outputs[0])
-                node_tree.links.new(math_vc_B.inputs[0], math_B.outputs[0])
-                node_tree.links.new(combine.inputs[0], math_vc_R.outputs[0])
-                node_tree.links.new(combine.inputs[1], math_vc_G.outputs[0])
-                node_tree.links.new(combine.inputs[2], math_vc_B.outputs[0])
+                node_tree.links.new(vc_mult_node.inputs[2], attribute_node.outputs[0])
+                node_tree.links.new(vc_mult_node.inputs[1], mult_node.outputs[0])
+                node_tree.links.new(principled.inputs[0], vc_mult_node.outputs[0])
 
             else:
-                node_tree.links.new(combine.inputs[0], math_R.outputs[0])
-                node_tree.links.new(combine.inputs[1], math_G.outputs[0])
-                node_tree.links.new(combine.inputs[2], math_B.outputs[0])
+                node_tree.links.new(principled.inputs[0], mult_node.outputs[0])
 
             # Common for both mode (non vertex color / vertex color)
-            node_tree.links.new(math_R.inputs[0], separate.outputs[0])
-            node_tree.links.new(math_G.inputs[0], separate.outputs[1])
-            node_tree.links.new(math_B.inputs[0], separate.outputs[2])
-
             node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
             node_tree.links.new(text_node.inputs[0], mapping.outputs[0])
-            node_tree.links.new(separate.inputs[0], text_node.outputs[0])
-
-            node_tree.links.new(principled.inputs[0], combine.outputs[0])
+            node_tree.links.new(mult_node.inputs[1], text_node.outputs[0])
 
         elif pypbr.color_type == gltf.TEXTURE:
 
@@ -179,26 +147,9 @@ class BlenderPbr():
                 attribute_node.attribute_name = 'COLOR_0'
                 attribute_node.location = -2000, 250
 
-                separate_vertex_color = node_tree.nodes.new('ShaderNodeSeparateRGB')
-                separate_vertex_color.location = -1500, 250
-
-                math_vc_R = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_R.operation = 'MULTIPLY'
-                math_vc_R.location = -1000, 750
-
-                math_vc_G = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_G.operation = 'MULTIPLY'
-                math_vc_G.location = -1000, 500
-
-                math_vc_B = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_B.operation = 'MULTIPLY'
-                math_vc_B.location = -1000, 250
-
-                combine = node_tree.nodes.new('ShaderNodeCombineRGB')
-                combine.location = -500, 500
-
-                separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-                separate.location = -1500, 500
+                vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
+                vc_mult_node.blend_type = 'MULTIPLY'
+                vc_mult_node.inputs['Fac'].default_value = 0.5
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
@@ -230,23 +181,9 @@ class BlenderPbr():
 
             # Create links
             if vertex_color:
-                node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
-
-                node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
-                node_tree.links.new(math_vc_B.inputs[1], separate_vertex_color.outputs[2])
-
-                node_tree.links.new(combine.inputs[0], math_vc_R.outputs[0])
-                node_tree.links.new(combine.inputs[1], math_vc_G.outputs[0])
-                node_tree.links.new(combine.inputs[2], math_vc_B.outputs[0])
-
-                node_tree.links.new(separate.inputs[0], text_node.outputs[0])
-
-                node_tree.links.new(principled.inputs[0], combine.outputs[0])
-
-                node_tree.links.new(math_vc_R.inputs[0], separate.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[0], separate.outputs[1])
-                node_tree.links.new(math_vc_B.inputs[0], separate.outputs[2])
+                node_tree.links.new(vc_mult_node.inputs[2], attribute_node.outputs[0])
+                node_tree.links.new(vc_mult_node.inputs[1], text_node.outputs[0])
+                node_tree.links.new(principled.inputs[0], vc_mult_node.outputs[0])
 
             else:
                 node_tree.links.new(principled.inputs[0], text_node.outputs[0])
