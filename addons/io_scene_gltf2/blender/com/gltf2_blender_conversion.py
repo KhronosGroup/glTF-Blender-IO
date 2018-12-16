@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from mathutils import Matrix, Quaternion
+from math import sqrt
 
 def matrix_gltf_to_blender(mat_input):
     """Matrix from glTF format to Blender format."""
@@ -39,3 +40,9 @@ def scale_to_matrix(scale):
         mat[i][i] = scale[i]
 
     return mat
+
+def correction_rotation():
+    """Correction of Rotation."""
+    # Correction is needed for lamps, because Yup2Zup is not written in vertices
+    # and lamps has no vertices :)
+    return Quaternion((sqrt(2)/2, -sqrt(2)/2, 0.0, 0.0)).to_matrix().to_4x4()

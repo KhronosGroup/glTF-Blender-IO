@@ -16,7 +16,8 @@ import bpy
 from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
 from .gltf2_blender_skin import BlenderSkin
-from ..com.gltf2_blender_conversion import scale_to_matrix, matrix_gltf_to_blender
+from .gltf2_blender_light import BlenderLight
+from ..com.gltf2_blender_conversion import scale_to_matrix, matrix_gltf_to_blender, correction_rotation
 
 
 class BlenderNode():
@@ -106,7 +107,21 @@ class BlenderNode():
 
             return
 
-        # No mesh, no camera. For now, create empty #TODO
+        if pynode.extensions is not None:
+            if 'KHR_lights_punctual' in pynode.extensions.keys():
+                obj = BlenderLight.create(gltf, pynode.extensions['KHR_lights_punctual']['light'])
+                obj.rotation_mode = 'QUATERNION'
+                BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent, correction=True)
+                pynode.blender_object = obj.name
+                BlenderNode.set_parent(gltf, pynode, obj, parent)
+
+                if pynode.children:
+                    for child_idx in pynode.children:
+                        BlenderNode.create(gltf, child_idx, node_idx)
+
+                return
+
+        # No mesh, no camera, no light. For now, create empty #TODO
 
         if pynode.name:
             gltf.log.info("Blender create Empty node " + pynode.name)
@@ -192,17 +207,32 @@ class BlenderNode():
         gltf.log.error("ERROR, parent not found")
 
     @staticmethod
-    def set_transforms(gltf, node_idx, pynode, obj, parent):
+    def set_transforms(gltf, node_idx, pynode, obj, parent, correction=False):
         """Set transforms."""
         if parent is None:
             obj.matrix_world = matrix_gltf_to_blender(pynode.transform)
+            if correction is True:
+                if bpy.app.version < (2, 80, 0):
+                    obj.matrix_world = obj.matrix_world * correction_rotation()
+                else:
+                    obj.matrix_world = obj.matrix_world @ correction_rotation()
             return
 
         for idx, node in enumerate(gltf.data.nodes):
             if idx == parent:
                 if node.is_joint is True:
                     obj.matrix_world = matrix_gltf_to_blender(pynode.transform)
+                    if correction is True:
+                        if bpy.app.version < (2, 80, 0):
+                            obj.matrix_world = obj.matrix_world * correction_rotation()
+                        else:
+                            obj.matrix_world = obj.matrix_world @ correction_rotation()
                     return
                 else:
+                    if correction is True:
+                        if bpy.app.version < (2, 80, 0):
+                            obj.matrix_world = obj.matrix_world * correction_rotation()
+                        else:
+                            obj.matrix_world = obj.matrix_world @ correction_rotation()
                     obj.matrix_world = matrix_gltf_to_blender(pynode.transform)
                     return
