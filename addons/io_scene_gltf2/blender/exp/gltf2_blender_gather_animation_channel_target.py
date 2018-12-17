@@ -67,6 +67,8 @@ def __gather_path(channels: typing.Tuple[bpy.types.FCurve],
                   ) -> str:
     target = channels[0].data_path.split('.')[-1]
     path = {
+        "delta_location": "translation",
+        "delta_rotation_euler": "rotation",
         "location": "translation",
         "rotation_axis_angle": "rotation",
         "rotation_euler": "rotation",

@@ -35,6 +35,8 @@ class Keyframe:
 
     def __get_target_len(self):
         length = {
+            "delta_location": 3,
+            "delta_rotation_euler": 3,
             "location": 3,
             "rotation_axis_angle": 4,
             "rotation_euler": 3,

@@ -17,6 +17,7 @@ import bpy
 from mathutils import Quaternion
 
 from . import gltf2_blender_export_keys
+from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
@@ -50,16 +51,17 @@ def gather_node(blender_object, export_settings):
     )
     node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
 
-    if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS]:
-        correction_node = __get_correction_node(blender_object, export_settings)
-        correction_node.extensions = {"KHR_lights_punctual": node.extensions["KHR_lights_punctual"]}
-        del node.extensions["KHR_lights_punctual"]
-        node.children.append(correction_node)
-    if blender_object.type == 'CAMERA' and export_settings[gltf2_blender_export_keys.CAMERAS]:
-        correction_node = __get_correction_node(blender_object, export_settings)
-        correction_node.camera = node.camera
-        node.children.append(correction_node)
-    node.camera = None
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS]:
+            correction_node = __get_correction_node(blender_object, export_settings)
+            correction_node.extensions = {"KHR_lights_punctual": node.extensions["KHR_lights_punctual"]}
+            del node.extensions["KHR_lights_punctual"]
+            node.children.append(correction_node)
+        if blender_object.type == 'CAMERA' and export_settings[gltf2_blender_export_keys.CAMERAS]:
+            correction_node = __get_correction_node(blender_object, export_settings)
+            correction_node.camera = node.camera
+            node.children.append(correction_node)
+        node.camera = None
 
     return node
 
@@ -168,8 +170,21 @@ def __gather_mesh(blender_object, export_settings):
         modifiers = None
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
-        blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
+        auto_smooth = blender_object.data.use_auto_smooth
+        if auto_smooth:
+            blender_object = blender_object.copy()
+            edge_split = blender_object.modifiers.new('Temporary_Auto_Smooth', 'EDGE_SPLIT')
+            edge_split.split_angle = blender_object.data.auto_smooth_angle
+            edge_split.use_edge_angle = not blender_object.data.has_custom_normals
+
+        if bpy.app.version < (2, 80, 0):
+            blender_mesh = blender_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
+        else:
+            blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
         skip_filter = True
+
+        if auto_smooth:
+            bpy.data.objects.remove(blender_object)
     else:
         blender_mesh = blender_object.data
         skip_filter = False
@@ -203,6 +218,12 @@ def __gather_trans_rot_scale(blender_object, export_settings):
             trans = -gltf2_blender_extract.convert_swizzle_location(
                 blender_object.instance_collection.instance_offset, export_settings)
     translation, rotation, scale = (None, None, None)
+    trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
+                                   gltf2_blender_math.round_if_near(trans[2], 0.0)
+    rot[0], rot[1], rot[2], rot[3] = gltf2_blender_math.round_if_near(rot[0], 0.0), gltf2_blender_math.round_if_near(rot[1], 0.0), \
+                                     gltf2_blender_math.round_if_near(rot[2], 0.0), gltf2_blender_math.round_if_near(rot[3], 1.0)
+    sca[0], sca[1], sca[2] = gltf2_blender_math.round_if_near(sca[0], 1.0), gltf2_blender_math.round_if_near(sca[1], 1.0), \
+                             gltf2_blender_math.round_if_near(sca[2], 1.0)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
         translation = [trans[0], trans[1], trans[2]]
     if rot[0] != 0.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 1.0:
