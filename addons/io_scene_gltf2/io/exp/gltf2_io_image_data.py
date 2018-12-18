@@ -14,6 +14,7 @@
 
 import typing
 import struct
+import re
 import zlib
 import numpy as np
 
@@ -75,6 +76,10 @@ class ImageData:
         if len(self.channels) <= 3:
             return None
         return self.channels[3]
+
+    def get_extension(self):
+        matches = re.findall(r'\.\w+$', self.filepath)
+        return matches[0] if len(matches) > 0 else ".png"
 
     def to_image_data(self, mime_type: str) -> bytes:
         if mime_type == 'image/png':

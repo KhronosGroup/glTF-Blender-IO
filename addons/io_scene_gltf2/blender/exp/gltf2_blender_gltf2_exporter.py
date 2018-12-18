@@ -144,8 +144,7 @@ class GlTF2Exporter:
         :return:
         """
         for image in self.__images:
-            dst_path = output_path + image.name + ".png"
-
+            dst_path = output_path + image.name + image.get_extension()
             src_path = bpy.path.abspath(image.filepath)
             if os.path.isfile(src_path):
                 # Source file exists.
