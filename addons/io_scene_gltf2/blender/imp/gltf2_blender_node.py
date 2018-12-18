@@ -113,6 +113,7 @@ class BlenderNode():
                 obj.rotation_mode = 'QUATERNION'
                 BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent, correction=True)
                 pynode.blender_object = obj.name
+                pynode.correction_needed = True
                 BlenderNode.set_parent(gltf, pynode, obj, parent)
 
                 if pynode.children:
