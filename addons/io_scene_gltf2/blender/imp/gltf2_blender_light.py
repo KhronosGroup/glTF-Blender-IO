@@ -47,6 +47,7 @@ class BlenderLight():
 
         return obj
 
+    @staticmethod
     def create_directional(gltf, light_id):
         pylight = gltf.data.extensions['KHR_lights_punctual']['lights'][light_id]
 
@@ -60,6 +61,7 @@ class BlenderLight():
         obj = bpy.data.objects.new(pylight['name'], sun)
         return obj
 
+    @staticmethod
     def create_point(gltf, light_id):
         pylight = gltf.data.extensions['KHR_lights_punctual']['lights'][light_id]
 
@@ -73,6 +75,7 @@ class BlenderLight():
         obj = bpy.data.objects.new(pylight['name'], point)
         return obj
 
+    @staticmethod
     def create_spot(gltf, light_id):
         pylight = gltf.data.extensions['KHR_lights_punctual']['lights'][light_id]
 
