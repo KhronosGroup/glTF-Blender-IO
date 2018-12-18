@@ -107,37 +107,40 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
     target_datapath = channels[0].data_path
 
-    transform = Matrix.Identity(4)
+    transform = blender_object.matrix_parent_inverse
+
+    isYup = export_settings[gltf2_blender_export_keys.YUP]
 
     if blender_object.type == "ARMATURE":
         bone = blender_object.path_resolve(get_target_object_path(target_datapath))
         if isinstance(bone, bpy.types.PoseBone):
-            transform = bone.bone.matrix_local
             if bone.parent is not None:
                 parent_transform = bone.parent.bone.matrix_local
-                transform = gltf2_blender_math.multiply(parent_transform.inverted(), transform)
-                # if not export_settings[gltf2_blender_export_keys.YUP]:
-                #     transform = gltf2_blender_math.multiply(gltf2_blender_math.to_zup(), transform)
+                transform = gltf2_blender_math.multiply(transform, parent_transform.inverted())
+                # if not isYup:
+                #     transform = gltf2_blender_math.multiply(transform, gltf2_blender_math.to_zup())
             else:
                 # only apply the y-up conversion to root bones, as child bones already are in the y-up space
-                if export_settings[gltf2_blender_export_keys.YUP]:
-                    transform = gltf2_blender_math.multiply(gltf2_blender_math.to_yup(), transform)
+                if isYup:
+                    transform = gltf2_blender_math.multiply(transform, gltf2_blender_math.to_yup())
+            local_transform = bone.bone.matrix_local
+            transform = gltf2_blender_math.multiply(transform, local_transform)
 
     values = []
     for keyframe in keyframes:
         # Transform the data and extract
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform)
-        if export_settings[gltf2_blender_export_keys.YUP] and not blender_object.type == "ARMATURE":
+        if isYup and not blender_object.type == "ARMATURE":
             value = gltf2_blender_math.swizzle_yup(value, target_datapath)
         keyframe_value = gltf2_blender_math.mathutils_to_gltf(value)
         if keyframe.in_tangent is not None:
             in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform)
-            if export_settings[gltf2_blender_export_keys.YUP] and not blender_object.type == "ARMATURE":
+            if isYup and not blender_object.type == "ARMATURE":
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
             keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value
         if keyframe.out_tangent is not None:
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform)
-            if export_settings[gltf2_blender_export_keys.YUP] and not blender_object.type == "ARMATURE":
+            if isYup and not blender_object.type == "ARMATURE":
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
             keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)
         values += keyframe_value

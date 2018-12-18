@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import sys
 import traceback
 
@@ -25,6 +26,9 @@ from io_scene_gltf2.io.exp import gltf2_io_export
 
 def save(context, export_settings):
     """Start the glTF 2.0 export and saves to content either to a .gltf or .glb file."""
+    if bpy.context.active_object is not None:
+        bpy.ops.object.mode_set(mode='OBJECT')
+
     __notify_start(context)
     json, buffer = __export(export_settings)
     __write_file(json, buffer, export_settings)

@@ -43,18 +43,17 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
     :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
     """
     if blender_material.node_tree and blender_material.use_nodes:
-        i = [input for input in blender_material.node_tree.inputs]
-        o = [output for output in blender_material.node_tree.outputs]
-        nodes = [node for node in blender_material.node_tree.nodes]
+        #i = [input for input in blender_material.node_tree.inputs]
+        #o = [output for output in blender_material.node_tree.outputs]
         if name == "Emissive":
-            nodes = filter(lambda n: isinstance(n, bpy.types.ShaderNodeEmission), nodes)
+            type = bpy.types.ShaderNodeEmission
             name = "Color"
         else:
-            nodes = filter(lambda n: isinstance(n, bpy.types.ShaderNodeBsdfPrincipled), nodes)
+            type = bpy.types.ShaderNodeBsdfPrincipled
+        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
-        if not inputs:
-            return None
-        return inputs[0]
+        if inputs:
+            return inputs[0]
     elif bpy.app.version < (2, 80, 0):  # blender 2.8 removed texture_slots
         if name != 'Base Color':
             return None
@@ -72,9 +71,26 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
                 if blender_texture_slot.use_map_color_diffuse:
                     return blender_texture_slot
 
-        return None
-    else:
-        return None
+    return None
+
+
+def get_socket_or_texture_slot_old(blender_material: bpy.types.Material, name: str):
+    """
+    For a given material input name, retrieve the corresponding node tree socket in the special glTF Metallic Roughness nodes (which might be deprecated?).
+
+    :param blender_material: a blender material for which to get the socket/slot
+    :param name: the name of the socket/slot
+    :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
+    """
+    if blender_material.node_tree and blender_material.use_nodes:
+        nodes = [n for n in blender_material.node_tree.nodes if \
+            isinstance(n, bpy.types.ShaderNodeGroup) and \
+            n.node_tree.name.startswith('glTF Metallic Roughness')]
+        inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
+        if inputs:
+            return inputs[0]
+
+    return None
 
 
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
