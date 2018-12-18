@@ -78,7 +78,7 @@ class ImageData:
         return self.channels[3]
 
     def get_extension(self):
-        allowed_extensions = ['.png', '.jpg']
+        allowed_extensions = ['.png', '.jpg', '.jpeg']
         fallback_extension = allowed_extensions[0]
 
         matches = re.findall(r'\.\w+$', self.filepath)
