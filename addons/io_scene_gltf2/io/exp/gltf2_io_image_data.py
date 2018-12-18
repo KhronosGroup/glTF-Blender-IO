@@ -78,8 +78,12 @@ class ImageData:
         return self.channels[3]
 
     def get_extension(self):
+        allowed_extensions = ['.png', '.jpg']
+        fallback_extension = allowed_extensions[0]
+
         matches = re.findall(r'\.\w+$', self.filepath)
-        return matches[0] if len(matches) > 0 else ".png"
+        extension = matches[0] if len(matches) > 0 else fallback_extension
+        return extension if extension.lower() in allowed_extensions else fallback_extension
 
     def to_image_data(self, mime_type: str) -> bytes:
         if mime_type == 'image/png':
