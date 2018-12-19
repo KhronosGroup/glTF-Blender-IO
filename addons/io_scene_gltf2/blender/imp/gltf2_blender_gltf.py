@@ -175,6 +175,9 @@ class BlenderGlTF():
 
                 gltf.data.skins[node.skin].node_ids.append(node_idx)
 
+            # Lights management
+            node.correction_needed = False
+
             # transform management
             if node.matrix:
                 node.transform = node.matrix

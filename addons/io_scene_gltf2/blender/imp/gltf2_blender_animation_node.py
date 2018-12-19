@@ -16,6 +16,7 @@ import bpy
 from mathutils import Vector
 
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_gltf_to_blender
+from ..com.gltf2_blender_conversion import correction_rotation
 from ...io.imp.gltf2_io_binary import BinaryData
 
 
@@ -96,9 +97,15 @@ class BlenderNodeAnim():
                     for idx, key in enumerate(keys):
                         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
                             # TODO manage tangent?
-                            obj.rotation_quaternion = quaternion_gltf_to_blender(values[idx * 3 + 1])
+                            vals = values[idx * 3 + 1]
                         else:
-                            obj.rotation_quaternion = quaternion_gltf_to_blender(values[idx])
+                            vals = values[idx]
+
+                        if node.correction_needed is True:
+                            obj.rotation_quaternion = (quaternion_gltf_to_blender(vals).to_matrix().to_4x4()  * correction_rotation()).to_quaternion()
+                        else:
+                            obj.rotation_quaternion = quaternion_gltf_to_blender(vals)
+
                         obj.keyframe_insert(blender_path, frame=key[0] * fps, group='rotation')
 
                     # Setting interpolation
