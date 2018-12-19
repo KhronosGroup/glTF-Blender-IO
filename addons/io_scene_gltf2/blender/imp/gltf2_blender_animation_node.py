@@ -102,7 +102,10 @@ class BlenderNodeAnim():
                             vals = values[idx]
 
                         if node.correction_needed is True:
-                            obj.rotation_quaternion = (quaternion_gltf_to_blender(vals).to_matrix().to_4x4()  * correction_rotation()).to_quaternion()
+                            if bpy.app.version < (2, 80, 0):
+                                obj.rotation_quaternion = (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() * correction_rotation()).to_quaternion()
+                            else:
+                                obj.rotation_quaternion = (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() @ correction_rotation()).to_quaternion()
                         else:
                             obj.rotation_quaternion = quaternion_gltf_to_blender(vals)
 
