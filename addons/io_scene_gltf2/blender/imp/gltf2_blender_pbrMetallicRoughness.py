@@ -89,7 +89,7 @@ class BlenderPbr():
 
                 vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
                 vc_mult_node.blend_type = 'MULTIPLY'
-                vc_mult_node.inputs['Fac'].default_value = 0.5
+                vc_mult_node.inputs['Fac'].default_value = 1.0
 
             BlenderTextureInfo.create(gltf, pypbr.base_color_texture.index)
 
@@ -103,7 +103,7 @@ class BlenderPbr():
 
             mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
             mult_node.blend_type = 'MULTIPLY'
-            mult_node.inputs['Fac'].default_value = 0.5
+            mult_node.inputs['Fac'].default_value = 1.0
             mult_node.inputs['Color2'].default_value = [
                                                         pypbr.base_color_factor[0],
                                                         pypbr.base_color_factor[1],
@@ -149,7 +149,7 @@ class BlenderPbr():
 
                 vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
                 vc_mult_node.blend_type = 'MULTIPLY'
-                vc_mult_node.inputs['Fac'].default_value = 0.5
+                vc_mult_node.inputs['Fac'].default_value = 1.0
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
