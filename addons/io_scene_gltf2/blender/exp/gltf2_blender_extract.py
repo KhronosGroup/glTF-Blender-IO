@@ -667,7 +667,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
 
                     #
 
-                    joint_index = 0
+                    joint_index = None
 
                     if modifiers is not None:
                         modifiers_dict = {m.type: m for m in modifiers}
@@ -681,8 +681,9 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
                     joint_weight = group_element.weight
 
                     #
-                    joint.append(joint_index)
-                    weight.append(joint_weight)
+                    if joint_weight > 0.0 and joint_index is not None:
+                        joint.append(joint_index)
+                        weight.append(joint_weight)
 
                 if len(joint) > 0:
                     bone_count += 1
