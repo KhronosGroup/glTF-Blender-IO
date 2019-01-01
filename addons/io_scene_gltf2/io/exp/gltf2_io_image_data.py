@@ -24,34 +24,35 @@ class ImageData:
     # FUTURE_WORK: as a method to allow the node graph to be better supported, we could model some of
     # the node graph elements with numpy functions
 
-    def __init__(self, name: str, filepath: str, width: int, height: int, offset: int, channels: typing.Optional[typing.List[np.ndarray]] = []):
+    def __init__(self, name: str, filepath: str, width: int, height: int, source: int, target: int, source_length: int, channels: typing.Optional[typing.List[np.ndarray]] = []):
         if width <= 0 or height <= 0:
             raise ValueError("Image data can not have zero width or height")
-        if offset + len(channels) > 4:
-            raise ValueError("Image data can not have more than 4 channels")
+        if source + source_length > 4:
+            raise ValueError("Source image data can not have more than 4 channels")
+        if target + source_length > 4:
+            raise ValueError("Target image data can not have more than 4 channels")
         self.channels = [None, None, None, None]
-        channels_length = len(channels)
-        for index in range(offset, offset + channels_length):
-            self.channels[index] = channels[index - offset]
+        for index in range(source, source + source_length):
+            self.channels[target + index - source] = channels[index]
         self.name = name
         self.filepath = filepath
         self.width = width
         self.height = height
 
-    def add_to_image(self, channel, image_data):
+    def add_to_image(self, target: int, image_data):
         if self.width != image_data.width or self.height != image_data.height:
             raise ValueError("Image dimensions do not match")
-        if channel < 0 or channel > 3:
-            raise ValueError("Can't append image: channels out of bounds")
+        if target < 0 or target > 3:
+            raise ValueError("Can't insert image: channels out of bounds")
         if len(image_data.channels) != 4:
-            raise ValueError("Can't append image: incomplete image")
+            raise ValueError("Can't insert image: incomplete image")
 
         if self.name != image_data.name:
             self.name += image_data.name
             self.filepath = ""
 
         # Replace channel.
-        self.channels[channel] = image_data.channels[channel]
+        self.channels[target] = image_data.channels[target]
 
     @property
     def r(self):

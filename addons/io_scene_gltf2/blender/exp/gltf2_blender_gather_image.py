@@ -115,20 +115,35 @@ def __get_image_data(sockets_or_slots, export_settings):
         image = None
         for result, socket in zip(results, sockets_or_slots):
             # rudimentarily try follow the node tree to find the correct image data.
-            channel = None
+            source_channel = None
+            target_channel = None
+            source_channels_length = None
             for elem in result.path:
                 if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
-                    channel = {
+                    source_channel = {
                         'R': 0,
                         'G': 1,
                         'B': 2
                     }[elem.from_socket.name]
 
-            if channel is not None:
-                pixels = [split_pixels_by_channels(result.shader_node.image, export_settings)[channel]]
+            if source_channel is not None:
+                pixels = [split_pixels_by_channels(result.shader_node.image, export_settings)[source_channel]]
+                target_channel = source_channel
+                source_channel = 0
+                source_channels_length = 1
             else:
                 pixels = split_pixels_by_channels(result.shader_node.image, export_settings)
-                channel = 0
+                target_channel = 0
+                source_channel = 0
+                source_channels_length = len(pixels)
+
+            # Change target channel for metallic and roughness.
+            if elem.to_socket.name == 'Metallic':
+                target_channel = 2
+                source_channels_length = 1
+            elif elem.to_socket.name == 'Roughness':
+                target_channel = 1
+                source_channels_length = 1
 
             file_name = os.path.splitext(result.shader_node.image.name)[0]
 
@@ -137,13 +152,15 @@ def __get_image_data(sockets_or_slots, export_settings):
                 result.shader_node.image.filepath,
                 result.shader_node.image.size[0],
                 result.shader_node.image.size[1],
-                channel,
+                source_channel,
+                target_channel,
+                source_channels_length,
                 pixels)
 
             if image is None:
                 image = image_data
             else:
-                image.add_to_image(channel, image_data)
+                image.add_to_image(target_channel, image_data)
 
         return image
     elif __is_slot(sockets_or_slots):
@@ -156,6 +173,8 @@ def __get_image_data(sockets_or_slots, export_settings):
             texture.image.size[0],
             texture.image.size[1],
             0,
+            0,
+            len(pixels),
             pixels)
         return image_data
     else:
