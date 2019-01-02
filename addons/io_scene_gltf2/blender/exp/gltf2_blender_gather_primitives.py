@@ -73,9 +73,7 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
     indices = blender_primitive['indices']
 
     max_index = max(indices)
-    if max_index < (1 << 8):
-        component_type = gltf2_io_constants.ComponentType.UnsignedByte
-    elif max_index < (1 << 16):
+    if max_index < (1 << 16):
         component_type = gltf2_io_constants.ComponentType.UnsignedShort
     elif max_index < (1 << 32):
         component_type = gltf2_io_constants.ComponentType.UnsignedInt
