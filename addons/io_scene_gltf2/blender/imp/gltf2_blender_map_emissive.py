@@ -40,7 +40,8 @@ class BlenderEmissiveMap():
 
         # check if there is some emssive_factor on material
         if pymaterial.emissive_factor is None:
-            pymaterial.emissive_factor = [1.0, 1.0, 1.0]
+            # Default in glTF specification is 0/0/0 --> No emission
+            pymaterial.emissive_factor = [0.0, 0.0, 0.0]
 
         # retrieve principled node and output node
         principled = get_preoutput_node_output(node_tree)
