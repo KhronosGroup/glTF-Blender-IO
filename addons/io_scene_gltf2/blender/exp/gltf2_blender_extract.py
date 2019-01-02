@@ -662,12 +662,16 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
 
                     #
 
-                    vertex_group_index = group_element.group
-                    vertex_group_name = blender_vertex_groups[vertex_group_index].name
+                    joint_weight = group_element.weight
+                    if joint_weight <= 0.0:
+                        continue
 
                     #
 
-                    joint_index = 0
+                    vertex_group_index = group_element.group
+                    vertex_group_name = blender_vertex_groups[vertex_group_index].name
+
+                    joint_index = None
 
                     if modifiers is not None:
                         modifiers_dict = {m.type: m for m in modifiers}
@@ -677,12 +681,12 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
                             for index, j in enumerate(skin.joints):
                                 if j.name == vertex_group_name:
                                     joint_index = index
-
-                    joint_weight = group_element.weight
+                                    break
 
                     #
-                    joint.append(joint_index)
-                    weight.append(joint_weight)
+                    if joint_index is not None:
+                        joint.append(joint_index)
+                        weight.append(joint_weight)
 
                 if len(joint) > 0:
                     bone_count += 1
