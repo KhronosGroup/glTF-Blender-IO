@@ -84,7 +84,7 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
     elif max_index < 4294967295:
         component_type = gltf2_io_constants.ComponentType.UnsignedInt
     else:
-        print_console('ERROR', 'Invalid max_index: ' + str(max_index))
+        print_console('ERROR', 'A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
         return None
 
     element_type = gltf2_io_constants.DataType.Scalar
