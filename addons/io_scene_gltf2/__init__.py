@@ -36,7 +36,7 @@ from bpy.props import (CollectionProperty,
 
 bl_info = {
     'name': 'glTF 2.0 format',
-    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann Moritz Becher, Benjamin Schmithüsen',
+    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen',
     "version": (0, 0, 1),
     'blender': (2, 80, 0),
     'location': 'File > Import-Export',
