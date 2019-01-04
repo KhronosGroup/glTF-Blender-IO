@@ -72,10 +72,16 @@ def __gather_materials(blender_primitive, blender_mesh, modifiers, export_settin
 def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings):
     indices = blender_primitive['indices']
 
+    # NOTE: Values used by some graphics APIs as "primitive restart" values are disallowed.
+    # Specifically, the values 65535 (in UINT16) and 4294967295 (in UINT32) cannot be used as indices.
+    # https://github.com/KhronosGroup/glTF/issues/1142
+    # https://github.com/KhronosGroup/glTF/pull/1476/files
+    # Also, UINT8 mode is not supported:
+    # https://github.com/KhronosGroup/glTF/issues/1471
     max_index = max(indices)
-    if max_index < (1 << 16):
+    if max_index < 65535:
         component_type = gltf2_io_constants.ComponentType.UnsignedShort
-    elif max_index < (1 << 32):
+    elif max_index < 4294967295:
         component_type = gltf2_io_constants.ComponentType.UnsignedInt
     else:
         print_console('ERROR', 'Invalid max_index: ' + str(max_index))

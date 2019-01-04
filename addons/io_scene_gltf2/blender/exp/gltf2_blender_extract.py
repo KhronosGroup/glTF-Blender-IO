@@ -975,7 +975,12 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
 
         #
 
-        range_indices = 65536
+        # NOTE: Values used by some graphics APIs as "primitive restart" values are disallowed.
+        # Specifically, the value 65535 (in UINT16) cannot be used as a vertex index.
+        # https://github.com/KhronosGroup/glTF/issues/1142
+        # https://github.com/KhronosGroup/glTF/pull/1476/files
+
+        range_indices = 65535
 
         #
 
