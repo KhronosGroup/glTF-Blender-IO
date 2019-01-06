@@ -89,7 +89,16 @@ class BinaryData():
             for idx, tuple in enumerate(data):
                 new_tuple = ()
                 for i in tuple:
-                    new_tuple += (float(i),)
+                    if accessor.component_type == 5120:
+                        new_tuple += (max(float(i / 127.0 ), -1.0),)
+                    elif accessor.component_type == 5121:
+                        new_tuple += (float(i / 255.0),)
+                    elif accessor.component_type == 5122:
+                        new_tuple += (max(float(i / 32767.0), -1.0),)
+                    elif accessor.component_type == 5123:
+                        new_tuple += (i / 65535.0,)
+                    else:
+                        new_tuple += (float(i),)
                 data[idx] = new_tuple
 
         return data
