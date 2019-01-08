@@ -18,6 +18,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
 from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
@@ -38,6 +39,9 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
         weights=__gather_weights(blender_mesh, vertex_groups, modifiers, export_settings)
     )
 
+    if len(mesh.primitives) == 0:
+        print_console("WARNING", "Mesh '{}' has no primitives and will be omitted.".format(mesh.name))
+        return None
     return mesh
 
 
