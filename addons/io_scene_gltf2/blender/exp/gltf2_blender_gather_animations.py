@@ -159,7 +159,8 @@ def __get_blender_actions(blender_object: bpy.types.Object
     if blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
-            and blender_object.data.shape_keys.animation_data is not None:
+            and blender_object.data.shape_keys.animation_data is not None \
+            and blender_object.data.shape_keys.animation_data.action is not None:
         blender_actions.append(blender_object.data.shape_keys.animation_data.action)
 
     # Remove duplicate actions.
