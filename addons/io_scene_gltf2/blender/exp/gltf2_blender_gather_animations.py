@@ -17,6 +17,7 @@ import typing
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 def gather_animations(blender_object: bpy.types.Object, export_settings) -> typing.List[gltf2_io.Animation]:
@@ -48,13 +49,18 @@ def __gather_animation(blender_action: bpy.types.Action,
     if not __filter_animation(blender_action, blender_object, export_settings):
         return None
 
-    animation = gltf2_io.Animation(
-        channels=__gather_channels(blender_action, blender_object, export_settings),
-        extensions=__gather_extensions(blender_action, blender_object, export_settings),
-        extras=__gather_extras(blender_action, blender_object, export_settings),
-        name=__gather_name(blender_action, blender_object, export_settings),
-        samplers=__gather_samplers(blender_action, blender_object, export_settings)
-    )
+    name = __gather_name(blender_action, blender_object, export_settings)
+    try:
+        animation = gltf2_io.Animation(
+            channels=__gather_channels(blender_action, blender_object, export_settings),
+            extensions=__gather_extensions(blender_action, blender_object, export_settings),
+            extras=__gather_extras(blender_action, blender_object, export_settings),
+            name=name,
+            samplers=__gather_samplers(blender_action, blender_object, export_settings)
+        )
+    except RuntimeError as error:
+        print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
+        return None
 
     # To allow reuse of samplers in one animation,
     __link_samplers(animation, export_settings)
