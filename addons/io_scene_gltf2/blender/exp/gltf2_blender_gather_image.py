@@ -33,7 +33,7 @@ def gather_image(
         return None
 
     uri = __gather_uri(blender_shader_sockets_or_texture_slots, export_settings)
-    mime_type = __gather_mime_type(uri.filepath)
+    mime_type = __gather_mime_type(uri.filepath if uri is not None else "")
 
     image = gltf2_io.Image(
         buffer_view=__gather_buffer_view(blender_shader_sockets_or_texture_slots, export_settings),
@@ -56,7 +56,7 @@ def __gather_buffer_view(sockets_or_slots, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
         image = __get_image_data(sockets_or_slots, export_settings)
         return gltf2_io_binary_data.BinaryData(
-            data=image.to_image_data(__gather_mime_type(sockets_or_slots, export_settings)))
+            data=image.to_image_data(__gather_mime_type()))
     return None
 
 
@@ -68,13 +68,13 @@ def __gather_extras(sockets_or_slots, export_settings):
     return None
 
 
-def __gather_mime_type(filepath):
+def __gather_mime_type(filepath=""):
     extension_types = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg'}
-    fallback_extension = extension_types['.png']
+    default_extension = extension_types['.png']
 
     matches = re.findall(r'\.\w+$', filepath)
-    extension = matches[0] if len(matches) > 0 else fallback_extension
-    return extension_types[extension] if extension.lower() in extension_types.keys() else fallback_extension
+    extension = matches[0] if len(matches) > 0 else default_extension
+    return extension_types[extension] if extension.lower() in extension_types.keys() else default_extension
 
 
 def __gather_name(sockets_or_slots, export_settings):
