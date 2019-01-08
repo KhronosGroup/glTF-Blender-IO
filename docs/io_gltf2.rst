@@ -57,7 +57,7 @@ Supports Metal/Rough PBR (Principled BSDF) and Spec/Gloss PBR.
 Export
 ^^^^^^
 
-Supports Metal/Rough PBR (Principled BSDF) materials.
+Supports Metal/Rough PBR (Principled BSDF) and Shadeless (Unlit) materials.
 
 .. note::
 
@@ -72,7 +72,7 @@ Supports Metal/Rough PBR (Principled BSDF) materials.
 
 .. note::
 
-  Support for Shadeless (Unlit) materials is in progress.
+  To create Shadeless (Unlit) materials, use the Background material type.
 
 Complex nodes cannot be exported. For best results when using nodes, prefer
 the following structure:
