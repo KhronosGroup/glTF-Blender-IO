@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
 
 import bpy
 import typing
@@ -30,13 +31,17 @@ def gather_image(
         export_settings):
     if not __filter_image(blender_shader_sockets_or_texture_slots, export_settings):
         return None
+
+    uri = __gather_uri(blender_shader_sockets_or_texture_slots, export_settings)
+    mime_type = __gather_mime_type(uri.filepath)
+
     image = gltf2_io.Image(
         buffer_view=__gather_buffer_view(blender_shader_sockets_or_texture_slots, export_settings),
         extensions=__gather_extensions(blender_shader_sockets_or_texture_slots, export_settings),
         extras=__gather_extras(blender_shader_sockets_or_texture_slots, export_settings),
-        mime_type=__gather_mime_type(blender_shader_sockets_or_texture_slots, export_settings),
+        mime_type=mime_type,
         name=__gather_name(blender_shader_sockets_or_texture_slots, export_settings),
-        uri=__gather_uri(blender_shader_sockets_or_texture_slots, export_settings)
+        uri=uri
     )
     return image
 
@@ -63,9 +68,13 @@ def __gather_extras(sockets_or_slots, export_settings):
     return None
 
 
-def __gather_mime_type(sockets_or_slots, export_settings):
-    return 'image/png'
-    # return 'image/jpeg'
+def __gather_mime_type(filepath):
+    extension_types = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg'}
+    fallback_extension = extension_types['.png']
+
+    matches = re.findall(r'\.\w+$', filepath)
+    extension = matches[0] if len(matches) > 0 else fallback_extension
+    return extension_types[extension] if extension.lower() in extension_types.keys() else fallback_extension
 
 
 def __gather_name(sockets_or_slots, export_settings):
