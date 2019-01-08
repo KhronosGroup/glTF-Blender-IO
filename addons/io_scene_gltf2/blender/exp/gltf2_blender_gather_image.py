@@ -107,6 +107,8 @@ def __get_image_data(sockets_or_slots, export_settings):
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # ressources.
     def split_pixels_by_channels(image: bpy.types.Image, export_settings) -> typing.List[typing.List[float]]:
+        assert image.channels > 0, "Image '{}' has no color channels and cannot be exported.".format(image.name)
+
         channelcache = export_settings['gltf_channelcache']
         if image.name in channelcache:
             return channelcache[image.name]
