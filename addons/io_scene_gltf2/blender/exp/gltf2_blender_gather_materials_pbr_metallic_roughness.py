@@ -48,6 +48,8 @@ def __gather_base_color_factor(blender_material, export_settings):
         base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "BaseColor")
     if base_color_socket is None:
         base_color_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "BaseColorFactor")
+    if base_color_socket is None:
+        base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background")
     if isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked:
         return list(base_color_socket.default_value)
     return None
@@ -58,6 +60,8 @@ def __gather_base_color_texture(blender_material, export_settings):
         base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "BaseColor")
     if base_color_socket is None:
         base_color_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "BaseColor")
+    if base_color_socket is None:
+        base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background")
     return gltf2_blender_gather_texture_info.gather_texture_info((base_color_socket,), export_settings)
 
 

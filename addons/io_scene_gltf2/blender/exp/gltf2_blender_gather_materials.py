@@ -16,6 +16,7 @@ import bpy
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
+from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_normal_texture_info_class
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_occlusion_texture_info_class
@@ -121,7 +122,10 @@ def __gather_extensions(blender_material, export_settings):
 
     if bpy.app.version < (2, 80, 0):
         if blender_material.use_shadeless:
-            extensions["KHR_materials_unlit"] = {}
+            extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
+    else:
+        if gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background") is not None:
+            extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
 
     # TODO specular glossiness extension
 
