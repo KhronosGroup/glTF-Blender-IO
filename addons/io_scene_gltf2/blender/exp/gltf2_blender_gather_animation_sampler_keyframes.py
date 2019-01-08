@@ -46,7 +46,7 @@ class Keyframe:
         }.get(self.__target)
 
         if length is None:
-            raise RuntimeError("Unknown target type {}".format(self.__target))
+            raise RuntimeError("Animations with target type '{}' are not supported.".format(self.__target))
 
         return length
 
