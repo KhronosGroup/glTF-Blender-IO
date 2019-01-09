@@ -174,6 +174,10 @@ def __get_image_data(sockets_or_slots, export_settings) -> ExportImage:
                 dst_chan = Channel.R
             elif socket.name == 'Alpha' and len(sockets_or_slots) > 1 and sockets_or_slots[1] is not None:
                 dst_chan = Channel.A
+            elif socket.name == 'Clearcoat':
+                dst_chan = Channel.R
+            elif socket.name == 'Clearcoat Roughness':
+                dst_chan = Channel.G
 
             if dst_chan is not None:
                 composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)

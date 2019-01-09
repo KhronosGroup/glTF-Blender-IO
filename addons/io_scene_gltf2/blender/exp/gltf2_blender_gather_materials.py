@@ -129,10 +129,18 @@ def __gather_emissive_texture(blender_material, export_settings):
 def __gather_extensions(blender_material, export_settings):
     extensions = {}
 
+    # KHR_materials_unlit
+
     if gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background") is not None:
         extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
 
-    # TODO specular glossiness extension
+    # KHR_materials_clearcoat
+
+    clearcoat_extension = __gather_clearcoat_extension(blender_material, export_settings)
+    if clearcoat_extension:
+        extensions["KHR_materials_clearcoat"] = clearcoat_extension
+
+    # TODO KHR_materials_pbrSpecularGlossiness
 
     return extensions if extensions else None
 
@@ -217,3 +225,55 @@ def __has_image_node_from_socket(socket):
     if not result:
         return False
     return True
+
+def __gather_clearcoat_extension(blender_material, export_settings):
+    clearcoat_enabled = False
+    has_clearcoat_texture = False
+    has_clearcoat_roughness_texture = False
+
+    clearcoat_extension = {}
+    clearcoat_roughness_slots = ()
+
+    clearcoat_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, 'Clearcoat')
+    clearcoat_roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, 'Clearcoat Roughness')
+    clearcoat_normal_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, 'Clearcoat Normal')
+
+    if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
+        clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
+        clearcoat_enabled = clearcoat_extension['clearcoatFactor'] > 0
+    elif __has_image_node_from_socket(clearcoat_socket):
+        clearcoat_extension['clearcoatFactor'] = 1
+        has_clearcoat_texture = True
+        clearcoat_enabled = True
+
+    if not clearcoat_enabled:
+        return None
+
+    if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
+        clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
+    elif __has_image_node_from_socket(clearcoat_roughness_socket):
+        clearcoat_extension['clearcoatRoughnessFactor'] = 1
+        has_clearcoat_roughness_texture = True
+
+    # Pack clearcoat (R) and clearcoatRoughness (G) channels.
+    if has_clearcoat_texture and has_clearcoat_roughness_texture:
+        clearcoat_roughness_slots = (clearcoat_socket, clearcoat_roughness_socket,)
+    elif has_clearcoat_texture:
+        clearcoat_roughness_slots = (clearcoat_socket,)
+    elif has_clearcoat_roughness_texture:
+        clearcoat_roughness_slots = (clearcoat_roughness_socket,)
+
+    if len(clearcoat_roughness_slots) > 0:
+        combined_texture = gltf2_blender_gather_texture_info.gather_texture_info(clearcoat_roughness_slots, export_settings)
+        if has_clearcoat_texture:
+            clearcoat_extension['clearcoatTexture'] = combined_texture
+        if has_clearcoat_roughness_texture:
+            clearcoat_extension['clearcoatRoughnessTexture'] = combined_texture
+
+    if __has_image_node_from_socket(clearcoat_normal_socket):
+        clearcoat_extension['clearcoatNormalTexture'] = gltf2_blender_gather_texture_info.gather_texture_info(
+            (clearcoat_normal_socket,),
+            export_settings
+        )
+
+    return Extension('KHR_materials_clearcoat', clearcoat_extension, False)
