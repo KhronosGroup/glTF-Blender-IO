@@ -20,7 +20,7 @@ then
 	command=test-bail
 fi
 
-docker build -t gltf-io-test -f Dockerfile.tests .
+docker build -t ux3d/gltf-blender-io -f Dockerfile.tests .
 
 # TODO: find a more elegant way to do this
 docker run -t gltf-io-test npm run $command

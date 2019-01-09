@@ -15,4 +15,4 @@
 # limitations under the License.
 
 docker build -t blender-gltf-testenv -f Dockerfile.testenv .
-docker build -t gltf-io-test -f Dockerfile.tests .
+docker build -t ux3d/gltf-blender-io -f Dockerfile.tests .
