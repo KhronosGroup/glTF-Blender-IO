@@ -15,7 +15,7 @@
 import bpy
 
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
@@ -50,9 +50,19 @@ def __gather_base_color_factor(blender_material, export_settings):
         base_color_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "BaseColorFactor")
     if base_color_socket is None:
         base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background")
-    if isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked:
+    if not isinstance(base_color_socket, bpy.types.NodeSocket):
+        return None
+    if not base_color_socket.is_linked:
         return list(base_color_socket.default_value)
+
+    texture_node = __get_tex_from_socket(base_color_socket)
+
+    def is_multiply_node(node):
+        return isinstance(node, bpy.types.ShaderNodeMath) and node.operation == "MULTIPLY"
+    multiply_node = next((link.from_node for link in texture_node.path if is_multiply_node(link.from_node)), None)
+
     return None
+
 
 def __gather_base_color_texture(blender_material, export_settings):
     base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Base Color")
@@ -63,6 +73,15 @@ def __gather_base_color_texture(blender_material, export_settings):
     if base_color_socket is None:
         base_color_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background")
     return gltf2_blender_gather_texture_info.gather_texture_info((base_color_socket,), export_settings)
+
+
+def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket):
+    result = gltf2_blender_search_node_tree.from_socket(
+        blender_shader_socket,
+        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
+    if not result:
+        return None
+    return result[0]
 
 
 def __gather_extensions(blender_material, export_settings):
