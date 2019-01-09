@@ -58,6 +58,8 @@ def __gather_base_color_factor(blender_material, export_settings):
         return list(base_color_socket.default_value)
 
     texture_node = __get_tex_from_socket(base_color_socket)
+    if texture_node is None:
+        return None
 
     def is_valid_multiply_node(node):
         return isinstance(node, bpy.types.ShaderNodeMixRGB) and \
