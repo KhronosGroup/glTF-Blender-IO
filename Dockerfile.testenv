@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
 
-ENV DART_VERSION 2.0.0
+ENV DART_VERSION 2.1.0
 
 RUN \
   apt-get -q update && apt-get install --no-install-recommends -y -q \
@@ -18,7 +18,7 @@ ENV DART_SDK /usr/lib/dart
 ENV PATH $DART_SDK/bin:$PATH
 
 
-ENV BLENDER_URL https://builder.blender.org/download//blender-2.80-71fd7e610a6-linux-glibc224-x86_64.tar.bz2 
+ENV BLENDER_URL https://builder.blender.org/download/blender-2.80-3c3d80ea22af-linux-glibc224-x86_64.tar.bz2
 ENV BLENDER_VERSION 2.80
 
 RUN mkdir /opt/blender28 && \

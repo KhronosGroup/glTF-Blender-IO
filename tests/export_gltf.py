@@ -33,9 +33,9 @@ try:
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
     if extension == '.glb':
-        bpy.ops.export_scene.glb(filepath=os.path.join(output_dir, path_parts[1]))
+        bpy.ops.export_scene.gltf(export_format='GLB', filepath=os.path.join(output_dir, path_parts[1]))
     else:
-        bpy.ops.export_scene.gltf(filepath=os.path.join(output_dir, path_parts[1]))
+        bpy.ops.export_scene.gltf(export_format='GLTF_SEPARATE', filepath=os.path.join(output_dir, path_parts[1]))
 except Exception as err:
     print(err, file=sys.stderr)
     sys.exit(1)
