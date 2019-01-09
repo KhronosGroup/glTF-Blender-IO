@@ -7,10 +7,10 @@ jobs:
       - checkout
       - run:
           name: Install Blender Plugin (2.79)
-          command: cp -r addons/io_scene_gltf2 /opt/blender279b/2.79/scripts/addons/io_scene_gltf2
+          command: rm -r /opt/blender279b/2.79/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender279b/2.79/scripts/addons/io_scene_gltf2
       - run:
           name: Install Blender Plugin (2.80)
-          command: cp -r addons/io_scene_gltf2 /opt/blender28/2.80/scripts/addons/io_scene_gltf2
+          command: rm -r /opt/blender28/2.80/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender28/2.80/scripts/addons/io_scene_gltf2
       - run:
           name: Prepare Tests
           command: cd tests && npm install
