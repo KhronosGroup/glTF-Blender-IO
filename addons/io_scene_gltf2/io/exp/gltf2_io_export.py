@@ -26,6 +26,7 @@ import struct
 #
 # Functions
 #
+from collections import OrderedDict
 
 
 def save_gltf(glTF, export_settings, encoder, glb_buffer):
@@ -37,7 +38,9 @@ def save_gltf(glTF, export_settings, encoder, glb_buffer):
         # The comma is typically followed by a newline, so no trailing whitespace is needed on it.
         separators = separators = (',', ' : ')
 
-    glTF_encoded = json.dumps(glTF, indent=indent, separators=separators, sort_keys=True, cls=encoder, allow_nan=False)
+    sort_order = ['asset', 'extensions', 'scene', 'scenes', 'nodes', 'accessors', 'buffers', 'bufferViews', 'images', 'materials', 'meshes', 'textures']
+    gltf_ordered = [OrderedDict(sorted(glTF.items(), key=lambda item: sort_order.index(item[0])))]
+    glTF_encoded = json.dumps(gltf_ordered, indent=indent, separators=separators, cls=encoder, allow_nan=False)
 
     #
 
