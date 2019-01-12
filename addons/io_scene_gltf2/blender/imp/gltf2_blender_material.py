@@ -15,6 +15,7 @@
 import bpy
 from .gltf2_blender_pbrMetallicRoughness import BlenderPbr
 from .gltf2_blender_KHR_materials_pbrSpecularGlossiness import BlenderKHR_materials_pbrSpecularGlossiness
+from .gltf2_blender_KHR_materials_unlit import BlenderKHR_materials_unlit
 from .gltf2_blender_map_emissive import BlenderEmissiveMap
 from .gltf2_blender_map_normal import BlenderNormalMap
 from .gltf2_blender_map_occlusion import BlenderOcclusionMap
@@ -48,10 +49,21 @@ class BlenderMaterial():
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material[vertex_color] = mat.name
 
-        if pymaterial.extensions is not None and 'KHR_materials_pbrSpecularGlossiness' in pymaterial.extensions.keys():
-            BlenderKHR_materials_pbrSpecularGlossiness.create(
-                gltf, pymaterial.extensions['KHR_materials_pbrSpecularGlossiness'], mat.name, vertex_color
-            )
+        ignore_map = False
+
+        if pymaterial.extensions is not None :
+            if 'KHR_materials_unlit' in pymaterial.extensions.keys():
+                ignore_map = True
+                BlenderKHR_materials_unlit.create(
+                    gltf, material_idx,
+                    pymaterial.extensions['KHR_materials_unlit'],
+                    mat.name,
+                    vertex_color
+                )
+            elif 'KHR_materials_pbrSpecularGlossiness' in pymaterial.extensions.keys():
+                BlenderKHR_materials_pbrSpecularGlossiness.create(
+                    gltf, pymaterial.extensions['KHR_materials_pbrSpecularGlossiness'], mat.name, vertex_color
+                )
         else:
             # create pbr material
             if pymaterial.pbr_metallic_roughness is None:
@@ -66,21 +78,22 @@ class BlenderMaterial():
 
             BlenderPbr.create(gltf, pymaterial.pbr_metallic_roughness, mat.name, vertex_color)
 
-        # add emission map if needed
-        if pymaterial.emissive_texture is not None:
-            BlenderEmissiveMap.create(gltf, material_idx, vertex_color)
+        if ignore_map == False:
+            # add emission map if needed
+            if pymaterial.emissive_texture is not None:
+                BlenderEmissiveMap.create(gltf, material_idx, vertex_color)
 
-        # add normal map if needed
-        if pymaterial.normal_texture is not None:
-            BlenderNormalMap.create(gltf, material_idx, vertex_color)
+            # add normal map if needed
+            if pymaterial.normal_texture is not None:
+                BlenderNormalMap.create(gltf, material_idx, vertex_color)
 
-        # add occlusion map if needed
-        # will be pack, but not used
-        if pymaterial.occlusion_texture is not None:
-            BlenderOcclusionMap.create(gltf, material_idx, vertex_color)
+            # add occlusion map if needed
+            # will be pack, but not used
+            if pymaterial.occlusion_texture is not None:
+                BlenderOcclusionMap.create(gltf, material_idx, vertex_color)
 
-        if pymaterial.alpha_mode is not None and pymaterial.alpha_mode != 'OPAQUE':
-            BlenderMaterial.blender_alpha(gltf, material_idx, vertex_color)
+            if pymaterial.alpha_mode is not None and pymaterial.alpha_mode != 'OPAQUE':
+                BlenderMaterial.blender_alpha(gltf, material_idx, vertex_color)
 
     @staticmethod
     def set_uvmap(gltf, material_idx, prim, obj, vertex_color):
