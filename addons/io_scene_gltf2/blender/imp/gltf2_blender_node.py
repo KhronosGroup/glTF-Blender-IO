@@ -36,8 +36,10 @@ class BlenderNode():
 
         if pynode.mesh is not None:
 
+            instance = False
             if gltf.data.meshes[pynode.mesh].blender_name is not None:
                 # Mesh is already created, only create instance
+                instance = True
                 mesh = bpy.data.meshes[gltf.data.meshes[pynode.mesh].blender_name]
             else:
                 if pynode.name:
@@ -70,7 +72,8 @@ class BlenderNode():
             pynode.blender_object = obj.name
             BlenderNode.set_parent(gltf, pynode, obj, parent)
 
-            BlenderMesh.set_mesh(gltf, gltf.data.meshes[pynode.mesh], mesh, obj)
+            if instance == False:
+                BlenderMesh.set_mesh(gltf, gltf.data.meshes[pynode.mesh], mesh, obj)
 
             if pynode.children:
                 for child_idx in pynode.children:
