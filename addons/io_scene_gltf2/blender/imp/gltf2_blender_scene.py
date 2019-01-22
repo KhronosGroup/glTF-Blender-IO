@@ -144,6 +144,11 @@ class BlenderScene():
                     bpy.data.objects.remove(obj_rotation)
                 else:
                     for node_idx in list_nodes:
+
+                        if node_idx in exclude_nodes:
+                            continue # for root node that are parented by the process
+                            # for example skinned meshes
+
                         for obj_ in bpy.context.scene.objects:
                             obj_.select_set(False)
                         if gltf.data.nodes[node_idx].is_joint:
