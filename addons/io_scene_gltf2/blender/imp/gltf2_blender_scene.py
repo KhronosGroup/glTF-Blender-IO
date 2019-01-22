@@ -28,34 +28,46 @@ class BlenderScene():
     @staticmethod
     def create(gltf, scene_idx):
         """Scene creation."""
-        pyscene = gltf.data.scenes[scene_idx]
+        if scene_idx is not None:
+            pyscene = gltf.data.scenes[scene_idx]
+            list_nodes = pyscene.nodes
 
-    # Create a new scene only if not already exists in .blend file
-    # TODO : put in current scene instead ?
-        if pyscene.name not in [scene.name for scene in bpy.data.scenes]:
-            # TODO: There is a bug in 2.8 alpha that break CLEAR_KEEP_TRANSFORM
-            # if we are creating a new scene
-            if bpy.app.version < (2, 80, 0):
-                if pyscene.name:
-                    scene = bpy.data.scenes.new(pyscene.name)
+            # Create a new scene only if not already exists in .blend file
+            # TODO : put in current scene instead ?
+            if pyscene.name not in [scene.name for scene in bpy.data.scenes]:
+                # TODO: There is a bug in 2.8 alpha that break CLEAR_KEEP_TRANSFORM
+                # if we are creating a new scene
+                if bpy.app.version < (2, 80, 0):
+                    if pyscene.name:
+                        scene = bpy.data.scenes.new(pyscene.name)
+                    else:
+                        scene = bpy.context.scene
                 else:
                     scene = bpy.context.scene
+                if bpy.app.version < (2, 80, 0):
+                    scene.render.engine = "CYCLES"
+                else:
+                    scene.render.engine = "BLENDER_EEVEE"
+
+                gltf.blender_scene = scene.name
             else:
-                scene = bpy.context.scene
+                gltf.blender_scene = pyscene.name
+
+            # Switch to newly created main scene
+            if bpy.app.version < (2, 80, 0):
+                bpy.context.screen.scene = bpy.data.scenes[gltf.blender_scene]
+            else:
+                bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
+
+        else:
+            # No scene in glTF file, create all objects in current scene
+            scene = bpy.context.scene
             if bpy.app.version < (2, 80, 0):
                 scene.render.engine = "CYCLES"
             else:
                 scene.render.engine = "BLENDER_EEVEE"
-
             gltf.blender_scene = scene.name
-        else:
-            gltf.blender_scene = pyscene.name
-
-        # Switch to newly created main scene
-        if bpy.app.version < (2, 80, 0):
-            bpy.context.screen.scene = bpy.data.scenes[gltf.blender_scene]
-        else:
-            bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
+            list_nodes = BlenderScene.get_root_nodes(gltf)
 
         # Create Yup2Zup empty
         obj_rotation = bpy.data.objects.new("Yup2Zup", None)
@@ -67,8 +79,8 @@ class BlenderScene():
         else:
             bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj_rotation)
 
-        if pyscene.nodes is not None:
-            for node_idx in pyscene.nodes:
+        if list_nodes is not None:
+            for node_idx in list_nodes:
                 BlenderNode.create(gltf, node_idx, None)  # None => No parent
 
         # Now that all mesh / bones are created, create vertex groups on mesh
@@ -87,19 +99,19 @@ class BlenderScene():
 
         if gltf.data.animations:
             for anim_idx, anim in enumerate(gltf.data.animations):
-                if pyscene.nodes is not None:
-                    for node_idx in pyscene.nodes:
+                if list_nodes is not None:
+                    for node_idx in list_nodes:
                         BlenderAnimation.anim(gltf, anim_idx, node_idx)
 
         # Parent root node to rotation object
-        if pyscene.nodes is not None:
-            for node_idx in pyscene.nodes:
+        if list_nodes is not None:
+            for node_idx in list_nodes:
                 bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation
 
             if gltf.animation_object is False:
 
                 if bpy.app.version < (2, 80, 0):
-                    for node_idx in pyscene.nodes:
+                    for node_idx in list_nodes:
                         for obj_ in bpy.context.scene.objects:
                             obj_.select = False
                         bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select = True
@@ -110,7 +122,7 @@ class BlenderScene():
                     bpy.context.scene.objects.unlink(obj_rotation)
                     bpy.data.objects.remove(obj_rotation)
                 else:
-                    for node_idx in pyscene.nodes:
+                    for node_idx in list_nodes:
                         for obj_ in bpy.context.scene.objects:
                             obj_.select_set(False)
                         bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select_set(True)
@@ -121,3 +133,22 @@ class BlenderScene():
                     # remove object
                     bpy.context.scene.collection.objects.unlink(obj_rotation)
                     bpy.data.objects.remove(obj_rotation)
+
+    @staticmethod
+    def get_root_nodes(gltf):
+        if gltf.data.nodes is None:
+            return None
+
+        parents = {}
+        for idx, node  in enumerate(gltf.data.nodes):
+            pynode = gltf.data.nodes[idx]
+            if pynode.children:
+                for child_idx in pynode.children:
+                    parents[child_idx] = idx
+
+        roots = []
+        for idx, node in enumerate(gltf.data.nodes):
+            if idx not in parents.keys():
+                roots.append(idx)
+
+        return roots

@@ -31,8 +31,13 @@ class BlenderGlTF():
             bpy.context.scene.render.engine = 'BLENDER_EEVEE'
         BlenderGlTF.pre_compute(gltf)
 
-        for scene_idx, scene in enumerate(gltf.data.scenes):
-            BlenderScene.create(gltf, scene_idx)
+        if gltf.data.scenes is not None:
+            for scene_idx, scene in enumerate(gltf.data.scenes):
+                BlenderScene.create(gltf, scene_idx)
+        else:
+            # special case where there is no scene in glTF file
+            # generate all objects in current scene
+            BlenderScene.create(gltf, None)
 
         # Armature correction
         # Try to detect bone chains, and set bone lengths
