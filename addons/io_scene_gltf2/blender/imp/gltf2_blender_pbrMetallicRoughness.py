@@ -53,9 +53,10 @@ class BlenderPbr():
         elif nodetype == "unlit":
             if bpy.app.version < (2, 80, 0):
                 main_node = node_tree.nodes.new('ShaderNodeEmission')
+                main_node.location = 750, -300
             else:
                 main_node = node_tree.nodes.new('ShaderNodeBackground')
-            main_node.location = 0, 0
+                main_node.location = 0, 0
 
         if pypbr.color_type == gltf.SIMPLE:
 
@@ -290,4 +291,17 @@ class BlenderPbr():
                 node_tree.links.new(metallic_text.inputs[0], metallic_mapping.outputs[0])
 
         # link node to output
-        node_tree.links.new(output_node.inputs[0], main_node.outputs[0])
+        if bpy.app.version < (2, 80, 0):
+            if nodetype == 'principled':
+                node_tree.links.new(output_node.inputs[0], main_node.outputs[0])
+            elif nodetype == 'unlit':
+                mix = node_tree.nodes.new('ShaderNodeMixShader')
+                mix.location = 1000, 0
+                path = node_tree.nodes.new('ShaderNodeLightPath')
+                path.location = 750, 300
+
+                node_tree.links.new(output_node.inputs[0], mix.outputs[0])
+                node_tree.links.new(mix.inputs[2], main_node.outputs[0])
+                node_tree.links.new(mix.inputs[0], path.outputs[0])
+        else:
+            node_tree.links.new(output_node.inputs[0], main_node.outputs[0])
