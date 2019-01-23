@@ -39,7 +39,7 @@ def save(context, export_settings):
 def __export(export_settings):
     export_settings['gltf_channelcache'] = dict()
     exporter = GlTF2Exporter(__get_copyright(export_settings))
-    __add_root_objects(exporter, export_settings)
+    __gather_gltf(exporter, export_settings)
     buffer = __create_buffer(exporter, export_settings)
     exporter.finalize_images(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
     json = __fix_json(exporter.glTF.to_dict())
@@ -53,7 +53,7 @@ def __get_copyright(export_settings):
     return None
 
 
-def __add_root_objects(exporter, export_settings):
+def __gather_gltf(exporter, export_settings):
     scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
     for scene in scenes:
         exporter.add_scene(scene)
@@ -82,6 +82,8 @@ def __fix_json(obj):
         fixed = {}
         for key, value in obj.items():
             if value is None:
+                continue
+            elif isinstance(value, dict) and len(value) == 0:
                 continue
             elif isinstance(value, list) and len(value) == 0:
                 continue
