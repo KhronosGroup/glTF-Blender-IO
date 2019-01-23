@@ -77,6 +77,12 @@ class BlenderNormalMap():
         else:
             normalmap_node["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
 
+        # Set strength
+        if pymaterial.normal_texture.scale is not None:
+            normalmap_node.inputs[0].default_value = pymaterial.normal_texture.scale
+        else:
+            normalmap_node.inputs[0].default_value = 1.0 # Default
+
         # create links
         node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
         node_tree.links.new(text.inputs[0], mapping.outputs[0])
