@@ -80,7 +80,7 @@ class BlenderMaterial():
             BlenderOcclusionMap.create(gltf, material_idx, vertex_color)
 
         if pymaterial.alpha_mode is not None and pymaterial.alpha_mode != 'OPAQUE':
-            BlenderMaterial.blender_alpha(gltf, material_idx, vertex_color)
+            BlenderMaterial.blender_alpha(gltf, material_idx, vertex_color, pymaterial.alpha_mode)
 
     @staticmethod
     def set_uvmap(gltf, material_idx, prim, obj, vertex_color):
@@ -94,10 +94,21 @@ class BlenderMaterial():
                 uvmap_node.uv_map = prim.blender_texcoord[uvmap_node["gltf2_texcoord"]]
 
     @staticmethod
-    def blender_alpha(gltf, material_idx, vertex_color):
+    def blender_alpha(gltf, material_idx, vertex_color, alpha_mode):
         """Set alpha."""
         pymaterial = gltf.data.materials[material_idx]
         material = bpy.data.materials[pymaterial.blender_material[vertex_color]]
+
+        # Set alpha value in material
+        if bpy.app.version < (2, 80, 0):
+            material.game_settings.alpha_blend = 'ALPHA'
+        else:
+            if alpha_mode == 'BLEND':
+                material.blend_method = 'BLEND'
+            elif alpha_mode == "MASK":
+                material.blend_method = 'CLIP'
+                alpha_cutoff = 1.0 - pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
+                material.alpha_threshold = alpha_cutoff
 
         node_tree = material.node_tree
         # Add nodes for basic transparency
