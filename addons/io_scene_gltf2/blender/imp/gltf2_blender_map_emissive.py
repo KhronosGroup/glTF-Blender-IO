@@ -71,9 +71,12 @@ class BlenderEmissiveMap():
             uvmap["gltf2_texcoord"] = 0  # TODO: set in precompute instead of here?
 
         text = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[gltf.data.images[
+        if gltf.data.images[
             gltf.data.textures[pymaterial.emissive_texture.index].source
-        ].blender_image_name]
+        ].blender_image_name is not None:
+            text.image = bpy.data.images[gltf.data.images[
+                gltf.data.textures[pymaterial.emissive_texture.index].source
+            ].blender_image_name]
         text.label = 'EMISSIVE'
         text.location = -1000, 1000
         add = node_tree.nodes.new('ShaderNodeAddShader')

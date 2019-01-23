@@ -95,9 +95,12 @@ class BlenderPbr():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[gltf.data.images[
+            if gltf.data.images[
                 gltf.data.textures[pypbr.base_color_texture.index].source
-            ].blender_image_name]
+            ].blender_image_name is not None:
+                text_node.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pypbr.base_color_texture.index].source
+                ].blender_image_name]
             text_node.label = 'BASE COLOR'
             text_node.location = -1000, 500
 
@@ -153,9 +156,12 @@ class BlenderPbr():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[gltf.data.images[
+            if gltf.data.images[
                 gltf.data.textures[pypbr.base_color_texture.index].source
-            ].blender_image_name]
+            ].blender_image_name is not None:
+                text_node.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pypbr.base_color_texture.index].source
+                ].blender_image_name]
             text_node.label = 'BASE COLOR'
             if vertex_color:
                 text_node.location = -2000, 500
@@ -201,9 +207,12 @@ class BlenderPbr():
         elif pypbr.metallic_type == gltf.TEXTURE:
             BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture.index)
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
-            metallic_text.image = bpy.data.images[gltf.data.images[
+            if gltf.data.images[
                 gltf.data.textures[pypbr.metallic_roughness_texture.index].source
-            ].blender_image_name]
+            ].blender_image_name is not None:
+                metallic_text.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pypbr.metallic_roughness_texture.index].source
+                ].blender_image_name]
             metallic_text.color_space = 'NONE'
             metallic_text.label = 'METALLIC ROUGHNESS'
             metallic_text.location = -500, 0
@@ -234,9 +243,12 @@ class BlenderPbr():
 
             BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture.index)
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
-            metallic_text.image = bpy.data.images[gltf.data.images[
+            if gltf.data.images[
                 gltf.data.textures[pypbr.metallic_roughness_texture.index].source
-            ].blender_image_name]
+            ].blender_image_name is not None:
+                metallic_text.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pypbr.metallic_roughness_texture.index].source
+                ].blender_image_name]
             metallic_text.color_space = 'NONE'
             metallic_text.label = 'METALLIC ROUGHNESS'
             metallic_text.location = -1000, 0
