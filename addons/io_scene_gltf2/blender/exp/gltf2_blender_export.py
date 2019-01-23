@@ -83,6 +83,8 @@ def __fix_json(obj):
         for key, value in obj.items():
             if value is None:
                 continue
+            elif isinstance(value, dict) and len(value) == 0:
+                continue
             elif isinstance(value, list) and len(value) == 0:
                 continue
             fixed[key] = __fix_json(value)
