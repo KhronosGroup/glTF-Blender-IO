@@ -26,24 +26,47 @@ import struct
 #
 # Functions
 #
+from collections import OrderedDict
 
 
-def save_gltf(glTF, export_settings, encoder, glb_buffer):
+def save_gltf(gltf, export_settings, encoder, glb_buffer):
     indent = None
-    separators = separators = (',', ':')
+    separators = (',', ':')
 
     if export_settings['gltf_format'] != 'GLB':
         indent = 4
         # The comma is typically followed by a newline, so no trailing whitespace is needed on it.
-        separators = separators = (',', ' : ')
+        separators = (',', ' : ')
 
-    glTF_encoded = json.dumps(glTF, indent=indent, separators=separators, sort_keys=True, cls=encoder, allow_nan=False)
+    sort_order = [
+        "asset",
+        "extensionsUsed",
+        "extensionsRequired",
+        "extensions",
+        "extras",
+        "scene",
+        "scenes",
+        "nodes",
+        "cameras",
+        "animations",
+        "materials",
+        "meshes",
+        "textures",
+        "images",
+        "skins",
+        "accessors",
+        "bufferViews",
+        "samplers",
+        "buffers"
+    ]
+    gltf_ordered = OrderedDict(sorted(gltf.items(), key=lambda item: sort_order.index(item[0])))
+    gltf_encoded = json.dumps(gltf_ordered, indent=indent, separators=separators, cls=encoder, allow_nan=False)
 
     #
 
     if export_settings['gltf_format'] != 'GLB':
         file = open(export_settings['gltf_filepath'], "w", encoding="utf8", newline="\n")
-        file.write(glTF_encoded)
+        file.write(gltf_encoded)
         file.write("\n")
         file.close()
 
@@ -56,18 +79,18 @@ def save_gltf(glTF, export_settings, encoder, glb_buffer):
     else:
         file = open(export_settings['gltf_filepath'], "wb")
 
-        glTF_data = glTF_encoded.encode()
+        gltf_data = gltf_encoded.encode()
         binary = glb_buffer
 
-        length_gtlf = len(glTF_data)
-        spaces_gltf = (4 - (length_gtlf & 3)) & 3
-        length_gtlf += spaces_gltf
+        length_gltf = len(gltf_data)
+        spaces_gltf = (4 - (length_gltf & 3)) & 3
+        length_gltf += spaces_gltf
 
         length_bin = len(binary)
         zeros_bin = (4 - (length_bin & 3)) & 3
         length_bin += zeros_bin
 
-        length = 12 + 8 + length_gtlf
+        length = 12 + 8 + length_gltf
         if length_bin > 0:
             length += 8 + length_bin
 
@@ -77,9 +100,9 @@ def save_gltf(glTF, export_settings, encoder, glb_buffer):
         file.write(struct.pack("I", length))
 
         # Chunk 0 (JSON)
-        file.write(struct.pack("I", length_gtlf))
+        file.write(struct.pack("I", length_gltf))
         file.write('JSON'.encode())
-        file.write(glTF_data)
+        file.write(gltf_data)
         for i in range(0, spaces_gltf):
             file.write(' '.encode())
 

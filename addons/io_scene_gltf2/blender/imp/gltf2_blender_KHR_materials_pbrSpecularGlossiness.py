@@ -90,10 +90,13 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = \
-                bpy.data.images[
-                    gltf.data.images[gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name
-                ]
+            if gltf.data.images[
+                gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name is not None:
+                text_node.image = \
+                    bpy.data.images[
+                        gltf.data.images[
+                            gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name
+                    ]
             text_node.location = -1000, 500
 
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
@@ -191,9 +194,11 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[
-                gltf.data.images[gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name
-            ]
+            if gltf.data.images[
+                gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name is not None:
+                text_node.image = bpy.data.images[
+                    gltf.data.images[gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name
+                ]
             if vertex_color:
                 text_node.location = -2000, 500
             else:
@@ -257,11 +262,14 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
         elif pbrSG['specgloss_type'] == gltf.TEXTURE:
             BlenderTextureInfo.create(gltf, pbrSG['specularGlossinessTexture']['index'])
             spec_text = node_tree.nodes.new('ShaderNodeTexImage')
-            spec_text.image = bpy.data.images[
-                gltf.data.images[
-                    gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
-                ].blender_image_name
-            ]
+            if gltf.data.images[
+                gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
+            ].blender_image_name is not None:
+                spec_text.image = bpy.data.images[
+                    gltf.data.images[
+                        gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
+                    ].blender_image_name
+                ]
             spec_text.color_space = 'NONE'
             spec_text.location = -500, 0
 
@@ -288,9 +296,12 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             BlenderTextureInfo.create(gltf, pbrSG['specularGlossinessTexture']['index'])
 
             spec_text = node_tree.nodes.new('ShaderNodeTexImage')
-            spec_text.image = bpy.data.images[gltf.data.images[
+            if gltf.data.images[
                 gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
-            ].blender_image_name]
+            ].blender_image_name is not None:
+                spec_text.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
+                ].blender_image_name]
             spec_text.color_space = 'NONE'
             spec_text.location = -1000, 0
 

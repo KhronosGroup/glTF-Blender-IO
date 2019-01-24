@@ -59,9 +59,12 @@ class BlenderNormalMap():
             uvmap["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
 
         text = node_tree.nodes.new('ShaderNodeTexImage')
-        text.image = bpy.data.images[gltf.data.images[
+        if gltf.data.images[
             gltf.data.textures[pymaterial.normal_texture.index].source
-        ].blender_image_name]
+        ].blender_image_name is not None:
+            text.image = bpy.data.images[gltf.data.images[
+                gltf.data.textures[pymaterial.normal_texture.index].source
+            ].blender_image_name]
         text.label = 'NORMALMAP'
         text.color_space = 'NONE'
         text.location = -500, -500
@@ -73,6 +76,12 @@ class BlenderNormalMap():
             normalmap_node["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord
         else:
             normalmap_node["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
+
+        # Set strength
+        if pymaterial.normal_texture.scale is not None:
+            normalmap_node.inputs[0].default_value = pymaterial.normal_texture.scale
+        else:
+            normalmap_node.inputs[0].default_value = 1.0 # Default
 
         # create links
         node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])

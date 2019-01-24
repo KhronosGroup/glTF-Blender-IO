@@ -43,7 +43,7 @@ class BlenderImage():
             if isfile(join(dirname(gltf.filename), pyimage.uri)):
                 return True, join(dirname(gltf.filename), pyimage.uri), basename(join(dirname(gltf.filename), pyimage.uri))
             else:
-                pyimage.gltf.log.error("Missing file (index " + str(img_idx) + "): " + pyimage.uri)
+                gltf.log.error("Missing file (index " + str(img_idx) + "): " + pyimage.uri)
                 return False, None, None
 
         if pyimage.buffer_view is None:
@@ -89,12 +89,13 @@ class BlenderImage():
             # Create a temp image, pack, and delete image
             tmp_image = tempfile.NamedTemporaryFile(delete=False)
             img_data, img_name = BinaryData.get_image_data(gltf, img_idx)
-            tmp_image.write(img_data)
-            tmp_image.close()
+            if img_name is not None:
+                tmp_image.write(img_data)
+                tmp_image.close()
 
-            blender_image = bpy.data.images.load(tmp_image.name)
-            blender_image.pack()
-            blender_image.name = img_name
-            img.blender_image_name = blender_image.name
-            blender_image['gltf_index'] = img_idx
-            os.remove(tmp_image.name)
+                blender_image = bpy.data.images.load(tmp_image.name)
+                blender_image.pack()
+                blender_image.name = img_name
+                img.blender_image_name = blender_image.name
+                blender_image['gltf_index'] = img_idx
+                os.remove(tmp_image.name)

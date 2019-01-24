@@ -235,10 +235,24 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
 def __gather_skin(blender_object, export_settings):
     modifiers = {m.type: m for m in blender_object.modifiers}
+    if "ARMATURE" not in modifiers:
+        return None
 
-    if "ARMATURE" in modifiers:
-        # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-        return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
+    # no skin needed when the modifier is linked without having a vertex group
+    vertex_groups = blender_object.vertex_groups
+    if len(vertex_groups) == 0:
+        return None
+
+    # check if any vertices in the mesh are part of a vertex group
+    if bpy.app.version < (2, 80, 0):
+        blender_mesh = blender_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
+    else:
+        blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
+    if not any(vertex.groups is not None and len(vertex.groups) > 0 for vertex in blender_mesh.vertices):
+        return None
+
+    # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
+    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):

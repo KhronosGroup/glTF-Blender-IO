@@ -166,8 +166,16 @@ class BlenderMesh():
                         if vert_idx in range(offset, offset + prim.vertices_length):
                             cpt_idx = vert_idx - offset
                             if bpy.app.version < (2, 80, 0):
-                                vertex_color.data[loop_idx].color = color_data[cpt_idx][0:3]
-                                # TODO : no alpha in vertex color
+                                # manage post 2.79b versions
+                                if len(vertex_color.data[loop_idx].color) == 4:
+                                    if len(color_data[cpt_idx]) == 3:
+                                        # TODO : no alpha in vertex color
+                                        vertex_color_data = color_data[cpt_idx] + (1.0,)
+                                    else:
+                                        vertex_color_data = color_data[cpt_idx]
+                                    vertex_color.data[loop_idx].color = vertex_color_data
+                                else:
+                                    vertex_color.data[loop_idx].color = color_data[cpt_idx][0:3]
                             else:
                                 # check dimension, and add alpha if needed
                                 if len(color_data[cpt_idx]) == 3:

@@ -105,9 +105,12 @@ class BlenderPbr():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[gltf.data.images[
+            if gltf.data.images[
                 gltf.data.textures[pypbr.base_color_texture.index].source
-            ].blender_image_name]
+            ].blender_image_name is not None:
+                text_node.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pypbr.base_color_texture.index].source
+                ].blender_image_name]
             text_node.label = 'BASE COLOR'
             text_node.location = -1000, 500
 
@@ -163,9 +166,12 @@ class BlenderPbr():
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
             text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            text_node.image = bpy.data.images[gltf.data.images[
+            if gltf.data.images[
                 gltf.data.textures[pypbr.base_color_texture.index].source
-            ].blender_image_name]
+            ].blender_image_name is not None:
+                text_node.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pypbr.base_color_texture.index].source
+                ].blender_image_name]
             text_node.label = 'BASE COLOR'
             if vertex_color:
                 text_node.location = -2000, 500
@@ -203,6 +209,7 @@ class BlenderPbr():
             node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
             node_tree.links.new(text_node.inputs[0], mapping.outputs[0])
 
+<<<<<<< HEAD
         if nodetype == 'principled':
             # Says metallic, but it means metallic & Roughness values
             if pypbr.metallic_type == gltf.SIMPLE:
@@ -275,6 +282,85 @@ class BlenderPbr():
                     metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord
                 else:
                     metallic_uvmap["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
+=======
+        # Says metallic, but it means metallic & Roughness values
+        if pypbr.metallic_type == gltf.SIMPLE:
+            principled.inputs[4].default_value = pypbr.metallic_factor
+            principled.inputs[7].default_value = pypbr.roughness_factor
+
+        elif pypbr.metallic_type == gltf.TEXTURE:
+            BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture.index)
+            metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
+            if gltf.data.images[
+                gltf.data.textures[pypbr.metallic_roughness_texture.index].source
+            ].blender_image_name is not None:
+                metallic_text.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pypbr.metallic_roughness_texture.index].source
+                ].blender_image_name]
+            metallic_text.color_space = 'NONE'
+            metallic_text.label = 'METALLIC ROUGHNESS'
+            metallic_text.location = -500, 0
+
+            metallic_separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
+            metallic_separate.location = -250, 0
+
+            metallic_mapping = node_tree.nodes.new('ShaderNodeMapping')
+            metallic_mapping.location = -1000, 0
+
+            metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
+            metallic_uvmap.location = -1500, 0
+            if pypbr.metallic_roughness_texture.tex_coord is not None:
+                # Set custom flag to retrieve TexCoord
+                metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord
+            else:
+                metallic_uvmap["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
+
+            # links
+            node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
+            node_tree.links.new(principled.inputs[4], metallic_separate.outputs[2])  # metallic
+            node_tree.links.new(principled.inputs[7], metallic_separate.outputs[1])  # Roughness
+
+            node_tree.links.new(metallic_mapping.inputs[0], metallic_uvmap.outputs[0])
+            node_tree.links.new(metallic_text.inputs[0], metallic_mapping.outputs[0])
+
+        elif pypbr.metallic_type == gltf.TEXTURE_FACTOR:
+
+            BlenderTextureInfo.create(gltf, pypbr.metallic_roughness_texture.index)
+            metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
+            if gltf.data.images[
+                gltf.data.textures[pypbr.metallic_roughness_texture.index].source
+            ].blender_image_name is not None:
+                metallic_text.image = bpy.data.images[gltf.data.images[
+                    gltf.data.textures[pypbr.metallic_roughness_texture.index].source
+                ].blender_image_name]
+            metallic_text.color_space = 'NONE'
+            metallic_text.label = 'METALLIC ROUGHNESS'
+            metallic_text.location = -1000, 0
+
+            metallic_separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
+            metallic_separate.location = -500, 0
+
+            metallic_math = node_tree.nodes.new('ShaderNodeMath')
+            metallic_math.operation = 'MULTIPLY'
+            metallic_math.inputs[1].default_value = pypbr.metallic_factor
+            metallic_math.location = -250, 100
+
+            roughness_math = node_tree.nodes.new('ShaderNodeMath')
+            roughness_math.operation = 'MULTIPLY'
+            roughness_math.inputs[1].default_value = pypbr.roughness_factor
+            roughness_math.location = -250, -100
+
+            metallic_mapping = node_tree.nodes.new('ShaderNodeMapping')
+            metallic_mapping.location = -1000, 0
+
+            metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
+            metallic_uvmap.location = -1500, 0
+            if pypbr.metallic_roughness_texture.tex_coord is not None:
+                # Set custom flag to retrieve TexCoord
+                metallic_uvmap["gltf2_texcoord"] = pypbr.metallic_roughness_texture.tex_coord
+            else:
+                metallic_uvmap["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
+>>>>>>> master
 
                 # links
                 node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
