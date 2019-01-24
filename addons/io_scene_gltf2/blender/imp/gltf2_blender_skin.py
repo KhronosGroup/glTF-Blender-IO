@@ -63,7 +63,6 @@ class BlenderSkin():
                         inverse_bind_matrices[index_in_skel]
                     ).inverted()
                     bone.matrix = pynode.blender_bone_matrix
-                    print(pynode.blender_bone_matrix)
                 else:
                     gltf.log.error("Error with inverseBindMatrix for skin " + pyskin)
             else:
