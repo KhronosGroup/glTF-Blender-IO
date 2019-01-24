@@ -55,15 +55,19 @@ class BlenderSkin():
         # Set bone bind_pose by inverting bindpose matrix
         if node_id in pyskin.joints:
             index_in_skel = pyskin.joints.index(node_id)
-            inverse_bind_matrices = BinaryData.get_data_from_accessor(gltf, pyskin.inverse_bind_matrices)
-            # Needed to keep scale in matrix, as bone.matrix seems to drop it
-            if index_in_skel < len(inverse_bind_matrices):
-                pynode.blender_bone_matrix = matrix_gltf_to_blender(
-                    inverse_bind_matrices[index_in_skel]
-                ).inverted()
-                bone.matrix = pynode.blender_bone_matrix
+            if pyskin.inverse_bind_matrices is not None:
+                inverse_bind_matrices = BinaryData.get_data_from_accessor(gltf, pyskin.inverse_bind_matrices)
+                # Needed to keep scale in matrix, as bone.matrix seems to drop it
+                if index_in_skel < len(inverse_bind_matrices):
+                    pynode.blender_bone_matrix = matrix_gltf_to_blender(
+                        inverse_bind_matrices[index_in_skel]
+                    ).inverted()
+                    bone.matrix = pynode.blender_bone_matrix
+                    print(pynode.blender_bone_matrix)
+                else:
+                    gltf.log.error("Error with inverseBindMatrix for skin " + pyskin)
             else:
-                gltf.log.error("Error with inverseBindMatrix for skin " + pyskin)
+                pynode.blender_bone_matrix = Matrix() # 4x4 identity matrix
         else:
             print('No invBindMatrix for bone ' + str(node_id))
             pynode.blender_bone_matrix = Matrix()
