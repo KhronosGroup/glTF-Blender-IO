@@ -92,8 +92,8 @@ class BlenderMaterial():
             if pymaterial.occlusion_texture is not None:
                 BlenderOcclusionMap.create(gltf, material_idx, vertex_color)
 
-        if pymaterial.alpha_mode is not None and pymaterial.alpha_mode != 'OPAQUE':
-            BlenderMaterial.blender_alpha(gltf, material_idx, vertex_color, pymaterial.alpha_mode)
+            if pymaterial.alpha_mode is not None and pymaterial.alpha_mode != 'OPAQUE':
+                BlenderMaterial.blender_alpha(gltf, material_idx, vertex_color, pymaterial.alpha_mode)
 
     @staticmethod
     def set_uvmap(gltf, material_idx, prim, obj, vertex_color):
