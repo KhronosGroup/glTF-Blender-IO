@@ -77,6 +77,15 @@ def __gather_extras(blender_shader_sockets_or_texture_slots, export_settings):
 
 
 def __gather_scale(blender_shader_sockets_or_texture_slots, export_settings):
+    if __is_socket(blender_shader_sockets_or_texture_slots):
+        result = gltf2_blender_search_node_tree.from_socket(
+            blender_shader_sockets_or_texture_slots[0],
+            gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeNormalMap))
+        if not result:
+            return None
+        strengthInput = result[0].shader_node.inputs['Strength']
+        if not strengthInput.is_linked and strengthInput.default_value != 1:
+            return strengthInput.default_value
     return None
 
 
