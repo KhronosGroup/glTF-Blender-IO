@@ -34,7 +34,7 @@ class BlenderBoneAnim():
         elif interpolation == "CUBICSPLINE":
             kf.interpolation = 'BEZIER'
         else:
-            kf.interpolation = 'BEZIER'
+            kf.interpolation = 'LINEAR'
 
     @staticmethod
     def parse_translation_channel(gltf, node, obj, bone, channel, animation):

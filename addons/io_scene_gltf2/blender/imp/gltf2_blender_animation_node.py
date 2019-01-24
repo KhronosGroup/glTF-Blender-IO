@@ -35,7 +35,7 @@ class BlenderNodeAnim():
         elif interpolation == "CUBICSPLINE":
             kf.interpolation = 'BEZIER'
         else:
-            kf.interpolation = 'BEZIER'
+            kf.interpolation = 'LINEAR'
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):
