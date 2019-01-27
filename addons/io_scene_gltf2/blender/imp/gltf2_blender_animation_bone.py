@@ -261,13 +261,22 @@ class BlenderBoneAnim():
         if name not in bpy.data.actions:
             action = bpy.data.actions.new(name)
         else:
-            action = bpy.data.actions[name]
-            # Check if this action has some users.
-            # If no user (only 1 indeed), that means that this action must be deleted
-            # (is an action from a deleted object)
-            if action.users == 1:
-                bpy.data.actions.remove(action)
-                action = bpy.data.actions.new(name)
+            if name in gltf.animation_managed:
+                # multiple animation with same name in glTF file
+                # Create a new action with new name if needed
+                if name in gltf.current_animation_names.keys():
+                    action = bpy.data.actions[gltf.current_animation_names[name]]
+                    name = gltf.current_animation_names[name]
+                else:
+                    action = bpy.data.actions.new(name)
+            else:
+                action = bpy.data.actions[name]
+                # Check if this action has some users.
+                # If no user (only 1 indeed), that means that this action must be deleted
+                # (is an action from a deleted object)
+                if action.users == 1:
+                    bpy.data.actions.remove(action)
+                    action = bpy.data.actions.new(name)
         if not obj.animation_data:
             obj.animation_data_create()
         obj.animation_data.action = bpy.data.actions[action.name]
@@ -283,3 +292,6 @@ class BlenderBoneAnim():
 
             elif channel.target.path == "scale":
                 BlenderBoneAnim.parse_scale_channel(gltf, node, obj, bone, channel, animation)
+
+        if action.name not in gltf.current_animation_names.keys():
+            gltf.current_animation_names[name] = action.name
