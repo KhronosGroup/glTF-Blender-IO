@@ -104,6 +104,12 @@ class BlenderNodeAnim():
                     else:
                         values = [quaternion_gltf_to_blender(vals) for vals in values]
 
+
+                    # Manage antipodal quaternions
+                    for i in range(1, len(values)):
+                        if values[i].dot(values[i-1]) < 0:
+                            values[i] = -values[i]
+
                 elif channel.target.path == "scale":
                     blender_path = "scale"
                     group_name = "scale"
