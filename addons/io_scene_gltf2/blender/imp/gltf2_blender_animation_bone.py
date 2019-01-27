@@ -34,7 +34,7 @@ class BlenderBoneAnim():
         elif interpolation == "CUBICSPLINE":
             kf.interpolation = 'BEZIER'
         else:
-            kf.interpolation = 'BEZIER'
+            kf.interpolation = 'LINEAR'
 
     @staticmethod
     def parse_translation_channel(gltf, node, obj, bone, channel, animation):
@@ -57,7 +57,7 @@ class BlenderBoneAnim():
                 translation_keyframe = loc_gltf_to_blender(values[idx * 3 + 1])
             else:
                 translation_keyframe = loc_gltf_to_blender(values[idx])
-            if not node.parent:
+            if node.parent is None:
                 parent_mat = Matrix()
             else:
                 if not gltf.data.nodes[node.parent].is_joint:
