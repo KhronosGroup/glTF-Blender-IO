@@ -17,6 +17,7 @@
 #
 
 import os
+import time
 import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from bpy.types import Operator, AddonPreferences
@@ -482,8 +483,10 @@ class ImportGLTF2(Operator, ImportHelper):
             self.report({'ERROR'}, txt)
             return {'CANCELLED'}
         self.gltf_importer.log.critical("Data are loaded, start creating Blender stuff")
+        start_time = time.time()
         BlenderGlTF.create(self.gltf_importer)
-        self.gltf_importer.log.critical("glTF import is now finished")
+        elapsed_s = "{:.2f}s".format(time.time() - start_time)
+        self.gltf_importer.log.critical("glTF import finished in " + elapsed_s)
         self.gltf_importer.log.removeHandler(self.gltf_importer.log_handler)
 
         return {'FINISHED'}

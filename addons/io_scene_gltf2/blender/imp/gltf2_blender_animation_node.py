@@ -76,61 +76,58 @@ class BlenderNodeAnim():
                 # We can't remove Yup2Zup oject
                 gltf.animation_object = True
 
+                if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
+                    # TODO manage tangent?
+                    values = [values[idx * 3 + 1] for idx in range(0, len(keys))]
+
                 if channel.target.path == "translation":
                     blender_path = "location"
-                    for idx, key in enumerate(keys):
-                        if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
-                            # TODO manage tangent?
-                            obj.location = Vector(loc_gltf_to_blender(list(values[idx * 3 + 1])))
-                        else:
-                            obj.location = Vector(loc_gltf_to_blender(list(values[idx])))
-                        obj.keyframe_insert(blender_path, frame=key[0] * fps, group='location')
-
-                    # Setting interpolation
-                    for fcurve in [curve for curve in obj.animation_data.action.fcurves
-                                   if curve.group.name == "location"]:
-                        for kf in fcurve.keyframe_points:
-                            BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
+                    group_name = "location"
+                    num_components = 3
+                    values = [loc_gltf_to_blender(vals) for vals in values]
 
                 elif channel.target.path == "rotation":
                     blender_path = "rotation_quaternion"
-                    for idx, key in enumerate(keys):
-                        if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
-                            # TODO manage tangent?
-                            vals = values[idx * 3 + 1]
+                    group_name = "rotation"
+                    num_components = 4
+                    if node.correction_needed is True:
+                        if bpy.app.version < (2, 80, 0):
+                            values = [
+                                (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() * correction_rotation()).to_quaternion()
+                                for vals in values
+                            ]
                         else:
-                            vals = values[idx]
-
-                        if node.correction_needed is True:
-                            if bpy.app.version < (2, 80, 0):
-                                obj.rotation_quaternion = (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() * correction_rotation()).to_quaternion()
-                            else:
-                                obj.rotation_quaternion = (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() @ correction_rotation()).to_quaternion()
-                        else:
-                            obj.rotation_quaternion = quaternion_gltf_to_blender(vals)
-
-                        obj.keyframe_insert(blender_path, frame=key[0] * fps, group='rotation')
-
-                    # Setting interpolation
-                    for fcurve in [curve for curve in obj.animation_data.action.fcurves
-                                   if curve.group.name == "rotation"]:
-                        for kf in fcurve.keyframe_points:
-                            BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
+                            values = [
+                                (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() @ correction_rotation()).to_quaternion()
+                                for vals in values
+                            ]
+                    else:
+                        values = [quaternion_gltf_to_blender(vals) for vals in values]
 
                 elif channel.target.path == "scale":
                     blender_path = "scale"
-                    for idx, key in enumerate(keys):
-                        # TODO manage tangent?
-                        if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
-                            obj.scale = Vector(scale_gltf_to_blender(list(values[idx * 3 + 1])))
-                        else:
-                            obj.scale = Vector(scale_gltf_to_blender(list(values[idx])))
-                        obj.keyframe_insert(blender_path, frame=key[0] * fps, group='scale')
+                    group_name = "scale"
+                    num_components = 3
+                    values = [scale_gltf_to_blender(vals) for vals in values]
+
+                coords = [0] * (2 * len(keys))
+                coords[::2] = (key[0] * fps for key in keys)
+
+                if group_name not in action.groups:
+                    action.groups.new(group_name)
+                group = action.groups[group_name]
+
+                for i in range(0, num_components):
+                    fcurve = action.fcurves.new(data_path=blender_path, index=i)
+                    fcurve.group = group
+
+                    fcurve.keyframe_points.add(len(keys))
+                    coords[1::2] = (vals[i] for vals in values)
+                    fcurve.keyframe_points.foreach_set('co', coords)
 
                     # Setting interpolation
-                    for fcurve in [curve for curve in obj.animation_data.action.fcurves if curve.group.name == "scale"]:
-                        for kf in fcurve.keyframe_points:
-                            BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
+                    for kf in fcurve.keyframe_points:
+                        BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
 
             elif channel.target.path == 'weights':
 
