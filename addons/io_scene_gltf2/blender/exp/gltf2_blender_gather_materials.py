@@ -99,7 +99,7 @@ def __gather_double_sided(blender_material, export_settings):
             not old_double_sided_socket.is_linked and\
             old_double_sided_socket.default_value > 0.5:
         return True
-    return None
+    return blender_material.gltf_double_sided or None
 
 
 def __gather_emissive_factor(blender_material, export_settings):

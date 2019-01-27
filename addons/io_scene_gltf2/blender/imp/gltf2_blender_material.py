@@ -95,6 +95,8 @@ class BlenderMaterial():
             if pymaterial.alpha_mode is not None and pymaterial.alpha_mode != 'OPAQUE':
                 BlenderMaterial.blender_alpha(gltf, material_idx, vertex_color, pymaterial.alpha_mode)
 
+        mat.gltf_double_sided = bool(pymaterial.double_sided)
+        
     @staticmethod
     def set_uvmap(gltf, material_idx, prim, obj, vertex_color):
         """Set UV Map."""

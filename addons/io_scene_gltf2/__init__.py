@@ -491,6 +491,21 @@ class ImportGLTF2(Operator, ImportHelper):
 
         return {'FINISHED'}
 
+class GltfMaterialPanel(bpy.types.Panel):
+    bl_label = "glTF"
+    bl_idname = "MATERIAL_PT_glTF"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+
+    @classmethod
+    def poll(self, context):
+        return context.active_object is not None and context.active_object.active_material is not None
+
+    def draw(self, context):
+        layout = self.layout
+        mat = context.active_object.active_material
+        layout.prop(mat, "gltf_double_sided")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text=ImportGLTF2.bl_label)
@@ -498,7 +513,8 @@ def menu_func_import(self, context):
 
 classes = (
     ExportGLTF2,
-    ImportGLTF2
+    ImportGLTF2,
+    GltfMaterialPanel,
 )
 
 
@@ -515,6 +531,7 @@ def register():
         bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
         bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
+    bpy.types.Material.gltf_double_sided = BoolProperty( name="glTF double sided", description="When this value is true, back-face culling is disabled and double sided lighting is enabled in exported glTF files" )
 
 def unregister():
     for c in classes:
@@ -528,3 +545,5 @@ def unregister():
     else:
         bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
         bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+
+    del bpy.types.Material.gltf_double_sided
