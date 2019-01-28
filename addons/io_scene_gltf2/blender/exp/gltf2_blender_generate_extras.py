@@ -16,37 +16,6 @@
 import bpy
 from io_scene_gltf2.blender.com import gltf2_blender_json
 
-def to_json_compatible(value):
-    """Make a value (usually a custom property) compatible with json"""
-
-    if isinstance(value, bpy.types.ID):
-        return value
-
-    elif isinstance(value, str):
-        return value
-
-    elif isinstance(value, (int, float)):
-        return value
-
-    # for list classes
-    elif isinstance(value, list):
-        value = list(value)
-        # make sure contents are json-compatible too
-        for index in range(len(value)):
-            value[index] = to_json_compatible(value[index])
-        return value
-
-    # for IDPropertyArray classes
-    elif hasattr(value, "to_list"):
-        value = value.to_list()
-        return value
-
-    elif hasattr(value, "to_dict"):
-        value = value.to_dict()
-        if gltf2_blender_json.is_json_convertible(value):
-            return value;
-        
-    return None
 
 def generate_extras(blender_element):
     """Filter and create a custom property, which is stored in the glTF extra field."""
@@ -63,7 +32,7 @@ def generate_extras(blender_element):
         if custom_property in black_list:
             continue
 
-        value = to_json_compatible(blender_element[custom_property])
+        value = __to_json_compatible(blender_element[custom_property])
 
         if value is not None:
             extras[custom_property] = value
@@ -73,3 +42,36 @@ def generate_extras(blender_element):
         return None
 
     return extras
+
+
+def __to_json_compatible(value):
+    """Make a value (usually a custom property) compatible with json"""
+
+    if isinstance(value, bpy.types.ID):
+        return value
+
+    elif isinstance(value, str):
+        return value
+
+    elif isinstance(value, (int, float)):
+        return value
+
+    # for list classes
+    elif isinstance(value, list):
+        value = list(value)
+        # make sure contents are json-compatible too
+        for index in range(len(value)):
+            value[index] = __to_json_compatible(value[index])
+        return value
+
+    # for IDPropertyArray classes
+    elif hasattr(value, "to_list"):
+        value = value.to_list()
+        return value
+
+    elif hasattr(value, "to_dict"):
+        value = value.to_dict()
+        if gltf2_blender_json.is_json_convertible(value):
+            return value
+
+    return None
