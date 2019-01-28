@@ -94,6 +94,11 @@ def __gather_alpha_mode(blender_material, export_settings):
 
 
 def __gather_double_sided(blender_material, export_settings):
+    old_double_sided_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "DoubleSided")
+    if old_double_sided_socket is not None and\
+            not old_double_sided_socket.is_linked and\
+            old_double_sided_socket.default_value > 0.5:
+        return True
     return None
 
 
