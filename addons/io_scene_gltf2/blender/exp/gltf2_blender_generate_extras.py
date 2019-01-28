@@ -16,6 +16,37 @@
 import bpy
 from io_scene_gltf2.blender.com import gltf2_blender_json
 
+def to_json_compatible(value):
+    """Make a value (usually a custom property) compatible with json"""
+
+    if isinstance(value, bpy.types.ID):
+        return value
+
+    elif isinstance(value, str):
+        return value
+
+    elif isinstance(value, (int, float)):
+        return value
+
+    # for list classes
+    elif isinstance(value, list):
+        value = list(value)
+        # make sure contents are json-compatible too
+        for index in range(len(value)):
+            value[index] = to_json_compatible(value[index])
+        return value
+
+    # for IDPropertyArray classes
+    elif hasattr(value, "to_list"):
+        value = value.to_list()
+        return value
+
+    elif hasattr(value, "to_dict"):
+        value = value.to_dict()
+        if gltf2_blender_json.is_json_convertible(value):
+            return value;
+        
+    return None
 
 def generate_extras(blender_element):
     """Filter and create a custom property, which is stored in the glTF extra field."""
@@ -32,28 +63,9 @@ def generate_extras(blender_element):
         if custom_property in black_list:
             continue
 
-        value = blender_element[custom_property]
+        value = to_json_compatible(blender_element[custom_property])
 
-        add_value = False
-
-        if isinstance(value, bpy.types.ID):
-            add_value = True
-
-        if isinstance(value, str):
-            add_value = True
-
-        if isinstance(value, (int, float)):
-            add_value = True
-
-        if hasattr(value, "to_list"):
-            value = value.to_list()
-            add_value = True
-
-        if hasattr(value, "to_dict"):
-            value = value.to_dict()
-            add_value = gltf2_blender_json.is_json_convertible(value)
-
-        if add_value:
+        if value is not None:
             extras[custom_property] = value
             count += 1
 
