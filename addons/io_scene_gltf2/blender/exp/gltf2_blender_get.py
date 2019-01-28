@@ -389,6 +389,9 @@ def get_texture_transform_from_texture_node(texture_node):
     if texture_transform["rotation"] == 0:
         del(texture_transform["rotation"])
 
+    if len(texture_transform) == 0:
+        return None
+
     return texture_transform
 
 

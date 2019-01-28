@@ -67,6 +67,8 @@ def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings
 
     texture_node = texture_socket.links[0].from_node
     texture_transform = gltf2_blender_get.get_texture_transform_from_texture_node(texture_node)
+    if texture_transform is None:
+        return None
 
     extension = Extension("KHR_texture_transform", texture_transform)
     return {"KHR_texture_transform": extension}
