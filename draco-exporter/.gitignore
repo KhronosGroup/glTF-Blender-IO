@@ -1,0 +1,19 @@
+
+# Build output:
+build/
+build-*/
+out/
+Debug/
+cmake-build-*/
+
+# Binaries:
+*.a
+*.o
+*.dll
+*.lib
+*.exe
+*.out
+*.so
+
+# JetBrains
+.idea/
