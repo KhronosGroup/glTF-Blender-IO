@@ -1,20 +1,18 @@
 # Setup
-
+* Make sure `cmake` is installed
 * Make sure the submodule at `draco-exporter/draco` is initialized and up to date
 * Open a command line at `draco-exporter` and execute the following commands
 
-## Linux
-
+## Linux/MacOS
 ```bash
 mkdir cmake-build-draco
 cd cmake-build-draco
 cmake ..
 make -j 8
-sudo cp libblender-draco-exporter.so /usr/lib/
+sudo cp libblender-draco-exporter.* /usr/lib/
 ```
 
 ## Windows
-
 ```bash
 mkdir cmake-build-draco
 cd cmake-build-draco
