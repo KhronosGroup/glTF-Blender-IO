@@ -21,7 +21,7 @@ cmake .. -G "Visual Studio 15 2017 Win64"
 cmake --build . --config Release
 ```
 
-Copy `Release/blender-draco-exporter.dll` to `C:/Windows/`.
+Copy `Release/blender-draco-exporter.dll` to `%userprofile%\AppData\Local\Blender 2.80\draco`.
 
 # Usage
-If the setup worked correctly, your should see the draco mesh compression options in the exporter settings.
+If the setup worked correctly, you should see the draco mesh compression options in the `Meshes` section from the exporter settings.
