@@ -59,6 +59,9 @@ bl_info = {
 class ExportGLTF2_Base:
     # TODO: refactor to avoid boilerplate
 
+    def __init__(self):
+        self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
+
     bl_options = {'UNDO', 'PRESET'}
 
     export_format = EnumProperty(
@@ -350,7 +353,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_normals'] = self.export_normals
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
 
-        if gltf2_io_draco_compression_extension.dll_exists():
+        if self.is_draco_available:
             export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression_enable
             export_settings['gltf_draco_mesh_compression_level'] = self.export_draco_mesh_compression_level
             export_settings['gltf_draco_position_quantization'] = self.export_draco_position_quantization
@@ -436,7 +439,7 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_colors')
 
         # Add Draco compression option only if the DLL could be found.
-        if gltf2_io_draco_compression_extension.dll_exists():
+        if self.is_draco_available:
             col.prop(self, 'export_draco_mesh_compression_enable')
 
             # Display options when Draco compression is enabled.

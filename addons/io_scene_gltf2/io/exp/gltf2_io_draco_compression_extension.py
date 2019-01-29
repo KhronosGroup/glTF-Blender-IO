@@ -1,37 +1,30 @@
+import sys
 from ctypes import *
-from io_scene_gltf2 import *
-from io_scene_gltf2.blender.exp.gltf2_blender_export import *
-from io_scene_gltf2.blender.exp.gltf2_blender_gather import gather_gltf2
+from pathlib import Path
+
 from io_scene_gltf2.io.exp.gltf2_io_binary_data import BinaryData
 
-import sys
 
-
-def dll_path() -> str:
+def dll_path() -> Path:
     """
     Get the DLL path depending on the underlying platform.
     :return: DLL path.
     """
     paths = {
-        'win32': 'C:/Windows/blender-draco-exporter.dll',
-        'linux': '/usr/lib/libblender-draco-exporter.so',
-        'cygwin': '',
-        'darwin': '/usr/lib/libblender-draco-exporter.dylib',
+        'win32': Path.home() / Path('AppData/Local/Blender 2.80/draco/blender-draco-exporter.dll'),
+        'linux': Path.home() / Path('.local/lib/blender2.80/libblender-draco-exporter.so'),
+        'cygwin': Path(''),
+        'darwin': Path.home() / Path('.local/lib/blender2.80/libblender-draco-exporter.dylib'),
     }
     return paths[sys.platform]
 
 
 def dll_exists() -> bool:
     """
-    Checks wether the DLL path exists and the file can be opended for reading.
+    Checks whether the DLL path exists.
     :return: True if the DLL exists.
     """
-    try:
-        f = open(dll_path(), "rb")
-        f.close()
-        return True
-    except FileNotFoundError:
-        return False
+    return dll_path().exists()
 
 
 def compress_scene_primitives(scenes, export_settings):
@@ -43,7 +36,7 @@ def compress_scene_primitives(scenes, export_settings):
 
     # Load DLL and setup function signatures.
     # Nearly all functions take the compressor as the first argument.
-    dll = cdll.LoadLibrary(dll_path())
+    dll = cdll.LoadLibrary(str(dll_path().resolve()))
 
     dll.createCompressor.restype = c_void_p
     dll.createCompressor.argtypes = []
