@@ -8,7 +8,7 @@ glTF 2.0
 :Version: 0.0.1
 :Blender: 2.80
 :Category: Import-Export
-:Authors: Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Khronos Group, Mozilla
+:Authors: Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, Khronos Group, Mozilla
 
 
 Usage

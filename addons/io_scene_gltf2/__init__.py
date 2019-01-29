@@ -39,7 +39,7 @@ from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
 
 bl_info = {
     'name': 'glTF 2.0 format',
-    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen',
+    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein',
     "version": (0, 0, 1),
     'blender': (2, 80, 0),
     'location': 'File > Import-Export',
