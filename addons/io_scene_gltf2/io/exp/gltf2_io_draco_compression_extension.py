@@ -14,7 +14,7 @@ def dll_path() -> str:
     """
     paths = {
         'win32': 'C:/Windows/blender-draco-exporter.dll',
-        'linux': '/usr/share/lib/libblender-draco-exporter.so',
+        'linux': '/usr/lib/libblender-draco-exporter.so',
         'cygwin': '',
         'darwin': '',
     }
@@ -34,21 +34,33 @@ def dll_exists() -> bool:
         return False
 
 
-def compress_scene_primitives(scenes):
+def compress_scene_primitives(scenes, export_settings):
     """
     Handles draco compression.
     Invoked after data has been gathered, but before scenes get traversed.
     Moves position, normal and texture coordinate attributes into a Draco compressed buffer.
     """
 
-    # Load DLL
+    # Load DLL and setup function signatures.
+    # Nearly all functions take the compressor as the first argument.
     dll = cdll.LoadLibrary(dll_path())
 
-    # Set up function pointer types.
     dll.createCompressor.restype = c_void_p
     dll.createCompressor.argtypes = []
 
-    dll.compress.restype = None
+    dll.setCompressionLevel.restype = None
+    dll.setCompressionLevel.argtypes = [c_void_p, c_uint32]
+
+    dll.setPositionQuantizationBits.restype = None
+    dll.setPositionQuantizationBits.argtypes = [c_void_p, c_uint32]
+
+    dll.setNormalQuantizationBits.restype = None
+    dll.setNormalQuantizationBits.argtypes = [c_void_p, c_uint32]
+
+    dll.setTexCoordQuantizationBits.restype = None
+    dll.setTexCoordQuantizationBits.argtypes = [c_void_p, c_uint32]
+
+    dll.compress.restype = c_bool
     dll.compress.argtypes = [c_void_p]
 
     dll.compressedSize.restype = c_uint64
@@ -60,14 +72,14 @@ def compress_scene_primitives(scenes):
     dll.setFaces.restype = None
     dll.setFaces.argtypes = [c_void_p, c_uint32, c_uint32, c_void_p]
 
-    dll.addPositions.restype = None
-    dll.addPositions.argtypes = [c_void_p, c_uint32, c_char_p]
+    dll.addPositionAttribute.restype = None
+    dll.addPositionAttribute.argtypes = [c_void_p, c_uint32, c_char_p]
 
-    dll.addNormals.restype = None
-    dll.addNormals.argtypes = [c_void_p, c_uint32, c_char_p]
+    dll.addNormalAttribute.restype = None
+    dll.addNormalAttribute.argtypes = [c_void_p, c_uint32, c_char_p]
 
-    dll.addTexcoords.restype = None
-    dll.addTexcoords.argtypes = [c_void_p, c_uint32, c_char_p]
+    dll.addTexCoordAttribute.restype = None
+    dll.addTexCoordAttribute.argtypes = [c_void_p, c_uint32, c_char_p]
 
     dll.copyToBytes.restype = None
     dll.copyToBytes.argtypes = [c_void_p, c_char_p]
@@ -84,40 +96,49 @@ def compress_scene_primitives(scenes):
     dll.getNormalAttributeId.restype = c_uint32
     dll.getNormalAttributeId.argtypes = [c_void_p]
 
+    dll.setCompressionLevel.restype = None
+    dll.setCompressionLevel.argtypes = [c_void_p, c_uint32]
+
+    dll.setPositionQuantizationBits.restype = None
+    dll.setPositionQuantizationBits.argtypes = [c_void_p, c_uint32]
+
+    dll.setNormalQuantizationBits.restype = None
+    dll.setNormalQuantizationBits.argtypes = [c_void_p, c_uint32]
+
+    dll.setTexCoordQuantizationBits.restype = None
+    dll.setTexCoordQuantizationBits.argtypes = [c_void_p, c_uint32]
+
     for scene in scenes:
         for node in scene.nodes:
-            __traverse_node(node, dll)
+            __traverse_node(node, dll, export_settings)
 
 
-def __traverse_node(node, dll):
+def __traverse_node(node, dll, export_settings):
     if not (node.mesh is None):
         print("Compressing mesh " + node.name)
         for primitive in node.mesh.primitives:
-            __compress_primitive(primitive, dll)
+            __compress_primitive(primitive, dll, export_settings)
 
     if not (node.children is None):
         for child in node.children:
-            __traverse_node(child, dll)
+            __traverse_node(child, dll, export_settings)
 
 
-def __compress_primitive(primitive, dll):
+def __compress_primitive(primitive, dll, export_settings):
     attributes = primitive.attributes
 
     # Begin mesh.
     compressor = dll.createCompressor()
 
     # Process position attributes.
-    dll.addPositions(compressor, attributes['POSITION'].count, attributes['POSITION'].buffer_view.data)
-    attributes['POSITION'].buffer_view = None
+    dll.addPositionAttribute(compressor, attributes['POSITION'].count, attributes['POSITION'].buffer_view.data)
 
     # Process normal attributes.
-    dll.addNormals(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
-    attributes['NORMAL'].buffer_view = None
+    dll.addNormalAttribute(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
 
     # Process texture coordinate attributes.
     for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
-        dll.addTexcoords(compressor, attribute.count, attribute.buffer_view.data)
-        attribute.buffer_view = None
+        dll.addTexCoordAttribute(compressor, attribute.count, attribute.buffer_view.data)
 
     # Process faces.
     index_byte_length = {
@@ -131,36 +152,57 @@ def __compress_primitive(primitive, dll):
     dll.setFaces(compressor, indices.count, index_byte_length[indices.component_type.name], indices.buffer_view.data)
     indices.buffer_view = None
 
+    # Set compression parameters.
+    dll.setCompressionLevel(compressor, export_settings['gltf_draco_mesh_compression_level'])
+    dll.setPositionQuantizationBits(compressor, export_settings['gltf_draco_position_quantization'])
+    dll.setNormalQuantizationBits(compressor, export_settings['gltf_draco_normal_quantization'])
+    dll.setTexCoordQuantizationBits(compressor, export_settings['gltf_draco_texcoord_quantization'])
+
     # After all point and connectivity data has been written to the compressor,
     # it can finally be compressed.
-    dll.compress(compressor)
+    if dll.compress(compressor):
 
-    # Query size necessary to hold all the compressed data.
-    compressionSize = dll.compressedSize(compressor)
+        # Compression was successfull.
+        # Move compressed data into a bytes object,
+        # which is referenced by a 'gltf2_io_binary_data.BinaryData':
+        #
+        # "KHR_draco_mesh_compression": {
+        #     ....
+        #     "buffer_view": Compressed data inside a 'gltf2_io_binary_data.BinaryData'.
+        # }
 
-    # Allocate byte buffer and write compressed data to it.
-    compressedData = bytes(compressionSize)
-    dll.copyToBytes(compressor, compressedData)
+        # Query size necessary to hold all the compressed data.
+        compressionSize = dll.compressedSize(compressor)
 
-    if primitive.extensions is None:
-        primitive.extensions = {}
+        # Allocate byte buffer and write compressed data to it.
+        compressedData = bytes(compressionSize)
+        dll.copyToBytes(compressor, compressedData)
 
-    texCoordIds = {}
-    texCoordAttributeCount = dll.getTexCoordAttributeIdCount(compressor)
-    if texCoordAttributeCount == 1:
-        texCoordIds["TEXCOORD_0"] = dll.getTexCoordAttributeId(compressor, 0)
+        if primitive.extensions is None:
+            primitive.extensions = {}
 
-    primitive.extensions["KHR_draco_mesh_compression"] = {
-        'bufferView': BinaryData(compressedData),
-        'attributes': {
-            'POSITION': dll.getPositionAttributeId(compressor),
-            'NORMAL': dll.getNormalAttributeId(compressor),
-            **texCoordIds,
+        texCoordIds = {}
+        for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
+            texCoordIds["TEXCOORD_" + str(id)] = dll.getTexCoordAttributeId(compressor, id)
+
+        # Register draco compression extension into primitive.
+        primitive.extensions["KHR_draco_mesh_compression"] = {
+            'bufferView': BinaryData(compressedData),
+            'attributes': {
+                'POSITION': dll.getPositionAttributeId(compressor),
+                'NORMAL': dll.getNormalAttributeId(compressor),
+                **texCoordIds,
+            }
         }
-    }
 
-    # Set to triangle list mode.
-    primitive.mode = 4
+        # Set to triangle list mode.
+        primitive.mode = 4
+
+        # Remove buffers from attribute, since the data now resides inside the compressed Draco buffer.
+        attributes['POSITION'].buffer_view = None
+        attributes['NORMAL'].buffer_view = None
+        for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
+            attribute.buffer_view = None
 
     # Afterwards, the compressor can be released.
     dll.disposeCompressor(compressor)

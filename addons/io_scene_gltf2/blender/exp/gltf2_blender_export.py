@@ -58,7 +58,7 @@ def __gather_gltf(exporter, export_settings):
     scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
 
     if export_settings['gltf_draco_mesh_compression']:
-        gltf2_io_draco_compression_extension.compress_scene_primitives(scenes)
+        gltf2_io_draco_compression_extension.compress_scene_primitives(scenes, export_settings)
         exporter.add_draco_extension()
 
     for scene in scenes:

@@ -57,7 +57,6 @@ bl_info = {
 
 
 class ExportGLTF2_Base:
-
     # TODO: refactor to avoid boilerplate
 
     bl_options = {'UNDO', 'PRESET'}
@@ -108,10 +107,42 @@ class ExportGLTF2_Base:
         default=True
     )
 
-    export_draco_mesh_compression = BoolProperty(
+    export_draco_mesh_compression_enable = BoolProperty(
         name='Draco mesh compression',
         description='Compress mesh using Draco',
         default=False
+    )
+
+    export_draco_mesh_compression_level = IntProperty(
+        name='Compression level',
+        description='Compression level (0 = most speed, 10 = most compression)',
+        default=7,
+        min=0,
+        max=10
+    )
+
+    export_draco_position_quantization = IntProperty(
+        name='Position quantization bits',
+        description='Quantization bits for position values (0 = no quantization)',
+        default=14,
+        min=0,
+        max=64
+    )
+
+    export_draco_normal_quantization = IntProperty(
+        name='Normal quantization bits',
+        description='Quantization bits for normal values (0 = no quantization)',
+        default=10,
+        min=0,
+        max=64
+    )
+
+    export_draco_texcoord_quantization = IntProperty(
+        name='Texcoord quantization bits',
+        description='Quantization bits for texture coordinate values (0 = no quantization)',
+        default=12,
+        min=0,
+        max=64
     )
 
     export_tangents = BoolProperty(
@@ -320,7 +351,11 @@ class ExportGLTF2_Base:
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
 
         if gltf2_io_draco_compression_extension.dll_exists():
-            export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression
+            export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression_enable
+            export_settings['gltf_draco_mesh_compression_level'] = self.export_draco_mesh_compression_level
+            export_settings['gltf_draco_position_quantization'] = self.export_draco_position_quantization
+            export_settings['gltf_draco_normal_quantization'] = self.export_draco_normal_quantization
+            export_settings['gltf_draco_texcoord_quantization'] = self.export_draco_texcoord_quantization
         else:
             export_settings['gltf_draco_mesh_compression'] = False
 
@@ -328,7 +363,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
         export_settings['gltf_selected'] = self.export_selected
-        export_settings['gltf_layers'] = True #self.export_layers
+        export_settings['gltf_layers'] = True  # self.export_layers
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
         export_settings['gltf_apply'] = self.export_apply
@@ -399,9 +434,17 @@ class ExportGLTF2_Base:
         if self.export_normals:
             col.prop(self, 'export_tangents')
         col.prop(self, 'export_colors')
+
+        # Add Draco compression option only if the DLL could be found.
         if gltf2_io_draco_compression_extension.dll_exists():
-            # Add Draco compression option only if the DLL could be found.
-            col.prop(self, 'export_draco_mesh_compression')
+            col.prop(self, 'export_draco_mesh_compression_enable')
+
+            # Display options when Draco compression is enabled.
+            if self.export_draco_mesh_compression_enable:
+                col.prop(self, 'export_draco_mesh_compression_level')
+                col.prop(self, 'export_draco_position_quantization')
+                col.prop(self, 'export_draco_normal_quantization')
+                col.prop(self, 'export_draco_texcoord_quantization')
 
     def draw_object_settings(self):
         col = self.layout.box().column()
