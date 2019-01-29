@@ -31,6 +31,8 @@ from bpy.props import (CollectionProperty,
                        FloatProperty,
                        IntProperty)
 
+from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
+
 #
 # Globals
 #
@@ -104,6 +106,12 @@ class ExportGLTF2_Base:
         name='Normals',
         description='Export vertex normals with meshes',
         default=True
+    )
+
+    export_draco_mesh_compression = BoolProperty(
+        name='Draco mesh compression',
+        description='Compress mesh using Draco',
+        default=False
     )
 
     export_tangents = BoolProperty(
@@ -310,6 +318,12 @@ class ExportGLTF2_Base:
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
+
+        if gltf2_io_draco_compression_extension.dll_exists():
+            export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression
+        else:
+            export_settings['gltf_draco_mesh_compression'] = False
+
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
@@ -385,6 +399,9 @@ class ExportGLTF2_Base:
         if self.export_normals:
             col.prop(self, 'export_tangents')
         col.prop(self, 'export_colors')
+        if gltf2_io_draco_compression_extension.dll_exists():
+            # Add Draco compression option only if the DLL could be found.
+            col.prop(self, 'export_draco_mesh_compression')
 
     def draw_object_settings(self):
         col = self.layout.box().column()

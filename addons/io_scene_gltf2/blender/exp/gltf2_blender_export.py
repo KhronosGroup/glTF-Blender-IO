@@ -22,6 +22,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather
 from io_scene_gltf2.blender.exp.gltf2_blender_gltf2_exporter import GlTF2Exporter
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console, print_newline
 from io_scene_gltf2.io.exp import gltf2_io_export
+from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
 
 
 def save(context, export_settings):
@@ -55,6 +56,11 @@ def __get_copyright(export_settings):
 
 def __gather_gltf(exporter, export_settings):
     scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
+
+    if export_settings['gltf_draco_mesh_compression']:
+        gltf2_io_draco_compression_extension.compress_scene_primitives(scenes)
+        exporter.add_draco_extension()
+
     for scene in scenes:
         exporter.add_scene(scene)
     for animation in animations:
