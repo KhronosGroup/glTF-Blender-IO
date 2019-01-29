@@ -116,7 +116,7 @@ class ExportGLTF2_Base:
     export_draco_mesh_compression_level = IntProperty(
         name='Compression level',
         description='Compression level (0 = most speed, 10 = most compression)',
-        default=7,
+        default=6,
         min=0,
         max=10
     )
