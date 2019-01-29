@@ -9,7 +9,7 @@ mkdir cmake-build-draco
 cd cmake-build-draco
 cmake ..
 make -j 8
-sudo cp libblender-draco-exporter.* /usr/lib/
+sudo cp libblender-draco-exporter.* ~/.local/lib/blender2.80/
 ```
 
 ## Windows
@@ -23,5 +23,4 @@ cmake --build . --config Release
 Copy `Release/blender-draco-exporter.dll` to `C:/Windows/`.
 
 # Usage
-
 If the setup worked correctly, your should see the draco mesh compression options in the exporter settings.
