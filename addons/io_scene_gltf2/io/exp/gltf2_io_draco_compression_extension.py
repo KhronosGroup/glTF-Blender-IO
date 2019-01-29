@@ -16,7 +16,7 @@ def dll_path() -> str:
         'win32': 'C:/Windows/blender-draco-exporter.dll',
         'linux': '/usr/lib/libblender-draco-exporter.so',
         'cygwin': '',
-        'darwin': '',
+        'darwin': '/usr/lib/libblender-draco-exporter.dylib',
     }
     return paths[sys.platform]
 
