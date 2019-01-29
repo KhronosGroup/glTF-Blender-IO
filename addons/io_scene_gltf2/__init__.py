@@ -126,7 +126,7 @@ class ExportGLTF2_Base:
         description='Quantization bits for position values (0 = no quantization)',
         default=14,
         min=0,
-        max=64
+        max=30
     )
 
     export_draco_normal_quantization = IntProperty(
@@ -134,7 +134,7 @@ class ExportGLTF2_Base:
         description='Quantization bits for normal values (0 = no quantization)',
         default=10,
         min=0,
-        max=64
+        max=30
     )
 
     export_draco_texcoord_quantization = IntProperty(
@@ -142,7 +142,7 @@ class ExportGLTF2_Base:
         description='Quantization bits for texture coordinate values (0 = no quantization)',
         default=12,
         min=0,
-        max=64
+        max=30
     )
 
     export_tangents = BoolProperty(
