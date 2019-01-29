@@ -1,3 +1,3 @@
 [submodule "draco-exporter/draco"]
 	path = draco-exporter/draco
-	url = git@github.com:google/draco.git
+	url = https://github.com/google/draco
