@@ -10,7 +10,7 @@ cd cmake-build-draco
 cmake ..
 make -j 8
 mkdir -p ~/.local/lib/blender2.80
-sudo cp libblender-draco-exporter.* ~/.local/lib/blender2.80/
+cp libblender-draco-exporter.* ~/.local/lib/blender2.80/
 ```
 
 ## Windows
