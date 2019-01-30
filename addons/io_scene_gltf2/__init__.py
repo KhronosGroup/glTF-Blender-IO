@@ -255,7 +255,10 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    will_save_settings = BoolProperty(default=False)
+    will_save_settings = BoolProperty(
+        name='Remember Settings',
+        description='Store glTF export settings in the Blender project',
+        default=False)
 
     # Custom scene property for saving settings
     scene_key = "glTF2ExportSettings"
@@ -377,6 +380,7 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_yup')
         col.prop(self, 'export_extras')
         col.prop(self, 'export_copyright')
+        col.prop(self, 'will_save_settings')
 
     def draw_mesh_settings(self):
         col = self.layout.box().column()
