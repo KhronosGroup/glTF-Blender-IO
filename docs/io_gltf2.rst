@@ -202,7 +202,7 @@ Skinning
 Bake Skinning Constraints
    Apply skinning constraints to armatures.
 Include All Bone Influences
-   Allow >4 joint vertex influences. Models may appear.
+   Allow >4 joint vertex influences. Models may appear incorrectly in many viewers
 Shape Keys
    Export shape keys (morph targets).
 Shape Key Normals
