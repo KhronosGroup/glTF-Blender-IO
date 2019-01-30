@@ -36,7 +36,14 @@ class BlenderPbr():
         # If there is no diffuse texture, but only a color, wihtout
         # vertex_color, we set this color in viewport color
         if pypbr.color_type == gltf.SIMPLE and not vertex_color:
-            material.diffuse_color = pypbr.base_color_factor[:3]
+            if bpy.app.version < (2, 80, 0):
+                material.diffuse_color = pypbr.base_color_factor[:3]
+            else:
+                # Manage some change in beta version on 20190129
+                if len(material.diffuse_color) == 3:
+                    material.diffuse_color = pypbr.base_color_factor[:3]
+                else:
+                    material.diffuse_color = pypbr.base_color_factor
 
         # delete all nodes except output
         for node in list(node_tree.nodes):
