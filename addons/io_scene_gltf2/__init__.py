@@ -256,7 +256,7 @@ class ExportGLTF2_Base:
     )
 
     will_save_settings = BoolProperty(
-        name='Remember Settings',
+        name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
         default=False)
 
