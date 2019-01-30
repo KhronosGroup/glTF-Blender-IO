@@ -379,8 +379,8 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_apply')
         col.prop(self, 'export_yup')
         col.prop(self, 'export_extras')
-        col.prop(self, 'export_copyright')
         col.prop(self, 'will_save_settings')
+        col.prop(self, 'export_copyright')
 
     def draw_mesh_settings(self):
         col = self.layout.box().column()
