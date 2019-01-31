@@ -1,11 +1,11 @@
-# To build docker image:
-./docker_build.sh
+# To force build docker image:
+docker-compose build
 
 # To run tests:
-./docker_test.sh
+docker-compose up
 
 # To open Blender shell:
-docker run -i -t gltf-io-test blender -b --addons io_scene_gltf2 --python-console
+docker-compose run --rm gltf-blender-io blender -b -noaudio --python-console
 
 # To display Blender help:
-docker run --rm gltf-io-test blender -b --help
+docker-compose run --rm gltf-blender-io blender -b -noaudio --help

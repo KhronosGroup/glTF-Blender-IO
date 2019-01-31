@@ -1,8 +1,0 @@
-FROM blender-gltf-testenv
-
-ADD addons/io_scene_gltf2 /opt/blender28/2.80/scripts/addons/io_scene_gltf2
-ADD addons/io_scene_gltf2 /opt/blender279b/2.79/scripts/addons/io_scene_gltf2
-
-ADD tests /tests
-WORKDIR /tests
-ENV PATH /tests:$PATH

@@ -36,7 +36,7 @@ try:
     path_parts = os.path.split(path)
     output_dir = os.path.join(path_parts[0], argv[1])
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+        os.makedirs(output_dir)
     if extension == '.glb':
         bpy.ops.export_scene.gltf(export_format='GLB', filepath=os.path.join(output_dir, path_parts[1]))
     else:

@@ -1,0 +1,20 @@
+version: "3"
+services:
+  gltf-blender-io:
+    build:
+      context: .
+    # image: ux3d/gltf-blender-io
+    volumes:
+      - "./addons:/root/.config/blender/2.80/scripts/addons:ro"
+      - "./addons:/root/.config/blender/2.79/scripts/addons:ro"
+      - "./tests/gltf:/tests/gltf:ro"
+      - "./tests/pbr_node:/tests/pbr_node:ro"
+      - "./tests/roundtrip:/tests/roundtrip:ro"
+      - "./tests/scenes:/tests/scenes:ro"
+      - "./tests/test:/tests/test:ro"
+      - "./tests_out:/out"
+    command: |
+      bash -c 'bash -s <<EOF
+      mkdir -p /out
+      OUT_PREFIX=/out yarn test-bail --reporter-options reportDir=/out/mochawesome
+      EOF'
