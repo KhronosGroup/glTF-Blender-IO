@@ -100,17 +100,17 @@ class BlenderSkin():
                 obj.pose.bones[pynode.blender_bone_name].location = \
                     bind_rotation.inverted().to_matrix().to_4x4() @ final_location
 
-            # Do the same for rotation
+            # Do the same for rotation & scale
             if bpy.app.version < (2, 80, 0):
                 obj.pose.bones[pynode.blender_bone_name].rotation_quaternion = \
-                    (bind_rotation.
-                        to_matrix().to_4x4().inverted() * parent_mat * rotation.to_matrix().to_4x4()).to_quaternion()
+                    (pynode.blender_bone_matrix.inverted() * parent_mat *
+                        matrix_gltf_to_blender(pynode.transform)).to_quaternion()
                 obj.pose.bones[pynode.blender_bone_name].scale = \
                     (bind_scale.inverted() * parent_mat * scale_to_matrix(scale)).to_scale()
             else:
                 obj.pose.bones[pynode.blender_bone_name].rotation_quaternion = \
-                    (bind_rotation.to_matrix().to_4x4().inverted() @ parent_mat @
-                        rotation.to_matrix().to_4x4()).to_quaternion()
+                    (pynode.blender_bone_matrix.inverted() @ parent_mat @
+                        matrix_gltf_to_blender(pynode.transform)).to_quaternion()
                 obj.pose.bones[pynode.blender_bone_name].scale = \
                     (bind_scale.inverted() @ parent_mat @ scale_to_matrix(scale)).to_scale()
 
