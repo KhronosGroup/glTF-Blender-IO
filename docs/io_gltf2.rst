@@ -151,6 +151,9 @@ Y Up
    Export using glTF convention, +Y up
 Custom Properties
    Export custom properties as glTF extras.
+Remember Export Settings
+   Store export settings in the Blender file, so they will be remembered next
+   time the file is opened.
 Copyright
    Legal rights and conditions for the model.
 
