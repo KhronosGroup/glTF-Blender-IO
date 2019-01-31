@@ -38,7 +38,7 @@ class BlenderEmissiveMap():
 
         BlenderTextureInfo.create(gltf, pymaterial.emissive_texture.index)
 
-        # check if there is some emssive_factor on material
+        # check if there is some emissive_factor on material
         if pymaterial.emissive_factor is None:
             # Default in glTF specification is 0/0/0 --> No emission
             pymaterial.emissive_factor = [0.0, 0.0, 0.0]
