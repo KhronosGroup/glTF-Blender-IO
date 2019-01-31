@@ -311,10 +311,23 @@ class BlenderPbr():
                 mix = node_tree.nodes.new('ShaderNodeMixShader')
                 mix.location = 1000, 0
                 path = node_tree.nodes.new('ShaderNodeLightPath')
-                path.location = 750, 300
+                path.location = 500, 300
+                if pypbr.color_type != gltf.SIMPLE:
+                    math = node_tree.nodes.new('ShaderNodeMath')
+                    math.location = 750, 200
+                    math.operation = 'MULTIPLY'
+
+                transparent = node_tree.nodes.new('ShaderNodeBsdfTransparent')
+                transparent.location = 750, 0
 
                 node_tree.links.new(output_node.inputs[0], mix.outputs[0])
                 node_tree.links.new(mix.inputs[2], main_node.outputs[0])
-                node_tree.links.new(mix.inputs[0], path.outputs[0])
+                node_tree.links.new(mix.inputs[1], transparent.outputs[0])
+                if pypbr.color_type != gltf.SIMPLE:
+                    node_tree.links.new(math.inputs[0], path.outputs[0])
+                    node_tree.links.new(math.inputs[1], text_node.outputs[1])
+                    node_tree.links.new(mix.inputs[0], math.outputs[0])
+                else:
+                    node_tree.links.new(mix.inputs[0], path.outputs[0])
         else:
             node_tree.links.new(output_node.inputs[0], main_node.outputs[0])
