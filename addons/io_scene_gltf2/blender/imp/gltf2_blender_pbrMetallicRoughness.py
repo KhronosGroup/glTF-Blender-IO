@@ -58,12 +58,8 @@ class BlenderPbr():
             main_node = node_tree.nodes.new('ShaderNodeBsdfPrincipled')
             main_node.location = 0, 0
         elif nodetype == "unlit":
-            if bpy.app.version < (2, 80, 0):
-                main_node = node_tree.nodes.new('ShaderNodeEmission')
-                main_node.location = 750, -300
-            else:
-                main_node = node_tree.nodes.new('ShaderNodeBackground')
-                main_node.location = 0, 0
+            main_node = node_tree.nodes.new('ShaderNodeEmission')
+            main_node.location = 750, -300
 
         if pypbr.color_type == gltf.SIMPLE:
 
@@ -304,30 +300,34 @@ class BlenderPbr():
                 node_tree.links.new(metallic_text.inputs[0], metallic_mapping.outputs[0])
 
         # link node to output
-        if bpy.app.version < (2, 80, 0):
-            if nodetype == 'principled':
-                node_tree.links.new(output_node.inputs[0], main_node.outputs[0])
-            elif nodetype == 'unlit':
-                mix = node_tree.nodes.new('ShaderNodeMixShader')
-                mix.location = 1000, 0
-                path = node_tree.nodes.new('ShaderNodeLightPath')
-                path.location = 500, 300
-                if pypbr.color_type != gltf.SIMPLE:
-                    math = node_tree.nodes.new('ShaderNodeMath')
-                    math.location = 750, 200
-                    math.operation = 'MULTIPLY'
-
-                transparent = node_tree.nodes.new('ShaderNodeBsdfTransparent')
-                transparent.location = 750, 0
-
-                node_tree.links.new(output_node.inputs[0], mix.outputs[0])
-                node_tree.links.new(mix.inputs[2], main_node.outputs[0])
-                node_tree.links.new(mix.inputs[1], transparent.outputs[0])
-                if pypbr.color_type != gltf.SIMPLE:
-                    node_tree.links.new(math.inputs[0], path.outputs[0])
-                    node_tree.links.new(math.inputs[1], text_node.outputs[1])
-                    node_tree.links.new(mix.inputs[0], math.outputs[0])
-                else:
-                    node_tree.links.new(mix.inputs[0], path.outputs[0])
-        else:
+        if nodetype == 'principled':
             node_tree.links.new(output_node.inputs[0], main_node.outputs[0])
+        elif nodetype == 'unlit':
+            mix = node_tree.nodes.new('ShaderNodeMixShader')
+            mix.location = 1000, 0
+            path = node_tree.nodes.new('ShaderNodeLightPath')
+            path.location = 500, 300
+            if pypbr.color_type != gltf.SIMPLE:
+                math = node_tree.nodes.new('ShaderNodeMath')
+                math.location = 750, 200
+                math.operation = 'MULTIPLY'
+
+                # Set material alpha mode to blend
+                # This is needed for Eevee
+                if bpy.app.version < (2, 80, 0):
+                    pass # Not needed for Cycles
+                else:
+                    material.blend_method = 'HASHED' # TODO check best result in eevee
+
+            transparent = node_tree.nodes.new('ShaderNodeBsdfTransparent')
+            transparent.location = 750, 0
+
+            node_tree.links.new(output_node.inputs[0], mix.outputs[0])
+            node_tree.links.new(mix.inputs[2], main_node.outputs[0])
+            node_tree.links.new(mix.inputs[1], transparent.outputs[0])
+            if pypbr.color_type != gltf.SIMPLE:
+                node_tree.links.new(math.inputs[0], path.outputs[0])
+                node_tree.links.new(math.inputs[1], text_node.outputs[1])
+                node_tree.links.new(mix.inputs[0], math.outputs[0])
+            else:
+                node_tree.links.new(mix.inputs[0], path.outputs[0])
