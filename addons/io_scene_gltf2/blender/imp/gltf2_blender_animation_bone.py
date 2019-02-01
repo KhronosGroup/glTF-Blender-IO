@@ -110,12 +110,20 @@ class BlenderBoneAnim():
 
         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
             # TODO manage tangent?
-            quat_keyframes = (
+            quat_keyframes = [
                 quaternion_gltf_to_blender(values[idx * 3 + 1])
                 for idx in range(0, len(keys))
-            )
+            ]
         else:
-            quat_keyframes = (quaternion_gltf_to_blender(vals) for vals in values)
+            quat_keyframes = [quaternion_gltf_to_blender(vals) for vals in values]
+
+        # Manage antipodal quaternions
+        # (but is not suffisant, we also convert quaternion --> euler --> quaternion)
+        for i in range(1, len(quat_keyframes)):
+            if quat_keyframes[i].dot(quat_keyframes[i-1]) < 0:
+                quat_keyframes[i] = -quat_keyframes[i]
+
+
         if not node.parent:
             if bpy.app.version < (2, 80, 0):
                 final_rots = [
