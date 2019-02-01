@@ -10,7 +10,7 @@ ARG BLENDER279_URL=https://download.blender.org/release/Blender2.79/blender-2.79
 RUN mkdir /opt/blender279 && \
 	curl -SL "$BLENDER279_URL" | \
 	tar -jx -C /opt/blender279 --strip-components=1 && \
-    ln -ss /opt/blender279/blender /usr/local/bin/blender279b
+    ln -s /opt/blender279/blender /usr/local/bin/blender279b
 
 RUN mkdir /opt/blender280 && \
     BLENDER280_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
