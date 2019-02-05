@@ -39,7 +39,11 @@ class BlenderSkin():
         if bpy.app.version < (2, 80, 0):
             bpy.data.scenes[gltf.blender_scene].objects.link(obj)
         else:
-            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
+            if gltf.blender_active_collection is not None:
+                bpy.data.collections[gltf.blender_active_collection].objects.link(obj)
+            else:
+                bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
+                
         pyskin.blender_armature_name = obj.name
         if parent is not None:
             obj.parent = bpy.data.objects[gltf.data.nodes[parent].blender_object]

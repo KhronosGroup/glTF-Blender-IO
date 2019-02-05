@@ -63,7 +63,10 @@ class BlenderNode():
             if bpy.app.version < (2, 80, 0):
                 bpy.data.scenes[gltf.blender_scene].objects.link(obj)
             else:
-                bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
+                if gltf.blender_active_collection is not None:
+                    bpy.data.collections[gltf.blender_active_collection].objects.link(obj)
+                else:
+                    bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
             # Transforms apply only if this mesh is not skinned
             # See implementation node of gltf2 specification
@@ -137,7 +140,11 @@ class BlenderNode():
         if bpy.app.version < (2, 80, 0):
             bpy.data.scenes[gltf.blender_scene].objects.link(obj)
         else:
-            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
+            if gltf.blender_active_collection is not None:
+                bpy.data.collections[gltf.blender_active_collection].objects.link(obj)
+            else:
+                bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
+
         BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)
         pynode.blender_object = obj.name
         BlenderNode.set_parent(gltf, pynode, obj, parent)
