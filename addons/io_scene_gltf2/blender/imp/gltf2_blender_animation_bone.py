@@ -41,7 +41,7 @@ class BlenderBoneAnim():
     def parse_translation_channel(gltf, node, obj, bone, channel, animation):
         """Manage Location animation."""
         blender_path = "pose.bones[" + json.dumps(bone.name) + "].location"
-        group_name = "location"
+        group_name = bone.name
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
@@ -102,7 +102,7 @@ class BlenderBoneAnim():
         # better solution is found
         # This fix is skipped when parent matrix is identity
         blender_path = "pose.bones[" + json.dumps(bone.name) + "].rotation_quaternion"
-        group_name = "rotation"
+        group_name = bone.name
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
@@ -175,7 +175,7 @@ class BlenderBoneAnim():
     def parse_scale_channel(gltf, node, obj, bone, channel, animation):
         """Manage scaling animation."""
         blender_path = "pose.bones[" + json.dumps(bone.name) + "].scale"
-        group_name = "scale"
+        group_name = bone.name
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)

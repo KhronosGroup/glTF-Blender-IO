@@ -82,13 +82,13 @@ class BlenderNodeAnim():
 
                 if channel.target.path == "translation":
                     blender_path = "location"
-                    group_name = "location"
+                    group_name = "Location"
                     num_components = 3
                     values = [loc_gltf_to_blender(vals) for vals in values]
 
                 elif channel.target.path == "rotation":
                     blender_path = "rotation_quaternion"
-                    group_name = "rotation"
+                    group_name = "Rotation"
                     num_components = 4
                     if node.correction_needed is True:
                         if bpy.app.version < (2, 80, 0):
@@ -112,7 +112,7 @@ class BlenderNodeAnim():
 
                 elif channel.target.path == "scale":
                     blender_path = "scale"
-                    group_name = "scale"
+                    group_name = "Scale"
                     num_components = 3
                     values = [scale_gltf_to_blender(vals) for vals in values]
 
