@@ -39,6 +39,8 @@ This importer/exporter supports the following glTF 2.0 features:
   **Import**
 
    - KHR_materials_pbrSpecularGlossiness
+   - KHR_lights_punctual
+   - KHR_materials_unlit
 
   **Export**
 
@@ -52,7 +54,7 @@ Materials
 Import
 ^^^^^^
 
-Supports Metal/Rough PBR (Principled BSDF) and Spec/Gloss PBR.
+Supports Metal/Rough PBR (Principled BSDF), Spec/Gloss PBR and Shadeless (Unlit) materials.
 
 Export
 ^^^^^^
