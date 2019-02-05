@@ -55,7 +55,7 @@ def __filter_lights_punctual(blender_lamp, export_settings) -> bool:
 def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
     emission_node = __get_cycles_emission_node(blender_lamp)
     if emission_node is not None:
-        return emission_node.inputs["Color"].default_value
+        return list(emission_node.inputs["Color"].default_value)[:3]
 
     return list(blender_lamp.color)
 

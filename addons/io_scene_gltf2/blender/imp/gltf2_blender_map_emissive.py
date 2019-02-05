@@ -101,7 +101,7 @@ class BlenderEmissiveMap():
         add = node_tree.nodes.new('ShaderNodeAddShader')
         add.location = 500, 500
 
-        # following  links will modify PBR node tree
+        # following links will modify PBR node tree
         node_tree.links.new(add.inputs[0], emit.outputs[0])
         node_tree.links.new(add.inputs[1], principled)
         node_tree.links.new(output.inputs[0], add.outputs[0])
