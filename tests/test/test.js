@@ -130,7 +130,7 @@ describe('Exporter', function() {
 
 describe('Importer / Exporter (Roundtrip)', function() {
     let blenderVersions = [
-        //"blender28",
+        "blender28",
         "blender279b"
     ]
     

@@ -53,12 +53,20 @@ jobs:
           filter: blender28_export
       - store_artifacts:
           path: /out
-  roundtrip:
+  roundtrip279:
     executor: test_executor
     steps:
       - prepare
       - run_tests:
-          filter: Roundtrip
+          filter: blender279b_roundtrip
+      - store_artifacts:
+          path: /out
+  roundtrip280:
+    executor: test_executor
+    steps:
+      - prepare
+      - run_tests:
+          filter: blender28_roundtrip
       - store_artifacts:
           path: /out
 workflows:
@@ -68,4 +76,5 @@ workflows:
       - general
       - exporter279
       - exporter280
-      - roundtrip
+      - roundtrip279
+      - roundtrip280
