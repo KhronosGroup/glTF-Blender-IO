@@ -193,8 +193,8 @@ def __gather_mesh(blender_object, export_settings):
 
         if export_settings[gltf2_blender_export_keys.SKINS]:
             # restore Armature modifiers
-            for key, val in armature_modifiers.items():
-                blender_object.modifiers[key].show_viewport = val
+            for idx, show_viewport in armature_modifiers.items():
+                blender_object.modifiers[idx].show_viewport = show_viewport
 
         if auto_smooth:
             bpy.data.objects.remove(blender_object)
