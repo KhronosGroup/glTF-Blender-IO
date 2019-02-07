@@ -165,10 +165,10 @@ def __gather_skins(blender_primitive, export_settings):
         joint_id = 'JOINTS_' + str(bone_index)
         weight_id = 'WEIGHTS_' + str(bone_index)
         while blender_primitive["attributes"].get(joint_id) and blender_primitive["attributes"].get(weight_id):
-            if bone_index >= 4:
-                gltf2_io_debug.print_console("WARNING", "There are more than 4 joint vertex influences."
-                                                        "Consider to apply blenders Limit Total function.")
+            if bone_index >= 1:
                 if not export_settings['gltf_all_vertex_influences']:
+                    gltf2_io_debug.print_console("WARNING", "There are more than 4 joint vertex influences."
+                                                            "The 4 with highest weight will be used (and normalized).")
                     break
 
             # joints
@@ -192,6 +192,15 @@ def __gather_skins(blender_primitive, export_settings):
 
             # weights
             internal_weight = blender_primitive["attributes"][weight_id]
+            # normalize first 4 weights, when not exporting all influences
+            if not export_settings['gltf_all_vertex_influences']:
+                for idx in range(0, len(internal_weight), 4):
+                    weight_slice = internal_weight[idx:idx + 4]
+                    total = sum(weight_slice)
+                    if total > 0:
+                        factor = 1.0 / total
+                        internal_weight[idx:idx + 4] = [w * factor for w in weight_slice]
+
             weight = gltf2_io.Accessor(
                 buffer_view=gltf2_io_binary_data.BinaryData.from_list(
                     internal_weight, gltf2_io_constants.ComponentType.Float),
