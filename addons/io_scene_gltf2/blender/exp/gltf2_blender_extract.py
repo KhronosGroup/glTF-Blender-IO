@@ -397,7 +397,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
     Furthermore, primitives are split up, if the indices range is exceeded.
     Finally, triangles are also split up/duplicated, if face normals are used instead of vertex normals.
     """
-    print_console('INFO', 'Extracting primitive')
+    print_console('INFO', 'Extracting primitive: ' + blender_mesh.name)
 
     use_tangents = False
     if blender_mesh.uv_layers.active and len(blender_mesh.uv_layers) > 0:
