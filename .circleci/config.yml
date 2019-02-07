@@ -1,80 +1,22 @@
-version: 2.1
-commands:
-  prepare:
-    description: Prepare Tests
-    steps:
-      - checkout
-      - run:
-          name: Prepare Tests
-          command: |
-            rm -rf /opt/blender279/2.79/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender279/2.79/scripts/addons/io_scene_gltf2
-            rm -rf /opt/blender280/2.80/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender280/2.80/scripts/addons/io_scene_gltf2
-            cd tests && yarn install
-  run_tests:
-    description: Run Tests
-    parameters:
-      filter:
-        type: string
-    steps:
-      - run:
-          name: Run tests
-          command: |
-            mkdir -p /out
-            cd tests
-            OUT_PREFIX=/out yarn test-bail --reporter-options reportDir=/out/mochawesome -g << parameters.filter >>
-
-executors:
-  test_executor:
+version: 2.1    
+jobs:
+  tests:
     docker:
       - image: p3din/gltf-blender-io
-    
-jobs:
-  general:
-    executor: test_executor
+    parallelism: 4
     steps:
-      - prepare
-      - run_tests:
-          filter: General
+      - run:
+        command: |
+          git init
+          git remote add origin $CIRCLE_REPOSITORY_URL
+          git fetch --depth=1 origin $CIRCLE_SHA1
+          git git reset --hard FETCH_HEAD
+          rm -rf /opt/blender279/2.79/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender279/2.79/scripts/addons/io_scene_gltf2
+          rm -rf /opt/blender280/2.80/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender280/2.80/scripts/addons/io_scene_gltf2
+          cd tests
+          yarn install
+          mkdir -p /out
+          export FILTERS=(General\|blender279b_export blender28_export blender279b_roundtrip blender28_roundtrip)
+          OUT_PREFIX=/out yarn test-bail --reporter-options reportDir=/out/mochawesome -g ${FILTERS[$CIRCLE_NODE_INDEX ]}
       - store_artifacts:
           path: /out
-  exporter279:
-    executor: test_executor
-    steps:
-      - prepare
-      - run_tests:
-          filter: blender279b_export
-      - store_artifacts:
-          path: /out
-  exporter280:
-    executor: test_executor
-    steps:
-      - prepare
-      - run_tests:
-          filter: blender28_export
-      - store_artifacts:
-          path: /out
-  roundtrip279:
-    executor: test_executor
-    steps:
-      - prepare
-      - run_tests:
-          filter: blender279b_roundtrip
-      - store_artifacts:
-          path: /out
-  roundtrip280:
-    executor: test_executor
-    steps:
-      - prepare
-      - run_tests:
-          filter: blender28_roundtrip
-      - store_artifacts:
-          path: /out
-workflows:
-  version: 2
-  test:
-    jobs:
-      - general
-      - exporter279
-      - exporter280
-      - roundtrip279
-      - roundtrip280
