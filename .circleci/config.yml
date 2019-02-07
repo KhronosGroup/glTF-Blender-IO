@@ -1,16 +1,13 @@
 version: 2.1    
 jobs:
-  tests:
+  build:
     docker:
       - image: p3din/gltf-blender-io
     parallelism: 4
     steps:
+      - checkout
       - run:
         command: |
-          git init
-          git remote add origin $CIRCLE_REPOSITORY_URL
-          git fetch --depth=1 origin $CIRCLE_SHA1
-          git git reset --hard FETCH_HEAD
           rm -rf /opt/blender279/2.79/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender279/2.79/scripts/addons/io_scene_gltf2
           rm -rf /opt/blender280/2.80/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender280/2.80/scripts/addons/io_scene_gltf2
           cd tests
