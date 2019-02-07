@@ -21,6 +21,7 @@ from mathutils.geometry import tessellate_polygon
 
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
+from ...io.com.gltf2_io_color_management import color_srgb_to_scene_linear
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 #
@@ -112,19 +113,6 @@ def decompose_transition(matrix, context, export_settings):
     rotation = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
 
     return translation, rotation, scale
-
-
-def color_srgb_to_scene_linear(c):
-    """
-    Convert from sRGB to scene linear color space.
-
-    Source: Cycles addon implementation, node_color.h.
-    """
-    if c < 0.04045:
-        return 0.0 if c < 0.0 else c * (1.0 / 12.92)
-    else:
-        return pow((c + 0.055) * (1.0 / 1.055), 2.4)
-
 
 def extract_primitive_floor(a, indices, use_tangents):
     """Shift indices, that the first one starts with 0. It is assumed, that the indices are packed."""
