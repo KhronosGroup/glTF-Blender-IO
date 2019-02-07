@@ -161,11 +161,11 @@ def __gather_colors(blender_primitive, export_settings):
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
     if export_settings[gltf2_blender_export_keys.SKINS]:
-        bone_index = 0
-        joint_id = 'JOINTS_' + str(bone_index)
-        weight_id = 'WEIGHTS_' + str(bone_index)
+        bone_set_index = 0
+        joint_id = 'JOINTS_' + str(bone_set_index)
+        weight_id = 'WEIGHTS_' + str(bone_set_index)
         while blender_primitive["attributes"].get(joint_id) and blender_primitive["attributes"].get(weight_id):
-            if bone_index >= 1:
+            if bone_set_index >= 1:
                 if not export_settings['gltf_all_vertex_influences']:
                     gltf2_io_debug.print_console("WARNING", "There are more than 4 joint vertex influences."
                                                             "The 4 with highest weight will be used (and normalized).")
@@ -219,7 +219,7 @@ def __gather_skins(blender_primitive, export_settings):
             )
             attributes[weight_id] = weight
 
-            bone_index += 1
-            joint_id = 'JOINTS_' + str(bone_index)
-            weight_id = 'WEIGHTS_' + str(bone_index)
+            bone_set_index += 1
+            joint_id = 'JOINTS_' + str(bone_set_index)
+            weight_id = 'WEIGHTS_' + str(bone_set_index)
     return attributes
