@@ -1,12 +1,13 @@
 version: 2.1    
 jobs:
-  build:
+  test:
     docker:
       - image: p3din/gltf-blender-io
     parallelism: 4
     steps:
       - checkout
       - run:
+          name: Run Tests
           command: |
             rm -rf /opt/blender279/2.79/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender279/2.79/scripts/addons/io_scene_gltf2
             rm -rf /opt/blender280/2.80/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender280/2.80/scripts/addons/io_scene_gltf2
