@@ -1,6 +1,6 @@
 version: 2.1    
 jobs:
-  test:
+  build:
     docker:
       - image: p3din/gltf-blender-io
     parallelism: 4
