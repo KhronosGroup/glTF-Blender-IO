@@ -235,7 +235,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
 def __gather_skin(blender_object, export_settings):
     modifiers = {m.type: m for m in blender_object.modifiers}
-    if "ARMATURE" not in modifiers:
+    if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:
         return None
 
     # no skin needed when the modifier is linked without having a vertex group
