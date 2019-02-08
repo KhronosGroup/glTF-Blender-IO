@@ -99,6 +99,9 @@ def __gather_children(blender_object, export_settings):
     # standard children
     for child_object in blender_object.children:
         if child_object.parent_bone:
+            # this is handled further down,
+            # as the object should be a child of the specific bone,
+            # not the Armature object
             continue
         node = gather_node(child_object, export_settings)
         if node is not None:
@@ -138,28 +141,29 @@ def __gather_children(blender_object, export_settings):
         for child in direct_bone_children:
             # find parent joint
             parent_joint = find_parent_joint(root_joints, child.parent_bone)
-            if parent_joint:
-                child_node = gather_node(child, export_settings)
-                if child_node is not None:
-                    # fix rotation
-                    if export_settings[gltf2_blender_export_keys.YUP]:
-                        rot = child_node.rotation
-                        if rot is None:
-                            rot = [0, 0, 0, 1]
-                        rot_quat = Quaternion(rot)
-                        rot_quat.rotate(Quaternion([0, 0, 1], math.radians(-90)))
-                        child_node.rotation = [rot_quat[0], rot_quat[1], rot_quat[2], rot_quat[3]]
+            if not parent_joint:
+                continue
+            child_node = gather_node(child, export_settings)
+            if child_node is not None:
+                # fix rotation
+                if export_settings[gltf2_blender_export_keys.YUP]:
+                    rot = child_node.rotation
+                    if rot is None:
+                        rot = [0, 0, 0, 1]
+                    rot_quat = Quaternion(rot)
+                    rot_quat.rotate(Quaternion([0, 0, 1], math.radians(-90)))
+                    child_node.rotation = [rot_quat[0], rot_quat[1], rot_quat[2], rot_quat[3]]
 
-                    # fix translation (in blender bone's tail is the origin for children)
-                    trans, _, _ = child.matrix_local.decompose()
-                    if trans is None:
-                        trans = [0, 0, 0]
-                    blender_bone = blender_object.pose.bones[parent_joint.name]
-                    # bones go down their local y axis
-                    bone_tail = [0, blender_bone.length, 0]
-                    child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
+                # fix translation (in blender bone's tail is the origin for children)
+                trans, _, _ = child.matrix_local.decompose()
+                if trans is None:
+                    trans = [0, 0, 0]
+                blender_bone = blender_object.pose.bones[parent_joint.name]
+                # bones go down their local y axis
+                bone_tail = [0, blender_bone.length, 0]
+                child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
 
-                    parent_joint.children.append(child_node)
+                parent_joint.children.append(child_node)
 
     return children
 
