@@ -149,12 +149,15 @@ def __gather_children(blender_object, export_settings):
                         rot_quat = Quaternion(rot)
                         rot_quat.rotate(Quaternion([0, 0, 1], math.radians(-90)))
                         child_node.rotation = [rot_quat[0], rot_quat[1], rot_quat[2], rot_quat[3]]
+
                     # fix translation (in blender bone's tail is the origin for children)
-                    trans = child_node.translation
+                    trans, _, _ = child.matrix_local.decompose()
                     if trans is None:
                         trans = [0, 0, 0]
                     blender_bone = blender_object.pose.bones[parent_joint.name]
-                    child_node.translation = [trans[idx] + blender_bone.vector[idx] for idx in range(3)]
+                    # bones go down their local y axis
+                    bone_tail = [0, blender_bone.length, 0]
+                    child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
 
                     parent_joint.children.append(child_node)
 
