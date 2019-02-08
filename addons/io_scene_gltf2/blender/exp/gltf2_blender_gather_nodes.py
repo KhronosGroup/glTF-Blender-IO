@@ -98,6 +98,8 @@ def __gather_children(blender_object, export_settings):
     children = []
     # standard children
     for child_object in blender_object.children:
+        if child_object.parent_bone:
+            continue
         node = gather_node(child_object, export_settings)
         if node is not None:
             children.append(node)
@@ -117,9 +119,44 @@ def __gather_children(blender_object, export_settings):
 
     # blender bones
     if blender_object.type == "ARMATURE":
+        root_joints = []
         for blender_bone in blender_object.pose.bones:
             if not blender_bone.parent:
-                children.append(gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings))
+                joint = gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
+                children.append(joint)
+                root_joints.append(joint)
+        # handle objects directly parented to bones
+        direct_bone_children = [child for child in blender_object.children if child.parent_bone]
+        def find_parent_joint(joints, name):
+            for joint in joints:
+                if joint.name == name:
+                    return joint
+                parent_joint = find_parent_joint(joint.children, name)
+                if parent_joint:
+                    return parent_joint
+            return None
+        for child in direct_bone_children:
+            # find parent joint
+            parent_joint = find_parent_joint(root_joints, child.parent_bone)
+            if parent_joint:
+                child_node = gather_node(child, export_settings)
+                if child_node is not None:
+                    # fix rotation
+                    if export_settings[gltf2_blender_export_keys.YUP]:
+                        rot = child_node.rotation
+                        if rot is None:
+                            rot = [0, 0, 0, 1]
+                        rot_quat = Quaternion(rot)
+                        rot_quat.rotate(Quaternion([0, 0, 1], math.radians(-90)))
+                        child_node.rotation = [rot_quat[0], rot_quat[1], rot_quat[2], rot_quat[3]]
+                    # fix translation (in blender bone's tail is the origin for children)
+                    trans = child_node.translation
+                    if trans is None:
+                        trans = [0, 0, 0]
+                    blender_bone = blender_object.pose.bones[parent_joint.name]
+                    child_node.translation = [trans[idx] + blender_bone.vector[idx] for idx in range(3)]
+
+                    parent_joint.children.append(child_node)
 
     return children
 
