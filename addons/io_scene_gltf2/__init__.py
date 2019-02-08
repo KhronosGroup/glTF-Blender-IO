@@ -497,7 +497,7 @@ class ImportGLTF2(Operator, ImportHelper):
 
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportGLTF2.bl_idname, text=ImportGLTF2.bl_label)
+    self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
 classes = (
