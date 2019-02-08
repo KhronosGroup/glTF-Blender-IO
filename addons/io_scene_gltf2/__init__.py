@@ -156,7 +156,7 @@ class ExportGLTF2_Base:
 
     export_apply = BoolProperty(
         name='Apply Modifiers',
-        description='Apply modifiers to mesh objects',
+        description='Apply modifiers (excluding Armatures) to mesh objects',
         default=False
     )
 

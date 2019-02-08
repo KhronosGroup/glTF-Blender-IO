@@ -158,7 +158,7 @@ Format
 Selected Objects
    Export selected objects only.
 Apply Modifiers
-   Apply modifiers to mesh objects.
+   Apply modifiers (excluding Armatures) to mesh objects.
 Y Up
    Export using glTF convention, +Y up.
 Custom Properties
