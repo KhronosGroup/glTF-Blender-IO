@@ -30,7 +30,198 @@ This importer/exporter supports the following glTF 2.0 features:
 - Animation (keyframe, shape key, and skinning)
 
 
-.. rubric:: Supported
+Meshes
+------
+
+glTF's internal structure mimics the memory buffers commonly used by graphics chips
+when rendering in real-time, such that assets can be delivered to desktop, web, or mobile
+clients and be promptly displayed with minimal processing.  As a result, quads and N-gons
+(faces with more than 3 edges) are automatically converted to triangles when
+saving to glTF.  Likewise, curves and and other non-mesh data are not preserved,
+and should be converted to meshes prior to export.
+
+Materials
+---------
+
+The core material system in glTF supports a metal/rough PBR workflow with the following
+channels of information:
+
+- Base Color
+- Metallic
+- Roughness
+- Baked Ambient Occlusion
+- Normal Map
+- Emissive
+
+.. note::
+
+   When images are used to drive these channels, glTF requires that PNG or JPG format
+   is used to pack the images.
+
+.. note::
+
+   glTF does not directly contain Blender's nodes, however, this glTF exporter
+   and importer will use nodes to describe the contents of the glTF file.
+
+Base Color
+^^^^^^^^^^
+
+The glTF base color is determined by looking for a Base Color input on a
+"Principled BSDF" node.  If the input is disconnected, the input's default color
+(the color swatch next to the disconnected input) is used as the Base Color for
+the material.
+
+If an "Image Texture" node is found to be connected to the Base Color input, that
+image will be used as the glTF base color.
+
+Metallic and Roughness
+^^^^^^^^^^^^^^^^^^^^^^
+
+These values are read from the "Principled BSDF" node.  If both of these inputs
+are disconnected, the node will display sliders to control their respective
+values between 0.0 and 1.0, and these values will be copied into the glTF.
+
+When using an image, glTF expects the metallic values to be encoded in the
+Blue (``B``) channel, and roughness to be encoded in the Green (``G``) channel of the
+same image.  If images are connected to the Blender node in a manner that
+does not follow this convention, this addon may attempt to adapt the image
+to the correct form during export, costing some performance.
+
+In the Blender node graph, it is recommended to use a "Separate RGB" node
+to separate the channels from an "Image Texture" node, and connect the
+Green (``G``) channel to Roughness, and Blue (``B``) to Metallic.  The glTF exporter
+will recognize this arrangement as matching the glTF standard, and that will
+allow it to simply copy the image texture into the glTF file during export.
+
+The Image Texture node for this should have its "Colorspace" setting
+configured to "Non-Color Data".
+
+.. figure:: /images/addons_io-gltf2-material-metalRough.png
+   :alt: A metallic-roughness image connected in a manner consistent
+         with the glTF standard, allowing it to be used verbatim inside
+         an exported glTF file.
+
+   A metallic/roughness image connected in a manner consistent
+   with the glTF standard, allowing it to be used verbatim inside
+   an exported glTF file.
+
+Baked Ambient Occlusion
+^^^^^^^^^^^^^^^^^^^^^^^
+
+glTF is capable of storing a baked ambient occlusion map.  Currently there
+is no arrangement of nodes that causes Blender to use such a map in exactly
+the same way as glTF intends it to be used.  However, if the exporter finds
+a custom node group by the name of ``glTF Metallic Roughness``, and finds an
+input named ``Occlusion`` on that node group, it will look for an Image Texture
+attached there to use as the occlusion map in glTF.  The effect need not be shown
+in Blender, as Blender has other ways of showing ambient occlusion, but this
+method will allow the exporter to write an occlusion image to the glTF.
+
+glTF stores occlusion in the Red (``R``) channel, allowing it to optionally share
+the same image with the Roughness and Metallic channels.
+
+Normal Map
+^^^^^^^^^^
+
+To use a Normal Map in glTF, connect an "Image Texture" node's color output
+to a "Normal Map" node's color input, and then connect the "Normal Map" normal
+output to the "Principled BSDF" node's "Normal" input.  The Image Texture node
+for this should have its "Colorspace" setting configured to "Non-Color Data".
+
+The "Normal Map" node must remain on its default setting of "Tangent Space" as
+this is the only type of normal map currently supported by glTF.  The strength
+of the normal map can be adjusted on this node.  The exporter isn't exporting
+these nodes directly, but will use them to locate the correct image and will
+copy the strength setting into the glTF.
+
+.. figure:: /images/addons_io-gltf2-material-normal.png
+   :alt: A normal map image connected such that the exporter will find it and copy it
+         to the glTF file.
+
+   A normal map image connected such that the exporter will find it and copy it
+   to the glTF file.
+
+.. note::
+
+   Blender's "Cycles" rendering engine has a "Bake" panel that can be used to bake
+   tangent-space normal maps from almost any other arrangement of normal vector
+   nodes.  Switch the "Bake type" to "Normal".  Keep the default space settings
+   (Space: Tangent, R: +X, G: +Y, B: +Z) when using this bake panel for glTF.
+   The resulting baked image can be saved and hooked up to a new material using
+   the Normal Map node as described above.
+
+Emissive
+^^^^^^^^
+
+An "Image Texture" node can be connected to an "Emission" shader node, and optionally
+combined with settings from a "Principled BSDF" node by way of an "Add" shader node.
+
+If the glTF exporter finds an image connected to the Emission shader node, it will
+export that image as the glTF material's emissive image.
+
+Double Sided
+^^^^^^^^^^^^
+
+In glTF, double-sided is a property that is applied per-material, not per-viewport
+or per-mesh, so it has no exact equivalent within Blender.  It can be thought of as
+a combination of backface culling (in Blender's viewport) and double-sided lighting
+(a Blender mesh property).
+
+When ``false`` (the default), backface culling is used, and the backs of faces in
+the glTF will not be visible in other software.  When ``true``, backface culling
+is disabled, and double-sided lighting is used, automatically reversing the normal
+vectors of any visible back faces.
+
+To set this value to true, create a custom node group by the name of
+``glTF Metallic Roughness``, add an input value named ``DoubleSided`` with a range
+of 0.0 to 1.0, and set it to 1.0.  There will be no equivalent effect in Blender,
+but the exporter will enable double-sided mode in glTF for this material.
+
+Blend Modes
+^^^^^^^^^^^
+
+The Base Color input value, or Base Color image, can optionally supply alpha values.
+How these values are treated by glTF depends on the selected blend mode.
+
+With the "Eevee" rendering engine selected, each material has a "Blend Mode" on the
+material settings panel.  Use this setting to govern how alpha values from the
+Base Color channel are treated in glTF.  Three settings are supported by glTF:
+
+- **Opaque** - Alpha values are ignored (the default).
+- **Alpha Blend** - Lower alpha values cause blending with background objects.
+- **Alpha Clip** - Alpha values below the ``Clip Threshold`` setting will cause portions
+of the material to not be rendered at all.  Everything else is rendered as opaque.
+
+.. note::
+
+   Be careful using materials with blend mode: **Alpha Blend**.  Some real-time rendering
+   engines may show artifacts if multiple blended polygons overlap.
+
+Putting it All Together
+^^^^^^^^^^^^^^^^^^^^^^^
+
+A single material may use all of the above at the same time, if desired.  This figure shows
+a typical node structure when several of the above options are applied at once:
+
+.. figure:: /images/addons_io-gltf2-material-principled.png
+   :alt: A Principled BSDF node uses multiple Image Texture inputs.
+         Each texture takes a Mapping Vector, with a UV Map as its input.
+         Roughness must use the ``G`` channel of its texture, and
+         Metallic must use the ``B`` channel. The output of the Principled BSDF node
+         is added to an Emission node, and the sum is connected to the Material Output node.
+
+   A Principled BSDF material with an emissive texture.
+
+Factors
+^^^^^^^
+
+Any Image Texture nodes may optionally be multiplied with a constant color or scalar.
+These will be written as "factors" in the glTF file, which are numbers that multiply
+with specified image textures.  These are not common.
+
+
+Extensions
+----------
 
 Certain features require extensions to the core format specification. The following
 `glTF 2.0 extensions <https://github.com/KhronosGroup/glTF/tree/master/extensions>`__
@@ -55,43 +246,17 @@ Materials
 Import
 ^^^^^^
 
-Supports Metal/Rough PBR (Principled BSDF), Spec/Gloss PBR and Shadeless (Unlit) materials.
+Supports Metal/Rough PBR (core glTF), Spec/Gloss PBR (``KHR_materials_pbrSpecularGlossiness``) and Shadeless (``KHR_materials_unlit``) materials.
 
 
 Export
 ^^^^^^
 
-Supports Metal/Rough PBR (Principled BSDF) and Shadeless (Unlit) materials.
-
-
-.. rubric:: Supported
-
-Only certain properties of the Principled BSDF material are supported:
-
-- Base Color
-- Metallic (``B`` channel)
-- Roughness (``G`` channel)
-- Normal
-- Tangent
-- Blend Mode (Opaque, Alpha Blend, Alpha Clip)
+Supports Metal/Rough PBR (core glTF) and Shadeless (``KHR_materials_unlit``) materials.
 
 .. note::
 
    To create Shadeless (Unlit) materials, use the Background material type.
-
-Complex nodes cannot be exported. For best results when using nodes, prefer
-the following structure:
-
-.. figure:: /images/addons_io-gltf2-material-principled.png
-   :alt: A Principled BSDF node uses multiple Image Texture inputs.
-         Each texture takes a Mapping Vector, with a UV Map as its input.
-         Roughness must use the ``G`` channel of its texture, and
-         Metalness must use the ``B`` channel. The output of the Principled BSDF node
-         is added to an Emission node, and the sum is connected to the Material Output node.
-
-   A Principled BSDF material with an emissive texture.
-
-Image Texture nodes may be multiplied with a constant color or scalar.
 
 
 Animation
@@ -236,5 +401,5 @@ Contributing
 glTF 2.0 is a relatively new file format. Discussion and development of the format
 occur on the Khronos Group `GitHub repository <https://github.com/KhronosGroup/glTF>`__,
 and feedback there is welcome. This importer/exporter is developed through
-the `Blender glTF IO repository <https://github.com/KhronosGroup/glTF-Blender-IO>`__,
+the `glTF-Blender-IO repository <https://github.com/KhronosGroup/glTF-Blender-IO>`__,
 where you can file bug reports, submit feature requests, or contribute code.
