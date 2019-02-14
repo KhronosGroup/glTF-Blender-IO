@@ -55,13 +55,8 @@ channels of information:
 
 .. note::
 
-   When images are used to drive these channels, glTF requires that PNG or JPG format
-   is used to pack the images.
-
-.. note::
-
-   glTF does not directly contain Blender's nodes, however, this glTF exporter
-   and importer will use nodes to describe the contents of the glTF file.
+   When images are used for these inputs, glTF requires that images be in PNG or JPEG format.
+   This addon will automatically convert images from other formats, increasing export time.
 
 Base Color
 ^^^^^^^^^^
@@ -69,7 +64,7 @@ Base Color
 The glTF base color is determined by looking for a Base Color input on a
 "Principled BSDF" node.  If the input is disconnected, the input's default color
 (the color swatch next to the disconnected input) is used as the Base Color for
-the material.
+the glTF material.
 
 If an "Image Texture" node is found to be connected to the Base Color input, that
 image will be used as the glTF base color.
@@ -85,7 +80,7 @@ When using an image, glTF expects the metallic values to be encoded in the
 Blue (``B``) channel, and roughness to be encoded in the Green (``G``) channel of the
 same image.  If images are connected to the Blender node in a manner that
 does not follow this convention, this addon may attempt to adapt the image
-to the correct form during export, costing some performance.
+to the correct form during export, increasing export time.
 
 In the Blender node graph, it is recommended to use a "Separate RGB" node
 to separate the channels from an "Image Texture" node, and connect the
@@ -141,7 +136,7 @@ copy the strength setting into the glTF.
    A normal map image connected such that the exporter will find it and copy it
    to the glTF file.
 
-.. note::
+.. tip::
 
    Blender's "Cycles" rendering engine has a "Bake" panel that can be used to bake
    tangent-space normal maps from almost any other arrangement of normal vector
@@ -190,12 +185,14 @@ Base Color channel are treated in glTF.  Three settings are supported by glTF:
 - **Opaque** - Alpha values are ignored (the default).
 - **Alpha Blend** - Lower alpha values cause blending with background objects.
 - **Alpha Clip** - Alpha values below the ``Clip Threshold`` setting will cause portions
-of the material to not be rendered at all.  Everything else is rendered as opaque.
+  of the material to not be rendered at all.  Everything else is rendered as opaque.
 
 .. note::
 
-   Be careful using materials with blend mode: **Alpha Blend**.  Some real-time rendering
-   engines may show artifacts if multiple blended polygons overlap.
+   Be aware that transparency (or **Alpha Blend** mode) is complex for real-time engines
+   to render, and may behave in unexpected ways after export. Where possible, use
+   **Alpha Clip** mode instead, or place **Opaque** polygons behind only a single
+   layer of **Alpha Blend** polygons.
 
 Putting it All Together
 ^^^^^^^^^^^^^^^^^^^^^^^
