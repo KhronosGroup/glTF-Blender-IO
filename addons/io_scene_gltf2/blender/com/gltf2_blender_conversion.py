@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from mathutils import Matrix, Quaternion
-from math import sqrt
+from math import sqrt, sin, cos
 
 def matrix_gltf_to_blender(mat_input):
     """Matrix from glTF format to Blender format."""
@@ -46,3 +46,22 @@ def correction_rotation():
     # Correction is needed for lamps, because Yup2Zup is not written in vertices
     # and lamps has no vertices :)
     return Quaternion((sqrt(2)/2, -sqrt(2)/2, 0.0, 0.0)).to_matrix().to_4x4()
+
+def convert_texture_transform(texture_transform):
+    """
+    Converts a KHR_texture_transform object in one UV space (glTF or Blender)
+    into the equivalent in the other UV space. The returned transform is the
+    same as switching UV spaces (with u,v -> u,1-v), applying texture_transform,
+    then switching back.
+    """
+    offset = texture_transform.get('offset', [0, 0])
+    rotation = texture_transform.get('rotation', 0)
+    scale = texture_transform.get('scale', [1, 1])
+    return {
+        'offset': [
+            offset[0] - scale[1] * sin(rotation),
+            1 - offset[1] - scale[1] * cos(rotation),
+        ],
+        'rotation': -rotation,
+        'scale': [scale[0], scale[1]],
+    }
