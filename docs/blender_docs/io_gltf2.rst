@@ -194,6 +194,22 @@ Base Color channel are treated in glTF.  Three settings are supported by glTF:
    **Alpha Clip** mode instead, or place **Opaque** polygons behind only a single
    layer of **Alpha Blend** polygons.
 
+UV Mapping
+^^^^^^^^^^
+
+Control over UV map selection and transformations is available by connecting a "UV Map"
+node and a "Mapping" node to any "Image Texture" node.  Settings from the "Mapping" node
+are exported using a glTF extension named ``KHR_texture_transform``.
+
+.. figure:: /images/addons_io-gltf2-material-mapping.png
+   :alt: A deliberate choice of UV mapping.
+
+   A deliberate choice of UV mapping.
+
+.. note::
+
+   These nodes are optional.  Not all glTF readers support multiple UV maps or texture transforms.
+
 Putting it All Together
 ^^^^^^^^^^^^^^^^^^^^^^^
 
