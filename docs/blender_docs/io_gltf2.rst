@@ -198,8 +198,15 @@ UV Mapping
 ^^^^^^^^^^
 
 Control over UV map selection and transformations is available by connecting a "UV Map"
-node and a "Mapping" node to any "Image Texture" node.  Settings from the "Mapping" node
-are exported using a glTF extension named ``KHR_texture_transform``.
+node and a "Mapping" node to any "Image Texture" node.
+
+Settings from the "Mapping" node are exported using a glTF extension named
+``KHR_texture_transform``.  The supported mapping types from the selector across the
+top of the node are **Texture** and **Point**.  The supported offsets are:
+
+- **Location** - ``X`` and ``Y``
+- **Rotation** - ``Z`` only
+- **Scale** - ``X`` and ``Y``
 
 .. figure:: /images/addons_io-gltf2-material-mapping.png
    :alt: A deliberate choice of UV mapping.
