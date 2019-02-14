@@ -18,6 +18,7 @@
 
 from mathutils import Vector, Quaternion
 from mathutils.geometry import tessellate_polygon
+from operator import attrgetter
 
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
@@ -639,7 +640,11 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
             if blender_vertex_groups is not None and vertex.groups is not None and len(vertex.groups) > 0 and export_settings[gltf2_blender_export_keys.SKINS]:
                 joint = []
                 weight = []
-                for group_element in vertex.groups:
+                vertex_groups = vertex.groups
+                if not export_settings['gltf_all_vertex_influences']:
+                    # sort groups by weight descending
+                    vertex_groups = sorted(vertex.groups, key=attrgetter('weight'), reverse=True)
+                for group_element in vertex_groups:
 
                     if len(joint) == 4:
                         bone_count += 1
