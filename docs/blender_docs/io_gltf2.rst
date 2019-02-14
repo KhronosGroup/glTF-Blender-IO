@@ -181,6 +181,8 @@ Tangents
    Export vertex tangents with meshes.
 Vertex Colors
    Export vertex colors with meshes.
+Materials
+   Export materials.
 
 
 Objects
@@ -190,15 +192,6 @@ Cameras
    Export cameras.
 Punctual Lights
    Export directional, point, and spot lights. Uses the ``KHR_lights_punctual`` glTF extension.
-
-
-Materials
-^^^^^^^^^
-
-Materials
-   Export materials.
-Texture Transforms
-   Export texture or UV position, rotation, and scale. Uses the ``KHR_texture_transform`` glTF extension.
 
 
 Animation
