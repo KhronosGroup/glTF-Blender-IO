@@ -184,7 +184,7 @@ Base Color channel are treated in glTF.  Three settings are supported by glTF:
 
 - **Opaque** - Alpha values are ignored (the default).
 - **Alpha Blend** - Lower alpha values cause blending with background objects.
-- **Alpha Clip** - Alpha values below the ``Clip Threshold`` setting will cause portions
+- **Alpha Clip** - Alpha values below the **Clip Threshold** setting will cause portions
   of the material to not be rendered at all.  Everything else is rendered as opaque.
 
 .. note::
@@ -395,8 +395,10 @@ Shape Key Tangents
 Contributing
 ============
 
-glTF 2.0 is a relatively new file format. Discussion and development of the format
-occur on the Khronos Group `GitHub repository <https://github.com/KhronosGroup/glTF>`__,
-and feedback there is welcome. This importer/exporter is developed through
+This importer/exporter is developed through
 the `glTF-Blender-IO repository <https://github.com/KhronosGroup/glTF-Blender-IO>`__,
 where you can file bug reports, submit feature requests, or contribute code.
+
+Discussion and development of the glTF 2.0 format itself takes place on
+the Khronos Group `glTF GitHub repository <https://github.com/KhronosGroup/glTF>`__,
+and feedback there is welcome.
