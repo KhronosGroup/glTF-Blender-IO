@@ -335,7 +335,7 @@ importer handles all of these ways.  The exporter will ask the user to
 select one of the following forms:
 
 glTF Binary (``.glb``)
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------
 
 This produces a single ``.glb`` file with all mesh data, image textures, and
 related information packed into a single binary file.  This makes it easy to
@@ -344,7 +344,7 @@ share or copy the model to other systems and services.
 This is the default.
 
 glTF Separate (``.gltf`` + ``.bin`` + textures)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------------------
 
 This produces a JSON text-based ``.gltf`` file describing the overall structure,
 along with a ``.bin`` file containing mesh and vector data, and optionally a
@@ -358,7 +358,7 @@ Be aware that sharing this format requires sharing all of these separate files
 together as a group.
 
 glTF Embedded (``.gltf``)
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 This produces a JSON text-based ``.gltf`` file, with all mesh data and image
 data encoded (using Base64) within the file.  This form is useful if the
