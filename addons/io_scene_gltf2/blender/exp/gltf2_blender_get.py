@@ -20,7 +20,7 @@ import bpy
 
 from . import gltf2_blender_export_keys
 from ...io.exp import gltf2_io_get
-from ...blender.com.gltf2_blender_conversion import convert_texture_transform
+from ...blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
 from io_scene_gltf2.io.com import gltf2_io_debug
 #
 # Globals
@@ -373,17 +373,17 @@ def get_texture_transform_from_texture_node(texture_node):
     if not isinstance(mapping_node, bpy.types.ShaderNodeMapping):
         return None
 
-    texture_transform = {}
+    mapping_transform = {}
     if mapping_node.vector_type == 'TEXTURE':
-        texture_transform["offset"] = [-mapping_node.translation[0], -mapping_node.translation[1]]
-        texture_transform["rotation"] = -mapping_node.rotation[2]
-        texture_transform["scale"] = [1.0 / mapping_node.scale[0], 1.0 / mapping_node.scale[1]]
+        mapping_transform["offset"] = [-mapping_node.translation[0], -mapping_node.translation[1]]
+        mapping_transform["rotation"] = -mapping_node.rotation[2]
+        mapping_transform["scale"] = [1.0 / mapping_node.scale[0], 1.0 / mapping_node.scale[1]]
     elif mapping_node.vector_type == 'POINT':
-        texture_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
-        texture_transform["rotation"] = mapping_node.rotation[2]
-        texture_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
+        mapping_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
+        mapping_transform["rotation"] = mapping_node.rotation[2]
+        mapping_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
 
-    texture_transform = convert_texture_transform(texture_transform)
+    texture_transform = texture_transform_blender_to_gltf(mapping_transform)
 
     if all([component == 0 for component in texture_transform["offset"]]):
         del(texture_transform["offset"])
