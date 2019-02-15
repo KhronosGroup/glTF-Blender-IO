@@ -385,8 +385,8 @@ Shading
 Export Properties
 -----------------
 
-Tab: General
-^^^^^^^^^^^^
+General Tab
+^^^^^^^^^^^
 
 Format
    Output format and embedding options. Binary is most efficient,
@@ -417,8 +417,8 @@ Copyright
    Legal rights and conditions for the model.
 
 
-Tab: Meshes
-^^^^^^^^^^^
+Meshes Tab
+^^^^^^^^^^
 
 UVs
    Export UVs (texture coordinates) with meshes.
@@ -432,8 +432,8 @@ Materials
    Export materials.
 
 
-Tab: Objects
-^^^^^^^^^^^^
+Objects Tab
+^^^^^^^^^^^
 
 Cameras
    Export cameras.
@@ -441,8 +441,8 @@ Punctual Lights
    Export directional, point, and spot lights. Uses the ``KHR_lights_punctual`` glTF extension.
 
 
-Tab: Animation
-^^^^^^^^^^^^^^
+Animation Tab
+^^^^^^^^^^^^^
 
 Animations
    Exports active actions and NLA tracks as glTF animations.
