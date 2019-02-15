@@ -37,8 +37,8 @@ glTF's internal structure mimics the memory buffers commonly used by graphics ch
 when rendering in real-time, such that assets can be delivered to desktop, web, or mobile
 clients and be promptly displayed with minimal processing.  As a result, quads and N-gons
 (faces with more than 3 edges) are automatically converted to triangles when
-saving to glTF.  Likewise, curves and and other non-mesh data are not preserved,
-and should be converted to meshes prior to export.
+exporting to glTF.  Likewise, curves and and other non-mesh data are not preserved,
+and must be converted to meshes prior to export.
 
 Materials
 ---------
@@ -53,9 +53,49 @@ channels of information:
 - Normal Map
 - Emissive
 
+Imported Materials
+------------------
+
+The glTF material system is different from Blender's own materials.  When a glTF file
+is imported, this addon will construct a set of Blender nodes to replicate each glTF material
+as closely as possible.
+
+The importer supports Metal/Rough PBR (core glTF), Spec/Gloss PBR (``KHR_materials_pbrSpecularGlossiness``)
+and Shadeless (``KHR_materials_unlit``) materials.
+
+.. tip::
+
+   Examining the result of the material import process is a good way to see examples of the
+   types of material nodes and settings that can be exported to glTF.
+
+
+Exported Materials
+------------------
+
+The exporter supports Metal/Rough PBR (core glTF) and Shadeless (``KHR_materials_unlit``) materials.  It
+will construct a glTF material based on the nodes it recognizes in the Blender material.
+
+.. tip::
+
+   To create Shadeless (Unlit) materials, use the Background material type.
+
+The material export process handles the following settings:
+
+- `Base Color`_
+- `Metallic and Roughness`_
+- `Baked Ambient Occlusion`_
+- `Normal Map`_
+- `Emissive`_
+- `Double Sided`_
+- `Blend Modes`_
+- `UV Mapping`_
+- `Factors`_
+
+See also: `Putting it All Together`_
+
 .. note::
 
-   When images are used for these inputs, glTF requires that images be in PNG or JPEG format.
+   When image textures are used by materials, glTF requires that images be in PNG or JPEG format.
    This addon will automatically convert images from other formats, increasing export time.
 
 Base Color
@@ -260,25 +300,6 @@ are supported:
 - ``KHR_texture_transform``
 
 
-Materials
----------
-
-Import
-^^^^^^
-
-Supports Metal/Rough PBR (core glTF), Spec/Gloss PBR (``KHR_materials_pbrSpecularGlossiness``) and Shadeless (``KHR_materials_unlit``) materials.
-
-
-Export
-^^^^^^
-
-Supports Metal/Rough PBR (core glTF) and Shadeless (``KHR_materials_unlit``) materials.
-
-.. note::
-
-   To create Shadeless (Unlit) materials, use the Background material type.
-
-
 Animation
 ---------
 
@@ -306,11 +327,52 @@ Custom properties on most objects are preserved in glTF export/import, and
 may be used for user-specific purposes.
 
 
+File Format Variations
+======================
+
+The glTF specification identifies different ways the data can be stored.  The
+importer handles all of these ways.  The exporter will ask the user to
+select one of the following forms:
+
+glTF Binary (``.glb``)
+^^^^^^^^^^^^^^^^^^^^^^
+
+This produces a single ``.glb`` file with all mesh data, image textures, and
+related information packed into a single binary file.  This makes it easy to
+share or copy the model to other systems and services.
+
+This is the default.
+
+glTF Separate (``.gltf`` + ``.bin`` + textures)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This produces a JSON text-based ``.gltf`` file describing the overall structure,
+along with a ``.bin`` file containing mesh and vector data, and optionally a
+number of ``.png`` or ``.jpg`` files containing image textures referenced by
+the ``.gltf`` file.
+
+Having an assortment of separate files makes it much easier for a user to
+go back and edit any JSON or images after the export has completed.
+
+Be aware that sharing this format requires sharing all of these separate files
+together as a group.
+
+glTF Embedded (``.gltf``)
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This produces a JSON text-based ``.gltf`` file, with all mesh data and image
+data encoded (using Base64) within the file.  This form is useful if the
+asset must be shared over a plain-text-only connection.
+
+This is the least efficient of the available forms, and should only be used
+when required.
+
+
 Properties
 ==========
 
-Import
-------
+Import Properties
+-----------------
 
 Log Level
    Set level of log to display.
@@ -320,11 +382,11 @@ Shading
    How normals are computed during import.
 
 
-Export
-------
+Export Properties
+-----------------
 
-General
-^^^^^^^
+Tab: General
+^^^^^^^^^^^^
 
 Format
    Output format and embedding options. Binary is most efficient,
@@ -355,8 +417,8 @@ Copyright
    Legal rights and conditions for the model.
 
 
-Meshes
-^^^^^^
+Tab: Meshes
+^^^^^^^^^^^
 
 UVs
    Export UVs (texture coordinates) with meshes.
@@ -370,8 +432,8 @@ Materials
    Export materials.
 
 
-Objects
-^^^^^^^
+Tab: Objects
+^^^^^^^^^^^^
 
 Cameras
    Export cameras.
@@ -379,8 +441,8 @@ Punctual Lights
    Export directional, point, and spot lights. Uses the ``KHR_lights_punctual`` glTF extension.
 
 
-Animation
-^^^^^^^^^
+Tab: Animation
+^^^^^^^^^^^^^^
 
 Animations
    Exports active actions and NLA tracks as glTF animations.
