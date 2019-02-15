@@ -17,6 +17,7 @@ jobs:
       - run:
           name: Run Tests
           command: |
+            cd tests
             export FILTERS=(General\|blender279b_export blender28_export blender279b_roundtrip blender28_roundtrip)
             OUT_PREFIX=/out yarn test-bail --reporter-options reportDir=/out/mochawesome -g ${FILTERS[$CIRCLE_NODE_INDEX ]}
       - store_artifacts:
