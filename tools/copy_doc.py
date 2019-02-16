@@ -13,7 +13,7 @@ ap.add_argument("-r", "--repo", required=True, help="repo path")
 args = vars(ap.parse_args())
 
 doc = dirname(realpath(__file__)) + "/../docs/blender_docs/io_gltf2.rst"
-images = dirname(realpath(__file__)) + "/../docs/blender_docs/images/"
+images = dirname(realpath(__file__)) + "/../images/"
 
 if not isdir(args["repo"]):
     sys.exit()
