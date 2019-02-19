@@ -197,20 +197,16 @@ export that image as the glTF material's emissive image.
 Double Sided
 ^^^^^^^^^^^^
 
-In glTF, double-sided is a property that is applied per-material, not per-viewport
-or per-mesh, so it has no exact equivalent within Blender.  It can be thought of as
-a combination of backface culling (in Blender's viewport) and double-sided lighting
-(a Blender mesh property).
+The Double Sided setting is controlled from the "Normals" panel of the Mesh settings
+tab.  In Blender, this is a per-mesh setting, but in glTF, it is a per-material
+setting.
 
-When ``false`` (the default), backface culling is used, and the backs of faces in
-the glTF will not be visible in other software.  When ``true``, backface culling
-is disabled, and double-sided lighting is used, automatically reversing the normal
-vectors of any visible back faces.
+.. tip::
 
-To set this value to true, create a custom node group by the name of
-``glTF Metallic Roughness``, add an input value named ``DoubleSided`` with a range
-of 0.0 to 1.0, and set it to 1.0.  There will be no equivalent effect in Blender,
-but the exporter will enable double-sided mode in glTF for this material.
+   Blender also has a setting called "Backface Culling" in the "Shading" settings
+   panel of each 3D viewport.  This setting has no effect on the glTF export, however
+   standard glTF viewers will automatically turn on backface culling per-material for
+   any glTF materials that are not double-sided.
 
 Blend Modes
 ^^^^^^^^^^^
