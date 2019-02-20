@@ -30,12 +30,18 @@ def save(context, export_settings):
     if bpy.context.active_object is not None:
         bpy.ops.object.mode_set(mode='OBJECT')
 
+    original_frame = bpy.context.scene.frame_current
+    bpy.context.scene.frame_set(0)
+
     __notify_start(context)
     start_time = time.time()
     json, buffer = __export(export_settings)
     __write_file(json, buffer, export_settings)
+
     end_time = time.time()
     __notify_end(context, end_time - start_time)
+
+    bpy.context.scene.frame_set(original_frame)
     return {'FINISHED'}
 
 
