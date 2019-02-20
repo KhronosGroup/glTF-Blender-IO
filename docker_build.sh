@@ -14,5 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
+
 docker build -t blender-gltf-testenv -f Dockerfile.testenv .
 docker build -t ux3d/gltf-blender-io -f Dockerfile.tests .
