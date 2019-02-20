@@ -31,7 +31,8 @@ def save(context, export_settings):
         bpy.ops.object.mode_set(mode='OBJECT')
 
     original_frame = bpy.context.scene.frame_current
-    bpy.context.scene.frame_set(0)
+    if not export_settings['gltf_current_frame']:
+        bpy.context.scene.frame_set(0)
 
     __notify_start(context)
     start_time = time.time()
@@ -41,7 +42,8 @@ def save(context, export_settings):
     end_time = time.time()
     __notify_end(context, end_time - start_time)
 
-    bpy.context.scene.frame_set(original_frame)
+    if not export_settings['gltf_current_frame']:
+        bpy.context.scene.frame_set(original_frame)
     return {'FINISHED'}
 
 
