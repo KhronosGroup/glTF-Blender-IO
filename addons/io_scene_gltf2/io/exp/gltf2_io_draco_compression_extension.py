@@ -165,26 +165,26 @@ def __compress_primitive(primitive, dll, export_settings):
         # }
 
         # Query size necessary to hold all the compressed data.
-        compressionSize = dll.compressedSize(compressor)
+        compression_size = dll.compressedSize(compressor)
 
         # Allocate byte buffer and write compressed data to it.
-        compressedData = bytes(compressionSize)
-        dll.copyToBytes(compressor, compressedData)
+        compressed_data = bytes(compression_size)
+        dll.copyToBytes(compressor, compressed_data)
 
         if primitive.extensions is None:
             primitive.extensions = {}
 
-        texCoordIds = {}
+        tex_coord_ids = {}
         for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
-            texCoordIds["TEXCOORD_" + str(id)] = dll.getTexCoordAttributeId(compressor, id)
+            tex_coord_ids["TEXCOORD_" + str(id)] = dll.getTexCoordAttributeId(compressor, id)
 
         # Register draco compression extension into primitive.
         primitive.extensions["KHR_draco_mesh_compression"] = {
-            'bufferView': BinaryData(compressedData),
+            'bufferView': BinaryData(compressed_data),
             'attributes': {
                 'POSITION': dll.getPositionAttributeId(compressor),
                 'NORMAL': dll.getNormalAttributeId(compressor),
-                **texCoordIds,
+                **tex_coord_ids,
             }
         }
 
