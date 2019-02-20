@@ -45,7 +45,7 @@ bl_info = {
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
-    'wiki_url': "https://github.com/KhronosGroup/glTF-Blender-IO",
+    'wiki_url': "https://docs.blender.org/manual/en/dev/addons/io_gltf2.html",
     'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",
     'support': 'OFFICIAL',
     'category': 'Import-Export'}
@@ -86,7 +86,6 @@ class ExportGLTF2_Base:
         items=(('GENERAL', "General", "General settings"),
                ('MESHES', "Meshes", "Mesh settings"),
                ('OBJECTS', "Objects", "Object settings"),
-               ('MATERIALS', "Materials", "Material settings"),
                ('ANIMATION', "Animation", "Animation settings")),
         name="ui_tab",
         description="Export setting categories",
@@ -198,7 +197,7 @@ class ExportGLTF2_Base:
 
     export_apply = BoolProperty(
         name='Apply Modifiers',
-        description='Apply modifiers to mesh objects',
+        description='Apply modifiers (excluding Armatures) to mesh objects',
         default=False
     )
 
@@ -283,13 +282,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    export_texture_transform = BoolProperty(
-        name='Texture Transforms',
-        description='Export texture or UV position, rotation, and scale. '
-                    'Uses "KHR_texture_transform" glTF extension',
-        default=False
-    )
-
     export_displacement = BoolProperty(
         name='Displacement Textures (EXPERIMENTAL)',
         description='EXPERIMENTAL: Export displacement textures. '
@@ -297,7 +289,10 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    will_save_settings = BoolProperty(default=False)
+    will_save_settings = BoolProperty(
+        name='Remember Export Settings',
+        description='Store glTF export settings in the Blender project',
+        default=False)
 
     # Custom scene property for saving settings
     scene_key = "glTF2ExportSettings"
@@ -400,7 +395,6 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
-        export_settings['gltf_texture_transform'] = self.export_texture_transform
         export_settings['gltf_displacement'] = self.export_displacement
 
         export_settings['gltf_binary'] = bytearray()
@@ -428,6 +422,7 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_apply')
         col.prop(self, 'export_yup')
         col.prop(self, 'export_extras')
+        col.prop(self, 'will_save_settings')
         col.prop(self, 'export_copyright')
 
     def draw_mesh_settings(self):
@@ -437,6 +432,7 @@ class ExportGLTF2_Base:
         if self.export_normals:
             col.prop(self, 'export_tangents')
         col.prop(self, 'export_colors')
+        col.prop(self, 'export_materials')
 
         # Add Draco compression option only if the DLL could be found.
         if self.is_draco_available:
@@ -453,11 +449,6 @@ class ExportGLTF2_Base:
         col = self.layout.box().column()
         col.prop(self, 'export_cameras')
         col.prop(self, 'export_lights')
-
-    def draw_material_settings(self):
-        col = self.layout.box().column()
-        col.prop(self, 'export_materials')
-        col.prop(self, 'export_texture_transform')
 
     def draw_animation_settings(self):
         col = self.layout.box().column()
@@ -483,7 +474,7 @@ class ExportGLTF2_Base:
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
     bl_idname = 'export_scene.gltf'
-    bl_label = 'glTF 2.0 (.glb/.gltf)'
+    bl_label = 'Export glTF 2.0'
 
     filename_ext = ''
 
@@ -495,8 +486,9 @@ def menu_func_export(self, context):
 
 
 class ImportGLTF2(Operator, ImportHelper):
+    """Load a glTF 2.0 file"""
     bl_idname = 'import_scene.gltf'
-    bl_label = 'glTF 2.0 (.glb/.gltf)'
+    bl_label = 'Import glTF 2.0'
 
     filter_glob = StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
@@ -556,7 +548,7 @@ class ImportGLTF2(Operator, ImportHelper):
 
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportGLTF2.bl_idname, text=ImportGLTF2.bl_label)
+    self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
 classes = (

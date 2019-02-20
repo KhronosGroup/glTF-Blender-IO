@@ -55,7 +55,6 @@ ANIMATIONS = 'gltf_animations'
 EMBED_IMAGES = 'gltf_embed_images'
 BINARY = 'gltf_binary'
 EMBED_BUFFERS = 'gltf_embed_buffers'
-TEXTURE_TRANSFORM = 'gltf_texture_transform'
 USE_NO_COLOR = 'gltf_use_no_color'
 
 METALLIC_ROUGHNESS_IMAGE = "metallic_roughness_image"

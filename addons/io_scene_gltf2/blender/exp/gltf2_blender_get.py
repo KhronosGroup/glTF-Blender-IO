@@ -20,6 +20,7 @@ import bpy
 
 from . import gltf2_blender_export_keys
 from ...io.exp import gltf2_io_get
+from ...blender.com.gltf2_blender_conversion import convert_texture_transform
 from io_scene_gltf2.io.com import gltf2_io_debug
 #
 # Globals
@@ -381,6 +382,8 @@ def get_texture_transform_from_texture_node(texture_node):
         texture_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
         texture_transform["rotation"] = mapping_node.rotation[2]
         texture_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
+
+    texture_transform = convert_texture_transform(texture_transform)
 
     if all([component == 0 for component in texture_transform["offset"]]):
         del(texture_transform["offset"])

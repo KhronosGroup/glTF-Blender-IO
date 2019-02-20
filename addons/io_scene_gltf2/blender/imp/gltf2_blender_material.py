@@ -82,6 +82,10 @@ class BlenderMaterial():
             # add emission map if needed
             if pymaterial.emissive_texture is not None:
                 BlenderEmissiveMap.create(gltf, material_idx, vertex_color)
+            elif pymaterial.emissive_factor is not None:
+            # add emissive factor only if there is not emissive texture
+                BlenderEmissiveMap.create(gltf, material_idx, vertex_color, factor_only=True)
+
 
             # add normal map if needed
             if pymaterial.normal_texture is not None:

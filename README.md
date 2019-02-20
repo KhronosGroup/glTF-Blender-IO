@@ -49,6 +49,10 @@ Documentation coming soon.
 
 Blender glTF I/O no longer requires the use of custom Cycles nodes when exporting PBR materials. Properties of the Principled BSDF node will be used automatically, as supported by the glTF 2.0 format. Only simple node inputs like Image Textures are currently supported, and complex node graphs are ignored.
 
+Debugging
+---------
+https://code.blender.org/2015/10/debugging-python-code-with-pycharm/
+
 Continuous Integration Tests
 ----------------------------
 
