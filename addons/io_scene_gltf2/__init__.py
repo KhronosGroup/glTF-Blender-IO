@@ -179,12 +179,6 @@ class ExportGLTF2_Base:
         max=120
     )
 
-    export_move_keyframes = BoolProperty(
-        name='Keyframes Start at 0',
-        description='Keyframes start at 0, instead of 1',
-        default=True
-    )
-
     export_force_sampling = BoolProperty(
         name='Always Sample Animations',
         description='Apply sampling to all animations',
@@ -317,7 +311,6 @@ class ExportGLTF2_Base:
         export_settings['gltf_animations'] = self.export_animations
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
-            export_settings['gltf_move_keyframes'] = self.export_move_keyframes
             export_settings['gltf_force_sampling'] = self.export_force_sampling
         else:
             export_settings['gltf_frame_range'] = False
