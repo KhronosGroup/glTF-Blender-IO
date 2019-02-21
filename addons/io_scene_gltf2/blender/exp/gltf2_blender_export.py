@@ -92,11 +92,7 @@ def __fix_json(obj):
     if isinstance(obj, dict):
         fixed = {}
         for key, value in obj.items():
-            if value is None:
-                continue
-            elif isinstance(value, dict) and len(value) == 0:
-                continue
-            elif isinstance(value, list) and len(value) == 0:
+            if not __should_include_json_value(key, value):
                 continue
             fixed[key] = __fix_json(value)
     elif isinstance(obj, list):
@@ -108,6 +104,20 @@ def __fix_json(obj):
         if int(obj) == obj:
             return int(obj)
     return fixed
+
+
+def __should_include_json_value(key, value):
+    allowed_empty_collections = ["KHR_materials_unlit"]
+
+    if value is None:
+        return False
+    elif __is_empty_collection(value) and key not in allowed_empty_collections:
+        return False
+    return True
+
+
+def __is_empty_collection(value):
+    return (isinstance(value, dict) or isinstance(value, list)) and len(value) == 0
 
 
 def __write_file(json, buffer, export_settings):
