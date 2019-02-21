@@ -39,15 +39,28 @@ class BlenderNode():
             instance = False
             if gltf.data.meshes[pynode.mesh].blender_name is not None:
                 # Mesh is already created, only create instance
-                instance = True
-                mesh = bpy.data.meshes[gltf.data.meshes[pynode.mesh].blender_name]
-            else:
+                # Except is current node is animated with path weight
+                # Or if previous instance is animation at node level
+                if pynode.weight_animation is True:
+                    instance = False
+                else:
+                    if gltf.data.meshes[pynode.mesh].is_weight_animated is True:
+                        instance = False
+                    else:
+                        instance = True
+                        mesh = bpy.data.meshes[gltf.data.meshes[pynode.mesh].blender_name]
+
+            if instance is False:
                 if pynode.name:
                     gltf.log.info("Blender create Mesh node " + pynode.name)
                 else:
                     gltf.log.info("Blender create Mesh node")
 
                 mesh = BlenderMesh.create(gltf, pynode.mesh, node_idx, parent)
+
+            if pynode.weight_animation is True:
+                # flag this mesh instance as created only for this node, because of weight animation
+                gltf.data.meshes[pynode.mesh].is_weight_animated = True
 
             if pynode.name:
                 name = pynode.name
