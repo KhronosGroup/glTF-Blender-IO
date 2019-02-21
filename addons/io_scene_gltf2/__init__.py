@@ -18,33 +18,6 @@
 
 import importlib
 from pathlib import Path
-
-
-modules = locals()
-
-
-def reload_recursive(current_dir: Path, current_module):
-    for path in current_dir.iterdir():
-        if "__init__" in str(path):
-            continue
-
-        module_dict = current_module.__dict__ if current_module is not None else modules
-        if path.stem not in module_dict:
-            continue
-
-        if path.is_file():
-            if path.suffix == ".py":
-                importlib.reload(module_dict[path.stem])
-            continue
-
-        if path.is_dir():
-            reload_recursive(path, module_dict[path.stem])
-            continue
-
-
-directory = Path(__file__).parent
-reload_recursive(directory, None)
-
 import bpy
 import os
 import time
@@ -59,6 +32,25 @@ from bpy.props import (CollectionProperty,
                        EnumProperty,
                        FloatProperty,
                        IntProperty)
+
+
+#
+# Script reloading (if the user calls 'Reload Scripts' from Blender)
+#
+
+def reload_recursive(current_dir: Path, module_dict):
+    for path in current_dir.iterdir():
+        if "__init__" in str(path) or path.stem not in module_dict:
+            continue
+
+        if path.is_file() and path.suffix == ".py":
+            importlib.reload(module_dict[path.stem])
+        elif path.is_dir():
+            reload_recursive(path, module_dict[path.stem].__dict__)
+
+
+directory = Path(__file__).parent
+reload_recursive(directory, locals())
 
 #
 # Globals
