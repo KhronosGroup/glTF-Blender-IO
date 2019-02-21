@@ -183,7 +183,16 @@ Vertex Colors
    Export vertex colors with meshes.
 Materials
    Export materials.
-
+Draco mesh compression (if the library is available)
+   Compress meshes using Google Draco
+Compression level
+   Higher compression results in slower encoding and decoding
+Position quantization bits
+   Higher values result in better compression rates
+Normal quantization bits
+   Higher values result in better compression rates
+Texcoord quantization bits
+   Higher values result in better compression rates
 
 Objects
 ^^^^^^^
