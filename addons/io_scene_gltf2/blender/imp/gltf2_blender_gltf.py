@@ -92,6 +92,10 @@ class BlenderGlTF():
         # Init is to False, and will be set to True during creation
         gltf.animation_object = False
 
+        # Store shapekeys equivalent between target & shapekey index
+        # For example when no POSITION on target
+        gltf.shapekeys = {}
+
         # Blender material
         if gltf.data.materials:
             for material in gltf.data.materials:

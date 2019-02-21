@@ -146,12 +146,13 @@ class BlenderNodeAnim():
 
                 for idx, key in enumerate(keys):
                     for sk in range(nb_targets):
-                        obj.data.shape_keys.key_blocks[sk + 1].value = values[idx * nb_targets + sk][0]
-                        obj.data.shape_keys.key_blocks[sk + 1].keyframe_insert(
-                            "value",
-                            frame=key[0] * fps,
-                            group='ShapeKeys'
-                        )
+                        if gltf.shapekeys[sk] is not None: # Do not animate shapekeys not created
+                            obj.data.shape_keys.key_blocks[gltf.shapekeys[sk]].value = values[idx * nb_targets + sk][0]
+                            obj.data.shape_keys.key_blocks[gltf.shapekeys[sk]].keyframe_insert(
+                                "value",
+                                frame=key[0] * fps,
+                                group='ShapeKeys'
+                            )
 
         if action.name not in gltf.current_animation_names.keys():
             gltf.current_animation_names[name] = action.name
