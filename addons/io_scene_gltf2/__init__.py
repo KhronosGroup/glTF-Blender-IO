@@ -16,9 +16,38 @@
 # Imports
 #
 
+import importlib
+from pathlib import Path
+
+
+modules = locals()
+
+
+def reload_recursive(current_dir: Path, current_module):
+    for path in current_dir.iterdir():
+        if "__init__" in str(path):
+            continue
+
+        module_dict = current_module.__dict__ if current_module is not None else modules
+        if path.stem not in module_dict:
+            continue
+
+        if path.is_file():
+            if path.suffix == ".py":
+                importlib.reload(module_dict[path.stem])
+            continue
+
+        if path.is_dir():
+            reload_recursive(path, module_dict[path.stem])
+            continue
+
+
+directory = Path(__file__).parent
+reload_recursive(directory, None)
+
+import bpy
 import os
 import time
-import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from bpy.types import Operator, AddonPreferences
 
