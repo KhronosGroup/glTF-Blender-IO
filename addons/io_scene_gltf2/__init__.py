@@ -17,21 +17,19 @@
 #
 
 import importlib
-from pathlib import Path
-import bpy
 import os
 import time
-from bpy_extras.io_utils import ImportHelper, ExportHelper
-from bpy.types import Operator, AddonPreferences
+from pathlib import Path
 
-from .io.com.gltf2_io_debug import Log
-
-from bpy.props import (CollectionProperty,
-                       StringProperty,
+import bpy
+from bpy.props import (StringProperty,
                        BoolProperty,
                        EnumProperty,
-                       FloatProperty,
                        IntProperty)
+from bpy.types import Operator
+from bpy_extras.io_utils import ImportHelper, ExportHelper
+
+from .io.com.gltf2_io_debug import Log
 
 
 #
