@@ -169,7 +169,16 @@ class BlenderMesh():
                 if vertex_color is None:
                     vertex_color = obj.data.vertex_colors.new(name="COLOR_0")
 
-                color_data = BinaryData.get_data_from_accessor(gltf, prim.attributes['COLOR_0'])
+                original_color_data = BinaryData.get_data_from_accessor(gltf, prim.attributes['COLOR_0'])
+
+                tmp_indices = {}
+                tmp_idx = 0
+                color_data = []
+                for i in prim.tmp_indices:
+                    if i[0] not in tmp_indices.keys():
+                        tmp_indices[i[0]] = tmp_idx
+                        tmp_idx += 1
+                        color_data.append(original_color_data[i[0]])
 
                 for poly in mesh.polygons:
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
