@@ -44,20 +44,17 @@ class BlenderPrimitive():
         pyprimitive.tmp_indices = indices
 
         # Manage only vertices that are in indices tab
-        if len(indices) != len(pos):
+        indice_equivalents = {}
+        new_pos = []
+        new_pos_idx = 0
+        for i in indices:
+            if i[0] not in indice_equivalents.keys():
+                indice_equivalents[i[0]] = new_pos_idx
+                new_pos.append(pos[i[0]])
+                new_pos_idx += 1
 
-            indice_equivalents = {}
-            new_pos = []
-            new_pos_idx = 0
-            for i in indices:
-                if i[0] not in indice_equivalents.keys():
-                    indice_equivalents[i[0]] = new_pos_idx
-                    new_pos.append(pos[i[0]])
-                    new_pos_idx += 1
+        prim_verts = [loc_gltf_to_blender(vert) for vert in new_pos]
 
-            prim_verts = [loc_gltf_to_blender(vert) for vert in new_pos]
-        else:
-            prim_verts = [loc_gltf_to_blender(vert) for vert in pos]
         pyprimitive.vertices_length = len(prim_verts)
         verts.extend(prim_verts)
         prim_faces = []
@@ -65,10 +62,7 @@ class BlenderPrimitive():
             vals = indices[i:i + 3]
             new_vals = []
             for y in vals:
-                if len(indices) != len(pos):
-                    new_vals.append(indice_equivalents[y[0]] + current_length)
-                else:
-                    new_vals.append(y[0] + current_length)
+                new_vals.append(indice_equivalents[y[0]] + current_length)
             prim_faces.append(tuple(new_vals))
         faces.extend(prim_faces)
         pyprimitive.faces_length = len(prim_faces)
