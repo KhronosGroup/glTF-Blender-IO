@@ -16,20 +16,39 @@
 # Imports
 #
 
+import importlib
 import os
 import time
+from pathlib import Path
+
 import bpy
+from bpy.props import (StringProperty,
+                       BoolProperty,
+                       EnumProperty,
+                       IntProperty)
+from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
-from bpy.types import Operator, AddonPreferences
 
 from .io.com.gltf2_io_debug import Log
 
-from bpy.props import (CollectionProperty,
-                       StringProperty,
-                       BoolProperty,
-                       EnumProperty,
-                       FloatProperty,
-                       IntProperty)
+
+#
+# Script reloading (if the user calls 'Reload Scripts' from Blender)
+#
+
+def reload_recursive(current_dir: Path, module_dict):
+    for path in current_dir.iterdir():
+        if "__init__" in str(path) or path.stem not in module_dict:
+            continue
+
+        if path.is_file() and path.suffix == ".py":
+            importlib.reload(module_dict[path.stem])
+        elif path.is_dir():
+            reload_recursive(path, module_dict[path.stem].__dict__)
+
+
+directory = Path(__file__).parent
+reload_recursive(directory, locals())
 
 #
 # Globals
@@ -179,12 +198,6 @@ class ExportGLTF2_Base:
         max=120
     )
 
-    export_move_keyframes = BoolProperty(
-        name='Keyframes Start at 0',
-        description='Keyframes start at 0, instead of 1',
-        default=True
-    )
-
     export_force_sampling = BoolProperty(
         name='Always Sample Animations',
         description='Apply sampling to all animations',
@@ -194,7 +207,7 @@ class ExportGLTF2_Base:
     export_current_frame = BoolProperty(
         name='Use Current Frame',
         description='Export the scene in the current animation frame',
-        default=True
+        default=False
     )
 
     export_skins = BoolProperty(
@@ -313,14 +326,12 @@ class ExportGLTF2_Base:
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
         export_settings['gltf_apply'] = self.export_apply
+        export_settings['gltf_current_frame'] = self.export_current_frame
         export_settings['gltf_animations'] = self.export_animations
         if self.export_animations:
-            export_settings['gltf_current_frame'] = False
             export_settings['gltf_frame_range'] = self.export_frame_range
-            export_settings['gltf_move_keyframes'] = self.export_move_keyframes
             export_settings['gltf_force_sampling'] = self.export_force_sampling
         else:
-            export_settings['gltf_current_frame'] = self.export_current_frame
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
@@ -389,14 +400,13 @@ class ExportGLTF2_Base:
 
     def draw_animation_settings(self):
         col = self.layout.box().column()
+        col.prop(self, 'export_current_frame')
         col.prop(self, 'export_animations')
         if self.export_animations:
             col.prop(self, 'export_frame_range')
             col.prop(self, 'export_frame_step')
             col.prop(self, 'export_move_keyframes')
             col.prop(self, 'export_force_sampling')
-        else:
-            col.prop(self, 'export_current_frame')
         col.prop(self, 'export_skins')
         if self.export_skins:
             col.prop(self, 'export_bake_skins')

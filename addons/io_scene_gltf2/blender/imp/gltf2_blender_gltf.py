@@ -92,6 +92,10 @@ class BlenderGlTF():
         # Init is to False, and will be set to True during creation
         gltf.animation_object = False
 
+        # Store shapekeys equivalent between target & shapekey index
+        # For example when no POSITION on target
+        gltf.shapekeys = {}
+
         # Blender material
         if gltf.data.materials:
             for material in gltf.data.materials:
@@ -204,6 +208,10 @@ class BlenderGlTF():
 
             node.transform = mat
 
+            # Weight animation management
+            node.weight_animation = False
+
+
         # joint management
         for node_idx, node in enumerate(gltf.data.nodes):
             is_joint, skin_idx = gltf.is_node_joint(node_idx)
@@ -231,8 +239,12 @@ class BlenderGlTF():
                     if anim_idx not in gltf.data.nodes[channel.target.node].animations.keys():
                         gltf.data.nodes[channel.target.node].animations[anim_idx] = []
                     gltf.data.nodes[channel.target.node].animations[anim_idx].append(channel_idx)
+                    # Manage node with animation on weights, that are animated in meshes in Blender (ShapeKeys)
+                    if channel.target.path == "weights":
+                        gltf.data.nodes[channel.target.node].weight_animation = True
 
         # Meshes
         if gltf.data.meshes:
             for mesh in gltf.data.meshes:
                 mesh.blender_name = None
+                mesh.is_weight_animated = False

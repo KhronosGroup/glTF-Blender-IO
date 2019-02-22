@@ -63,10 +63,11 @@ def gather_primitives(
 
 def __gather_materials(blender_primitive, blender_mesh, modifiers, export_settings):
     if not blender_primitive['material']:
-        # TODO: fix 'extract_promitives' so that the value of 'material' is None and not empty string
+        # TODO: fix 'extract_primitives' so that the value of 'material' is None and not empty string
         return None
+    mesh_double_sided = blender_mesh.show_double_sided
     material = bpy.data.materials[blender_primitive['material']]
-    return gltf2_blender_gather_materials.gather_material(material, export_settings)
+    return gltf2_blender_gather_materials.gather_material(material, mesh_double_sided, export_settings)
 
 
 def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings):

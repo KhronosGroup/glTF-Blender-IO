@@ -108,9 +108,16 @@ class BlenderMesh():
         if max_shape_to_create > 0:
             obj.shape_key_add(name="Basis")
 
+        current_shapekey_index = 0
         for i in range(max_shape_to_create):
 
+            # Check if this target has POSITION
+            if 'POSITION' not in prim.targets[i].keys():
+                gltf.shapekeys[i] = None
+                continue
+
             obj.shape_key_add(name="target_" + str(i))
+            current_shapekey_index += 1
 
             offset_idx = 0
             for prim in pymesh.primitives:
@@ -122,7 +129,8 @@ class BlenderMesh():
                 bm = bmesh.new()
                 bm.from_mesh(mesh)
 
-                shape_layer = bm.verts.layers.shape[i + 1]
+                shape_layer = bm.verts.layers.shape[current_shapekey_index]
+                gltf.shapekeys[i] = current_shapekey_index
 
                 pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
 
@@ -145,9 +153,11 @@ class BlenderMesh():
         if pymesh.weights is not None:
             for i in range(max_shape_to_create):
                 if i < len(pymesh.weights):
-                    obj.data.shape_keys.key_blocks[i + 1].value = pymesh.weights[i]
+                    if gltf.shapekeys[i] is None: # No default value if shapekeys was not created
+                        continue
+                    obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].value = pymesh.weights[i]
                     if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
-                        obj.data.shape_keys.key_blocks[i + 1].name = \
+                        obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].name = \
                             gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
 
         # Apply vertex color.

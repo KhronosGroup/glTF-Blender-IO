@@ -440,18 +440,16 @@ Punctual Lights
 Animation Tab
 ^^^^^^^^^^^^^
 
+Use Current Frame
+   Export the scene in the current animation frame.
 Animations
    Exports active actions and NLA tracks as glTF animations.
 Limit to Playback Range
    Clips animations to selected playback range.
 Sampling Rate
    How often to evaluate animated values (in frames).
-Keyframes Start at 0
-   Keyframes start at 0, instead of 1.
 Always Sample Animations
    Apply sampling to all animations.
-Use Current Frame
-   Export the scene in the current animation frame.
 Skinning
    Export skinning (armature) data.
 Bake Skinning Constraints
