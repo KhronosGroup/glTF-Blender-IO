@@ -16,20 +16,39 @@
 # Imports
 #
 
+import importlib
 import os
 import time
+from pathlib import Path
+
 import bpy
+from bpy.props import (StringProperty,
+                       BoolProperty,
+                       EnumProperty,
+                       IntProperty)
+from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
-from bpy.types import Operator, AddonPreferences
 
 from .io.com.gltf2_io_debug import Log
 
-from bpy.props import (CollectionProperty,
-                       StringProperty,
-                       BoolProperty,
-                       EnumProperty,
-                       FloatProperty,
-                       IntProperty)
+
+#
+# Script reloading (if the user calls 'Reload Scripts' from Blender)
+#
+
+def reload_recursive(current_dir: Path, module_dict):
+    for path in current_dir.iterdir():
+        if "__init__" in str(path) or path.stem not in module_dict:
+            continue
+
+        if path.is_file() and path.suffix == ".py":
+            importlib.reload(module_dict[path.stem])
+        elif path.is_dir():
+            reload_recursive(path, module_dict[path.stem].__dict__)
+
+
+directory = Path(__file__).parent
+reload_recursive(directory, locals())
 
 #
 # Globals
