@@ -132,7 +132,16 @@ class BlenderMesh():
                 shape_layer = bm.verts.layers.shape[current_shapekey_index]
                 gltf.shapekeys[i] = current_shapekey_index
 
-                pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
+                original_pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
+
+                tmp_indices = {}
+                tmp_idx = 0
+                pos = []
+                for i in prim.tmp_indices:
+                    if i[0] not in tmp_indices.keys():
+                        tmp_indices[i[0]] = tmp_idx
+                        tmp_idx += 1
+                        pos.append(original_pos[i[0]])
 
                 for vert in bm.verts:
                     if vert.index not in range(offset_idx, offset_idx + prim.vertices_length):
