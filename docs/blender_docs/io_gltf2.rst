@@ -339,12 +339,12 @@ glTF Binary (``.glb``)
 ----------------------
 
 This produces a single ``.glb`` file with all mesh data, image textures, and
-related information packed into a single binary file.  This makes it easy to
-share or copy the model to other systems and services.
+related information packed into a single binary file.  This is the default.
 
 .. tip::
 
-   This is the default.
+   Using a single file makes it easy to share or copy the model to other
+   systems and services.
 
 glTF Separate (``.gltf`` + ``.bin`` + textures)
 -----------------------------------------------
@@ -354,8 +354,10 @@ along with a ``.bin`` file containing mesh and vector data, and optionally a
 number of ``.png`` or ``.jpg`` files containing image textures referenced by
 the ``.gltf`` file.
 
-Having an assortment of separate files makes it much easier for a user to
-go back and edit any JSON or images after the export has completed.
+.. tip::
+
+   Having an assortment of separate files makes it much easier for a user to
+   go back and edit any JSON or images after the export has completed.
 
 .. note::
 
