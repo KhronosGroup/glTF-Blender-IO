@@ -183,7 +183,9 @@ copy the strength setting into the glTF.
    nodes.  Switch the "Bake type" to "Normal".  Keep the default space settings
    (Space: Tangent, R: +X, G: +Y, B: +Z) when using this bake panel for glTF.
    The resulting baked image can be saved and hooked up to a new material using
-   the Normal Map node as described above.
+   the Normal Map node as described above, allowing it to export correctly.
+
+   See: :doc:`Cycles Render Baking </render/cycles/baking>`
 
 Emissive
 ^^^^^^^^
@@ -256,6 +258,13 @@ For the **Texture** type, **Scale** ``X`` and ``Y`` must be equal (uniform scali
 
    These nodes are optional.  Not all glTF readers support multiple UV maps or texture transforms.
 
+Factors
+^^^^^^^
+
+Any Image Texture nodes may optionally be multiplied with a constant color or scalar.
+These will be written as "factors" in the glTF file, which are numbers that multiply
+with specified image textures.  These are not common.
+
 Putting it All Together
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -270,13 +279,6 @@ a typical node structure when several of the above options are applied at once:
          is added to an Emission node, and the sum is connected to the Material Output node.
 
    A Principled BSDF material with an emissive texture.
-
-Factors
-^^^^^^^
-
-Any Image Texture nodes may optionally be multiplied with a constant color or scalar.
-These will be written as "factors" in the glTF file, which are numbers that multiply
-with specified image textures.  These are not common.
 
 
 Extensions
@@ -340,7 +342,9 @@ This produces a single ``.glb`` file with all mesh data, image textures, and
 related information packed into a single binary file.  This makes it easy to
 share or copy the model to other systems and services.
 
-This is the default.
+.. tip::
+
+   This is the default.
 
 glTF Separate (``.gltf`` + ``.bin`` + textures)
 -----------------------------------------------
@@ -353,8 +357,10 @@ the ``.gltf`` file.
 Having an assortment of separate files makes it much easier for a user to
 go back and edit any JSON or images after the export has completed.
 
-Be aware that sharing this format requires sharing all of these separate files
-together as a group.
+.. note::
+
+   Be aware that sharing this format requires sharing all of these separate files
+   together as a group.
 
 glTF Embedded (``.gltf``)
 -------------------------
@@ -363,8 +369,10 @@ This produces a JSON text-based ``.gltf`` file, with all mesh data and image
 data encoded (using Base64) within the file.  This form is useful if the
 asset must be shared over a plain-text-only connection.
 
-This is the least efficient of the available forms, and should only be used
-when required.
+.. warning::
+
+   This is the least efficient of the available forms, and should only be used
+   when required.
 
 
 Properties
@@ -388,19 +396,7 @@ General Tab
 ^^^^^^^^^^^
 
 Format
-   Output format and embedding options. Binary is most efficient,
-   but JSON (embedded or separate) may be easier to edit later.
-
-   glTF Binary (``.glb``)
-      Exports a single file, with all data packed in binary form.
-      Most efficient and portable, but more difficult to edit later.
-   glTF Embedded (``.gltf``)
-      Exports a single file, with all data packed in JSON.
-      Less efficient than binary, but easier to edit later.
-   glTF Separate (``.gltf`` + ``.bin`` + textures)
-      Exports multiple files, with separate JSON, binary and texture data.
-      Easiest to edit later.
-
+   See: `File Format Variations`_
 Selected Objects
    Export selected objects only.
 Apply Modifiers
