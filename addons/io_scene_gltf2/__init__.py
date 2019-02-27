@@ -57,7 +57,6 @@ from bpy.props import (StringProperty,
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from .io.com.gltf2_io_debug import Log
 
 #
 #  Functions / Classes.
@@ -431,11 +430,9 @@ class ImportGLTF2(Operator, ImportHelper):
 
     filter_glob = StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
-    loglevel = EnumProperty(
-        items=Log.get_levels(),
-        name="Log Level",
-        description="Set level of log to display",
-        default=Log.default())
+    loglevel = IntProperty(
+        name='Log Level',
+        description="Log Level")
 
     import_pack_images = BoolProperty(
         name='Pack images',
@@ -454,7 +451,6 @@ class ImportGLTF2(Operator, ImportHelper):
     def draw(self, context):
         layout = self.layout
 
-        layout.prop(self, 'loglevel')
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'import_shading')
 
@@ -466,6 +462,7 @@ class ImportGLTF2(Operator, ImportHelper):
         from .io.imp.gltf2_io_gltf import glTFImporter
         from .blender.imp.gltf2_blender_gltf import BlenderGlTF
 
+        self.set_debug_log()
         import_settings = self.as_keywords()
 
         self.gltf_importer = glTFImporter(self.filepath, import_settings)
@@ -485,6 +482,19 @@ class ImportGLTF2(Operator, ImportHelper):
         self.gltf_importer.log.removeHandler(self.gltf_importer.log_handler)
 
         return {'FINISHED'}
+
+    def set_debug_log(self):
+        import logging
+        if bpy.app.debug_value == 0:
+            self.loglevel = logging.CRITICAL
+        elif bpy.app.debug_value == 1:
+            self.loglevel = logging.ERROR
+        elif bpy.app.debug_value == 2:
+            self.loglevel = logging.WARNING
+        elif bpy.app.debug_value == 3:
+            self.loglevel = logging.INFO
+        else:
+            self.loglevel = logging.NOTSET
 
 
 def menu_func_import(self, context):

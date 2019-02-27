@@ -124,19 +124,3 @@ class Log:
         self.hdlr.setFormatter(formatter)
         self.logger.addHandler(self.hdlr)
         self.logger.setLevel(int(loglevel))
-
-    @staticmethod
-    def get_levels():
-        levels = [
-            (str(logging.CRITICAL), "Critical", "", logging.CRITICAL),
-            (str(logging.ERROR), "Error", "", logging.ERROR),
-            (str(logging.WARNING), "Warning", "", logging.WARNING),
-            (str(logging.INFO), "Info", "", logging.INFO),
-            (str(logging.NOTSET), "NotSet", "", logging.NOTSET)
-        ]
-
-        return levels
-
-    @staticmethod
-    def default():
-        return str(logging.ERROR)
