@@ -157,6 +157,13 @@ class BlenderScene():
                     bpy.context.scene.objects.unlink(obj_rotation)
                     bpy.data.objects.remove(obj_rotation)
                 else:
+
+                    # Avoid rotation bug if collection is hidden or disabled
+                    if gltf.blender_active_collection is not None:
+                        gltf.collection_hide_viewport = bpy.data.collections[gltf.blender_active_collection].hide_viewport
+                        bpy.data.collections[gltf.blender_active_collection].hide_viewport = False
+                        # TODO for visibility ... but seems not exposed on bpy for now
+
                     for node_idx in list_nodes:
 
                         if node_idx in exclude_nodes:
@@ -178,6 +185,11 @@ class BlenderScene():
                     # remove object
                     #bpy.context.scene.collection.objects.unlink(obj_rotation)
                     bpy.data.objects.remove(obj_rotation)
+
+                    # Restore collection hiden / disabled values
+                    if gltf.blender_active_collection is not None:
+                        bpy.data.collections[gltf.blender_active_collection].hide_viewport = gltf.collection_hide_viewport
+                        # TODO restore visibility when expose in bpy
 
     @staticmethod
     def get_root_nodes(gltf):
