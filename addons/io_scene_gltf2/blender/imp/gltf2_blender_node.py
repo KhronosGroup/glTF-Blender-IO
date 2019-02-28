@@ -104,6 +104,10 @@ class BlenderNode():
             pynode.blender_object = obj.name
             BlenderNode.set_parent(gltf, pynode, obj, parent)
 
+            if pynode.children:
+                for child_idx in pynode.children:
+                    BlenderNode.create(gltf, child_idx, node_idx)
+
             return
 
         if pynode.is_joint:
