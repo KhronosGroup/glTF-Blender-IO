@@ -10,13 +10,15 @@ def dll_path() -> Path:
     Get the DLL path depending on the underlying platform.
     :return: DLL path.
     """
-    paths = {
-        'win32': Path.home() / Path('AppData/Local/Blender 2.80/draco/blender-draco-exporter.dll'),
-        'linux': Path.home() / Path('.local/lib/blender2.80/libblender-draco-exporter.so'),
-        'cygwin': Path(''),
-        'darwin': Path.home() / Path('.local/lib/blender2.80/libblender-draco-exporter.dylib'),
+    lib_names = {
+        'win32': 'blender-draco-exporter.dll',
+        'linux': 'libblender-draco-exporter.so',
+        'darwin': 'libblender-draco-exporter.dylib',
     }
-    return paths[sys.platform]
+    lib_name = lib_names.get(sys.platform)
+    if lib_name is None:
+        return Path('')
+    return Path('2.80/python/lib/python3.7') / lib_name
 
 
 def dll_exists() -> bool:
@@ -24,7 +26,10 @@ def dll_exists() -> bool:
     Checks whether the DLL path exists.
     :return: True if the DLL exists.
     """
-    return dll_path().exists()
+    exists = dll_path().exists()
+    print("'{}' ".format(dll_path()) + ("exists, draco mesh compression is available" if exists else
+                                        "does not exist, draco mesh compression not available"))
+    return exists
 
 
 def compress_scene_primitives(scenes, export_settings):
