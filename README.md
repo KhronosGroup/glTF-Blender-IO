@@ -41,11 +41,10 @@ Installation
 
 The Khronos glTF 2.0 importer and exporter is enabled by default in beta versions of [Blender 2.8](https://www.blender.org/2-8/). To reinstall it — for example, when testing recent or upcoming changes — copy the `addons/io_scene_gltf2` folder into the `scripts/addons/` directory of the Blender installation, then enable it under the *Add-ons* tab. For additional development documentation, see [Debugging](DEBUGGING.md).
 
-Usage
------
-Documentation coming soon. 
+Usage Documentation
+-------------------
 
-Blender glTF I/O no longer requires the use of custom Cycles nodes when exporting PBR materials. Properties of the Principled BSDF node will be used automatically, as supported by the glTF 2.0 format. Only simple node inputs like Image Textures are currently supported, and complex node graphs are ignored.
+See: https://docs.blender.org/manual/en/dev/addons/io_gltf2.html
 
 Debugging
 ---------

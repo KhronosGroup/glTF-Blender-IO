@@ -53,7 +53,7 @@ def __filter_texture_info(blender_shader_sockets_or_texture_slots, export_settin
 
 
 def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings):
-    if not export_settings[gltf2_blender_export_keys.TEXTURE_TRANSFORM]:
+    if not hasattr(blender_shader_sockets_or_texture_slots[0], 'links'):
         return None
 
     texture_node = blender_shader_sockets_or_texture_slots[0].links[0].from_node

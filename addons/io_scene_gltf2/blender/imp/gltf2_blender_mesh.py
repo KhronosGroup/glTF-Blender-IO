@@ -17,6 +17,7 @@ import bmesh
 
 from .gltf2_blender_primitive import BlenderPrimitive
 from ...io.imp.gltf2_io_binary import BinaryData
+from ...io.com.gltf2_io_color_management import color_linear_to_srgb
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender
 
 
@@ -107,9 +108,16 @@ class BlenderMesh():
         if max_shape_to_create > 0:
             obj.shape_key_add(name="Basis")
 
+        current_shapekey_index = 0
         for i in range(max_shape_to_create):
 
+            # Check if this target has POSITION
+            if 'POSITION' not in prim.targets[i].keys():
+                gltf.shapekeys[i] = None
+                continue
+
             obj.shape_key_add(name="target_" + str(i))
+            current_shapekey_index += 1
 
             offset_idx = 0
             for prim in pymesh.primitives:
@@ -121,9 +129,19 @@ class BlenderMesh():
                 bm = bmesh.new()
                 bm.from_mesh(mesh)
 
-                shape_layer = bm.verts.layers.shape[i + 1]
+                shape_layer = bm.verts.layers.shape[current_shapekey_index]
+                gltf.shapekeys[i] = current_shapekey_index
 
-                pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
+                original_pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
+
+                tmp_indices = {}
+                tmp_idx = 0
+                pos = []
+                for i in prim.tmp_indices:
+                    if i[0] not in tmp_indices.keys():
+                        tmp_indices[i[0]] = tmp_idx
+                        tmp_idx += 1
+                        pos.append(original_pos[i[0]])
 
                 for vert in bm.verts:
                     if vert.index not in range(offset_idx, offset_idx + prim.vertices_length):
@@ -144,9 +162,11 @@ class BlenderMesh():
         if pymesh.weights is not None:
             for i in range(max_shape_to_create):
                 if i < len(pymesh.weights):
-                    obj.data.shape_keys.key_blocks[i + 1].value = pymesh.weights[i]
+                    if gltf.shapekeys[i] is None: # No default value if shapekeys was not created
+                        continue
+                    obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].value = pymesh.weights[i]
                     if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
-                        obj.data.shape_keys.key_blocks[i + 1].name = \
+                        obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].name = \
                             gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
 
         # Apply vertex color.
@@ -158,29 +178,59 @@ class BlenderMesh():
                 if vertex_color is None:
                     vertex_color = obj.data.vertex_colors.new(name="COLOR_0")
 
-                color_data = BinaryData.get_data_from_accessor(gltf, prim.attributes['COLOR_0'])
+                original_color_data = BinaryData.get_data_from_accessor(gltf, prim.attributes['COLOR_0'])
+
+                tmp_indices = {}
+                tmp_idx = 0
+                color_data = []
+                for i in prim.tmp_indices:
+                    if i[0] not in tmp_indices.keys():
+                        tmp_indices[i[0]] = tmp_idx
+                        tmp_idx += 1
+                        color_data.append(original_color_data[i[0]])
 
                 for poly in mesh.polygons:
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                         vert_idx = mesh.loops[loop_idx].vertex_index
                         if vert_idx in range(offset, offset + prim.vertices_length):
                             cpt_idx = vert_idx - offset
+                            # Need to convert from linear (glTF to sRGB (blender))
                             if bpy.app.version < (2, 80, 0):
                                 # manage post 2.79b versions
                                 if len(vertex_color.data[loop_idx].color) == 4:
                                     if len(color_data[cpt_idx]) == 3:
                                         # TODO : no alpha in vertex color
-                                        vertex_color_data = color_data[cpt_idx] + (1.0,)
+                                        srgb_color = [
+                                            color_linear_to_srgb(color_data[cpt_idx][0]),
+                                            color_linear_to_srgb(color_data[cpt_idx][1]),
+                                            color_linear_to_srgb(color_data[cpt_idx][2]),
+                                            1.0]
                                     else:
-                                        vertex_color_data = color_data[cpt_idx]
-                                    vertex_color.data[loop_idx].color = vertex_color_data
+                                        srgb_color = [
+                                            color_linear_to_srgb(color_data[cpt_idx][0]),
+                                            color_linear_to_srgb(color_data[cpt_idx][1]),
+                                            color_linear_to_srgb(color_data[cpt_idx][2]),
+                                            color_data[cpt_idx][3]]
+                                    vertex_color.data[loop_idx].color = srgb_color
                                 else:
-                                    vertex_color.data[loop_idx].color = color_data[cpt_idx][0:3]
+                                    srgb_color = [
+                                        color_linear_to_srgb(color_data[cpt_idx][0]),
+                                        color_linear_to_srgb(color_data[cpt_idx][1]),
+                                        color_linear_to_srgb(color_data[cpt_idx][2])]
+                                    vertex_color.data[loop_idx].color = srgb_color
                             else:
                                 # check dimension, and add alpha if needed
                                 if len(color_data[cpt_idx]) == 3:
-                                    vertex_color_data = color_data[cpt_idx] + (1.0,)
+                                    srgb_color = [
+                                        color_linear_to_srgb(color_data[cpt_idx][0]),
+                                        color_linear_to_srgb(color_data[cpt_idx][1]),
+                                        color_linear_to_srgb(color_data[cpt_idx][2]),
+                                        1.0]
                                 else:
-                                    vertex_color_data = color_data[cpt_idx]
-                                vertex_color.data[loop_idx].color = vertex_color_data
+                                    srgb_color = [
+                                        color_linear_to_srgb(color_data[cpt_idx][0]),
+                                        color_linear_to_srgb(color_data[cpt_idx][1]),
+                                        color_linear_to_srgb(color_data[cpt_idx][2]),
+                                        color_data[cpt_idx][3]]
+                                vertex_color.data[loop_idx].color = srgb_color
             offset = offset + prim.vertices_length

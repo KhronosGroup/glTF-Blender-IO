@@ -13,20 +13,17 @@
 # limitations under the License.
 
 
-import bpy
-import mathutils
 import typing
-import math
 
-from . import gltf2_blender_export_keys
-from mathutils import Matrix
-from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name, get_target_object_path
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from io_scene_gltf2.io.com import gltf2_io_constants
+import bpy
 from io_scene_gltf2.blender.com import gltf2_blender_math
+from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name, get_target_object_path
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_sampler_keyframes
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.io.com import gltf2_io
+from io_scene_gltf2.io.com import gltf2_io_constants
+from io_scene_gltf2.io.exp import gltf2_io_binary_data
+from . import gltf2_blender_export_keys
 
 
 @cached
@@ -109,19 +106,21 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
     transform = blender_object.matrix_parent_inverse
 
-    isYup = export_settings[gltf2_blender_export_keys.YUP]
+    is_yup = export_settings[gltf2_blender_export_keys.YUP]
 
-    if blender_object.type == "ARMATURE":
-        bone = blender_object.path_resolve(get_target_object_path(target_datapath))
+    object_path = get_target_object_path(target_datapath)
+    is_armature_animation = blender_object.type == "ARMATURE" and object_path != ""
+    if is_armature_animation:
+        bone = blender_object.path_resolve(object_path)
         if isinstance(bone, bpy.types.PoseBone):
             if bone.parent is not None:
                 parent_transform = bone.parent.bone.matrix_local
                 transform = gltf2_blender_math.multiply(transform, parent_transform.inverted())
-                # if not isYup:
+                # if not is_yup:
                 #     transform = gltf2_blender_math.multiply(transform, gltf2_blender_math.to_zup())
             else:
                 # only apply the y-up conversion to root bones, as child bones already are in the y-up space
-                if isYup:
+                if is_yup:
                     transform = gltf2_blender_math.multiply(transform, gltf2_blender_math.to_yup())
             local_transform = bone.bone.matrix_local
             transform = gltf2_blender_math.multiply(transform, local_transform)
@@ -130,17 +129,17 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     for keyframe in keyframes:
         # Transform the data and extract
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform)
-        if isYup and not blender_object.type == "ARMATURE":
+        if is_yup and not is_armature_animation:
             value = gltf2_blender_math.swizzle_yup(value, target_datapath)
         keyframe_value = gltf2_blender_math.mathutils_to_gltf(value)
         if keyframe.in_tangent is not None:
             in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform)
-            if isYup and not blender_object.type == "ARMATURE":
+            if is_yup and not blender_object.type == "ARMATURE":
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
             keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value
         if keyframe.out_tangent is not None:
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform)
-            if isYup and not blender_object.type == "ARMATURE":
+            if is_yup and not blender_object.type == "ARMATURE":
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
             keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)
         values += keyframe_value

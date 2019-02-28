@@ -181,8 +181,27 @@ class BlenderSkin():
                 idx_already_done = {}
 
                 if 'JOINTS_0' in prim.attributes.keys() and 'WEIGHTS_0' in prim.attributes.keys():
-                    joint_ = BinaryData.get_data_from_accessor(gltf, prim.attributes['JOINTS_0'])
-                    weight_ = BinaryData.get_data_from_accessor(gltf, prim.attributes['WEIGHTS_0'])
+                    original_joint_ = BinaryData.get_data_from_accessor(gltf, prim.attributes['JOINTS_0'])
+                    original_weight_ = BinaryData.get_data_from_accessor(gltf, prim.attributes['WEIGHTS_0'])
+
+                    tmp_indices = {}
+                    tmp_idx = 0
+                    weight_ = []
+                    for i in prim.tmp_indices:
+                        if i[0] not in tmp_indices.keys():
+                            tmp_indices[i[0]] = tmp_idx
+                            tmp_idx += 1
+                            weight_.append(original_weight_[i[0]])
+
+                    tmp_indices = {}
+                    tmp_idx = 0
+                    joint_ = []
+                    for i in prim.tmp_indices:
+                        if i[0] not in tmp_indices.keys():
+                            tmp_indices[i[0]] = tmp_idx
+                            tmp_idx += 1
+                            joint_.append(original_joint_[i[0]])
+
 
                     for poly in obj.data.polygons:
                         for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):

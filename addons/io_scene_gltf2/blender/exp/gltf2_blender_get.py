@@ -17,9 +17,11 @@
 #
 
 import bpy
+from mathutils import Vector, Matrix
 
 from . import gltf2_blender_export_keys
 from ...io.exp import gltf2_io_get
+from ...blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
 from io_scene_gltf2.io.com import gltf2_io_debug
 #
 # Globals
@@ -372,15 +374,64 @@ def get_texture_transform_from_texture_node(texture_node):
     if not isinstance(mapping_node, bpy.types.ShaderNodeMapping):
         return None
 
-    texture_transform = {}
-    if mapping_node.vector_type == 'TEXTURE':
-        texture_transform["offset"] = [-mapping_node.translation[0], -mapping_node.translation[1]]
-        texture_transform["rotation"] = -mapping_node.rotation[2]
-        texture_transform["scale"] = [1.0 / mapping_node.scale[0], 1.0 / mapping_node.scale[1]]
-    elif mapping_node.vector_type == 'POINT':
-        texture_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
-        texture_transform["rotation"] = mapping_node.rotation[2]
-        texture_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
+    if mapping_node.vector_type not in ["TEXTURE", "POINT", "VECTOR"]:
+        gltf2_io_debug.print_console("WARNING",
+            "Skipping exporting texture transform because it had type " +
+            mapping_node.vector_type + "; recommend using POINT instead"
+        )
+        return None
+
+    if mapping_node.rotation[0] or mapping_node.rotation[1]:
+        # TODO: can we handle this?
+        gltf2_io_debug.print_console("WARNING",
+            "Skipping exporting texture transform because it had non-zero "
+            "rotations in the X/Y direction; only a Z rotation can be exported!"
+        )
+        return None
+
+    mapping_transform = {}
+    mapping_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
+    mapping_transform["rotation"] = mapping_node.rotation[2]
+    mapping_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
+
+    if mapping_node.vector_type == "TEXTURE":
+        # This means use the inverse of the TRS transform.
+        def inverted(mapping_transform):
+            offset = mapping_transform["offset"]
+            rotation = mapping_transform["rotation"]
+            scale = mapping_transform["scale"]
+
+            # Inverse of a TRS is not always a TRS. This function will be right
+            # at least when the following don't occur.
+            if abs(rotation) > 1e-5 and abs(scale[0] - scale[1]) > 1e-5:
+                return None
+            if abs(scale[0]) < 1e-5 or abs(scale[1]) < 1e-5:
+                return None
+
+            if bpy.app.version >= (2, 80, 0):
+                new_offset = Matrix.Rotation(-rotation, 3, 'Z') @ Vector((-offset[0], -offset[1], 1))
+            else:
+                new_offset = Matrix.Rotation(-rotation, 3, 'Z') * Vector((-offset[0], -offset[1], 1))
+            new_offset[0] /= scale[0]; new_offset[1] /= scale[1]
+            return {
+                "offset": new_offset[0:2],
+                "rotation": -rotation,
+                "scale": [1/scale[0], 1/scale[1]],
+            }
+
+        mapping_transform = inverted(mapping_transform)
+        if mapping_transform is None:
+            gltf2_io_debug.print_console("WARNING",
+                "Skipping exporting texture transform with type TEXTURE because "
+                "we couldn't convert it to TRS; recommend using POINT instead"
+            )
+            return None
+
+    elif mapping_node.vector_type == "VECTOR":
+        # Vectors don't get translated
+        mapping_transform["offset"] = [0, 0]
+
+    texture_transform = texture_transform_blender_to_gltf(mapping_transform)
 
     if all([component == 0 for component in texture_transform["offset"]]):
         del(texture_transform["offset"])

@@ -177,11 +177,24 @@ def __gather_mesh(blender_object, export_settings):
             edge_split.split_angle = blender_object.data.auto_smooth_angle
             edge_split.use_edge_angle = not blender_object.data.has_custom_normals
 
+        armature_modifiers = {}
+        if export_settings[gltf2_blender_export_keys.SKINS]:
+            # temprorary disable Armature modifiers if exporting skins
+            for idx, modifier in enumerate(blender_object.modifiers):
+                if modifier.type == 'ARMATURE':
+                    armature_modifiers[idx] = modifier.show_viewport
+                    modifier.show_viewport = False
+
         if bpy.app.version < (2, 80, 0):
             blender_mesh = blender_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
         else:
             blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
         skip_filter = True
+
+        if export_settings[gltf2_blender_export_keys.SKINS]:
+            # restore Armature modifiers
+            for idx, show_viewport in armature_modifiers.items():
+                blender_object.modifiers[idx].show_viewport = show_viewport
 
         if auto_smooth:
             bpy.data.objects.remove(blender_object)
@@ -235,7 +248,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
 def __gather_skin(blender_object, export_settings):
     modifiers = {m.type: m for m in blender_object.modifiers}
-    if "ARMATURE" not in modifiers:
+    if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:
         return None
 
     # no skin needed when the modifier is linked without having a vertex group
@@ -252,7 +265,7 @@ def __gather_skin(blender_object, export_settings):
         return None
 
     # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
+    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, blender_object, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):

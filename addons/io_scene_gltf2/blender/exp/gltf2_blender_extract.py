@@ -18,9 +18,11 @@
 
 from mathutils import Vector, Quaternion
 from mathutils.geometry import tessellate_polygon
+from operator import attrgetter
 
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
+from ...io.com.gltf2_io_color_management import color_srgb_to_scene_linear
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 #
@@ -112,19 +114,6 @@ def decompose_transition(matrix, context, export_settings):
     rotation = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
 
     return translation, rotation, scale
-
-
-def color_srgb_to_scene_linear(c):
-    """
-    Convert from sRGB to scene linear color space.
-
-    Source: Cycles addon implementation, node_color.h.
-    """
-    if c < 0.04045:
-        return 0.0 if c < 0.0 else c * (1.0 / 12.92)
-    else:
-        return pow((c + 0.055) * (1.0 / 1.055), 2.4)
-
 
 def extract_primitive_floor(a, indices, use_tangents):
     """Shift indices, that the first one starts with 0. It is assumed, that the indices are packed."""
@@ -409,7 +398,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
     Furthermore, primitives are split up, if the indices range is exceeded.
     Finally, triangles are also split up/duplicated, if face normals are used instead of vertex normals.
     """
-    print_console('INFO', 'Extracting primitive')
+    print_console('INFO', 'Extracting primitive: ' + blender_mesh.name)
 
     use_tangents = False
     if blender_mesh.uv_layers.active and len(blender_mesh.uv_layers) > 0:
@@ -651,7 +640,11 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
             if blender_vertex_groups is not None and vertex.groups is not None and len(vertex.groups) > 0 and export_settings[gltf2_blender_export_keys.SKINS]:
                 joint = []
                 weight = []
-                for group_element in vertex.groups:
+                vertex_groups = vertex.groups
+                if not export_settings['gltf_all_vertex_influences']:
+                    # sort groups by weight descending
+                    vertex_groups = sorted(vertex.groups, key=attrgetter('weight'), reverse=True)
+                for group_element in vertex_groups:
 
                     if len(joint) == 4:
                         bone_count += 1
@@ -676,12 +669,14 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
                     if modifiers is not None:
                         modifiers_dict = {m.type: m for m in modifiers}
                         if "ARMATURE" in modifiers_dict:
-                            armature = modifiers_dict["ARMATURE"].object
-                            skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
-                            for index, j in enumerate(skin.joints):
-                                if j.name == vertex_group_name:
-                                    joint_index = index
-                                    break
+                            modifier = modifiers_dict["ARMATURE"]
+                            armature = modifier.object
+                            if armature:
+                                skin = gltf2_blender_gather_skins.gather_skin(armature, modifier.id_data, export_settings)
+                                for index, j in enumerate(skin.joints):
+                                    if j.name == vertex_group_name:
+                                        joint_index = index
+                                        break
 
                     #
                     if joint_index is not None:
