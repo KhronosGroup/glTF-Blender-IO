@@ -83,7 +83,7 @@ class BlenderNode():
             if not (pynode.mesh and pynode.skin is not None):
                 BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)
             pynode.blender_object = obj.name
-            BlenderNode.set_parent(gltf, pynode, obj, parent)
+            BlenderNode.set_parent(gltf, obj, parent)
 
             if instance == False:
                 BlenderMesh.set_mesh(gltf, gltf.data.meshes[pynode.mesh], mesh, obj)
@@ -102,7 +102,7 @@ class BlenderNode():
             obj = BlenderCamera.create(gltf, pynode.camera)
             BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)  # TODO default rotation of cameras ?
             pynode.blender_object = obj.name
-            BlenderNode.set_parent(gltf, pynode, obj, parent)
+            BlenderNode.set_parent(gltf, obj, parent)
 
             if pynode.children:
                 for child_idx in pynode.children:
@@ -134,7 +134,7 @@ class BlenderNode():
                 BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent, correction=True)
                 pynode.blender_object = obj.name
                 pynode.correction_needed = True
-                BlenderNode.set_parent(gltf, pynode, obj, parent)
+                BlenderNode.set_parent(gltf, obj, parent)
 
                 if pynode.children:
                     for child_idx in pynode.children:
@@ -157,14 +157,14 @@ class BlenderNode():
             bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
         BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)
         pynode.blender_object = obj.name
-        BlenderNode.set_parent(gltf, pynode, obj, parent)
+        BlenderNode.set_parent(gltf, obj, parent)
 
         if pynode.children:
             for child_idx in pynode.children:
                 BlenderNode.create(gltf, child_idx, node_idx)
 
     @staticmethod
-    def set_parent(gltf, pynode, obj, parent):
+    def set_parent(gltf, obj, parent):
         """Set parent."""
         if parent is None:
             return
