@@ -1,3 +1,4 @@
+import bpy
 import sys
 from ctypes import *
 from pathlib import Path
@@ -18,7 +19,7 @@ def dll_path() -> Path:
     lib_name = lib_names.get(sys.platform)
     if lib_name is None:
         return Path('')
-    return Path('2.80/python/lib/python3.7') / lib_name
+    return Path(bpy.app.binary_path).parent / Path('2.80/python/lib/python3.7') / lib_name
 
 
 def dll_exists() -> bool:
@@ -27,8 +28,8 @@ def dll_exists() -> bool:
     :return: True if the DLL exists.
     """
     exists = dll_path().exists()
-    print("'{}' ".format(dll_path()) + ("exists, draco mesh compression is available" if exists else
-                                        "does not exist, draco mesh compression not available"))
+    print("'{}' ".format(dll_path().absolute()) + ("exists, draco mesh compression is available" if exists else
+                                                   "does not exist, draco mesh compression not available"))
     return exists
 
 
