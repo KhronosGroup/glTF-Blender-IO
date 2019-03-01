@@ -63,6 +63,9 @@ class BlenderScene():
                 bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
                 if bpy.context.collection.name in bpy.data.collections: # avoid master collection
                     gltf.blender_active_collection = bpy.context.collection.name
+            if bpy.app.version < (2, 80, 0):
+                scene = bpy.context.scene
+                scene.render.engine = "CYCLES"
 
         else:
             # No scene in glTF file, create all objects in current scene
