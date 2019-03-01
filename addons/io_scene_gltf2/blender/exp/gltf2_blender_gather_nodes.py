@@ -88,7 +88,10 @@ def __filter_node(blender_object, export_settings):
 
 
 def __gather_camera(blender_object, export_settings):
-    return gltf2_blender_gather_cameras.gather_camera(blender_object, export_settings)
+    if blender_object.type != 'CAMERA':
+        return None
+
+    return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
 
 
 def __gather_children(blender_object, export_settings):

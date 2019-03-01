@@ -21,43 +21,38 @@ import math
 
 
 @cached
-def gather_camera(blender_object, export_settings):
-    if not __filter_camera(blender_object, export_settings):
+def gather_camera(blender_camera, export_settings):
+    if not __filter_camera(blender_camera, export_settings):
         return None
 
     return gltf2_io.Camera(
-        extensions=__gather_extensions(blender_object, export_settings),
-        extras=__gather_extras(blender_object, export_settings),
-        name=__gather_name(blender_object, export_settings),
-        orthographic=__gather_orthographic(blender_object, export_settings),
-        perspective=__gather_perspective(blender_object, export_settings),
-        type=__gather_type(blender_object, export_settings)
+        extensions=__gather_extensions(blender_camera, export_settings),
+        extras=__gather_extras(blender_camera, export_settings),
+        name=__gather_name(blender_camera, export_settings),
+        orthographic=__gather_orthographic(blender_camera, export_settings),
+        perspective=__gather_perspective(blender_camera, export_settings),
+        type=__gather_type(blender_camera, export_settings)
     )
 
 
-def __filter_camera(blender_object, export_settings):
-    if blender_object.type != 'CAMERA':
-        return False
-    if not __gather_type(blender_object, export_settings):
-        return False
-
-    return True
+def __filter_camera(blender_camera, export_settings):
+    return bool(__gather_type(blender_camera, export_settings))
 
 
-def __gather_extensions(blender_object, export_settings):
+def __gather_extensions(blender_camera, export_settings):
     return None
 
 
-def __gather_extras(blender_object, export_settings):
+def __gather_extras(blender_camera, export_settings):
     return None
 
 
-def __gather_name(blender_object, export_settings):
-    return blender_object.data.name
+def __gather_name(blender_camera, export_settings):
+    return blender_camera.name
 
 
-def __gather_orthographic(blender_object, export_settings):
-    if __gather_type(blender_object, export_settings) == "orthographic":
+def __gather_orthographic(blender_camera, export_settings):
+    if __gather_type(blender_camera, export_settings) == "orthographic":
         orthographic = gltf2_io.CameraOrthographic(
             extensions=None,
             extras=None,
@@ -66,7 +61,6 @@ def __gather_orthographic(blender_object, export_settings):
             zfar=None,
             znear=None
         )
-        blender_camera = blender_object.data
 
         orthographic.xmag = blender_camera.ortho_scale
         orthographic.ymag = blender_camera.ortho_scale
@@ -78,8 +72,8 @@ def __gather_orthographic(blender_object, export_settings):
     return None
 
 
-def __gather_perspective(blender_object, export_settings):
-    if __gather_type(blender_object, export_settings) == "perspective":
+def __gather_perspective(blender_camera, export_settings):
+    if __gather_type(blender_camera, export_settings) == "perspective":
         perspective = gltf2_io.CameraPerspective(
             aspect_ratio=None,
             extensions=None,
@@ -88,7 +82,6 @@ def __gather_perspective(blender_object, export_settings):
             zfar=None,
             znear=None
         )
-        blender_camera = blender_object.data
 
         width = bpy.context.scene.render.pixel_aspect_x * bpy.context.scene.render.resolution_x
         height = bpy.context.scene.render.pixel_aspect_y * bpy.context.scene.render.resolution_y
@@ -112,10 +105,9 @@ def __gather_perspective(blender_object, export_settings):
     return None
 
 
-def __gather_type(blender_object, export_settings):
-    camera = blender_object.data
-    if camera.type == 'PERSP':
+def __gather_type(blender_camera, export_settings):
+    if blender_camera.type == 'PERSP':
         return "perspective"
-    elif camera.type == 'ORTHO':
+    elif blender_camera.type == 'ORTHO':
         return "orthographic"
     return None
