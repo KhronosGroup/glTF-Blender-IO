@@ -52,8 +52,14 @@ class BlenderGlTF():
         threshold = 0.001
         for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
             if bpy.app.version < (2, 80, 0):
+                # Take into account only armature from this scene
+                if armobj.name not in bpy.context.scene.objects:
+                    continue
                 bpy.context.scene.objects.active = armobj
             else:
+                # Take into account only armature from this scene
+                if armobj.name not in bpy.context.view_layer.objects:
+                    continue
                 bpy.context.view_layer.objects.active = armobj
             armature = armobj.data
             bpy.ops.object.mode_set(mode="EDIT")
