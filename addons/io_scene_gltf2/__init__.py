@@ -396,7 +396,6 @@ class ExportGLTF2_Base:
         if self.export_animations:
             col.prop(self, 'export_frame_range')
             col.prop(self, 'export_frame_step')
-            col.prop(self, 'export_move_keyframes')
             col.prop(self, 'export_force_sampling')
         col.prop(self, 'export_skins')
         if self.export_skins:
