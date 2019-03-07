@@ -157,10 +157,15 @@ def __get_image_data(sockets_or_slots, export_settings):
                 source_channels_length = 1
 
             file_name = os.path.splitext(result.shader_node.image.name)[0]
+            if result.shader_node.image.packed_file is None:
+                file_path = result.shader_node.image.filepath
+            else:
+                # empty path for packed textures, because they are converted to png anyway
+                file_path = ""
 
             image_data = gltf2_io_image_data.ImageData(
                 file_name,
-                result.shader_node.image.filepath,
+                file_path,
                 result.shader_node.image.size[0],
                 result.shader_node.image.size[1],
                 source_channel,
