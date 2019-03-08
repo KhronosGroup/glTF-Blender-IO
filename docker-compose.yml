@@ -3,7 +3,6 @@ services:
   gltf-blender-io:
     build:
       context: .
-    # image: ux3d/gltf-blender-io
     volumes:
       - "./addons:/root/.config/blender/2.80/scripts/addons:ro"
       - "./addons:/root/.config/blender/2.79/scripts/addons:ro"
