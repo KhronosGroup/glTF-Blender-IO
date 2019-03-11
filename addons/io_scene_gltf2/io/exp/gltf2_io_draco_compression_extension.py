@@ -19,7 +19,7 @@ def dll_path() -> Path:
     lib_name = lib_names.get(sys.platform)
     if lib_name is None:
         return Path('')
-    return Path(bpy.app.binary_path).parent / Path('2.80/python/lib/python3.7') / lib_name
+    return Path(bpy.app.binary_path).parent / Path('2.80/python/lib/python3.7/site-packages') / lib_name
 
 
 def dll_exists() -> bool:
