@@ -1,37 +1,67 @@
-version: 2
+version: 2.1
 jobs:
   build:
     docker:
-      - image: ux3d/gltf-blender-io
+      - image: node:8-stretch
+    parallelism: 4
+    environment:
+      TEST_FILTERS: >-
+        General|blender279b_export
+        blender28_export
+        blender279b_roundtrip
+        blender28_roundtrip
     steps:
       - checkout
       - run:
-          name: Install Blender Plugin (2.79)
-          command: rm -r /opt/blender279b/2.79/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender279b/2.79/scripts/addons/io_scene_gltf2
+          name: Install Blender
+          command: |
+            FILTERS=($TEST_FILTERS)
+            FILTER=${FILTERS[$CIRCLE_NODE_INDEX]}
+            echo "FILTER: '$FILTER'"
+            export DEBIAN_FRONTEND=noninteractive
+            apt -q update && apt install --no-install-recommends -y -q \
+              libglu1-mesa \
+              libxi6
+            if [[ $FILTER =~ blender279 ]]; then
+              echo "Installing Blender 2.79"
+              BLENDER279_URL=https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
+              mkdir /opt/blender279
+              curl -SL "$BLENDER279_URL" | \
+                tar -jx -C /opt/blender279 --strip-components=1
+              ln -s /opt/blender279/blender /usr/local/bin/blender279b
+            fi
+            if [[ $FILTER =~ blender28 ]]; then
+              echo "Installing Blender 2.80"
+              BLENDER280_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
+                grep -oe '[^\"]*blender-2\.80[^\"]*linux[^\"]*-x86_64[^\"]*')"
+              mkdir /opt/blender280
+              echo "Downloading from: $BLENDER280_URL"
+              curl -SL "$BLENDER280_URL" | \
+                tar -jx -C /opt/blender280 --strip-components=1
+              ln -s /opt/blender280/blender /usr/local/bin/blender28
+            fi
       - run:
-          name: Install Blender Plugin (2.80)
-          command: rm -r /opt/blender28/2.80/scripts/addons/io_scene_gltf2 && cp -r addons/io_scene_gltf2 /opt/blender28/2.80/scripts/addons/io_scene_gltf2
-      - run:
-          name: Prepare Tests
-          command: cd tests && npm install
+          name: Setup Tests
+          command: |
+            FILTERS=($TEST_FILTERS)
+            FILTER=${FILTERS[$CIRCLE_NODE_INDEX]}
+            if [[ $FILTER =~ blender279 ]]; then
+              rm -rf /opt/blender279/2.79/scripts/addons/io_scene_gltf2
+              cp -r addons/io_scene_gltf2 /opt/blender279/2.79/scripts/addons/io_scene_gltf2
+            fi
+            if [[ $FILTER =~ blender28 ]]; then
+              rm -rf /opt/blender280/2.80/scripts/addons/io_scene_gltf2
+              cp -r addons/io_scene_gltf2 /opt/blender280/2.80/scripts/addons/io_scene_gltf2
+            fi
+            cd tests
+            yarn install
+            mkdir -p /out
       - run:
           name: Run Tests
-          command: cd tests && npm test
-      - run:
-          name: Store Results
-          when: always
-          command: cp -r tests/mochawesome-report /tmp/report
-      - run:
-          name: Store Scenes
-          when: always
-          command: cp -r tests/scenes /tmp/scenes
-      - run:
-          name: Store glTFs
-          when: always
-          command: cp -r tests/roundtrip /tmp/roundtrip
+          command: |
+            FILTERS=($TEST_FILTERS)
+            FILTER=${FILTERS[$CIRCLE_NODE_INDEX]}
+            cd tests
+            OUT_PREFIX=/out yarn test-bail --reporter-options reportDir=/out/mochawesome -g $FILTER
       - store_artifacts:
-          path: /tmp/report
-      - store_artifacts:
-          path: /tmp/scenes
-      - store_artifacts:
-          path: /tmp/roundtrip
+          path: /out
