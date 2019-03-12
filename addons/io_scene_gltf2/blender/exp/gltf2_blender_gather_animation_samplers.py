@@ -20,6 +20,7 @@ from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name, get_target_object_path
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_sampler_keyframes
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -64,19 +65,14 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
     keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(channels, export_settings)
     times = [k.seconds for k in keyframes]
 
-    return gltf2_io.Accessor(
-        buffer_view=gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float),
-        byte_offset=None,
-        component_type=gltf2_io_constants.ComponentType.Float,
-        count=len(times),
-        extensions=None,
-        extras=None,
-        max=[max(times)],
-        min=[min(times)],
-        name=None,
-        normalized=None,
-        sparse=None,
-        type=gltf2_io_constants.DataType.Scalar
+    return gltf2_blender_gather_accessors.gather_accessor(
+        gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float),
+        gltf2_io_constants.ComponentType.Float,
+        len(times),
+        tuple([max(times)]),
+        tuple([min(times)]),
+        gltf2_io_constants.DataType.Scalar,
+        export_settings
     )
 
 

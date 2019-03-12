@@ -18,6 +18,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.com import gltf2_blender_math
 
@@ -91,19 +92,14 @@ def __gather_inverse_bind_matrices(blender_object, mesh_object, export_settings)
                 inverse_matrices.append(inverse_bind_matrix[row][column])
 
     binary_data = gltf2_io_binary_data.BinaryData.from_list(inverse_matrices, gltf2_io_constants.ComponentType.Float)
-    return gltf2_io.Accessor(
-        buffer_view=binary_data,
-        byte_offset=None,
-        component_type=gltf2_io_constants.ComponentType.Float,
-        count=len(inverse_matrices) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Mat4),
-        extensions=None,
-        extras=None,
-        max=None,
-        min=None,
-        name=None,
-        normalized=None,
-        sparse=None,
-        type=gltf2_io_constants.DataType.Mat4
+    return gltf2_blender_gather_accessors.gather_accessor(
+        binary_data,
+        gltf2_io_constants.ComponentType.Float,
+        len(inverse_matrices) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Mat4),
+        None,
+        None,
+        gltf2_io_constants.DataType.Mat4,
+        export_settings
     )
 
 
