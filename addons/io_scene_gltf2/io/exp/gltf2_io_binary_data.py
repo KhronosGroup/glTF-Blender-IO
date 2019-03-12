@@ -25,6 +25,12 @@ class BinaryData:
             raise TypeError("Data is not a bytes array")
         self.data = data
 
+    def __eq__(self, other):
+        return self.data == other.data
+
+    def __hash__(self):
+        return hash(self.data)
+
     @classmethod
     def from_list(cls, lst: typing.List[typing.Any], gltf_component_type: gltf2_io_constants.ComponentType):
         format_char = gltf2_io_constants.ComponentType.to_type_code(gltf_component_type)
