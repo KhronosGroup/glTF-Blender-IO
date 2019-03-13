@@ -183,6 +183,9 @@ class BlenderGlTF():
 
         for node_idx, node in enumerate(gltf.data.nodes):
 
+            # Weight animation management
+            node.weight_animation = False
+
             # skin management
             if node.skin is not None and node.mesh is not None:
                 if not hasattr(gltf.data.skins[node.skin], "node_ids"):
@@ -213,9 +216,6 @@ class BlenderGlTF():
                 mat = TRS.matrix_multiply(loc_mat, mat)
 
             node.transform = mat
-
-            # Weight animation management
-            node.weight_animation = False
 
 
         # joint management
