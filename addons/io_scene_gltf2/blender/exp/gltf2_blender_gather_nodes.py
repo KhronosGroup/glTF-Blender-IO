@@ -14,7 +14,7 @@
 
 import math
 import bpy
-from mathutils import Quaternion
+from mathutils import Matrix, Quaternion
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.com import gltf2_blender_math
@@ -146,20 +146,26 @@ def __gather_children(blender_object, export_settings):
             child_node = gather_node(child, export_settings)
             if child_node is None:
                 continue
+            blender_bone = blender_object.pose.bones[parent_joint.name]
             # fix rotation
             if export_settings[gltf2_blender_export_keys.YUP]:
                 rot = child_node.rotation
                 if rot is None:
                     rot = [0, 0, 0, 1]
+
                 rot_quat = Quaternion(rot)
-                rot_quat.rotate(Quaternion([0, 0, 1], math.radians(-90)))
-                child_node.rotation = [rot_quat[0], rot_quat[1], rot_quat[2], rot_quat[3]]
+                axis_basis_change = Matrix(
+                    ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, -1.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+                mat = gltf2_blender_math.multiply(axis_basis_change, child.matrix_basis)
+                mat = gltf2_blender_math.multiply(child.matrix_parent_inverse, mat)
+
+                _, rot_quat, _ = mat.decompose()
+                child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
 
             # fix translation (in blender bone's tail is the origin for children)
             trans, _, _ = child.matrix_local.decompose()
             if trans is None:
                 trans = [0, 0, 0]
-            blender_bone = blender_object.pose.bones[parent_joint.name]
             # bones go down their local y axis
             bone_tail = [0, blender_bone.length, 0]
             child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
