@@ -12,9 +12,9 @@ def dll_path() -> Path:
     :return: DLL path.
     """
     lib_names = {
-        'win32': 'blender-draco-exporter.dll',
-        'linux': 'libblender-draco-exporter.so',
-        'darwin': 'libblender-draco-exporter.dylib',
+        'win32': 'extern_draco.dll',
+        'linux': 'libextern_draco.so',
+        'darwin': 'libextern_draco.dylib',
     }
     lib_name = lib_names.get(sys.platform)
     if lib_name is None:
