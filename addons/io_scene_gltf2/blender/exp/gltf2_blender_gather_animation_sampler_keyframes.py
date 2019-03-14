@@ -50,10 +50,6 @@ class Keyframe:
 
         return length
 
-    @property
-    def target(self):
-        return self.__target
-
     def __set_indexed(self, value):
         # 'value' targets don't use keyframe.array_index
         if self.__target == "value":
@@ -164,11 +160,8 @@ def needs_baking(channels: typing.Tuple[bpy.types.FCurve],
     def all_equal(lst):
         return lst[1:] == lst[:-1]
 
-    gltf2_io_debug.print_console("WARNING", "needs_baking()")
-
     # Sampling is forced
     if export_settings[gltf2_blender_export_keys.FORCE_SAMPLING]:
-        gltf2_io_debug.print_console("WARNING", "forcing")
         return True
 
     # Sampling due to unsupported interpolation
