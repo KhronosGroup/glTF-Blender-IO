@@ -50,18 +50,18 @@ def __filter_texture_info(blender_shader_sockets_or_texture_slots, export_settin
             # sockets do not lead to a texture --> discard
             return False
 
-    resolution = __get_tex_from_socket(blender_shader_sockets_or_texture_slots[0]).shader_node.image.size
-    if any(__get_tex_from_socket(elem).shader_node.image.size != resolution
-           for elem in blender_shader_sockets_or_texture_slots):
-        def format_image(image_node):
-            return "{} ({}x{})".format(image_node.name, image_node.image.size[0], image_node.image.size[1])
+        resolution = __get_tex_from_socket(blender_shader_sockets_or_texture_slots[0]).shader_node.image.size
+        if any(__get_tex_from_socket(elem).shader_node.image.size != resolution
+               for elem in blender_shader_sockets_or_texture_slots):
+            def format_image(image_node):
+                return "{} ({}x{})".format(image_node.name, image_node.image.size[0], image_node.image.size[1])
 
-        images = [format_image(__get_tex_from_socket(elem).shader_node) for elem in
-                  blender_shader_sockets_or_texture_slots]
+            images = [format_image(__get_tex_from_socket(elem).shader_node) for elem in
+                      blender_shader_sockets_or_texture_slots]
 
-        print_console("ERROR", "Image sizes do not match. In order to be merged into one image file, "
-                               "images need to be of the same size. Images: {}".format(images))
-        return False
+            print_console("ERROR", "Image sizes do not match. In order to be merged into one image file, "
+                                   "images need to be of the same size. Images: {}".format(images))
+            return False
 
     return True
 
