@@ -116,7 +116,16 @@ class BlenderMesh():
                 gltf.shapekeys[i] = None
                 continue
 
-            obj.shape_key_add(name="target_" + str(i))
+            # Check if glTF file has some extras with targetNames
+            shapekey_name = None
+            if pymesh.extras is not None:
+                if 'targetNames' in pymesh.extras.keys() and i < len(pymesh.extras['targetNames']):
+                    shapekey_name = pymesh.extras['targetNames'][i]
+
+            if shapekey_name is None:
+                shapekey_name = "target_" + str(i)
+
+            obj.shape_key_add(name=shapekey_name)
             current_shapekey_index += 1
 
             offset_idx = 0
