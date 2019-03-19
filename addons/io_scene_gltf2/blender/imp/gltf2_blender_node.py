@@ -83,7 +83,7 @@ class BlenderNode():
 
             # Transforms apply only if this mesh is not skinned
             # See implementation node of gltf2 specification
-            if not (pynode.mesh and pynode.skin is not None):
+            if not (pynode.mesh is not None and pynode.skin is not None):
                 BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)
             pynode.blender_object = obj.name
             BlenderNode.set_parent(gltf, obj, parent)
