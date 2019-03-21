@@ -23,6 +23,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
+from io_scene_gltf2.io.com import gltf2_io_debug
 
 
 def gather_image(
@@ -33,10 +34,15 @@ def gather_image(
         return None
 
     uri = __gather_uri(blender_shader_sockets_or_texture_slots, export_settings)
+    buffer_view = __gather_buffer_view(blender_shader_sockets_or_texture_slots, export_settings)
+    if not (uri is not None or buffer_view is not None):
+        # The blender image has no data
+        return None
+
     mime_type = __gather_mime_type(uri.filepath if uri is not None else "")
 
     image = gltf2_io.Image(
-        buffer_view=__gather_buffer_view(blender_shader_sockets_or_texture_slots, export_settings),
+        buffer_view=buffer_view,
         extensions=__gather_extensions(blender_shader_sockets_or_texture_slots, export_settings),
         extras=__gather_extras(blender_shader_sockets_or_texture_slots, export_settings),
         mime_type=mime_type,
@@ -55,6 +61,8 @@ def __filter_image(sockets_or_slots, export_settings):
 def __gather_buffer_view(sockets_or_slots, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
         image = __get_image_data(sockets_or_slots, export_settings)
+        if image is None:
+            return None
         return gltf2_io_binary_data.BinaryData(
             data=image.to_image_data(__gather_mime_type()))
     return None
@@ -106,9 +114,7 @@ def __get_image_data(sockets_or_slots, export_settings):
     # For shared ressources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # ressources.
-    def split_pixels_by_channels(image: bpy.types.Image, export_settings) -> typing.List[typing.List[float]]:
-        assert image.channels > 0, "Image '{}' has no color channels and cannot be exported.".format(image.name)
-
+    def split_pixels_by_channels(image: bpy.types.Image, export_settings) -> typing.Optional[typing.List[typing.List[float]]]:
         channelcache = export_settings['gltf_channelcache']
         if image.name in channelcache:
             return channelcache[image.name]
@@ -125,6 +131,12 @@ def __get_image_data(sockets_or_slots, export_settings):
         results = [__get_tex_from_socket(socket) for socket in sockets_or_slots]
         image = None
         for result, socket in zip(results, sockets_or_slots):
+            if result.shader_node.image.channels == 0:
+                gltf2_io_debug.print_console("WARNING",
+                                             "Image '{}' has no color channels and cannot be exported.".format(
+                                                 result.shader_node.image))
+                continue
+
             # rudimentarily try follow the node tree to find the correct image data.
             source_channel = None
             target_channel = None
