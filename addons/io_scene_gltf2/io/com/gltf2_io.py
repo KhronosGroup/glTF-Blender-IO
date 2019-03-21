@@ -1104,7 +1104,7 @@ class Texture:
         result["extras"] = self.extras
         result["name"] = from_union([from_str, from_none], self.name)
         result["sampler"] = from_union([from_int, from_none], self.sampler)
-        result["source"] = from_int(self.source)
+        result["source"] = from_int(self.source)  # most viewers can't handle missing sources
         return result
 
 
