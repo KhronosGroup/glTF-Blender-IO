@@ -14,7 +14,7 @@
 
 import math
 import bpy
-from mathutils import Quaternion
+from mathutils import Matrix, Quaternion
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.com import gltf2_blender_math
@@ -98,6 +98,11 @@ def __gather_children(blender_object, export_settings):
     children = []
     # standard children
     for child_object in blender_object.children:
+        if child_object.parent_bone:
+            # this is handled further down,
+            # as the object should be a child of the specific bone,
+            # not the Armature object
+            continue
         node = gather_node(child_object, export_settings)
         if node is not None:
             children.append(node)
@@ -117,9 +122,55 @@ def __gather_children(blender_object, export_settings):
 
     # blender bones
     if blender_object.type == "ARMATURE":
+        root_joints = []
         for blender_bone in blender_object.pose.bones:
             if not blender_bone.parent:
-                children.append(gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings))
+                joint = gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
+                children.append(joint)
+                root_joints.append(joint)
+        # handle objects directly parented to bones
+        direct_bone_children = [child for child in blender_object.children if child.parent_bone]
+        def find_parent_joint(joints, name):
+            for joint in joints:
+                if joint.name == name:
+                    return joint
+                parent_joint = find_parent_joint(joint.children, name)
+                if parent_joint:
+                    return parent_joint
+            return None
+        for child in direct_bone_children:
+            # find parent joint
+            parent_joint = find_parent_joint(root_joints, child.parent_bone)
+            if not parent_joint:
+                continue
+            child_node = gather_node(child, export_settings)
+            if child_node is None:
+                continue
+            blender_bone = blender_object.pose.bones[parent_joint.name]
+            # fix rotation
+            if export_settings[gltf2_blender_export_keys.YUP]:
+                rot = child_node.rotation
+                if rot is None:
+                    rot = [0, 0, 0, 1]
+
+                rot_quat = Quaternion(rot)
+                axis_basis_change = Matrix(
+                    ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, -1.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+                mat = gltf2_blender_math.multiply(axis_basis_change, child.matrix_basis)
+                mat = gltf2_blender_math.multiply(child.matrix_parent_inverse, mat)
+
+                _, rot_quat, _ = mat.decompose()
+                child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
+
+            # fix translation (in blender bone's tail is the origin for children)
+            trans, _, _ = child.matrix_local.decompose()
+            if trans is None:
+                trans = [0, 0, 0]
+            # bones go down their local y axis
+            bone_tail = [0, blender_bone.length, 0]
+            child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
+
+            parent_joint.children.append(child_node)
 
     return children
 
