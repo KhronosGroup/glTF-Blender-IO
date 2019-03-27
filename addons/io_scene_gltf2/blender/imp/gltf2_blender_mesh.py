@@ -109,21 +109,21 @@ class BlenderMesh():
             obj.shape_key_add(name="Basis")
 
         current_shapekey_index = 0
-        for i in range(max_shape_to_create):
+        for sk in range(max_shape_to_create):
 
             # Check if this target has POSITION
-            if 'POSITION' not in prim.targets[i].keys():
-                gltf.shapekeys[i] = None
+            if 'POSITION' not in prim.targets[sk].keys():
+                gltf.shapekeys[sk] = None
                 continue
 
             # Check if glTF file has some extras with targetNames
             shapekey_name = None
             if pymesh.extras is not None:
-                if 'targetNames' in pymesh.extras.keys() and i < len(pymesh.extras['targetNames']):
-                    shapekey_name = pymesh.extras['targetNames'][i]
+                if 'targetNames' in pymesh.extras.keys() and sk < len(pymesh.extras['targetNames']):
+                    shapekey_name = pymesh.extras['targetNames'][sk]
 
             if shapekey_name is None:
-                shapekey_name = "target_" + str(i)
+                shapekey_name = "target_" + str(sk)
 
             obj.shape_key_add(name=shapekey_name)
             current_shapekey_index += 1
@@ -132,16 +132,16 @@ class BlenderMesh():
             for prim in pymesh.primitives:
                 if prim.targets is None:
                     continue
-                if i >= len(prim.targets):
+                if sk >= len(prim.targets):
                     continue
 
                 bm = bmesh.new()
                 bm.from_mesh(mesh)
 
                 shape_layer = bm.verts.layers.shape[current_shapekey_index]
-                gltf.shapekeys[i] = current_shapekey_index
+                gltf.shapekeys[sk] = current_shapekey_index
 
-                original_pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
+                original_pos = BinaryData.get_data_from_accessor(gltf, prim.targets[sk]['POSITION'])
 
                 tmp_indices = {}
                 tmp_idx = 0
