@@ -167,16 +167,17 @@ class BlenderMesh():
                 bm.free()
                 offset_idx += prim.vertices_length
 
-        # set default weights for shape keys, and names
+        # set default weights for shape keys, and names, if not set by convention on extras data
         if pymesh.weights is not None:
             for i in range(max_shape_to_create):
                 if i < len(pymesh.weights):
                     if gltf.shapekeys[i] is None: # No default value if shapekeys was not created
                         continue
                     obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].value = pymesh.weights[i]
-                    if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
-                        obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].name = \
-                            gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
+                    if shapekey_name is None: # No names set for now
+                        if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
+                            obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].name = \
+                                gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
 
         # Apply vertex color.
         vertex_color = None
