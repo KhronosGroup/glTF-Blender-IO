@@ -108,23 +108,49 @@ class BlenderMesh():
         if max_shape_to_create > 0:
             obj.shape_key_add(name="Basis")
 
-        for i in range(max_shape_to_create):
+        current_shapekey_index = 0
+        for sk in range(max_shape_to_create):
 
-            obj.shape_key_add(name="target_" + str(i))
+            # Check if this target has POSITION
+            if 'POSITION' not in prim.targets[sk].keys():
+                gltf.shapekeys[sk] = None
+                continue
+
+            # Check if glTF file has some extras with targetNames
+            shapekey_name = None
+            if pymesh.extras is not None:
+                if 'targetNames' in pymesh.extras.keys() and sk < len(pymesh.extras['targetNames']):
+                    shapekey_name = pymesh.extras['targetNames'][sk]
+
+            if shapekey_name is None:
+                shapekey_name = "target_" + str(sk)
+
+            obj.shape_key_add(name=shapekey_name)
+            current_shapekey_index += 1
 
             offset_idx = 0
             for prim in pymesh.primitives:
                 if prim.targets is None:
                     continue
-                if i >= len(prim.targets):
+                if sk >= len(prim.targets):
                     continue
 
                 bm = bmesh.new()
                 bm.from_mesh(mesh)
 
-                shape_layer = bm.verts.layers.shape[i + 1]
+                shape_layer = bm.verts.layers.shape[current_shapekey_index]
+                gltf.shapekeys[sk] = current_shapekey_index
 
-                pos = BinaryData.get_data_from_accessor(gltf, prim.targets[i]['POSITION'])
+                original_pos = BinaryData.get_data_from_accessor(gltf, prim.targets[sk]['POSITION'])
+
+                tmp_indices = {}
+                tmp_idx = 0
+                pos = []
+                for i in prim.tmp_indices:
+                    if i[0] not in tmp_indices.keys():
+                        tmp_indices[i[0]] = tmp_idx
+                        tmp_idx += 1
+                        pos.append(original_pos[i[0]])
 
                 for vert in bm.verts:
                     if vert.index not in range(offset_idx, offset_idx + prim.vertices_length):
@@ -141,14 +167,17 @@ class BlenderMesh():
                 bm.free()
                 offset_idx += prim.vertices_length
 
-        # set default weights for shape keys, and names
+        # set default weights for shape keys, and names, if not set by convention on extras data
         if pymesh.weights is not None:
             for i in range(max_shape_to_create):
                 if i < len(pymesh.weights):
-                    obj.data.shape_keys.key_blocks[i + 1].value = pymesh.weights[i]
-                    if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
-                        obj.data.shape_keys.key_blocks[i + 1].name = \
-                            gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
+                    if gltf.shapekeys[i] is None: # No default value if shapekeys was not created
+                        continue
+                    obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].value = pymesh.weights[i]
+                    if shapekey_name is None: # No names set for now
+                        if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
+                            obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].name = \
+                                gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
 
         # Apply vertex color.
         vertex_color = None
@@ -159,7 +188,16 @@ class BlenderMesh():
                 if vertex_color is None:
                     vertex_color = obj.data.vertex_colors.new(name="COLOR_0")
 
-                color_data = BinaryData.get_data_from_accessor(gltf, prim.attributes['COLOR_0'])
+                original_color_data = BinaryData.get_data_from_accessor(gltf, prim.attributes['COLOR_0'])
+
+                tmp_indices = {}
+                tmp_idx = 0
+                color_data = []
+                for i in prim.tmp_indices:
+                    if i[0] not in tmp_indices.keys():
+                        tmp_indices[i[0]] = tmp_idx
+                        tmp_idx += 1
+                        color_data.append(original_color_data[i[0]])
 
                 for poly in mesh.polygons:
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):

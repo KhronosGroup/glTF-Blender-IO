@@ -160,10 +160,11 @@ def needs_baking(channels: typing.Tuple[bpy.types.FCurve],
     def all_equal(lst):
         return lst[1:] == lst[:-1]
 
-
+    # Sampling is forced
     if export_settings[gltf2_blender_export_keys.FORCE_SAMPLING]:
         return True
 
+    # Sampling due to unsupported interpolation
     interpolation = channels[0].keyframe_points[0].interpolation
     if interpolation not in ["BEZIER", "LINEAR", "CONSTANT"]:
         gltf2_io_debug.print_console("WARNING",
@@ -175,7 +176,7 @@ def needs_baking(channels: typing.Tuple[bpy.types.FCurve],
     if any(any(k.interpolation != interpolation for k in c.keyframe_points) for c in channels):
         # There are different interpolation methods in one action group
         gltf2_io_debug.print_console("WARNING",
-                                     "Baking animation because there are different "
+                                     "Baking animation because there are keyframes with different "
                                      "interpolation methods in one channel"
                                      )
         return True
@@ -194,6 +195,12 @@ def needs_baking(channels: typing.Tuple[bpy.types.FCurve],
         # The channels have differently located keyframes
         gltf2_io_debug.print_console("WARNING",
                                      "Baking animation because of differently located keyframes in one channel")
+        return True
+
+    # Baking is required when the animation targets a quaternion with bezier interpolation
+    if channels[0].data_path == "rotation_quaternion" and interpolation == "BEZIER":
+        gltf2_io_debug.print_console("WARNING",
+                                     "Baking animation because targeting a quaternion with bezier interpolation")
         return True
 
     return False

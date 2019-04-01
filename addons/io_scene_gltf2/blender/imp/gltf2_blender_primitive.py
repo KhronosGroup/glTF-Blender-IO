@@ -41,7 +41,20 @@ class BlenderPrimitive():
             for i in indices_:
                 indices.append((i,))
 
-        prim_verts = [loc_gltf_to_blender(vert) for vert in pos]
+        pyprimitive.tmp_indices = indices
+
+        # Manage only vertices that are in indices tab
+        indice_equivalents = {}
+        new_pos = []
+        new_pos_idx = 0
+        for i in indices:
+            if i[0] not in indice_equivalents.keys():
+                indice_equivalents[i[0]] = new_pos_idx
+                new_pos.append(pos[i[0]])
+                new_pos_idx += 1
+
+        prim_verts = [loc_gltf_to_blender(vert) for vert in new_pos]
+
         pyprimitive.vertices_length = len(prim_verts)
         verts.extend(prim_verts)
         prim_faces = []
@@ -49,7 +62,7 @@ class BlenderPrimitive():
             vals = indices[i:i + 3]
             new_vals = []
             for y in vals:
-                new_vals.append(y[0] + current_length)
+                new_vals.append(indice_equivalents[y[0]] + current_length)
             prim_faces.append(tuple(new_vals))
         faces.extend(prim_faces)
         pyprimitive.faces_length = len(prim_faces)
@@ -75,7 +88,17 @@ class BlenderPrimitive():
     def set_normals(gltf, pyprimitive, mesh, offset, custom_normals):
         """Set Normal."""
         if 'NORMAL' in pyprimitive.attributes.keys():
-            normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
+            original_normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
+
+            tmp_indices = {}
+            tmp_idx = 0
+            normal_data = []
+            for i in pyprimitive.tmp_indices:
+                if i[0] not in tmp_indices.keys():
+                    tmp_indices[i[0]] = tmp_idx
+                    tmp_idx += 1
+                    normal_data.append(original_normal_data[i[0]])
+
             for poly in mesh.polygons:
                 if gltf.import_settings['import_shading'] == "NORMALS":
                     calc_norm_vertices = []
@@ -125,7 +148,18 @@ class BlenderPrimitive():
                     mesh.uv_layers.new(name=texcoord)
                 pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
 
-            texcoord_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes[texcoord])
+            original_texcoord_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes[texcoord])
+
+
+            tmp_indices = {}
+            tmp_idx = 0
+            texcoord_data = []
+            for i in pyprimitive.tmp_indices:
+                if i[0] not in tmp_indices.keys():
+                    tmp_indices[i[0]] = tmp_idx
+                    tmp_idx += 1
+                    texcoord_data.append(original_texcoord_data[i[0]])
+
             for poly in mesh.polygons:
                 for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                     vert_idx = mesh.loops[loop_idx].vertex_index

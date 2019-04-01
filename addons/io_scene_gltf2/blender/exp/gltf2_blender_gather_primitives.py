@@ -19,6 +19,7 @@ from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TA
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
 from io_scene_gltf2.blender.exp import gltf2_blender_utils
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials
@@ -63,10 +64,11 @@ def gather_primitives(
 
 def __gather_materials(blender_primitive, blender_mesh, modifiers, export_settings):
     if not blender_primitive['material']:
-        # TODO: fix 'extract_promitives' so that the value of 'material' is None and not empty string
+        # TODO: fix 'extract_primitives' so that the value of 'material' is None and not empty string
         return None
+    mesh_double_sided = blender_mesh.show_double_sided
     material = bpy.data.materials[blender_primitive['material']]
-    return gltf2_blender_gather_materials.gather_material(material, export_settings)
+    return gltf2_blender_gather_materials.gather_material(material, mesh_double_sided, export_settings)
 
 
 def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings):
@@ -89,19 +91,14 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
 
     element_type = gltf2_io_constants.DataType.Scalar
     binary_data = gltf2_io_binary_data.BinaryData.from_list(indices, component_type)
-    return gltf2_io.Accessor(
-        buffer_view=binary_data,
-        byte_offset=None,
-        component_type=component_type,
-        count=len(indices) // gltf2_io_constants.DataType.num_elements(element_type),
-        extensions=None,
-        extras=None,
-        max=None,
-        min=None,
-        name=None,
-        normalized=None,
-        sparse=None,
-        type=element_type
+    return gltf2_blender_gather_accessors.gather_accessor(
+        binary_data,
+        component_type,
+        len(indices) // gltf2_io_constants.DataType.num_elements(element_type),
+        None,
+        None,
+        element_type,
+        export_settings
     )
 
 

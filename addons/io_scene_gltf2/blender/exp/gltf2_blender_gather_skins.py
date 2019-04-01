@@ -18,16 +18,18 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.com import gltf2_blender_math
 
 
 @cached
-def gather_skin(blender_object, export_settings):
+def gather_skin(blender_object, mesh_object, export_settings):
     """
     Gather armatures, bones etc into a glTF2 skin object.
 
     :param blender_object: the object which may contain a skin
+    :param mesh_object: the mesh object to be deformed
     :param export_settings:
     :return: a glTF2 skin object
     """
@@ -37,7 +39,7 @@ def gather_skin(blender_object, export_settings):
     return gltf2_io.Skin(
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
-        inverse_bind_matrices=__gather_inverse_bind_matrices(blender_object, export_settings),
+        inverse_bind_matrices=__gather_inverse_bind_matrices(blender_object, mesh_object, export_settings),
         joints=__gather_joints(blender_object, export_settings),
         name=__gather_name(blender_object, export_settings),
         skeleton=__gather_skeleton(blender_object, export_settings)
@@ -60,8 +62,7 @@ def __gather_extensions(blender_object, export_settings):
 def __gather_extras(blender_object, export_settings):
     return None
 
-
-def __gather_inverse_bind_matrices(blender_object, export_settings):
+def __gather_inverse_bind_matrices(blender_object, mesh_object, export_settings):
     inverse_matrices = []
 
     axis_basis_change = mathutils.Matrix.Identity(4)
@@ -77,29 +78,28 @@ def __gather_inverse_bind_matrices(blender_object, export_settings):
 
     #
     for blender_bone in blender_object.pose.bones:
-        inverse_bind_matrix = gltf2_blender_math.multiply(axis_basis_change, blender_bone.bone.matrix_local)
-        bind_shape_matrix = gltf2_blender_math.multiply(gltf2_blender_math.multiply(
-            axis_basis_change, blender_object.matrix_world.inverted()), axis_basis_change.inverted())
+        matrix_world = gltf2_blender_math.multiply(blender_object.matrix_world, mesh_object.matrix_world.inverted())
+        inverse_bind_matrix = gltf2_blender_math.multiply(
+            axis_basis_change,
+            gltf2_blender_math.multiply(
+                matrix_world,
+                blender_bone.bone.matrix_local
+            )
+        ).inverted()
 
-        inverse_bind_matrix = gltf2_blender_math.multiply(inverse_bind_matrix.inverted(), bind_shape_matrix)
         for column in range(0, 4):
             for row in range(0, 4):
                 inverse_matrices.append(inverse_bind_matrix[row][column])
 
     binary_data = gltf2_io_binary_data.BinaryData.from_list(inverse_matrices, gltf2_io_constants.ComponentType.Float)
-    return gltf2_io.Accessor(
-        buffer_view=binary_data,
-        byte_offset=None,
-        component_type=gltf2_io_constants.ComponentType.Float,
-        count=len(inverse_matrices) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Mat4),
-        extensions=None,
-        extras=None,
-        max=None,
-        min=None,
-        name=None,
-        normalized=None,
-        sparse=None,
-        type=gltf2_io_constants.DataType.Mat4
+    return gltf2_blender_gather_accessors.gather_accessor(
+        binary_data,
+        gltf2_io_constants.ComponentType.Float,
+        len(inverse_matrices) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Mat4),
+        None,
+        None,
+        gltf2_io_constants.DataType.Mat4,
+        export_settings
     )
 
 

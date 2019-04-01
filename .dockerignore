@@ -5,3 +5,6 @@
 __pycache__
 docs
 misc
+
+node_modules
+/tests_out

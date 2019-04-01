@@ -1,0 +1,2 @@
+# This helps the doc8 linter not find "whitespace" at the end of every line.
+*.rst text eol=lf

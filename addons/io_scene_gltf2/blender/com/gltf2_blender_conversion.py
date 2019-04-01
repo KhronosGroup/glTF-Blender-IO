@@ -47,21 +47,36 @@ def correction_rotation():
     # and lamps has no vertices :)
     return Quaternion((sqrt(2)/2, -sqrt(2)/2, 0.0, 0.0)).to_matrix().to_4x4()
 
-def convert_texture_transform(texture_transform):
+def texture_transform_blender_to_gltf(mapping_transform):
     """
-    Converts a KHR_texture_transform object in one UV space (glTF or Blender)
-    into the equivalent in the other UV space. The returned transform is the
-    same as switching UV spaces (with u,v -> u,1-v), applying texture_transform,
-    then switching back.
+    Converts the offset/rotation/scale from a Mapping node applied in Blender's
+    UV space to the equivalent KHR_texture_transform.
+    """
+    offset = mapping_transform.get('offset', [0, 0])
+    rotation = mapping_transform.get('rotation', 0)
+    scale = mapping_transform.get('scale', [1, 1])
+    return {
+        'offset': [
+            offset[0] - scale[1] * sin(rotation),
+            1 - offset[1] - scale[1] * cos(rotation),
+        ],
+        'rotation': rotation,
+        'scale': [scale[0], scale[1]],
+    }
+
+def texture_transform_gltf_to_blender(texture_transform):
+    """
+    Converts a KHR_texture_transform into the equivalent offset/rotation/scale
+    for a Mapping node applied in Blender's UV space.
     """
     offset = texture_transform.get('offset', [0, 0])
     rotation = texture_transform.get('rotation', 0)
     scale = texture_transform.get('scale', [1, 1])
     return {
         'offset': [
-            offset[0] - scale[1] * sin(rotation),
+            offset[0] + scale[1] * sin(rotation),
             1 - offset[1] - scale[1] * cos(rotation),
         ],
-        'rotation': -rotation,
+        'rotation': rotation,
         'scale': [scale[0], scale[1]],
     }

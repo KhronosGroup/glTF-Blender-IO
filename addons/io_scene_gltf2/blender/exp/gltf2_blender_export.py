@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import time
 
 import bpy
 import sys
@@ -30,10 +31,20 @@ def save(context, export_settings):
     if bpy.context.active_object is not None:
         bpy.ops.object.mode_set(mode='OBJECT')
 
+    original_frame = bpy.context.scene.frame_current
+    if not export_settings['gltf_current_frame']:
+        bpy.context.scene.frame_set(0)
+
     __notify_start(context)
+    start_time = time.time()
     json, buffer = __export(export_settings)
     __write_file(json, buffer, export_settings)
-    __notify_end(context)
+
+    end_time = time.time()
+    __notify_end(context, end_time - start_time)
+
+    if not export_settings['gltf_current_frame']:
+        bpy.context.scene.frame_set(original_frame)
     return {'FINISHED'}
 
 
@@ -87,11 +98,7 @@ def __fix_json(obj):
     if isinstance(obj, dict):
         fixed = {}
         for key, value in obj.items():
-            if value is None:
-                continue
-            elif isinstance(value, dict) and len(value) == 0:
-                continue
-            elif isinstance(value, list) and len(value) == 0:
+            if not __should_include_json_value(key, value):
                 continue
             fixed[key] = __fix_json(value)
     elif isinstance(obj, list):
@@ -103,6 +110,20 @@ def __fix_json(obj):
         if int(obj) == obj:
             return int(obj)
     return fixed
+
+
+def __should_include_json_value(key, value):
+    allowed_empty_collections = ["KHR_materials_unlit"]
+
+    if value is None:
+        return False
+    elif __is_empty_collection(value) and key not in allowed_empty_collections:
+        return False
+    return True
+
+
+def __is_empty_collection(value):
+    return (isinstance(value, dict) or isinstance(value, list)) and len(value) == 0
 
 
 def __write_file(json, buffer, export_settings):
@@ -129,7 +150,7 @@ def __notify_start(context):
     context.window_manager.progress_update(0)
 
 
-def __notify_end(context):
-    print_console('INFO', 'Finished glTF 2.0 export')
+def __notify_end(context, elapsed):
+    print_console('INFO', 'Finished glTF 2.0 export in {} s'.format(elapsed))
     context.window_manager.progress_end()
     print_newline()
