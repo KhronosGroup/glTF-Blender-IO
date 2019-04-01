@@ -49,7 +49,7 @@ def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Unio
     elif target == 'scale':
         return Vector(values)
     elif target == 'value':
-        return values
+        return Vector(values)
 
     return values
 
@@ -148,6 +148,7 @@ def transform_location(location: Vector, transform: Matrix = Matrix.Identity(4))
 
 def transform_rotation(rotation: Quaternion, transform: Matrix = Matrix.Identity(4)) -> Quaternion:
     """Transform rotation."""
+    rotation.normalize()
     m = rotation.to_matrix().to_4x4()
     m = multiply(transform, m)
     return m.to_quaternion()

@@ -123,27 +123,31 @@ def gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings) 
             if channels[0].keyframe_points[0].interpolation == "BEZIER":
                 # Construct the in tangent
                 if time == times[0]:
-                    # start in-tangent has zero length
-                    key.in_tangent = [0.0 for _ in channels]
+                    # start in-tangent should become all zero
+                    key.in_tangent = key.value
                 else:
-                    # otherwise construct an in tangent from the keyframes control points
-
+                    # otherwise construct an in tangent coordinate from the keyframes control points. We intermediately
+                    # use a point at t-1 to define the tangent. This allows the tangent control point to be transformed
+                    # normally
                     key.in_tangent = [
-                        3.0 * (c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]
-                               ) / (time - times[i - 1])
+                        c.keyframe_points[i].co[1] + ((c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]
+                                                       ) / (time - times[i - 1]))
                         for c in channels
                     ]
                 # Construct the out tangent
                 if time == times[-1]:
-                    # end out-tangent has zero length
-                    key.out_tangent = [0.0 for _ in channels]
+                    # end out-tangent should become all zero
+                    key.out_tangent = key.value
                 else:
-                    # otherwise construct an out tangent from the keyframes control points
+                    # otherwise construct an in tangent coordinate from the keyframes control points. We intermediately
+                    # use a point at t+1 to define the tangent. This allows the tangent control point to be transformed
+                    # normally
                     key.out_tangent = [
-                        3.0 * (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]
-                               ) / (times[i + 1] - time)
+                        c.keyframe_points[i].co[1] + ((c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]
+                                                       ) / (times[i + 1] - time))
                         for c in channels
                     ]
+
             keyframes.append(key)
 
     return keyframes
@@ -197,10 +201,10 @@ def needs_baking(channels: typing.Tuple[bpy.types.FCurve],
                                      "Baking animation because of differently located keyframes in one channel")
         return True
 
-    # Baking is required when the animation targets a quaternion with bezier interpolation
-    if channels[0].data_path == "rotation_quaternion" and interpolation == "BEZIER":
-        gltf2_io_debug.print_console("WARNING",
-                                     "Baking animation because targeting a quaternion with bezier interpolation")
-        return True
+    # # Baking is required when the animation targets a quaternion with bezier interpolation
+    # if channels[0].data_path == "rotation_quaternion" and interpolation == "BEZIER":
+    #     gltf2_io_debug.print_console("WARNING",
+    #                                  "Baking animation because targeting a quaternion with bezier interpolation")
+    #     return True
 
     return False
