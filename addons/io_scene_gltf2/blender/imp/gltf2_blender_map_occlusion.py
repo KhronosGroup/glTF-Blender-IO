@@ -54,7 +54,6 @@ class BlenderOcclusionMap():
             # Create a new node group
             gltf_node_group = bpy.data.node_groups.new(gltf_node_group_name, 'ShaderNodeTree')
             gltf_node_group.inputs.new("NodeSocketFloat", "Occlusion")
-            gltf_node_group.inputs.new("NodeSocketInt", "DoubleSided")
             gltf_node_group.nodes.new('NodeGroupOutput')
             gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
             gltf_node_group_input.location = -200, 0
