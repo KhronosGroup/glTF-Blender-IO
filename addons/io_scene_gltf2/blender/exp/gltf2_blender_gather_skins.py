@@ -63,33 +63,44 @@ def __gather_extras(blender_object, export_settings):
     return None
 
 def __gather_inverse_bind_matrices(blender_object, mesh_object, export_settings):
-    inverse_matrices = []
-
     axis_basis_change = mathutils.Matrix.Identity(4)
     if export_settings[gltf2_blender_export_keys.YUP]:
         axis_basis_change = mathutils.Matrix(
             ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
-    # # artificial torso, as needed by glTF
-    # inverse_bind_matrix = blender_object.matrix_world.inverted() * axis_basis_change.inverted()
-    # for column in range(0, 4):
-    #     for row in range(0, 4):
-    #         inverse_matrices.append(inverse_bind_matrix[row][column])
-
-    #
+    # build the hierarchy of nodes out of the bones
+    root_bones = []
     for blender_bone in blender_object.pose.bones:
+        if not blender_bone.parent:
+            root_bones.append(blender_bone)
+
+    matrices = []
+
+    # traverse the matrices in the same order as the joints and compute the inverse bind matrix
+    def __collect_matrices(bone):
         matrix_world = gltf2_blender_math.multiply(blender_object.matrix_world, mesh_object.matrix_world.inverted())
         inverse_bind_matrix = gltf2_blender_math.multiply(
             axis_basis_change,
             gltf2_blender_math.multiply(
                 matrix_world,
-                blender_bone.bone.matrix_local
+                bone.bone.matrix_local
             )
         ).inverted()
+        matrices.append(inverse_bind_matrix)
 
+        for child in bone.children:
+            __collect_matrices(child)
+
+    # start with the "root" bones and recurse into children, in the same ordering as the how joints are gathered
+    for root_bone in root_bones:
+        __collect_matrices(root_bone)
+
+    # flatten the matrices
+    inverse_matrices = []
+    for matrix in matrices:
         for column in range(0, 4):
             for row in range(0, 4):
-                inverse_matrices.append(inverse_bind_matrix[row][column])
+                inverse_matrices.append(matrix[row][column])
 
     binary_data = gltf2_io_binary_data.BinaryData.from_list(inverse_matrices, gltf2_io_constants.ComponentType.Float)
     return gltf2_blender_gather_accessors.gather_accessor(
@@ -104,23 +115,6 @@ def __gather_inverse_bind_matrices(blender_object, mesh_object, export_settings)
 
 
 def __gather_joints(blender_object, export_settings):
-    # # the skeletal hierarchy groups below a 'root' joint
-    # # TODO: add transform?
-    # torso = gltf2_io.Node(
-    #     camera=None,
-    #     children=[],
-    #     extensions={},
-    #     extras=None,
-    #     matrix=[],
-    #     mesh=None,
-    #     name="Skeleton_" + blender_object.name,
-    #     rotation=None,
-    #     scale=None,
-    #     skin=None,
-    #     translation=None,
-    #     weights=None
-    # )
-
     root_joints = []
     # build the hierarchy of nodes out of the bones
     for blender_bone in blender_object.pose.bones:
