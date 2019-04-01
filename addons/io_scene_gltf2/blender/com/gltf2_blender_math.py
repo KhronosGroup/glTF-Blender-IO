@@ -49,7 +49,7 @@ def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Unio
     elif target == 'scale':
         return Vector(values)
     elif target == 'value':
-        return values
+        return Vector(values)
 
     return values
 

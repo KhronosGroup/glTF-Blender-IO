@@ -142,7 +142,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
             if is_yup and blender_object_if_armature is None:
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
             # the tangent in glTF is relative to the keyframe value
-            in_tangent = value - in_tangent
+            in_tangent = value - in_tangent if not isinstance(value, list) else [value[0] - in_tangent[0]]
             keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value  # append
 
         if keyframe.out_tangent is not None:
@@ -151,7 +151,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
             if is_yup and blender_object_if_armature is None:
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
             # the tangent in glTF is relative to the keyframe value
-            out_tangent = value - out_tangent
+            out_tangent = value - out_tangent if not isinstance(value, list) else [value[0] - out_tangent[0]]
             keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)  # append
 
         values += keyframe_value
