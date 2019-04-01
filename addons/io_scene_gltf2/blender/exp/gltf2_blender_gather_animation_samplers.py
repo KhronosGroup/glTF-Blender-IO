@@ -16,6 +16,7 @@
 import typing
 
 import bpy
+import mathutils
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name, get_target_object_path
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_sampler_keyframes
@@ -104,7 +105,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
     target_datapath = channels[0].data_path
 
-    transform = parent_inverse
+    transform = mathutils.Matrix.Identity(4)
 
     is_yup = export_settings[gltf2_blender_export_keys.YUP]
 
@@ -113,17 +114,19 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     if is_armature_animation:
         bone = blender_object_if_armature.path_resolve(object_path)
         if isinstance(bone, bpy.types.PoseBone):
-            if bone.parent is not None:
-                parent_transform = bone.parent.bone.matrix_local
-                transform = gltf2_blender_math.multiply(transform, parent_transform.inverted())
-                # if not is_yup:
-                #     transform = gltf2_blender_math.multiply(transform, gltf2_blender_math.to_zup())
+            axis_basis_change = mathutils.Matrix.Identity(4)
+            if export_settings[gltf2_blender_export_keys.YUP]:
+                axis_basis_change = mathutils.Matrix(
+                    ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+
+            # extract bone transform
+            if bone.parent is None:
+                correction_matrix_local = gltf2_blender_math.multiply(axis_basis_change, bone.bone.matrix_local)
             else:
-                # only apply the y-up conversion to root bones, as child bones already are in the y-up space
-                if is_yup:
-                    transform = gltf2_blender_math.multiply(transform, gltf2_blender_math.to_yup())
-            local_transform = bone.bone.matrix_local
-            transform = gltf2_blender_math.multiply(transform, local_transform)
+                correction_matrix_local = gltf2_blender_math.multiply(
+                    bone.parent.bone.matrix_local.inverted(), bone.bone.matrix_local)
+
+            transform = gltf2_blender_math.multiply(correction_matrix_local, bone.matrix_basis)
 
     values = []
     for keyframe in keyframes:
@@ -132,16 +135,25 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
         if is_yup and not is_armature_animation:
             value = gltf2_blender_math.swizzle_yup(value, target_datapath)
         keyframe_value = gltf2_blender_math.mathutils_to_gltf(value)
+
         if keyframe.in_tangent is not None:
+            # we can directly transform the tangent as it currently is represented by a control point
             in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform)
             if is_yup and blender_object_if_armature is None:
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
-            keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value
+            # the tangent in glTF is relative to the keyframe value
+            in_tangent = value - in_tangent if not isinstance(value, list) else [value[0] - in_tangent[0]]
+            keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value  # append
+
         if keyframe.out_tangent is not None:
+            # we can directly transform the tangent as it currently is represented by a control point
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform)
             if is_yup and blender_object_if_armature is None:
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
-            keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)
+            # the tangent in glTF is relative to the keyframe value
+            out_tangent = value - out_tangent if not isinstance(value, list) else [value[0] - out_tangent[0]]
+            keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)  # append
+
         values += keyframe_value
 
     component_type = gltf2_io_constants.ComponentType.Float
