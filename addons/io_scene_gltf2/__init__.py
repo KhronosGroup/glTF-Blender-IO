@@ -14,7 +14,7 @@
 
 bl_info = {
     'name': 'glTF 2.0 format',
-    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen',
+    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein',
     "version": (0, 0, 1),
     'blender': (2, 80, 0),
     'location': 'File > Import-Export',
@@ -26,6 +26,7 @@ bl_info = {
     'category': 'Import-Export',
 }
 
+
 #
 # Script reloading (if the user calls 'Reload Scripts' from Blender)
 #
@@ -33,6 +34,7 @@ bl_info = {
 def reload_package(module_dict_main):
     import importlib
     from pathlib import Path
+
     def reload_package_recursive(current_dir, module_dict):
         for path in current_dir.iterdir():
             if "__init__" in str(path) or path.stem not in module_dict:
@@ -56,6 +58,7 @@ from bpy.props import (StringProperty,
                        IntProperty)
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
+from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
 
 
 #
@@ -64,8 +67,10 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 
 class ExportGLTF2_Base:
-
     # TODO: refactor to avoid boilerplate
+
+    def __init__(self):
+        self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
 
     bl_options = {'UNDO', 'PRESET'}
 
@@ -112,6 +117,44 @@ class ExportGLTF2_Base:
         name='Normals',
         description='Export vertex normals with meshes',
         default=True
+    )
+
+    export_draco_mesh_compression_enable = BoolProperty(
+        name='Draco mesh compression',
+        description='Compress mesh using Draco',
+        default=False
+    )
+
+    export_draco_mesh_compression_level = IntProperty(
+        name='Compression level',
+        description='Compression level (0 = most speed, 6 = most compression, higher values currently not supported)',
+        default=6,
+        min=0,
+        max=6
+    )
+
+    export_draco_position_quantization = IntProperty(
+        name='Position quantization bits',
+        description='Quantization bits for position values (0 = no quantization)',
+        default=14,
+        min=0,
+        max=30
+    )
+
+    export_draco_normal_quantization = IntProperty(
+        name='Normal quantization bits',
+        description='Quantization bits for normal values (0 = no quantization)',
+        default=10,
+        min=0,
+        max=30
+    )
+
+    export_draco_texcoord_quantization = IntProperty(
+        name='Texcoord quantization bits',
+        description='Quantization bits for texture coordinate values (0 = no quantization)',
+        default=12,
+        min=0,
+        max=30
     )
 
     export_tangents = BoolProperty(
@@ -309,11 +352,21 @@ class ExportGLTF2_Base:
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
+
+        if self.is_draco_available:
+            export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression_enable
+            export_settings['gltf_draco_mesh_compression_level'] = self.export_draco_mesh_compression_level
+            export_settings['gltf_draco_position_quantization'] = self.export_draco_position_quantization
+            export_settings['gltf_draco_normal_quantization'] = self.export_draco_normal_quantization
+            export_settings['gltf_draco_texcoord_quantization'] = self.export_draco_texcoord_quantization
+        else:
+            export_settings['gltf_draco_mesh_compression'] = False
+
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
         export_settings['gltf_selected'] = self.export_selected
-        export_settings['gltf_layers'] = True #self.export_layers
+        export_settings['gltf_layers'] = True  # self.export_layers
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
         export_settings['gltf_apply'] = self.export_apply
@@ -384,6 +437,17 @@ class ExportGLTF2_Base:
             col.prop(self, 'export_tangents')
         col.prop(self, 'export_colors')
         col.prop(self, 'export_materials')
+
+        # Add Draco compression option only if the DLL could be found.
+        if self.is_draco_available:
+            col.prop(self, 'export_draco_mesh_compression_enable')
+
+            # Display options when Draco compression is enabled.
+            if self.export_draco_mesh_compression_enable:
+                col.prop(self, 'export_draco_mesh_compression_level')
+                col.prop(self, 'export_draco_position_quantization')
+                col.prop(self, 'export_draco_normal_quantization')
+                col.prop(self, 'export_draco_texcoord_quantization')
 
     def draw_object_settings(self):
         col = self.layout.box().column()

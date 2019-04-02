@@ -135,6 +135,15 @@ class GlTF2Exporter:
         if is_glb:
             return self.__buffer.to_bytes()
 
+    def add_draco_extension(self):
+        """
+        Register Draco extension as *used* and *required*.
+
+        :return:
+        """
+        self.__gltf.extensions_required.append('KHR_draco_mesh_compression')
+        self.__gltf.extensions_used.append('KHR_draco_mesh_compression')
+
     def finalize_images(self, output_path):
         """
         Write all images.
