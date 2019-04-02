@@ -11,24 +11,17 @@ def dll_path() -> Path:
     Get the DLL path depending on the underlying platform.
     :return: DLL path.
     """
-    lib_names = {
-        'win32': 'extern_draco.dll',
-        'linux': 'libextern_draco.so',
-        'darwin': 'libextern_draco.dylib',
-    }
-    py_version_strings = {
-        'win32': '',
-        'linux': 'python3.7',
-        'darwin': 'python3.7'
+    lib_name = 'extern_draco'
+    blender_root = Path(bpy.app.binary_path).parent
+    python_lib = Path('2.80/python/lib')
+    paths = {
+        'win32': blender_root/python_lib/'site-packages'/'{}.dll'.format(lib_name),
+        'linux': blender_root/python_lib/'python3.7'/'site-packages'/'lib{}.so'.format(lib_name),
+        'darwin': blender_root.parent/'Resources'/python_lib/'python3.7'/'site-packages'/'lib{}.dylib'.format(lib_name)
     }
 
-    lib_name = lib_names.get(sys.platform)
-    py_version_string = py_version_strings.get(sys.platform)
-
-    if lib_name is None:
-        return Path('')
-
-    return Path(bpy.app.binary_path).parent / Path('2.80/python/lib') / py_version_string / 'site-packages' / lib_name
+    path = paths.get(sys.platform)
+    return path if path is not None else ''
 
 
 def dll_exists() -> bool:
