@@ -16,10 +16,19 @@ def dll_path() -> Path:
         'linux': 'libextern_draco.so',
         'darwin': 'libextern_draco.dylib',
     }
+    py_version_strings = {
+        'win32': '',
+        'linux': 'python3.7',
+        'darwin': 'python3.7'
+    }
+
     lib_name = lib_names.get(sys.platform)
+    py_version_string = py_version_strings.get(sys.platform)
+
     if lib_name is None:
         return Path('')
-    return Path(bpy.app.binary_path).parent / Path('2.80/python/lib/python3.7/site-packages') / lib_name
+
+    return Path(bpy.app.binary_path).parent / Path('2.80/python/lib') / py_version_string / 'site-packages' / lib_name
 
 
 def dll_exists() -> bool:
