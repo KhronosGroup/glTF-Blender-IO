@@ -12,125 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import typing
-import struct
-import re
-import zlib
-import numpy as np
 
 class ImageData:
-    """Contains channels of an image with raw pixel data."""
-    # TODO: refactor to only operate on numpy arrays
+    """Contains encoded images"""
     # FUTURE_WORK: as a method to allow the node graph to be better supported, we could model some of
     # the node graph elements with numpy functions
 
-    def __init__(self, name: str, filepath: str, width: int, height: int, source: int, target: int, source_length: int, channels: typing.Optional[typing.List[np.ndarray]] = []):
-        if width <= 0 or height <= 0:
-            raise ValueError("Image data can not have zero width or height")
-        if source + source_length > 4:
-            raise ValueError("Source image data can not have more than 4 channels")
-        if target + source_length > 4:
-            raise ValueError("Target image data can not have more than 4 channels")
-        self.channels = [None, None, None, None]
-        for index in range(source, source + source_length):
-            self.channels[target + index - source] = channels[index]
-        self.name = name
-        self.filepath = filepath
-        self.width = width
-        self.height = height
+    def __init__(self, data: bytes, mime_type: str, name: str):
+        self._data = data
+        self._mime_type = mime_type
+        self._name = name
 
-    def add_to_image(self, target: int, image_data):
-        if self.width != image_data.width or self.height != image_data.height:
-            raise ValueError("Image dimensions do not match")
-        if target < 0 or target > 3:
-            raise ValueError("Can't insert image: channels out of bounds")
-        if len(image_data.channels) != 4:
-            raise ValueError("Can't insert image: incomplete image")
+    def __eq__(self, other):
+        return self._data == other.data
 
-        if self.name != image_data.name:
-            self.name += image_data.name
-            self.filepath = ""
-
-        # Replace channel.
-        self.channels[target] = image_data.channels[target]
+    def __hash__(self):
+        return hash(self._data)
 
     @property
-    def r(self):
-        if len(self.channels) <= 0:
-            return None
-        return self.channels[0]
+    def data(self):
+        return self._data
 
     @property
-    def g(self):
-        if len(self.channels) <= 1:
-            return None
-        return self.channels[1]
+    def name(self):
+        return self._name
 
     @property
-    def b(self):
-        if len(self.channels) <= 2:
-            return None
-        return self.channels[2]
+    def file_extension(self):
+        if self._mime_type == "image/jpeg":
+            return ".jpg"
+        return ".png"
 
     @property
-    def a(self):
-        if len(self.channels) <= 3:
-            return None
-        return self.channels[3]
-
-    def get_extension(self):
-        allowed_extensions = ['.png', '.jpg', '.jpeg']
-        fallback_extension = allowed_extensions[0]
-
-        matches = re.findall(r'\.\w+$', self.filepath)
-        extension = matches[0] if len(matches) > 0 else fallback_extension
-        return extension if extension.lower() in allowed_extensions else fallback_extension
-
-    def to_image_data(self, mime_type: str) -> bytes:
-        if mime_type == 'image/png':
-            return self.to_png_data()
-        raise ValueError("Unsupported image file type {}".format(mime_type))
-
-    def to_png_data(self) -> bytes:
-        channels = self.channels
-
-        # if there is no data, create a single pixel image
-        if not channels:
-            channels = np.ones((1, 1))
-            # fill all channels of the png
-            for _ in range(4 - len(channels)):
-                channels.append(np.ones_like(channels[0]))
-        else:
-            template_index = None
-            for index in range(0, 4):
-                if channels[index] is not None:
-                    template_index = index
-                    break
-            for index in range(0, 4):
-                if channels[index] is None:
-                    channels[index] = np.ones_like(channels[template_index])
-
-        image = np.concatenate(channels, axis=1)
-        image = image.flatten()
-        image = (image * 255.0).astype(np.uint8)
-        buf = image.tobytes()
-
-        #
-        # Taken from 'blender-thumbnailer.py' in Blender.
-        #
-
-        # reverse the vertical line order and add null bytes at the start
-        width_byte_4 = self.width * 4
-        raw_data = b"".join(
-            b'\x00' + buf[span:span + width_byte_4] for span in range(
-                (self.height - 1) * self.width * 4, -1, - width_byte_4))
-
-        def png_pack(png_tag, data):
-            chunk_head = png_tag + data
-            return struct.pack("!I", len(data)) + chunk_head + struct.pack("!I", 0xFFFFFFFF & zlib.crc32(chunk_head))
-
-        return b"".join([
-            b'\x89PNG\r\n\x1a\n',
-            png_pack(b'IHDR', struct.pack("!2I5B", self.width, self.height, 8, 6, 0, 0, 0)),
-            png_pack(b'IDAT', zlib.compress(raw_data)),
-            png_pack(b'IEND', b'')])
+    def byte_length(self):
+        return len(self._data)

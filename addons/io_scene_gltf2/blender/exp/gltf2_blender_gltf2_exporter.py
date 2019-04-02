@@ -153,17 +153,9 @@ class GlTF2Exporter:
         :return:
         """
         for image in self.__images:
-            dst_path = output_path + image.name + image.get_extension()
-            src_path = bpy.path.abspath(image.filepath)
-            if os.path.isfile(src_path):
-                # Source file exists.
-                if os.path.abspath(dst_path) != os.path.abspath(src_path):
-                    # Only copy, if source and destination are not the same.
-                    copyfile(src_path, dst_path)
-            else:
-                # Source file does not exist e.g. it is packed or has been generated.
-                with open(dst_path, 'wb') as f:
-                    f.write(image.to_png_data())
+            dst_path = output_path + "/" + image.name + image.file_extension
+            with open(dst_path, 'wb') as f:
+                f.write(image.data)
 
     def add_scene(self, scene: gltf2_io.Scene, active: bool = True):
         """
@@ -224,7 +216,7 @@ class GlTF2Exporter:
         # TODO: we need to know the image url at this point already --> maybe add all options to the constructor of the
         # exporter
         # TODO: allow embedding of images (base64)
-        return image.name + image.get_extension()
+        return image.name + image.file_extension
 
     @classmethod
     def __get_key_path(cls, d: dict, keypath: List[str], default=[]):

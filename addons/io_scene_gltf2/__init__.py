@@ -107,6 +107,20 @@ class ExportGLTF2_Base:
         default=''
     )
 
+    export_image_format = EnumProperty(
+        name='Image Format',
+        items=(('JPEG', 'jpeg image format (.jpg)',
+                'encode and save textures as .jpeg files. Be aware of a possible loss in quality.'),
+               ('PNG', 'png image format (.png)',
+                'encode and save textures as .png files.')
+               ),
+        description=(
+            'Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for web '
+            'applications due to the smaller file size'
+        ),
+        default='PNG'
+    )
+
     export_texcoords = BoolProperty(
         name='UVs',
         description='Export UVs (texture coordinates) with meshes',
@@ -348,6 +362,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
 
         export_settings['gltf_format'] = self.export_format
+        export_settings['gltf_image_format'] = self.export_image_format
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
@@ -428,6 +443,7 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_extras')
         col.prop(self, 'will_save_settings')
         col.prop(self, 'export_copyright')
+        col.prop(self, 'export_image_format')
 
     def draw_mesh_settings(self):
         col = self.layout.box().column()
