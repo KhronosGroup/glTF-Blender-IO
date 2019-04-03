@@ -152,9 +152,6 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
 
             image = gltf2_blender_image.ExportImage.from_blender_image(result.shader_node.image)
 
-            if source_channel is not None:
-                image = image[source_channel]
-
             if composed_image is None:
                 composed_image = gltf2_blender_image.ExportImage.zero_image(image.width, image.height)
 

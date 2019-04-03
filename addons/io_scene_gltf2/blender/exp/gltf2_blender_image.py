@@ -81,7 +81,7 @@ class ExportImage:
         if isinstance(key, slice):
             self._img[:, :, key] = value.img
         else:
-            self._img[:, :, key] = value.img[0]
+            self._img[:, :, key] = value.img[:, :, 0]
 
     def append(self, other):
         if self.channels + other.channels > self._max_channels:
