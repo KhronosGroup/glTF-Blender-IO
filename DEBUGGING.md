@@ -32,7 +32,7 @@ If both actions happen within 20 seconds or so, you may see a console message in
 
 ## Sample Breakpoint
 
-Look for a line in `__init__.py` around 277 that looks like this:
+Look for a line in `__init__.py` around 319 that looks like this:
 
 ```
         return ExportHelper.invoke(self, context, event)
