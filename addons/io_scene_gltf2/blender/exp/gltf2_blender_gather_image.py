@@ -153,7 +153,7 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
             image = gltf2_blender_image.ExportImage.from_blender_image(result.shader_node.image)
 
             if composed_image is None:
-                composed_image = gltf2_blender_image.ExportImage.zero_image(image.width, image.height)
+                composed_image = gltf2_blender_image.ExportImage.white_image(image.width, image.height)
 
             # Change target channel for metallic and roughness.
             if elem.to_socket.name == 'Metallic':

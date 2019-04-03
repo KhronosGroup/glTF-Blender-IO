@@ -44,8 +44,8 @@ class ExportImage:
         return ExportImage(img=img)
 
     @classmethod
-    def zero_image(cls, width, height, num_channels: int = 4):
-        img = np.zeros((width, height, num_channels))
+    def white_image(cls, width, height, num_channels: int = 4):
+        img = np.ones((width, height, num_channels))
         return ExportImage(img=img)
 
     def split_channels(self):
