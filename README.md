@@ -49,7 +49,7 @@ See: https://docs.blender.org/manual/en/dev/addons/io_gltf2.html
 Debugging
 ---------
 
-- [Debug with PyCharm](https://code.blender.org/2015/10/debugging-python-code-with-pycharm/)
+- [Debug with PyCharm](https://code.blender.org/2015/10/debugging-python-code-with-pycharm) **NOTE:** If you are using Blender 2.80, you need the [updated debugger script](https://github.com/ux3d/random-blender-addons/blob/master/remote_debugger2-80.py)
 - [Debug with VSCode](DEBUGGING.md)
 
 Continuous Integration Tests
