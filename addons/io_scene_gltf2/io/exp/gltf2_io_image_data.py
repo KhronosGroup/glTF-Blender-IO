@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import re
 
 
 class ImageData:
@@ -28,6 +29,12 @@ class ImageData:
 
     def __hash__(self):
         return hash(self._data)
+
+    def adjusted_name(self):
+        regex_dot = re.compile("\.")
+        adjusted_name = re.sub(regex_dot, "_", self.name)
+        new_name = "".join([char for char in adjusted_name if char not in "!#$&'()*+,/:;<>?@[\]^`{|}~"])
+        return new_name
 
     @property
     def data(self):
