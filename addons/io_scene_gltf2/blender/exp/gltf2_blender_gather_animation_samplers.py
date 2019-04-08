@@ -130,7 +130,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                 correction_matrix_local = gltf2_blender_math.multiply(
                     bone.parent.bone.matrix_local.inverted(), bone.bone.matrix_local)
 
-            transform = gltf2_blender_math.multiply(correction_matrix_local, bone.matrix_basis)
+            transform = correction_matrix_local
 
     values = []
     for keyframe in keyframes:
