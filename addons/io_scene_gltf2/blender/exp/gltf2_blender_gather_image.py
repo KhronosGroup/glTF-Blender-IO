@@ -168,7 +168,8 @@ def __get_image_data(sockets_or_slots, export_settings):
                 target_channel = 1
                 source_channels_length = 1
 
-            file_name = os.path.splitext(result.shader_node.image.name)[0]
+            file_name = __safe_uri_name(result.shader_node.image.name,export_settings)
+
             if result.shader_node.image.packed_file is None:
                 file_path = result.shader_node.image.filepath
             else:
@@ -221,3 +222,38 @@ def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket):
 
 def __get_tex_from_slot(blender_texture_slot):
     return blender_texture_slot.texture
+
+def __safe_uri_name(name,export_settings):
+    imgs_key = 'tmp_image_path_names'
+    if not imgs_key in export_settings:
+        export_settings[imgs_key] = set()
+
+    # If name contain slashes or back-slashes (path-like), just take the part after the last one
+    name = re.split(r'[/\\]',name)[-1]
+
+    # Remove delimiter characters (not allowed in RFC 3986), dots and subsequent underscores by a single underscore
+    delim_chars = re.compile(r'[:\/?\#\[\]\@\!\$&\'\"\(\)\*\+,\;=\_\.]+')
+    name = re.sub(delim_chars,'_',name)
+
+    # Unify file name to avoid collisions
+    if name in export_settings[imgs_key]:
+        for new_name in __get_alt_name(name):
+            if not new_name in export_settings[imgs_key]:
+                name = new_name
+                break
+
+    export_settings[imgs_key].add(name)
+    return name
+
+def __get_alt_name(name):
+    match = re.search(r'[0-9]+$',name)
+    if match:
+        count = int(match.group(0))+1
+        prefix = name[:match.start()]
+    else:
+        count = 1
+        prefix = name
+
+    while True:
+        yield prefix+str(count)
+        count+=1
