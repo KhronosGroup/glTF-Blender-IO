@@ -108,13 +108,13 @@ class ExportGLTF2_Base:
     )
 
     export_image_format = EnumProperty(
-        name='Image Format',
-        items=(('NAME', 'from image name',
-                'Determine the output format from the blender image name'),
-                ('JPEG', 'jpeg image format (.jpg)',
-                'encode and save textures as .jpeg files. Be aware of a possible loss in quality.'),
-               ('PNG', 'png image format (.png)',
-                'encode and save textures as .png files.')
+        name='Images',
+        items=(('NAME', 'Automatic',
+                'Determine the image format from the blender image name.'),
+                ('JPEG', 'JPEG Format (.jpg)',
+                'Encode and save textures as .jpg files. Be aware of a possible loss in quality.'),
+               ('PNG', 'PNG Format (.png)',
+                'Encode and save textures as .png files.')
                ),
         description=(
             'Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for web '
@@ -445,7 +445,6 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_extras')
         col.prop(self, 'will_save_settings')
         col.prop(self, 'export_copyright')
-        col.prop(self, 'export_image_format')
 
     def draw_mesh_settings(self):
         col = self.layout.box().column()
@@ -455,6 +454,8 @@ class ExportGLTF2_Base:
             col.prop(self, 'export_tangents')
         col.prop(self, 'export_colors')
         col.prop(self, 'export_materials')
+        if self.export_materials:
+            col.prop(self, 'export_image_format')
 
         # Add Draco compression option only if the DLL could be found.
         if self.is_draco_available:
