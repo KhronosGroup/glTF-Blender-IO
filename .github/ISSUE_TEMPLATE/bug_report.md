@@ -26,7 +26,7 @@ If applicable, add screenshots to help explain your problem.
 **.blend file/ .gltf**
 If applicable, a zipped folder containing a .blend or .gltf file and all resources
 
-**Desktop (please complete the following information):**
+**Version**
  - OS: [e.g. macOS, linux]
  - Blender Version [e.g. 2.79, 2.80 (2019-03-18)]
 
