@@ -110,18 +110,21 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
     is_yup = export_settings[gltf2_blender_export_keys.YUP]
 
+    # bone animations need to be handled differently as they are in a different coordinate system
     object_path = get_target_object_path(target_datapath)
     is_armature_animation = blender_object_if_armature is not None and object_path != ""
+
     if is_armature_animation:
         bone = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, object_path)
         if isinstance(bone, bpy.types.PoseBone):
-            axis_basis_change = mathutils.Matrix.Identity(4)
-            if export_settings[gltf2_blender_export_keys.YUP]:
-                axis_basis_change = mathutils.Matrix(
-                    ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-
-            # extract bone transform
             if bone.parent is None:
+                axis_basis_change = mathutils.Matrix.Identity(4)
+                if export_settings[gltf2_blender_export_keys.YUP]:
+                    axis_basis_change = mathutils.Matrix(
+                        ((1.0, 0.0, 0.0, 0.0),
+                         (0.0, 0.0, 1.0, 0.0),
+                         (0.0, -1.0, 0.0, 0.0),
+                         (0.0, 0.0, 0.0, 1.0)))
                 correction_matrix_local = gltf2_blender_math.multiply(axis_basis_change, bone.bone.matrix_local)
             else:
                 correction_matrix_local = gltf2_blender_math.multiply(
@@ -131,7 +134,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
     values = []
     for keyframe in keyframes:
-        # Transform the data and extract
+        # Transform the data and build gltf control points
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform)
         if is_yup and not is_armature_animation:
             value = gltf2_blender_math.swizzle_yup(value, target_datapath)
@@ -157,6 +160,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
         values += keyframe_value
 
+    # store the keyframe data in a binary buffer
     component_type = gltf2_io_constants.ComponentType.Float
     if get_target_property_name(target_datapath) == "value":
         # channels with 'weight' targets must have scalar accessors
