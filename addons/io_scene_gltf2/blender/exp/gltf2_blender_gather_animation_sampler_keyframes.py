@@ -25,6 +25,8 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 class Keyframe:
     def __init__(self, channels: typing.Tuple[bpy.types.FCurve], time: float):
         self.seconds = time / bpy.context.scene.render.fps
+        self.frame = time
+        self.fps = bpy.context.scene.render.fps
         self.__target = channels[0].data_path.split('.')[-1]
         self.__indices = [c.array_index for c in channels]
 
