@@ -65,7 +65,7 @@ class GlTF2Exporter:
         )
 
         self.__buffer = gltf2_io_buffer.Buffer()
-        self.__images = []
+        self.__images = {}
 
         # mapping of all glTFChildOfRootProperty types to their corresponding root level arrays
         self.__childOfRootPropertyTypeLookup = {
@@ -152,18 +152,10 @@ class GlTF2Exporter:
         :param output_path:
         :return:
         """
-        for image in self.__images:
-            dst_path = output_path + image.name + image.get_extension()
-            src_path = bpy.path.abspath(image.filepath)
-            if os.path.isfile(src_path):
-                # Source file exists.
-                if os.path.abspath(dst_path) != os.path.abspath(src_path):
-                    # Only copy, if source and destination are not the same.
-                    copyfile(src_path, dst_path)
-            else:
-                # Source file does not exist e.g. it is packed or has been generated.
-                with open(dst_path, 'wb') as f:
-                    f.write(image.to_png_data())
+        for name, image in self.__images.items():
+            dst_path = output_path + "/" + name + image.file_extension
+            with open(dst_path, 'wb') as f:
+                f.write(image.data)
 
     def add_scene(self, scene: gltf2_io.Scene, active: bool = True):
         """
@@ -220,11 +212,16 @@ class GlTF2Exporter:
             return index
 
     def __add_image(self, image: gltf2_io_image_data.ImageData):
-        self.__images.append(image)
+        name = image.adjusted_name()
+        while name in self.__images.keys():
+            name += "_"
+
         # TODO: we need to know the image url at this point already --> maybe add all options to the constructor of the
         # exporter
         # TODO: allow embedding of images (base64)
-        return image.name + image.get_extension()
+
+        self.__images[name] = image
+        return name + image.file_extension
 
     @classmethod
     def __get_key_path(cls, d: dict, keypath: List[str], default=[]):
@@ -288,7 +285,8 @@ class GlTF2Exporter:
 
         # image data needs to be saved to file
         if isinstance(node, gltf2_io_image_data.ImageData):
-            return self.__add_image(node)
+            image = self.__add_image(node)
+            return image
 
         # extensions
         if isinstance(node, gltf2_io_extensions.Extension):
