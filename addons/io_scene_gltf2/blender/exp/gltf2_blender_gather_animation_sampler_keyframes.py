@@ -201,10 +201,4 @@ def needs_baking(channels: typing.Tuple[bpy.types.FCurve],
                                      "Baking animation because of differently located keyframes in one channel")
         return True
 
-    # # Baking is required when the animation targets a quaternion with bezier interpolation
-    # if channels[0].data_path == "rotation_quaternion" and interpolation == "BEZIER":
-    #     gltf2_io_debug.print_console("WARNING",
-    #                                  "Baking animation because targeting a quaternion with bezier interpolation")
-    #     return True
-
     return False

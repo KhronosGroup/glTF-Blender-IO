@@ -11,18 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from typing import Optional, List, Dict
+import re
+from typing import List
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
+from io_scene_gltf2.io.exp import gltf2_io_image_data
 
-import bpy
-import os
-from shutil import copyfile
 
 class GlTF2Exporter:
     """
@@ -65,7 +62,7 @@ class GlTF2Exporter:
         )
 
         self.__buffer = gltf2_io_buffer.Buffer()
-        self.__images = []
+        self.__images = {}
 
         # mapping of all glTFChildOfRootProperty types to their corresponding root level arrays
         self.__childOfRootPropertyTypeLookup = {
@@ -135,6 +132,15 @@ class GlTF2Exporter:
         if is_glb:
             return self.__buffer.to_bytes()
 
+    def add_draco_extension(self):
+        """
+        Register Draco extension as *used* and *required*.
+
+        :return:
+        """
+        self.__gltf.extensions_required.append('KHR_draco_mesh_compression')
+        self.__gltf.extensions_used.append('KHR_draco_mesh_compression')
+
     def finalize_images(self, output_path):
         """
         Write all images.
@@ -143,18 +149,10 @@ class GlTF2Exporter:
         :param output_path:
         :return:
         """
-        for image in self.__images:
-            dst_path = output_path + image.name + image.get_extension()
-            src_path = bpy.path.abspath(image.filepath)
-            if os.path.isfile(src_path):
-                # Source file exists.
-                if os.path.abspath(dst_path) != os.path.abspath(src_path):
-                    # Only copy, if source and destination are not the same.
-                    copyfile(src_path, dst_path)
-            else:
-                # Source file does not exist e.g. it is packed or has been generated.
-                with open(dst_path, 'wb') as f:
-                    f.write(image.to_png_data())
+        for name, image in self.__images.items():
+            dst_path = output_path + "/" + name + image.file_extension
+            with open(dst_path, 'wb') as f:
+                f.write(image.data)
 
     def add_scene(self, scene: gltf2_io.Scene, active: bool = True):
         """
@@ -211,11 +209,23 @@ class GlTF2Exporter:
             return index
 
     def __add_image(self, image: gltf2_io_image_data.ImageData):
-        self.__images.append(image)
+        name = image.adjusted_name()
+        count = 1
+        regex = re.compile(r"\d+$")
+        regex_found = re.findall(regex, name)
+        while name in self.__images.keys():
+            if regex_found:
+                name = re.sub(regex, str(count), name)
+            else:
+                name += " " + str(count)
+
+            count += 1
         # TODO: we need to know the image url at this point already --> maybe add all options to the constructor of the
         # exporter
         # TODO: allow embedding of images (base64)
-        return image.name + image.get_extension()
+
+        self.__images[name] = image
+        return name + image.file_extension
 
     @classmethod
     def __get_key_path(cls, d: dict, keypath: List[str], default=[]):
@@ -279,7 +289,8 @@ class GlTF2Exporter:
 
         # image data needs to be saved to file
         if isinstance(node, gltf2_io_image_data.ImageData):
-            return self.__add_image(node)
+            image = self.__add_image(node)
+            return image
 
         # extensions
         if isinstance(node, gltf2_io_extensions.Extension):

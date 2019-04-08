@@ -8,7 +8,7 @@ glTF 2.0
 :Version: 0.0.1
 :Blender: 2.80
 :Category: Import-Export
-:Authors: Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Khronos Group, Mozilla
+:Authors: Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, Khronos Group, Mozilla
 
 
 Usage
@@ -417,7 +417,16 @@ Vertex Colors
    Export vertex colors with meshes.
 Materials
    Export materials.
-
+Draco mesh compression (if the library is available)
+   Compress meshes using Google Draco
+Compression level
+   Higher compression results in slower encoding and decoding
+Position quantization bits
+   Higher values result in better compression rates
+Normal quantization bits
+   Higher values result in better compression rates
+Texcoord quantization bits
+   Higher values result in better compression rates
 
 Objects Tab
 ^^^^^^^^^^^
