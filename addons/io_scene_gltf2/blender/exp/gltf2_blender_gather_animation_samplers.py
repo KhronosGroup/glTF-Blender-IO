@@ -22,6 +22,7 @@ from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_proper
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_sampler_keyframes
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
+from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -112,7 +113,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     object_path = get_target_object_path(target_datapath)
     is_armature_animation = blender_object_if_armature is not None and object_path != ""
     if is_armature_animation:
-        bone = blender_object_if_armature.path_resolve(object_path)
+        bone = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, object_path)
         if isinstance(bone, bpy.types.PoseBone):
             axis_basis_change = mathutils.Matrix.Identity(4)
             if export_settings[gltf2_blender_export_keys.YUP]:
