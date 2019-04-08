@@ -11,18 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from typing import Optional, List, Dict
+import re
+from typing import List
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
+from io_scene_gltf2.io.exp import gltf2_io_image_data
 
-import bpy
-import os
-from shutil import copyfile
 
 class GlTF2Exporter:
     """
