@@ -24,7 +24,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **.blend file/ .gltf**
-If applicable, a zipped folder containing a .blend or .gltf file and all resources
+If applicable, a zipped folder containing a .blend file for exporter issues and a .gltf file for importer issues. Please take care to include all resources, such as textures in the .zip file.
 
 **Version**
  - OS: [e.g. macOS, linux]

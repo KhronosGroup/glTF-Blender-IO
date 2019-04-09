@@ -18,6 +18,8 @@ import typing
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.com import gltf2_blender_math
+from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
 
@@ -25,7 +27,9 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 class Keyframe:
     def __init__(self, channels: typing.Tuple[bpy.types.FCurve], time: float):
         self.seconds = time / bpy.context.scene.render.fps
-        self.__target = channels[0].data_path.split('.')[-1]
+        self.frame = time
+        self.fps = bpy.context.scene.render.fps
+        self.target = channels[0].data_path.split('.')[-1]
         self.__indices = [c.array_index for c in channels]
 
         # Data holders for virtual properties
@@ -43,16 +47,16 @@ class Keyframe:
             "rotation_quaternion": 4,
             "scale": 3,
             "value": 1
-        }.get(self.__target)
+        }.get(self.target)
 
         if length is None:
-            raise RuntimeError("Animations with target type '{}' are not supported.".format(self.__target))
+            raise RuntimeError("Animations with target type '{}' are not supported.".format(self.target))
 
         return length
 
     def __set_indexed(self, value):
         # 'value' targets don't use keyframe.array_index
-        if self.__target == "value":
+        if self.target == "value":
             return value
         # Sometimes blender animations only reference a subset of components of a data target. Keyframe should always
         # contain a complete Vector/ Quaternion --> use the array_index value of the keyframe to set components in such
@@ -60,7 +64,7 @@ class Keyframe:
         result = [0.0] * self.__get_target_len()
         for i, v in zip(self.__indices, value):
             result[i] = v
-        result = gltf2_blender_math.list_to_mathutils(result, self.__target)
+        result = gltf2_blender_math.list_to_mathutils(result, self.target)
         return result
 
     @property
@@ -90,8 +94,9 @@ class Keyframe:
 
 # cache for performance reasons
 @cached
-def gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings) \
-        -> typing.List[Keyframe]:
+def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
+                     channels: typing.Tuple[bpy.types.FCurve],
+                     export_settings) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
     # Find the start and end of the whole action group
     ranges = [channel.range() for channel in channels]
@@ -100,15 +105,36 @@ def gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings) 
     end = max([channel.range()[1] for channel in channels])
 
     keyframes = []
-    if needs_baking(channels, export_settings):
-        # Bake the animation, by evaluating it at a high frequency
+    if needs_baking(blender_object_if_armature, channels, export_settings):
+        # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
+
+        if blender_object_if_armature is not None:
+            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
+                                                                               channels[0].data_path)
+        else:
+            pose_bone_if_armature = None
+
+        # sample all frames
         time = start
-        # TODO: make user controllable
         step = 1.0 / bpy.context.scene.render.fps
         while time <= end:
             key = Keyframe(channels, time)
-            key.value = [c.evaluate(time) for c in channels]
+            if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
+                # we need to bake in the constraints
+                bpy.context.scene.frame_set(time)
+                trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
+                target_property = channels[0].data_path.split('.')[-1]
+                key.value = {
+                    "location": trans,
+                    "rotation_axis_angle": rot,
+                    "rotation_euler": rot,
+                    "rotation_quaternion": rot,
+                    "scale": scale
+                }[target_property]
+
+            else:
+                key.value = [c.evaluate(time) for c in channels]
             keyframes.append(key)
             time += step
     else:
@@ -153,7 +179,8 @@ def gather_keyframes(channels: typing.Tuple[bpy.types.FCurve], export_settings) 
     return keyframes
 
 
-def needs_baking(channels: typing.Tuple[bpy.types.FCurve],
+def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
+                 channels: typing.Tuple[bpy.types.FCurve],
                  export_settings
                  ) -> bool:
     """
@@ -200,5 +227,14 @@ def needs_baking(channels: typing.Tuple[bpy.types.FCurve],
         gltf2_io_debug.print_console("WARNING",
                                      "Baking animation because of differently located keyframes in one channel")
         return True
+
+    if blender_object_if_armature is not None:
+        animation_target = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, channels[0].data_path)
+        if isinstance(animation_target, bpy.types.PoseBone):
+            if len(animation_target.constraints) != 0:
+                # Constraints such as IK act on the bone -> can not be represented in glTF atm
+                gltf2_io_debug.print_console("WARNING",
+                                             "Baking animation because of unsupported constraints acting on the bone")
+                return True
 
     return False
