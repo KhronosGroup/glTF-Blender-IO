@@ -275,7 +275,15 @@ def __gather_name(blender_object, export_settings):
 
 
 def __gather_trans_rot_scale(blender_object, export_settings):
-    trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, 'NODE', export_settings)
+    trans = gltf2_blender_extract.convert_swizzle_location(blender_object.location, export_settings)
+
+    rotation = blender_object.rotation_quaternion
+    # Put w at the end.
+    rotation = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
+    rot = gltf2_blender_extract.convert_swizzle_rotation(rotation, export_settings)
+
+    sca = gltf2_blender_extract.convert_swizzle_scale(blender_object.scale, export_settings)
+
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
             trans = -gltf2_blender_extract.convert_swizzle_location(
