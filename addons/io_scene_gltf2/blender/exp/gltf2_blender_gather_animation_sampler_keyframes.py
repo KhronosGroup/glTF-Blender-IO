@@ -117,7 +117,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
 
         # sample all frames
         time = start
-        step = 1.0 / bpy.context.scene.render.fps
+        step = export_settings['gltf_frame_step']
         while time <= end:
             key = Keyframe(channels, time)
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
