@@ -110,11 +110,11 @@ class ExportGLTF2_Base:
     export_image_format = EnumProperty(
         name='Images',
         items=(('NAME', 'Automatic',
-                'Determine the image format from the blender image name.'),
+                'Determine the image format from the blender image name'),
                 ('JPEG', 'JPEG Format (.jpg)',
-                'Encode and save textures as .jpg files. Be aware of a possible loss in quality.'),
+                'Encode and save textures as .jpg files. Be aware of a possible loss in quality'),
                ('PNG', 'PNG Format (.png)',
-                'Encode and save textures as .png files.')
+                'Encode and save textures as .png files')
                ),
         description=(
             'Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for web '
