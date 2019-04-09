@@ -34,26 +34,27 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              blender_object: bpy.types.Object,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
+    blender_object_if_armature = blender_object if blender_object.type == "ARMATURE" else None
     return gltf2_io.AnimationSampler(
-        extensions=__gather_extensions(channels, blender_object, export_settings),
-        extras=__gather_extras(channels, blender_object, export_settings),
-        input=__gather_input(channels, export_settings),
-        interpolation=__gather_interpolation(channels, blender_object, export_settings),
+        extensions=__gather_extensions(channels, blender_object_if_armature, export_settings),
+        extras=__gather_extras(channels, blender_object_if_armature, export_settings),
+        input=__gather_input(channels, blender_object_if_armature, export_settings),
+        interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings),
         output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
-                               blender_object if blender_object.type == "ARMATURE" else None,
+                               blender_object_if_armature,
                                export_settings)
     )
 
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
-                        blender_object: bpy.types.Object,
+                        blender_object_if_armature: typing.Optional[bpy.types.Object],
                         export_settings
                         ) -> typing.Any:
     return None
 
 
 def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
-                    blender_object: bpy.types.Object,
+                    blender_object_if_armature: typing.Optional[bpy.types.Object],
                     export_settings
                     ) -> typing.Any:
     return None
@@ -61,10 +62,13 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 @cached
 def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
+                   blender_object_if_armature: typing.Optional[bpy.types.Object],
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes."""
-    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(channels, export_settings)
+    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object_if_armature,
+                                                                                  channels,
+                                                                                  export_settings)
     times = [k.seconds for k in keyframes]
 
     return gltf2_blender_gather_accessors.gather_accessor(
@@ -79,10 +83,12 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
-                           blender_object: bpy.types.Object,
+                           blender_object_if_armature: typing.Optional[bpy.types.Object],
                            export_settings
                            ) -> str:
-    if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(channels, export_settings):
+    if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(blender_object_if_armature,
+                                                                     channels,
+                                                                     export_settings):
         return 'STEP'
 
     blender_keyframe = channels[0].keyframe_points[0]
@@ -102,7 +108,9 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
-    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(channels, export_settings)
+    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object_if_armature,
+                                                                                  channels,
+                                                                                  export_settings)
 
     target_datapath = channels[0].data_path
 
