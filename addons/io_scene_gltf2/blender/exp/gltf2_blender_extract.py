@@ -597,7 +597,10 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
 
             v = convert_swizzle_location(vertex.co, export_settings)
             if blender_polygon.use_smooth:
-                n = convert_swizzle_location(vertex.normal, export_settings)
+                if blender_mesh.has_custom_normals:
+                    n = convert_swizzle_location(blender_mesh.loops[loop_index].normal, export_settings)
+                else:
+                    n = convert_swizzle_location(vertex.normal, export_settings)
                 if use_tangents:
                     t = convert_swizzle_tangent(blender_mesh.loops[loop_index].tangent, export_settings)
                     b = convert_swizzle_location(blender_mesh.loops[loop_index].bitangent, export_settings)
