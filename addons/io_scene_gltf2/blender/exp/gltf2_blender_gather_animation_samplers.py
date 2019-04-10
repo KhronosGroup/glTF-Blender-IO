@@ -89,7 +89,7 @@ def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
     if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(blender_object_if_armature,
                                                                      channels,
                                                                      export_settings):
-        return 'STEP'
+        return 'LINEAR'
 
     blender_keyframe = channels[0].keyframe_points[0]
 
