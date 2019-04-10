@@ -225,11 +225,13 @@ def __gather_mesh(blender_object, export_settings):
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
         auto_smooth = blender_object.data.use_auto_smooth
+        edge_split = None
         if auto_smooth:
-            blender_object = blender_object.copy()
             edge_split = blender_object.modifiers.new('Temporary_Auto_Smooth', 'EDGE_SPLIT')
             edge_split.split_angle = blender_object.data.auto_smooth_angle
             edge_split.use_edge_angle = not blender_object.data.has_custom_normals
+            blender_object.data.use_auto_smooth = False
+            bpy.context.scene.update()
 
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -251,7 +253,8 @@ def __gather_mesh(blender_object, export_settings):
                 blender_object.modifiers[idx].show_viewport = show_viewport
 
         if auto_smooth:
-            bpy.data.objects.remove(blender_object)
+            blender_object.data.use_auto_smooth = True
+            blender_object.modifiers.remove(edge_split)
     else:
         blender_mesh = blender_object.data
         skip_filter = False
