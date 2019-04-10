@@ -89,7 +89,9 @@ def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
     if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(blender_object_if_armature,
                                                                      channels,
                                                                      export_settings):
-        return 'LINEAR'
+        min_keyframes = min([len(ch.keyframe_points) for ch in channels])
+        # If only single keyframe revert to STEP
+        return 'STEP' if min_keyframes < 2 else 'LINEAR'
 
     blender_keyframe = channels[0].keyframe_points[0]
 
