@@ -277,10 +277,15 @@ def __gather_name(blender_object, export_settings):
 def __gather_trans_rot_scale(blender_object, export_settings):
     trans = gltf2_blender_extract.convert_swizzle_location(blender_object.location, export_settings)
 
-    rotation = blender_object.rotation_quaternion
+    if blender_object.rotation_mode in ['QUATERNION', 'AXIS_ANGLE']:
+        rotation = blender_object.rotation_quaternion
+    else:
+        rotation = blender_object.rotation_euler.to_quaternion()
+
+    rotation = gltf2_blender_extract.convert_swizzle_rotation(rotation, export_settings)
+
     # Put w at the end.
-    rotation = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
-    rot = gltf2_blender_extract.convert_swizzle_rotation(rotation, export_settings)
+    rot = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
 
     sca = gltf2_blender_extract.convert_swizzle_scale(blender_object.scale, export_settings)
 
