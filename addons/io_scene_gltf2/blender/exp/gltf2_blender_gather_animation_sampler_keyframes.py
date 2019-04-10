@@ -25,9 +25,9 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 
 
 class Keyframe:
-    def __init__(self, channels: typing.Tuple[bpy.types.FCurve], time: float):
-        self.seconds = time / bpy.context.scene.render.fps
-        self.frame = time
+    def __init__(self, channels: typing.Tuple[bpy.types.FCurve], frame: float):
+        self.seconds = frame / bpy.context.scene.render.fps
+        self.frame = frame
         self.fps = bpy.context.scene.render.fps
         self.target = channels[0].data_path.split('.')[-1]
         self.__indices = [c.array_index for c in channels]
@@ -101,8 +101,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     # Find the start and end of the whole action group
     ranges = [channel.range() for channel in channels]
 
-    start = min([channel.range()[0] for channel in channels])
-    end = max([channel.range()[1] for channel in channels])
+    start_frame = min([channel.range()[0] for channel in channels])
+    end_frame = max([channel.range()[1] for channel in channels])
 
     keyframes = []
     if needs_baking(blender_object_if_armature, channels, export_settings):
@@ -116,13 +116,13 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
             pose_bone_if_armature = None
 
         # sample all frames
-        time = start
-        step = 1.0 / bpy.context.scene.render.fps
-        while time <= end:
-            key = Keyframe(channels, time)
+        frame = start_frame
+        step = export_settings['gltf_frame_step']
+        while frame <= end_frame:
+            key = Keyframe(channels, frame)
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
                 # we need to bake in the constraints
-                bpy.context.scene.frame_set(time)
+                bpy.context.scene.frame_set(frame)
                 trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
                 target_property = channels[0].data_path.split('.')[-1]
                 key.value = {
@@ -134,21 +134,21 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                 }[target_property]
 
             else:
-                key.value = [c.evaluate(time) for c in channels]
+                key.value = [c.evaluate(frame) for c in channels]
             keyframes.append(key)
-            time += step
+            frame += step
     else:
         # Just use the keyframes as they are specified in blender
-        times = [keyframe.co[0] for keyframe in channels[0].keyframe_points]
-        for i, time in enumerate(times):
-            key = Keyframe(channels, time)
+        frames = [keyframe.co[0] for keyframe in channels[0].keyframe_points]
+        for i, frame in enumerate(frames):
+            key = Keyframe(channels, frame)
             # key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
-            key.value = [c.evaluate(time) for c in channels]
+            key.value = [c.evaluate(frame) for c in channels]
 
             # compute tangents for cubic spline interpolation
             if channels[0].keyframe_points[0].interpolation == "BEZIER":
                 # Construct the in tangent
-                if time == times[0]:
+                if frame == frames[0]:
                     # start in-tangent should become all zero
                     key.in_tangent = key.value
                 else:
@@ -157,11 +157,11 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     # normally
                     key.in_tangent = [
                         c.keyframe_points[i].co[1] + ((c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]
-                                                       ) / (time - times[i - 1]))
+                                                       ) / (frame - frames[i - 1]))
                         for c in channels
                     ]
                 # Construct the out tangent
-                if time == times[-1]:
+                if frame == frames[-1]:
                     # end out-tangent should become all zero
                     key.out_tangent = key.value
                 else:
@@ -170,7 +170,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     # normally
                     key.out_tangent = [
                         c.keyframe_points[i].co[1] + ((c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]
-                                                       ) / (times[i + 1] - time))
+                                                       ) / (frames[i + 1] - frame))
                         for c in channels
                     ]
 
