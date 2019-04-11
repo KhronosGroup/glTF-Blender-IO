@@ -102,13 +102,8 @@ def convert_swizzle_scale(scale, export_settings):
         return Vector((scale[0], scale[1], scale[2]))
 
 
-def decompose_transition(matrix, context, export_settings):
+def decompose_transition(matrix, export_settings):
     translation, rotation, scale = matrix.decompose()
-    """Decompose a matrix depending if it is associated to a joint or node."""
-    if context == 'NODE':
-        translation = convert_swizzle_location(translation, export_settings)
-        rotation = convert_swizzle_rotation(rotation, export_settings)
-        scale = convert_swizzle_scale(scale, export_settings)
 
     # Put w at the end.
     rotation = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))

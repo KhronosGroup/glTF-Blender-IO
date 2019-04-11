@@ -48,7 +48,7 @@ def gather_joint(blender_bone, export_settings):
         # matrix_basis = blender_object.convert_space(blender_bone, blender_bone.matrix, from_space='POSE',
         #                                             to_space='LOCAL')
     trans, rot, sca = gltf2_blender_extract.decompose_transition(
-        gltf2_blender_math.multiply(correction_matrix_local, matrix_basis), 'JOINT', export_settings)
+        gltf2_blender_math.multiply(correction_matrix_local, matrix_basis), export_settings)
     translation, rotation, scale = (None, None, None)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
         translation = [trans[0], trans[1], trans[2]]
