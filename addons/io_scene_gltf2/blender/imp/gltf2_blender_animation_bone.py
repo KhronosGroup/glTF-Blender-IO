@@ -34,6 +34,8 @@ class BlenderBoneAnim():
             kf.interpolation = 'CONSTANT'
         elif interpolation == "CUBICSPLINE":
             kf.interpolation = 'BEZIER'
+            kf.handle_right_type = 'AUTO'
+            kf.handle_left_type = 'AUTO'
         else:
             kf.interpolation = 'LINEAR'
 
@@ -241,6 +243,7 @@ class BlenderBoneAnim():
             # Setting interpolation
             for kf in fcurve.keyframe_points:
                 BlenderBoneAnim.set_interpolation(interpolation, kf)
+            fcurve.update() # force updating tangents (this may change when tangent will be managed)
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):

@@ -80,7 +80,8 @@ def __gather_extras(sockets_or_slots, export_settings):
 def __gather_mime_type(sockets_or_slots, export_settings):
     if export_settings["gltf_image_format"] == "NAME":
         image_name = __get_texname_from_slot(sockets_or_slots, export_settings)
-        _, extension = os.path.splitext(image_name)
+        _, extension = os.path.splitext(bpy.data.images[image_name].filepath)
+        extension = extension.lower()
         if extension in [".jpeg", ".jpg", ".png"]:
             return {
                 ".jpeg": "image/jpeg",
@@ -99,6 +100,7 @@ def __gather_name(sockets_or_slots, export_settings):
     image_name = __get_texname_from_slot(sockets_or_slots, export_settings)
 
     name, extension = os.path.splitext(image_name)
+    extension = extension.lower()
     if extension in [".jpeg", ".jpg", ".png"]:
         return name
     return image_name
