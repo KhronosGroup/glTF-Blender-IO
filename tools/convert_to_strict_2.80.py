@@ -18,11 +18,13 @@
 
 from os import walk, makedirs
 import argparse
-from os.path import realpath, dirname, isdir, splitext, exists
+from os.path import realpath, dirname, isdir, splitext, exists, isfile
 from shutil import copyfile
+import sys
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-r", "--repo", required=False, help="repo path")
+ap.add_argument("-b", "--bump", required=False, action="store_true", help="bump to +1 minor version number")
 args = vars(ap.parse_args())
 
 
@@ -42,6 +44,50 @@ properties = [
 if not isdir(OUTPUT):
     makedirs(OUTPUT)
 
+# On glTF-Blender-IO repo, increase version number if needed
+if args["bump"] is True:
+    if args["repo"] is None:
+        print("You can't bump to new version if --repo is not set")
+        sys.exit()
+
+    if args["repo"][-1] != "/":
+        args["repo"] += "/"
+
+    init_file = INPUT + "io_scene_gltf2/__init__.py"
+    if not isfile(init_file):
+        print("Can't find __init__ file")
+        sys.exit()
+
+    data = ""
+    new_line = ""
+    with open(init_file, "r") as f_read:
+        data = f_read.read()
+
+        for l in data.split("\n"):
+            if "\"version\"" in l:
+                try:
+                    versions = l.split('(')[1].split(')')[0].split(',')
+                    if len(versions) != 3:
+                        print("Can't find version properly")
+                        sys.exit()
+
+                    new_line = "    \"version\": (" + versions[0] + "," + versions[1] + ", " + str(int(versions[2]) + 1) + "),"
+                    break
+                except:
+                    print("Can't find version")
+                    sys.exit()
+
+    with open(init_file, "w") as f_write:
+        for idx, l in enumerate(data.split("\n")):
+            if "\"version\"" in l:
+                f_write.write(new_line + "\n")
+            else:
+                if idx == len(data.split("\n")) - 1:
+                    f_write.write(l)
+                else:
+                    f_write.write(l + "\n")
+
+# Create 2.80 version of files
 for root, dirs, files in walk(INPUT):
     new_dir = root[len(INPUT):]
 
