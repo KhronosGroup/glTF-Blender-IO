@@ -179,8 +179,9 @@ class BlenderGlTF():
                         material.extensions['KHR_materials_pbrSpecularGlossiness']['glossinessFactor'] = 1.0
 
         # images
-        for img in gltf.data.images:
-            img.blender_image_name = None
+        if gltf.data.images is not None:
+            for img in gltf.data.images:
+                img.blender_image_name = None
 
         if gltf.data.nodes is None:
             # Something is wrong in file, there is no nodes
