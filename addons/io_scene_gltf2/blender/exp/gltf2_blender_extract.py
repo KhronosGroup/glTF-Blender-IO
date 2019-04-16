@@ -102,13 +102,8 @@ def convert_swizzle_scale(scale, export_settings):
         return Vector((scale[0], scale[1], scale[2]))
 
 
-def decompose_transition(matrix, context, export_settings):
+def decompose_transition(matrix, export_settings):
     translation, rotation, scale = matrix.decompose()
-    """Decompose a matrix depending if it is associated to a joint or node."""
-    if context == 'NODE':
-        translation = convert_swizzle_location(translation, export_settings)
-        rotation = convert_swizzle_rotation(rotation, export_settings)
-        scale = convert_swizzle_scale(scale, export_settings)
 
     # Put w at the end.
     rotation = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
@@ -597,7 +592,10 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
 
             v = convert_swizzle_location(vertex.co, export_settings)
             if blender_polygon.use_smooth:
-                n = convert_swizzle_location(vertex.normal, export_settings)
+                if blender_mesh.has_custom_normals:
+                    n = convert_swizzle_location(blender_mesh.loops[loop_index].normal, export_settings)
+                else:
+                    n = convert_swizzle_location(vertex.normal, export_settings)
                 if use_tangents:
                     t = convert_swizzle_tangent(blender_mesh.loops[loop_index].tangent, export_settings)
                     b = convert_swizzle_location(blender_mesh.loops[loop_index].bitangent, export_settings)

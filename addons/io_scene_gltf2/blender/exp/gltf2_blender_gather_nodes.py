@@ -225,11 +225,13 @@ def __gather_mesh(blender_object, export_settings):
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
         auto_smooth = blender_object.data.use_auto_smooth
+        edge_split = None
         if auto_smooth:
-            blender_object = blender_object.copy()
             edge_split = blender_object.modifiers.new('Temporary_Auto_Smooth', 'EDGE_SPLIT')
             edge_split.split_angle = blender_object.data.auto_smooth_angle
             edge_split.use_edge_angle = not blender_object.data.has_custom_normals
+            blender_object.data.use_auto_smooth = False
+            bpy.context.scene.update()
 
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -243,6 +245,8 @@ def __gather_mesh(blender_object, export_settings):
             blender_mesh = blender_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
         else:
             blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
+        for prop in blender_object.data.keys():
+            blender_mesh[prop] = blender_object.data[prop]
         skip_filter = True
 
         if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -251,7 +255,8 @@ def __gather_mesh(blender_object, export_settings):
                 blender_object.modifiers[idx].show_viewport = show_viewport
 
         if auto_smooth:
-            bpy.data.objects.remove(blender_object)
+            blender_object.data.use_auto_smooth = True
+            blender_object.modifiers.remove(edge_split)
     else:
         blender_mesh = blender_object.data
         skip_filter = False
@@ -275,7 +280,20 @@ def __gather_name(blender_object, export_settings):
 
 
 def __gather_trans_rot_scale(blender_object, export_settings):
-    trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, 'NODE', export_settings)
+    trans = gltf2_blender_extract.convert_swizzle_location(blender_object.location, export_settings)
+
+    if blender_object.rotation_mode in ['QUATERNION', 'AXIS_ANGLE']:
+        rotation = blender_object.rotation_quaternion
+    else:
+        rotation = blender_object.rotation_euler.to_quaternion()
+
+    rotation = gltf2_blender_extract.convert_swizzle_rotation(rotation, export_settings)
+
+    # Put w at the end.
+    rot = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
+
+    sca = gltf2_blender_extract.convert_swizzle_scale(blender_object.scale, export_settings)
+
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
             trans = -gltf2_blender_extract.convert_swizzle_location(

@@ -34,6 +34,8 @@ class BlenderNodeAnim():
             kf.interpolation = 'CONSTANT'
         elif interpolation == "CUBICSPLINE":
             kf.interpolation = 'BEZIER'
+            kf.handle_right_type = 'AUTO'
+            kf.handle_left_type = 'AUTO'
         else:
             kf.interpolation = 'LINEAR'
 
@@ -134,6 +136,7 @@ class BlenderNodeAnim():
                     # Setting interpolation
                     for kf in fcurve.keyframe_points:
                         BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
+                    fcurve.update() # force updating tangents (this may change when tangent will be managed)
 
             elif channel.target.path == 'weights':
 
