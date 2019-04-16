@@ -245,6 +245,8 @@ def __gather_mesh(blender_object, export_settings):
             blender_mesh = blender_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
         else:
             blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
+        for prop in blender_object.data.keys():
+            blender_mesh[prop] = blender_object.data[prop]
         skip_filter = True
 
         if export_settings[gltf2_blender_export_keys.SKINS]:

@@ -209,4 +209,4 @@ def __get_texname_from_slot(sockets_or_slots, export_settings):
         return node.shader_node.image.name
 
     elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
-        return sockets_or_slots[0].name
+        return sockets_or_slots[0].texture.image.name
