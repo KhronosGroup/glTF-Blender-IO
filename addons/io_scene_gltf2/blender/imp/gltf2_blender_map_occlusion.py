@@ -32,7 +32,7 @@ class BlenderOcclusionMap():
         """Nodetree creation."""
         pymaterial = gltf.data.materials[material_idx]
 
-        BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture.index)
+        BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture)
 
         # Pack texture, but doesn't use it for now. Occlusion is calculated from Cycles.
         if gltf.data.images[gltf.data.textures[
