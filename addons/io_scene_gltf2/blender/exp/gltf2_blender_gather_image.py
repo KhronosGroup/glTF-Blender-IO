@@ -174,7 +174,7 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
                 composed_image[2] = image[source_channel]
             elif socket.name == 'Roughness':
                 composed_image[1] = image[source_channel]
-            elif socket.name == 'Occlusion':
+            elif socket.name == 'Occlusion' and len(sockets_or_slots) > 2:
                 composed_image[0] = image[source_channel]
             else:
                 composed_image.update(image)

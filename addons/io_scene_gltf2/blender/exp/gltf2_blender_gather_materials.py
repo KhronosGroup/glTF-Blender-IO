@@ -20,6 +20,7 @@ from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_normal_texture_info_class
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_occlusion_texture_info_class
+from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
@@ -167,16 +168,18 @@ def __gather_orm_texture(blender_material, export_settings):
     # If not fully shared, return None, so the images will be cached and processed separately.
 
     occlusion = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Occlusion")
-    if occlusion is None:
+    if occlusion is None or not __has_image_node_from_socket(occlusion):
         occlusion = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "Occlusion")
-        if occlusion is None:
+        if occlusion is None or not __has_image_node_from_socket(occlusion):
             return None
 
     metallic_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Metallic")
     roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Roughness")
-    if metallic_socket is None or roughness_socket is None:
+    if metallic_socket is None or roughness_socket is None\
+            or not __has_image_node_from_socket(metallic_socket)\
+            or not __has_image_node_from_socket(roughness_socket):
         metallic_roughness = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "MetallicRoughness")
-        if metallic_roughness is None:
+        if metallic_roughness is None or not __has_image_node_from_socket(metallic_roughness):
             return None
         return (occlusion, metallic_roughness, metallic_roughness)
 
@@ -200,3 +203,11 @@ def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settin
         blender_material,
         orm_texture,
         export_settings)
+
+def __has_image_node_from_socket(socket):
+    result = gltf2_blender_search_node_tree.from_socket(
+        socket,
+        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
+    if not result:
+        return False
+    return True
