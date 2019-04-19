@@ -35,7 +35,7 @@ class BlenderNormalMap():
         material = bpy.data.materials[pymaterial.blender_material[vertex_color]]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(gltf, pymaterial.normal_texture.index)
+        BlenderTextureInfo.create(gltf, pymaterial.normal_texture)
 
         # retrieve principled node and output node
         principled = None

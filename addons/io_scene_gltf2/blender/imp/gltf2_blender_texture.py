@@ -21,10 +21,20 @@ class BlenderTextureInfo():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, pytextureinfo_idx):
+    def create(gltf, pytextureinfo, dict_=False):
         """Create Texture info."""
-        BlenderTexture.create(gltf, pytextureinfo_idx)
+        extension_text_transform_used = {}
 
+        if dict_ is True: # coming from KHR_materials_pbrSpecularGlossiness
+            if 'extensions' in pytextureinfo.keys() \
+            and 'KHR_texture_transform' in pytextureinfo['extensions'].keys():
+                extension_text_transform_used = pytextureinfo['extensions']['KHR_texture_transform']
+            BlenderTexture.create(gltf, pytextureinfo['index'], extension_text_transform_used)
+        else:
+            if pytextureinfo.extensions is not None \
+            and 'KHR_texture_transform' in pytextureinfo.extensions.keys():
+                extension_text_transform_used = pytextureinfo.extensions['KHR_texture_transform']
+            BlenderTexture.create(gltf, pytextureinfo.index, extension_text_transform_used)
 
 class BlenderTexture():
     """Blender Texture."""
@@ -32,7 +42,7 @@ class BlenderTexture():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, pytexture_idx):
+    def create(gltf, pytexture_idx, tex_transform):
         """Create texture."""
         pytexture = gltf.data.textures[pytexture_idx]
-        BlenderImage.create(gltf, pytexture.source)
+        BlenderImage.create(gltf, pytexture.source, pytexture_idx, tex_transform)
