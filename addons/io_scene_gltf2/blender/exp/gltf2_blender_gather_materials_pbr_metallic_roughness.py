@@ -23,7 +23,7 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
-def gather_material_pbr_metallic_roughness(blender_material, export_settings):
+def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
     if not __filter_pbr_material(blender_material, export_settings):
         return None
 
@@ -33,7 +33,7 @@ def gather_material_pbr_metallic_roughness(blender_material, export_settings):
         extensions=__gather_extensions(blender_material, export_settings),
         extras=__gather_extras(blender_material, export_settings),
         metallic_factor=__gather_metallic_factor(blender_material, export_settings),
-        metallic_roughness_texture=__gather_metallic_roughness_texture(blender_material, export_settings),
+        metallic_roughness_texture=__gather_metallic_roughness_texture(blender_material, orm_texture, export_settings),
         roughness_factor=__gather_roughness_factor(blender_material, export_settings)
     )
 
@@ -123,17 +123,20 @@ def __gather_metallic_factor(blender_material, export_settings):
     return None
 
 
-def __gather_metallic_roughness_texture(blender_material, export_settings):
-    metallic_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Metallic")
-    roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Roughness")
-
-    if metallic_socket is None and roughness_socket is None:
-        metallic_roughness = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "MetallicRoughness")
-        if metallic_roughness is None:
-            metallic_roughness = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "MetallicRoughness")
-        texture_input = (metallic_roughness,)
+def __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings):
+    if orm_texture is not None:
+        texture_input = orm_texture
     else:
-        texture_input = (metallic_socket, roughness_socket)
+        metallic_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Metallic")
+        roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Roughness")
+
+        if metallic_socket is None and roughness_socket is None:
+            metallic_roughness = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "MetallicRoughness")
+            if metallic_roughness is None:
+                metallic_roughness = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "MetallicRoughness")
+            texture_input = (metallic_roughness,)
+        else:
+            texture_input = (metallic_socket, roughness_socket)
 
     return gltf2_blender_gather_texture_info.gather_texture_info(texture_input, export_settings)
 
