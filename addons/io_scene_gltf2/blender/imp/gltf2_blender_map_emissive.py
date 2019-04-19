@@ -37,7 +37,7 @@ class BlenderEmissiveMap():
         node_tree = material.node_tree
 
         if factor_only is False:
-            BlenderTextureInfo.create(gltf, pymaterial.emissive_texture.index)
+            BlenderTextureInfo.create(gltf, pymaterial.emissive_texture)
 
         # check if there is some emissive_factor on material
         if pymaterial.emissive_factor is None:

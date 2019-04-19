@@ -36,7 +36,7 @@ class BlenderOcclusionMap():
         material = bpy.data.materials[pymaterial.blender_material[vertex_color]]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture.index)
+        BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture)
 
         # Pack texture. Occlusion is calculated from Cycles or Eevee, so do nothing
         if gltf.data.images[gltf.data.textures[

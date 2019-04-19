@@ -45,7 +45,8 @@ class glTFImporter():
         self.extensions_managed = [
             'KHR_materials_pbrSpecularGlossiness',
             'KHR_lights_punctual',
-            'KHR_materials_unlit'
+            'KHR_materials_unlit',
+            'KHR_texture_transform'
         ]
 
         # TODO : merge with io_constants
