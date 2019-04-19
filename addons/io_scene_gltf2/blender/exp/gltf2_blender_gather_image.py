@@ -164,10 +164,12 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
                 composed_image = gltf2_blender_image.ExportImage.white_image(image.width, image.height)
 
             # Change target channel for metallic and roughness.
-            if elem.to_socket.name == 'Metallic':
+            if socket.name == 'Metallic':
                 composed_image[2] = image[source_channel]
-            elif elem.to_socket.name == 'Roughness':
+            elif socket.name == 'Roughness':
                 composed_image[1] = image[source_channel]
+            elif socket.name == 'Occlusion' and len(sockets_or_slots) > 2:
+                composed_image[0] = image[source_channel]
             else:
                 composed_image.update(image)
 

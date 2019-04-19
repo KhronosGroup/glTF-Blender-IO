@@ -56,7 +56,9 @@ class BlenderImage():
         """Image creation."""
         img = gltf.data.images[img_idx]
 
-        img.blender_image_name = None
+        if img.blender_image_name is not None:
+            # Image is already used somewhere
+            return
 
         if gltf.import_settings['import_pack_images'] is False:
 
