@@ -16,8 +16,6 @@ const fs = require('fs');
 const path = require('path');
 const validator = require('gltf-validator');
 
-var blenderSampleScenes = ["01_alpha_blend", "01_alpha_mask", "01_color_attribute", "01_cs_morph", "01_cs_rotate", "01_cs_scale", "01_cs_translate", "01_cube", "01_cube_no_material", "01_metallic_sphere", "01_morphed_cube", "01_morphed_cube_no_uv", "01_morphed_triangle", "01_plane", "01_sphere", "01_textured_sphere", "01_textured_sphere_principled_bsdf", "01_triangle", "01_two_sided_plane", "02_node_hierarchy", "02_shared_mesh", "02_suzanne", "03_all_animations", "03_animated_cube", "03_skinned_cylinder", "04_common_materials", "04_lenna", "04_lights", "04_sphere_specular_glossiness", "05_metallic_sphere_light", "05_node_material", "06_parent-inverse-anim", "07_nla-anim"];
-
 const OUT_PREFIX = process.env.OUT_PREFIX
 
 function blenderFileToGltf(blenderVersion, blenderPath, outDirName, done, options='') {
@@ -69,8 +67,8 @@ function validateGltf(gltfPath, done) {
         // [result] will contain validation report in object form.
         done(null, result);
     }, (result) => {
-        // Promise rejection means that arguments were invalid or validator was unable 
-        // to detect file format (glTF or GLB). 
+        // Promise rejection means that arguments were invalid or validator was unable
+        // to detect file format (glTF or GLB).
         // [result] will contain exception string.
         done(result);
     });
@@ -95,13 +93,15 @@ describe('Exporter', function() {
         "blender28",
         "blender279b"
     ]
-    
+
+    let blenderSampleScenes = fs.readdirSync('scenes').filter(f => f.endsWith('.blend')).map(f => f.substring(0, f.length - 6));
+
     blenderVersions.forEach(function(blenderVersion) {
         let variants = [
             ['', ''],
             ['_glb', '--glb']
         ];
-    
+
         variants.forEach(function(variant) {
             const args = variant[1];
             describe(blenderVersion + '_export' + variant[0], function() {
@@ -114,18 +114,18 @@ describe('Exporter', function() {
                         if (OUT_PREFIX) {
                             outDirName = path.resolve(OUT_PREFIX, 'scenes', outDirName)
                             dstPath = path.resolve(OUT_PREFIX, dstPath)
-                        }                    
+                        }
                         blenderFileToGltf(blenderVersion, blenderPath, outDirName, (error) => {
                             if (error)
                                 return done(error);
-    
+
                             validateGltf(dstPath, done);
                         }, args);
                     });
                 });
             });
         });
-    });    
+    });
 });
 
 describe('Importer / Exporter (Roundtrip)', function() {
@@ -133,13 +133,13 @@ describe('Importer / Exporter (Roundtrip)', function() {
         "blender28",
         "blender279b"
     ]
-    
+
     blenderVersions.forEach(function(blenderVersion) {
         let variants = [
             ['', ''],
             ['_glb', '--glb']
         ];
-    
+
         variants.forEach(function(variant) {
             const args = variant[1];
             describe(blenderVersion + '_roundtrip' + variant[0], function() {
@@ -147,7 +147,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 dirs.forEach((dir) => {
                     if (!fs.statSync('roundtrip/' + dir).isDirectory())
                         return;
-    
+
                     it(dir, function(done) {
                         let outDirName = 'out' + blenderVersion + variant[0];
                         let gltfSrcPath = `roundtrip/${dir}/${dir}.gltf`;
@@ -157,15 +157,15 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         if (OUT_PREFIX) {
                             outDirName = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName)
                             gltfDstPath = path.resolve(OUT_PREFIX, gltfDstPath)
-                        }                    
+                        }
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirName, (error) => {
                             if (error)
                                 return done(error);
-    
+
                             validateGltf(gltfDstPath, (error, gltfDstReport) => {
                                 if (error)
                                     return done(error);
-        
+
                                 const info_keys = ['version', 'hasAnimations', 'hasMaterials', 'hasMorphTargets', 'hasSkins', 'hasTextures', 'hasDefaultScene', 'primitivesCount'/*, 'maxAttributesUsed'*/];
                                 let reduceKeys = function(raw, allowed) {
                                     return Object.keys(raw)
@@ -175,12 +175,12 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                         return obj;
                                       }, {});
                                 };
-    
+
                                 let srcInfo = reduceKeys(gltfSrcReport.info, info_keys);
                                 let dstInfo = reduceKeys(gltfDstReport.info, info_keys);
-    
+
                                 assert.deepStrictEqual(dstInfo, srcInfo);
-    
+
                                 done();
                             });
                         }, args);
