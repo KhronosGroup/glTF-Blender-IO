@@ -105,9 +105,6 @@ def convert_swizzle_scale(scale, export_settings):
 def decompose_transition(matrix, export_settings):
     translation, rotation, scale = matrix.decompose()
 
-    # Put w at the end.
-    rotation = Quaternion((rotation[1], rotation[2], rotation[3], rotation[0]))
-
     return translation, rotation, scale
 
 def extract_primitive_floor(a, indices, use_tangents):
