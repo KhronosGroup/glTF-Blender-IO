@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 const validator = require('gltf-validator');
 
-const OUT_PREFIX = process.env.OUT_PREFIX || '.';
+const OUT_PREFIX = process.env.OUT_PREFIX || '../tests_out';
 
 const blenderVersions = [
     "blender28",
@@ -132,6 +132,19 @@ describe('Exporter', function() {
                 assert(fs.existsSync(resultName));
             });
 
+            it('references the Occlusion texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_only_occlusion.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture, undefined);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_tiny-box-upper-left.png');
+            });
+
             it('produces a RoughnessMetallic texture', function() {
                 let resultName = path.resolve(outDirPath, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
                 assert(fs.existsSync(resultName));
@@ -142,6 +155,19 @@ describe('Exporter', function() {
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_gb.png');
                 let testBuffer = fs.readFileSync(resultName)
                 assert(testBuffer.equals(expectedRgbBuffer));
+            });
+
+            it('references the RoughnessMetallic texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_only_roughMetal.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture, undefined);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
             });
 
             it('produces an OcclusionRoughnessMetallic texture', function() {
@@ -155,6 +181,20 @@ describe('Exporter', function() {
                 let testBuffer = fs.readFileSync(resultName)
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
+
+            it('references the OcclusionRoughnessMetallic texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_combine_orm.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
+            });
+
         });
     });
 });
