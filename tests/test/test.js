@@ -16,7 +16,12 @@ const fs = require('fs');
 const path = require('path');
 const validator = require('gltf-validator');
 
-const OUT_PREFIX = process.env.OUT_PREFIX
+const OUT_PREFIX = process.env.OUT_PREFIX || '../tests_out';
+
+const blenderVersions = [
+    "blender28",
+    "blender279b"
+];
 
 function blenderFileToGltf(blenderVersion, blenderPath, outDirName, done, options='') {
     const { exec } = require('child_process');
@@ -89,11 +94,6 @@ describe('General', function() {
 });
 
 describe('Exporter', function() {
-    let blenderVersions = [
-        "blender28",
-        "blender279b"
-    ]
-
     let blenderSampleScenes = fs.readdirSync('scenes').filter(f => f.endsWith('.blend')).map(f => f.substring(0, f.length - 6));
 
     blenderVersions.forEach(function(blenderVersion) {
@@ -110,12 +110,9 @@ describe('Exporter', function() {
                         let outDirName = 'out' + blenderVersion + variant[0];
                         let blenderPath = `scenes/${scene}.blend`;
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
-                        let dstPath = `scenes/${outDirName}/${scene}${ext}`;
-                        if (OUT_PREFIX) {
-                            outDirName = path.resolve(OUT_PREFIX, 'scenes', outDirName)
-                            dstPath = path.resolve(OUT_PREFIX, dstPath)
-                        }
-                        blenderFileToGltf(blenderVersion, blenderPath, outDirName, (error) => {
+                        let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
+                        let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
+                        blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
 
@@ -125,15 +122,84 @@ describe('Exporter', function() {
                 });
             });
         });
+
+        describe(blenderVersion + '_export_results', function() {
+            let outDirName = 'out' + blenderVersion;
+            let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName)
+
+            it('produces an Occlusion texture', function() {
+                let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left.png');
+                assert(fs.existsSync(resultName));
+            });
+
+            it('references the Occlusion texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_only_occlusion.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture, undefined);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_tiny-box-upper-left.png');
+            });
+
+            it('produces a RoughnessMetallic texture', function() {
+                let resultName = path.resolve(outDirPath, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
+                assert(fs.existsSync(resultName));
+            });
+
+            it('combines two images into a RoughnessMetallic texture', function() {
+                let resultName = path.resolve(outDirPath, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_gb.png');
+                let testBuffer = fs.readFileSync(resultName)
+                assert(testBuffer.equals(expectedRgbBuffer));
+            });
+
+            it('references the RoughnessMetallic texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_only_roughMetal.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture, undefined);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
+            });
+
+            it('produces an OcclusionRoughnessMetallic texture', function() {
+                let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
+                assert(fs.existsSync(resultName));
+            });
+
+            it('combines three images into an OcclusionRoughnessMetallic texture', function() {
+                let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rgb.png');
+                let testBuffer = fs.readFileSync(resultName)
+                assert(testBuffer.equals(expectedRgbBuffer));
+            });
+
+            it('references the OcclusionRoughnessMetallic texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_combine_orm.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
+            });
+
+        });
     });
 });
 
 describe('Importer / Exporter (Roundtrip)', function() {
-    let blenderVersions = [
-        "blender28",
-        "blender279b"
-    ]
-
     blenderVersions.forEach(function(blenderVersion) {
         let variants = [
             ['', ''],
@@ -153,12 +219,9 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         let gltfSrcPath = `roundtrip/${dir}/${dir}.gltf`;
                         let gltfSrcReport = JSON.parse(fs.readFileSync(`roundtrip/${dir}/${dir}_report.json`, 'utf8'));
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
-                        let gltfDstPath = `roundtrip/${dir}/${outDirName}/${dir}${ext}`;
-                        if (OUT_PREFIX) {
-                            outDirName = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName)
-                            gltfDstPath = path.resolve(OUT_PREFIX, gltfDstPath)
-                        }
-                        blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirName, (error) => {
+                        let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                        let gltfDstPath = path.resolve(outDirPath, `${dir}${ext}`);
+                        blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
 
@@ -186,6 +249,17 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         }, args);
                     });
                 });
+            });
+        });
+
+        describe(blenderVersion + '_roundtrip_results', function() {
+            let outDirName = 'out' + blenderVersion;
+
+            it('roundtrips an OcclusionRoughnessMetallic texture', function() {
+                let dir = '08_combine_orm';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName)
+
+                assert(fs.existsSync(path.resolve(outDirPath, '08_tiny-box-rgb.png')));
             });
         });
     });
