@@ -137,9 +137,90 @@ describe('Exporter', function() {
             let outDirName = 'out' + blenderVersion;
             let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
 
+            // ORM tests, source images:
+            // Occlusion: Black square in upper-left on white background, grayscale image
+            // Roughness: Black square in upper-right on white background, grayscale image
+            //  Metallic: Black square in lower-left on white background, grayscale image
+            // When the texture is present, expect the factor to be undefined, and vice-versa
+
+            it('produces a Roughness texture', function() {
+                // Expect magenta (inverted green) square
+                let resultName = path.resolve(outDirPath, '08_img_rough.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_g_.png');
+                let testBuffer = fs.readFileSync(resultName);
+                assert(testBuffer.equals(expectedRgbBuffer));
+            });
+
+            it('references the Roughness texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_only_rough.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture, undefined);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.roughnessFactor, undefined);
+                assert.equalEpsilon(asset.materials[0].pbrMetallicRoughness.metallicFactor, 0.1);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_img_rough.png');
+            });
+
+            it('produces a Metallic texture', function() {
+                // Expect yellow (inverted blue) square
+                let resultName = path.resolve(outDirPath, '08_img_metal.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-__b.png');
+                let testBuffer = fs.readFileSync(resultName);
+                assert(testBuffer.equals(expectedRgbBuffer));
+            });
+
+            it('references the Metallic texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_only_metal.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture, undefined);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.equalEpsilon(asset.materials[0].pbrMetallicRoughness.roughnessFactor, 0.2);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicFactor, undefined);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_img_metal.png');
+            });
+
+            it('combines two images into a RoughnessMetallic texture', function() {
+                // Expect magenta (inverted green) and yellow (inverted blue) squares
+                let resultName = path.resolve(outDirPath, '08_metallic-08_roughness.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_gb.png');
+                let testBuffer = fs.readFileSync(resultName);
+                assert(testBuffer.equals(expectedRgbBuffer));
+            });
+
+            it('references the RoughnessMetallic texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_combine_roughMetal.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture, undefined);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.roughnessFactor, undefined);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicFactor, undefined);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_metallic-08_roughness.png');
+            });
+
             it('produces an Occlusion texture', function() {
-                let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left.png');
-                assert(fs.existsSync(resultName));
+                // Expect upper-left black square.  This is a special case because when R/M are not
+                // present, occlusion may take all channels.  Currently this test "expects" the
+                // grayscale PNG to get converted to a color PNG, but someday this should be optimized
+                // to preserve the original PNG exactly.
+                let resultName = path.resolve(outDirPath, '08_img_occlusion.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-upper-left-black.png');
+                let testBuffer = fs.readFileSync(resultName);
+                assert(testBuffer.equals(expectedRgbBuffer));
             });
 
             it('references the Occlusion texture', function() {
@@ -149,44 +230,63 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.materials.length, 1);
                 assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
                 assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture, undefined);
+                assert.equalEpsilon(asset.materials[0].pbrMetallicRoughness.roughnessFactor, 0.2);
+                assert.equalEpsilon(asset.materials[0].pbrMetallicRoughness.metallicFactor, 0.1);
                 assert.strictEqual(asset.textures.length, 1);
                 assert.strictEqual(asset.textures[0].source, 0);
                 assert.strictEqual(asset.images.length, 1);
-                assert.strictEqual(asset.images[0].uri, '08_tiny-box-upper-left.png');
+                assert.strictEqual(asset.images[0].uri, '08_img_occlusion.png');
             });
 
-            it('produces a RoughnessMetallic texture', function() {
-                let resultName = path.resolve(outDirPath, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
-                assert(fs.existsSync(resultName));
-            });
-
-            it('combines two images into a RoughnessMetallic texture', function() {
-                let resultName = path.resolve(outDirPath, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_gb.png');
+            it('combines two images into an OcclusionRoughness texture', function() {
+                // Expect cyan (inverted red) and magenta (inverted green) squares
+                let resultName = path.resolve(outDirPath, '08_occlusion-08_roughness.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rg_.png');
                 let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the RoughnessMetallic texture', function() {
-                let gltfPath = path.resolve(outDirPath, '08_only_roughMetal.gltf');
+            it('references the OcclusionRoughness texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_combine_occlusionRough.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
                 assert.strictEqual(asset.materials.length, 1);
-                assert.strictEqual(asset.materials[0].occlusionTexture, undefined);
+                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
                 assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.roughnessFactor, undefined);
+                assert.equalEpsilon(asset.materials[0].pbrMetallicRoughness.metallicFactor, 0.1);
                 assert.strictEqual(asset.textures.length, 1);
                 assert.strictEqual(asset.textures[0].source, 0);
                 assert.strictEqual(asset.images.length, 1);
-                assert.strictEqual(asset.images[0].uri, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
+                assert.strictEqual(asset.images[0].uri, '08_occlusion-08_roughness.png');
             });
 
-            it('produces an OcclusionRoughnessMetallic texture', function() {
-                let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
-                assert(fs.existsSync(resultName));
+            it('combines two images into an OcclusionMetallic texture', function() {
+                // Expect cyan (inverted red) and yellow (inverted blue) squares
+                let resultName = path.resolve(outDirPath, '08_occlusion-08_metallic.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-r_b.png');
+                let testBuffer = fs.readFileSync(resultName);
+                assert(testBuffer.equals(expectedRgbBuffer));
+            });
+
+            it('references the OcclusionMetallic texture', function() {
+                let gltfPath = path.resolve(outDirPath, '08_combine_occlusionMetal.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.equalEpsilon(asset.materials[0].pbrMetallicRoughness.roughnessFactor, 0.2);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicFactor, undefined);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_occlusion-08_metallic.png');
             });
 
             it('combines three images into an OcclusionRoughnessMetallic texture', function() {
-                let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
+                // Expect cyan (inverted red), magenta (inverted green), and yellow (inverted blue) squares
+                let resultName = path.resolve(outDirPath, '08_occlusion-08_roughness-08_metallic.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rgb.png');
                 let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
@@ -199,10 +299,12 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.materials.length, 1);
                 assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
                 assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.roughnessFactor, undefined);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicFactor, undefined);
                 assert.strictEqual(asset.textures.length, 1);
                 assert.strictEqual(asset.textures[0].source, 0);
                 assert.strictEqual(asset.images.length, 1);
-                assert.strictEqual(asset.images[0].uri, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
+                assert.strictEqual(asset.images[0].uri, '08_occlusion-08_roughness-08_metallic.png');
             });
 
             it('exports texture transform from mapping type point', function() {

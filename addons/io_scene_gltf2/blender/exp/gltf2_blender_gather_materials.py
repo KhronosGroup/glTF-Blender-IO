@@ -175,15 +175,28 @@ def __gather_orm_texture(blender_material, export_settings):
 
     metallic_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Metallic")
     roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Roughness")
-    if metallic_socket is None or roughness_socket is None\
-            or not __has_image_node_from_socket(metallic_socket)\
-            or not __has_image_node_from_socket(roughness_socket):
+
+    hasMetal = metallic_socket is not None and __has_image_node_from_socket(metallic_socket)
+    hasRough = roughness_socket is not None and __has_image_node_from_socket(roughness_socket)
+
+    if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not __has_image_node_from_socket(metallic_roughness):
             return None
-        return (occlusion, metallic_roughness, metallic_roughness)
+        result = (occlusion, metallic_roughness)
+    elif not hasMetal:
+        result = (occlusion, roughness_socket)
+    elif not hasRough:
+        result = (occlusion, metallic_socket)
+    else:
+        result = (occlusion, roughness_socket, metallic_socket)
 
-    return (occlusion, roughness_socket, metallic_socket)
+    # Double-check this will past the filter in texture_info (otherwise there are different resolutions or other problems).
+    info = gltf2_blender_gather_texture_info.gather_texture_info(result, export_settings)
+    if info is None:
+        return None
+
+    return result
 
 def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
     if orm_texture is not None:
