@@ -135,7 +135,7 @@ describe('Exporter', function() {
 
         describe(blenderVersion + '_export_results', function() {
             let outDirName = 'out' + blenderVersion;
-            let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName)
+            let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
 
             it('produces an Occlusion texture', function() {
                 let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left.png');
@@ -163,7 +163,7 @@ describe('Exporter', function() {
             it('combines two images into a RoughnessMetallic texture', function() {
                 let resultName = path.resolve(outDirPath, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_gb.png');
-                let testBuffer = fs.readFileSync(resultName)
+                let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
@@ -188,7 +188,7 @@ describe('Exporter', function() {
             it('combines three images into an OcclusionRoughnessMetallic texture', function() {
                 let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rgb.png');
-                let testBuffer = fs.readFileSync(resultName)
+                let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
@@ -283,11 +283,11 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                 const info_keys = ['version', 'hasAnimations', 'hasMaterials', 'hasMorphTargets', 'hasSkins', 'hasTextures', 'hasDefaultScene', 'primitivesCount'/*, 'maxAttributesUsed'*/];
                                 let reduceKeys = function(raw, allowed) {
                                     return Object.keys(raw)
-                                      .filter(key => allowed.includes(key))
-                                      .reduce((obj, key) => {
-                                        obj[key] = raw[key];
-                                        return obj;
-                                      }, {});
+                                        .filter(key => allowed.includes(key))
+                                        .reduce((obj, key) => {
+                                            obj[key] = raw[key];
+                                            return obj;
+                                        }, {});
                                 };
 
                                 let srcInfo = reduceKeys(gltfSrcReport.info, info_keys);

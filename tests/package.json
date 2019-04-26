@@ -1,15 +1,18 @@
 {
-  "name": "gltftest",
+  "name": "gltf-blender-io-tests",
   "version": "1.0.0",
-  "description": "",
+  "description": "Test suite for glTF-Blender-IO",
   "dependencies": {},
   "devDependencies": {
     "gltf-validator": "^2.0.0-dev.2.7",
     "mocha": "^5.2.0",
-    "mochawesome": "^3.1.1"
+    "mochawesome": "^3.1.1",
+    "eslint": "^5.16.0"
   },
   "scripts": {
     "test": "mocha --reporter mochawesome",
-    "test-bail": "mocha -b --reporter mochawesome"
+    "test-bail": "mocha -b --reporter mochawesome",
+    "lint": "eslint **/*.js",
+    "lint:fix": "eslint --fix **/*.js"
   }
 }
