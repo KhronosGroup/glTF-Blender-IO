@@ -6,5 +6,6 @@ addons/io_scene_gltf2/.idea/
 /roundtrip/
 2.80/*
 .DS_Store
+desktop.ini
 node_modules
 /tests_out
