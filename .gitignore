@@ -1,7 +1,7 @@
 .idea/
 addons/.idea/
 addons/io_scene_gltf2/.idea/
-/mochawesome-report
+mochawesome-report
 /scenes/
 /roundtrip/
 2.80/*
