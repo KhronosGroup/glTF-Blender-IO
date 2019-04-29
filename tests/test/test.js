@@ -81,6 +81,16 @@ function validateGltf(gltfPath, done) {
 
 var assert = require('assert');
 
+// This tests floating-point numbers for equality, ignoring roundoff errors.
+assert.equalEpsilon = function(actual, expected) {
+    if (typeof actual !== 'number') {
+        throw new Error("Expected " + actual + " to be a number.");
+    }
+    let epsilon = Math.abs(expected * 1e-6);
+    if (Math.abs(actual - expected) > epsilon) {
+        throw new Error("Expected " + actual + " to equal " + expected);
+    }
+};
 
 describe('General', function() {
     describe('gltf_validator', function() {
@@ -125,7 +135,7 @@ describe('Exporter', function() {
 
         describe(blenderVersion + '_export_results', function() {
             let outDirName = 'out' + blenderVersion;
-            let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName)
+            let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
 
             it('produces an Occlusion texture', function() {
                 let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left.png');
@@ -153,7 +163,7 @@ describe('Exporter', function() {
             it('combines two images into a RoughnessMetallic texture', function() {
                 let resultName = path.resolve(outDirPath, '08_tiny-box-lower-left-08_tiny-box-upper-right.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_gb.png');
-                let testBuffer = fs.readFileSync(resultName)
+                let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
@@ -178,7 +188,7 @@ describe('Exporter', function() {
             it('combines three images into an OcclusionRoughnessMetallic texture', function() {
                 let resultName = path.resolve(outDirPath, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rgb.png');
-                let testBuffer = fs.readFileSync(resultName)
+                let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
@@ -195,6 +205,47 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_tiny-box-upper-left-08_tiny-box-upper-right-08_tiny-box-lower-left.png');
             });
 
+            it('exports texture transform from mapping type point', function() {
+                let gltfPath = path.resolve(outDirPath, '09_tex_transform_from_point.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const transform = asset.materials[0].pbrMetallicRoughness.baseColorTexture.extensions.KHR_texture_transform;
+
+                assert.equalEpsilon(transform.rotation, 0.2617993950843811);
+                assert.equalEpsilon(transform.scale[0], 2);
+                assert.equalEpsilon(transform.scale[1], 3);
+                assert.equalEpsilon(transform.offset[0], -0.2764571564185425);
+                assert.equalEpsilon(transform.offset[1], -2.2977774791709993);
+            });
+
+            it('exports texture transform from mapping type texture', function() {
+                let gltfPath = path.resolve(outDirPath, '09_tex_transform_from_texture.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const transform = asset.materials[0].pbrMetallicRoughness.baseColorTexture.extensions.KHR_texture_transform;
+
+                assert.equalEpsilon(transform.rotation, -0.2617993950843811);
+                assert.equalEpsilon(transform.scale[0], 5);
+                assert.equalEpsilon(transform.scale[1], 5);
+                assert.equalEpsilon(transform.offset[0], -1.6383571988477919);
+                assert.equalEpsilon(transform.offset[1], -2.54482482508252);
+            });
+
+            it('exports texture transform from mapping type vector', function() {
+                let gltfPath = path.resolve(outDirPath, '09_tex_transform_from_vector.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const transform = asset.materials[0].pbrMetallicRoughness.baseColorTexture.extensions.KHR_texture_transform;
+
+                assert.equalEpsilon(transform.rotation, 0.2617993950843811);
+                assert.equalEpsilon(transform.scale[0], 0.4);
+                assert.equalEpsilon(transform.scale[1], 0.8);
+                assert.equalEpsilon(transform.offset[0], -0.20705524479697487);
+                assert.equalEpsilon(transform.offset[1], 0.2272593289624576);
+            });
         });
     });
 });
@@ -232,11 +283,11 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                 const info_keys = ['version', 'hasAnimations', 'hasMaterials', 'hasMorphTargets', 'hasSkins', 'hasTextures', 'hasDefaultScene', 'primitivesCount'/*, 'maxAttributesUsed'*/];
                                 let reduceKeys = function(raw, allowed) {
                                     return Object.keys(raw)
-                                      .filter(key => allowed.includes(key))
-                                      .reduce((obj, key) => {
-                                        obj[key] = raw[key];
-                                        return obj;
-                                      }, {});
+                                        .filter(key => allowed.includes(key))
+                                        .reduce((obj, key) => {
+                                            obj[key] = raw[key];
+                                            return obj;
+                                        }, {});
                                 };
 
                                 let srcInfo = reduceKeys(gltfSrcReport.info, info_keys);
@@ -257,9 +308,40 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             it('roundtrips an OcclusionRoughnessMetallic texture', function() {
                 let dir = '08_combine_orm';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName)
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
 
                 assert(fs.existsSync(path.resolve(outDirPath, '08_tiny-box-rgb.png')));
+            });
+
+            it('references the OcclusionRoughnessMetallic texture', function() {
+                let dir = '08_combine_orm';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.textures[0].source, 0);
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
+            });
+
+            it('roundtrips a texture transform', function() {
+                let dir = '09_texture_transform';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const transform = asset.materials[0].pbrMetallicRoughness.baseColorTexture.extensions.KHR_texture_transform;
+
+                assert.equalEpsilon(transform.offset[0], 0.1);
+                assert.equalEpsilon(transform.offset[1], 0.2);
+                assert.equalEpsilon(transform.rotation, 0.3);
+                assert.equalEpsilon(transform.scale[0], 4);
+                assert.equalEpsilon(transform.scale[1], 5);
             });
         });
     });

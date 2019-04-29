@@ -1,0 +1,152 @@
+{
+    "asset" : {
+        "version" : "2.0",
+        "generator" : "Khronos glTF Blender I/O v0.9.2"
+    },
+    "extensionsUsed" : [
+        "KHR_texture_transform"
+    ],
+    "extensionsRequired" : [
+        "KHR_texture_transform"
+    ],
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "Plane"
+        }
+    ],
+    "materials" : [
+        {
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "extensions" : {
+                        "KHR_texture_transform" : {
+                            "offset" : [
+                                0.1,
+                                0.2
+                            ],
+                            "rotation" : 0.3,
+                            "scale" : [
+                                4,
+                                5
+                            ]
+                        }
+                    },
+                    "index" : 0,
+                    "texCoord" : 0
+                },
+                "roughnessFactor" : 0.800000011920929,
+                "metallicFactor" : 0
+            },
+            "name" : "Material"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Plane",
+            "primitives" : [
+                {
+                    "material" : 0,
+                    "indices" : 3,
+                    "attributes" : {
+                        "TEXCOORD_0" : 0,
+                        "NORMAL" : 1,
+                        "POSITION" : 2
+                    }
+                }
+            ]
+        }
+    ],
+    "textures" : [
+        {
+            "sampler" : 0,
+            "source" : 0
+        }
+    ],
+    "images" : [
+        {
+            "uri" : "09_tiny_grid.png",
+            "name" : "09_tiny_grid",
+            "mimeType" : "image/png"
+        }
+    ],
+    "accessors" : [
+        {
+            "componentType" : 5126,
+            "bufferView" : 0,
+            "type" : "VEC2",
+            "count" : 4
+        },
+        {
+            "componentType" : 5126,
+            "bufferView" : 1,
+            "type" : "VEC3",
+            "count" : 4
+        },
+        {
+            "bufferView" : 2,
+            "type" : "VEC3",
+            "max" : [
+                1,
+                0,
+                1
+            ],
+            "componentType" : 5126,
+            "min" : [
+                -1,
+                0,
+                -1
+            ],
+            "count" : 4
+        },
+        {
+            "componentType" : 5123,
+            "bufferView" : 3,
+            "type" : "SCALAR",
+            "count" : 6
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 32,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 32
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 80
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 12,
+            "byteOffset" : 128
+        }
+    ],
+    "samplers" : [
+        {
+            "magFilter" : 9728,
+            "minFilter" : 9984
+        }
+    ],
+    "buffers" : [
+        {
+            "uri" : "09_texture_transform.bin",
+            "byteLength" : 140
+        }
+    ]
+}
