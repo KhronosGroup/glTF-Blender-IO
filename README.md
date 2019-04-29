@@ -69,4 +69,6 @@ Running the Tests Locally
 
 To run the tests locally, your system should be modified to include `blender279b` and `blender28` as shell scripts (or Windows `.bat` files) in the path that launch their respective versions of Blender, including all command-line arguments.
 
-Then, in the `tests` folder of this repository, run `npm install`, followed by `npm run test`.  You can limit the test suite to one version of Blender with `npm run test-blender279b` or `npm run test-blender28`.
+The latest version of [Yarn](https://yarnpkg.com/en/) should also be installed.
+
+Then, in the `tests` folder of this repository, run `yarn install`, followed by `yarn run test`.  You can limit the test suite to one version of Blender with `yarn run test-blender279b` or `yarn run test-blender28`.
