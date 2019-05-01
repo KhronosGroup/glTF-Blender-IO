@@ -1,0 +1,53 @@
+{
+    "uri": "09_texture_transform.gltf",
+    "mimeType": "model/gltf+json",
+    "validatorVersion": "2.0.0-dev.2.7",
+    "validatedAt": "2019-04-26T15:02:29.729Z",
+    "issues": {
+        "numErrors": 0,
+        "numWarnings": 0,
+        "numInfos": 0,
+        "numHints": 0,
+        "messages": [],
+        "truncated": false
+    },
+    "info": {
+        "version": "2.0",
+        "generator": "Khronos glTF Blender I/O v0.9.2",
+        "extensionsUsed": [
+            "KHR_texture_transform"
+        ],
+        "extensionsRequired": [
+            "KHR_texture_transform"
+        ],
+        "resources": [
+            {
+                "pointer": "/buffers/0",
+                "mimeType": "application/gltf-buffer",
+                "storage": "external",
+                "uri": "09_texture_transform.bin",
+                "byteLength": 140
+            },
+            {
+                "pointer": "/images/0",
+                "mimeType": "image/png",
+                "storage": "external",
+                "uri": "09_tiny_grid.png",
+                "image": {
+                    "width": 8,
+                    "height": 8,
+                    "format": "RGB",
+                    "bits": 8
+                }
+            }
+        ],
+        "hasAnimations": false,
+        "hasMaterials": true,
+        "hasMorphTargets": false,
+        "hasSkins": false,
+        "hasTextures": true,
+        "hasDefaultScene": true,
+        "primitivesCount": 1,
+        "maxAttributesUsed": 3
+    }
+}

@@ -11,7 +11,7 @@ Beta
 Credits
 -------
 
-Developed by [UX3D](http://www.ux3d.io/) and [Julien Duroure](http://julienduroure.com/), with support from the [Khronos Group](https://www.khronos.org/), [Mozilla](https://www.mozilla.org/), and [Airbus Defense & Space](https://www.airbus.com/space.html).
+Developed by [UX3D](https://www.ux3d.io/) and [Julien Duroure](http://julienduroure.com/), with support from the [Khronos Group](https://www.khronos.org/), [Mozilla](https://www.mozilla.org/), and [Airbus Defense & Space](https://www.airbus.com/space.html).
 
 Introduction
 ------------
@@ -55,7 +55,7 @@ Debugging
 Continuous Integration Tests
 ----------------------------
 
-Several companies, individuals, and glTF community members contribute to Blender glTF I/O. Functionality is added and bugs are fixed regularly. Because hobbyists and professionals using Blender glTF I/O rely on its stability for their daily work,  continuous integration tests are enabled. After each commit or pull request, the following tests are run:
+Several companies, individuals, and glTF community members contribute to Blender glTF I/O. Functionality is added and bugs are fixed regularly. Because hobbyists and professionals using Blender glTF I/O rely on its stability for their daily work, continuous integration tests are enabled. After each commit or pull request, the following tests are run:
 
 -	Export Blender scene and validate using the [glTF validator](https://github.com/KhronosGroup/glTF-Validator/)
 -	Round trip import-export and comparison of glTF validator results  
@@ -63,3 +63,12 @@ Several companies, individuals, and glTF community members contribute to Blender
 These quality-assurance checks improve the reliability of Blender glTF I/O.  
 
 [![CircleCI](https://circleci.com/gh/KhronosGroup/glTF-Blender-IO.svg?style=svg)](https://circleci.com/gh/KhronosGroup/glTF-Blender-IO)
+
+Running the Tests Locally
+-------------------------
+
+To run the tests locally, your system should be modified to include `blender279b` and `blender28` as shell scripts (or Windows `.bat` files) in the path that launch their respective versions of Blender, including all command-line arguments.
+
+The latest version of [Yarn](https://yarnpkg.com/en/) should also be installed.
+
+Then, in the `tests` folder of this repository, run `yarn install`, followed by `yarn run test`.  You can limit the test suite to one version of Blender with `yarn run test-blender279b` or `yarn run test-blender28`.

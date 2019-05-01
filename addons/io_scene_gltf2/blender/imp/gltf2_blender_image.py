@@ -58,6 +58,8 @@ class BlenderImage():
 
         if img.blender_image_name is not None:
             # Image is already used somewhere
+            # We need to store index, for texture coord. mapping, if needed
+            bpy.data.images[img.blender_image_name]['tex_transform'][str(tex_index)] = tex_transform
             return
 
         if gltf.import_settings['import_pack_images'] is False:

@@ -92,8 +92,7 @@ def __gather_extras(sockets_or_slots, export_settings):
 
 def __gather_mime_type(sockets_or_slots, export_settings):
     if export_settings["gltf_image_format"] == "NAME":
-        image_name = __get_texname_from_slot(sockets_or_slots, export_settings)
-        _, extension = os.path.splitext(bpy.data.images[image_name].filepath)
+        extension = __get_extension_from_slot(sockets_or_slots, export_settings)
         extension = extension.lower()
         if extension in [".jpeg", ".jpg", ".png"]:
             return {
@@ -111,11 +110,6 @@ def __gather_mime_type(sockets_or_slots, export_settings):
 
 def __gather_name(sockets_or_slots, export_settings):
     image_name = __get_texname_from_slot(sockets_or_slots, export_settings)
-
-    name, extension = os.path.splitext(image_name)
-    extension = extension.lower()
-    if extension in [".jpeg", ".jpg", ".png"]:
-        return name
     return image_name
 
 
@@ -218,10 +212,49 @@ def __get_tex_from_slot(blender_texture_slot):
 @cached
 def __get_texname_from_slot(sockets_or_slots, export_settings):
     if __is_socket(sockets_or_slots):
-        node = __get_tex_from_socket(sockets_or_slots[0], export_settings)
-        if node is None:
-            return None
-        return node.shader_node.image.name
+        combined_name = None
+        foundNames = []
+        # If multiple images are being combined, combine the names as well.
+        for socket in sockets_or_slots:
+            node = __get_tex_from_socket(socket, export_settings)
+            if node is not None:
+                image_name = node.shader_node.image.name
+                if image_name not in foundNames:
+                    foundNames.append(image_name)
+                    name, extension = os.path.splitext(image_name)
+                    if combined_name is None:
+                        combined_name = name
+                    else:
+                        combined_name += '-' + name
+
+        # If only one image was used, and that image has a real filepath, use the real filepath instead.
+        if len(foundNames) == 1:
+            filename = os.path.basename(bpy.data.images[foundNames[0]].filepath)
+            name, extension = os.path.splitext(filename)
+            if extension.lower() in ['.png', '.jpg', '.jpeg']:
+                return name
+
+        return combined_name
 
     elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
         return sockets_or_slots[0].texture.image.name
+
+
+@cached
+def __get_extension_from_slot(sockets_or_slots, export_settings):
+    if __is_socket(sockets_or_slots):
+        for socket in sockets_or_slots:
+            node = __get_tex_from_socket(socket, export_settings)
+            if node is not None:
+                image_name = node.shader_node.image.name
+                filepath = bpy.data.images[image_name].filepath
+                name, extension = os.path.splitext(filepath)
+                if extension:
+                    return extension
+        return '.png'
+
+    elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
+        image_name = sockets_or_slots[0].texture.image.name
+        filepath = bpy.data.images[image_name].filepath
+        name, extension = os.path.splitext(filepath)
+        return extension
