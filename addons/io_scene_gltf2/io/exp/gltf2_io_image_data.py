@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
+import os
 
 
 class ImageData:
@@ -19,10 +20,12 @@ class ImageData:
     # FUTURE_WORK: as a method to allow the node graph to be better supported, we could model some of
     # the node graph elements with numpy functions
 
-    def __init__(self, data: bytes, mime_type: str, name: str):
+    def __init__(self, data: bytes, mime_type: str, name: str, filepath: str, uri_handling: str):
         self._data = data
         self._mime_type = mime_type
         self._name = name
+        self._filepath = filepath
+        self._uri_handling = uri_handling
 
     def __eq__(self, other):
         return self._data == other.data
@@ -49,6 +52,21 @@ class ImageData:
         if self._mime_type == "image/jpeg":
             return ".jpg"
         return ".png"
+
+    def filepath_uri(self):
+        if self._uri_handling != "TRY_USE_FILEPATH":
+            return None
+
+        path = self._filepath
+        if path[:2] == '//':
+            path = path[2:]
+
+        _, extension = os.path.splitext(path)
+        extension = extension.lower()
+        if extension not in [".jpeg", ".jpg", ".png"]:
+            return None
+
+        return path
 
     @property
     def byte_length(self):

@@ -62,7 +62,7 @@ class GlTF2Exporter:
         )
 
         self.__buffer = gltf2_io_buffer.Buffer()
-        self.__images = {}
+        self.__images_to_save = {}
 
         # mapping of all glTFChildOfRootProperty types to their corresponding root level arrays
         self.__childOfRootPropertyTypeLookup = {
@@ -149,7 +149,7 @@ class GlTF2Exporter:
         :param output_path:
         :return:
         """
-        for name, image in self.__images.items():
+        for name, image in self.__images_to_save.items():
             dst_path = output_path + "/" + name + image.file_extension
             with open(dst_path, 'wb') as f:
                 f.write(image.data)
@@ -209,11 +209,15 @@ class GlTF2Exporter:
             return index
 
     def __add_image(self, image: gltf2_io_image_data.ImageData):
+        uri = image.filepath_uri()
+        if uri is not None:
+            return uri # Don't add to the __images_to_save array
+
         name = image.adjusted_name()
         count = 1
         regex = re.compile(r"\d+$")
         regex_found = re.findall(regex, name)
-        while name in self.__images.keys():
+        while name in self.__images_to_save.keys():
             if regex_found:
                 name = re.sub(regex, str(count), name)
             else:
@@ -224,7 +228,7 @@ class GlTF2Exporter:
         # exporter
         # TODO: allow embedding of images (base64)
 
-        self.__images[name] = image
+        self.__images_to_save[name] = image
         return name + image.file_extension
 
     @classmethod

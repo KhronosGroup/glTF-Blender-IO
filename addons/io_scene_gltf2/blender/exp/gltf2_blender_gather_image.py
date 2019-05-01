@@ -113,7 +113,9 @@ def __gather_uri(sockets_or_slots, export_settings):
         return gltf2_io_image_data.ImageData(
             data=__get_image_data(sockets_or_slots, export_settings).encode(mime_type=mime_type),
             mime_type=mime_type,
-            name=__gather_name(sockets_or_slots, export_settings)
+            name=__gather_name(sockets_or_slots, export_settings),
+            filepath=__get_teximage_from_slot(sockets_or_slots, export_settings).filepath,
+            uri_handling=export_settings[gltf2_blender_export_keys.IMAGE_URI_HANDLING]
         )
 
     return None
@@ -208,5 +210,17 @@ def __get_texname_from_slot(sockets_or_slots, export_settings):
             return None
         return node.shader_node.image.name
 
-    elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
+    elif __is_slot(sockets_or_slots):
         return sockets_or_slots[0].name
+
+@cached
+def __get_teximage_from_slot(sockets_or_slots, export_settings):
+    if __is_socket(sockets_or_slots):
+        node = __get_tex_from_socket(sockets_or_slots[0], export_settings)
+        if node is None:
+            return None
+        return node.shader_node.image
+
+    elif __is_slot(sockets_or_slots):
+        return __get_tex_from_slot(sockets_or_slots[0]).image
+

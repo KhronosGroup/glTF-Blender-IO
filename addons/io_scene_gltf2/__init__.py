@@ -123,6 +123,20 @@ class ExportGLTF2_Base:
         default='NAME'
     )
 
+    image_uri_handling = EnumProperty(
+        name='Image URI handling',
+        items=(('USE_NAME', 'Use texture name',
+                'Images will be copied to the output directory using their name'),
+                ('TRY_USE_FILEPATH', 'Try to use file path',
+                'If source images are already PNG or JPEG, their URI will be set to their relative path'),
+               ),
+        description=(
+            'How image URIs are chosen, which in turn determines if image files should be '
+            'copied/converted along with the output GLTF.'
+        ),
+        default='USE_NAME'
+    )
+
     export_texcoords = BoolProperty(
         name='UVs',
         description='Export UVs (texture coordinates) with meshes',
@@ -365,6 +379,7 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
+        export_settings['gltf_image_uri_handling'] = self.image_uri_handling
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
@@ -456,6 +471,7 @@ class ExportGLTF2_Base:
         col.prop(self, 'export_materials')
         if self.export_materials:
             col.prop(self, 'export_image_format')
+            col.prop(self, 'image_uri_handling')
 
         # Add Draco compression option only if the DLL could be found.
         if self.is_draco_available:
