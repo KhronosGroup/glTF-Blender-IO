@@ -52,11 +52,15 @@ class BlenderImage():
         return False, None, None
 
     @staticmethod
-    def create(gltf, img_idx):
+    def create(gltf, img_idx, tex_index, tex_transform):
         """Image creation."""
         img = gltf.data.images[img_idx]
 
-        img.blender_image_name = None
+        if img.blender_image_name is not None:
+            # Image is already used somewhere
+            # We need to store index, for texture coord. mapping, if needed
+            bpy.data.images[img.blender_image_name]['tex_transform'][str(tex_index)] = tex_transform
+            return
 
         if gltf.import_settings['import_pack_images'] is False:
 
@@ -70,10 +74,13 @@ class BlenderImage():
                     if img_.filepath == path:
                         # Already loaded, not needed to reload it
                         img.blender_image_name = img_.name
+                        img_['tex_transform'][str(tex_index)] = tex_transform
                         return
 
                 blender_image = bpy.data.images.load(path)
                 blender_image.name = img_name
+                blender_image['tex_transform'] = {}
+                blender_image['tex_transform'][str(tex_index)] = tex_transform
                 img.blender_image_name = blender_image.name
                 return
 
@@ -83,6 +90,7 @@ class BlenderImage():
             if hasattr(img_, "gltf_index") and img_['gltf_index'] == img_idx:
                 file_creation_needed = False
                 img.blender_image_name = img_.name
+                img_['tex_transform'][tex_index] = tex_transform
                 break
 
         if file_creation_needed is True:
@@ -96,6 +104,8 @@ class BlenderImage():
                 blender_image = bpy.data.images.load(tmp_image.name)
                 blender_image.pack()
                 blender_image.name = img_name
+                blender_image['tex_transform'] = {}
+                blender_image['tex_transform'][str(tex_index)] = tex_transform
                 img.blender_image_name = blender_image.name
                 blender_image['gltf_index'] = img_idx
                 os.remove(tmp_image.name)

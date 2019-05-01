@@ -1,0 +1,23 @@
+{
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 2017
+    },
+    "globals":{
+        "describe": "readonly",
+        "it": "readonly"
+    },
+    "env": {
+        "es6": true,
+        "node": true
+    },
+    "rules": {
+        "indent": 1,
+        "semi": 1,
+        "no-extra-semi": 1,
+        "no-unused-vars": 0,
+        "no-console": [
+            "off"
+        ]
+    }
+}

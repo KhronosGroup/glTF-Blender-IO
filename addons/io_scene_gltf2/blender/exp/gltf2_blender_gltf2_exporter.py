@@ -14,6 +14,7 @@
 import re
 from typing import List
 
+from ... import get_version_string
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -35,7 +36,7 @@ class GlTF2Exporter:
             copyright=copyright,
             extensions=None,
             extras=None,
-            generator='Khronos Blender glTF 2.0 I/O',
+            generator='Khronos glTF Blender I/O v' + get_version_string(),
             min_version=None,
             version='2.0')
 

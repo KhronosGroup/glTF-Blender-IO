@@ -14,8 +14,8 @@
 
 bl_info = {
     'name': 'glTF 2.0 format',
-    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein',
-    "version": (0, 0, 1),
+    'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
+    "version": (0, 9, 4),
     'blender': (2, 80, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -26,6 +26,8 @@ bl_info = {
     'category': 'Import-Export',
 }
 
+def get_version_string():
+    return str(bl_info['version'][0]) + '.' + str(bl_info['version'][1]) + '.' + str(bl_info['version'][2])
 
 #
 # Script reloading (if the user calls 'Reload Scripts' from Blender)
