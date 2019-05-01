@@ -129,7 +129,7 @@ class ExportGLTF2_Base:
         name='Image URI handling',
         items=(('USE_NAME', 'Use texture name',
                 'Images will be copied to the output directory using their name'),
-                ('TRY_USE_FILEPATH', 'Try to use file path',
+                ('TRY_USE_FILEPATH', 'Try to use original file path',
                 'If source images are already PNG or JPEG, their URI will be set to their relative path'),
                ),
         description=(
