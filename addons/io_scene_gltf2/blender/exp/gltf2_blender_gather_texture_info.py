@@ -57,7 +57,7 @@ def __filter_texture_info(blender_shader_sockets_or_texture_slots, export_settin
         if any(any(a != b for a, b in zip(__get_tex_from_socket(elem).shader_node.image.size, resolution))
                for elem in blender_shader_sockets_or_texture_slots):
             def format_image(image_node):
-                return "{} ({}x{})".format(image_node.name, image_node.image.size[0], image_node.image.size[1])
+                return "{} ({}x{})".format(image_node.image.name, image_node.image.size[0], image_node.image.size[1])
 
             images = [format_image(__get_tex_from_socket(elem).shader_node) for elem in
                       blender_shader_sockets_or_texture_slots]
