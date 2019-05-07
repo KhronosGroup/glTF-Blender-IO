@@ -196,6 +196,10 @@ class BlenderScene():
                         bpy.data.collections[gltf.blender_active_collection].hide_viewport = gltf.collection_hide_viewport
                         # TODO restore visibility when expose in bpy
 
+        # Make first root object the new active one
+        if list_nodes is not None:
+            bpy.context.scene.objects.active = bpy.data.objects[gltf.data.nodes[list_nodes[0]].blender_object]
+
     @staticmethod
     def get_root_nodes(gltf):
         if gltf.data.nodes is None:
