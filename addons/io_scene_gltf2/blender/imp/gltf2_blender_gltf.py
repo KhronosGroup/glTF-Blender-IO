@@ -32,6 +32,12 @@ class BlenderGlTF():
                 bpy.context.scene.render.engine = 'BLENDER_EEVEE'
         BlenderGlTF.pre_compute(gltf)
 
+        gltf.display_current_node = 0
+        if gltf.data.nodes is not None:
+            gltf.display_total_nodes = len(gltf.data.nodes)
+        else:
+            gltf.display_total_nodes = "?"
+
         active_object_name_at_end = None
         if gltf.data.scenes is not None:
             for scene_idx, scene in enumerate(gltf.data.scenes):

@@ -34,6 +34,10 @@ class BlenderNode():
         pynode.blender_object = ""
         pynode.parent = parent
 
+        gltf.display_current_node += 1
+        if bpy.app.debug_value == 101:
+            gltf.log.critical("Node " + str(gltf.display_current_node) + " of " + str(gltf.display_total_nodes))
+
         if pynode.mesh is not None:
 
             instance = False
