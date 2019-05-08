@@ -65,16 +65,10 @@ class BlenderGlTF():
                 active_object_name_at_end = bpy.context.view_layer.objects.active.name
 
         # Armature correction
-        # Try to detect bone chains, and set bone lengths
-        # To detect if a bone is in a chain, we try to detect if a bone head is aligned
-        # with parent_bone :
-        #          Parent bone defined a line (between head & tail)
-        #          Bone head defined a point
-        #          Calcul of distance between point and line
-        #          If < threshold --> In a chain
-        # Based on an idea of @Menithal, but added alignement detection to avoid some bad cases
-
-        threshold = 0.001
+        # Tries to set the bone tails so that they look logical.
+        # If a bone has children, then set the tail to the average of all children heads,
+        # Otherwise calculate the difference between the head and the tail of the parent bone and calculate the tail from that.
+        
         for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
             if bpy.app.version < (2, 80, 0):
                 # Take into account only armature from this scene
@@ -89,27 +83,20 @@ class BlenderGlTF():
             armature = armobj.data
             bpy.ops.object.mode_set(mode="EDIT")
             for bone in armature.edit_bones:
-                if bone.parent is None:
-                    continue
-
-                parent = bone.parent
-
-                # case where 2 bones are aligned (not in chain, same head)
-                if (bone.head - parent.head).length < threshold:
-                    continue
-
-                u = (parent.tail - parent.head).normalized()
-                point = bone.head
-                distance = ((point - parent.head).cross(u)).length / u.length
-                if distance < threshold:
-                    save_parent_direction = (parent.tail - parent.head).normalized().copy()
-                    save_parent_tail = parent.tail.copy()
-                    parent.tail = bone.head
-
-                    # case where 2 bones are aligned (not in chain, same head)
-                    # bone is no more is same direction
-                    if (parent.tail - parent.head).normalized().dot(save_parent_direction) < 0.9:
-                        parent.tail = save_parent_tail
+                child_bone_sum = [0, 0, 0]
+                child_count = 0
+                for child in bone.children:
+                    child_bone_sum[0] += child.head[0]
+                    child_bone_sum[1] += child.head[1]
+                    child_bone_sum[2] += child.head[2]
+                    child_count += 1
+                if child_count == 0:
+                    disp_x = bone.parent.tail[0] - bone.parent.head[0]
+                    disp_y = bone.parent.tail[1] - bone.parent.head[1]
+                    disp_z = bone.parent.tail[2] - bone.parent.head[2]
+                    bone.tail = [bone.head[0] + disp_x, bone.head[1] + disp_y, bone.head[2] + disp_z]
+                else:
+                    bone.tail = [child_bone_sum[0]/child_count, child_bone_sum[1]/child_count, child_bone_sum[2]/child_count]
 
             bpy.ops.object.mode_set(mode="OBJECT")
 
