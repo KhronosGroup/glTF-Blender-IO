@@ -112,7 +112,9 @@ class ExportImage:
             tmpfilename = tmpdirname + "/img"
             image.filepath_raw = tmpfilename
             image.file_format = file_format
-            image.save()
+            image_settings = bpy.context.scene.render.image_settings
+            image_settings.color_mode = 'RGBA'
+            image.save_render(tmpfilename)
 
             with open(tmpfilename, "rb") as f:
                 encoded_image = f.read()
