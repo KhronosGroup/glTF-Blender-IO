@@ -82,6 +82,7 @@ class BlenderGlTF():
                 bpy.context.view_layer.objects.active = armobj
             armature = armobj.data
             bpy.ops.object.mode_set(mode="EDIT")
+            no_children_bones = []
             for bone in armature.edit_bones:
                 child_bone_sum = [0, 0, 0]
                 child_count = 0
@@ -90,13 +91,15 @@ class BlenderGlTF():
                     child_bone_sum[1] += child.head[1]
                     child_bone_sum[2] += child.head[2]
                     child_count += 1
-                if child_count == 0:
-                    disp_x = bone.parent.tail[0] - bone.parent.head[0]
-                    disp_y = bone.parent.tail[1] - bone.parent.head[1]
-                    disp_z = bone.parent.tail[2] - bone.parent.head[2]
-                    bone.tail = [bone.head[0] + disp_x, bone.head[1] + disp_y, bone.head[2] + disp_z]
+                if child_count == 0 and bone.parent is not None:
+                    no_children_bones.append(bone)
                 else:
                     bone.tail = [child_bone_sum[0]/child_count, child_bone_sum[1]/child_count, child_bone_sum[2]/child_count]
+            for bone in no_children_bones:
+                disp_x = bone.parent.tail[0] - bone.parent.head[0]
+                disp_y = bone.parent.tail[1] - bone.parent.head[1]
+                disp_z = bone.parent.tail[2] - bone.parent.head[2]
+                bone.tail = [bone.head[0] + disp_x, bone.head[1] + disp_y, bone.head[2] + disp_z]
 
             bpy.ops.object.mode_set(mode="OBJECT")
 
