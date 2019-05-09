@@ -67,8 +67,9 @@ class BlenderGlTF():
         # Armature correction
         # Tries to set the bone tails so that they look logical.
         # If a bone has children, then set the tail to the average of all children heads,
-        # Otherwise calculate the difference between the head and the tail of the parent bone and calculate the tail from that.
-        
+        # Otherwise calculate the difference between the head and the tail
+        # of the parent bone and calculate the tail from that.
+
         for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
             if bpy.app.version < (2, 80, 0):
                 # Take into account only armature from this scene
@@ -91,10 +92,13 @@ class BlenderGlTF():
                     child_bone_sum[1] += child.head[1]
                     child_bone_sum[2] += child.head[2]
                     child_count += 1
-                if child_count == 0 and bone.parent is not None:
-                    no_children_bones.append(bone)
+                if child_count == 0:
+                    if bone.parent is not None:
+                        no_children_bones.append(bone)
                 else:
-                    bone.tail = [child_bone_sum[0]/child_count, child_bone_sum[1]/child_count, child_bone_sum[2]/child_count]
+                    bone.tail[0] = child_bone_sum[0]/child_count
+                    bone.tail[1] = child_bone_sum[1]/child_count
+                    bone.tail[2] = child_bone_sum[2]/child_count
             for bone in no_children_bones:
                 disp_x = bone.parent.tail[0] - bone.parent.head[0]
                 disp_y = bone.parent.tail[1] - bone.parent.head[1]
