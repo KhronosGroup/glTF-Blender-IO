@@ -36,21 +36,37 @@ def gather_image(
     if not __filter_image(blender_shader_sockets_or_texture_slots, export_settings):
         return None
 
-    uri = __gather_uri(blender_shader_sockets_or_texture_slots, export_settings)
-    buffer_view = __gather_buffer_view(blender_shader_sockets_or_texture_slots, export_settings)
-    if not (uri is not None or buffer_view is not None):
+    image_data = __get_image_data(blender_shader_sockets_or_texture_slots, export_settings)
+    if image_data is None:
         # The blender image has no data
         return None
 
-    image = gltf2_io.Image(
+    mime_type = __gather_mime_type(blender_shader_sockets_or_texture_slots, export_settings)
+    name = __gather_name(blender_shader_sockets_or_texture_slots, export_settings)
+
+    uri = __gather_uri(image_data, mime_type, name, export_settings)
+    buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
+
+    return __make_image(
+        buffer_view,
+        __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings),
+        __gather_extras(blender_shader_sockets_or_texture_slots, export_settings),
+        mime_type,
+        name,
+        uri,
+        export_settings
+    )
+
+@cached
+def __make_image(buffer_view, extensions, extras, mime_type, name, uri, export_settings):
+    return gltf2_io.Image(
         buffer_view=buffer_view,
-        extensions=__gather_extensions(blender_shader_sockets_or_texture_slots, export_settings),
-        extras=__gather_extras(blender_shader_sockets_or_texture_slots, export_settings),
-        mime_type=__gather_mime_type(blender_shader_sockets_or_texture_slots, export_settings),
-        name=__gather_name(blender_shader_sockets_or_texture_slots, export_settings),
+        extensions=extensions,
+        extras=extras,
+        mime_type=mime_type,
+        name=name,
         uri=uri
     )
-    return image
 
 
 def __filter_image(sockets_or_slots, export_settings):
@@ -59,13 +75,10 @@ def __filter_image(sockets_or_slots, export_settings):
     return True
 
 
-def __gather_buffer_view(sockets_or_slots, export_settings):
+@cached
+def __gather_buffer_view(image_data, mime_type, name, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
-        image = __get_image_data(sockets_or_slots, export_settings)
-        if image is None:
-            return None
-        return gltf2_io_binary_data.BinaryData(
-            data=image.encode(__gather_mime_type(sockets_or_slots, export_settings)))
+        return gltf2_io_binary_data.BinaryData(data=image_data.encode(mime_type))
     return None
 
 
@@ -100,14 +113,14 @@ def __gather_name(sockets_or_slots, export_settings):
     return image_name
 
 
-def __gather_uri(sockets_or_slots, export_settings):
+@cached
+def __gather_uri(image_data, mime_type, name, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_SEPARATE':
         # as usual we just store the data in place instead of already resolving the references
-        mime_type = __gather_mime_type(sockets_or_slots, export_settings)
         return gltf2_io_image_data.ImageData(
-            data=__get_image_data(sockets_or_slots, export_settings).encode(mime_type=mime_type),
+            data=image_data.encode(mime_type=mime_type),
             mime_type=mime_type,
-            name=__gather_name(sockets_or_slots, export_settings)
+            name=name
         )
 
     return None
@@ -122,9 +135,9 @@ def __is_slot(sockets_or_slots):
 
 
 def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.ExportImage:
-    # For shared ressources, such as images, we just store the portion of data that is needed in the glTF property
+    # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
-    # ressources.
+    # resources.
     def split_pixels_by_channels(image: bpy.types.Image, export_settings) -> typing.Optional[typing.List[typing.List[float]]]:
         channelcache = export_settings['gltf_channelcache']
         if image.name in channelcache:

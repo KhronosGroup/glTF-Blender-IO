@@ -212,13 +212,13 @@ class GlTF2Exporter:
     def __add_image(self, image: gltf2_io_image_data.ImageData):
         name = image.adjusted_name()
         count = 1
-        regex = re.compile(r"\d+$")
-        regex_found = re.findall(regex, name)
+        regex = re.compile(r"-\d+$")
         while name in self.__images.keys():
+            regex_found = re.findall(regex, name)
             if regex_found:
-                name = re.sub(regex, str(count), name)
+                name = re.sub(regex, "-" + str(count), name)
             else:
-                name += " " + str(count)
+                name += "-" + str(count)
 
             count += 1
         # TODO: we need to know the image url at this point already --> maybe add all options to the constructor of the

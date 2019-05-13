@@ -29,7 +29,7 @@ def gather_texture(
             typing.Tuple[bpy.types.NodeSocket], typing.Tuple[typing.Any]],
         export_settings):
     """
-    Gather texture sampling information and image channels from a blender shader textu  re attached to a shader socket.
+    Gather texture sampling information and image channels from a blender shader texture attached to a shader socket.
 
     :param blender_shader_sockets: The sockets of the material which should contribute to the texture
     :param export_settings: configuration of the export
@@ -47,7 +47,7 @@ def gather_texture(
         source=__gather_source(blender_shader_sockets_or_texture_slots, export_settings)
     )
 
-    # although valid, most viewers cant handle missing source properties
+    # although valid, most viewers can't handle missing source properties
     if texture.source is None:
         return None
 

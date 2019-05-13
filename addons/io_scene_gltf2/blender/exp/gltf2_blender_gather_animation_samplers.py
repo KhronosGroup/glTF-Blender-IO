@@ -116,8 +116,6 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
     target_datapath = channels[0].data_path
 
-    transform = mathutils.Matrix.Identity(4)
-
     is_yup = export_settings[gltf2_blender_export_keys.YUP]
 
     # bone animations need to be handled differently as they are in a different coordinate system
@@ -141,6 +139,10 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     bone.parent.bone.matrix_local.inverted(), bone.bone.matrix_local)
 
             transform = correction_matrix_local
+        else:
+            transform = mathutils.Matrix.Identity(4)
+    else:
+        transform = parent_inverse
 
     values = []
     for keyframe in keyframes:
