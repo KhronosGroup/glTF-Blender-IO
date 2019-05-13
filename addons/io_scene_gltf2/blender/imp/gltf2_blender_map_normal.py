@@ -66,7 +66,8 @@ class BlenderNormalMap():
                 gltf.data.textures[pymaterial.normal_texture.index].source
             ].blender_image_name]
         text.label = 'NORMALMAP'
-        text.color_space = 'NONE'
+        if text.image:
+            text.image.colorspace_settings.is_data = True
         text.location = -500, -500
 
         normalmap_node = node_tree.nodes.new('ShaderNodeNormalMap')
