@@ -94,7 +94,7 @@ class Keyframe:
 
 # cache for performance reasons
 @cached
-def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
+def gather_keyframes(blender_object: bpy.types.Object,
                      channels: typing.Tuple[bpy.types.FCurve],
                      export_settings) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
@@ -105,12 +105,12 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     end_frame = max([channel.range()[1] for channel in channels])
 
     keyframes = []
-    if needs_baking(blender_object_if_armature, channels, export_settings):
+    if needs_baking(blender_object, channels, export_settings):
         # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
 
-        if blender_object_if_armature is not None:
-            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
+        if blender_object.type == "ARMATURE":
+            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object,
                                                                                channels[0].data_path)
         else:
             pose_bone_if_armature = None
@@ -179,7 +179,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     return keyframes
 
 
-def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
+def needs_baking(blender_object: bpy.types.Object,
                  channels: typing.Tuple[bpy.types.FCurve],
                  export_settings
                  ) -> bool:
@@ -228,7 +228,7 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
                                      "Baking animation because of differently located keyframes in one channel")
         return True
 
-    if blender_object_if_armature is not None:
+    if blender_object.type == "ARMATURE":
         animation_target = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, channels[0].data_path)
         if isinstance(animation_target, bpy.types.PoseBone):
             if len(animation_target.constraints) != 0:

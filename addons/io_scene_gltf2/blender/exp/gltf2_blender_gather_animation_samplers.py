@@ -34,27 +34,26 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              blender_object: bpy.types.Object,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
-    blender_object_if_armature = blender_object if blender_object.type == "ARMATURE" else None
     return gltf2_io.AnimationSampler(
-        extensions=__gather_extensions(channels, blender_object_if_armature, export_settings),
-        extras=__gather_extras(channels, blender_object_if_armature, export_settings),
-        input=__gather_input(channels, blender_object_if_armature, export_settings),
-        interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings),
+        extensions=__gather_extensions(channels, blender_object, export_settings),
+        extras=__gather_extras(channels, blender_object, export_settings),
+        input=__gather_input(channels, blender_object, export_settings),
+        interpolation=__gather_interpolation(channels, blender_object, export_settings),
         output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
-                               blender_object_if_armature,
+                               blender_object,
                                export_settings)
     )
 
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
-                        blender_object_if_armature: typing.Optional[bpy.types.Object],
+                        blender_object: bpy.types.Object,
                         export_settings
                         ) -> typing.Any:
     return None
 
 
 def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
-                    blender_object_if_armature: typing.Optional[bpy.types.Object],
+                    blender_object: bpy.types.Object,
                     export_settings
                     ) -> typing.Any:
     return None
@@ -62,11 +61,11 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 @cached
 def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
-                   blender_object_if_armature: typing.Optional[bpy.types.Object],
+                   blender_object: bpy.types.Object,
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes."""
-    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object_if_armature,
+    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object,
                                                                                   channels,
                                                                                   export_settings)
     times = [k.seconds for k in keyframes]
@@ -83,10 +82,10 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
-                           blender_object_if_armature: typing.Optional[bpy.types.Object],
+                           blender_object: bpy.types.Object,
                            export_settings
                            ) -> str:
-    if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(blender_object_if_armature,
+    if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(blender_object,
                                                                      channels,
                                                                      export_settings):
         max_keyframes = max([len(ch.keyframe_points) for ch in channels])
@@ -106,11 +105,11 @@ def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
 @cached
 def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     parent_inverse,
-                    blender_object_if_armature: typing.Optional[bpy.types.Object],
+                    blender_object: bpy.types.Object,
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
-    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object_if_armature,
+    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object,
                                                                                   channels,
                                                                                   export_settings)
 
@@ -120,10 +119,10 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
     # bone animations need to be handled differently as they are in a different coordinate system
     object_path = get_target_object_path(target_datapath)
-    is_armature_animation = blender_object_if_armature is not None and object_path != ""
+    is_armature_animation = blender_object.type == "ARMATURE" and object_path != ""
 
     if is_armature_animation:
-        bone = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, object_path)
+        bone = gltf2_blender_get.get_object_from_datapath(blender_object, object_path)
         if isinstance(bone, bpy.types.PoseBone):
             if bone.parent is None:
                 axis_basis_change = mathutils.Matrix.Identity(4)
@@ -155,7 +154,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
         if keyframe.in_tangent is not None:
             # we can directly transform the tangent as it currently is represented by a control point
             in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform)
-            if is_yup and blender_object_if_armature is None:
+            if is_yup and blender_object.type != "ARMATURE":
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
             # the tangent in glTF is relative to the keyframe value
             in_tangent = value - in_tangent if not isinstance(value, list) else [value[0] - in_tangent[0]]
@@ -164,7 +163,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
         if keyframe.out_tangent is not None:
             # we can directly transform the tangent as it currently is represented by a control point
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform)
-            if is_yup and blender_object_if_armature is None:
+            if is_yup and blender_object.type != "ARMATURE":
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
             # the tangent in glTF is relative to the keyframe value
             out_tangent = value - out_tangent if not isinstance(value, list) else [value[0] - out_tangent[0]]
