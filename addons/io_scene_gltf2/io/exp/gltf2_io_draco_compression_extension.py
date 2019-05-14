@@ -4,6 +4,7 @@ from ctypes import *
 from pathlib import Path
 
 from io_scene_gltf2.io.exp.gltf2_io_binary_data import BinaryData
+from ...io.com.gltf2_io_debug import print_console
 
 
 def dll_path() -> Path:
@@ -111,18 +112,40 @@ def compress_scene_primitives(scenes, export_settings):
 
     for scene in scenes:
         for node in scene.nodes:
-            __traverse_node(node, dll, export_settings)
+            __traverse_node(node, lambda node: __compress_node(node, dll, export_settings))
 
+    for scene in scenes:
+        for node in scene.nodes:
+            __traverse_node(node, __dispose_memory)
 
-def __traverse_node(node, dll, export_settings):
+def __dispose_memory(node):
+    """Remove buffers from attribute, since the data now resides inside the compressed Draco buffer."""
     if not (node.mesh is None):
-        print("Compressing mesh " + node.name)
+        for primitive in node.mesh.primitives:
+
+            # Drop indices.
+            primitive.indices.buffer_view = None
+
+            # Drop attributes.
+            attributes = primitive.attributes
+            attributes['POSITION'].buffer_view = None
+            attributes['NORMAL'].buffer_view = None
+            for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
+                attribute.buffer_view = None
+
+def __compress_node(node, dll, export_settings):
+    """Compress a single node."""
+    if not (node.mesh is None):
+        print_console("INFO", "Compressing mesh " + node.name)
         for primitive in node.mesh.primitives:
             __compress_primitive(primitive, dll, export_settings)
 
+def __traverse_node(node, f):
+    """Calls f for each node and all child nodes, recursively."""
+    f(node)
     if not (node.children is None):
         for child in node.children:
-            __traverse_node(child, dll, export_settings)
+            __traverse_node(child)
 
 
 def __compress_primitive(primitive, dll, export_settings):
@@ -151,7 +174,6 @@ def __compress_primitive(primitive, dll, export_settings):
     }
     indices = primitive.indices
     dll.setFaces(compressor, indices.count, index_byte_length[indices.component_type.name], indices.buffer_view.data)
-    indices.buffer_view = None
 
     # Set compression parameters.
     dll.setCompressionLevel(compressor, export_settings['gltf_draco_mesh_compression_level'])
@@ -198,12 +220,6 @@ def __compress_primitive(primitive, dll, export_settings):
 
         # Set to triangle list mode.
         primitive.mode = 4
-
-        # Remove buffers from attribute, since the data now resides inside the compressed Draco buffer.
-        attributes['POSITION'].buffer_view = None
-        attributes['NORMAL'].buffer_view = None
-        for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
-            attribute.buffer_view = None
 
     # Afterwards, the compressor can be released.
     dll.disposeCompressor(compressor)
