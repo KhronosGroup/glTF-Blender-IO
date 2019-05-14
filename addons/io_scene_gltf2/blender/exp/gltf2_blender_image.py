@@ -17,7 +17,6 @@ import typing
 import numpy as np
 import tempfile
 
-
 class ExportImage:
     """Custom image class that allows manipulation and encoding of images"""
     # FUTURE_WORK: as a method to allow the node graph to be better supported, we could model some of
@@ -97,7 +96,7 @@ class ExportImage:
         self.append(other)
 
     def encode(self, mime_type: typing.Optional[str]) -> bytes:
-        image = bpy.data.images.new("TmpImage", width=self.width, height=self.height)
+        image = bpy.data.images.new("TmpImage", width=self.width, height=self.height, alpha=True)
         pixels = self._img.flatten().tolist()
         image.pixels = pixels
 

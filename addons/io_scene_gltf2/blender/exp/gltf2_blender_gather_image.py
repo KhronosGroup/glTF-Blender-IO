@@ -43,7 +43,6 @@ def gather_image(
 
     mime_type = __gather_mime_type(blender_shader_sockets_or_texture_slots, export_settings)
     name = __gather_name(blender_shader_sockets_or_texture_slots, export_settings)
-
     uri = __gather_uri(image_data, mime_type, name, export_settings)
     buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -91,6 +90,11 @@ def __gather_extras(sockets_or_slots, export_settings):
 
 
 def __gather_mime_type(sockets_or_slots, export_settings):
+    # force png if Opacity contained so we can export alpha
+    for socket in sockets_or_slots:
+        if socket.name == "Opacity":
+            return "image/png"
+
     if export_settings["gltf_image_format"] == "NAME":
         extension = __get_extension_from_slot(sockets_or_slots, export_settings)
         extension = extension.lower()
@@ -183,6 +187,8 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
                 composed_image[1] = image[source_channel]
             elif socket.name == 'Occlusion' and len(sockets_or_slots) > 1 and sockets_or_slots[1] is not None:
                 composed_image[0] = image[source_channel]
+            elif socket.name == 'Opacity' and len(sockets_or_slots) > 1 and sockets_or_slots[1] is not None:
+                composed_image[3] = image[0]
             else:
                 composed_image.update(image)
 
