@@ -270,7 +270,7 @@ def needs_baking(blender_object: bpy.types.Object,
         return True
 
     if blender_object.type == "ARMATURE":
-        animation_target = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, channels[0].data_path)
+        animation_target = gltf2_blender_get.get_object_from_datapath(blender_object, channels[0].data_path)
         if isinstance(animation_target, bpy.types.PoseBone):
             if len(animation_target.constraints) != 0:
                 # Constraints such as IK act on the bone -> can not be represented in glTF atm
