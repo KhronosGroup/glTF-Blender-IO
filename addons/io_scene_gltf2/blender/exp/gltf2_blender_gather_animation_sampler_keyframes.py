@@ -73,6 +73,11 @@ class Keyframe:
     def set_value_index(self, idx, val):
         self.__value[idx] = val
 
+    def set_full_value(self, val):
+        self.__value = [0.0] * self.get_target_len()
+        for i in range(0, self.get_target_len()):
+            self.set_value_index(i, val[i])
+
     @property
     def value(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
         return self.__value
@@ -134,14 +139,15 @@ def gather_keyframes(blender_object: bpy.types.Object,
                 # TODO, this is not working if the action is not active (NLA case for example)
                 trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
                 target_property = channels[0].data_path.split('.')[-1]
-                key.value = {
+                # Store all values, not only the data from fcurve:
+                # All indices must be stored
+                key.set_full_value({
                     "location": trans,
                     "rotation_axis_angle": rot,
                     "rotation_euler": rot,
                     "rotation_quaternion": rot,
                     "scale": scale
-                }[target_property]
-
+                }[target_property])
             else:
                 key.value = [c.evaluate(frame) for c in channels]
             keyframes.append(key)
