@@ -150,6 +150,7 @@ def gather_keyframes(blender_object: bpy.types.Object,
                 }[target_property])
             else:
                 key.value = [c.evaluate(frame) for c in channels]
+                complete_key(key, blender_object, pose_bone_if_armature, non_keyed_values)
             keyframes.append(key)
             frame += step
     else:
