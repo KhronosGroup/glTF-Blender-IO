@@ -211,22 +211,15 @@ def complete_key(key: Keyframe, blender_object: bpy.types.Object, pose_bone_if_a
             key.set_value_index(i, non_keyed_values[i])
             continue
         if blender_object.type != "ARMATURE":
-            if key.target == "delta_location":
-                non_keyed_values[i] = blender_object.delta_location[i]
-            elif key.target == "delta_rotation_euler":
-                non_keyed_values[i] = blender_object.delta_rotation_euler[i]
-            elif key.target == "location":
-                non_keyed_values[i] = blender_object.location[i]
-            elif key.target == "rotation_axis_angle":
-                non_keyed_values[i] = blender_object.rotation_axis_angle[i]
-            elif key.target == "rotation_euler":
-                non_keyed_values[i] = blender_object.rotation_euler[i]
-            elif key.target == "rotation_quaternion":
-                non_keyed_values[i] = blender_object.rotation_quaternion[i]
-            elif key.target == "scale":
-                non_keyed_values[i] = blender_object.scale[i]
-            else:
-                pass # this should not happen
+            non_keyed_values[i] = {
+                "delta_location" : blender_object.delta_location,
+                "delta_rotation_euler" : blender_object.delta_rotation_euler,
+                "location" : blender_object.location,
+                "rotation_axis_angle" : blender_object.rotation_axis_angle,
+                "rotation_euler" : blender_object.rotation_euler,
+                "rotation_quaternion" : blender_object.rotation_quaternion,
+                "scale" : blender_object.scale
+            }[key.target][i]
             key.set_value_index(i, non_keyed_values[i])
         else:
             # TODO, this is not working if the action is not active (NLA case for example)
