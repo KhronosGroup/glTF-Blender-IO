@@ -229,7 +229,7 @@ class GlTF2Exporter:
         return name + image.file_extension
 
     @classmethod
-    def __get_key_path(cls, d: dict, keypath: List[str], default=[]):
+    def __get_key_path(cls, d: dict, keypath: List[str], default):
         """Create if necessary and get the element at key path from a dict"""
         key = keypath.pop(0)
 
@@ -302,7 +302,7 @@ class GlTF2Exporter:
             # extensions that lie in the root of the glTF.
             # They need to be converted to a reference at place of occurrence
             if isinstance(node, gltf2_io_extensions.ChildOfRootExtension):
-                root_extension_list = self.__get_key_path(self.__gltf.extensions, [node.name] + node.path)
+                root_extension_list = self.__get_key_path(self.__gltf.extensions, [node.name] + node.path, [])
                 idx = self.__append_unique_and_get_index(root_extension_list, extension)
                 return idx
 
