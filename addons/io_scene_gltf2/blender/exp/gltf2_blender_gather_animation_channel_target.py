@@ -24,37 +24,47 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 @cached
 def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
                                     blender_object: bpy.types.Object,
+                                    def_bone: str,
+                                    def_channel: str,
                                     export_settings
                                     ) -> gltf2_io.AnimationChannelTarget:
-    return gltf2_io.AnimationChannelTarget(
-        extensions=__gather_extensions(channels, blender_object, export_settings),
-        extras=__gather_extras(channels, blender_object, export_settings),
-        node=__gather_node(channels, blender_object, export_settings),
-        path=__gather_path(channels, blender_object, export_settings)
-    )
 
+        return gltf2_io.AnimationChannelTarget(
+            extensions=__gather_extensions(channels, blender_object, export_settings, def_bone),
+            extras=__gather_extras(channels, blender_object, export_settings, def_bone),
+            node=__gather_node(channels, blender_object, export_settings, def_bone),
+            path=__gather_path(channels, blender_object, export_settings, def_bone, def_channel)
+        )
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
                         blender_object: bpy.types.Object,
-                        export_settings
+                        export_settings,
+                        def_bone: str
                         ) -> typing.Any:
     return None
 
 
 def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
-                    export_settings
+                    export_settings,
+                    def_bone: str
                     ) -> typing.Any:
     return None
 
 
 def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                   blender_object: bpy.types.Object,
-                  export_settings
+                  export_settings,
+                  def_bone: str
                   ) -> gltf2_io.Node:
     if blender_object.type == "ARMATURE":
         # TODO: get joint from fcurve data_path and gather_joint
-        blender_bone = blender_object.path_resolve(channels[0].data_path.rsplit('.', 1)[0])
+
+        if def_bone != "":
+            blender_bone = blender_object.pose.bones[def_bone]
+        else:
+            blender_bone = blender_object.path_resolve(channels[0].data_path.rsplit('.', 1)[0])
+
         if isinstance(blender_bone, bpy.types.PoseBone):
             return gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
 
@@ -63,9 +73,14 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],
                   blender_object: bpy.types.Object,
-                  export_settings
+                  export_settings,
+                  def_bone: str,
+                  def_channel: str
                   ) -> str:
-    target = channels[0].data_path.split('.')[-1]
+    if def_channel == "":
+        target = channels[0].data_path.split('.')[-1]
+    else:
+        target = def_channel
     path = {
         "delta_location": "translation",
         "delta_rotation_euler": "rotation",

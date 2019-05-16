@@ -32,25 +32,41 @@ def gather_animation_channels(blender_action: bpy.types.Action,
     channels = []
 
     for channel_group in __get_channel_groups(blender_action, blender_object):
-        channel = __gather_animation_channel(channel_group, blender_object, export_settings)
+        channel = __gather_animation_channel(channel_group, blender_object, export_settings, "", "")
         if channel is not None:
             channels.append(channel)
+
+    if blender_object.type == "ARMATURE" and export_settings['gltf_force_def_bones'] is True:
+        # We have to store sampled animation data for every deformation bones
+        # TODO460 But only if there is no animation on these bones, to avoid double info
+        for bone in blender_object.data.bones:
+            if bone.use_deform is True:
+                for p in ["location", "rotation_quaternion", "scale"]:
+                    channel = __gather_animation_channel(
+                        (),
+                        blender_object,
+                        export_settings,
+                        bone.name,
+                        p)
+                    channels.append(channel)
 
     return channels
 
 
 def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                blender_object: bpy.types.Object,
-                               export_settings
+                               export_settings,
+                               def_bone: str,
+                               def_channel: str
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
     if not __filter_animation_channel(channels, blender_object, export_settings):
         return None
 
     return gltf2_io.AnimationChannel(
-        extensions=__gather_extensions(channels, blender_object, export_settings),
-        extras=__gather_extras(channels, blender_object, export_settings),
-        sampler=__gather_sampler(channels, blender_object, export_settings),
-        target=__gather_target(channels, blender_object, export_settings)
+        extensions=__gather_extensions(channels, blender_object, export_settings, def_bone),
+        extras=__gather_extras(channels, blender_object, export_settings, def_bone),
+        sampler=__gather_sampler(channels, blender_object, export_settings, def_bone, def_channel),
+        target=__gather_target(channels, blender_object, export_settings, def_bone, def_channel)
     )
 
 
@@ -63,35 +79,43 @@ def __filter_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
                         blender_object: bpy.types.Object,
-                        export_settings
+                        export_settings,
+                        def_bone: str
                         ) -> typing.Any:
     return None
 
 
 def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
-                    export_settings
+                    export_settings,
+                    def_bone: str
                     ) -> typing.Any:
     return None
 
 
 def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
                      blender_object: bpy.types.Object,
-                     export_settings
+                     export_settings,
+                     def_bone: str,
+                     def_channel: str
                      ) -> gltf2_io.AnimationSampler:
     return gltf2_blender_gather_animation_samplers.gather_animation_sampler(
         channels,
         blender_object,
+        def_bone,
+        def_channel,
         export_settings
     )
 
 
 def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object: bpy.types.Object,
-                    export_settings
+                    export_settings,
+                    def_bone: str,
+                    def_channel: str
                     ) -> gltf2_io.AnimationChannelTarget:
     return gltf2_blender_gather_animation_channel_target.gather_animation_channel_target(
-        channels, blender_object, export_settings)
+        channels, blender_object, def_bone, def_channel, export_settings)
 
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object):

@@ -25,12 +25,19 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 
 
 class Keyframe:
-    def __init__(self, channels: typing.Tuple[bpy.types.FCurve], frame: float):
+    def __init__(self, channels: typing.Tuple[bpy.types.FCurve], frame: float, def_channel: str):
         self.seconds = frame / bpy.context.scene.render.fps
         self.frame = frame
         self.fps = bpy.context.scene.render.fps
-        self.target = channels[0].data_path.split('.')[-1]
-        self.__indices = [c.array_index for c in channels]
+        if def_channel == "":
+            self.target = channels[0].data_path.split('.')[-1]
+            self.__indices = [c.array_index for c in channels]
+        else:
+            self.target = def_channel
+            self.__indices = []
+            for i in range(self.__get_target_len()):
+                self.__indices.append(i)
+
 
         # Data holders for virtual properties
         self.__value = None
@@ -96,22 +103,32 @@ class Keyframe:
 @cached
 def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
                      channels: typing.Tuple[bpy.types.FCurve],
+                     def_bone: str,
+                     def_channel: str,
                      export_settings) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
-    # Find the start and end of the whole action group
-    ranges = [channel.range() for channel in channels]
+    if def_bone == "":
+        # Find the start and end of the whole action group
+        ranges = [channel.range() for channel in channels]
 
-    start_frame = min([channel.range()[0] for channel in channels])
-    end_frame = max([channel.range()[1] for channel in channels])
+        start_frame = min([channel.range()[0] for channel in channels])
+        end_frame = max([channel.range()[1] for channel in channels])
+    else:
+        # TODO460 how to retrieve start_frame and end_frame ?????
+        start_frame = 1
+        end_frame = 2
 
     keyframes = []
-    if needs_baking(blender_object_if_armature, channels, export_settings):
+    if needs_baking(blender_object_if_armature, channels, export_settings, def_bone):
         # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
 
         if blender_object_if_armature is not None:
-            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
+            if def_bone == "":
+                pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
                                                                                channels[0].data_path)
+            else:
+                pose_bone_if_armature = blender_object_if_armature.pose.bones[def_bone]
         else:
             pose_bone_if_armature = None
 
@@ -119,12 +136,19 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         frame = start_frame
         step = export_settings['gltf_frame_step']
         while frame <= end_frame:
-            key = Keyframe(channels, frame)
+            key = Keyframe(channels, frame, def_channel)
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
                 # we need to bake in the constraints
                 bpy.context.scene.frame_set(frame)
-                trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
-                target_property = channels[0].data_path.split('.')[-1]
+                if def_bone == "":
+                    trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
+                else:
+                    # TODO460 this is object space ... need to be relative to own rest pose
+                    trans, rot, scale = pose_bone_if_armature.matrix.decompose()
+                if def_channel == "":
+                    target_property = channels[0].data_path.split('.')[-1]
+                else:
+                    target_property = def_channel
                 key.value = {
                     "location": trans,
                     "rotation_axis_angle": rot,
@@ -141,7 +165,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         # Just use the keyframes as they are specified in blender
         frames = [keyframe.co[0] for keyframe in channels[0].keyframe_points]
         for i, frame in enumerate(frames):
-            key = Keyframe(channels, frame)
+            key = Keyframe(channels, frame, def_channel)
             # key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
             key.value = [c.evaluate(frame) for c in channels]
 
@@ -181,7 +205,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
 
 def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
                  channels: typing.Tuple[bpy.types.FCurve],
-                 export_settings
+                 export_settings,
+                 def_bone
                  ) -> bool:
     """
     Check if baking is needed.
@@ -190,6 +215,10 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
     """
     def all_equal(lst):
         return lst[1:] == lst[:-1]
+
+    # This is a deformation bone
+    if def_bone != "":
+        return True
 
     # Sampling is forced
     if export_settings[gltf2_blender_export_keys.FORCE_SAMPLING]:

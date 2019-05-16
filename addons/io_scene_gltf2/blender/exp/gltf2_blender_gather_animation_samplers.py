@@ -32,30 +32,38 @@ from . import gltf2_blender_export_keys
 @cached
 def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              blender_object: bpy.types.Object,
+                             def_bone: str,
+                             def_channel: str,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
     blender_object_if_armature = blender_object if blender_object.type == "ARMATURE" else None
     return gltf2_io.AnimationSampler(
-        extensions=__gather_extensions(channels, blender_object_if_armature, export_settings),
-        extras=__gather_extras(channels, blender_object_if_armature, export_settings),
-        input=__gather_input(channels, blender_object_if_armature, export_settings),
-        interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings),
+        extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, def_bone, def_channel),
+        extras=__gather_extras(channels, blender_object_if_armature, export_settings, def_bone, def_channel),
+        input=__gather_input(channels, blender_object_if_armature, def_bone, def_channel, export_settings),
+        interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings, def_bone, def_channel),
         output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
                                blender_object_if_armature,
+                               def_bone,
+                               def_channel,
                                export_settings)
     )
 
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
                         blender_object_if_armature: typing.Optional[bpy.types.Object],
-                        export_settings
+                        export_settings,
+                        def_bone: str,
+                        def_channel: str
                         ) -> typing.Any:
     return None
 
 
 def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object_if_armature: typing.Optional[bpy.types.Object],
-                    export_settings
+                    export_settings,
+                    def_bone: str,
+                    def_channel: str
                     ) -> typing.Any:
     return None
 
@@ -63,11 +71,15 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 @cached
 def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    blender_object_if_armature: typing.Optional[bpy.types.Object],
+                   def_bone: str,
+                   def_channel: str,
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes."""
     keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object_if_armature,
                                                                                   channels,
+                                                                                  def_bone,
+                                                                                  def_channel,
                                                                                   export_settings)
     times = [k.seconds for k in keyframes]
 
@@ -84,14 +96,20 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
 
 def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
                            blender_object_if_armature: typing.Optional[bpy.types.Object],
-                           export_settings
+                           export_settings,
+                           def_bone,
+                           def_channel
                            ) -> str:
     if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(blender_object_if_armature,
                                                                      channels,
-                                                                     export_settings):
-        max_keyframes = max([len(ch.keyframe_points) for ch in channels])
-        # If only single keyframe revert to STEP
-        return 'STEP' if max_keyframes < 2 else 'LINEAR'
+                                                                     export_settings,
+                                                                     def_bone):
+        if def_bone != "":
+            return 'LINEAR'
+        else:
+            max_keyframes = max([len(ch.keyframe_points) for ch in channels])
+            # If only single keyframe revert to STEP
+            return 'STEP' if max_keyframes < 2 else 'LINEAR'
 
     blender_keyframe = channels[0].keyframe_points[0]
 
@@ -107,23 +125,35 @@ def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
 def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     parent_inverse,
                     blender_object_if_armature: typing.Optional[bpy.types.Object],
+                    def_bone: str,
+                    def_channel: str,
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
     keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object_if_armature,
                                                                                   channels,
+                                                                                  def_bone,
+                                                                                  def_channel,
                                                                                   export_settings)
-
-    target_datapath = channels[0].data_path
+    if def_bone != "":
+        target_datapath = "pose.bones['" + def_bone + "']." + def_channel
+    else:
+        target_datapath = channels[0].data_path
 
     is_yup = export_settings[gltf2_blender_export_keys.YUP]
 
     # bone animations need to be handled differently as they are in a different coordinate system
-    object_path = get_target_object_path(target_datapath)
-    is_armature_animation = blender_object_if_armature is not None and object_path != ""
+    if def_bone == "":
+        object_path = get_target_object_path(target_datapath)
+    else:
+        object_path = None
+    is_armature_animation = def_bone != "" or (blender_object_if_armature is not None and object_path != "")
 
     if is_armature_animation:
-        bone = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, object_path)
+        if def_bone == "":
+            bone = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, object_path)
+        else:
+            bone = blender_object_if_armature.pose.bones[def_bone]
         if isinstance(bone, bpy.types.PoseBone):
             if bone.parent is None:
                 axis_basis_change = mathutils.Matrix.Identity(4)
