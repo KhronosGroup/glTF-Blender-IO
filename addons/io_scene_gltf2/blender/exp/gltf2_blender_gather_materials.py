@@ -110,7 +110,9 @@ def __gather_double_sided(blender_material, mesh_double_sided, export_settings):
 
 
 def __gather_emissive_factor(blender_material, export_settings):
-    emissive_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
+    emissive_socket = gltf2_blender_get.get_socket_or_texture_slot_principled(blender_material, "Emission")
+    if emissive_socket is None:
+        emissive_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
     if emissive_socket is None:
         emissive_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "EmissiveFactor")
     if isinstance(emissive_socket, bpy.types.NodeSocket):
@@ -152,7 +154,9 @@ def __gather_emissive_factor(blender_material, export_settings):
 
 
 def __gather_emissive_texture(blender_material, export_settings):
-    emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
+    emissive = gltf2_blender_get.get_socket_or_texture_slot_principled(blender_material, "Emission")
+    if emissive is None:
+        emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
     if emissive is None:
         emissive = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "Emissive")
     return gltf2_blender_gather_texture_info.gather_texture_info((emissive,), export_settings)

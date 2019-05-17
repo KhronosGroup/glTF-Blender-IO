@@ -42,6 +42,25 @@ def get_object_from_datapath(blender_object, data_path: str):
 
     return prop
 
+def get_socket_or_texture_slot_principled(blender_material: bpy.types.Material, name: str):
+    """
+    For a given material input name, retrieve the corresponding node tree socket or blender render texture slot.
+
+    :param blender_material: a blender material for which to get the socket/slot
+    :param name: the name of the socket/slot
+    :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
+    """
+    if blender_material.node_tree and blender_material.use_nodes:
+        #i = [input for input in blender_material.node_tree.inputs]
+        #o = [output for output in blender_material.node_tree.outputs]
+        type = bpy.types.ShaderNodeBsdfPrincipled
+        
+        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+        inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
+        if inputs:
+            return inputs[0]
+    else:
+        return None
 
 def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
     """
