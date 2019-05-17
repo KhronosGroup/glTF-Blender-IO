@@ -25,6 +25,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
@@ -113,10 +114,38 @@ def __gather_emissive_factor(blender_material, export_settings):
     if emissive_socket is None:
         emissive_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "EmissiveFactor")
     if isinstance(emissive_socket, bpy.types.NodeSocket):
+
         if emissive_socket.is_linked:
             # In glTF, the default emissiveFactor is all zeros, so if an emission texture is connected,
             # we have to manually set it to all ones.
-            return [1.0, 1.0, 1.0]
+
+            texture_node = __get_tex_from_socket(emissive_socket)
+            if texture_node is None:
+                return [1.0, 1.0, 1.0]
+
+            def is_valid_multiply_node(node):
+                return isinstance(node, bpy.types.ShaderNodeMixRGB) and \
+                    node.blend_type == "MULTIPLY" and \
+                    len(node.inputs) == 3
+
+            multiply_node = next((link.from_node for link in texture_node.path if is_valid_multiply_node(link.from_node)), None)
+            if multiply_node is None:
+                return [1.0, 1.0, 1.0]
+
+            def is_factor_socket(socket):
+                return isinstance(socket, bpy.types.NodeSocketColor) and \
+                    (not socket.is_linked or socket.links[0] not in texture_node.path)
+
+            factor_socket = next((socket for socket in multiply_node.inputs if is_factor_socket(socket)), None)
+            if factor_socket is None:
+                return [1.0, 1.0, 1.0]
+
+            if factor_socket.is_linked:
+                print_console("WARNING", "EmissionFactor only supports sockets without links (in Node '{}')."
+                            .format(multiply_node.name))
+                return None
+
+            return list(factor_socket.default_value)[0:3]
         else:
             return list(emissive_socket.default_value)[0:3]
     return None
@@ -143,6 +172,13 @@ def __gather_extensions(blender_material, export_settings):
 
     return extensions if extensions else None
 
+def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket):
+    result = gltf2_blender_search_node_tree.from_socket(
+        blender_shader_socket,
+        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
+    if not result:
+        return None
+    return result[0]
 
 def __gather_extras(blender_material, export_settings):
     if export_settings['gltf_extras']:
