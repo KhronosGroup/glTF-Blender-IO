@@ -31,14 +31,13 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                               ) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-    for channel_group in __get_channel_groups(blender_action, blender_object):
+    for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
         channel = __gather_animation_channel(channel_group, blender_object, export_settings, "", "")
         if channel is not None:
             channels.append(channel)
 
     if blender_object.type == "ARMATURE" and export_settings['gltf_force_def_bones'] is True:
         # We have to store sampled animation data for every deformation bones
-        # TODO460 But only if there is no animation on these bones, to avoid double info
         for bone in blender_object.data.bones:
             if bone.use_deform is True:
                 for p in ["location", "rotation_quaternion", "scale"]:
@@ -118,11 +117,19 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
         channels, blender_object, def_bone, def_channel, export_settings)
 
 
-def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object):
+def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
     targets = {}
     for fcurve in blender_action.fcurves:
         target_property = get_target_property_name(fcurve.data_path)
         object_path = get_target_object_path(fcurve.data_path)
+
+        # We have to skip this fcurve for deformation bones, if they are baked
+        # Because baking will be handled later
+        if export_settings['gltf_force_def_bones'] is True:
+            if blender_object.type == "ARMATURE":
+                bone_name = blender_object.path_resolve(object_path).name
+                if blender_object.data.bones[bone_name].use_deform is True:
+                    continue
 
         # find the object affected by this action
         if not object_path:
