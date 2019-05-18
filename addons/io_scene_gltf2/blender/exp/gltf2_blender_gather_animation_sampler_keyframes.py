@@ -116,7 +116,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     else:
         # TODO460 how to retrieve start_frame and end_frame ?????
         start_frame = 1
-        end_frame = 25
+        end_frame = 60
 
     keyframes = []
     if needs_baking(blender_object_if_armature, channels, export_settings, def_bone):
@@ -144,10 +144,11 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
                 else:
                     matrix = pose_bone_if_armature.matrix
+                    #TODO460 still not OK in all cases (inheritance + rotation in bouncing ball for example)
                     if bpy.app.version < (2, 80, 0):
-                        new_matrix = blender_object_if_armature.convert_space(pose_bone_if_armature, matrix, 'POSE', 'LOCAL')
+                        new_matrix = blender_object_if_armature.convert_space(pose_bone_if_armature, matrix, 'POSE', 'LOCAL_WITH_PARENT')
                     else:
-                        new_matrix = blender_object_if_armature.convert_space(pose_bone=pose_bone_if_armature, matrix=matrix, from_space='POSE', to_space='LOCAL')
+                        new_matrix = blender_object_if_armature.convert_space(pose_bone=pose_bone_if_armature, matrix=matrix, from_space='POSE', to_space='LOCAL_WITH_PARENT')
                     trans, rot, scale = new_matrix.decompose()
                 if def_channel == "":
                     target_property = channels[0].data_path.split('.')[-1]
