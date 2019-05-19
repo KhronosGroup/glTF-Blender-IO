@@ -31,15 +31,9 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                               ) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-    for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
-        channel = __gather_animation_channel(channel_group, blender_object, export_settings, "", "")
-        if channel is not None:
-            channels.append(channel)
-
     if blender_object.type == "ARMATURE" and export_settings['gltf_force_def_bones'] is True:
         # We have to store sampled animation data for every deformation bones
-        for bone in blender_object.data.bones:
-            if bone.use_deform is True:
+            for bone in blender_object.data.bones:
                 for p in ["location", "rotation_quaternion", "scale"]:
                     channel = __gather_animation_channel(
                         (),
@@ -48,6 +42,11 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                         bone.name,
                         p)
                     channels.append(channel)
+    else:
+        for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
+            channel = __gather_animation_channel(channel_group, blender_object, export_settings, "", "")
+            if channel is not None:
+                channels.append(channel)
 
     return channels
 
