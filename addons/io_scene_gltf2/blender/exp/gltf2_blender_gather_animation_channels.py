@@ -35,8 +35,21 @@ def gather_animation_channels(blender_action: bpy.types.Action,
         # We have to store sampled animation data for every deformation bones
 
         # First calculate range of animation for baking
-        bake_range_start = 1
-        bake_range_end = 100
+        bake_range_start = None
+        bake_range_end = None
+        groups = __get_channel_groups(blender_action, blender_object, export_settings)
+        for chans in groups:
+            ranges = [channel.range() for channel in chans]
+            if bake_range_start is None:
+                bake_range_start = min([channel.range()[0] for channel in chans])
+            else:
+                bake_range_start = min(bake_range_start, min([channel.range()[0] for channel in chans]))
+            if bake_range_end is None:
+                bake_range_end = max([channel.range()[1] for channel in chans])
+            else:
+                bake_range_rend = max(bake_range_end, max([channel.range()[1] for channel in chans]))
+
+        # Then bake all bones
         for bone in blender_object.data.bones:
             for p in ["location", "rotation_quaternion", "scale"]:
                 channel = __gather_animation_channel(
