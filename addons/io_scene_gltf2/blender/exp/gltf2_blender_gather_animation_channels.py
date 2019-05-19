@@ -31,7 +31,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                               ) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-    if blender_object.type == "ARMATURE" and export_settings['gltf_force_def_bones'] is True:
+    if blender_object.type == "ARMATURE" and export_settings['gltf_force_sampling'] is True:
         # We have to store sampled animation data for every deformation bones
             for bone in blender_object.data.bones:
                 for p in ["location", "rotation_quaternion", "scale"]:
@@ -124,7 +124,7 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
 
         # We have to skip this fcurve for deformation bones, if they are baked
         # Because baking will be handled later
-        if export_settings['gltf_force_def_bones'] is True:
+        if export_settings['gltf_force_sampling'] is True:
             if blender_object.type == "ARMATURE":
                 bone_name = blender_object.path_resolve(object_path).name
                 if blender_object.data.bones[bone_name].use_deform is True:
