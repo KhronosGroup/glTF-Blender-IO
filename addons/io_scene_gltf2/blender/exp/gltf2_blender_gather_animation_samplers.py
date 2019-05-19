@@ -34,18 +34,22 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              blender_object: bpy.types.Object,
                              bake_bone: typing.Union[str, None],
                              bake_channel: typing.Union[str, None],
+                             bake_range_start,
+                             bake_range_end,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
     blender_object_if_armature = blender_object if blender_object.type == "ARMATURE" else None
     return gltf2_io.AnimationSampler(
         extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         extras=__gather_extras(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
-        input=__gather_input(channels, blender_object_if_armature, bake_bone, bake_channel, export_settings),
+        input=__gather_input(channels, blender_object_if_armature, bake_bone, bake_channel, bake_range_start, bake_range_end, export_settings),
         interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
                                blender_object_if_armature,
                                bake_bone,
                                bake_channel,
+                               bake_range_start,
+                               bake_range_end,
                                export_settings)
     )
 
@@ -73,6 +77,8 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    blender_object_if_armature: typing.Optional[bpy.types.Object],
                    bake_bone: typing.Union[str, None],
                    bake_channel: typing.Union[str, None],
+                   bake_range_start,
+                   bake_range_end,
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes."""
@@ -80,6 +86,8 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   channels,
                                                                                   bake_bone,
                                                                                   bake_channel,
+                                                                                  bake_range_start,
+                                                                                  bake_range_end,
                                                                                   export_settings)
     times = [k.seconds for k in keyframes]
 
@@ -126,6 +134,8 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     blender_object_if_armature: typing.Optional[bpy.types.Object],
                     bake_bone: typing.Union[str, None],
                     bake_channel: typing.Union[str, None],
+                    bake_range_start,
+                    bake_range_end,
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
@@ -133,6 +143,8 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   channels,
                                                                                   bake_bone,
                                                                                   bake_channel,
+                                                                                  bake_range_start,
+                                                                                  bake_range_end,
                                                                                   export_settings)
     if bake_bone is not None:
         target_datapath = "pose.bones['" + bake_bone + "']." + bake_channel

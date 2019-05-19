@@ -105,6 +105,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      channels: typing.Tuple[bpy.types.FCurve],
                      bake_bone: typing.Union[str, None],
                      bake_channel: typing.Union[str, None],
+                     bake_range_start,
+                     bake_range_end,
                      export_settings) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
     if bake_bone is None:
@@ -114,9 +116,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         start_frame = min([channel.range()[0] for channel in channels])
         end_frame = max([channel.range()[1] for channel in channels])
     else:
-        # TODO460 how to retrieve start_frame and end_frame ?????
-        start_frame = 1
-        end_frame = 60
+        start_frame = bake_range_start
+        end_frame = bake_range_end
 
     keyframes = []
     if needs_baking(blender_object_if_armature, channels, export_settings):
