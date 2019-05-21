@@ -70,6 +70,10 @@ function validateGltf(gltfPath, done) {
             })
     }).then((result) => {
         // [result] will contain validation report in object form.
+        if (result.issues.numErrors > 0) {
+            done(new Error("Validation failed for " + gltfPath), result);
+            return;
+        }
         done(null, result);
     }, (result) => {
         // Promise rejection means that arguments were invalid or validator was unable
