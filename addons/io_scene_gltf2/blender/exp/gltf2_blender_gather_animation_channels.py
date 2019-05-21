@@ -47,7 +47,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             if bake_range_end is None:
                 bake_range_end = max([channel.range()[1] for channel in chans])
             else:
-                bake_range_rend = max(bake_range_end, max([channel.range()[1] for channel in chans]))
+                bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans]))
 
         # Then bake all bones
         for bone in blender_object.data.bones:
