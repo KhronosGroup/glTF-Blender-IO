@@ -1,4 +1,4 @@
-# Copyright 2018 The glTF-Blender-IO authors.
+# Copyright 2018-2019 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -231,7 +231,10 @@ def __gather_mesh(blender_object, export_settings):
             edge_split.split_angle = blender_object.data.auto_smooth_angle
             edge_split.use_edge_angle = not blender_object.data.has_custom_normals
             blender_object.data.use_auto_smooth = False
-            bpy.context.view_layer.update()
+            if bpy.app.version < (2, 80, 0):
+                bpy.context.scene.update()
+            else:
+                bpy.context.view_layer.update()
 
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
