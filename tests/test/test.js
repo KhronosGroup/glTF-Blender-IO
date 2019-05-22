@@ -71,7 +71,9 @@ function validateGltf(gltfPath, done) {
     }).then((result) => {
         // [result] will contain validation report in object form.
         if (result.issues.numErrors > 0) {
-            done(new Error("Validation failed for " + gltfPath), result);
+            const errors = result.issues.messages.filter(i => i.severity === 0)
+                .reduce((msg, i, idx) => (idx > 5) ? msg : `${msg}\n${i.pointer} - ${i.message} (${i.code})`, '');
+            done(new Error("Validation failed for " + gltfPath + '\nFirst few messages:' + errors), result);
             return;
         }
         done(null, result);
