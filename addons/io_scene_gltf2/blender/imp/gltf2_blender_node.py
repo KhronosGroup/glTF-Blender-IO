@@ -1,4 +1,4 @@
-# Copyright 2018 The glTF-Blender-IO authors.
+# Copyright 2018-2019 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -204,7 +204,7 @@ class BlenderNode():
                         obj.select_set(True)
                         bpy.data.objects[node.blender_armature_name].select_set(True)
                         bpy.context.view_layer.objects.active = bpy.data.objects[node.blender_armature_name]
-                    bpy.context.scene.update()
+                    bpy.context.view_layer.update()
                     bpy.ops.object.parent_set(type='BONE_RELATIVE', keep_transform=True)
                     # From world transform to local (-armature transform -bone transform)
                     bone_trans = bpy.data.objects[node.blender_armature_name] \

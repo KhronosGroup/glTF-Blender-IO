@@ -1,4 +1,4 @@
-# Copyright 2018 The glTF-Blender-IO authors.
+# Copyright 2018-2019 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -231,7 +231,7 @@ def __gather_mesh(blender_object, export_settings):
             edge_split.split_angle = blender_object.data.auto_smooth_angle
             edge_split.use_edge_angle = not blender_object.data.has_custom_normals
             blender_object.data.use_auto_smooth = False
-            bpy.context.scene.update()
+            bpy.context.view_layer.update()
 
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -244,7 +244,9 @@ def __gather_mesh(blender_object, export_settings):
         if bpy.app.version < (2, 80, 0):
             blender_mesh = blender_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
         else:
-            blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            blender_mesh_owner = blender_object.evaluated_get(depsgraph)
+            blender_mesh = blender_mesh_owner.to_mesh()
         for prop in blender_object.data.keys():
             blender_mesh[prop] = blender_object.data[prop]
         skip_filter = True
@@ -264,7 +266,10 @@ def __gather_mesh(blender_object, export_settings):
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh, vertex_groups, modifiers, skip_filter, export_settings)
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
-        bpy.data.meshes.remove(blender_mesh)
+        if bpy.app.version < (2, 80, 0):
+            bpy.data.meshes.remove(blender_mesh)
+        else:
+            blender_mesh_owner.to_mesh_clear()
 
     return result
 
@@ -336,7 +341,9 @@ def __gather_skin(blender_object, export_settings):
     if bpy.app.version < (2, 80, 0):
         blender_mesh = blender_object.to_mesh(bpy.context.scene, True, 'PREVIEW')
     else:
-        blender_mesh = blender_object.to_mesh(bpy.context.depsgraph, True)
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        # XXX: ...
+        blender_mesh = blender_object.evaluated_get(depsgraph).to_mesh()
     if not any(vertex.groups is not None and len(vertex.groups) > 0 for vertex in blender_mesh.vertices):
         return None
 
