@@ -16,6 +16,8 @@ const fs = require('fs');
 const path = require('path');
 const validator = require('gltf-validator');
 
+const compareGltf = require('./compare-gltf')
+
 const OUT_PREFIX = process.env.OUT_PREFIX || '../tests_out';
 
 const blenderVersions = [
@@ -116,18 +118,32 @@ describe('Exporter', function() {
             const args = variant[1];
             describe(blenderVersion + '_export' + variant[0], function() {
                 blenderSampleScenes.forEach((scene) => {
-                    it(scene, function(done) {
+                    it(scene, async () => {
                         let outDirName = 'out' + blenderVersion + variant[0];
                         let blenderPath = `scenes/${scene}.blend`;
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
                         let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
                         let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
-                        blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
-                            if (error)
-                                return done(error);
-
-                            validateGltf(dstPath, done);
+                        let expectedGltfPath = `scenes/expected/${scene}${ext}`;
+                        
+                        await new Promise((resolve, reject) => {
+                            blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
+                                if (error)
+                                    return reject(error);
+                                resolve();
+                            })
                         }, args);
+
+                        await new Promise((resolve, reject) => {
+                            validateGltf(dstPath, (error) => {
+                                if(error) {
+                                    return done(error);
+                                } else {
+                                    resolve()
+                                }
+                            });
+                        });
+                        compareGltf(dstPath, expectedGltfPath);
                     });
                 });
             });
