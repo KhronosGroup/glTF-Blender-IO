@@ -34,18 +34,60 @@ function parseGltf(gltf, gltfPath) {
         }
     }
 
+    const accessors = []
     if (gltf.accessors) {
         for (const accessor of gltf.accessors) {
             accessor.bufferView = bufferViews[accessor.bufferView];
+            accessors.push(accessor)
         }
     }
 
+    // replace refs to accessors
+    for (const mesh of gltf.meshes) {
+        for (const primitive of mesh.primitives) {
+            for (const attrib of Object.keys(primitive.attributes)) {
+                primitive.attributes[attrib] = accessors[primitive.attributes[attrib]]
+            }
+            if(typeof(primitive.indices !== 'undefined')) {
+                primitive.indices = accessors[primitive.indices]
+            }
+        }
+    }
+
+
     const parsed = {};
-    const exclude = ['buffers', 'bufferViews'];
+    const exclude = ['buffers', 'bufferViews', 'accessors'];
     for (key of Object.keys(gltf)) {
         if (exclude.indexOf(key) < 0) {
             parsed[key] = gltf[key];
         }
+    }
+
+    const ignore = ['materials[].doubleSided'];
+    for (const jsonPath of ignore) {
+        const parts = jsonPath.split('.');
+
+        function handlePart(value, parts, index) {
+            if (index >= parts.length) {
+                return;
+            }
+            let part = parts[index];
+            if (index === parts.length - 1) {
+                delete value[part];
+                return;
+            }
+            const bracketPos = part.indexOf('[]');
+            if (bracketPos >= 0) {
+                // this is an array
+                part = part.substring(0, bracketPos);
+                for (elem of value[part]) {
+                    handlePart(elem, parts, index + 1);
+                }
+            } else {
+                handlePart(value[part], index + 1);
+            }
+        }
+        handlePart(parsed, parts, 0);
     }
 
     return parsed;

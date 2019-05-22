@@ -131,8 +131,8 @@ describe('Exporter', function() {
                                 if (error)
                                     return reject(error);
                                 resolve();
-                            })
-                        }, args);
+                            }, args)
+                        });
 
                         await new Promise((resolve, reject) => {
                             validateGltf(dstPath, (error) => {
