@@ -392,6 +392,10 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
     """
     print_console('INFO', 'Extracting primitive: ' + blender_mesh.name)
 
+    if blender_mesh.has_custom_normals:
+        # Custom normals are all (0, 0, 0) until calling calc_normals_split() or calc_tangents().
+        blender_mesh.calc_normals_split()
+
     use_tangents = False
     if blender_mesh.uv_layers.active and len(blender_mesh.uv_layers) > 0:
         try:
