@@ -164,7 +164,7 @@ def __gather_extensions(blender_material, export_settings):
             mime_type="video/mp4"
             image_base_name = path.splitext(image_name)[0]
 
-            # Create an image, either in a buffer view or in a seperate file
+            # Create an image, either in a buffer view or in a separate file
             image = gltf2_io.Image(
                 buffer_view=__gather_buffer_view(data, export_settings),
                 extensions=None,
