@@ -68,7 +68,7 @@ def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
 
     target = channels[0].data_path.split('.')[-1]
     if target == "value":
-        return []
+        return ()
 
     indices = [c.array_index for c in channels]
     indices.sort()
