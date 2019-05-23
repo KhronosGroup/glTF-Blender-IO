@@ -105,9 +105,11 @@ class Keyframe:
 
 # cache for performance reasons
 @cached
-def gather_keyframes(blender_object: bpy.types.Object,
+def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
                      channels: typing.Tuple[bpy.types.FCurve],
-                     export_settings) -> typing.List[Keyframe]:
+                     non_keyed_values: typing.Tuple[typing.Optional[float]],
+                     export_settings
+                     ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
     # Find the start and end of the whole action group
     ranges = [channel.range() for channel in channels]
@@ -116,15 +118,14 @@ def gather_keyframes(blender_object: bpy.types.Object,
     end_frame = max([channel.range()[1] for channel in channels])
 
     keyframes = []
-    non_keyed_values = {}
 
-    if blender_object.type == "ARMATURE":
-        pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object,
+    if blender_object_if_armature is not None:
+        pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
                                                                            channels[0].data_path)
     else:
         pose_bone_if_armature = None
 
-    if needs_baking(blender_object, channels, export_settings):
+    if needs_baking(blender_object_if_armature, channels, export_settings):
         # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
 
@@ -150,7 +151,7 @@ def gather_keyframes(blender_object: bpy.types.Object,
                 }[target_property])
             else:
                 key.value = [c.evaluate(frame) for c in channels]
-                complete_key(key, blender_object, pose_bone_if_armature, non_keyed_values)
+                complete_key(key, non_keyed_values)
             keyframes.append(key)
             frame += step
     else:
@@ -161,7 +162,7 @@ def gather_keyframes(blender_object: bpy.types.Object,
             key.value = [c.evaluate(frame) for c in channels]
             # Complete key with non keyed values, if needed
             if len(channels) != key.get_target_len():
-                complete_key(key, blender_object, pose_bone_if_armature, non_keyed_values)
+                complete_key(key, non_keyed_values)
 
             # compute tangents for cubic spline interpolation
             if channels[0].keyframe_points[0].interpolation == "BEZIER":
@@ -197,7 +198,7 @@ def gather_keyframes(blender_object: bpy.types.Object,
     return keyframes
 
 
-def complete_key(key: Keyframe, blender_object: bpy.types.Object, pose_bone_if_armature: typing.Optional[bpy.types.PoseBone], non_keyed_values: dict):
+def complete_key(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[float]]):
     """
     Complete keyframe with non keyed values
     """
@@ -207,33 +208,9 @@ def complete_key(key: Keyframe, blender_object: bpy.types.Object, pose_bone_if_a
     for i in range(0, key.get_target_len()):
         if i in key.get_indices():
             continue # this is a keyed array_index
-        if i in non_keyed_values.keys():
-            key.set_value_index(i, non_keyed_values[i])
-            continue
-        if blender_object.type != "ARMATURE":
-            non_keyed_values[i] = {
-                "delta_location" : blender_object.delta_location,
-                "delta_rotation_euler" : blender_object.delta_rotation_euler,
-                "location" : blender_object.location,
-                "rotation_axis_angle" : blender_object.rotation_axis_angle,
-                "rotation_euler" : blender_object.rotation_euler,
-                "rotation_quaternion" : blender_object.rotation_quaternion,
-                "scale" : blender_object.scale
-            }[key.target][i]
-            key.set_value_index(i, non_keyed_values[i])
-        else:
-            # TODO, this is not working if the action is not active (NLA case for example)
-            trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
-            non_keyed_values[i] = {
-                "location": trans,
-                "rotation_axis_angle": rot,
-                "rotation_euler": rot,
-                "rotation_quaternion": rot,
-                "scale": scale
-            }[key.target][i]
-            key.set_value_index(i, non_keyed_values[i])
+        key.set_value_index(i, non_keyed_values[i])
 
-def needs_baking(blender_object: bpy.types.Object,
+def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
                  channels: typing.Tuple[bpy.types.FCurve],
                  export_settings
                  ) -> bool:
@@ -282,8 +259,8 @@ def needs_baking(blender_object: bpy.types.Object,
                                      "Baking animation because of differently located keyframes in one channel")
         return True
 
-    if blender_object.type == "ARMATURE":
-        animation_target = gltf2_blender_get.get_object_from_datapath(blender_object, channels[0].data_path)
+    if blender_object_if_armature is not None:
+        animation_target = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, channels[0].data_path)
         if isinstance(animation_target, bpy.types.PoseBone):
             if len(animation_target.constraints) != 0:
                 # Constraints such as IK act on the bone -> can not be represented in glTF atm
