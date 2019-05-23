@@ -19,7 +19,6 @@ import tempfile
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.io.com import gltf2_io_debug
 
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 
