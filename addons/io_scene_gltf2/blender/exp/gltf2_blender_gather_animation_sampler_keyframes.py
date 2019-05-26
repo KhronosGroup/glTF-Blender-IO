@@ -37,7 +37,7 @@ class Keyframe:
         self.__in_tangent = None
         self.__out_tangent = None
 
-    def __get_target_len(self):
+    def get_target_len(self):
         length = {
             "delta_location": 3,
             "delta_rotation_euler": 3,
@@ -61,11 +61,22 @@ class Keyframe:
         # Sometimes blender animations only reference a subset of components of a data target. Keyframe should always
         # contain a complete Vector/ Quaternion --> use the array_index value of the keyframe to set components in such
         # structures
-        result = [0.0] * self.__get_target_len()
+        result = [0.0] * self.get_target_len()
         for i, v in zip(self.__indices, value):
             result[i] = v
         result = gltf2_blender_math.list_to_mathutils(result, self.target)
         return result
+
+    def get_indices(self):
+        return self.__indices
+
+    def set_value_index(self, idx, val):
+        self.__value[idx] = val
+
+    def set_full_value(self, val):
+        self.__value = [0.0] * self.get_target_len()
+        for i in range(0, self.get_target_len()):
+            self.set_value_index(i, val[i])
 
     @property
     def value(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
@@ -96,7 +107,9 @@ class Keyframe:
 @cached
 def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
                      channels: typing.Tuple[bpy.types.FCurve],
-                     export_settings) -> typing.List[Keyframe]:
+                     non_keyed_values: typing.Tuple[typing.Optional[float]],
+                     export_settings
+                     ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
     # Find the start and end of the whole action group
     ranges = [channel.range() for channel in channels]
@@ -105,15 +118,16 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     end_frame = max([channel.range()[1] for channel in channels])
 
     keyframes = []
+
+    if blender_object_if_armature is not None:
+        pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
+                                                                           channels[0].data_path)
+    else:
+        pose_bone_if_armature = None
+
     if needs_baking(blender_object_if_armature, channels, export_settings):
         # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
-
-        if blender_object_if_armature is not None:
-            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
-                                                                               channels[0].data_path)
-        else:
-            pose_bone_if_armature = None
 
         # sample all frames
         frame = start_frame
@@ -123,18 +137,21 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
                 # we need to bake in the constraints
                 bpy.context.scene.frame_set(frame)
+                # TODO, this is not working if the action is not active (NLA case for example)
                 trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
                 target_property = channels[0].data_path.split('.')[-1]
-                key.value = {
+                # Store all values, not only the data from fcurve:
+                # All indices must be stored
+                key.set_full_value({
                     "location": trans,
                     "rotation_axis_angle": rot,
                     "rotation_euler": rot,
                     "rotation_quaternion": rot,
                     "scale": scale
-                }[target_property]
-
+                }[target_property])
             else:
                 key.value = [c.evaluate(frame) for c in channels]
+                complete_key(key, non_keyed_values)
             keyframes.append(key)
             frame += step
     else:
@@ -142,8 +159,10 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         frames = [keyframe.co[0] for keyframe in channels[0].keyframe_points]
         for i, frame in enumerate(frames):
             key = Keyframe(channels, frame)
-            # key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
             key.value = [c.evaluate(frame) for c in channels]
+            # Complete key with non keyed values, if needed
+            if len(channels) != key.get_target_len():
+                complete_key(key, non_keyed_values)
 
             # compute tangents for cubic spline interpolation
             if channels[0].keyframe_points[0].interpolation == "BEZIER":
@@ -178,6 +197,18 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
 
     return keyframes
 
+
+def complete_key(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[float]]):
+    """
+    Complete keyframe with non keyed values
+    """
+
+    if key.target == "value":
+        return # No array_index
+    for i in range(0, key.get_target_len()):
+        if i in key.get_indices():
+            continue # this is a keyed array_index
+        key.set_value_index(i, non_keyed_values[i])
 
 def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
                  channels: typing.Tuple[bpy.types.FCurve],
