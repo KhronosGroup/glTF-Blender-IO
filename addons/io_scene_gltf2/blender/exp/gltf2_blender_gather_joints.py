@@ -43,10 +43,6 @@ def gather_joint(blender_bone, export_settings):
         correction_matrix_local = gltf2_blender_math.multiply(
             blender_bone.parent.bone.matrix_local.inverted(), blender_bone.bone.matrix_local)
     matrix_basis = blender_bone.matrix_basis
-    if export_settings[gltf2_blender_export_keys.BAKE_SKINS]:
-        gltf2_io_debug.print_console("WARNING", "glTF bake skins not supported")
-        # matrix_basis = blender_object.convert_space(blender_bone, blender_bone.matrix, from_space='POSE',
-        #                                             to_space='LOCAL')
     trans, rot, sca = gltf2_blender_extract.decompose_transition(
         gltf2_blender_math.multiply(correction_matrix_local, matrix_basis), export_settings)
     translation, rotation, scale = (None, None, None)

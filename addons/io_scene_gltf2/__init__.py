@@ -267,12 +267,6 @@ class ExportGLTF2_Base:
         default=True
     )
 
-    export_bake_skins = BoolProperty(
-        name='Bake Skinning Constraints',
-        description='Apply skinning constraints to armatures',
-        default=False
-    )
-
     export_all_influences = BoolProperty(
         name='Include All Bone Influences',
         description='Allow >4 joint vertex influences. Models may appear incorrectly in many viewers',
@@ -400,10 +394,8 @@ class ExportGLTF2_Base:
             export_settings['gltf_force_sampling'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
-            export_settings['gltf_bake_skins'] = self.export_bake_skins
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
         else:
-            export_settings['gltf_bake_skins'] = False
             export_settings['gltf_all_vertex_influences'] = False
         export_settings['gltf_frame_step'] = self.export_frame_step
         export_settings['gltf_morph'] = self.export_morph
@@ -485,7 +477,6 @@ class ExportGLTF2_Base:
             col.prop(self, 'export_force_sampling')
         col.prop(self, 'export_skins')
         if self.export_skins:
-            col.prop(self, 'export_bake_skins')
             col.prop(self, 'export_all_influences')
         col.prop(self, 'export_morph')
         if self.export_morph:
