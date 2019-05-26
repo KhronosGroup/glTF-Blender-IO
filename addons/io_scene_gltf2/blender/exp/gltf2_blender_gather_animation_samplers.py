@@ -38,7 +38,18 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              bake_range_end,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
+
     blender_object_if_armature = blender_object if blender_object.type == "ARMATURE" else None
+    if blender_object_if_armature is not None:
+        pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
+                                                                           channels[0].data_path)
+    else:
+        pose_bone_if_armature = None
+    non_keyed_values = __gather_non_keyed_values(channels, blender_object,
+                                                 blender_object_if_armature, pose_bone_if_armature,
+                                                 export_settings)
+
+
     return gltf2_io.AnimationSampler(
         extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         extras=__gather_extras(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
@@ -53,6 +64,58 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                export_settings)
     )
 
+def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
+                              blender_object: bpy.types.Object,
+                              blender_object_if_armature: typing.Optional[bpy.types.Object],
+                              pose_bone_if_armature: typing.Optional[bpy.types.PoseBone],
+                              export_settings
+                              ) ->  typing.Tuple[typing.Optional[float]]:
+
+    non_keyed_values = []
+
+    target = channels[0].data_path.split('.')[-1]
+    if target == "value":
+        return ()
+
+    indices = [c.array_index for c in channels]
+    indices.sort()
+    length = {
+        "delta_location": 3,
+        "delta_rotation_euler": 3,
+        "location": 3,
+        "rotation_axis_angle": 4,
+        "rotation_euler": 3,
+        "rotation_quaternion": 4,
+        "scale": 3,
+        "value": 1
+    }.get(target)
+
+    for i in range(0, length):
+        if i in indices:
+            non_keyed_values.append(None)
+        else:
+            if blender_object_if_armature is None:
+                non_keyed_values.append({
+                    "delta_location" : blender_object.delta_location,
+                    "delta_rotation_euler" : blender_object.delta_rotation_euler,
+                    "location" : blender_object.location,
+                    "rotation_axis_angle" : blender_object.rotation_axis_angle,
+                    "rotation_euler" : blender_object.rotation_euler,
+                    "rotation_quaternion" : blender_object.rotation_quaternion,
+                    "scale" : blender_object.scale
+                }[target][i])
+            else:
+                 # TODO, this is not working if the action is not active (NLA case for example)
+                 trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
+                 non_keyed_values.append({
+                    "location": trans,
+                    "rotation_axis_angle": rot,
+                    "rotation_euler": rot,
+                    "rotation_quaternion": rot,
+                    "scale": scale
+                    }[target][i])
+
+    return tuple(non_keyed_values)
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
                         blender_object_if_armature: typing.Optional[bpy.types.Object],
