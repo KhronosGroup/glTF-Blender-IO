@@ -35,7 +35,7 @@ class Keyframe:
         else:
             self.target = bake_channel
             self.__indices = []
-            for i in range(self.__get_target_len()):
+            for i in range(self.get_target_len()):
                 self.__indices.append(i)
 
 
@@ -115,6 +115,10 @@ class Keyframe:
 def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
                      channels: typing.Tuple[bpy.types.FCurve],
                      non_keyed_values: typing.Tuple[typing.Optional[float]],
+                     bake_bone: typing.Union[str, None],
+                     bake_channel: typing.Union[str, None],
+                     bake_range_start,
+                     bake_range_end,
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
@@ -129,13 +133,6 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         end_frame = bake_range_end
 
     keyframes = []
-
-    if blender_object_if_armature is not None:
-        pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
-                                                                           channels[0].data_path)
-    else:
-        pose_bone_if_armature = None
-
     if needs_baking(blender_object_if_armature, channels, export_settings):
         # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
@@ -170,7 +167,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     target_property = channels[0].data_path.split('.')[-1]
                 else:
                     target_property = bake_channel
-                key.value = {
+                key.set_full_value({
                     "location": trans,
                     "rotation_axis_angle": rot,
                     "rotation_euler": rot,
