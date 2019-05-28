@@ -32,3 +32,27 @@ class BlenderAnimation():
         if gltf.data.nodes[node_idx].children:
             for child in gltf.data.nodes[node_idx].children:
                 BlenderAnimation.anim(gltf, anim_idx, child)
+
+    @staticmethod
+    def stash_action(gltf, anim_idx, node_idx, action_name):
+
+        if gltf.data.nodes[node_idx].is_joint:
+            BlenderBoneAnim.stash_action(gltf, anim_idx, node_idx, action_name)
+        else:
+            BlenderNodeAnim.stash_action(gltf, anim_idx, node_idx, action_name)
+
+        if gltf.data.nodes[node_idx].children:
+            for child in gltf.data.nodes[node_idx].children:
+                BlenderAnimation.stash_action(gltf, anim_idx, child, action_name)
+
+    @staticmethod
+    def restore_last_action(gltf, node_idx):
+
+        if gltf.data.nodes[node_idx].is_joint:
+            BlenderBoneAnim.restore_last_action(gltf, node_idx)
+        else:
+            BlenderNodeAnim.restore_last_action(gltf, node_idx)
+
+        if gltf.data.nodes[node_idx].children:
+            for child in gltf.data.nodes[node_idx].children:
+                BlenderAnimation.restore_last_action(gltf, child)
