@@ -414,6 +414,26 @@ describe('Importer / Exporter (Roundtrip)', function() {
         describe(blenderVersion + '_roundtrip_results', function() {
             let outDirName = 'out' + blenderVersion;
 
+            // Only Blender 2.80 and above will roundtrip the doubleSided flag.
+            if (blenderVersion != 'blender279b') {
+                it('roundtrips the doubleSided flag', function() {
+                    let dir = '01_single_vs_double_sided';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 2);
+
+                    const singleSidedMaterials = asset.materials.filter(m => m.name === 'mat_single');
+                    assert.strictEqual(singleSidedMaterials.length, 1);
+                    assert.strictEqual(singleSidedMaterials[0].doubleSided, undefined);
+
+                    const doubleSidedMaterials = asset.materials.filter(m => m.name === 'mat_double');
+                    assert.strictEqual(doubleSidedMaterials.length, 1);
+                    assert.strictEqual(doubleSidedMaterials[0].doubleSided, true);
+                });
+            }
+
             it('roundtrips an OcclusionRoughnessMetallic texture', function() {
                 let dir = '08_combine_orm';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
