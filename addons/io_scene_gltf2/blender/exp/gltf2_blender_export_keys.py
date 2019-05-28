@@ -25,7 +25,6 @@ FILTERED_OBJECTS = 'filtered_objects'
 FILTERED_CAMERAS = 'filtered_cameras'
 
 APPLY = 'gltf_apply'
-LAYERS = 'gltf_layers'
 SELECTED = 'gltf_selected'
 SKINS = 'gltf_skins'
 DISPLACEMENT = 'gltf_displacement'
