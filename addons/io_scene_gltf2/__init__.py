@@ -205,12 +205,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    # export_layers = BoolProperty(
-    #     name='All layers',
-    #     description='Export all layers, rather than just the first',
-    #     default=True
-    # )
-
     export_extras = BoolProperty(
         name='Custom Properties',
         description='Export custom properties as glTF extras',
