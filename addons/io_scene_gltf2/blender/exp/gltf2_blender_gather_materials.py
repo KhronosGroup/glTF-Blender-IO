@@ -13,10 +13,18 @@
 # limitations under the License.
 
 import bpy
+from os import path
+import tempfile
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
+from io_scene_gltf2.io.com import gltf2_io_constants
+
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
+
+from io_scene_gltf2.io.exp import gltf2_io_binary_data
+from io_scene_gltf2.io.exp import gltf2_io_image_data
+
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_normal_texture_info_class
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_occlusion_texture_info_class
@@ -129,6 +137,16 @@ def __gather_emissive_texture(blender_material, export_settings):
     return gltf2_blender_gather_texture_info.gather_texture_info((emissive,), export_settings)
 
 
+def tmp_encode_movie(image: bpy.types.Image):
+    """
+    Reads the image bytes from disk back.
+    """
+    path=image.filepath_from_user()
+    with open(path, "rb") as f:
+        encoded_image = f.read()
+
+    return encoded_image
+
 def __gather_extensions(blender_material, export_settings):
     extensions = {}
 
@@ -139,10 +157,45 @@ def __gather_extensions(blender_material, export_settings):
         if gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background") is not None:
             extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
 
+    if blender_material.get("useVideoTextureExtension", False) == "True":
+        image_name = blender_material.get("videoTextureExtension_ImageName")
+        if image_name is not None:
+            data = tmp_encode_movie(bpy.data.images[image_name])
+            mime_type="video/mp4"
+            image_base_name = path.splitext(image_name)[0]
+
+            # Create an image, either in a buffer view or in a separate file
+            image = gltf2_io.Image(
+                buffer_view=__gather_buffer_view(data, export_settings),
+                extensions=None,
+                extras=None,
+                mime_type=mime_type,
+                name=image_base_name,
+                uri=__gather_uri(data, image_base_name, mime_type, export_settings)
+            )
+
+            extension = dict(image=image)
+            extensions["SVRF_video_texture"] = Extension("SVRF_video_texture", extension, False)
+
     # TODO specular glossiness extension
 
     return extensions if extensions else None
 
+@cached
+def __gather_buffer_view(image_data: bytes, export_settings):
+    if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
+        return gltf2_io_binary_data.BinaryData(data=image_data)
+    return None
+
+@cached
+def __gather_uri(image_data: bytes, image_name: str, mime_type: str, export_settings):
+    if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_SEPARATE':
+        return gltf2_io_image_data.ImageData(
+            data=image_data,
+            mime_type=mime_type,
+            name=image_name,
+        )
+    return None
 
 def __gather_extras(blender_material, export_settings):
     if export_settings['gltf_extras']:

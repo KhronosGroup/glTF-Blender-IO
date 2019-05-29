@@ -48,6 +48,8 @@ class ImageData:
     def file_extension(self):
         if self._mime_type == "image/jpeg":
             return ".jpg"
+        elif self._mime_type == "video/mp4":
+            return ".mp4"
         return ".png"
 
     @property
