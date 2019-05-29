@@ -90,14 +90,11 @@ class ExportImage:
 
         self._img = np.concatenate([self.img, other.img], axis=2)
 
-    def update(self, other):
-        self[:other.channels] = other[:other.channels]
-
     def __add__(self, other):
         self.append(other)
 
     def encode(self, mime_type: typing.Optional[str]) -> bytes:
-        image = bpy.data.images.new("TmpImage", width=self.width, height=self.height)
+        image = bpy.data.images.new("TmpImage", width=self.width, height=self.height, alpha=False)
         pixels = self._img.flatten().tolist()
         image.pixels = pixels
 
