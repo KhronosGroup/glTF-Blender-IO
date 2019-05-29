@@ -128,7 +128,7 @@
     ],
     "materials" : [
         {
-            "alphaCutoff" : 0.5,
+            "alphaCutoff" : 0.42,
             "alphaMode" : "MASK",
             "doubleSided" : true,
             "name" : "Alpha_Mask",

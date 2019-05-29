@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+import os
 import typing
 import numpy as np
 import tempfile
@@ -23,7 +24,8 @@ class ExportImage:
     # FUTURE_WORK: as a method to allow the node graph to be better supported, we could model some of
     # the node graph elements with numpy functions
 
-    def __init__(self, img: typing.Union[np.ndarray, typing.List[np.ndarray]], max_channels: int = 4):
+    def __init__(self, img: typing.Union[np.ndarray, typing.List[np.ndarray]], max_channels: int = 4,\
+            blender_image: bpy.types.Image = None, has_alpha: bool = False):
         if isinstance(img, list):
             np.stack(img, axis=2)
 
@@ -36,12 +38,15 @@ class ExportImage:
 
         self._img = img
         self._max_channels = max_channels
+        self._blender_image = blender_image
+        self._has_alpha = has_alpha
 
     @classmethod
     def from_blender_image(cls, blender_image: bpy.types.Image):
         img = np.array(blender_image.pixels)
         img = img.reshape((blender_image.size[0], blender_image.size[1], blender_image.channels))
-        return ExportImage(img=img)
+        has_alpha = blender_image.depth == 32
+        return ExportImage(img=img, blender_image=blender_image, has_alpha=has_alpha)
 
     @classmethod
     def white_image(cls, width, height, num_channels: int = 4):
@@ -94,14 +99,21 @@ class ExportImage:
         self.append(other)
 
     def encode(self, mime_type: typing.Optional[str]) -> bytes:
-        image = bpy.data.images.new("TmpImage", width=self.width, height=self.height, alpha=False)
-        pixels = self._img.flatten().tolist()
-        image.pixels = pixels
-
         file_format = {
             "image/jpeg": "JPEG",
             "image/png": "PNG"
         }.get(mime_type, "PNG")
+
+        if self._blender_image is not None and file_format == self._blender_image.file_format:
+            src_path = bpy.path.abspath(self._blender_image.filepath_raw)
+            if os.path.isfile(src_path):
+                with open(src_path, "rb") as f:
+                    encoded_image = f.read()
+                return encoded_image
+
+        image = bpy.data.images.new("TmpImage", width=self.width, height=self.height, alpha=self._has_alpha)
+        pixels = self._img.flatten().tolist()
+        image.pixels = pixels
 
         # we just use blenders built in save mechanism, this can be considered slightly dodgy but currently is the only
         # way to support

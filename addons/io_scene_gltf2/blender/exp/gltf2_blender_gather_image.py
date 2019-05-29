@@ -189,6 +189,7 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
 
                 composed_image[target_channel] = image[source_channel]
             else:
+                # If we're not assigning target channels, just return the first valid image.
                 return image
 
         return composed_image
