@@ -43,7 +43,8 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
     for blender_action in blender_actions:
 
         # Set action as active, to be able to bake if needed
-        blender_object.animation_data.action = blender_action
+        if blender_object.animation_data: # Not for shapekeys!
+            blender_object.animation_data.action = blender_action
 
         animation = __gather_animation(blender_action, blender_object, export_settings)
         if animation is not None:
