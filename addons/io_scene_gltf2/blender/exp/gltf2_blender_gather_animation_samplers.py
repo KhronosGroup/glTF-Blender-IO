@@ -99,6 +99,10 @@ def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
         "value": 1
     }.get(target)
 
+    if length is None:
+        # This is not a known target
+        return ()
+
     for i in range(0, length):
         if bake_channel is not None:
             non_keyed_values.append({
