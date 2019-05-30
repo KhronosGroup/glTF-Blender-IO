@@ -129,7 +129,7 @@ class BlenderMaterial():
                 material.blend_method = 'BLEND'
             elif alpha_mode == "MASK":
                 material.blend_method = 'CLIP'
-                alpha_cutoff = 1.0 - pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
+                alpha_cutoff = pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
                 material.alpha_threshold = alpha_cutoff
 
         node_tree = material.node_tree
@@ -181,6 +181,7 @@ class BlenderMaterial():
             mult = node_tree.nodes.new('ShaderNodeMath')
             mult.operation = 'MULTIPLY' if pymaterial.alpha_mode == 'BLEND' else 'GREATER_THAN'
             mult.location = 500, -250
+            # Note that `1.0 - pymaterial.alpha_cutoff` is used due to the invert node above.
             alpha_cutoff = 1.0 if pymaterial.alpha_mode == 'BLEND' else \
                 1.0 - pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
             mult.inputs[1].default_value = alpha_cutoff

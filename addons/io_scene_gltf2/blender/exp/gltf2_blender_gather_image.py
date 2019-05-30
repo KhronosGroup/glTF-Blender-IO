@@ -173,18 +173,24 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
 
             image = gltf2_blender_image.ExportImage.from_blender_image(result.shader_node.image)
 
-            if composed_image is None:
-                composed_image = gltf2_blender_image.ExportImage.white_image(image.width, image.height)
+            target_channel = None
 
             # Change target channel for metallic and roughness.
             if socket.name == 'Metallic':
-                composed_image[2] = image[source_channel]
+                target_channel = 2
             elif socket.name == 'Roughness':
-                composed_image[1] = image[source_channel]
+                target_channel = 1
             elif socket.name == 'Occlusion' and len(sockets_or_slots) > 1 and sockets_or_slots[1] is not None:
-                composed_image[0] = image[source_channel]
+                target_channel = 0
+
+            if target_channel is not None:
+                if composed_image is None:
+                    composed_image = gltf2_blender_image.ExportImage.white_image(image.width, image.height)
+
+                composed_image[target_channel] = image[source_channel]
             else:
-                composed_image.update(image)
+                # If we're not assigning target channels, just return the first valid image.
+                return image
 
         return composed_image
 
