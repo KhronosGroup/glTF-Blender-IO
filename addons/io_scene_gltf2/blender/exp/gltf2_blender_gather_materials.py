@@ -174,7 +174,16 @@ def __gather_extensions(blender_material, export_settings):
                 uri=__gather_uri(data, image_base_name, mime_type, export_settings)
             )
 
-            extension = dict(image=image)
+            # Create a texture to use the previous video image
+            texture = gltf2_io.Texture(
+                extensions=None,
+                extras=None,
+                name=None,
+                sampler=None, # Might need a sampler
+                source=image
+            )
+
+            extension = dict(texture=texture)
             extensions["SVRF_video_texture"] = Extension("SVRF_video_texture", extension, False)
 
     # TODO specular glossiness extension
