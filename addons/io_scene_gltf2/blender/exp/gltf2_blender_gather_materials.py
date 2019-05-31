@@ -179,7 +179,7 @@ def __gather_extensions(blender_material, export_settings):
                 extensions=None,
                 extras=None,
                 name=None,
-                sampler=None, # Might need a sampler
+                sampler=None,
                 source=image
             )
 
