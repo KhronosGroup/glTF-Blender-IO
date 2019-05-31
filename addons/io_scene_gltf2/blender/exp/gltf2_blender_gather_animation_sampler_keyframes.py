@@ -114,6 +114,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      bake_channel: typing.Union[str, None],
                      bake_range_start,
                      bake_range_end,
+                     action_name: str,
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
