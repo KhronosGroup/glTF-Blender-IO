@@ -279,6 +279,9 @@ class BlenderGlTF():
 
             for anim_idx, anim in enumerate(gltf.data.animations):
                 for channel_idx, channel in enumerate(anim.channels):
+                    if channel.target.node is None:
+                        continue
+
                     if anim_idx not in gltf.data.nodes[channel.target.node].animations.keys():
                         gltf.data.nodes[channel.target.node].animations[anim_idx] = []
                     gltf.data.nodes[channel.target.node].animations[anim_idx].append(channel_idx)
