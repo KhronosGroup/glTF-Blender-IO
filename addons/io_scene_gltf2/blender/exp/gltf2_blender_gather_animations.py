@@ -44,17 +44,19 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
 
         # Set action as active, to be able to bake if needed
         if blender_object.animation_data: # Not for shapekeys!
-            if blender_object.animation_data.is_property_readonly('action'):
-                # NLA stuff: some track are on readonly mode, we can't change action
-                error = "Action is readonly. Please check NLA editor"
-                print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
-                continue
-            try:
-                blender_object.animation_data.action = blender_action
-            except:
-                error = "Action is readonly. Please check NLA editor"
-                print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
-                continue
+            if blender_object.animation_data.action is None \
+                    or (blender_object.animation_data.action.name != blender_action.name):
+                if blender_object.animation_data.is_property_readonly('action'):
+                    # NLA stuff: some track are on readonly mode, we can't change action
+                    error = "Action is readonly. Please check NLA editor"
+                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
+                    continue
+                try:
+                    blender_object.animation_data.action = blender_action
+                except:
+                    error = "Action is readonly. Please check NLA editor"
+                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
+                    continue
 
         animation = __gather_animation(blender_action, blender_object, export_settings)
         if animation is not None:
@@ -62,7 +64,8 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
 
     # Restore current action
     if blender_object.animation_data:
-        blender_object.animation_data.action = current_action
+        if blender_object.animation_data.action is not None and current_action is not None and blender_object.animation_data.action.name != current_action.name:
+            blender_object.animation_data.action = current_action
 
     return animations
 
