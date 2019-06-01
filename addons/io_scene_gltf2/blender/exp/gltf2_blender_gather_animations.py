@@ -44,6 +44,11 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
 
         # Set action as active, to be able to bake if needed
         if blender_object.animation_data: # Not for shapekeys!
+            if blender_object.anmation_data.is_property_readonly('action'):
+                # NLA stuff: some track are on readonly mode, we can't change action
+                error = "Action is readonly. Please check NLA editor"
+                print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
+                continue
             blender_object.animation_data.action = blender_action
 
         animation = __gather_animation(blender_action, blender_object, export_settings)
