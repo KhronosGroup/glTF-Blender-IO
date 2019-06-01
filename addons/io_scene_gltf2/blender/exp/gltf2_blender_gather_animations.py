@@ -49,7 +49,12 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
                 error = "Action is readonly. Please check NLA editor"
                 print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
                 continue
-            blender_object.animation_data.action = blender_action
+            try:
+                blender_object.animation_data.action = blender_action
+            except:
+                error = "Action is readonly. Please check NLA editor"
+                print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
+                continue
 
         animation = __gather_animation(blender_action, blender_object, export_settings)
         if animation is not None:
