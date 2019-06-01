@@ -311,7 +311,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
             if not isinstance(value, list):
                 out_tangent = value - out_tangent
             else:
-                [value[i] - in_tangent[i] for i in range(len(value))]
+                [value[i] - out_tangent[i] for i in range(len(value))]
             keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)  # append
 
         values += keyframe_value
