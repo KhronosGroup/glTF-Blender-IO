@@ -286,6 +286,12 @@ class BlenderBoneAnim():
             name = animation.name + "_" + obj.name
         else:
             name = "Animation_" + str(anim_idx) + "_" + obj.name
+        if len(name) >= 63:
+            # Name is too long to be kept, we are going to keep only animation name for now
+            name = animation.name
+            if len(name) >= 63:
+                # Very long name!
+                name = "Animation_" + str(anim_idx)
         if name not in bpy.data.actions:
             action = bpy.data.actions.new(name)
         else:

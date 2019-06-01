@@ -80,6 +80,12 @@ class BlenderNodeAnim():
             name = animation.name + "_" + obj.name
         else:
             name = "Animation_" + str(anim_idx) + "_" + obj.name
+        if len(name) >= 63:
+            # Name is too long to be kept, we are going to keep only animation name for now
+            name = animation.name
+            if len(name) >= 63:
+                # Very long name!
+                name = "Animation_" + str(anim_idx)
         action = bpy.data.actions.new(name)
         # Check if this action has some users.
         # If no user (only 1 indeed), that means that this action must be deleted
