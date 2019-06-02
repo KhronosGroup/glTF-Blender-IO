@@ -275,7 +275,7 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
         # we need to bake to 'STEP', as at least two keyframes are required to interpolate
         return True
 
-    if not all(all_equal(key_times) for key_times in zip([[k.co[0] for k in c.keyframe_points] for c in channels])):
+    if not all_equal(list(zip([[k.co[0] for k in c.keyframe_points] for c in channels]))):
         # The channels have differently located keyframes
         gltf2_io_debug.print_console("WARNING",
                                      "Baking animation because of differently located keyframes in one channel")
