@@ -180,7 +180,7 @@ class BlenderNodeAnim():
 
                 if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
                     factor = 3
-                    delta = len(keys)
+                    delta = nb_targets
                 else:
                     factor = 1
                     delta = 0
@@ -188,7 +188,7 @@ class BlenderNodeAnim():
                 for idx, key in enumerate(keys):
                     for sk in range(nb_targets):
                         if gltf.shapekeys[sk] is not None: # Do not animate shapekeys not created
-                            obj.data.shape_keys.key_blocks[gltf.shapekeys[sk]].value = values[idx * nb_targets + sk][0]
+                            obj.data.shape_keys.key_blocks[gltf.shapekeys[sk]].value = values[factor * idx * nb_targets + delta + sk][0]
                             obj.data.shape_keys.key_blocks[gltf.shapekeys[sk]].keyframe_insert(
                                 "value",
                                 frame=key[0] * fps,
