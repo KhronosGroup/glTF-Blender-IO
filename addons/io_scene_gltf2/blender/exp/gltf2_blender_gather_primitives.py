@@ -35,6 +35,7 @@ def gather_primitives(
         blender_mesh: bpy.types.Mesh,
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
+        blender_object: bpy.types.Object,
         export_settings
         ) -> List[gltf2_io.MeshPrimitive]:
     """
@@ -44,7 +45,7 @@ def gather_primitives(
     """
     primitives = []
     blender_primitives = gltf2_blender_extract.extract_primitives(
-        None, blender_mesh, vertex_groups, modifiers, export_settings)
+        None, blender_mesh, vertex_groups, modifiers, blender_object, export_settings)
 
     for internal_primitive in blender_primitives:
         if bpy.app.version < (2, 80, 0):

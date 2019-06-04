@@ -27,6 +27,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
                 vertex_groups: Optional[bpy.types.VertexGroups],
                 modifiers: Optional[bpy.types.ObjectModifiers],
                 skip_filter: bool,
+                blender_object: bpy.types.Object,
                 export_settings
                 ) -> Optional[gltf2_io.Mesh]:
     if not skip_filter and not __filter_mesh(blender_mesh, vertex_groups, modifiers, export_settings):
@@ -36,7 +37,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
         extensions=__gather_extensions(blender_mesh, vertex_groups, modifiers, export_settings),
         extras=__gather_extras(blender_mesh, vertex_groups, modifiers, export_settings),
         name=__gather_name(blender_mesh, vertex_groups, modifiers, export_settings),
-        primitives=__gather_primitives(blender_mesh, vertex_groups, modifiers, export_settings),
+        primitives=__gather_primitives(blender_mesh, vertex_groups, modifiers, blender_object, export_settings),
         weights=__gather_weights(blender_mesh, vertex_groups, modifiers, export_settings)
     )
 
@@ -100,9 +101,14 @@ def __gather_name(blender_mesh: bpy.types.Mesh,
 def __gather_primitives(blender_mesh: bpy.types.Mesh,
                         vertex_groups: Optional[bpy.types.VertexGroups],
                         modifiers: Optional[bpy.types.ObjectModifiers],
+                        blender_object: bpy.types.Object,
                         export_settings
                         ) -> List[gltf2_io.MeshPrimitive]:
-    return gltf2_blender_gather_primitives.gather_primitives(blender_mesh, vertex_groups, modifiers, export_settings)
+    return gltf2_blender_gather_primitives.gather_primitives(blender_mesh,
+                                                             vertex_groups,
+                                                             modifiers,
+                                                             blender_object,
+                                                             export_settings)
 
 
 def __gather_weights(blender_mesh: bpy.types.Mesh,
