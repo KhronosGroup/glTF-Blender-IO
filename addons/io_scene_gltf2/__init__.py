@@ -13,7 +13,7 @@
 # limitations under the License.
 
 bl_info = {
-    'name': 'glTF 2.0 format',
+    'name': 'glTF 2.0 format (Svrf fork)',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
     "version": (0, 9, 21),
     'blender': (2, 80, 0),
