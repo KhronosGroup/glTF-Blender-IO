@@ -146,12 +146,11 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
         throw new Error("Untested accessor type " + accessor.type);
     }
 
-    // Note that accessor.stride is not handled yet.
-    let count = accessor.count;
-    let stride = componentSize * numElements;
-    let byteOffset = accessor.byteOffset || 0;
+    const count = accessor.count;
+    const stride = (bufferView.byteStride !== undefined) ? bufferView.byteStride : (componentSize * numElements);
+    const byteOffset = accessor.byteOffset || 0;
 
-    let accessorData = [];
+    const accessorData = [];
     for (var i = 0, o = byteOffset; i < count; ++i, o += stride) {
         accessorData.push(bufferViewData.readFloatLE(o));
     }
