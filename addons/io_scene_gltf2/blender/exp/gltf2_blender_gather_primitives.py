@@ -102,15 +102,6 @@ def __gather_cache_primitives(
 
     return primitives
 
-def __gather_materials(blender_primitive, material_names, modifiers, export_settings):
-    if blender_primitive['material'] is None:
-        return None
-    # material = bpy.data.materials[blender_primitive['material']]
-    material = bpy.data.materials[material_names[blender_primitive['material']]]
-    material_double_sided = not material.use_backface_culling
-    return gltf2_blender_gather_materials.gather_material(material, material_double_sided, export_settings)
-
-
 def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings):
     indices = blender_primitive['indices']
 
