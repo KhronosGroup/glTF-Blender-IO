@@ -383,7 +383,7 @@ def extract_primitive_pack(a, indices, use_tangents):
     return result_primitive
 
 
-def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, blender_object, export_settings):
+def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, export_settings):
     """
     Extract primitives from a mesh. Polygons are triangulated and sorted by material.
 
@@ -423,24 +423,23 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, ble
     # Directory of materials with its primitive.
     #
     no_material_primitives = {
-        MATERIAL_ID: '',
+        MATERIAL_ID: None,
         INDICES_ID: [],
         ATTRIBUTES_ID: no_material_attributes
     }
 
-    material_name_to_primitives = {'': no_material_primitives}
+    material_idx_to_primitives = {None: no_material_primitives}
 
     #
 
     vertex_index_to_new_indices = {}
 
-    material_map[''] = vertex_index_to_new_indices
+    material_map[None] = vertex_index_to_new_indices
 
-    materials = [ms.material for ms in blender_object.material_slots]
     #
     # Create primitive for each material.
     #
-    for blender_material in materials:
+    for (mat_idx, blender_material) in enumerate(blender_mesh.materials):
         if blender_material is None:
             continue
 
@@ -453,18 +452,18 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, ble
             attributes[TANGENT_ATTRIBUTE] = []
 
         primitive = {
-            MATERIAL_ID: blender_material.name,
+            MATERIAL_ID: mat_idx,
             INDICES_ID: [],
             ATTRIBUTES_ID: attributes
         }
 
-        material_name_to_primitives[blender_material.name] = primitive
+        material_idx_to_primitives[mat_idx] = primitive
 
         #
 
         vertex_index_to_new_indices = {}
 
-        material_map[blender_material.name] = vertex_index_to_new_indices
+        material_map[mat_idx] = vertex_index_to_new_indices
 
     tex_coord_max = 0
     if blender_mesh.uv_layers.active:
@@ -520,13 +519,13 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, ble
 
         #
 
-        if blender_polygon.material_index < 0 or blender_polygon.material_index >= len(materials) or \
-                materials[blender_polygon.material_index] is None:
-            primitive = material_name_to_primitives['']
-            vertex_index_to_new_indices = material_map['']
+        if blender_polygon.material_index < 0 or blender_polygon.material_index >= len(blender_mesh.materials) or \
+                blender_mesh.materials[blender_polygon.material_index] is None:
+            primitive = material_idx_to_primitives[None]
+            vertex_index_to_new_indices = material_map[None]
         else:
-            primitive = material_name_to_primitives[materials[blender_polygon.material_index].name]
-            vertex_index_to_new_indices = material_map[materials[blender_polygon.material_index].name]
+            primitive = material_idx_to_primitives[blender_polygon.material_index]
+            vertex_index_to_new_indices = material_map[blender_polygon.material_index]
         #
 
         attributes = primitive[ATTRIBUTES_ID]
@@ -921,7 +920,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, ble
 
     result_primitives = []
 
-    for material_name, primitive in material_name_to_primitives.items():
+    for material_idx, primitive in material_idx_to_primitives.items():
         export_color = True
 
         #
@@ -994,7 +993,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, ble
                 pending_attributes[TANGENT_ATTRIBUTE] = []
 
             pending_primitive = {
-                MATERIAL_ID: material_name,
+                MATERIAL_ID: material_idx,
                 INDICES_ID: [],
                 ATTRIBUTES_ID: pending_attributes
             }

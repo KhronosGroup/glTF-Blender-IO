@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import bpy
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
@@ -32,10 +32,10 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 @cached
 def gather_primitives(
-        blender_mesh: bpy.types.Mesh,
+        blender_mesh_name: str,
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
-        blender_object: bpy.types.Object,
+        material_names: Tuple[str],
         export_settings
         ) -> List[gltf2_io.MeshPrimitive]:
     """
@@ -44,48 +44,69 @@ def gather_primitives(
     :return: a list of glTF2 primitives
     """
     primitives = []
-    blender_primitives = gltf2_blender_extract.extract_primitives(
-        None, blender_mesh, vertex_groups, modifiers, blender_object, export_settings)
+
+    blender_primitives = __gather_cache_primitives(blender_mesh_name,
+        vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
-        if bpy.app.version < (2, 80, 0):
-            def __gather_materials_279(blender_primitive, blender_mesh, modifiers, export_settings):
-                if not blender_primitive['material']:
-                    # TODO: fix 'extract_primitives' so that the value of 'material' is None and not empty string
-                    return None
-                mesh_double_sided = blender_mesh.show_double_sided
-                material = bpy.data.materials[blender_primitive['material']]
-                return gltf2_blender_gather_materials.gather_material(material, mesh_double_sided, export_settings)
+        material_idx = internal_primitive['material']
+        double_sided = False
+        material = None
+        if material_idx is not None:
+            blender_material = bpy.data.materials[material_names[material_idx]]
+            if bpy.app.version < (2, 80, 0):
+                double_sided = bpy.data.meshes[blender_mesh_name].show_double_sided
+            else:
+                double_sided = not blender_material.use_backface_culling
+            material = gltf2_blender_gather_materials.gather_material(blender_material,
+                                                                  double_sided,
+                                                                  export_settings)
 
-            primitive = gltf2_io.MeshPrimitive(
-                attributes=__gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
-                extensions=None,
-                extras=None,
-                indices=__gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
-                material=__gather_materials_279(internal_primitive, blender_mesh, modifiers, export_settings),
-                mode=None,
-                targets=__gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
-            )
-        else:
-            primitive = gltf2_io.MeshPrimitive(
-                attributes=__gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
-                extensions=None,
-                extras=None,
-                indices=__gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
-                material=__gather_materials(internal_primitive, modifiers, export_settings),
-                mode=None,
-                targets=__gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
-            )
+        primitive = gltf2_io.MeshPrimitive(
+            attributes=internal_primitive['attributes'],
+            extensions=None,
+            extras=None,
+            indices=internal_primitive['indices'],
+            material=material,
+            mode=None,
+            targets=internal_primitive['targets']
+        )
         primitives.append(primitive)
 
     return primitives
 
+@cached
+def __gather_cache_primitives(
+        blender_mesh_name: str,
+        vertex_groups: Optional[bpy.types.VertexGroups],
+        modifiers: Optional[bpy.types.ObjectModifiers],
+        export_settings
+) -> List[dict]:
+    """
+    Gather parts that are identical for instances, i.e. excluding materials
+    """
+    blender_mesh = bpy.data.meshes[blender_mesh_name]
+    primitives = []
 
-def __gather_materials(blender_primitive, modifiers, export_settings):
-    if not blender_primitive['material']:
-        # TODO: fix 'extract_primitives' so that the value of 'material' is None and not empty string
+    blender_primitives = gltf2_blender_extract.extract_primitives(
+        None, blender_mesh, vertex_groups, modifiers, export_settings)
+
+    for internal_primitive in blender_primitives:
+        primitive = {
+            "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
+            "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+            "material": internal_primitive['material'],
+            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
+        }
+        primitives.append(primitive)
+
+    return primitives
+
+def __gather_materials(blender_primitive, material_names, modifiers, export_settings):
+    if blender_primitive['material'] is None:
         return None
-    material = bpy.data.materials[blender_primitive['material']]
+    # material = bpy.data.materials[blender_primitive['material']]
+    material = bpy.data.materials[material_names[blender_primitive['material']]]
     material_double_sided = not material.use_backface_culling
     return gltf2_blender_gather_materials.gather_material(material, material_double_sided, export_settings)
 
