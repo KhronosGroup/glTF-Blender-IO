@@ -52,7 +52,7 @@ def gather_primitives(
         material_idx = internal_primitive['material']
         double_sided = False
         material = None
-        if material_idx is not None:
+        try:
             blender_material = bpy.data.materials[material_names[material_idx]]
             if bpy.app.version < (2, 80, 0):
                 double_sided = bpy.data.meshes[blender_mesh_name].show_double_sided
@@ -61,6 +61,10 @@ def gather_primitives(
             material = gltf2_blender_gather_materials.gather_material(blender_material,
                                                                   double_sided,
                                                                   export_settings)
+        except IndexError:
+            # no material at that index
+            pass
+
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],

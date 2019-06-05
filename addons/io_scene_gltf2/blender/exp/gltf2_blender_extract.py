@@ -423,26 +423,23 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
     # Directory of materials with its primitive.
     #
     no_material_primitives = {
-        MATERIAL_ID: None,
+        MATERIAL_ID: 0,
         INDICES_ID: [],
         ATTRIBUTES_ID: no_material_attributes
     }
 
-    material_idx_to_primitives = {None: no_material_primitives}
+    material_idx_to_primitives = {0: no_material_primitives}
 
     #
 
     vertex_index_to_new_indices = {}
 
-    material_map[None] = vertex_index_to_new_indices
+    material_map[0] = vertex_index_to_new_indices
 
     #
     # Create primitive for each material.
     #
-    for (mat_idx, blender_material) in enumerate(blender_mesh.materials):
-        if blender_material is None:
-            continue
-
+    for (mat_idx, _) in enumerate(blender_mesh.materials):
         attributes = {
             POSITION_ATTRIBUTE: [],
             NORMAL_ATTRIBUTE: []
@@ -519,10 +516,9 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
 
         #
 
-        if blender_polygon.material_index < 0 or blender_polygon.material_index >= len(blender_mesh.materials) or \
-                blender_mesh.materials[blender_polygon.material_index] is None:
-            primitive = material_idx_to_primitives[None]
-            vertex_index_to_new_indices = material_map[None]
+        if not blender_polygon.material_index in material_idx_to_primitives:
+            primitive = material_idx_to_primitives[0]
+            vertex_index_to_new_indices = material_map[0]
         else:
             primitive = material_idx_to_primitives[blender_polygon.material_index]
             vertex_index_to_new_indices = material_map[blender_polygon.material_index]
