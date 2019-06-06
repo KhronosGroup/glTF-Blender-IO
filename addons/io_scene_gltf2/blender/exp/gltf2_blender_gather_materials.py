@@ -157,7 +157,7 @@ def __gather_extensions(blender_material, export_settings):
             extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
 
     if blender_material.get("useVideoTextureExtension", False) == "True":
-        image_name = blender_material.get("videoTextureExtension_ImageName")
+        image_name = blender_material.get("videoTextureExtension_DiffuseImageName")
         if image_name is not None:
             image = bpy.data.images[image_name]
             if image is not None and image.source == "MOVIE":
@@ -185,7 +185,7 @@ def __gather_extensions(blender_material, export_settings):
                         source=source
                     )
 
-                    extension = dict(texture=texture)
+                    extension = dict(diffuse=texture)
                     extensions["SVRF_video_texture"] = Extension("SVRF_video_texture", extension, False)
 
     # TODO specular glossiness extension
