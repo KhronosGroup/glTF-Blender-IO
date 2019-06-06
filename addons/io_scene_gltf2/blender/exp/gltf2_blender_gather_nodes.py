@@ -258,7 +258,13 @@ def __gather_mesh(blender_object, export_settings):
         blender_mesh = blender_object.data
         skip_filter = False
 
-    result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh, vertex_groups, modifiers, skip_filter, export_settings)
+    material_names = tuple([ms.material.name for ms in blender_object.material_slots])
+    result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh.name,
+                                                   vertex_groups,
+                                                   modifiers,
+                                                   skip_filter,
+                                                   material_names,
+                                                   export_settings)
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
         if bpy.app.version < (2, 80, 0):
