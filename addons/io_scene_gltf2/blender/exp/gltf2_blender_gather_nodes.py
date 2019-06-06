@@ -241,7 +241,7 @@ def __gather_mesh(blender_object, export_settings):
         else:
             depsgraph = bpy.context.evaluated_depsgraph_get()
             blender_mesh_owner = blender_object.evaluated_get(depsgraph)
-            blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True)
+            blender_mesh = blender_mesh_owner.to_mesh()
         for prop in blender_object.data.keys():
             blender_mesh[prop] = blender_object.data[prop]
         skip_filter = True
@@ -344,7 +344,7 @@ def __gather_skin(blender_object, export_settings):
     else:
         depsgraph = bpy.context.evaluated_depsgraph_get()
         # XXX: ...
-        blender_mesh = blender_object.evaluated_get(depsgraph).to_mesh(preserve_all_data_layers=True)
+        blender_mesh = blender_object.evaluated_get(depsgraph).to_mesh()
     if not any(vertex.groups is not None and len(vertex.groups) > 0 for vertex in blender_mesh.vertices):
         return None
 
