@@ -92,11 +92,70 @@ assert.equalEpsilon = function(actual, expected) {
     if (typeof actual !== 'number') {
         throw new Error("Expected " + actual + " to be a number.");
     }
-    let epsilon = Math.abs(expected * 1e-6);
+    let epsilon = 1e-6;
+    epsilon = Math.max(epsilon, Math.abs(expected * epsilon));
     if (Math.abs(actual - expected) > epsilon) {
         throw new Error("Expected " + actual + " to equal " + expected);
     }
 };
+
+assert.equalEpsilonArray = function(actual, expected) {
+    const length = expected.length;
+    assert.strictEqual(actual.length, length);
+
+    for (let i = 0; i < length; ++i) {
+        assert.equalEpsilon(actual[i], expected[i]);
+    }
+};
+
+function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
+    // This is only for testing exporter output, it does not handle enough
+    // cases to parse arbitrary glTF files from outside this test suite.
+
+    const accessor = asset.accessors[accessorIndex];
+    const bufferView = asset.bufferViews[accessor.bufferView];
+    const bufferIndex = bufferView.buffer;
+    let bufferData;
+    if (bufferCache[bufferIndex] !== undefined) {
+        bufferData = bufferCache[bufferIndex];
+    } else {
+        const buffer = asset.buffers[bufferIndex];
+        const binPath = path.resolve(gltfPath, '../' + buffer.uri);
+        bufferData = fs.readFileSync(binPath);
+        bufferCache[bufferIndex] = bufferData;
+    }
+
+    const bufferViewByteOffset = bufferView.byteOffset || 0;
+    const bufferViewData = bufferData.slice(bufferViewByteOffset, bufferViewByteOffset + bufferView.byteLength);
+
+    let componentSize;
+    switch (accessor.componentType) {
+    case 5126:  // FLOAT
+        componentSize = 4;
+        break;
+    default:
+        throw new Error("Untested accessor componentType " + accessor.componentType);
+    }
+
+    let numElements;
+    switch (accessor.type) {
+    case 'SCALAR':
+        numElements = 1;
+        break;
+    default:
+        throw new Error("Untested accessor type " + accessor.type);
+    }
+
+    const count = accessor.count;
+    const stride = (bufferView.byteStride !== undefined) ? bufferView.byteStride : (componentSize * numElements);
+    const byteOffset = accessor.byteOffset || 0;
+
+    const accessorData = [];
+    for (var i = 0, o = byteOffset; i < count; ++i, o += stride) {
+        accessorData.push(bufferViewData.readFloatLE(o));
+    }
+    return accessorData;
+}
 
 describe('General', function() {
     describe('gltf_validator', function() {
@@ -462,6 +521,37 @@ describe('Importer / Exporter (Roundtrip)', function() {
                     assert.strictEqual(doubleSidedMaterials[0].doubleSided, true);
                 });
             }
+
+            it('roundtrips a morph target animation', function() {
+                let dir = '01_morphed_cube';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                assert.strictEqual(asset.animations.length, 1);
+
+                const animation = asset.animations[0];
+                assert.strictEqual(animation.channels.length, 1);
+                assert.strictEqual(animation.samplers.length, 1);
+                assert.strictEqual(animation.channels[0].sampler, 0);
+                assert.strictEqual(animation.channels[0].target.path, 'weights');
+                assert.strictEqual(animation.samplers[0].interpolation, 'CUBICSPLINE');
+
+                const animatedNode = asset.nodes[animation.channels[0].target.node];
+                const animatedMesh = asset.meshes[animatedNode.mesh];
+                const targetNames = animatedMesh.extras.targetNames;
+                assert.strictEqual(targetNames.length, 2);
+                assert.notStrictEqual(targetNames.indexOf('Top'), -1);
+                assert.notStrictEqual(targetNames.indexOf('Bottom'), -1);
+
+                let bufferCache = {};
+                const inputData = getAccessorData(gltfPath, asset, animation.samplers[0].input, bufferCache);
+                const expectedInputData = [0, 1, 2];
+                assert.equalEpsilonArray(inputData, expectedInputData);
+
+                const outputData = getAccessorData(gltfPath, asset, animation.samplers[0].output, bufferCache);
+                const expectedOutputData = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0];
+                assert.equalEpsilonArray(outputData, expectedOutputData);
+            });
 
             it('roundtrips an OcclusionRoughnessMetallic texture', function() {
                 let dir = '08_combine_orm';
