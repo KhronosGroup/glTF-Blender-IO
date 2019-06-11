@@ -66,22 +66,25 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
         if inputs:
             return inputs[0]
-    elif bpy.app.version < (2, 80, 0):  # blender 2.8 removed texture_slots
-        if name != 'Base Color':
-            return None
+    else:
+        if bpy.app.version < (2, 80, 0):
+            if name != 'Base Color':
+                return None
 
-        gltf2_io_debug.print_console("WARNING", "You are using texture slots, which are deprecated. In future versions"
-                                                "of the glTF exporter they will not be supported any more")
+            gltf2_io_debug.print_console("WARNING", "You are using texture slots, which are deprecated. In future versions"
+                                                    "of the glTF exporter they will not be supported any more")
 
-        for blender_texture_slot in blender_material.texture_slots:
-            if blender_texture_slot and blender_texture_slot.texture and \
-                    blender_texture_slot.texture.type == 'IMAGE' and \
-                    blender_texture_slot.texture.image is not None:
-                #
-                # Base color texture
-                #
-                if blender_texture_slot.use_map_color_diffuse:
-                    return blender_texture_slot
+            for blender_texture_slot in blender_material.texture_slots:
+                if blender_texture_slot and blender_texture_slot.texture and \
+                        blender_texture_slot.texture.type == 'IMAGE' and \
+                        blender_texture_slot.texture.image is not None:
+                    #
+                    # Base color texture
+                    #
+                    if blender_texture_slot.use_map_color_diffuse:
+                        return blender_texture_slot
+        else:
+            pass
 
     return None
 
@@ -172,10 +175,10 @@ def get_texture_transform_from_texture_node(texture_node):
             if abs(scale[0]) < 1e-5 or abs(scale[1]) < 1e-5:
                 return None
 
-            if bpy.app.version >= (2, 80, 0):
-                new_offset = Matrix.Rotation(-rotation, 3, 'Z') @ Vector((-offset[0], -offset[1], 1))
-            else:
+            if bpy.app.version < (2, 80, 0):
                 new_offset = Matrix.Rotation(-rotation, 3, 'Z') * Vector((-offset[0], -offset[1], 1))
+            else:
+                new_offset = Matrix.Rotation(-rotation, 3, 'Z') @ Vector((-offset[0], -offset[1], 1))
             new_offset[0] /= scale[0]; new_offset[1] /= scale[1]
             return {
                 "offset": new_offset[0:2],
