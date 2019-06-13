@@ -32,7 +32,7 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 @cached
 def gather_primitives(
-        blender_mesh_name: str,
+        blender_mesh: bpy.types.Mesh,
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
         material_names: Tuple[str],
@@ -45,7 +45,7 @@ def gather_primitives(
     """
     primitives = []
 
-    blender_primitives = __gather_cache_primitives(blender_mesh_name,
+    blender_primitives = __gather_cache_primitives(blender_mesh,
         vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
@@ -55,7 +55,7 @@ def gather_primitives(
         try:
             blender_material = bpy.data.materials[material_names[material_idx]]
             if bpy.app.version < (2, 80, 0):
-                double_sided = bpy.data.meshes[blender_mesh_name].show_double_sided
+                double_sided = blender_mesh.show_double_sided
             else:
                 double_sided = not blender_material.use_backface_culling
             material = gltf2_blender_gather_materials.gather_material(blender_material,
@@ -81,7 +81,7 @@ def gather_primitives(
 
 @cached
 def __gather_cache_primitives(
-        blender_mesh_name: str,
+        blender_mesh: bpy.types.Mesh,
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
         export_settings
@@ -89,7 +89,6 @@ def __gather_cache_primitives(
     """
     Gather parts that are identical for instances, i.e. excluding materials
     """
-    blender_mesh = bpy.data.meshes[blender_mesh_name]
     primitives = []
 
     blender_primitives = gltf2_blender_extract.extract_primitives(

@@ -259,7 +259,7 @@ def __gather_mesh(blender_object, export_settings):
         skip_filter = False
 
     material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
-    result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh.name,
+    result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                    vertex_groups,
                                                    modifiers,
                                                    skip_filter,
