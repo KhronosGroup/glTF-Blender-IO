@@ -59,7 +59,10 @@ def __gather_scene(blender_scene, export_settings):
 def __gather_animations(blender_scene, export_settings):
     animations = []
     for blender_object in blender_scene.objects:
-        animations += gltf2_blender_gather_animations.gather_animations(blender_object, export_settings)
+        # First check if this object is exported or not. Do not export animation of not exported object
+        obj_node = gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
+        if obj_node is not None:
+            animations += gltf2_blender_gather_animations.gather_animations(blender_object, export_settings)
     return animations
 
 
