@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import functools
-
+import bpy
 
 def cached(func):
     """
@@ -37,17 +37,17 @@ def cached(func):
             export_settings = args[-1]
             cache_key_args = args[:-1]
 
-        __by_name = ['Object', 'Scene', 'Material', 'Action', 'Mesh']
+        __by_name = [bpy.types.Object, bpy.types.Scene, bpy.types.Material, bpy.types.Action, bpy.types.Mesh]
 
         # we make a tuple from the function arguments so that they can be used as a key to the cache
         cache_key = ()
         for i in cache_key_args:
-            if str(type(i).__name__) in __by_name:
+            if type(i) in __by_name:
                 cache_key += (i.name,)
             else:
                 cache_key += (i,)
         for i in cache_key_kwargs.values():
-            if str(type(i).__name__) in __by_name:
+            if type(i) in __by_name:
                 cache_key += (i.name,)
             else:
                 cache_key += (i,)
