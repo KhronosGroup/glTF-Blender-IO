@@ -37,8 +37,20 @@ def cached(func):
             export_settings = args[-1]
             cache_key_args = args[:-1]
 
+        __by_name = ['Object', 'Scene', 'Material', 'Action', 'Mesh']
+
         # we make a tuple from the function arguments so that they can be used as a key to the cache
-        cache_key = tuple(cache_key_args + tuple(cache_key_kwargs.values()))
+        cache_key = ()
+        for i in cache_key_args:
+            if str(type(i).__name__) in __by_name:
+                cache_key += (i.name,)
+            else:
+                cache_key += (i,)
+        for i in cache_key_kwargs.values():
+            if str(type(i).__name__) in __by_name:
+                cache_key += (i.name,)
+            else:
+                cache_key += (i,)
 
         # invalidate cache if export settings have changed
         if not hasattr(func, "__export_settings") or export_settings != func.__export_settings:
