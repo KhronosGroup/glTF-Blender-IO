@@ -202,6 +202,49 @@ describe('Exporter', function() {
             let outDirName = 'out' + blenderVersion;
             let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
 
+            it('can create instances of a mesh with different materials', function() {
+                let gltfPath = path.resolve(outDirPath, '02_material_instancing.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 4);
+                assert.strictEqual(asset.materials.length, 3);
+
+                const materialRed = asset.materials.filter(m => m.name === 'MaterialRed')[0];
+                const materialGreen = asset.materials.filter(m => m.name === 'MaterialGreen')[0];
+                const materialBlue = asset.materials.filter(m => m.name === 'MaterialBlue')[0];
+
+                const cubeRedMesh = asset.meshes[asset.nodes.filter(m => m.name === 'CubeRed')[0].mesh];
+                const cubeGreenMesh = asset.meshes[asset.nodes.filter(m => m.name === 'CubeGreen')[0].mesh];
+                const cubeBlueMesh = asset.meshes[asset.nodes.filter(m => m.name === 'CubeBlue')[0].mesh];
+                const cubeNoMatMesh = asset.meshes[asset.nodes.filter(m => m.name === 'CubeNoMat')[0].mesh];
+
+                // The "NoMat" mesh is a separate Blender mesh with no material defined.
+                assert.strictEqual(cubeNoMatMesh.primitives.length, 1);
+                assert.strictEqual(cubeNoMatMesh.primitives[0].material, undefined);
+
+                // CubeRed, CubeGreen, and CubeBlue share a single Blender mesh, but have separate
+                // materials.  This converts to glTF as separate meshes that share vertex attributes.
+                assert.strictEqual(cubeRedMesh.primitives.length, 1);
+                assert.strictEqual(cubeGreenMesh.primitives.length, 1);
+                assert.strictEqual(cubeBlueMesh.primitives.length, 1);
+                const cubeRedPrimitive = cubeRedMesh.primitives[0];
+                const cubeGreenPrimitive = cubeGreenMesh.primitives[0];
+                const cubeBluePrimitive = cubeBlueMesh.primitives[0];
+
+                // Each glTF mesh is assigned a different material.
+                assert.strictEqual(asset.materials[cubeRedPrimitive.material], materialRed);
+                assert.strictEqual(asset.materials[cubeGreenPrimitive.material], materialGreen);
+                assert.strictEqual(asset.materials[cubeBluePrimitive.material], materialBlue);
+
+                // Sharing of vertex attributes indicates that mesh data has been successfully re-used.
+                assert.strictEqual(cubeGreenPrimitive.indices, cubeRedPrimitive.indices);
+                assert.strictEqual(cubeGreenPrimitive.attributes.POSITION, cubeRedPrimitive.attributes.POSITION);
+                assert.strictEqual(cubeGreenPrimitive.attributes.NORMAL, cubeRedPrimitive.attributes.NORMAL);
+                assert.strictEqual(cubeBluePrimitive.indices, cubeRedPrimitive.indices);
+                assert.strictEqual(cubeBluePrimitive.attributes.POSITION, cubeRedPrimitive.attributes.POSITION);
+                assert.strictEqual(cubeBluePrimitive.attributes.NORMAL, cubeRedPrimitive.attributes.NORMAL);
+            });
+
             // ORM tests, source images:
             // Occlusion: Black square in upper-left on white background, grayscale image
             // Roughness: Black square in upper-right on white background, grayscale image
