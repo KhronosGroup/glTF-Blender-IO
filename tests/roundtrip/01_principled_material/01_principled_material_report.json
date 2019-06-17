@@ -1,0 +1,96 @@
+{
+    "uri": "01_principled_material.gltf",
+    "mimeType": "model/gltf+json",
+    "validatorVersion": "2.0.0-dev.2.7",
+    "validatedAt": "2019-06-15T17:17:47.180Z",
+    "issues": {
+        "numErrors": 0,
+        "numWarnings": 0,
+        "numInfos": 2,
+        "numHints": 0,
+        "messages": [
+            {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/1"
+            },
+            {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/2"
+            }
+        ],
+        "truncated": false
+    },
+    "info": {
+        "version": "2.0",
+        "generator": "Khronos glTF Blender I/O v0.9.28",
+        "resources": [
+            {
+                "pointer": "/buffers/0",
+                "mimeType": "application/gltf-buffer",
+                "storage": "external",
+                "uri": "01_principled_material.bin",
+                "byteLength": 1680
+            },
+            {
+                "pointer": "/images/0",
+                "mimeType": "image/png",
+                "storage": "external",
+                "uri": "01_principled_emissive.png",
+                "image": {
+                    "width": 128,
+                    "height": 128,
+                    "format": "RGB",
+                    "bits": 8
+                }
+            },
+            {
+                "pointer": "/images/1",
+                "mimeType": "image/png",
+                "storage": "external",
+                "uri": "01_principled_normal.png",
+                "image": {
+                    "width": 128,
+                    "height": 128,
+                    "format": "RGB",
+                    "bits": 8
+                }
+            },
+            {
+                "pointer": "/images/2",
+                "mimeType": "image/png",
+                "storage": "external",
+                "uri": "01_principled_occlusionRoughnessMetallic.png",
+                "image": {
+                    "width": 128,
+                    "height": 128,
+                    "format": "RGB",
+                    "bits": 8
+                }
+            },
+            {
+                "pointer": "/images/3",
+                "mimeType": "image/png",
+                "storage": "external",
+                "uri": "01_principled_baseColor.png",
+                "image": {
+                    "width": 128,
+                    "height": 128,
+                    "format": "RGB",
+                    "bits": 8
+                }
+            }
+        ],
+        "hasAnimations": false,
+        "hasMaterials": true,
+        "hasMorphTargets": false,
+        "hasSkins": false,
+        "hasTextures": true,
+        "hasDefaultScene": true,
+        "primitivesCount": 1,
+        "maxAttributesUsed": 3
+    }
+}
