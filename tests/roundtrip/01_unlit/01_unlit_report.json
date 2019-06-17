@@ -1,0 +1,41 @@
+{
+    "uri": "01_unlit.gltf",
+    "mimeType": "model/gltf+json",
+    "validatorVersion": "2.0.0-dev.2.7",
+    "validatedAt": "2019-06-17T15:24:14.909Z",
+    "issues": {
+        "numErrors": 0,
+        "numWarnings": 0,
+        "numInfos": 0,
+        "numHints": 0,
+        "messages": [],
+        "truncated": false
+    },
+    "info": {
+        "version": "2.0",
+        "generator": "Khronos Blender glTF 2.0 I/O, with hand-edits",
+        "extensionsUsed": [
+            "KHR_materials_unlit"
+        ],
+        "extensionsRequired": [
+            "KHR_materials_unlit"
+        ],
+        "resources": [
+            {
+                "pointer": "/buffers/0",
+                "mimeType": "application/gltf-buffer",
+                "storage": "external",
+                "uri": "01_unlit.bin",
+                "byteLength": 2568
+            }
+        ],
+        "hasAnimations": false,
+        "hasMaterials": true,
+        "hasMorphTargets": false,
+        "hasSkins": false,
+        "hasTextures": false,
+        "hasDefaultScene": true,
+        "primitivesCount": 2,
+        "maxAttributesUsed": 2
+    }
+}

@@ -202,6 +202,43 @@ describe('Exporter', function() {
             let outDirName = 'out' + blenderVersion;
             let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
 
+            it('can export a base color', function() {
+                let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const textureIndex = asset.materials[0].pbrMetallicRoughness.baseColorTexture.index;
+                const imageIndex = asset.textures[textureIndex].source;
+
+                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_baseColor.png');
+                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_baseColor.png')));
+            });
+
+            it('can export a normal map', function() {
+                let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const textureIndex = asset.materials[0].normalTexture.index;
+                const imageIndex = asset.textures[textureIndex].source;
+
+                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_normal.png');
+                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
+            });
+
+            it('can export an emissive map', function() {
+                let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const textureIndex = asset.materials[0].emissiveTexture.index;
+                const imageIndex = asset.textures[textureIndex].source;
+
+                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_emissive.png');
+                assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
+                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
+            });
+
             it('can create instances of a mesh with different materials', function() {
                 let gltfPath = path.resolve(outDirPath, '02_material_instancing.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
@@ -594,6 +631,49 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const outputData = getAccessorData(gltfPath, asset, animation.samplers[0].output, bufferCache);
                 const expectedOutputData = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0];
                 assert.equalEpsilonArray(outputData, expectedOutputData);
+            });
+
+            it('roundtrips a base color', function() {
+                let dir = '01_principled_material';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const textureIndex = asset.materials[0].pbrMetallicRoughness.baseColorTexture.index;
+                const imageIndex = asset.textures[textureIndex].source;
+
+                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_baseColor.png');
+                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_baseColor.png')));
+            });
+
+            it('roundtrips a normal map', function() {
+                let dir = '01_principled_material';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const textureIndex = asset.materials[0].normalTexture.index;
+                const imageIndex = asset.textures[textureIndex].source;
+
+                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_normal.png');
+                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
+            });
+
+            it('roundtrips an emissive map', function() {
+                let dir = '01_principled_material';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const textureIndex = asset.materials[0].emissiveTexture.index;
+                const imageIndex = asset.textures[textureIndex].source;
+
+                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_emissive.png');
+                assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
+                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
             });
 
             it('roundtrips an OcclusionRoughnessMetallic texture', function() {
