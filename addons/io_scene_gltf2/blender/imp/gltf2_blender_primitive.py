@@ -35,10 +35,7 @@ class BlenderPrimitive():
         if pyprimitive.indices is not None:
             indices = BinaryData.get_data_from_accessor(gltf, pyprimitive.indices)
         else:
-            indices = []
-            indices_ = range(0, len(pos))
-            for i in indices_:
-                indices.append((i,))
+            indices = [(i,) for i in range(len(pos))]
 
         pyprimitive.tmp_indices = indices
 
