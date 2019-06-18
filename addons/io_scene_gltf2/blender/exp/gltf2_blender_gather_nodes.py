@@ -131,28 +131,19 @@ def __gather_children(blender_object, export_settings):
                     return parent_joint
             return None
         for child in direct_bone_children:
-            # find parent joint
-            parent_joint = find_parent_joint(root_joints, child.parent_bone)
-            if not parent_joint:
-                continue
             child_node = gather_node(child, export_settings)
             if child_node is None:
                 continue
-            blender_bone = blender_object.pose.bones[parent_joint.name]
+            blender_bone = blender_object.pose.bones[child.parent_bone]
+            child_mat = child.matrix_local
             # fix rotation
             if export_settings[gltf2_blender_export_keys.YUP]:
-                rot = child_node.rotation
-                if rot is None:
-                    rot = [0, 0, 0, 1]
-
-                rot_quat = Quaternion(rot)
                 axis_basis_change = Matrix(
                     ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, -1.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-                mat = gltf2_blender_math.multiply(axis_basis_change, child.matrix_basis)
-                mat = gltf2_blender_math.multiply(child.matrix_parent_inverse, mat)
+                child_mat = gltf2_blender_math.multiply(axis_basis_change, child_mat)
 
-                _, rot_quat, _ = mat.decompose()
-                child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
+            _, rot_quat, _ = child_mat.decompose()
+            child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
 
             # fix translation (in blender bone's tail is the origin for children)
             trans, _, _ = child.matrix_local.decompose()
@@ -162,6 +153,10 @@ def __gather_children(blender_object, export_settings):
             bone_tail = [0, blender_bone.length, 0]
             child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
 
+            # find parent joint
+            parent_joint = find_parent_joint(root_joints, child.parent_bone)
+            if not parent_joint:
+                continue
             parent_joint.children.append(child_node)
 
     return children
