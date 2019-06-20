@@ -38,6 +38,9 @@ def gather_material_normal_texture_info_class(blender_shader_sockets_or_texture_
         tex_coord=__gather_tex_coord(blender_shader_sockets_or_texture_slots, export_settings)
     )
 
+    if texture_info.index is None:
+        return None
+
     return texture_info
 
 
