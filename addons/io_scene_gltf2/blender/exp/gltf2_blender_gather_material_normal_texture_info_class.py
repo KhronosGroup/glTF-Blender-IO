@@ -141,4 +141,6 @@ def __get_tex_from_socket(socket):
         gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
     if not result:
         return None
+    if result[0].shader_node.image is None:
+        return None
     return result[0]
