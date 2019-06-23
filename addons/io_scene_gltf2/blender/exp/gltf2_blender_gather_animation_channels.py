@@ -148,7 +148,11 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
     targets = {}
     for fcurve in blender_action.fcurves:
-        target_property = get_target_property_name(fcurve.data_path)
+        try:
+            target_property = get_target_property_name(fcurve.data_path)
+        except:
+            gltf2_io_debug.print_console("WARNING", "Invalid animation fcurve name on action {}".format(blender_action.name))
+            continue
         object_path = get_target_object_path(fcurve.data_path)
 
         # find the object affected by this action
