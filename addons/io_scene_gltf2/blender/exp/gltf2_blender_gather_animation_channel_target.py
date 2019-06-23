@@ -68,7 +68,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
         if isinstance(blender_bone, bpy.types.PoseBone):
             return gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
 
-    return gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
+    return gltf2_blender_gather_nodes.gather_node(blender_object, None, export_settings)
 
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],
