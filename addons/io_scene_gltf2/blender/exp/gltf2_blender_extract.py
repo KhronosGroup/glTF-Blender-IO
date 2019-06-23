@@ -936,7 +936,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
         colors = []
         if export_color:
             for color_index in range(0, color_max):
-                tex_coords.append(primitive[ATTRIBUTES_ID][COLOR_PREFIX + str(color_index)])
+                colors.append(primitive[ATTRIBUTES_ID][COLOR_PREFIX + str(color_index)])
         joints = []
         weights = []
         if export_settings[gltf2_blender_export_keys.SKINS]:
