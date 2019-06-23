@@ -140,4 +140,4 @@ def __gather_name(blender_object, export_settings):
 
 def __gather_skeleton(blender_object, export_settings):
     # In the future support the result of https://github.com/KhronosGroup/glTF/pull/1195
-    return None  # gltf2_blender_gather_nodes.gather_node(blender_object, export_settings)
+    return None  # gltf2_blender_gather_nodes.gather_node(blender_object, blender_scene, export_settings)
