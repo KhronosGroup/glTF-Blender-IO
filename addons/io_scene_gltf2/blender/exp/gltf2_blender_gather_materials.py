@@ -26,6 +26,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metall
 from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 
+ALPHA_MASK_METHODS = ['CLIP','HASHED']
 
 @cached
 def gather_material(blender_material, mesh_double_sided, export_settings):
@@ -80,7 +81,7 @@ def __gather_alpha_cutoff(blender_material, export_settings):
     if bpy.app.version < (2, 80, 0):
         return None
     else:
-        if blender_material.blend_method == 'CLIP':
+        if blender_material.blend_method in ALPHA_MASK_METHODS:
             return blender_material.alpha_threshold
     return None
 
@@ -89,7 +90,7 @@ def __gather_alpha_mode(blender_material, export_settings):
     if bpy.app.version < (2, 80, 0):
         return None
     else:
-        if blender_material.blend_method == 'CLIP':
+        if blender_material.blend_method in ALPHA_MASK_METHODS:
             return 'MASK'
         elif blender_material.blend_method == 'BLEND':
             return 'BLEND'
