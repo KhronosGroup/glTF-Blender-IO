@@ -75,7 +75,7 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     extras = {}
 
     if export_settings['gltf_extras']:
-        extras = gltf2_blender_generate_extras.generate_extras(blender_mesh)
+        extras = gltf2_blender_generate_extras.generate_extras(blender_mesh) or {}
 
     if export_settings[MORPH] and blender_mesh.shape_keys:
         morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
@@ -118,7 +118,7 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
                      modifiers: Optional[bpy.types.ObjectModifiers],
                      export_settings
                      ) -> Optional[List[float]]:
-    
+
     if not export_settings[MORPH] or not blender_mesh.shape_keys:
         return None
 
