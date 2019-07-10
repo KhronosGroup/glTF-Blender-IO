@@ -62,12 +62,18 @@ class Keyframe:
         return length
 
     def __set_indexed(self, value):
+        if value is None:
+            return value
+        if "rotation" in self.target and type(value) is mathutils.Quaternion:
+            return value
         # 'value' targets don't use keyframe.array_index
         if self.target == "value":
             return value
         # Sometimes blender animations only reference a subset of components of a data target. Keyframe should always
         # contain a complete Vector/ Quaternion --> use the array_index value of the keyframe to set components in such
         # structures
+        if type(value) is mathutils.Quaternion:
+            value = tuple(value.to_euler("XYZ"))
         result = [0.0] * self.get_target_len()
         for i, v in zip(self.__indices, value):
             result[i] = v
