@@ -29,9 +29,24 @@ from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 
+def gather_node(blender_object, blender_scene, export_settings):
+    # custom cache to avoid cache miss when called from animation
+    # with blender_scene=None
+
+    # invalidate cache if export settings have changed
+    if not hasattr(gather_node, "__export_settings") or export_settings != gather_node.__export_settings:
+        gather_node.__cache = {}
+        gather_node.__export_settings = export_settings
+
+    if blender_scene is None and blender_object.name in gather_node.__cache:
+        return gather_node.__cache[blender_object.name]
+
+    node = __gather_node(blender_object, blender_scene, export_settings)
+    gather_node.__cache[blender_object.name] = node
+    return node
 
 @cached
-def gather_node(blender_object, blender_scene, export_settings):
+def __gather_node(blender_object, blender_scene, export_settings):
     # If blender_scene is None, we are coming from animation export
     # Check to know if object is exported is already done, so we don't check
     # again if object is instanced in scene : this check was already done when exporting object itself
