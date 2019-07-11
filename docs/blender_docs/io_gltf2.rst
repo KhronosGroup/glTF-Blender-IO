@@ -119,7 +119,7 @@ that will allow it to simply copy the image texture into the glTF file during ex
 
 The Image Texture node for this should have its *Color Space* set to Non-Color Data.
 
-.. figure:: /images/addons_io-gltf2-material-metalRough.png
+.. figure:: /images/addons_io-gltf2_material-metalRough.png
 
    A metallic/roughness image connected in a manner consistent with the glTF standard,
    allowing it to be used verbatim inside an exported glTF file.
@@ -155,7 +155,7 @@ The strength of the normal map can be adjusted on this node.
 The exporter is not exporting these nodes directly, but will use them to locate
 the correct image and will copy the strength setting into the glTF.
 
-.. figure:: /images/addons_io-gltf2-material-normal.png
+.. figure:: /images/addons_io-gltf2_material-normal.png
 
    A normal map image connected such that the exporter will find it and copy it
    to the glTF file.
@@ -237,8 +237,7 @@ There is a mapping type selector across the top. *Point* is the recommended type
 
 For the *Texture* type, *Scale* X and Y must be equal (uniform scaling).
 
-.. figure:: /images/addons_io-gltf2-material-mapping.png
-   :alt: A deliberate choice of UV mapping.
+.. figure:: /images/addons_io-gltf2_material-mapping.png
 
    A deliberate choice of UV mapping.
 
@@ -261,7 +260,7 @@ Example
 A single material may use all of the above at the same time, if desired. This figure shows
 a typical node structure when several of the above options are applied at once:
 
-.. figure:: /images/addons_io-gltf2-material-principled.png
+.. figure:: /images/addons_io-gltf2_material-principled.png
    :alt: A Principled BSDF node uses multiple Image Texture inputs.
          Each texture takes a Mapping Vector, with a UV Map as its input.
          Roughness must use the green channel of its texture, and
@@ -429,6 +428,7 @@ Normal quantization bits
    Higher values result in better compression rates
 Texcoord quantization bits
    Higher values result in better compression rates
+
 
 Objects Tab
 ^^^^^^^^^^^
