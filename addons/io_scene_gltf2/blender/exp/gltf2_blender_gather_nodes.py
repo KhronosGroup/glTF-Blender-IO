@@ -79,12 +79,12 @@ def __filter_node(blender_object, blender_scene, export_settings):
             if blender_object.name not in blender_scene.objects:
                 return False
     else:
-        if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
-            return False
         if blender_scene is not None:
             instanced =  any([blender_object.name in layer.objects for layer in blender_scene.view_layers])
             if instanced is False:
                 return False
+        if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
+            return False
 
     return True
 
