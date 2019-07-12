@@ -21,6 +21,7 @@ from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.com import gltf2_blender_math
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 @cached
@@ -35,7 +36,7 @@ def gather_skin(blender_object, export_settings):
     if not __filter_skin(blender_object, export_settings):
         return None
 
-    return gltf2_io.Skin(
+    skin = gltf2_io.Skin(
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         inverse_bind_matrices=__gather_inverse_bind_matrices(blender_object, export_settings),
@@ -43,6 +44,10 @@ def gather_skin(blender_object, export_settings):
         name=__gather_name(blender_object, export_settings),
         skeleton=__gather_skeleton(blender_object, export_settings)
     )
+
+    export_user_extensions('gather_skin_hook', export_settings, skin, blender_object)
+
+    return skin
 
 
 def __filter_skin(blender_object, export_settings):

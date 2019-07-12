@@ -21,6 +21,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 @cached
@@ -39,6 +40,8 @@ def gather_texture_info(blender_shader_sockets_or_texture_slots: typing.Union[
 
     if texture_info.index is None:
         return None
+
+    export_user_extensions('gather_texture_info_hook', export_settings, texture_info, blender_shader_sockets_or_texture_slots)
 
     return texture_info
 

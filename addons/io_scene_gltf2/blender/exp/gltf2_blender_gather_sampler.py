@@ -15,6 +15,7 @@
 import bpy
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 @cached
@@ -22,7 +23,7 @@ def gather_sampler(blender_shader_node: bpy.types.Node, export_settings):
     if not __filter_sampler(blender_shader_node, export_settings):
         return None
 
-    return gltf2_io.Sampler(
+    sampler = gltf2_io.Sampler(
         extensions=__gather_extensions(blender_shader_node, export_settings),
         extras=__gather_extras(blender_shader_node, export_settings),
         mag_filter=__gather_mag_filter(blender_shader_node, export_settings),
@@ -31,6 +32,10 @@ def gather_sampler(blender_shader_node: bpy.types.Node, export_settings):
         wrap_s=__gather_wrap_s(blender_shader_node, export_settings),
         wrap_t=__gather_wrap_t(blender_shader_node, export_settings)
     )
+
+    export_user_extensions('gather_sampler_hook', export_settings, sampler, blender_shader_node)
+
+    return sampler
 
 
 def __filter_sampler(blender_shader_node, export_settings):

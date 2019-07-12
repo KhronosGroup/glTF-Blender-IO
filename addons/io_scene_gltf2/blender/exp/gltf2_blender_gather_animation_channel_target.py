@@ -20,6 +20,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 @cached
 def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
@@ -29,12 +30,22 @@ def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
                                     export_settings
                                     ) -> gltf2_io.AnimationChannelTarget:
 
-        return gltf2_io.AnimationChannelTarget(
+        animation_channel_target = gltf2_io.AnimationChannelTarget(
             extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
             extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
             node=__gather_node(channels, blender_object, export_settings, bake_bone),
             path=__gather_path(channels, blender_object, export_settings, bake_bone, bake_channel)
         )
+
+        export_user_extensions('gather_animation_channel_target_hook', 
+                               export_settings, 
+                               animation_channel_target, 
+                               channels, 
+                               blender_object, 
+                               bake_bone, 
+                               bake_channel)
+        
+        return animation_channel_target
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
                         blender_object: bpy.types.Object,

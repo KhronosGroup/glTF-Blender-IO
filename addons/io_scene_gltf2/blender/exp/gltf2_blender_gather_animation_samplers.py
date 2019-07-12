@@ -27,6 +27,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from . import gltf2_blender_export_keys
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 @cached
@@ -55,7 +56,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                                  export_settings)
 
 
-    return gltf2_io.AnimationSampler(
+    sampler = gltf2_io.AnimationSampler(
         extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         extras=__gather_extras(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         input=__gather_input(channels, blender_object_if_armature, non_keyed_values,
@@ -71,6 +72,19 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                action_name,
                                export_settings)
     )
+
+    export_user_extensions('gather_animation_sampler_hook', 
+                            export_settings, 
+                            sampler, 
+                            channels, 
+                            blender_object, 
+                            bake_bone, 
+                            bake_channel, 
+                            bake_range_start, 
+                            bake_range_end, 
+                            action_name)
+
+    return sampler
 
 def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
                               blender_object: bpy.types.Object,

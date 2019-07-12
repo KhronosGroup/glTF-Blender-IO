@@ -25,6 +25,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 @cached
@@ -54,6 +55,8 @@ def gather_material(blender_material, mesh_double_sided, export_settings):
         occlusion_texture=__gather_occlusion_texture(blender_material, orm_texture, export_settings),
         pbr_metallic_roughness=__gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
     )
+
+    export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
     return material
     # material = blender_primitive['material']
