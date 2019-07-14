@@ -57,6 +57,11 @@ with the following channels of information:
 - Normal Map
 - Emissive
 
+.. figure:: /images/addons_io-gltf2_material-channels.jpg
+
+   An example of the various image maps available in the glTF 2.0 core format.  This is the
+   `water bottle sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
+   shown alongside slices of its various image maps.
 
 Imported Materials
 ------------------
@@ -157,8 +162,8 @@ may not be spare horsepower for computing such things at render time.
 
    The easiest way to create the custom node group is to import an existing glTF model
    that contains an occlusion map, such as the
-   `water bottle sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__.
-   A manually created custom node group can also be used.
+   `water bottle <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
+   or another existing model.  A manually created custom node group can also be used.
 
 glTF stores occlusion in the red (``R``) channel, allowing it to optionally share
 the same image with the roughness and metallic channels.
