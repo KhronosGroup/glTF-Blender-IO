@@ -3,13 +3,11 @@
 glTF 2.0
 ********
 
-:Name: glTF 2.0 format
-:Location: :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
-:Version: 0.9.x
-:Blender: 2.80
-:Category: Import-Export
-:Authors: Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein,
-          Khronos Group, Mozilla, and many external contributors.
+.. admonition:: Reference
+   :class: refbox
+
+   :Category:  Import-Export
+   :Menu:      :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
 
 
 Usage
@@ -99,7 +97,7 @@ Base Color
 ^^^^^^^^^^
 
 The glTF base color is determined by looking for a Base Color input on a Principled BSDF node.
-If the input is unconnected, the input's default color (the color button next to the unconnected socket)
+If the input is unconnected, the input's default color (the color field next to the unconnected socket)
 is used as the Base Color for the glTF material.
 
 .. figure:: /images/addons_io-gltf2_material-baseColor-solidGreen.png
