@@ -18,8 +18,8 @@ Usage
 glTF™ (GL Transmission Format) is used for transmission and loading of 3D models
 in web and native applications. glTF reduces the size of 3D models and
 the runtime processing needed to unpack and render those models.
-This format is commonly used on the web, and has upcoming support in native 3D engines
-such as Unity3D and Unreal Engine 4.
+This format is commonly used on the web, and has support in various 3D engines
+such as Unity3D, Unreal Engine 4, and Godot.
 
 This importer/exporter supports the following glTF 2.0 features:
 
