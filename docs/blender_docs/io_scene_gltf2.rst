@@ -173,7 +173,7 @@ the same image with the roughness and metallic channels.
 
 .. tip::
 
-   Blender's Cycles rendering engine has a Bake panel that can be used to bake
+   The Cycles render engine has a Bake panel that can be used to bake
    ambient occlusion maps.  The resulting image can be saved and connected
    directly to the ``glTF Settings`` node.
 
@@ -199,7 +199,7 @@ the correct image and will copy the strength setting into the glTF.
 
 .. tip::
 
-   Blender's Cycles rendering engine has a Bake panel that can be used to bake
+   The Cycles render engine has a Bake panel that can be used to bake
    tangent-space normal maps from almost any other arrangement of normal vector nodes.
    Switch the Bake type to Normal. Keep the default space settings
    (space: Tangent, R: +X, G: +Y, B: +Z) when using this bake panel for glTF.
@@ -239,7 +239,7 @@ Leave this box un-checked for double-sided materials.
 
 .. figure:: /images/addons_io-gltf2_material-backfaceCulling.png
 
-   Check this box when the backs of faces are not shown by a material.
+   The inverse of this setting controls glTF's ``DoubleSided`` flag.
 
 
 Blend Modes
@@ -478,11 +478,6 @@ Normal quantization bits
    Higher values result in better compression rates.
 Texcoord quantization bits
    Higher values result in better compression rates.
-
-.. note::
-
-   The Draco-related checkboxes will not be shown unless the Draco library
-   is included in the build of Blender for the current platform.
 
 
 Objects Tab
