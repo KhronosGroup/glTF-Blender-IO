@@ -36,7 +36,7 @@ glTF's internal structure mimics the memory buffers commonly used by graphics ch
 when rendering in real-time, such that assets can be delivered to desktop, web, or mobile clients
 and be promptly displayed with minimal processing. As a result, quads and n-gons
 are automatically converted to triangles when exporting to glTF.
-Discontinuous UVs and flat-shaded edges may result in mildly higher vertex counts in glTF
+Discontinuous UVs and flat-shaded edges may result in moderately higher vertex counts in glTF
 compared to Blender, as such vertices are separated for export.
 Likewise, curves and other non-mesh data are not preserved,
 and must be converted to meshes prior to export.
@@ -57,9 +57,10 @@ with the following channels of information:
 
 .. figure:: /images/addons_io-gltf2_material-channels.jpg
 
-   An example of the various image maps available in the glTF 2.0 core format.  This is the
-   `water bottle sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
+   An example of the various image maps available in the glTF 2.0 core format. This is
+   the `water bottle sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
    shown alongside slices of its various image maps.
+
 
 Imported Materials
 ------------------
@@ -150,7 +151,7 @@ it will look for an Image Texture attached there to use as the occlusion map in 
 The effect need not be shown in Blender, as Blender has other ways of showing ambient occlusion,
 but this method will allow the exporter to write an occlusion image to the glTF.
 This can be useful to real-time glTF viewers, particularly on platforms where there
-may not be spare horsepower for computing such things at render time.
+may not be spare power for computing such things at render time.
 
 .. figure:: /images/addons_io-gltf2_material-occlusionOnly.png
 
@@ -159,9 +160,9 @@ may not be spare horsepower for computing such things at render time.
 .. tip::
 
    The easiest way to create the custom node group is to import an existing glTF model
-   that contains an occlusion map, such as the
-   `water bottle <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
-   or another existing model.  A manually created custom node group can also be used.
+   that contains an occlusion map, such as
+   the `water bottle <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
+   or another existing model. A manually created custom node group can also be used.
 
 glTF stores occlusion in the red (``R``) channel, allowing it to optionally share
 the same image with the roughness and metallic channels.
@@ -174,7 +175,7 @@ the same image with the roughness and metallic channels.
 .. tip::
 
    The Cycles render engine has a Bake panel that can be used to bake
-   ambient occlusion maps.  The resulting image can be saved and connected
+   ambient occlusion maps. The resulting image can be saved and connected
    directly to the ``glTF Settings`` node.
 
 
@@ -232,7 +233,7 @@ Double Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For materials where only the front faces will be visible, turn on *Backface Culling* in
-the *Settings* section of an Eevee material.  When using other engines (Cycles, Workbench)
+the *Settings* panel of an Eevee material. When using other engines (Cycles, Workbench)
 you can temporarily switch to Eevee to configure this setting, then switch back.
 
 Leave this box un-checked for double-sided materials.
@@ -301,8 +302,8 @@ Factors
 ^^^^^^^
 
 Any Image Texture nodes may optionally be multiplied with a constant color or scalar.
-These will be written as factors in the glTF file, which are numbers that multiply
-with specified image textures. These are not common.
+These will be written as factors in the glTF file, which are numbers that are multiplied
+with the specified image textures. These are not common.
 
 
 Example
@@ -320,11 +321,11 @@ Extensions
 ----------
 
 The core glTF 2.0 format can be extended with extra information, using glTF extensions.
-This allows the file format to hold details that were not considered universal at the time of
-first publication.  Not all glTF readers support all extensions, but some are fairly common.
+This allows the file format to hold details that were not considered universal at the time of first publication.
+Not all glTF readers support all extensions, but some are fairly common.
 
-Certain Blender features can only be exported to glTF via these extensions.  The following
-`glTF 2.0 extensions <https://github.com/KhronosGroup/glTF/tree/master/extensions>`__
+Certain Blender features can only be exported to glTF via these extensions.
+The following `glTF 2.0 extensions <https://github.com/KhronosGroup/glTF/tree/master/extensions>`__
 are supported directly by this add-on:
 
 
