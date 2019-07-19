@@ -339,6 +339,7 @@ are supported directly by this add-on:
 
 .. rubric:: Export
 
+- ``KHR_draco_mesh_compression``
 - ``KHR_lights_punctual``
 - ``KHR_materials_unlit``
 - ``KHR_texture_transform``
