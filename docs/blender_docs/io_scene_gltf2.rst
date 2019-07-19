@@ -249,7 +249,7 @@ Blend Modes
 The Base Color input can optionally supply alpha values.
 How these values are treated by glTF depends on the selected blend mode.
 
-With the Eevee rendering engine selected, each material has a Blend Mode on
+With the Eevee render engine selected, each material has a Blend Mode on
 the material settings panel. Use this setting to define how alpha values from
 the Base Color channel are treated in glTF. Three settings are supported by glTF:
 
