@@ -44,7 +44,7 @@ The Khronos glTF 2.0 importer and exporter is enabled by default in beta version
 Usage Documentation
 -------------------
 
-See: https://docs.blender.org/manual/en/dev/addons/io_gltf2.html
+See: https://docs.blender.org/manual/en/dev/addons/io_scene_gltf2.html
 
 Debugging
 ---------
