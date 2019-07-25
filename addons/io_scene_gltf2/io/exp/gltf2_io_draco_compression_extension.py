@@ -159,7 +159,7 @@ def __traverse_node(node, f):
     f(node)
     if not (node.children is None):
         for child in node.children:
-            __traverse_node(child)
+            __traverse_node(child, f)
 
 
 def __compress_primitive(primitive, dll, export_settings):

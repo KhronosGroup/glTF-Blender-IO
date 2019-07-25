@@ -3,13 +3,11 @@
 glTF 2.0
 ********
 
-:Name: glTF 2.0 format
-:Location: :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
-:Version: 0.9.x
-:Blender: 2.80
-:Category: Import-Export
-:Authors: Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein,
-          Khronos Group, Mozilla, and many external contributors.
+.. admonition:: Reference
+   :class: refbox
+
+   :Category:  Import-Export
+   :Menu:      :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
 
 
 Usage
@@ -18,8 +16,8 @@ Usage
 glTF™ (GL Transmission Format) is used for transmission and loading of 3D models
 in web and native applications. glTF reduces the size of 3D models and
 the runtime processing needed to unpack and render those models.
-This format is commonly used on the web, and has upcoming support in native 3D engines
-such as Unity3D and Unreal Engine 4.
+This format is commonly used on the web, and has support in various 3D engines
+such as Unity3D, Unreal Engine 4, and Godot.
 
 This importer/exporter supports the following glTF 2.0 features:
 
@@ -38,6 +36,8 @@ glTF's internal structure mimics the memory buffers commonly used by graphics ch
 when rendering in real-time, such that assets can be delivered to desktop, web, or mobile clients
 and be promptly displayed with minimal processing. As a result, quads and n-gons
 are automatically converted to triangles when exporting to glTF.
+Discontinuous UVs and flat-shaded edges may result in moderately higher vertex counts in glTF
+compared to Blender, as such vertices are separated for export.
 Likewise, curves and other non-mesh data are not preserved,
 and must be converted to meshes prior to export.
 
@@ -54,6 +54,12 @@ with the following channels of information:
 - Baked Ambient Occlusion
 - Normal Map
 - Emissive
+
+.. figure:: /images/addons_io-gltf2_material-channels.jpg
+
+   An example of the various image maps available in the glTF 2.0 core format. This is
+   the `water bottle sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
+   shown alongside slices of its various image maps.
 
 
 Imported Materials
@@ -92,11 +98,19 @@ Base Color
 ^^^^^^^^^^
 
 The glTF base color is determined by looking for a Base Color input on a Principled BSDF node.
-If the input is unconnected, the input's default color (the color button next to the unconnected socket)
+If the input is unconnected, the input's default color (the color field next to the unconnected socket)
 is used as the Base Color for the glTF material.
+
+.. figure:: /images/addons_io-gltf2_material-baseColor-solidGreen.png
+
+   A solid base color can be specified directly on the node.
 
 If an Image Texture node is found to be connected to the Base Color input,
 that image will be used as the glTF base color.
+
+.. figure:: /images/addons_io-gltf2_material-baseColor-imageHookup.png
+
+   An image is used as the glTF base color.
 
 
 Metallic and Roughness
@@ -117,9 +131,9 @@ connect the green (``G``) channel to Roughness, and blue (``B``) to Metallic.
 The glTF exporter will recognize this arrangement as matching the glTF standard, and
 that will allow it to simply copy the image texture into the glTF file during export.
 
-The Image Texture node for this should have its *Color Space* set to Non-Color Data.
+The Image Texture node for this should have its *Color Space* set to Non-Color.
 
-.. figure:: /images/addons_io-gltf2-material-metalRough.png
+.. figure:: /images/addons_io-gltf2_material-metalRough.png
 
    A metallic/roughness image connected in a manner consistent with the glTF standard,
    allowing it to be used verbatim inside an exported glTF file.
@@ -131,14 +145,38 @@ Baked Ambient Occlusion
 glTF is capable of storing a baked ambient occlusion map.
 Currently there is no arrangement of nodes that causes Blender
 to use such a map in exactly the same way as intended in glTF.
-However, if the exporter finds a custom node group by the name of ``glTF Metallic Roughness``, and
+However, if the exporter finds a custom node group by the name of ``glTF Settings``, and
 finds an input named ``Occlusion`` on that node group,
 it will look for an Image Texture attached there to use as the occlusion map in glTF.
 The effect need not be shown in Blender, as Blender has other ways of showing ambient occlusion,
 but this method will allow the exporter to write an occlusion image to the glTF.
+This can be useful to real-time glTF viewers, particularly on platforms where there
+may not be spare power for computing such things at render time.
+
+.. figure:: /images/addons_io-gltf2_material-occlusionOnly.png
+
+   A pre-baked ambient occlusion map, connected to a node that doesn't render but will export to glTF.
+
+.. tip::
+
+   The easiest way to create the custom node group is to import an existing glTF model
+   that contains an occlusion map, such as
+   the `water bottle <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
+   or another existing model. A manually created custom node group can also be used.
 
 glTF stores occlusion in the red (``R``) channel, allowing it to optionally share
 the same image with the roughness and metallic channels.
+
+.. figure:: /images/addons_io-gltf2_material-orm-hookup.png
+
+   This combination of nodes mimics the way glTF packs occlusion, roughness, and
+   metallic values into a single image.
+
+.. tip::
+
+   The Cycles render engine has a Bake panel that can be used to bake
+   ambient occlusion maps. The resulting image can be saved and connected
+   directly to the ``glTF Settings`` node.
 
 
 Normal Map
@@ -147,7 +185,7 @@ Normal Map
 To use a normal map in glTF, connect an Image Texture node's color output
 to a Normal Map node's color input, and then connect the Normal Map normal output to
 the Principled BSDF node's normal input. The Image Texture node
-for this should have its *Color Space* property set to Non-Color Data.
+for this should have its *Color Space* property set to Non-Color.
 
 The Normal Map node must remain on its default property of Tangent Space as
 this is the only type of normal map currently supported by glTF.
@@ -155,14 +193,14 @@ The strength of the normal map can be adjusted on this node.
 The exporter is not exporting these nodes directly, but will use them to locate
 the correct image and will copy the strength setting into the glTF.
 
-.. figure:: /images/addons_io-gltf2-material-normal.png
+.. figure:: /images/addons_io-gltf2_material-normal.png
 
    A normal map image connected such that the exporter will find it and copy it
    to the glTF file.
 
 .. tip::
 
-   Blender's Cycles rendering engine has a Bake panel that can be used to bake
+   The Cycles render engine has a Bake panel that can be used to bake
    tangent-space normal maps from almost any other arrangement of normal vector nodes.
    Switch the Bake type to Normal. Keep the default space settings
    (space: Tangent, R: +X, G: +Y, B: +Z) when using this bake panel for glTF.
@@ -181,18 +219,28 @@ optionally combined with properties from a Principled BSDF node by way of an Add
 If the glTF exporter finds an image connected to the Emission shader node,
 it will export that image as the glTF material's emissive texture.
 
+.. figure:: /images/addons_io-gltf2_material-emissive.png
 
-Double Sided
-^^^^^^^^^^^^
+   An Emission node can be added to existing nodes.
 
-The Double Sided setting is controlled from the Normals panel of the Mesh settings tab.
-In Blender, this is a per-mesh setting, but in glTF, it is a per-material setting.
+.. note::
 
-.. tip::
+   The *Emission* input of the Principled BSDF node is not yet supported by this exporter.
+   This may change in a future version.
 
-   Blender also has a setting called Backface Culling in the Shading panel of the 3D viewport.
-   This setting has no effect on the glTF export, however standard glTF viewers will automatically turn on
-   backface culling per-material for any glTF materials that are not double-sided.
+
+Double Sided / Backface Culling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For materials where only the front faces will be visible, turn on *Backface Culling* in
+the *Settings* panel of an Eevee material. When using other engines (Cycles, Workbench)
+you can temporarily switch to Eevee to configure this setting, then switch back.
+
+Leave this box un-checked for double-sided materials.
+
+.. figure:: /images/addons_io-gltf2_material-backfaceCulling.png
+
+   The inverse of this setting controls glTF's ``DoubleSided`` flag.
 
 
 Blend Modes
@@ -201,7 +249,7 @@ Blend Modes
 The Base Color input can optionally supply alpha values.
 How these values are treated by glTF depends on the selected blend mode.
 
-With the Eevee rendering engine selected, each material has a Blend Mode on
+With the Eevee render engine selected, each material has a Blend Mode on
 the material settings panel. Use this setting to define how alpha values from
 the Base Color channel are treated in glTF. Three settings are supported by glTF:
 
@@ -212,6 +260,10 @@ Alpha Blend
 Alpha Clip
    Alpha values below the *Clip Threshold* setting will cause portions
    of the material to not be rendered at all. Everything else is rendered as opaque.
+
+.. figure:: /images/addons_io-gltf2_material-alphaBlend.png
+
+   With the Eevee engine selected, a material's blend modes are configurable.
 
 .. note::
 
@@ -237,8 +289,7 @@ There is a mapping type selector across the top. *Point* is the recommended type
 
 For the *Texture* type, *Scale* X and Y must be equal (uniform scaling).
 
-.. figure:: /images/addons_io-gltf2-material-mapping.png
-   :alt: A deliberate choice of UV mapping.
+.. figure:: /images/addons_io-gltf2_material-mapping.png
 
    A deliberate choice of UV mapping.
 
@@ -251,8 +302,8 @@ Factors
 ^^^^^^^
 
 Any Image Texture nodes may optionally be multiplied with a constant color or scalar.
-These will be written as factors in the glTF file, which are numbers that multiply
-with specified image textures. These are not common.
+These will be written as factors in the glTF file, which are numbers that are multiplied
+with the specified image textures. These are not common.
 
 
 Example
@@ -261,12 +312,7 @@ Example
 A single material may use all of the above at the same time, if desired. This figure shows
 a typical node structure when several of the above options are applied at once:
 
-.. figure:: /images/addons_io-gltf2-material-principled.png
-   :alt: A Principled BSDF node uses multiple Image Texture inputs.
-         Each texture takes a Mapping Vector, with a UV Map as its input.
-         Roughness must use the green channel of its texture, and
-         Metallic must use the blue channel. The output of the Principled BSDF node
-         is added to an Emission node, and the sum is connected to the Material Output node.
+.. figure:: /images/addons_io-gltf2_material-principled.png
 
    A Principled BSDF material with an emissive texture.
 
@@ -274,9 +320,13 @@ a typical node structure when several of the above options are applied at once:
 Extensions
 ----------
 
-Certain features require extensions to the core format specification. The following
-`glTF 2.0 extensions <https://github.com/KhronosGroup/glTF/tree/master/extensions>`__
-are supported:
+The core glTF 2.0 format can be extended with extra information, using glTF extensions.
+This allows the file format to hold details that were not considered universal at the time of first publication.
+Not all glTF readers support all extensions, but some are fairly common.
+
+Certain Blender features can only be exported to glTF via these extensions.
+The following `glTF 2.0 extensions <https://github.com/KhronosGroup/glTF/tree/master/extensions>`__
+are supported directly by this add-on:
 
 
 .. rubric:: Import
@@ -289,6 +339,7 @@ are supported:
 
 .. rubric:: Export
 
+- ``KHR_draco_mesh_compression``
 - ``KHR_lights_punctual``
 - ``KHR_materials_unlit``
 - ``KHR_texture_transform``
@@ -419,16 +470,17 @@ Vertex Colors
    Export vertex colors with meshes.
 Materials
    Export materials.
-Draco mesh compression (if the library is available)
-   Compress meshes using Google Draco
+Draco mesh compression
+   Compress meshes using Google Draco.
 Compression level
-   Higher compression results in slower encoding and decoding
+   Higher compression results in slower encoding and decoding.
 Position quantization bits
-   Higher values result in better compression rates
+   Higher values result in better compression rates.
 Normal quantization bits
-   Higher values result in better compression rates
+   Higher values result in better compression rates.
 Texcoord quantization bits
-   Higher values result in better compression rates
+   Higher values result in better compression rates.
+
 
 Objects Tab
 ^^^^^^^^^^^

@@ -29,9 +29,24 @@ from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 
+def gather_node(blender_object, blender_scene, export_settings):
+    # custom cache to avoid cache miss when called from animation
+    # with blender_scene=None
+
+    # invalidate cache if export settings have changed
+    if not hasattr(gather_node, "__export_settings") or export_settings != gather_node.__export_settings:
+        gather_node.__cache = {}
+        gather_node.__export_settings = export_settings
+
+    if blender_scene is None and blender_object.name in gather_node.__cache:
+        return gather_node.__cache[blender_object.name]
+
+    node = __gather_node(blender_object, blender_scene, export_settings)
+    gather_node.__cache[blender_object.name] = node
+    return node
 
 @cached
-def gather_node(blender_object, blender_scene, export_settings):
+def __gather_node(blender_object, blender_scene, export_settings):
     # If blender_scene is None, we are coming from animation export
     # Check to know if object is exported is already done, so we don't check
     # again if object is instanced in scene : this check was already done when exporting object itself
@@ -79,12 +94,12 @@ def __filter_node(blender_object, blender_scene, export_settings):
             if blender_object.name not in blender_scene.objects:
                 return False
     else:
-        if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
-            return False
         if blender_scene is not None:
             instanced =  any([blender_object.name in layer.objects for layer in blender_scene.view_layers])
             if instanced is False:
                 return False
+        if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
+            return False
 
     return True
 
