@@ -29,6 +29,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 
+
 def gather_node(blender_object, blender_scene, export_settings):
     # custom cache to avoid cache miss when called from animation
     # with blender_scene=None
@@ -255,7 +256,7 @@ def __gather_mesh(blender_object, export_settings):
 
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
-            # temprorary disable Armature modifiers if exporting skins
+            # temporarily disable Armature modifiers if exporting skins
             for idx, modifier in enumerate(blender_object.modifiers):
                 if modifier.type == 'ARMATURE':
                     armature_modifiers[idx] = modifier.show_viewport

@@ -106,7 +106,7 @@ class BlenderNodeAnim():
             if channel.target.path in ['translation', 'rotation', 'scale']:
 
                 # There is an animation on object
-                # We can't remove Yup2Zup oject
+                # We can't remove Yup2Zup object
                 gltf.animation_object = True
 
                 if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":

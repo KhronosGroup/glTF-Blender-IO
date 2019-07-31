@@ -198,7 +198,7 @@ class BlenderScene():
                         #bpy.context.scene.collection.objects.unlink(obj_rotation)
                         bpy.data.objects.remove(obj_rotation)
 
-                        # Restore collection hiden / disabled values
+                        # Restore collection hidden / disabled values
                         if gltf.blender_active_collection is not None:
                             bpy.data.collections[gltf.blender_active_collection].hide_viewport = gltf.collection_hide_viewport
                             # TODO restore visibility when expose in bpy

@@ -14,7 +14,7 @@
 
 
 def get_output_node(node_tree):
-    """Retrive output node."""
+    """Retrieve output node."""
     output = [node for node in node_tree.nodes if node.type == 'OUTPUT_MATERIAL'][0]
     return output
 

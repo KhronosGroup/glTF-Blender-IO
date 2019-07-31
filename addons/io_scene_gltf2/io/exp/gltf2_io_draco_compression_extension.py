@@ -199,7 +199,7 @@ def __compress_primitive(primitive, dll, export_settings):
     # it can finally be compressed.
     if dll.compress(compressor):
 
-        # Compression was successfull.
+        # Compression was successful.
         # Move compressed data into a bytes object,
         # which is referenced by a 'gltf2_io_binary_data.BinaryData':
         #

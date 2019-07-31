@@ -131,7 +131,7 @@ class BlenderPrimitive():
                 elif gltf.import_settings['import_shading'] == "SMOOTH":
                     poly.use_smooth = True
                 else:
-                    pass  # Should not happend
+                    pass  # Should not happen
 
         offset = offset + pyprimitive.vertices_length
         return offset
