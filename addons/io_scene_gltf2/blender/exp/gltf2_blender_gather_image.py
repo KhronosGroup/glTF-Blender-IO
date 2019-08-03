@@ -91,6 +91,11 @@ def __gather_extras(sockets_or_slots, export_settings):
 
 
 def __gather_mime_type(sockets_or_slots, export_settings):
+    # force png if Alpha contained so we can export alpha
+    for socket in sockets_or_slots:
+        if socket.name == "Alpha":
+            return "image/png"
+
     if export_settings["gltf_image_format"] == "NAME":
         extension = __get_extension_from_slot(sockets_or_slots, export_settings)
         extension = extension.lower()
@@ -175,13 +180,16 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
 
             target_channel = None
 
-            # Change target channel for metallic and roughness.
+            # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
             if socket.name == 'Metallic':
                 target_channel = 2
             elif socket.name == 'Roughness':
                 target_channel = 1
             elif socket.name == 'Occlusion' and len(sockets_or_slots) > 1 and sockets_or_slots[1] is not None:
                 target_channel = 0
+            elif socket.name == 'Alpha' and len(sockets_or_slots) > 1 and sockets_or_slots[1] is not None:
+                composed_image.set_alpha(True)
+                target_channel = 3
 
             if target_channel is not None:
                 if composed_image is None:
@@ -189,8 +197,8 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
 
                 composed_image[target_channel] = image[source_channel]
             else:
-                # If we're not assigning target channels, just return the first valid image.
-                return image
+                # copy full image...eventually following sockets might overwrite things
+                composed_image = image
 
         return composed_image
 

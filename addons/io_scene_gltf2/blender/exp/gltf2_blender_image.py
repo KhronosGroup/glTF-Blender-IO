@@ -41,6 +41,9 @@ class ExportImage:
         self._blender_image = blender_image
         self._has_alpha = has_alpha
 
+    def set_alpha(self, alpha: bool):
+        self._has_alpha = alpha
+
     @classmethod
     def from_blender_image(cls, blender_image: bpy.types.Image):
         img = np.array(blender_image.pixels)
