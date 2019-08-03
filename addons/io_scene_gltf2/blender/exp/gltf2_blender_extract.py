@@ -588,7 +588,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
             vertex = blender_mesh.vertices[vertex_index]
 
             v = convert_swizzle_location(vertex.co, export_settings)
-            if blender_polygon.use_smooth:
+            if blender_polygon.use_smooth or blender_mesh.use_auto_smooth:
                 if blender_mesh.has_custom_normals:
                     n = convert_swizzle_location(blender_mesh.loops[loop_index].normal, export_settings)
                 else:

@@ -233,6 +233,11 @@ def __gather_mesh(blender_object, export_settings):
     if blender_object.type != "MESH":
         return None
 
+    modifier_normal_types = [
+        "NORMAL_EDIT",
+        "WEIGHTED_NORMAL"
+    ]
+
     # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
     vertex_groups = blender_object.vertex_groups
     modifiers = blender_object.modifiers
@@ -248,7 +253,7 @@ def __gather_mesh(blender_object, export_settings):
             edge_split = blender_object.modifiers.new('Temporary_Auto_Smooth', 'EDGE_SPLIT')
             edge_split.split_angle = blender_object.data.auto_smooth_angle
             edge_split.use_edge_angle = not blender_object.data.has_custom_normals
-            blender_object.data.use_auto_smooth = False
+            blender_object.data.use_auto_smooth = any([m in modifier_normal_types for m in [mod.type for mod in modifiers]])
             if bpy.app.version < (2, 80, 0):
                 bpy.context.scene.update()
             else:
