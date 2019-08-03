@@ -35,6 +35,9 @@ def gather_material_occlusion_texture_info_class(blender_shader_sockets_or_textu
         tex_coord=__gather_tex_coord(blender_shader_sockets_or_texture_slots, export_settings)
     )
 
+    if texture_info.index is None:
+        return None
+
     return texture_info
 
 
@@ -111,5 +114,7 @@ def __get_tex_from_socket(socket):
         socket,
         gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
     if not result:
+        return None
+    if result[0].shader_node.image is None:
         return None
     return result[0]
