@@ -60,12 +60,10 @@ class BlenderPrimitive():
             tuple(indice_equivalents[y] + current_length for y in e)
             for e in prim_edges
         )
-        pyprimitive.edges_length = len(prim_edges)
         faces.extend(
             tuple(indice_equivalents[y] + current_length for y in f)
             for f in prim_faces
         )
-        pyprimitive.faces_length = len(prim_faces)
 
         # manage material of primitive
         if pyprimitive.material is not None:
