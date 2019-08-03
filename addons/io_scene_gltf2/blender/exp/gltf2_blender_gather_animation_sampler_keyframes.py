@@ -80,6 +80,12 @@ class Keyframe:
     def set_value_index(self, idx, val):
         self.__value[idx] = val
 
+    def set_first_tangent(self):
+        self.__in_tangent = self.__value
+
+    def set_last_tangent(self):
+        self.__out_tangent = self.__value
+
     @property
     def value(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
         return self.__value
@@ -191,7 +197,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                 # Construct the in tangent
                 if frame == frames[0]:
                     # start in-tangent should become all zero
-                    key.in_tangent = key.value
+                    key.set_first_tangent()
                 else:
                     # otherwise construct an in tangent coordinate from the keyframes control points. We intermediately
                     # use a point at t-1 to define the tangent. This allows the tangent control point to be transformed
@@ -204,7 +210,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                 # Construct the out tangent
                 if frame == frames[-1]:
                     # end out-tangent should become all zero
-                    key.out_tangent = key.value
+                    key.set_last_tangent()
                 else:
                     # otherwise construct an in tangent coordinate from the keyframes control points. We intermediately
                     # use a point at t+1 to define the tangent. This allows the tangent control point to be transformed
