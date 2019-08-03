@@ -30,16 +30,12 @@ class BlenderPrimitive():
         """Primitive creation."""
         pyprimitive.blender_texcoord = {}
 
-        # TODO mode of primitive 4 for now.
         current_length = len(verts)
         pos = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['POSITION'])
         if pyprimitive.indices is not None:
             indices = BinaryData.get_data_from_accessor(gltf, pyprimitive.indices)
         else:
-            indices = []
-            indices_ = range(0, len(pos))
-            for i in indices_:
-                indices.append((i,))
+            indices = [(i,) for i in range(len(pos))]
 
         pyprimitive.tmp_indices = indices
 
@@ -55,16 +51,20 @@ class BlenderPrimitive():
 
         prim_verts = [loc_gltf_to_blender(vert) for vert in new_pos]
 
-        pyprimitive.vertices_length = len(prim_verts)
+        mode = 4 if pyprimitive.mode is None else pyprimitive.mode
+        prim_edges, prim_faces = BlenderPrimitive.edges_and_faces(mode, indices)
+
         verts.extend(prim_verts)
-        prim_faces = []
-        for i in range(0, len(indices), 3):
-            vals = indices[i:i + 3]
-            new_vals = []
-            for y in vals:
-                new_vals.append(indice_equivalents[y[0]] + current_length)
-            prim_faces.append(tuple(new_vals))
-        faces.extend(prim_faces)
+        pyprimitive.vertices_length = len(prim_verts)
+        edges.extend(
+            tuple(indice_equivalents[y] + current_length for y in e)
+            for e in prim_edges
+        )
+        pyprimitive.edges_length = len(prim_edges)
+        faces.extend(
+            tuple(indice_equivalents[y] + current_length for y in f)
+            for f in prim_faces
+        )
         pyprimitive.faces_length = len(prim_faces)
 
         # manage material of primitive
@@ -84,6 +84,80 @@ class BlenderPrimitive():
 
 
         return verts, edges, faces
+
+    @staticmethod
+    def edges_and_faces(mode, indices):
+        """Converts the indices in a particular primitive mode into standard lists of
+        edges (pairs of indices) and faces (tuples of CCW indices).
+        """
+        es = []
+        fs = []
+
+        if mode == 0:
+            # POINTS
+            pass
+        elif mode == 1:
+            # LINES
+            #   1   3
+            #  /   /
+            # 0   2
+            es = [
+                (indices[i][0], indices[i + 1][0])
+                for i in range(0, len(indices), 2)
+            ]
+        elif mode == 2:
+            # LINE LOOP
+            #   1---2
+            #  /     \
+            # 0-------3
+            es = [
+                (indices[i][0], indices[i + 1][0])
+                for i in range(0, len(indices) - 1)
+            ]
+            es.append((indices[-1][0], indices[0][0]))
+        elif mode == 3:
+            # LINE STRIP
+            #   1---2
+            #  /     \
+            # 0       3
+            es = [
+                (indices[i][0], indices[i + 1][0])
+                for i in range(0, len(indices) - 1)
+            ]
+        elif mode == 4:
+            # TRIANGLES
+            #   2     3
+            #  / \   / \
+            # 0---1 4---5
+            fs = [
+                (indices[i][0], indices[i + 1][0], indices[i + 2][0])
+                for i in range(0, len(indices), 3)
+            ]
+        elif mode == 5:
+            # TRIANGLE STRIP
+            # 0---2---4
+            #  \ / \ /
+            #   1---3
+            def alternate(i, xs):
+                even = i % 2 == 0
+                return xs if even else (xs[0], xs[2], xs[1])
+            fs = [
+                alternate(i, (indices[i][0], indices[i + 1][0], indices[i + 2][0]))
+                for i in range(0, len(indices) - 2)
+            ]
+        elif mode == 6:
+            # TRIANGLE FAN
+            #   3---2
+            #  / \ / \
+            # 4---0---1
+            fs = [
+                (indices[0][0], indices[i][0], indices[i + 1][0])
+                for i in range(1, len(indices) - 1)
+            ]
+        else:
+            raise Exception('primitive mode unimplemented: %d' % mode)
+
+        return es, fs
 
     def set_normals(gltf, pyprimitive, mesh, offset, custom_normals):
         """Set Normal."""
