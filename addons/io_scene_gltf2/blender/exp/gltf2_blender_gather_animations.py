@@ -193,9 +193,18 @@ def __get_blender_actions(blender_object: bpy.types.Object
     if blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
-            and blender_object.data.shape_keys.animation_data is not None \
-            and blender_object.data.shape_keys.animation_data.action is not None:
-        blender_actions.append(blender_object.data.shape_keys.animation_data.action)
+            and blender_object.data.shape_keys.animation_data is not None:
+
+            if blender_object.data.shape_keys.animation_data.action is not None:
+                blender_actions.append(blender_object.data.shape_keys.animation_data.action)
+
+            for track in blender_object.data.shape_keys.animation_data.nla_tracks:
+                # Multi-strip tracks do not export correctly yet (they need to be baked),
+                # so skip them for now and only write single-strip tracks.
+                if track.strips is None or len(track.strips) != 1:
+                    continue
+                for strip in track.strips:
+                    blender_actions.append(strip.action)
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))
