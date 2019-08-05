@@ -31,7 +31,7 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
     animations = []
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
-    blender_actions, blender_tracks = __get_blender_actions(blender_object)
+    blender_actions = __get_blender_actions(blender_object)
 
     # save the current active action of the object, if any
     # We will restore it after export
