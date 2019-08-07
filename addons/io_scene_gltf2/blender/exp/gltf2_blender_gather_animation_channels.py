@@ -148,6 +148,9 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
     targets = {}
     for fcurve in blender_action.fcurves:
+        # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
+        if len(fcurve.keyframe_points) == 0:
+            continue
         try:
             target_property = get_target_property_name(fcurve.data_path)
         except:

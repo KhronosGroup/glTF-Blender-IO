@@ -184,6 +184,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     else:
         # Just use the keyframes as they are specified in blender
         frames = [keyframe.co[0] for keyframe in channels[0].keyframe_points]
+        # some weird files have duplicate frame at same time, removed them
+        frames = sorted(set(frames))
         for i, frame in enumerate(frames):
             key = Keyframe(channels, frame, bake_channel)
             # key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
