@@ -621,12 +621,20 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
                 for color_index in range(0, color_max):
                     color_name = COLOR_PREFIX + str(color_index)
                     color = vertex_colors[color_name].data[loop_index].color
-                    colors.append([
-                        color_srgb_to_scene_linear(color[0]),
-                        color_srgb_to_scene_linear(color[1]),
-                        color_srgb_to_scene_linear(color[2]),
-                        1.0
-                    ])
+                    if len(color) == 3:
+                        colors.append([
+                            color_srgb_to_scene_linear(color[0]),
+                            color_srgb_to_scene_linear(color[1]),
+                            color_srgb_to_scene_linear(color[2]),
+                            1.0
+                        ])
+                    else:
+                        colors.append([
+                            color_srgb_to_scene_linear(color[0]),
+                            color_srgb_to_scene_linear(color[1]),
+                            color_srgb_to_scene_linear(color[2]),
+                            color[3]
+                        ])
 
             #
 
