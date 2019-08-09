@@ -15,6 +15,7 @@
 import struct
 import base64
 from os.path import dirname, join, isfile, basename
+from urllib.parse import unquote
 
 
 class BinaryData():
@@ -159,9 +160,9 @@ class BinaryData():
                     data = pyimage.uri[idx + len(sep):]
                     return base64.b64decode(data), image_name
 
-            if isfile(join(dirname(gltf.filename), pyimage.uri)):
-                with open(join(dirname(gltf.filename), pyimage.uri), 'rb') as f_:
-                    return f_.read(), basename(join(dirname(gltf.filename), pyimage.uri))
+            if isfile(join(dirname(gltf.filename), unquote(pyimage.uri))):
+                with open(join(dirname(gltf.filename), unquote(pyimage.uri)), 'rb') as f_:
+                    return f_.read(), basename(join(dirname(gltf.filename), unquote(pyimage.uri)))
             else:
                 gltf.log.error("Missing file (index " + str(img_idx) + "): " + pyimage.uri)
                 return None, None
