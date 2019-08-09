@@ -131,12 +131,13 @@ class BlenderPbr():
             mapping = node_tree.nodes.new('ShaderNodeMapping')
             mapping.location = -1500, 500
             mapping.vector_type = 'POINT'
-            tex_transform = text_node.image['tex_transform'][str(pypbr.base_color_texture.index)]
-            mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-            mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-            mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-            mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-            mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
+            if text_node.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
+                tex_transform = text_node.image['tex_transform'][str(pypbr.base_color_texture.index)]
+                mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
+                mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
+                mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
+                mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
+                mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
 
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
@@ -196,12 +197,13 @@ class BlenderPbr():
             else:
                 mapping.location = -1500, 500
             mapping.vector_type = 'POINT'
-            tex_transform = text_node.image['tex_transform'][str(pypbr.base_color_texture.index)]
-            mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-            mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-            mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-            mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-            mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
+            if text_node.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
+                tex_transform = text_node.image['tex_transform'][str(pypbr.base_color_texture.index)]
+                mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
+                mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
+                mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
+                mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
+                mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
 
             uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             if vertex_color:
