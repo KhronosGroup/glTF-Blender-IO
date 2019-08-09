@@ -187,7 +187,7 @@ def __get_blender_actions(blender_object: bpy.types.Object
             # so skip them for now and only write single-strip tracks.
             if track.strips is None or len(track.strips) != 1:
                 continue
-            for strip in track.strips:
+            for strip in [strip for strip in track.strips if strip.action is not None]:
                 blender_actions.append(strip.action)
 
     if blender_object.type == "MESH" \
