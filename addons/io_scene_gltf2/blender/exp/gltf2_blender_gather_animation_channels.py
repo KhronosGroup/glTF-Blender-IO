@@ -64,12 +64,35 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                 channels.append(channel)
     else:
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
-            channel = __gather_animation_channel(channel_group, blender_object, export_settings, None, None, None, None, blender_action.name)
+            channel_group_sorted = __get_channel_group_sorted(channel_group, blender_object)
+            channel = __gather_animation_channel(channel_group_sorted, blender_object, export_settings, None, None, None, None, blender_action.name)
             if channel is not None:
                 channels.append(channel)
 
     return channels
 
+def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender_object: bpy.types.Object):
+    # if this is shapekey animation, we need to sort in same order than shapekeys
+    # else, no need to sort
+    if blender_object.type == "MESH":
+        first_channel = channels[0]
+        object_path = get_target_object_path(first_channel.data_path)
+        if object_path:
+            # This is shapekeys, we need to sort channels
+            shapekeys_idx = {}
+            cpt_sk = 0
+            for sk in blender_object.data.shape_keys.key_blocks:
+                if sk == sk.relative_key:
+                    continue
+                if sk.mute is True:
+                    continue
+                shapekeys_idx[sk.name] = cpt_sk
+                cpt_sk += 1
+
+            return tuple(sorted(channels, key=lambda x: shapekeys_idx[blender_object.data.shape_keys.path_resolve(get_target_object_path(x.data_path)).name]))
+
+    # if not shapekeys, stay in same order, because order doesn't matter
+    return channels
 
 def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                blender_object: bpy.types.Object,
