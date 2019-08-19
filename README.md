@@ -4,7 +4,7 @@ Blender glTF 2.0 Importer and Exporter
 ======================================
 
 Documentation
--------------------
+-------------
 
 | Blender Version | Documentation |
 |---------|---------------------|
