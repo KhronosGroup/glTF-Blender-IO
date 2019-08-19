@@ -3,11 +3,6 @@
 Blender glTF 2.0 Importer and Exporter
 ======================================
 
-Version
--------
-
-0.9.47
-
 Documentation
 -------------------
 
