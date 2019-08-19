@@ -3,10 +3,13 @@
 Blender glTF 2.0 Importer and Exporter
 ======================================
 
-Version
--------
+Documentation
+-------------
 
-Beta
+| Blender Version | Documentation |
+|---------|---------------------|
+| 2.80    | https://docs.blender.org/manual/en/2.80/addons/io_scene_gltf2.html |
+| dev     | https://docs.blender.org/manual/en/dev/addons/io_scene_gltf2.html  |
 
 Credits
 -------
@@ -20,9 +23,7 @@ Official Khronos Group Blender [glTF](https://www.khronos.org/gltf/) 2.0 importe
 
 This project contains all features from the [previous exporter](https://github.com/KhronosGroup/glTF-Blender-Exporter), and all future development will happen on this repository. In addition, this repository contains a Blender importer, with common Python code shared between exporter and importer for round-trip workflows. New features are included or under development, but usage and menu functionality remain the same.
 
-Major change compared to the current Khronos glTF 2.0 exporter is, that the Blender glTF importer and exporter code is maintained in one place. Installation is simpler and the user experience regarding the menu functionality the same. On the development side, synergies do exist by sharing common code between the importer and exporter. Having the solution in one place, this also allows importing and exporting glTF files like loading and saving them.
-
-The shared code base is organised into common (Blender-independent) and Blender-specific packages:  
+The shared codebase is organized into common (Blender-independent) and Blender-specific packages:  
 
 ![Packages](docs/packages.png)  
 Package organisation  
@@ -39,12 +40,7 @@ For import, glTF data is parsed and written into the Python glTF scene descripti
 Installation
 ------------
 
-The Khronos glTF 2.0 importer and exporter is enabled by default in beta versions of [Blender 2.8](https://www.blender.org/2-8/). To reinstall it — for example, when testing recent or upcoming changes — copy the `addons/io_scene_gltf2` folder into the `scripts/addons/` directory of the Blender installation, then enable it under the *Add-ons* tab. For additional development documentation, see [Debugging](DEBUGGING.md).
-
-Usage Documentation
--------------------
-
-See: https://docs.blender.org/manual/en/dev/addons/io_scene_gltf2.html
+The Khronos glTF 2.0 importer and exporter is enabled by default in [Blender 2.8](https://www.blender.org/2-8/) and higher. To reinstall it — for example, when testing recent or upcoming changes — copy the `addons/io_scene_gltf2` folder into the `scripts/addons/` directory of the Blender installation, then enable it under the *Add-ons* tab. For additional development documentation, see [Debugging](DEBUGGING.md).
 
 Debugging
 ---------
