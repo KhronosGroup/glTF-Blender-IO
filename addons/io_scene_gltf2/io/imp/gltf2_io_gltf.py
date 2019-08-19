@@ -49,7 +49,8 @@ class glTFImporter():
             'KHR_materials_pbrSpecularGlossiness',
             'KHR_lights_punctual',
             'KHR_materials_unlit',
-            'KHR_texture_transform'
+            'KHR_texture_transform',
+            'FB_ngon_encoding',
         ]
 
         # TODO : merge with io_constants

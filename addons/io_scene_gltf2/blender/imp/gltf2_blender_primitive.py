@@ -149,8 +149,7 @@ class BlenderPrimitive():
         bme_verts.ensure_lookup_table()
 
         # Add edges/faces to bmesh
-        mode = 4 if pyprimitive.mode is None else pyprimitive.mode
-        edges, faces = BlenderPrimitive.edges_and_faces(mode, indices)
+        edges, faces = BlenderPrimitive.edges_and_faces(pyprimitive, indices)
         # NOTE: edges and vertices are in terms of pidxs!
         for edge in edges:
             try:
@@ -164,11 +163,18 @@ class BlenderPrimitive():
         pyprimitive.num_faces = 0
         for face in faces:
             try:
-                face = bme_faces.new((
-                    bme_verts[pidx_to_bidx[face[0]]],
-                    bme_verts[pidx_to_bidx[face[1]]],
-                    bme_verts[pidx_to_bidx[face[2]]],
-                ))
+                if len(face) == 3:
+                    # Special-cased for performance
+                    face = bme_faces.new((
+                        bme_verts[pidx_to_bidx[face[0]]],
+                        bme_verts[pidx_to_bidx[face[1]]],
+                        bme_verts[pidx_to_bidx[face[2]]],
+                    ))
+                else:
+                    face = bme_faces.new([
+                        bme_verts[pidx_to_bidx[fi]]
+                        for fi in face
+                    ])
 
                 if material_index is not None:
                     face.material_index = material_index
@@ -287,12 +293,19 @@ class BlenderPrimitive():
                     bme_verts[bidx][layer] = skin_vert(pos, pidx)
 
     @staticmethod
-    def edges_and_faces(mode, indices):
+    def edges_and_faces(pyprimitive, indices):
         """Converts the indices in a particular primitive mode into standard lists of
         edges (pairs of indices) and faces (tuples of CCW indices).
         """
         es = []
         fs = []
+
+        mode = pyprimitive.mode
+        if mode is None:
+            mode = 4
+
+        ngons = pyprimitive.extensions is not None and \
+            'FB_ngon_encoding' in pyprimitive.extensions
 
         if mode == 0:
             # POINTS
@@ -325,7 +338,7 @@ class BlenderPrimitive():
                 (indices[i], indices[i + 1])
                 for i in range(0, len(indices) - 1)
             ]
-        elif mode == 4:
+        elif mode == 4 and not ngons:
             # TRIANGLES
             #   2     3
             #  / \   / \
@@ -334,6 +347,21 @@ class BlenderPrimitive():
                 (indices[i], indices[i + 1], indices[i + 2])
                 for i in range(0, len(indices), 3)
             ]
+        elif mode == 4 and ngons:
+            # Same as TRIANGLES, but sequential tris with the same first vertex
+            # index are joined into one n-gon.
+            # 3---2
+            # |   |  =  0, 1, 2, 0, 2, 3
+            # 0---1
+            assert len(indices) >= 3
+            cur_face = [indices[0], indices[1], indices[2]]
+            for i in range(3, len(indices), 3):
+                if cur_face[0] != indices[i]:
+                    fs.append(tuple(cur_face))
+                    cur_face = [indices[i], indices[i+1], indices[i+2]]
+                else:
+                    cur_face.append(indices[i+2])
+            fs.append(tuple(cur_face))
         elif mode == 5:
             # TRIANGLE STRIP
             # 0---2---4
