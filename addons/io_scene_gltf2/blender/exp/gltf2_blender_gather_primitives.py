@@ -149,6 +149,9 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                 if blender_shape_key == blender_shape_key.relative_key:
                     continue
 
+                if blender_shape_key.mute is True:
+                    continue
+
                 target_position_id = 'MORPH_POSITION_' + str(morph_index)
                 target_normal_id = 'MORPH_NORMAL_' + str(morph_index)
                 target_tangent_id = 'MORPH_TANGENT_' + str(morph_index)
