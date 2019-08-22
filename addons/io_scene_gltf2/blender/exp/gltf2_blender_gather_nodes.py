@@ -72,8 +72,6 @@ def __gather_node(blender_object, blender_scene, export_settings):
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
     if node.skin is None:
         node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
-    else:
-        node.translation, node.rotation, node.scale = Matrix.Identity(4).decompose()
 
     if export_settings[gltf2_blender_export_keys.YUP]:
         if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS]:
