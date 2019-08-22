@@ -74,6 +74,8 @@ def convert_swizzle_location(loc, armature, blender_object, export_settings):
     else:
         # Mesh is skined, we have to apply armature transforms on data
         # TODO
+        # apply_matrix = armature world matrix inverted * blender_object world matrix
+        # apply this apply_matrix to vertex coord
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((loc[0], loc[2], -loc[1]))
         else:
@@ -94,6 +96,8 @@ def convert_swizzle_tangent(tan, armature, blender_object, export_settings):
     else:
         # Mesh is skined, we have to apply armature transforms on data
         # TODO
+        # apply_matrix = armature world matrix inverted * blender_object world matrix
+        # apply this apply_matrix to tangent values
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((loc[0], loc[2], -loc[1]))
         else:
