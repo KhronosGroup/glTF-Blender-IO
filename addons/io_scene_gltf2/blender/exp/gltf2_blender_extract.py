@@ -508,6 +508,14 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
                     blender_shape_key.normals_vertex_get(),  # calculate vertex normals for this shape key
                     blender_shape_key.normals_polygon_get()))  # calculate polygon normals for this shape key
 
+
+    if modifiers is not None:
+        modifiers_dict = {m.type: m for m in modifiers}
+        if "ARMATURE" in modifiers_dict:
+            modifier = modifiers_dict["ARMATURE"]
+            armature = modifier.object
+
+
     #
     # Convert polygon to primitive indices and eliminate invalid ones. Assign to material.
     #
@@ -669,17 +677,12 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
 
                     joint_index = None
 
-                    if modifiers is not None:
-                        modifiers_dict = {m.type: m for m in modifiers}
-                        if "ARMATURE" in modifiers_dict:
-                            modifier = modifiers_dict["ARMATURE"]
-                            armature = modifier.object
-                            if armature:
-                                skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
-                                for index, j in enumerate(skin.joints):
-                                    if j.name == vertex_group_name:
-                                        joint_index = index
-                                        break
+                    if armature:
+                        skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
+                        for index, j in enumerate(skin.joints):
+                            if j.name == vertex_group_name:
+                                joint_index = index
+                                break
 
                     #
                     if joint_index is not None:
