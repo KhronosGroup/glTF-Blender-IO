@@ -16,7 +16,7 @@
 # Imports
 #
 
-from mathutils import Vector, Quaternion
+from mathutils import Vector, Quaternion, Matrix
 from mathutils.geometry import tessellate_polygon
 from operator import attrgetter
 
@@ -73,35 +73,29 @@ def convert_swizzle_location(loc, armature, blender_object, export_settings):
             return Vector((loc[0], loc[1], loc[2]))
     else:
         # Mesh is skined, we have to apply armature transforms on data
-        # TODO
-        # apply_matrix = armature world matrix inverted * blender_object world matrix
-        # apply this apply_matrix to vertex coord
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((loc[0], loc[2], -loc[1]))
+        if bpy.app.version < (2, 80, 0):
+            apply_matrix = armature.matrix_world.inverted() * blender_object.matrix_world
+            new_loc = (armature.matrix_world * apply_matrix * Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
         else:
-            return Vector((loc[0], loc[1], loc[2]))
+            apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+            new_loc = (armature.matrix_world @ apply_matrix @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
+
+        if export_settings[gltf2_blender_export_keys.YUP]:
+            return Vector((new_loc[0], new_loc[2], -new_loc[1]))
+        else:
+            return Vector((new_loc[0], new_loc[1], new_loc[2]))
 
 
 def convert_swizzle_tangent(tan, armature, blender_object, export_settings):
+    # TODO if armature
     """Convert a tangent from Blender coordinate system to glTF coordinate system."""
-    if not armature:
-        # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
-        if tan[0] == 0.0 and tan[1] == 0.0 and tan[2] == 0.0:
-            print_console('WARNING', 'Tangent has zero length.')
+    if tan[0] == 0.0 and tan[1] == 0.0 and tan[2] == 0.0:
+        print_console('WARNING', 'Tangent has zero length.')
 
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((tan[0], tan[2], -tan[1], 1.0))
-        else:
-            return Vector((tan[0], tan[1], tan[2], 1.0))
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Vector((tan[0], tan[2], -tan[1], 1.0))
     else:
-        # Mesh is skined, we have to apply armature transforms on data
-        # TODO
-        # apply_matrix = armature world matrix inverted * blender_object world matrix
-        # apply this apply_matrix to tangent values
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((loc[0], loc[2], -loc[1]))
-        else:
-            return Vector((loc[0], loc[1], loc[2]))
+        return Vector((tan[0], tan[1], tan[2], 1.0))
 
 
 def convert_swizzle_rotation(rot, export_settings):
