@@ -1,0 +1,201 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v0.9.47",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0,
+                1,
+                2,
+                3
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "name" : "AngleCube",
+            "mesh" : 0,
+            "translation" : [
+                -2.5,
+                0,
+                0
+            ],
+            "rotation" : [
+                0.7071068286895752,
+                0,
+                0,
+                0.7071067094802856
+            ]
+        },
+        {
+            "name" : "SmoothCube",
+            "mesh" : 1,
+            "rotation" : [
+                0.7071068286895752,
+                0,
+                0,
+                0.7071067094802856
+            ]
+        },
+        {
+            "name" : "Lamp",
+            "translation" : [
+                4.076245307922363,
+                5.903861999511719,
+                -1.0054539442062378
+            ],
+            "rotation" : [
+                0.16907575726509094,
+                0.7558803558349609,
+                -0.27217137813568115,
+                0.570947527885437
+            ]
+        },
+        {
+            "name" : "Camera",
+            "translation" : [
+                7.481131553649902,
+                5.34366512298584,
+                6.5076398849487305
+            ],
+            "rotation" : [
+                0.483536034822464,
+                0.33687159419059753,
+                -0.20870360732078552,
+                0.7804827094078064
+            ]
+        }
+    ],
+    "materials" : [
+        {
+            "name" : "Shiny",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.800000011920929,
+                    0.800000011920929,
+                    0.800000011920929,
+                    1
+                ],
+                "metallicFactor" : 1,
+                "roughnessFactor" : 0
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "AngleCube",
+            "primitives" : [
+                {
+                    "material" : 0,
+                    "indices" : 2,
+                    "attributes" : {
+                        "NORMAL" : 0,
+                        "POSITION" : 1
+                    }
+                }
+            ]
+        },
+        {
+            "name" : "SmoothCube",
+            "primitives" : [
+                {
+                    "material" : 0,
+                    "indices" : 2,
+                    "attributes" : {
+                        "NORMAL" : 3,
+                        "POSITION" : 4
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "type" : "VEC3",
+            "count" : 96,
+            "componentType" : 5126,
+            "bufferView" : 0
+        },
+        {
+            "count" : 96,
+            "min" : [
+                -1,
+                -1,
+                -1
+            ],
+            "max" : [
+                1,
+                1,
+                1
+            ],
+            "type" : "VEC3",
+            "componentType" : 5126,
+            "bufferView" : 1
+        },
+        {
+            "type" : "SCALAR",
+            "count" : 132,
+            "componentType" : 5123,
+            "bufferView" : 2
+        },
+        {
+            "type" : "VEC3",
+            "count" : 96,
+            "componentType" : 5126,
+            "bufferView" : 3
+        },
+        {
+            "count" : 96,
+            "min" : [
+                -1,
+                -1,
+                -1
+            ],
+            "max" : [
+                1,
+                1,
+                1
+            ],
+            "type" : "VEC3",
+            "componentType" : 5126,
+            "bufferView" : 4
+        }
+    ],
+    "bufferViews" : [
+        {
+            "byteLength" : 1152,
+            "byteOffset" : 0,
+            "buffer" : 0
+        },
+        {
+            "byteLength" : 1152,
+            "byteOffset" : 1152,
+            "buffer" : 0
+        },
+        {
+            "byteLength" : 264,
+            "byteOffset" : 2304,
+            "buffer" : 0
+        },
+        {
+            "byteLength" : 1152,
+            "byteOffset" : 2568,
+            "buffer" : 0
+        },
+        {
+            "byteLength" : 1152,
+            "byteOffset" : 3720,
+            "buffer" : 0
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 4872,
+            "uri" : "10_custom_normals.bin"
+        }
+    ]
+}
