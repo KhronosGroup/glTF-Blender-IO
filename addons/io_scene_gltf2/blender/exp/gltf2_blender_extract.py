@@ -675,7 +675,7 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
                             modifier = modifiers_dict["ARMATURE"]
                             armature = modifier.object
                             if armature:
-                                skin = gltf2_blender_gather_skins.gather_skin(armature, modifier.id_data, export_settings)
+                                skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
                                 for index, j in enumerate(skin.joints):
                                     if j.name == vertex_group_name:
                                         joint_index = index

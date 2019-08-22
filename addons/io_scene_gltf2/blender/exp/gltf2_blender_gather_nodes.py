@@ -380,7 +380,7 @@ def __gather_skin(blender_object, export_settings):
         return None
 
     # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, blender_object, export_settings)
+    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):

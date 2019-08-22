@@ -24,12 +24,11 @@ from io_scene_gltf2.blender.com import gltf2_blender_math
 
 
 @cached
-def gather_skin(blender_object, mesh_object, export_settings):
+def gather_skin(blender_object, export_settings):
     """
     Gather armatures, bones etc into a glTF2 skin object.
 
     :param blender_object: the object which may contain a skin
-    :param mesh_object: the mesh object to be deformed
     :param export_settings:
     :return: a glTF2 skin object
     """
@@ -39,7 +38,7 @@ def gather_skin(blender_object, mesh_object, export_settings):
     return gltf2_io.Skin(
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
-        inverse_bind_matrices=__gather_inverse_bind_matrices(blender_object, mesh_object, export_settings),
+        inverse_bind_matrices=__gather_inverse_bind_matrices(blender_object, export_settings),
         joints=__gather_joints(blender_object, export_settings),
         name=__gather_name(blender_object, export_settings),
         skeleton=__gather_skeleton(blender_object, export_settings)
@@ -62,7 +61,7 @@ def __gather_extensions(blender_object, export_settings):
 def __gather_extras(blender_object, export_settings):
     return None
 
-def __gather_inverse_bind_matrices(blender_object, mesh_object, export_settings):
+def __gather_inverse_bind_matrices(blender_object, export_settings):
     axis_basis_change = mathutils.Matrix.Identity(4)
     if export_settings[gltf2_blender_export_keys.YUP]:
         axis_basis_change = mathutils.Matrix(
@@ -78,11 +77,10 @@ def __gather_inverse_bind_matrices(blender_object, mesh_object, export_settings)
 
     # traverse the matrices in the same order as the joints and compute the inverse bind matrix
     def __collect_matrices(bone):
-        matrix_world = gltf2_blender_math.multiply(blender_object.matrix_world, mesh_object.matrix_world.inverted())
         inverse_bind_matrix = gltf2_blender_math.multiply(
             axis_basis_change,
             gltf2_blender_math.multiply(
-                matrix_world,
+                blender_object.matrix_world,
                 bone.bone.matrix_local
             )
         ).inverted()
