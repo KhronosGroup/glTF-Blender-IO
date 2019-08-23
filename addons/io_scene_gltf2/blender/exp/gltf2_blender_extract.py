@@ -515,14 +515,14 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
     blender_shape_keys = []
 
     if blender_mesh.shape_keys is not None:
-        morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
-
         for blender_shape_key in blender_mesh.shape_keys.key_blocks:
             if blender_shape_key != blender_shape_key.relative_key:
-                blender_shape_keys.append(ShapeKey(
-                    blender_shape_key,
-                    blender_shape_key.normals_vertex_get(),  # calculate vertex normals for this shape key
-                    blender_shape_key.normals_polygon_get()))  # calculate polygon normals for this shape key
+                if blender_shape_key.mute is False:
+                    morph_max += 1
+                    blender_shape_keys.append(ShapeKey(
+                        blender_shape_key,
+                        blender_shape_key.normals_vertex_get(),  # calculate vertex normals for this shape key
+                        blender_shape_key.normals_polygon_get()))  # calculate polygon normals for this shape key
 
 
     armature = None
@@ -613,7 +613,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             vertex = blender_mesh.vertices[vertex_index]
 
             v = convert_swizzle_location(vertex.co, armature, blender_object, export_settings)
-            if blender_polygon.use_smooth:
+            if blender_polygon.use_smooth or blender_mesh.use_auto_smooth:
                 if blender_mesh.has_custom_normals:
                     n = convert_swizzle_location(blender_mesh.loops[loop_index].normal, armature, blender_object, export_settings)
                 else:
