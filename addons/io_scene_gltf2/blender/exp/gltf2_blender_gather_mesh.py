@@ -83,7 +83,8 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
             target_names = []
             for blender_shape_key in blender_mesh.shape_keys.key_blocks:
                 if blender_shape_key != blender_shape_key.relative_key:
-                    target_names.append(blender_shape_key.name)
+                    if blender_shape_key.mute is False:
+                        target_names.append(blender_shape_key.name)
             extras['targetNames'] = target_names
 
     if extras:
@@ -130,6 +131,7 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
 
     for blender_shape_key in blender_mesh.shape_keys.key_blocks:
         if blender_shape_key != blender_shape_key.relative_key:
-            weights.append(blender_shape_key.value)
+            if blender_shape_key.mute is False:
+                weights.append(blender_shape_key.value)
 
     return weights
