@@ -27,12 +27,15 @@ def dll_path() -> Path:
     :return: DLL path.
     """
     lib_name = 'extern_draco'
-    blender_root = Path(bpy.app.binary_path).parent
-    python_lib = Path('2.80/python/lib')
+    # Workaround: convert_to_strict_*.py deletes all lines containing the string 'bpy.app.version'.
+    bapp = bpy.app
+    blender_root = Path(bapp.binary_path).parent
+    python_lib = "{v[0]}.{v[1]}/python/lib".format(v=bapp.version)
+    python_version = "python{v[0]}.{v[1]}".format(v=sys.version_info)
     paths = {
         'win32': blender_root/python_lib/'site-packages'/'{}.dll'.format(lib_name),
-        'linux': blender_root/python_lib/'python3.7'/'site-packages'/'lib{}.so'.format(lib_name),
-        'darwin': blender_root.parent/'Resources'/python_lib/'python3.7'/'site-packages'/'lib{}.dylib'.format(lib_name)
+        'linux': blender_root/python_lib/python_version/'site-packages'/'lib{}.so'.format(lib_name),
+        'darwin': blender_root.parent/'Resources'/python_lib/python_version/'site-packages'/'lib{}.dylib'.format(lib_name)
     }
 
     path = paths.get(sys.platform)
