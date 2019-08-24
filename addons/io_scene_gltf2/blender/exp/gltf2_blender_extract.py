@@ -499,14 +499,14 @@ def extract_primitives(glTF, blender_mesh, blender_vertex_groups, modifiers, exp
     blender_shape_keys = []
 
     if blender_mesh.shape_keys is not None:
-        morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
-
         for blender_shape_key in blender_mesh.shape_keys.key_blocks:
             if blender_shape_key != blender_shape_key.relative_key:
-                blender_shape_keys.append(ShapeKey(
-                    blender_shape_key,
-                    blender_shape_key.normals_vertex_get(),  # calculate vertex normals for this shape key
-                    blender_shape_key.normals_polygon_get()))  # calculate polygon normals for this shape key
+                if blender_shape_key.mute is False:
+                    morph_max += 1
+                    blender_shape_keys.append(ShapeKey(
+                        blender_shape_key,
+                        blender_shape_key.normals_vertex_get(),  # calculate vertex normals for this shape key
+                        blender_shape_key.normals_polygon_get()))  # calculate polygon normals for this shape key
 
     #
     # Convert polygon to primitive indices and eliminate invalid ones. Assign to material.
