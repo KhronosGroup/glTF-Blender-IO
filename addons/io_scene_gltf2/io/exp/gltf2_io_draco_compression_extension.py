@@ -28,7 +28,7 @@ def dll_path() -> Path:
     """
     lib_name = 'extern_draco'
     blender_root = Path(bpy.app.binary_path).parent
-    python_lib = "{v[0]}.{v[1]}/python/lib".format(v=bpy.app.version)
+    python_lib = Path("{v[0]}.{v[1]}/python/lib".format(v=bpy.app.version))
     python_version = "python{v[0]}.{v[1]}".format(v=sys.version_info)
     paths = {
         'win32': blender_root/python_lib/'site-packages'/'{}.dll'.format(lib_name),
