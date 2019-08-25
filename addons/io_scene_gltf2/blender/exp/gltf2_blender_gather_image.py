@@ -148,7 +148,7 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
         if image.name in channelcache:
             return channelcache[image.name]
 
-        pixels = np.array(image.pixels)
+        pixels = np.array(image.pixels[:])
         pixels = pixels.reshape((pixels.shape[0] // image.channels, image.channels))
         channels = np.split(pixels, pixels.shape[1], axis=1)
 

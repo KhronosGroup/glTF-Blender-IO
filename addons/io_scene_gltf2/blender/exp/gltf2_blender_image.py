@@ -46,7 +46,7 @@ class ExportImage:
 
     @classmethod
     def from_blender_image(cls, blender_image: bpy.types.Image):
-        img = np.array(blender_image.pixels)
+        img = np.array(blender_image.pixels[:])
         img = img.reshape((blender_image.size[0], blender_image.size[1], blender_image.channels))
         has_alpha = blender_image.depth == 32
         return ExportImage(img=img, blender_image=blender_image, has_alpha=has_alpha)
