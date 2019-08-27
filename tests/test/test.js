@@ -142,6 +142,9 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
     case 'SCALAR':
         numElements = 1;
         break;
+    case 'VEC3':
+        numElements = 3;
+        break;
     default:
         throw new Error("Untested accessor type " + accessor.type);
     }
@@ -151,10 +154,41 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
     const byteOffset = accessor.byteOffset || 0;
 
     const accessorData = [];
-    for (var i = 0, o = byteOffset; i < count; ++i, o += stride) {
-        accessorData.push(bufferViewData.readFloatLE(o));
+    for (let i = 0, o = byteOffset; i < count; ++i, o += stride) {
+        for (let j = 0; j < numElements; ++j) {
+            accessorData.push(bufferViewData.readFloatLE(o + (j * componentSize)));
+        }
     }
     return accessorData;
+}
+
+function buildVectorHash(accessorData) {
+    // Vertex order is not preserved by this exporter, but, we can build a hash table of all the vectors we
+    // expect to find in the test output, to see if they are all accounted for.
+
+    let vectorHashTable = {};
+    const dataLen = accessorData.length;
+    if ((dataLen % 3) !== 0) {
+        throw new Error("Expected accessor length " + dataLen);
+    }
+
+    const precision = 3;
+    const count = dataLen / 3;
+    for (let i = 0; i < count; ++i) {
+        const index = i * 3;
+        let key = accessorData[index].toFixed(precision) + ',' + accessorData[index + 1].toFixed(precision) +
+            ',' + accessorData[index + 2].toFixed(precision);
+
+        key = key.replace(/-0\.000/g, '0.000');
+
+        if (vectorHashTable.hasOwnProperty(key)) {
+            ++vectorHashTable[key];
+        } else {
+            vectorHashTable[key] = 1;
+        }
+    }
+
+    return vectorHashTable;
 }
 
 describe('General', function() {
@@ -492,6 +526,69 @@ describe('Exporter', function() {
                 assert.equalEpsilon(transform.offset[0], -0.20705524479697487);
                 assert.equalEpsilon(transform.offset[1], 0.2272593289624576);
             });
+
+            it('exports custom normals', function() {
+                let gltfPath = path.resolve(outDirPath, '10_custom_normals.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                assert.strictEqual(asset.meshes.length, 2);
+
+                let bufferCache = {};
+
+                const angleCubeMesh = asset.meshes.filter(m => m.name === 'AngleCube')[0];
+                const flatNormals = angleCubeMesh.primitives[0].attributes.NORMAL;
+                const flatNormalData = getAccessorData(gltfPath, asset, flatNormals, bufferCache);
+                const flatNormalHash = buildVectorHash(flatNormalData);
+
+                // In this mesh, the beveled cube has various angled edges.  Custom normals
+                // exist but are not enabled via the auto-smooth flag.  So, many exported
+                // normals are not axis-aligned.
+                const expectedFlatNormalHash = {
+                    "0.000,1.000,0.000": 4,
+                    "-1.000,0.000,0.000": 4,
+                    "0.000,0.000,-1.000": 4,
+                    "0.000,-1.000,0.000": 4,
+                    "1.000,0.000,0.000": 4,
+                    "0.577,-0.577,0.577": 3,
+                    "0.577,0.577,0.577": 3,
+                    "0.577,-0.577,-0.577": 3,
+                    "0.577,0.577,-0.577": 3,
+                    "-0.577,-0.577,0.577": 3,
+                    "-0.577,0.577,0.577": 3,
+                    "-0.577,-0.577,-0.577": 3,
+                    "-0.577,0.577,-0.577": 3,
+                    "-0.707,0.707,0.000": 4,
+                    "0.000,0.707,0.707": 4,
+                    "0.707,0.000,0.707": 4,
+                    "-0.707,0.000,-0.707": 4,
+                    "0.707,0.000,-0.707": 4,
+                    "-0.707,0.000,0.707": 4,
+                    "0.000,-0.707,-0.707": 4,
+                    "0.707,-0.707,0.000": 4,
+                    "0.000,0.707,-0.707": 4,
+                    "-0.707,-0.707,0.000": 4,
+                    "0.000,-0.707,0.707": 4,
+                    "0.707,0.707,0.000": 4,
+                    "0.000,0.000,1.000": 4
+                };
+                assert.deepStrictEqual(flatNormalHash, expectedFlatNormalHash);
+
+                const smoothCubeMesh = asset.meshes.filter(m => m.name === 'SmoothCube')[0];
+                const customNormals = smoothCubeMesh.primitives[0].attributes.NORMAL;
+                const customNormalData = getAccessorData(gltfPath, asset, customNormals, bufferCache);
+                const customNormalHash = buildVectorHash(customNormalData);
+
+                // In this mesh, the beveled cube has custom normals that are all
+                // axis-aligned to the nearest cube face.
+                const expectedCustomNormalHash = {
+                    "0.000,1.000,0.000": 16,
+                    "-1.000,0.000,0.000": 16,
+                    "0.000,0.000,-1.000": 16,
+                    "0.000,-1.000,0.000": 16,
+                    "1.000,0.000,0.000": 16,
+                    "0.000,0.000,1.000": 16
+                };
+                assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
+            });
         });
     });
 });
@@ -712,6 +809,70 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(transform.rotation, 0.3);
                 assert.equalEpsilon(transform.scale[0], 4);
                 assert.equalEpsilon(transform.scale[1], 5);
+            });
+
+            it('roundtrips some custom normals', function() {
+                let dir = '10_custom_normals';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                assert.strictEqual(asset.meshes.length, 2);
+
+                let bufferCache = {};
+
+                const angleCubeMesh = asset.meshes.filter(m => m.name === 'AngleCube')[0];
+                const flatNormals = angleCubeMesh.primitives[0].attributes.NORMAL;
+                const flatNormalData = getAccessorData(gltfPath, asset, flatNormals, bufferCache);
+                const flatNormalHash = buildVectorHash(flatNormalData);
+
+                // In this mesh, the beveled cube has various angled edges.
+                // Several are not axis-aligned.
+                const expectedFlatNormalHash = {
+                    "0.000,1.000,0.000": 4,
+                    "-1.000,0.000,0.000": 4,
+                    "0.000,0.000,-1.000": 4,
+                    "0.000,-1.000,0.000": 4,
+                    "1.000,0.000,0.000": 4,
+                    "0.577,-0.577,0.577": 3,
+                    "0.577,0.577,0.577": 3,
+                    "0.577,-0.577,-0.577": 3,
+                    "0.577,0.577,-0.577": 3,
+                    "-0.577,-0.577,0.577": 3,
+                    "-0.577,0.577,0.577": 3,
+                    "-0.577,-0.577,-0.577": 3,
+                    "-0.577,0.577,-0.577": 3,
+                    "-0.707,0.707,0.000": 4,
+                    "0.000,0.707,0.707": 4,
+                    "0.707,0.000,0.707": 4,
+                    "-0.707,0.000,-0.707": 4,
+                    "0.707,0.000,-0.707": 4,
+                    "-0.707,0.000,0.707": 4,
+                    "0.000,-0.707,-0.707": 4,
+                    "0.707,-0.707,0.000": 4,
+                    "0.000,0.707,-0.707": 4,
+                    "-0.707,-0.707,0.000": 4,
+                    "0.000,-0.707,0.707": 4,
+                    "0.707,0.707,0.000": 4,
+                    "0.000,0.000,1.000": 4
+                };
+                assert.deepStrictEqual(flatNormalHash, expectedFlatNormalHash);
+
+                const smoothCubeMesh = asset.meshes.filter(m => m.name === 'SmoothCube')[0];
+                const customNormals = smoothCubeMesh.primitives[0].attributes.NORMAL;
+                const customNormalData = getAccessorData(gltfPath, asset, customNormals, bufferCache);
+                const customNormalHash = buildVectorHash(customNormalData);
+
+                // In this mesh, the beveled cube has custom normals that are all
+                // axis-aligned to the nearest cube face.
+                const expectedCustomNormalHash = {
+                    "0.000,1.000,0.000": 16,
+                    "-1.000,0.000,0.000": 16,
+                    "0.000,0.000,-1.000": 16,
+                    "0.000,-1.000,0.000": 16,
+                    "1.000,0.000,0.000": 16,
+                    "0.000,0.000,1.000": 16
+                };
+                assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
             });
         });
     });

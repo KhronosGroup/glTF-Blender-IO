@@ -1,0 +1,48 @@
+{
+    "uri": "10_custom_normals.gltf",
+    "mimeType": "model/gltf+json",
+    "validatorVersion": "2.0.0-dev.2.7",
+    "validatedAt": "2019-08-22T21:50:51.469Z",
+    "issues": {
+        "numErrors": 0,
+        "numWarnings": 0,
+        "numInfos": 2,
+        "numHints": 0,
+        "messages": [
+            {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/2"
+            },
+            {
+                "code": "NODE_EMPTY",
+                "message": "Empty node encountered.",
+                "severity": 2,
+                "pointer": "/nodes/3"
+            }
+        ],
+        "truncated": false
+    },
+    "info": {
+        "version": "2.0",
+        "generator": "Khronos glTF Blender I/O v0.9.47",
+        "resources": [
+            {
+                "pointer": "/buffers/0",
+                "mimeType": "application/gltf-buffer",
+                "storage": "external",
+                "uri": "10_custom_normals.bin",
+                "byteLength": 4872
+            }
+        ],
+        "hasAnimations": false,
+        "hasMaterials": true,
+        "hasMorphTargets": false,
+        "hasSkins": false,
+        "hasTextures": false,
+        "hasDefaultScene": true,
+        "primitivesCount": 2,
+        "maxAttributesUsed": 2
+    }
+}
