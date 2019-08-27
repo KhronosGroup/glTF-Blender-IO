@@ -189,7 +189,7 @@ class glTFImporter():
         buffer = self.data.buffers[buffer_idx]
 
         if buffer.uri:
-            sep = ';base64,'
+            sep = ','
             if buffer.uri[:5] == 'data:':
                 idx = buffer.uri.find(sep)
                 if idx != -1:
