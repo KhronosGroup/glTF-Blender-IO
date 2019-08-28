@@ -211,7 +211,7 @@ def __get_blender_actions(blender_object: bpy.types.Object
 
             if blender_object.data.shape_keys.animation_data.action is not None:
                 blender_actions.append(blender_object.data.shape_keys.animation_data.action)
-                blender_tracks[blender_object.data.shape_keys.animation_data.action] = None
+                blender_tracks[blender_object.data.shape_keys.animation_data.action.name] = None
 
             for track in blender_object.data.shape_keys.animation_data.nla_tracks:
                 # Multi-strip tracks do not export correctly yet (they need to be baked),
