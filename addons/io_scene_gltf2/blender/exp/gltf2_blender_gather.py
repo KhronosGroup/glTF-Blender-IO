@@ -66,7 +66,7 @@ def __gather_animations(blender_scene, export_settings):
         if obj_node is not None:
             animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(blender_object, merged_tracks, len(animations), export_settings)
             animations += animations_
-            
+
     to_delete_idx = []
     for merged_anim_track in merged_tracks.keys():
         if len(merged_tracks[merged_anim_track]) < 2:
@@ -91,9 +91,6 @@ def __gather_animations(blender_scene, export_settings):
             for channel in animations[anim_idx].channels:
                 animations[base_animation_idx].channels.append(channel)
                 animations[base_animation_idx].channels[-1].sampler = animations[base_animation_idx].channels[-1].sampler + offset_sampler
-
-            # TODO extension
-            # TODO extras
 
     new_animations = []
     if len(to_delete_idx) != 0:
