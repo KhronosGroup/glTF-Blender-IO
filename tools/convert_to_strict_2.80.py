@@ -171,7 +171,7 @@ for root, dirs, files in walk(INPUT):
                     else:
 
                         # check if contains a check on version
-                        if "bpy.app.version" in line:
+                        if "if bpy.app.version" in line:
                             # get indentation of the line
                             nb_spaces = len(line) - len(line.lstrip(' '))
                             erase_mode = True
