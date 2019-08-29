@@ -66,14 +66,14 @@ def __get_copyright(export_settings):
 
 
 def __gather_gltf(exporter, export_settings):
-    scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
+    active_scene_idx, scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
 
     if export_settings['gltf_draco_mesh_compression']:
         gltf2_io_draco_compression_extension.compress_scene_primitives(scenes, export_settings)
         exporter.add_draco_extension()
 
-    for scene in scenes:
-        exporter.add_scene(scene)
+    for idx, scene in enumerate(scenes):
+        exporter.add_scene(scene, idx==active_scene_idx)
     for animation in animations:
         exporter.add_animation(animation)
 

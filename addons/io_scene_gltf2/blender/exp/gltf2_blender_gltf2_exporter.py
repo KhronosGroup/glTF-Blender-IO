@@ -156,7 +156,7 @@ class GlTF2Exporter:
             with open(dst_path, 'wb') as f:
                 f.write(image.data)
 
-    def add_scene(self, scene: gltf2_io.Scene, active: bool = True):
+    def add_scene(self, scene: gltf2_io.Scene, active: bool = False):
         """
         Add a scene to the glTF.
 
