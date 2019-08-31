@@ -15,6 +15,7 @@
 import bpy
 
 from io_scene_gltf2.io.com import gltf2_io
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animations
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -87,7 +88,9 @@ def __gather_animations(blender_scene, export_settings):
             if idx == 0:
                 base_animation_idx = anim_idx
                 animations[anim_idx].name = merged_anim_track
-
+                already_animated = []
+                for channel in animations[anim_idx].channels:
+                    already_animated.append((channel.target.node, channel.target.path))
                 continue
 
             to_delete_idx.append(anim_idx)
@@ -97,8 +100,12 @@ def __gather_animations(blender_scene, export_settings):
                 animations[base_animation_idx].samplers.append(sampler)
 
             for channel in animations[anim_idx].channels:
+                if (channel.target.node, channel.target.path) in already_animated:
+                    print_console("WARNING", "Some strips have same channel animation ({}), on node {} !".format(channel.target.path, channel.target.node.name))
+                    continue
                 animations[base_animation_idx].channels.append(channel)
                 animations[base_animation_idx].channels[-1].sampler = animations[base_animation_idx].channels[-1].sampler + offset_sampler
+                already_animated.append((channel.target.node, channel.target.path))
 
     new_animations = []
     if len(to_delete_idx) != 0:
