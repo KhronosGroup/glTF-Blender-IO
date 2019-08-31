@@ -67,6 +67,14 @@ def __gather_animations(blender_scene, export_settings):
             animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(blender_object, merged_tracks, len(animations), export_settings)
             animations += animations_
 
+    if export_settings['gltf_nla_strips'] is False:
+        # Fake an animation witha all animations of the scene
+        merged_tracks = {}
+        merged_tracks['Animation'] = []
+        for idx, animation in enumerate(animations):
+            merged_tracks['Animation'].append(idx)
+
+
     to_delete_idx = []
     for merged_anim_track in merged_tracks.keys():
         if len(merged_tracks[merged_anim_track]) < 2:
