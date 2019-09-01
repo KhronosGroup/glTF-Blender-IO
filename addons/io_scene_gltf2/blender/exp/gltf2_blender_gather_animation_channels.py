@@ -50,7 +50,21 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                 bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans]))
 
         # Then bake all bones
+        # gather up all bones associated with current action.
+        pose_bones = set()
+        for fcurve in blender_action.fcurves:
+            pose_bone_path = fcurve.data_path.rpartition('.')[0]
+            pose_bones.add(pose_bone_path)
+
         for bone in blender_object.data.bones:
+            # a bit hacky to check bones this way but 
+            # its the simplest way to test the proposal.
+            for pose_bone_path in pose_bones:
+                if bone.name in pose_bone_path:
+                    break
+            else:
+                # skip bones not found in the action armature path.
+                continue
             for p in ["location", "rotation_quaternion", "scale"]:
                 channel = __gather_animation_channel(
                     (),
