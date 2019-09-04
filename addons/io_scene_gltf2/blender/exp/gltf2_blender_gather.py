@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+import typing
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
@@ -58,6 +59,62 @@ def __gather_scene(blender_scene, export_settings):
     return scene
 
 
+def __merge_channels(animations) -> typing.List[gltf2_io.AnimationChannel]:
+    channels = []
+    samplerOffset = 0
+    for anim in animations:
+        for channel in anim.channels:
+            # make sure to offet the channel sampler index properly
+            channel.sampler += samplerOffset
+            channels.append(channel)
+        samplerOffset += len(anim.samplers)
+    return channels
+
+
+def __merge_extensions(animations) -> typing.Any:
+    extensions = None
+    for anim in animations:
+        if anim.extensions is not None:
+            if extensions is None:
+                extensions = []
+            extensions.extend(anim.extensions)
+    # remove duplicates
+    if extensions is not None:
+        extensions = list(set(extensions))
+    return extensions
+
+
+def __merge_extras(animations) -> typing.Any:
+    extras = None
+    for anim in animations:
+        if anim.extras is not None:
+            if extras is None:
+                extras = []
+            extras.extend(anim.extras)
+    # remove duplicates
+    if extras is not None:
+        extras = list(set(extras))
+    return extras
+
+
+def __merge_samplers(animations) -> typing.List[gltf2_io.AnimationSampler]:
+    samplers = []
+    for anim in animations:
+        samplers.extend(anim.samplers)
+    return samplers
+
+
+def __merge_animations(blender_scene, animations, export_settings):
+    scene_animation = gltf2_io.Animation(
+            channels=__merge_channels(animations),
+            extensions=__merge_extensions(animations),
+            extras=__merge_extras(animations),
+            name=blender_scene.name,
+            samplers=__merge_samplers(animations)
+        )
+    return scene_animation
+
+
 def __gather_animations(blender_scene, export_settings):
     animations = []
     for blender_object in blender_scene.objects:
@@ -65,6 +122,16 @@ def __gather_animations(blender_scene, export_settings):
         obj_node = gltf2_blender_gather_nodes.gather_node(blender_object, blender_scene, export_settings)
         if obj_node is not None:
             animations += gltf2_blender_gather_animations.gather_animations(blender_object, export_settings)
+
+    # if none of those two actions have been selected, 
+    # let's merge indivudual animations into one single with multiple channels
+    all_actions = export_settings['gltf_all_actions']
+    nla_strips = export_settings['gltf_nla_strips']
+    if not all_actions and not nla_strips:
+        scene_animation = __merge_animations(blender_scene, animations, export_settings)
+        animations = []
+        animations.append(scene_animation)
+
     return animations
 
 

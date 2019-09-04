@@ -261,6 +261,18 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    export_nla_strips: BoolProperty(
+        name='NLA strips',
+        description='Export each non-muted NLA strip as a separated anim, if any, instead of global scene animation',
+        default=True
+    )
+
+    export_all_actions: BoolProperty(
+        name='All actions',
+        description='Export all actions as individual animations',
+        default=False
+    )
+
     export_all_influences = BoolProperty(
         name='Include All Bone Influences',
         description='Allow >4 joint vertex influences. Models may appear incorrectly in many viewers',
@@ -382,10 +394,14 @@ class ExportGLTF2_Base:
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
+            export_settings['gltf_all_actions'] = self.export_all_actions
+            export_settings['gltf_nla_strips'] = self.export_nla_strips
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
+            export_settings['gltf_all_actions'] = False
+            export_settings['gltf_nla_strips'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -469,6 +485,8 @@ class ExportGLTF2_Base:
             col.prop(self, 'export_frame_range')
             col.prop(self, 'export_frame_step')
             col.prop(self, 'export_force_sampling')
+            col.prop(self, 'export_nla_strips')
+            col.prop(self, 'export_all_actions')
         col.prop(self, 'export_skins')
         if self.export_skins:
             col.prop(self, 'export_all_influences')

@@ -31,7 +31,7 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
     animations = []
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
-    blender_actions = __get_blender_actions(blender_object)
+    blender_actions = __get_blender_actions(blender_object, export_settings)
 
     # save the current active action of the object, if any
     # We will restore it after export
@@ -68,6 +68,10 @@ def gather_animations(blender_object: bpy.types.Object, export_settings) -> typi
             blender_object.animation_data.action = current_action
 
     return animations
+
+
+def link_samplers(animation: gltf2_io.Animation, export_settings):
+    __link_samplers(animation, export_settings)
 
 
 def __gather_animation(blender_action: bpy.types.Action,
@@ -172,23 +176,50 @@ def __link_samplers(animation: gltf2_io.Animation, export_settings):
         animation.channels[i].sampler = __append_unique_and_get_index(animation.samplers, channel.sampler)
 
 
-def __get_blender_actions(blender_object: bpy.types.Object
+def __get_blender_actions(blender_object: bpy.types.Object, 
+                          export_settings
                           ) -> typing.List[bpy.types.Action]:
+    def validate_actions(act, path_resolve):
+        for fc in act.fcurves:
+            data_path = fc.data_path
+            if fc.array_index:
+                data_path = data_path + "[%d]" % fc.array_index
+            try:
+                path_resolve(data_path)
+            except ValueError:
+                return False  # Invalid.
+        return True  # Valid.
+
     blender_actions = []
 
-    if blender_object.animation_data is not None:
-        # Collect active action.
-        if blender_object.animation_data.action is not None:
-            blender_actions.append(blender_object.animation_data.action)
+    all_actions = export_settings['gltf_all_actions']
+    if all_actions:
+        if blender_object.type == "MESH":
+            default_action = None
+            if blender_object.animation_data is not None:
+                default_action = blender_object.animation_data.action
 
-        # Collect associated strips from NLA tracks.
-        for track in blender_object.animation_data.nla_tracks:
-            # Multi-strip tracks do not export correctly yet (they need to be baked),
-            # so skip them for now and only write single-strip tracks.
-            if track.strips is None or len(track.strips) != 1:
-                continue
-            for strip in [strip for strip in track.strips if strip.action is not None]:
-                blender_actions.append(strip.action)
+            for action in bpy.data.actions:
+                # For now, *all* paths in the action must be valid for the object, to validate the action.
+                # Unless that action was already assigned to the object!
+                if action != default_action and not validate_actions(action, blender_object.path_resolve):
+                        continue
+                blender_actions.append(action)
+    else:
+        # exported NLA strips ( if gltf_nla_strips option has not been selected then all associated animation will be merged together at the scene level ) 
+        if blender_object.animation_data is not None:
+            # Collect active action.
+            if blender_object.animation_data.action is not None:
+                blender_actions.append(blender_object.animation_data.action)
+
+            # Collect associated strips from NLA tracks.
+            for track in blender_object.animation_data.nla_tracks:
+                # Multi-strip tracks do not export correctly yet (they need to be baked),
+                # so skip them for now and only write single-strip tracks.
+                if track.strips is None or len(track.strips) != 1:
+                    continue
+                for strip in [strip for strip in track.strips if strip.action is not None]:
+                    blender_actions.append(strip.action)
 
     if blender_object.type == "MESH" \
             and blender_object.data is not None \
