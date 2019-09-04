@@ -53,7 +53,8 @@ class BlenderNodeAnim():
 
         start_frame = bpy.context.scene.frame_start
 
-        simulate_stash(obj, bpy.data.actions[action_name], start_frame)
+        animation_name = gltf.data.animations[anim_idx].name
+        simulate_stash(obj, animation_name, bpy.data.actions[action_name], start_frame)
 
         gltf.actions_stashed[(obj.name, action_name)] = True
 
