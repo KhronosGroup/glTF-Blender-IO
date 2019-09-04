@@ -700,6 +700,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_range')
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
+        layout.prop(operator, 'export_nla_strips')
 
 
 class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
