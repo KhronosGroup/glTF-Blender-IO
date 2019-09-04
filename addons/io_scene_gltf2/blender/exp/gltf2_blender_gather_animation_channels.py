@@ -187,10 +187,11 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
         else:
             try:
                 target = gltf2_blender_get.get_object_from_datapath(blender_object, object_path)
-                if blender_object.type == "MESH":
+                if blender_object.type == "MESH" and object_path.startswith("key_blocks"):
                     shape_key = blender_object.data.shape_keys.path_resolve(object_path)
                     if shape_key.mute is True:
                         continue
+                    target = blender_object.data.shape_keys
             except ValueError as e:
                 # if the object is a mesh and the action target path can not be resolved, we know that this is a morph
                 # animation.
