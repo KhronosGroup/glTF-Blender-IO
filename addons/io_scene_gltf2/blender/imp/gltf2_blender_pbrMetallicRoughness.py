@@ -255,6 +255,13 @@ class BlenderPbr():
 
                 metallic_mapping = node_tree.nodes.new('ShaderNodeMapping')
                 metallic_mapping.location = -1000, 0
+                metallic_mapping.vector_type = 'POINT'
+                tex_transform = metallic_text.image['tex_transform'][str(pypbr.metallic_roughness_texture.index)]
+                metallic_mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
+                metallic_mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
+                metallic_mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
+                metallic_mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
+                metallic_mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
 
                 metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
                 metallic_uvmap.location = -1500, 0
