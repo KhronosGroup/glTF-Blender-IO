@@ -149,9 +149,9 @@ def get_texture_transform_from_texture_node(texture_node):
         return None
 
 
-    try:
+    if bpy.app.version < (2, 81, 8):
         rotation_0, rotation_1 = mapping_node.rotation[0], mapping_node.rotation[1]
-    except:
+    else:
         rotation_0, rotation_1 = mapping_node.inputs['Rotation'].default_value[0], mapping_node.inputs['Rotation'].default_value[1]
     if  rotation_0 or rotation_1:
         # TODO: can we handle this?
@@ -162,13 +162,11 @@ def get_texture_transform_from_texture_node(texture_node):
         return None
 
     mapping_transform = {}
-    # TODO, remove this try/except after release of 2.81
-    # and when we will no more support 2.7x
-    try:
+    if bpy.app.version < (2, 81, 8):
         mapping_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
         mapping_transform["rotation"] = mapping_node.rotation[2]
         mapping_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
-    except:
+    else:
         mapping_transform["offset"] = [mapping_node.inputs['Location'].default_value[0], mapping_node.inputs['Location'].default_value[1]]
         mapping_transform["rotation"] = mapping_node.inputs['Rotation'].default_value[2]
         mapping_transform["scale"] = [mapping_node.inputs['Scale'].default_value[0], mapping_node.inputs['Scale'].default_value[1]]

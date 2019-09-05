@@ -133,15 +133,13 @@ class BlenderPbr():
             mapping.vector_type = 'POINT'
             if text_node.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
                 tex_transform = text_node.image['tex_transform'][str(pypbr.base_color_texture.index)]
-                # TODO, remove this try/except after release of 2.81
-                # and when we will no more support 2.7x
-                try:
+                if bpy.app.version < (2, 81, 8):
                     mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
                     mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
                     mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
                     mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
                     mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-                except:
+                else:
                     mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
                     mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
                     mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
@@ -209,15 +207,13 @@ class BlenderPbr():
             mapping.vector_type = 'POINT'
             if text_node.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
                 tex_transform = text_node.image['tex_transform'][str(pypbr.base_color_texture.index)]
-                # TODO, remove this try/except after release of 2.81
-                # and when we will no more support 2.7x
-                try:
+                if bpy.app.version < (2, 81, 8):
                     mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
                     mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
                     mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
                     mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
                     mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-                except:
+                else:
                     mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
                     mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
                     mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
@@ -277,15 +273,13 @@ class BlenderPbr():
                 metallic_mapping.location = -1000, 0
                 metallic_mapping.vector_type = 'POINT'
                 tex_transform = metallic_text.image['tex_transform'][str(pypbr.metallic_roughness_texture.index)]
-                # TODO, remove this try/except after release of 2.81
-                # and when we will no more support 2.7x
-                try:
+                if bpy.app.version < (2, 81, 8):
                     metallic_mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
                     metallic_mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
                     metallic_mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
                     metallic_mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
                     metallic_mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-                except:
+                else:
                     metallic_mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
                     metallic_mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
                     metallic_mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
