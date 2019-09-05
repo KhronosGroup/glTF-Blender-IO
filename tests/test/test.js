@@ -825,11 +825,11 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(normalTransform.scale[1], 7);
 
                 const occlusionTransform = asset.materials[0].occlusionTexture.extensions.KHR_texture_transform;
-                assert.equalEpsilon(occlusionTransform.offset[0], 0.4);
-                assert.equalEpsilon(occlusionTransform.offset[1], 0.5);
-                assert.equalEpsilon(occlusionTransform.rotation, 0.6);
-                assert.equalEpsilon(occlusionTransform.scale[0], 7);
-                assert.equalEpsilon(occlusionTransform.scale[1], 8);
+                assert.equalEpsilon(occlusionTransform.offset[0], 0.2);
+                assert.equalEpsilon(occlusionTransform.offset[1], 0.3);
+                assert.equalEpsilon(occlusionTransform.rotation, 0.4);
+                assert.equalEpsilon(occlusionTransform.scale[0], 5);
+                assert.equalEpsilon(occlusionTransform.scale[1], 6);
 
                 const emissiveTransform = asset.materials[0].emissiveTexture.extensions.KHR_texture_transform;
                 assert.equalEpsilon(emissiveTransform.offset[0], 0.5);
