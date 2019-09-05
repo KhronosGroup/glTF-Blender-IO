@@ -102,11 +102,21 @@ class BlenderOcclusionMap():
             text.label = 'OCCLUSION'
             if text.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
                 tex_transform = text.image['tex_transform'][str(pymaterial.occlusion_texture.index)]
-                mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
+                # TODO, remove this try/except after release of 2.81
+                # and when we will no more support 2.7x
+                try:
+                    mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
+                    mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
+                    mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
+                    mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
+                    mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
+                except:
+                    mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
+                    mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
+                    mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
+                    mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
+                    mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
+
 
             # Links
             node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])

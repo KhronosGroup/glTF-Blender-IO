@@ -157,9 +157,16 @@ def get_texture_transform_from_texture_node(texture_node):
         return None
 
     mapping_transform = {}
-    mapping_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
-    mapping_transform["rotation"] = mapping_node.rotation[2]
-    mapping_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
+    # TODO, remove this try/except after release of 2.81
+    # and when we will no more support 2.7x
+    try:
+        mapping_transform["offset"] = [mapping_node.translation[0], mapping_node.translation[1]]
+        mapping_transform["rotation"] = mapping_node.rotation[2]
+        mapping_transform["scale"] = [mapping_node.scale[0], mapping_node.scale[1]]
+    except:
+        mapping_transform["offset"] = [mapping_node.inputs['Location'].default_value[0], mapping_node.inputs['Location'].default_value[1]]
+        mapping_transform["rotation"] = mapping_node.inputs['Rotation'].default_value[2]
+        mapping_transform["scale"] = [mapping_node.inputs['Scale'].default_value[0], mapping_node.inputs['Scale'].default_value[1]]
 
     if mapping_node.vector_type == "TEXTURE":
         # This means use the inverse of the TRS transform.
