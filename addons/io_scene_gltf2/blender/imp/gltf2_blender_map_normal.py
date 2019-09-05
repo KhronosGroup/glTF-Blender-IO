@@ -75,11 +75,19 @@ class BlenderNormalMap():
         text.location = -500, -500
         if text.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
             tex_transform = text.image['tex_transform'][str(pymaterial.normal_texture.index)]
-            mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-            mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-            mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-            mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-            mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
+            if bpy.app.version < (2, 81, 8):
+                mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
+                mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
+                mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
+                mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
+                mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
+            else:
+                mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
+                mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
+                mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
+                mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
+                mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
+
 
         normalmap_node = node_tree.nodes.new('ShaderNodeNormalMap')
         normalmap_node.location = -250, -500
