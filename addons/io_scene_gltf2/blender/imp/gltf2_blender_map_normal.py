@@ -14,6 +14,7 @@
 
 import bpy
 from .gltf2_blender_texture import BlenderTextureInfo
+from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
 
 
 class BlenderNormalMap():
@@ -72,6 +73,13 @@ class BlenderNormalMap():
             if text.image:
                 text.image.colorspace_settings.is_data = True
         text.location = -500, -500
+        if text.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
+            tex_transform = text.image['tex_transform'][str(pymaterial.normal_texture.index)]
+            mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
+            mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
+            mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
+            mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
+            mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
 
         normalmap_node = node_tree.nodes.new('ShaderNodeNormalMap')
         normalmap_node.location = -250, -500
