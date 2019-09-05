@@ -98,8 +98,8 @@ def __gather_type(blender_lamp, _) -> str:
 
 
 def __gather_range(blender_lamp, export_settings) -> Optional[float]:
-    # TODO: calculate range from
-    # https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual#range-property
+    if blender_lamp.use_custom_distance:
+        return blender_lamp.cutoff_distance
     return None
 
 
