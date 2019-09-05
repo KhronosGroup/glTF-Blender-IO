@@ -73,7 +73,10 @@ def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings
     if not hasattr(blender_shader_sockets_or_texture_slots[0], 'links'):
         return None
 
-    texture_node = blender_shader_sockets_or_texture_slots[0].links[0].from_node
+    tex_nodes = [__get_tex_from_socket(socket).shader_node for socket in blender_shader_sockets_or_texture_slots]
+    texture_node = tex_nodes[0] if (tex_nodes is not None and len(tex_nodes) > 0) else None
+    if texture_node is None:
+        return None
     texture_transform = gltf2_blender_get.get_texture_transform_from_texture_node(texture_node)
     if texture_transform is None:
         return None
