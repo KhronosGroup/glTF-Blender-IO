@@ -148,7 +148,12 @@ def get_texture_transform_from_texture_node(texture_node):
         )
         return None
 
-    if mapping_node.rotation[0] or mapping_node.rotation[1]:
+
+    try:
+        rotation_0, rotation_1 = mapping_node.rotation[0], mapping_node.rotation[1]
+    except:
+        rotation_0, rotation_1 = mapping_node.inputs['Rotation'].default_value[0], mapping_node.inputs['Rotation'].default_value[1]
+    if  rotation_0 or rotation_1:
         # TODO: can we handle this?
         gltf2_io_debug.print_console("WARNING",
             "Skipping exporting texture transform because it had non-zero "
