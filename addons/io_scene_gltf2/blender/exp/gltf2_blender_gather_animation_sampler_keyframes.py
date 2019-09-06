@@ -16,7 +16,7 @@ import bpy
 import mathutils
 import typing
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, bonecache
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
@@ -111,6 +111,52 @@ class Keyframe:
         self.__out_tangent = self.__set_indexed(value)
 
 
+
+@bonecache
+def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object],
+                     channels: typing.Tuple[bpy.types.FCurve],
+                     bake_bone: typing.Union[str, None],
+                     bake_channel: typing.Union[str, None],
+                     bake_range_start,
+                     bake_range_end,
+                     action_name: str,
+                     current_frame: int,
+                     step: int
+                     ):
+
+    print("Call function")
+
+    data = {}
+
+    if bake_bone is None:
+        # Find the start and end of the whole action group
+        ranges = [channel.range() for channel in channels]
+
+        start_frame = min([channel.range()[0] for channel in channels])
+        end_frame = max([channel.range()[1] for channel in channels])
+    else:
+        start_frame = bake_range_start
+        end_frame = bake_range_end
+
+    frame = start_frame
+    while frame <= end_frame:
+        data[frame] = {}
+        # we need to bake in the constraints
+        bpy.context.scene.frame_set(frame)
+        for pbone in blender_object_if_armature.pose.bones:
+            if bake_bone is None:
+                matrix = pbone.matrix_basis
+            else:
+                matrix = pbone.matrix
+                if bpy.app.version < (2, 80, 0):
+                    matrix = blender_object_if_armature.convert_space(pbone, matrix, 'POSE', 'LOCAL')
+                else:
+                    matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
+            data[frame][pbone.name] = matrix
+        frame += step
+
+    return data
+
 # cache for performance reasons
 @cached
 def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
@@ -154,17 +200,20 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         while frame <= end_frame:
             key = Keyframe(channels, frame, bake_channel)
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
-                # we need to bake in the constraints
-                bpy.context.scene.frame_set(frame)
-                if bake_bone is None:
-                    trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
-                else:
-                    matrix = pose_bone_if_armature.matrix
-                    if bpy.app.version < (2, 80, 0):
-                        new_matrix = blender_object_if_armature.convert_space(pose_bone_if_armature, matrix, 'POSE', 'LOCAL')
-                    else:
-                        new_matrix = blender_object_if_armature.convert_space(pose_bone=pose_bone_if_armature, matrix=matrix, from_space='POSE', to_space='LOCAL')
-                    trans, rot, scale = new_matrix.decompose()
+
+                mat = get_bone_matrix(
+                    blender_object_if_armature,
+                    channels,
+                    bake_bone,
+                    bake_channel,
+                    bake_range_start,
+                    bake_range_end,
+                    action_name,
+                    frame,
+                    step
+                )
+                trans, rot, scale = mat.decompose()
+
                 if bake_channel is None:
                     target_property = channels[0].data_path.split('.')[-1]
                 else:
