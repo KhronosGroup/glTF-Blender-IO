@@ -124,8 +124,6 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
                      step: int
                      ):
 
-    print("Call function")
-
     data = {}
 
     if bake_bone is None:
