@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def simulate_stash(obj, action, start_frame):
+def simulate_stash(obj, gltf_animation_name, action, start_frame):
     # Simulate stash :
     # * add a track
     # * add an action on track
@@ -20,7 +20,7 @@ def simulate_stash(obj, action, start_frame):
     # * remove active action from object
     tracks = obj.animation_data.nla_tracks
     new_track = tracks.new(prev=None)
-    new_track.name = action.name
+    new_track.name = gltf_animation_name if gltf_animation_name is not None else action.name
     strip = new_track.strips.new(action.name, start_frame, action)
     new_track.lock = True
     new_track.mute = True

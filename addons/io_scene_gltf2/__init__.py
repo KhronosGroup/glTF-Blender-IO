@@ -15,8 +15,8 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (0, 9, 54),
-    'blender': (2, 80, 0),
+    "version": (0, 9, 61),
+    'blender': (2, 81, 6),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
@@ -410,73 +410,355 @@ class ExportGLTF2_Base:
             bpy.path.ensure_ext(self.filepath,self.filename_ext)))[0] + '.bin'
 
         return gltf2_blender_export.save(context, export_settings)
+    if bpy.app.version < (2, 80, 0):
+        def draw(self, context):
+            self.layout.prop(self, 'ui_tab', expand=True)
+            if self.ui_tab == 'GENERAL':
+                self.draw_general_settings()
+            elif self.ui_tab == 'MESHES':
+                self.draw_mesh_settings()
+            elif self.ui_tab == 'OBJECTS':
+                self.draw_object_settings()
+            elif self.ui_tab == 'MATERIALS':
+                self.draw_material_settings()
+            elif self.ui_tab == 'ANIMATION':
+                self.draw_animation_settings()
+
+        def draw_general_settings(self):
+            col = self.layout.box().column()
+            col.prop(self, 'export_format')
+            col.prop(self, 'export_selected')
+            col.prop(self, 'export_apply')
+            col.prop(self, 'export_yup')
+            col.prop(self, 'export_extras')
+            col.prop(self, 'will_save_settings')
+            col.prop(self, 'export_copyright')
+
+        def draw_mesh_settings(self):
+            col = self.layout.box().column()
+            col.prop(self, 'export_texcoords')
+            col.prop(self, 'export_normals')
+            if self.export_normals:
+                col.prop(self, 'export_tangents')
+            col.prop(self, 'export_colors')
+            col.prop(self, 'export_materials')
+            if self.export_materials:
+                col.prop(self, 'export_image_format')
+
+            # Add Draco compression option only if the DLL could be found.
+            if self.is_draco_available:
+                col.prop(self, 'export_draco_mesh_compression_enable')
+
+                # Display options when Draco compression is enabled.
+                if self.export_draco_mesh_compression_enable:
+                    col.prop(self, 'export_draco_mesh_compression_level')
+                    col.prop(self, 'export_draco_position_quantization')
+                    col.prop(self, 'export_draco_normal_quantization')
+                    col.prop(self, 'export_draco_texcoord_quantization')
+
+        def draw_object_settings(self):
+            col = self.layout.box().column()
+            col.prop(self, 'export_cameras')
+            col.prop(self, 'export_lights')
+
+        def draw_animation_settings(self):
+            col = self.layout.box().column()
+            col.prop(self, 'export_current_frame')
+            col.prop(self, 'export_animations')
+            if self.export_animations:
+                col.prop(self, 'export_frame_range')
+                col.prop(self, 'export_frame_step')
+                col.prop(self, 'export_force_sampling')
+            col.prop(self, 'export_skins')
+            if self.export_skins:
+                col.prop(self, 'export_all_influences')
+            col.prop(self, 'export_morph')
+            if self.export_morph:
+                col.prop(self, 'export_morph_normal')
+                if self.export_morph_normal:
+                    col.prop(self, 'export_morph_tangent')
+    else:
+        def draw(self, context):
+            pass
+
+
+class GLTF_PT_export_main(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = ""
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'HIDE_HEADER'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
 
     def draw(self, context):
-        self.layout.prop(self, 'ui_tab', expand=True)
-        if self.ui_tab == 'GENERAL':
-            self.draw_general_settings()
-        elif self.ui_tab == 'MESHES':
-            self.draw_mesh_settings()
-        elif self.ui_tab == 'OBJECTS':
-            self.draw_object_settings()
-        elif self.ui_tab == 'MATERIALS':
-            self.draw_material_settings()
-        elif self.ui_tab == 'ANIMATION':
-            self.draw_animation_settings()
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
 
-    def draw_general_settings(self):
-        col = self.layout.box().column()
-        col.prop(self, 'export_format')
-        col.prop(self, 'export_selected')
-        col.prop(self, 'export_apply')
-        col.prop(self, 'export_yup')
-        col.prop(self, 'export_extras')
-        col.prop(self, 'will_save_settings')
-        col.prop(self, 'export_copyright')
+        sfile = context.space_data
+        operator = sfile.active_operator
 
-    def draw_mesh_settings(self):
-        col = self.layout.box().column()
-        col.prop(self, 'export_texcoords')
-        col.prop(self, 'export_normals')
-        if self.export_normals:
-            col.prop(self, 'export_tangents')
-        col.prop(self, 'export_colors')
-        col.prop(self, 'export_materials')
-        if self.export_materials:
-            col.prop(self, 'export_image_format')
+        layout.prop(operator, 'export_format')
+        layout.prop(operator, 'export_copyright')
+        layout.prop(operator, 'will_save_settings')
 
-        # Add Draco compression option only if the DLL could be found.
-        if self.is_draco_available:
-            col.prop(self, 'export_draco_mesh_compression_enable')
 
-            # Display options when Draco compression is enabled.
-            if self.export_draco_mesh_compression_enable:
-                col.prop(self, 'export_draco_mesh_compression_level')
-                col.prop(self, 'export_draco_position_quantization')
-                col.prop(self, 'export_draco_normal_quantization')
-                col.prop(self, 'export_draco_texcoord_quantization')
+class GLTF_PT_export_include(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Include"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
 
-    def draw_object_settings(self):
-        col = self.layout.box().column()
-        col.prop(self, 'export_cameras')
-        col.prop(self, 'export_lights')
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
 
-    def draw_animation_settings(self):
-        col = self.layout.box().column()
-        col.prop(self, 'export_current_frame')
-        col.prop(self, 'export_animations')
-        if self.export_animations:
-            col.prop(self, 'export_frame_range')
-            col.prop(self, 'export_frame_step')
-            col.prop(self, 'export_force_sampling')
-        col.prop(self, 'export_skins')
-        if self.export_skins:
-            col.prop(self, 'export_all_influences')
-        col.prop(self, 'export_morph')
-        if self.export_morph:
-            col.prop(self, 'export_morph_normal')
-            if self.export_morph_normal:
-                col.prop(self, 'export_morph_tangent')
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_selected')
+        layout.prop(operator, 'export_extras')
+        layout.prop(operator, 'export_cameras')
+        layout.prop(operator, 'export_lights')
+
+
+class GLTF_PT_export_transform(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Transform"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_yup')
+
+
+class GLTF_PT_export_geometry(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Geometry"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_apply')
+        layout.prop(operator, 'export_texcoords')
+        layout.prop(operator, 'export_normals')
+        col = layout.column()
+        col.active = operator.export_normals
+        col.prop(operator, 'export_tangents')
+        layout.prop(operator, 'export_colors')
+        layout.prop(operator, 'export_materials')
+        col = layout.column()
+        col.active = operator.export_materials
+        col.prop(operator, 'export_image_format')
+
+
+class GLTF_PT_export_geometry_compression(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Compression"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    def __init__(self):
+        self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        if operator.is_draco_available:
+            return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.prop(operator, "export_draco_mesh_compression_enable", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_draco_mesh_compression_enable
+        layout.prop(operator, 'export_draco_mesh_compression_level')
+
+        col = layout.column(align=True)
+        col.prop(operator, 'export_draco_position_quantization', text="Quantize Position")
+        col.prop(operator, 'export_draco_normal_quantization', text="Normal")
+        col.prop(operator, 'export_draco_texcoord_quantization', text="Tex Coords")
+
+
+class GLTF_PT_export_animation(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Animation"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_current_frame')
+
+
+class GLTF_PT_export_animation_export(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Animation"
+    bl_parent_id = "GLTF_PT_export_animation"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.prop(operator, "export_animations", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_animations
+
+        layout.prop(operator, 'export_frame_range')
+        layout.prop(operator, 'export_frame_step')
+        layout.prop(operator, 'export_force_sampling')
+
+
+class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Shape Keys"
+    bl_parent_id = "GLTF_PT_export_animation"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.prop(operator, "export_morph", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_morph
+
+        layout.prop(operator, 'export_morph_normal')
+        col = layout.column()
+        col.active = operator.export_morph_normal
+        col.prop(operator, 'export_morph_tangent')
+
+
+class GLTF_PT_export_animation_skinning(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Skinning"
+    bl_parent_id = "GLTF_PT_export_animation"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.prop(operator, "export_skins", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_skins
+        layout.prop(operator, 'export_all_influences')
 
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
@@ -571,10 +853,25 @@ def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
-classes = (
-    ExportGLTF2,
-    ImportGLTF2
-)
+if bpy.app.version < (2, 80, 0):
+    classes = (
+        ExportGLTF2,
+        ImportGLTF2
+    )
+else:
+    classes = (
+        ExportGLTF2,
+        GLTF_PT_export_main,
+        GLTF_PT_export_include,
+        GLTF_PT_export_transform,
+        GLTF_PT_export_geometry,
+        GLTF_PT_export_geometry_compression,
+        GLTF_PT_export_animation,
+        GLTF_PT_export_animation_export,
+        GLTF_PT_export_animation_shapekeys,
+        GLTF_PT_export_animation_skinning,
+        ImportGLTF2
+    )
 
 
 def register():

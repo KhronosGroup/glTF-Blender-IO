@@ -196,10 +196,15 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                 # if the object is a mesh and the action target path can not be resolved, we know that this is a morph
                 # animation.
                 if blender_object.type == "MESH":
-                    shape_key = blender_object.data.shape_keys.path_resolve(object_path)
-                    if shape_key.mute is True:
+                    try:
+                        shape_key = blender_object.data.shape_keys.path_resolve(object_path)
+                        if shape_key.mute is True:
+                            continue
+                        target = blender_object.data.shape_keys
+                    except:
+                        # Something is wrong, for example a bone animation is linked to an object mesh...
+                        gltf2_io_debug.print_console("WARNING", "Animation target {} not found".format(object_path))
                         continue
-                    target = blender_object.data.shape_keys
                 else:
                     gltf2_io_debug.print_console("WARNING", "Animation target {} not found".format(object_path))
                     continue

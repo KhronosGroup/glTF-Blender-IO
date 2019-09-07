@@ -44,8 +44,70 @@
                     "index" : 0,
                     "texCoord" : 0
                 },
-                "roughnessFactor" : 0.800000011920929,
-                "metallicFactor" : 0
+                "metallicRoughnessTexture": {
+                    "index": 0,
+                    "extensions" : {
+                        "KHR_texture_transform" : {
+                            "offset" : [
+                                0.2,
+                                0.3
+                            ],
+                            "rotation" : 0.4,
+                            "scale" : [
+                                5,
+                                6
+                            ]
+                        }
+                    }
+                }
+            },
+            "normalTexture": {
+                "index": 0,
+                "extensions" : {
+                    "KHR_texture_transform" : {
+                        "offset" : [
+                            0.3,
+                            0.4
+                        ],
+                        "rotation" : 0.5,
+                        "scale" : [
+                            6,
+                            7
+                        ]
+                    }
+                }
+            },
+            "occlusionTexture": {
+                "index": 0,
+                "extensions" : {
+                    "KHR_texture_transform" : {
+                        "offset" : [
+                            0.2,
+                            0.3
+                        ],
+                        "rotation" : 0.4,
+                        "scale" : [
+                            5,
+                            6
+                        ]
+                    }
+                }
+            },
+            "emissiveTexture": {
+                "index": 0,
+                "extensions" : {
+                    "KHR_texture_transform" : {
+                        "offset" : [
+                            0.5,
+                            0.6
+                        ],
+                        "rotation" : 0.7,
+                        "scale" : [
+                            8,
+                            9
+                        ]
+                    }
+                }
             },
             "name" : "Material"
         }

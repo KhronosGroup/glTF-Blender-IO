@@ -795,20 +795,48 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
             });
 
-            it('roundtrips a texture transform', function() {
+            it('roundtrips all texture transforms', function() {
                 let dir = '09_texture_transform';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
                 assert.strictEqual(asset.materials.length, 1);
-                const transform = asset.materials[0].pbrMetallicRoughness.baseColorTexture.extensions.KHR_texture_transform;
 
-                assert.equalEpsilon(transform.offset[0], 0.1);
-                assert.equalEpsilon(transform.offset[1], 0.2);
-                assert.equalEpsilon(transform.rotation, 0.3);
-                assert.equalEpsilon(transform.scale[0], 4);
-                assert.equalEpsilon(transform.scale[1], 5);
+                const baseTransform = asset.materials[0].pbrMetallicRoughness.baseColorTexture.extensions.KHR_texture_transform;
+                assert.equalEpsilon(baseTransform.offset[0], 0.1);
+                assert.equalEpsilon(baseTransform.offset[1], 0.2);
+                assert.equalEpsilon(baseTransform.rotation, 0.3);
+                assert.equalEpsilon(baseTransform.scale[0], 4);
+                assert.equalEpsilon(baseTransform.scale[1], 5);
+
+                const mrTransform = asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.extensions.KHR_texture_transform;
+                assert.equalEpsilon(mrTransform.offset[0], 0.2);
+                assert.equalEpsilon(mrTransform.offset[1], 0.3);
+                assert.equalEpsilon(mrTransform.rotation, 0.4);
+                assert.equalEpsilon(mrTransform.scale[0], 5);
+                assert.equalEpsilon(mrTransform.scale[1], 6);
+
+                const normalTransform = asset.materials[0].normalTexture.extensions.KHR_texture_transform;
+                assert.equalEpsilon(normalTransform.offset[0], 0.3);
+                assert.equalEpsilon(normalTransform.offset[1], 0.4);
+                assert.equalEpsilon(normalTransform.rotation, 0.5);
+                assert.equalEpsilon(normalTransform.scale[0], 6);
+                assert.equalEpsilon(normalTransform.scale[1], 7);
+
+                const occlusionTransform = asset.materials[0].occlusionTexture.extensions.KHR_texture_transform;
+                assert.equalEpsilon(occlusionTransform.offset[0], 0.2);
+                assert.equalEpsilon(occlusionTransform.offset[1], 0.3);
+                assert.equalEpsilon(occlusionTransform.rotation, 0.4);
+                assert.equalEpsilon(occlusionTransform.scale[0], 5);
+                assert.equalEpsilon(occlusionTransform.scale[1], 6);
+
+                const emissiveTransform = asset.materials[0].emissiveTexture.extensions.KHR_texture_transform;
+                assert.equalEpsilon(emissiveTransform.offset[0], 0.5);
+                assert.equalEpsilon(emissiveTransform.offset[1], 0.6);
+                assert.equalEpsilon(emissiveTransform.rotation, 0.7);
+                assert.equalEpsilon(emissiveTransform.scale[0], 8);
+                assert.equalEpsilon(emissiveTransform.scale[1], 9);
             });
 
             it('roundtrips some custom normals', function() {
