@@ -143,7 +143,7 @@ def __gather_skeleton(blender_object, export_settings):
     return None  # gltf2_blender_gather_nodes.gather_node(blender_object, blender_scene, export_settings)
 
 @cached
-def get_bone_tree(blender_action, blender_object):
+def get_bone_tree(blender_dummy, blender_object):
 
     bones = []
     children = {}

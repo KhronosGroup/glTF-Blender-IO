@@ -20,6 +20,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.com import gltf2_blender_math
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 
 @cached
@@ -55,8 +56,15 @@ def gather_joint(blender_bone, export_settings):
 
     # traverse into children
     children = []
-    for bone in blender_bone.children:
-        children.append(gather_joint(bone, export_settings))
+
+    if export_settings["gltf_def_bones"] is False:
+        for bone in blender_bone.children:
+            children.append(gather_joint(bone, export_settings))
+    else:
+        _, children_ = gltf2_blender_gather_skins.get_bone_tree(None, blender_bone.id_data)
+        if blender_bone.name in children_.keys():
+            for bone in children_[blender_bone.name]:
+                children.append(gather_joint(blender_bone.id_data.pose.bones[bone], export_settings))
 
     # finally add to the joints array containing all the joints in the hierarchy
     return gltf2_io.Node(
