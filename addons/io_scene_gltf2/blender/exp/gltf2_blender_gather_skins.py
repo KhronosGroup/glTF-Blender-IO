@@ -141,3 +141,23 @@ def __gather_name(blender_object, export_settings):
 def __gather_skeleton(blender_object, export_settings):
     # In the future support the result of https://github.com/KhronosGroup/glTF/pull/1195
     return None  # gltf2_blender_gather_nodes.gather_node(blender_object, blender_scene, export_settings)
+
+@cached
+def get_bone_tree(blender_action, blender_object):
+
+    bones = []
+    children = {}
+
+    def get_parent(bone):
+        bones.append(bone.name)
+        if bone.parent is not None:
+            if bone.parent.name not in children.keys():
+                children[bone.parent.name] = []
+            children[bone.parent.name].append(bone.name)
+            get_parent(bone.parent)
+
+    for bone in [b for b in blender_object.data.bones if b.use_deform is True]:
+        get_parent(bone)
+
+    list_ = list(set(bones))
+    return [blender_object.data.bones[b] for b in list_], children

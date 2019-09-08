@@ -22,6 +22,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_samplers
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channel_target
 from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 
 @cached
@@ -49,8 +50,13 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             else:
                 bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans]))
 
-        # Then bake all bones
-        for bone in blender_object.data.bones:
+        # Then bake all bones or only def bones
+        if export_settings['gltf_def_bones'] is True:
+            bones, _ = gltf2_blender_gather_skins.get_bone_tree(blender_action, blender_object)
+        else:
+            bones = blender_object.data.bones
+
+        for bone in bones:
             for p in ["location", "rotation_quaternion", "scale"]:
                 channel = __gather_animation_channel(
                     (),
