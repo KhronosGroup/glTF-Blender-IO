@@ -170,6 +170,9 @@ def get_bone_tree(blender_dummy, blender_object):
     for bone in [b for b in blender_object.data.bones if b.use_deform is True]:
         get_parent(bone)
 
+    # remove duplicates
+    for k, v in children.items():
+        children[k] = list(set(v))
     list_ = list(set(bones))
     root_ = list(set(root_bones))
     return [blender_object.data.bones[b] for b in list_], children, [blender_object.pose.bones[b] for b in root_]
