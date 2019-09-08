@@ -61,7 +61,7 @@ def gather_joint(blender_bone, export_settings):
         for bone in blender_bone.children:
             children.append(gather_joint(bone, export_settings))
     else:
-        _, children_ = gltf2_blender_gather_skins.get_bone_tree(None, blender_bone.id_data)
+        _, children_, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_bone.id_data)
         if blender_bone.name in children_.keys():
             for bone in children_[blender_bone.name]:
                 children.append(gather_joint(blender_bone.id_data.pose.bones[bone], export_settings))

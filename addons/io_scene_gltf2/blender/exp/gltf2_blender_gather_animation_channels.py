@@ -52,7 +52,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
 
         # Then bake all bones or only def bones
         if export_settings['gltf_def_bones'] is True:
-            bones, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
+            bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
         else:
             bones = blender_object.data.bones
 

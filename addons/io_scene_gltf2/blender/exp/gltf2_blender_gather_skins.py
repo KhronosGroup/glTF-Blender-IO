@@ -68,11 +68,14 @@ def __gather_inverse_bind_matrices(blender_object, mesh_object, export_settings)
         axis_basis_change = mathutils.Matrix(
             ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
-    # build the hierarchy of nodes out of the bones
-    root_bones = []
-    for blender_bone in blender_object.pose.bones:
-        if not blender_bone.parent:
-            root_bones.append(blender_bone)
+    if export_settings['gltf_def_bones'] is False:
+        # build the hierarchy of nodes out of the bones
+        root_bones = []
+        for blender_bone in blender_object.pose.bones:
+            if not blender_bone.parent:
+                root_bones.append(blender_bone)
+    else:
+        _, children_, root_bones = get_bone_tree(None, blender_object)
 
     matrices = []
 
@@ -88,8 +91,13 @@ def __gather_inverse_bind_matrices(blender_object, mesh_object, export_settings)
         ).inverted()
         matrices.append(inverse_bind_matrix)
 
-        for child in bone.children:
-            __collect_matrices(child)
+        if export_settings['gltf_def_bones'] is False:
+            for child in bone.children:
+                __collect_matrices(child)
+        else:
+            if bone.name in children_.keys():
+                for child in children_[bone.name]:
+                    __collect_matrices(blender_object.pose.bones[child])
 
     # start with the "root" bones and recurse into children, in the same ordering as the how joints are gathered
     for root_bone in root_bones:
@@ -147,6 +155,7 @@ def get_bone_tree(blender_dummy, blender_object):
 
     bones = []
     children = {}
+    root_bones = []
 
     def get_parent(bone):
         bones.append(bone.name)
@@ -155,9 +164,12 @@ def get_bone_tree(blender_dummy, blender_object):
                 children[bone.parent.name] = []
             children[bone.parent.name].append(bone.name)
             get_parent(bone.parent)
+        else:
+            root_bones.append(bone.name)
 
     for bone in [b for b in blender_object.data.bones if b.use_deform is True]:
         get_parent(bone)
 
     list_ = list(set(bones))
-    return [blender_object.data.bones[b] for b in list_], children
+    root_ = list(set(root_bones))
+    return [blender_object.data.bones[b] for b in list_], children, [blender_object.pose.bones[b] for b in root_]
