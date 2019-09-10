@@ -146,7 +146,12 @@ def __gather_children(blender_object, blender_scene, export_settings):
     # blender bones
     if blender_object.type == "ARMATURE":
         root_joints = []
-        for blender_bone in blender_object.pose.bones:
+        if export_settings["gltf_def_bones"] is False:
+            bones = blender_object.pose.bones
+        else:
+            bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
+            bones = [blender_object.pose.bones[b.name] for b in bones]
+        for blender_bone in bones:
             if not blender_bone.parent:
                 joint = gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
                 children.append(joint)
