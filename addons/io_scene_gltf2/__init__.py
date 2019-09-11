@@ -249,6 +249,12 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    export_nla_strips = BoolProperty(
+        name='NLA Strips',
+        description='Export NLA Strip animations',
+        default=True
+    )
+
     export_current_frame = BoolProperty(
         name='Use Current Frame',
         description='Export the scene in the current animation frame',
@@ -382,6 +388,7 @@ class ExportGLTF2_Base:
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
+            export_settings['gltf_nla_strips'] = self.export_nla_strips
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
@@ -693,6 +700,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_range')
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
+        layout.prop(operator, 'export_nla_strips')
 
 
 class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
