@@ -25,11 +25,11 @@ def gather_animations(blender_object: bpy.types.Object,
                         offset: int,
                         export_settings) -> typing.Tuple[typing.List[gltf2_io.Animation], typing.Dict[str, typing.List[int]]]:
     """
-    Gather all animations which contribute to the objects property.
+    Gather all animations which contribute to the objects property, and corresponding track names
 
     :param blender_object: The blender object which is animated
     :param export_settings:
-    :return: A list of glTF2 animations
+    :return: A list of glTF2 animations and tracks
     """
     animations = []
 
@@ -43,35 +43,35 @@ def gather_animations(blender_object: bpy.types.Object,
         current_action = blender_object.animation_data.action
 
     # Export all collected actions.
-    for blender_action in blender_actions:
+    for blender_action, track_name in blender_actions:
 
         # Set action as active, to be able to bake if needed
         if blender_object.animation_data: # Not for shapekeys!
             if blender_object.animation_data.action is None \
-                    or (blender_object.animation_data.action.name != blender_action[0].name):
+                    or (blender_object.animation_data.action.name != blender_action.name):
                 if blender_object.animation_data.is_property_readonly('action'):
                     # NLA stuff: some track are on readonly mode, we can't change action
                     error = "Action is readonly. Please check NLA editor"
-                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action[0].name, error))
+                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
                     continue
                 try:
-                    blender_object.animation_data.action = blender_action[0]
+                    blender_object.animation_data.action = blender_action
                 except:
                     error = "Action is readonly. Please check NLA editor"
-                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action[0].name, error))
+                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
                     continue
 
-        animation = __gather_animation(blender_action[0], blender_object, export_settings)
+        animation = __gather_animation(blender_action, blender_object, export_settings)
         if animation is not None:
             animations.append(animation)
 
             # Store data for merging animation later
-            if blender_action[1] is not None: # Do not take into account animation not in NLA
+            if track_name is not None: # Do not take into account animation not in NLA
                 # Do not take into account default NLA track names
-                if not (blender_action[1].startswith("NlaTrack") or blender_action[1].startswith("[Action Stash]")):
-                    if blender_action[1] not in tracks.keys():
-                        tracks[blender_action[1]] = []
-                    tracks[blender_action[1]].append(offset + len(animations)-1) # Store index of animation in animations
+                if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
+                    if track_name not in tracks.keys():
+                        tracks[track_name] = []
+                    tracks[track_name].append(offset + len(animations)-1) # Store index of animation in animations
 
     # Restore current action
     if blender_object.animation_data:
