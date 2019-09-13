@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (0, 9, 66),
+    "version": (0, 9, 67),
     'blender': (2, 81, 6),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -219,7 +219,8 @@ class ExportGLTF2_Base:
 
     export_apply = BoolProperty(
         name='Apply Modifiers',
-        description='Apply modifiers (excluding Armatures) to mesh objects',
+        description='Apply modifiers (excluding Armatures) to mesh objects -'
+                    'WARNING: prevents exporting shape keys',
         default=False
     )
 
