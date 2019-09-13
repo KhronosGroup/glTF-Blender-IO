@@ -79,6 +79,7 @@ class BlenderImage():
                         return
 
                 blender_image = bpy.data.images.load(path)
+                blender_image.reload() # workaround bug in 2.81 alpha
                 blender_image.name = img_name
                 blender_image['tex_transform'] = {}
                 blender_image['tex_transform'][str(tex_index)] = tex_transform
@@ -103,6 +104,7 @@ class BlenderImage():
                 tmp_image.close()
 
                 blender_image = bpy.data.images.load(tmp_image.name)
+                blender_image.reload() # workaround bug in 2.81 alpha
                 blender_image.pack()
                 blender_image.name = img_name
                 blender_image['tex_transform'] = {}
