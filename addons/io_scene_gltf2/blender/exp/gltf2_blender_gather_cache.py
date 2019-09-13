@@ -14,6 +14,8 @@
 
 import functools
 import bpy
+from io_scene_gltf2.blender.exp import gltf2_blender_get
+
 
 def cached(func):
     """
@@ -65,6 +67,27 @@ def cached(func):
             return result
     return wrapper_cached
 
+def bonecache(func):
+
+    @functools.wraps(func)
+    def wrapper_bonecache(*args, **kwargs):
+        if args[2] is None:
+            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(args[0],
+                                                                args[1][0].data_path)
+        else:
+            pose_bone_if_armature = args[0].pose.bones[args[2]]
+
+        if not hasattr(func, "__current_action_name"):
+            func.__current_action_name = None
+            func.__bonecache = {}
+        if args[6] != func.__current_action_name:
+            result = func(*args)
+            func.__bonecache = result
+            func.__current_action_name = args[6]
+            return result[args[7]][pose_bone_if_armature.name]
+        else:
+            return func.__bonecache[args[7]][pose_bone_if_armature.name]
+    return wrapper_bonecache
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
 call_or_fetch = cached
