@@ -636,7 +636,14 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                 let srcInfo = reduceKeys(gltfSrcReport.info, info_keys);
                                 let dstInfo = reduceKeys(gltfDstReport.info, info_keys);
 
-                                assert.deepStrictEqual(dstInfo, srcInfo);
+                                try {
+                                    assert.deepStrictEqual(dstInfo, srcInfo);
+                                } catch (ex) {
+                                    done(new Error("Validation summary mismatch.\nExpected summary:\n" +
+                                        JSON.stringify(srcInfo, null, '  ') +
+                                        "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
+                                    return;
+                                }
 
                                 done();
                             });
