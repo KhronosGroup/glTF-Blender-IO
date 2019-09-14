@@ -39,18 +39,6 @@ class BlenderAnimation():
                 BlenderAnimation.anim(gltf, anim_idx, child)
 
     @staticmethod
-    def stash_action(gltf, anim_idx, node_idx, action_name):
-
-        if gltf.data.nodes[node_idx].is_joint:
-            BlenderBoneAnim.stash_action(gltf, anim_idx, node_idx, action_name)
-        else:
-            BlenderNodeAnim.stash_action(gltf, anim_idx, node_idx, action_name)
-
-        if gltf.data.nodes[node_idx].children:
-            for child in gltf.data.nodes[node_idx].children:
-                BlenderAnimation.stash_action(gltf, anim_idx, child, action_name)
-
-    @staticmethod
     def restore_animation(gltf, node_idx, animation_name):
         """Restores the actions for an animation by its track name on
         the subtree starting at node_idx."""

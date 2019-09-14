@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def simulate_stash(obj, track_name, action, start_frame):
+import bpy
+
+def simulate_stash(obj, track_name, action, start_frame=None):
     # Simulate stash :
     # * add a track
     # * add an action on track
@@ -21,6 +23,8 @@ def simulate_stash(obj, track_name, action, start_frame):
     tracks = obj.animation_data.nla_tracks
     new_track = tracks.new(prev=None)
     new_track.name = track_name
+    if start_frame is None:
+        start_frame = bpy.context.scene.frame_start
     strip = new_track.strips.new(action.name, start_frame, action)
     new_track.lock = True
     new_track.mute = True

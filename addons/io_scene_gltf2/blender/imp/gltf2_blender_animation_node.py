@@ -41,24 +41,6 @@ class BlenderNodeAnim():
             kf.interpolation = 'LINEAR'
 
     @staticmethod
-    def stash_action(gltf, anim_idx, node_idx, action_name):
-        node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[node.blender_object]
-
-        if anim_idx not in node.animations.keys():
-            return
-
-        if (obj.name, action_name) in gltf.actions_stashed.keys():
-            return
-
-        start_frame = bpy.context.scene.frame_start
-
-        track_name = gltf.data.animations[anim_idx].track_name
-        simulate_stash(obj, track_name, bpy.data.actions[action_name], start_frame)
-
-        gltf.actions_stashed[(obj.name, action_name)] = True
-
-    @staticmethod
     def anim(gltf, anim_idx, node_idx):
         """Manage animation."""
         node = gltf.data.nodes[node_idx]
@@ -79,6 +61,7 @@ class BlenderNodeAnim():
 
         name = animation.track_name + "_" + obj.name
         action = bpy.data.actions.new(name)
+        gltf.needs_stash.append((obj, animation.track_name, action))
 
         if not obj.animation_data:
             obj.animation_data_create()
@@ -156,6 +139,3 @@ class BlenderNodeAnim():
                 for kf in fcurve.keyframe_points:
                     BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
                 fcurve.update() # force updating tangents (this may change when tangent will be managed)
-
-        if action.name not in gltf.current_animation_names.keys():
-            gltf.current_animation_names[name] = action.name

@@ -41,24 +41,6 @@ class BlenderBoneAnim():
             kf.interpolation = 'LINEAR'
 
     @staticmethod
-    def stash_action(gltf, anim_idx, node_idx, action_name):
-        node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[gltf.data.skins[node.skin_id].blender_armature_name]
-
-        if anim_idx not in node.animations.keys():
-            return
-
-        if (obj.name, action_name) in gltf.actions_stashed.keys():
-            return
-
-        start_frame = bpy.context.scene.frame_start
-
-        track_name = gltf.data.animations[anim_idx].track_name
-        simulate_stash(obj, track_name, bpy.data.actions[action_name], start_frame)
-
-        gltf.actions_stashed[(obj.name, action_name)] = True
-
-    @staticmethod
     def parse_translation_channel(gltf, node, obj, bone, channel, animation):
         """Manage Location animation."""
         blender_path = "pose.bones[" + json.dumps(bone.name) + "].location"
@@ -281,6 +263,7 @@ class BlenderBoneAnim():
         if not action:
             name = animation.track_name + "_" + obj.name
             action = bpy.data.actions.new(name)
+            gltf.needs_stash.append((obj, animation.track_name, action))
             gltf.arma_cache[blender_armature_name] = action
 
         if not obj.animation_data:
@@ -298,6 +281,3 @@ class BlenderBoneAnim():
 
             elif channel.target.path == "scale":
                 BlenderBoneAnim.parse_scale_channel(gltf, node, obj, bone, channel, animation)
-
-        if action.name not in gltf.current_animation_names.keys():
-            gltf.current_animation_names[name] = action.name
