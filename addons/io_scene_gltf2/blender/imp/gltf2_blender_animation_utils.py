@@ -26,13 +26,17 @@ def simulate_stash(obj, track_name, action, start_frame):
     new_track.mute = True
     obj.animation_data.action = None
 
-def restore_last_action(obj):
+def restore_animation_on_object(obj, anim_name):
+    if not getattr(obj, 'animation_data', None):
+        return
 
-    if not obj.animation_data:
+    for track in obj.animation_data.nla_tracks:
+        if track.name != anim_name:
+            continue
+        if not track.strips:
+            continue
+
+        obj.animation_data.action = track.strips[0].action
         return
-    tracks = obj.animation_data.nla_tracks
-    if len(tracks) == 0:
-        return
-    if len(tracks[0].strips) == 0:
-        return
-    obj.animation_data.action = tracks[0].strips[0].action
+
+    obj.animation_data.action = None

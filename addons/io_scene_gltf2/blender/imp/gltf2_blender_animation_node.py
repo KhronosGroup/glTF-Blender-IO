@@ -18,7 +18,7 @@ from mathutils import Vector
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_gltf_to_blender
 from ..com.gltf2_blender_conversion import correction_rotation
 from ...io.imp.gltf2_io_binary import BinaryData
-from .gltf2_blender_animation_utils import simulate_stash, restore_last_action
+from .gltf2_blender_animation_utils import simulate_stash
 
 
 class BlenderNodeAnim():
@@ -57,13 +57,6 @@ class BlenderNodeAnim():
         simulate_stash(obj, track_name, bpy.data.actions[action_name], start_frame)
 
         gltf.actions_stashed[(obj.name, action_name)] = True
-
-    @staticmethod
-    def restore_last_action(gltf, node_idx):
-        node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[node.blender_object]
-
-        restore_last_action(obj)
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):

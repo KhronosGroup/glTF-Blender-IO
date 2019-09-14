@@ -18,7 +18,7 @@ from mathutils import Matrix
 
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_to_matrix
 from ...io.imp.gltf2_io_binary import BinaryData
-from .gltf2_blender_animation_utils import simulate_stash, restore_last_action
+from .gltf2_blender_animation_utils import simulate_stash
 
 
 class BlenderBoneAnim():
@@ -57,13 +57,6 @@ class BlenderBoneAnim():
         simulate_stash(obj, track_name, bpy.data.actions[action_name], start_frame)
 
         gltf.actions_stashed[(obj.name, action_name)] = True
-
-    @staticmethod
-    def restore_last_action(gltf, node_idx):
-        node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[gltf.data.skins[node.skin_id].blender_armature_name]
-
-        restore_last_action(obj)
 
     @staticmethod
     def parse_translation_channel(gltf, node, obj, bone, channel, animation):

@@ -125,8 +125,10 @@ class BlenderScene():
                     gltf.animation_managed.append(an)
                     for node_idx in list_nodes:
                         BlenderAnimation.stash_action(gltf, anim_idx, node_idx, an)
+            # Restore first animation
+            anim_name = gltf.data.animations[0].track_name
             for node_idx in list_nodes:
-                BlenderAnimation.restore_last_action(gltf, node_idx)
+                BlenderAnimation.restore_animation(gltf, node_idx, anim_name)
 
         if bpy.app.debug_value != 100:
             # Parent root node to rotation object
