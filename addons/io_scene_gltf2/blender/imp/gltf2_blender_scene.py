@@ -121,10 +121,10 @@ class BlenderScene():
                 if list_nodes is not None:
                     for node_idx in list_nodes:
                         BlenderAnimation.anim(gltf, anim_idx, node_idx)
-                for an in gltf.current_animation_names.values():
-                    gltf.animation_managed.append(an)
-                    for node_idx in list_nodes:
-                        BlenderAnimation.stash_action(gltf, anim_idx, node_idx, an)
+                #for an in gltf.current_animation_names.values():
+                #    gltf.animation_managed.append(an)
+                #    for node_idx in list_nodes:
+                #        BlenderAnimation.stash_action(gltf, anim_idx, node_idx, an)
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
             for node_idx in list_nodes:

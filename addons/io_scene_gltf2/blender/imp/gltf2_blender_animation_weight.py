@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import bpy
-from mathutils import Vector
 
-from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_gltf_to_blender
-from ..com.gltf2_blender_conversion import correction_rotation
 from ...io.imp.gltf2_io_binary import BinaryData
 from .gltf2_blender_animation_utils import simulate_stash
 
 
-class BlenderNodeAnim():
-    """Blender Object Animation."""
+class BlenderWeightAnim():
+    """Blender ShapeKey Animation."""
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("%s should not be instantiated" % cls)
 
@@ -54,7 +52,7 @@ class BlenderNodeAnim():
         start_frame = bpy.context.scene.frame_start
 
         track_name = gltf.data.animations[anim_idx].track_name
-        simulate_stash(obj, track_name, bpy.data.actions[action_name], start_frame)
+        simulate_stash(obj.data.shape_keys, track_name, bpy.data.actions[action_name], start_frame)
 
         gltf.actions_stashed[(obj.name, action_name)] = True
 
@@ -72,11 +70,10 @@ class BlenderNodeAnim():
 
         for channel_idx in node.animations[anim_idx]:
             channel = animation.channels[channel_idx]
-            if channel.target.path in ['translation', 'rotation', 'scale']:
+            if channel.target.path == "weights":
                 break
         else:
             return
-
 
         if animation.name:
             name = animation.name + "_" + obj.name
@@ -95,81 +92,50 @@ class BlenderNodeAnim():
         if action.users == 1:
             bpy.data.actions.remove(action)
             action = bpy.data.actions.new(name)
-        if not obj.animation_data:
-            obj.animation_data_create()
-        obj.animation_data.action = bpy.data.actions[action.name]
+        action.id_root = "KEY"
+        if not obj.data.shape_keys.animation_data:
+            obj.data.shape_keys.animation_data_create()
+        obj.data.shape_keys.animation_data.action = action
 
-        for channel_idx in node.animations[anim_idx]:
-            channel = animation.channels[channel_idx]
+        keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
+        values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
 
-            keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
-            values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
+        # retrieve number of targets
+        nb_targets = 0
+        for prim in gltf.data.meshes[gltf.data.nodes[node_idx].mesh].primitives:
+            if prim.targets:
+                if len(prim.targets) > nb_targets:
+                    nb_targets = len(prim.targets)
 
-            if channel.target.path not in ['translation', 'rotation', 'scale']:
-                continue
+        if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
+            offset = nb_targets
+            stride = 3 * nb_targets
+        else:
+            offset = 0
+            stride = nb_targets
 
-            # There is an animation on object
-            # We can't remove Yup2Zup object
-            gltf.animation_object = True
+        coords = [0] * (2 * len(keys))
+        coords[::2] = (key[0] * fps for key in keys)
 
-            if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
-                # TODO manage tangent?
-                values = [values[idx * 3 + 1] for idx in range(0, len(keys))]
+        group_name = "ShapeKeys"
+        if group_name not in action.groups:
+            action.groups.new(group_name)
+        group = action.groups[group_name]
 
-            if channel.target.path == "translation":
-                blender_path = "location"
-                group_name = "Location"
-                num_components = 3
-                values = [loc_gltf_to_blender(vals) for vals in values]
-
-            elif channel.target.path == "rotation":
-                blender_path = "rotation_quaternion"
-                group_name = "Rotation"
-                num_components = 4
-                if node.correction_needed is True:
-                    if bpy.app.version < (2, 80, 0):
-                        values = [
-                            (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() * correction_rotation()).to_quaternion()
-                            for vals in values
-                        ]
-                    else:
-                        values = [
-                            (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() @ correction_rotation()).to_quaternion()
-                            for vals in values
-                        ]
-                else:
-                    values = [quaternion_gltf_to_blender(vals) for vals in values]
-
-
-                # Manage antipodal quaternions
-                for i in range(1, len(values)):
-                    if values[i].dot(values[i-1]) < 0:
-                        values[i] = -values[i]
-
-            elif channel.target.path == "scale":
-                blender_path = "scale"
-                group_name = "Scale"
-                num_components = 3
-                values = [scale_gltf_to_blender(vals) for vals in values]
-
-            coords = [0] * (2 * len(keys))
-            coords[::2] = (key[0] * fps for key in keys)
-
-            if group_name not in action.groups:
-                action.groups.new(group_name)
-            group = action.groups[group_name]
-
-            for i in range(0, num_components):
-                fcurve = action.fcurves.new(data_path=blender_path, index=i)
+        for sk in range(nb_targets):
+            if gltf.shapekeys[sk] is not None: # Do not animate shapekeys not created
+                kb_name = obj.data.shape_keys.key_blocks[gltf.shapekeys[sk]].name
+                data_path = "key_blocks[" + json.dumps(kb_name) + "].value"
+                fcurve = action.fcurves.new(data_path=data_path)
                 fcurve.group = group
 
                 fcurve.keyframe_points.add(len(keys))
-                coords[1::2] = (vals[i] for vals in values)
+                coords[1::2] = (values[offset + stride * i + sk][0] for i in range(len(keys)))
                 fcurve.keyframe_points.foreach_set('co', coords)
 
                 # Setting interpolation
                 for kf in fcurve.keyframe_points:
-                    BlenderNodeAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
+                    BlenderWeightAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
                 fcurve.update() # force updating tangents (this may change when tangent will be managed)
 
         if action.name not in gltf.current_animation_names.keys():

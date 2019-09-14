@@ -16,6 +16,7 @@ import bpy
 
 from .gltf2_blender_animation_bone import BlenderBoneAnim
 from .gltf2_blender_animation_node import BlenderNodeAnim
+from .gltf2_blender_animation_weight import BlenderWeightAnim
 from .gltf2_blender_animation_utils import restore_animation_on_object
 
 
@@ -31,6 +32,7 @@ class BlenderAnimation():
             BlenderBoneAnim.anim(gltf, anim_idx, node_idx)
         else:
             BlenderNodeAnim.anim(gltf, anim_idx, node_idx)
+            BlenderWeightAnim.anim(gltf, anim_idx, node_idx)
 
         if gltf.data.nodes[node_idx].children:
             for child in gltf.data.nodes[node_idx].children:
