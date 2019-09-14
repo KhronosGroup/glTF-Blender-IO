@@ -114,8 +114,10 @@ class BlenderScene():
                     BlenderSkin.create_armature_modifiers(gltf, skin_id)
 
         if gltf.data.animations:
-            gltf.animation_managed = []
             for anim_idx, anim in enumerate(gltf.data.animations):
+                # Blender armature name -> action all its bones should use
+                gltf.arma_cache = {}
+
                 gltf.current_animation_names = {}
                 gltf.actions_stashed= {}
                 if list_nodes is not None:
