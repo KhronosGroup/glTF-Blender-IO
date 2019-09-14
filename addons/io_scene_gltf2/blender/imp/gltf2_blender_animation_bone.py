@@ -53,8 +53,8 @@ class BlenderBoneAnim():
 
         start_frame = bpy.context.scene.frame_start
 
-        animation_name = gltf.data.animations[anim_idx].name
-        simulate_stash(obj, animation_name, bpy.data.actions[action_name], start_frame)
+        track_name = gltf.data.animations[anim_idx].track_name
+        simulate_stash(obj, track_name, bpy.data.actions[action_name], start_frame)
 
         gltf.actions_stashed[(obj.name, action_name)] = True
 
