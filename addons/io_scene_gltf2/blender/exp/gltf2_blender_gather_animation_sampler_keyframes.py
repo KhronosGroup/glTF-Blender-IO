@@ -126,15 +126,12 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
 
     data = {}
 
-    if bake_bone is None:
-        # Find the start and end of the whole action group
-        ranges = [channel.range() for channel in channels]
+    # Always using bake_range, because some bones may need to be baked,
+    # even if user didn't request it
 
-        start_frame = min([channel.range()[0] for channel in channels])
-        end_frame = max([channel.range()[1] for channel in channels])
-    else:
-        start_frame = bake_range_start
-        end_frame = bake_range_end
+    start_frame = bake_range_start
+    end_frame = bake_range_end
+
 
     frame = start_frame
     while frame <= end_frame:
