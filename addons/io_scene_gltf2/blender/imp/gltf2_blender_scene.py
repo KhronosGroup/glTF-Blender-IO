@@ -18,6 +18,7 @@ from mathutils import Quaternion
 from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_skin import BlenderSkin
 from .gltf2_blender_animation import BlenderAnimation
+from .gltf2_blender_animation_utils import simulate_stash
 
 
 class BlenderScene():
@@ -114,19 +115,23 @@ class BlenderScene():
                     BlenderSkin.create_armature_modifiers(gltf, skin_id)
 
         if gltf.data.animations:
-            gltf.animation_managed = []
             for anim_idx, anim in enumerate(gltf.data.animations):
-                gltf.current_animation_names = {}
-                gltf.actions_stashed= {}
+                # Blender armature name -> action all its bones should use
+                gltf.arma_cache = {}
+                # Things we need to stash when we're done.
+                gltf.needs_stash = []
+
                 if list_nodes is not None:
                     for node_idx in list_nodes:
                         BlenderAnimation.anim(gltf, anim_idx, node_idx)
-                for an in gltf.current_animation_names.values():
-                    gltf.animation_managed.append(an)
-                    for node_idx in list_nodes:
-                        BlenderAnimation.stash_action(gltf, anim_idx, node_idx, an)
+
+                for (obj, anim_name, action) in gltf.needs_stash:
+                    simulate_stash(obj, anim_name, action)
+
+            # Restore first animation
+            anim_name = gltf.data.animations[0].track_name
             for node_idx in list_nodes:
-                BlenderAnimation.restore_last_action(gltf, node_idx)
+                BlenderAnimation.restore_animation(gltf, node_idx, anim_name)
 
         if bpy.app.debug_value != 100:
             # Parent root node to rotation object

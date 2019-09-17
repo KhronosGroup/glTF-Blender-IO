@@ -1,0 +1,108 @@
+# Copyright 2018-2019 The glTF-Blender-IO authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import json
+import bpy
+
+from ...io.imp.gltf2_io_binary import BinaryData
+from .gltf2_blender_animation_utils import simulate_stash
+
+
+class BlenderWeightAnim():
+    """Blender ShapeKey Animation."""
+    def __new__(cls, *args, **kwargs):
+        raise RuntimeError("%s should not be instantiated" % cls)
+
+    @staticmethod
+    def set_interpolation(interpolation, kf):
+        """Manage interpolation."""
+        if interpolation == "LINEAR":
+            kf.interpolation = 'LINEAR'
+        elif interpolation == "STEP":
+            kf.interpolation = 'CONSTANT'
+        elif interpolation == "CUBICSPLINE":
+            kf.interpolation = 'BEZIER'
+            kf.handle_right_type = 'AUTO'
+            kf.handle_left_type = 'AUTO'
+        else:
+            kf.interpolation = 'LINEAR'
+
+    @staticmethod
+    def anim(gltf, anim_idx, node_idx):
+        """Manage animation."""
+        node = gltf.data.nodes[node_idx]
+        obj = bpy.data.objects[node.blender_object]
+        fps = bpy.context.scene.render.fps
+
+        animation = gltf.data.animations[anim_idx]
+
+        if anim_idx not in node.animations.keys():
+            return
+
+        for channel_idx in node.animations[anim_idx]:
+            channel = animation.channels[channel_idx]
+            if channel.target.path == "weights":
+                break
+        else:
+            return
+
+        name = animation.track_name + "_" + obj.name
+        action = bpy.data.actions.new(name)
+        action.id_root = "KEY"
+        gltf.needs_stash.append((obj.data.shape_keys, animation.track_name, action))
+
+        if not obj.data.shape_keys.animation_data:
+            obj.data.shape_keys.animation_data_create()
+        obj.data.shape_keys.animation_data.action = action
+
+        keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
+        values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
+
+        # retrieve number of targets
+        nb_targets = 0
+        for prim in gltf.data.meshes[gltf.data.nodes[node_idx].mesh].primitives:
+            if prim.targets:
+                if len(prim.targets) > nb_targets:
+                    nb_targets = len(prim.targets)
+
+        if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
+            offset = nb_targets
+            stride = 3 * nb_targets
+        else:
+            offset = 0
+            stride = nb_targets
+
+        coords = [0] * (2 * len(keys))
+        coords[::2] = (key[0] * fps for key in keys)
+
+        group_name = "ShapeKeys"
+        if group_name not in action.groups:
+            action.groups.new(group_name)
+        group = action.groups[group_name]
+
+        for sk in range(nb_targets):
+            if gltf.shapekeys[sk] is not None: # Do not animate shapekeys not created
+                kb_name = obj.data.shape_keys.key_blocks[gltf.shapekeys[sk]].name
+                data_path = "key_blocks[" + json.dumps(kb_name) + "].value"
+                fcurve = action.fcurves.new(data_path=data_path)
+                fcurve.group = group
+
+                fcurve.keyframe_points.add(len(keys))
+                coords[1::2] = (values[offset + stride * i + sk][0] for i in range(len(keys)))
+                fcurve.keyframe_points.foreach_set('co', coords)
+
+                # Setting interpolation
+                for kf in fcurve.keyframe_points:
+                    BlenderWeightAnim.set_interpolation(animation.samplers[channel.sampler].interpolation, kf)
+                fcurve.update() # force updating tangents (this may change when tangent will be managed)
