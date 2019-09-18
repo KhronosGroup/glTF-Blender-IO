@@ -783,7 +783,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
                             temp_normals[blender_polygon.index * 3 + 0], temp_normals[blender_polygon.index * 3 + 1],
                             temp_normals[blender_polygon.index * 3 + 2])
 
-                    n_morph = convert_swizzle_normal_and_tangent(n_morph, armature, blender_object, export_settings)
+                    n_morph = convert_swizzle_normal_and_tangent(Vector(n_morph), armature, blender_object, export_settings)
 
                     # Store delta.
                     n_morph -= n
