@@ -79,13 +79,17 @@ def bonecache(func):
 
         if not hasattr(func, "__current_action_name"):
             func.__current_action_name = None
+            func.__current_armature_name = None
             func.__bonecache = {}
-        if args[6] != func.__current_action_name:
+        if args[6] != func.__current_action_name or args[0] != func.__current_armature_name:
             result = func(*args)
             func.__bonecache = result
             func.__current_action_name = args[6]
+            func.__current_armature_name = args[0]
+            print("Using cache (first) for bone ", pose_bone_if_armature.name)
             return result[args[7]][pose_bone_if_armature.name]
         else:
+            print("Using cache for bone ", pose_bone_if_armature.name)
             return func.__bonecache[args[7]][pose_bone_if_armature.name]
     return wrapper_bonecache
 
