@@ -52,6 +52,10 @@ def gather_animation_channels(blender_action: bpy.types.Action,
     if blender_object.type == "ARMATURE" and export_settings['gltf_force_sampling'] is True:
         # We have to store sampled animation data for every deformation bones
 
+        # Check that there are some anim in this action
+        if bake_range_start is None:
+            return []
+            
         # Then bake all bones
         for bone in blender_object.data.bones:
             for p in ["location", "rotation_quaternion", "scale"]:
