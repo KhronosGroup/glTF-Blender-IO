@@ -92,9 +92,9 @@ class BlenderMesh():
         # set default weights for shape keys, and names, if not set by convention on extras data
         if pymesh.weights is not None:
             for i in range(len(pymesh.weights)):
-                if gltf.shapekeys[i] is None: # No default value if shapekeys was not created
+                if pymesh.shapekey_names[i] is None: # No default value if shapekeys was not created
                     continue
-                obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].value = pymesh.weights[i]
+                obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]].value = pymesh.weights[i]
 
     @staticmethod
     def bmesh_to_mesh(gltf, pymesh, bme, mesh):

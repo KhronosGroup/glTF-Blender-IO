@@ -199,29 +199,12 @@ class BlenderPrimitive():
                             bme_verts[bidx][layer][joint] = weight
 
         # Set morph target positions (no normals/tangents)
-        current_shapekey_index = 0
         for sk, target in enumerate(pyprimitive.targets or []):
-            if 'POSITION' not in target:
-                gltf.shapekeys[sk] = None
+            if pymesh.shapekey_names[sk] is None:
                 continue
 
-            # Check if glTF file has some extras with targetNames
-            shapekey_name = None
-            if pymesh.extras is not None:
-                if 'targetNames' in pymesh.extras and sk < len(pymesh.extras['targetNames']):
-                    shapekey_name = pymesh.extras['targetNames'][sk]
-            if shapekey_name is None:
-                if gltf.data.accessors[target['POSITION']].name is not None:
-                    shapekey_name = gltf.data.accessors[target['POSITION']].name
-            if shapekey_name is None:
-                shapekey_name = "target_" + str(sk)
-            # TODO: handle name collisions; store the names on the pymesh instead
-            # of having a global list of names on the gltf object
-
-            layer = BlenderPrimitive.get_layer(bme.verts.layers.shape, shapekey_name)
-
-            current_shapekey_index += 1
-            gltf.shapekeys[sk] = current_shapekey_index
+            layer_name = pymesh.shapekey_names[sk]
+            layer = BlenderPrimitive.get_layer(bme.verts.layers.shape, layer_name)
 
             morph_positions = BinaryData.get_data_from_accessor(gltf, target['POSITION'])
 
