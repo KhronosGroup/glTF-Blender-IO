@@ -18,27 +18,13 @@ from mathutils import Matrix
 
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_to_matrix
 from ...io.imp.gltf2_io_binary import BinaryData
-from .gltf2_blender_animation_utils import simulate_stash
+from .gltf2_blender_animation_utils import simulate_stash, make_fcurve
 
 
 class BlenderBoneAnim():
     """Blender Bone Animation."""
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("%s should not be instantiated" % cls)
-
-    @staticmethod
-    def set_interpolation(interpolation, kf):
-        """Set interpolation."""
-        if interpolation == "LINEAR":
-            kf.interpolation = 'LINEAR'
-        elif interpolation == "STEP":
-            kf.interpolation = 'CONSTANT'
-        elif interpolation == "CUBICSPLINE":
-            kf.interpolation = 'BEZIER'
-            kf.handle_right_type = 'AUTO'
-            kf.handle_left_type = 'AUTO'
-        else:
-            kf.interpolation = 'LINEAR'
 
     @staticmethod
     def parse_translation_channel(gltf, node, obj, bone, channel, animation):
@@ -229,22 +215,16 @@ class BlenderBoneAnim():
         coords = [0] * (2 * len(keys))
         coords[::2] = (key[0] * fps for key in keys)
 
-        if group_name not in action.groups:
-            action.groups.new(group_name)
-        group = action.groups[group_name]
-
         for i in range(0, len(values[0])):
-            fcurve = action.fcurves.new(data_path=blender_path, index=i)
-            fcurve.group = group
-
-            fcurve.keyframe_points.add(len(keys))
             coords[1::2] = (vals[i] for vals in values)
-            fcurve.keyframe_points.foreach_set('co', coords)
-
-            # Setting interpolation
-            for kf in fcurve.keyframe_points:
-                BlenderBoneAnim.set_interpolation(interpolation, kf)
-            fcurve.update() # force updating tangents (this may change when tangent will be managed)
+            make_fcurve(
+                action,
+                coords,
+                data_path=blender_path,
+                index=i,
+                group_name=group_name,
+                interpolation=interpolation,
+            )
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):
