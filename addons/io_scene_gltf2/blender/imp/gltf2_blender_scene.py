@@ -108,10 +108,6 @@ class BlenderScene():
 
             for skin_id, skin in enumerate(gltf.data.skins):
                 if hasattr(skin, "node_ids"):
-                    BlenderSkin.assign_vertex_groups(gltf, skin_id)
-
-            for skin_id, skin in enumerate(gltf.data.skins):
-                if hasattr(skin, "node_ids"):
                     BlenderSkin.create_armature_modifiers(gltf, skin_id)
 
         if gltf.data.animations:

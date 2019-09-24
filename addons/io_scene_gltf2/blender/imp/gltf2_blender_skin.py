@@ -169,68 +169,6 @@ class BlenderSkin():
                 obj.vertex_groups.new(name=gltf.data.nodes[bone].blender_bone_name)
 
     @staticmethod
-    def assign_vertex_groups(gltf, skin_id):
-        """Assign vertex groups to vertices."""
-        pyskin = gltf.data.skins[skin_id]
-        for node_id in pyskin.node_ids:
-            node = gltf.data.nodes[node_id]
-            obj = bpy.data.objects[node.blender_object]
-
-            offset = 0
-            for prim in gltf.data.meshes[node.mesh].primitives:
-                idx_already_done = {}
-
-                if 'JOINTS_0' in prim.attributes.keys() and 'WEIGHTS_0' in prim.attributes.keys():
-                    original_joint_ = BinaryData.get_data_from_accessor(gltf, prim.attributes['JOINTS_0'])
-                    original_weight_ = BinaryData.get_data_from_accessor(gltf, prim.attributes['WEIGHTS_0'])
-
-                    tmp_indices = {}
-                    tmp_idx = 0
-                    weight_ = []
-                    for i in prim.tmp_indices:
-                        if i[0] not in tmp_indices.keys():
-                            tmp_indices[i[0]] = tmp_idx
-                            tmp_idx += 1
-                            weight_.append(original_weight_[i[0]])
-
-                    tmp_indices = {}
-                    tmp_idx = 0
-                    joint_ = []
-                    for i in prim.tmp_indices:
-                        if i[0] not in tmp_indices.keys():
-                            tmp_indices[i[0]] = tmp_idx
-                            tmp_idx += 1
-                            joint_.append(original_joint_[i[0]])
-
-
-                    for poly in obj.data.polygons:
-                        for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
-                            vert_idx = obj.data.loops[loop_idx].vertex_index
-
-                            if vert_idx in idx_already_done.keys():
-                                continue
-                            idx_already_done[vert_idx] = True
-
-                            if vert_idx in range(offset, offset + prim.vertices_length):
-
-                                tab_index = vert_idx - offset
-                                cpt = 0
-                                for joint_idx in joint_[tab_index]:
-                                    weight_val = weight_[tab_index][cpt]
-                                    if weight_val != 0.0:   # It can be a problem to assign weights of 0
-                                                            # for bone index 0, if there is always 4 indices in joint_
-                                                            # tuple
-                                        group = obj.vertex_groups[gltf.data.nodes[
-                                            pyskin.joints[joint_idx]
-                                        ].blender_bone_name]
-                                        group.add([vert_idx], weight_val, 'REPLACE')
-                                    cpt += 1
-                else:
-                    gltf.log.error("No Skinning ?????")  # TODO
-
-                offset = offset + prim.vertices_length
-
-    @staticmethod
     def create_armature_modifiers(gltf, skin_id):
         """Create Armature modifier."""
         pyskin = gltf.data.skins[skin_id]
