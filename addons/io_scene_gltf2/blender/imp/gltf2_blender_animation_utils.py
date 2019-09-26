@@ -44,3 +44,35 @@ def restore_animation_on_object(obj, anim_name):
         return
 
     obj.animation_data.action = None
+
+def make_fcurve(action, co, data_path, index=0, group_name=None, interpolation=None):
+    fcurve = action.fcurves.new(data_path=data_path, index=index)
+
+    if group_name:
+        if group_name not in action.groups:
+            action.groups.new(group_name)
+        group = action.groups[group_name]
+        fcurve.group = group
+
+    fcurve.keyframe_points.add(len(co) // 2)
+    fcurve.keyframe_points.foreach_set('co', co)
+
+    # Setting interpolation
+    if interpolation == 'CUBICSPLINE':
+        for kf in fcurve.keyframe_points:
+            kf.interpolation = 'BEZIER'
+            kf.handle_right_type = 'AUTO'
+            kf.handle_left_type = 'AUTO'
+    else:
+        if interpolation == 'LINEAR':
+            blender_interpolation = 'LINEAR'
+        elif interpolation == 'STEP':
+            blender_interpolation = 'CONSTANT'
+        else:
+            blender_interpolation = 'LINEAR'
+        for kf in fcurve.keyframe_points:
+            kf.interpolation = blender_interpolation
+
+    fcurve.update() # force updating tangents (this may change when tangent will be managed)
+
+    return fcurve
