@@ -204,7 +204,7 @@ class BlenderPrimitive():
             else:
                 joint_data = gltf.accessor_cache[attributes['JOINTS_%d' % set_num]]
 
-            if attributes['WEIGHTS_%d' % set_num] not in gltf.accessor_cache.keys()
+            if attributes['WEIGHTS_%d' % set_num] not in gltf.accessor_cache.keys():
                 weight_data = BinaryData.get_data_from_accessor(gltf, attributes['WEIGHTS_%d' % set_num])
                 gltf.accessor_cache[attributes['WEIGHTS_%d' % set_num]] = weight_data
             else:
