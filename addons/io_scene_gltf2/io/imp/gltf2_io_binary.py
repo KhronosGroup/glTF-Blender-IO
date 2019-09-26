@@ -64,12 +64,11 @@ class BinaryData():
         else:
             stride = stride_
 
-        data = []
-        offset = 0
-        while len(data) < accessor.count:
-            element = struct.unpack_from(fmt, buffer_data, offset)
-            data.append(element)
-            offset += stride
+        unpack_from = struct.Struct(fmt).unpack_from
+        data = [
+            unpack_from(buffer_data, offset)
+            for offset in range(0, accessor.count*stride, stride)
+        ]
 
         if accessor.sparse:
             sparse_indices_data = BinaryData.get_data_from_sparse(gltf, accessor.sparse, "indices")
@@ -136,12 +135,11 @@ class BinaryData():
         else:
             stride = stride_
 
-        data = []
-        offset = 0
-        while len(data) < sparse.count:
-            element = struct.unpack_from(fmt, bin_data, offset)
-            data.append(element)
-            offset += stride
+        unpack_from = struct.Struct(fmt).unpack_from
+        data = [
+            unpack_from(bin_data, offset)
+            for offset in range(0, sparse.count*stride, stride)
+        ]
 
         return data
 
