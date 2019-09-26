@@ -61,9 +61,9 @@ class BlenderMesh():
                 material = bpy.data.materials[material_name]
 
                 try:
-                    material_idx = materials.index(material)
+                    material_idx = materials.index(material.name)
                 except ValueError:
-                    materials.append(material)
+                    materials.append(material.name)
                     material_idx = len(materials) - 1
 
             BlenderPrimitive.add_primitive_to_bmesh(gltf, bme, pymesh, prim, material_idx)
@@ -72,8 +72,8 @@ class BlenderMesh():
         mesh = bpy.data.meshes.new(name)
         BlenderMesh.bmesh_to_mesh(gltf, pymesh, bme, mesh)
         bme.free()
-        for material in materials:
-            mesh.materials.append(material)
+        for name_material in materials:
+            mesh.materials.append(bpy.data.materials[name_material])
         mesh.update()
 
         pymesh.blender_name = mesh.name
