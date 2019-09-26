@@ -70,11 +70,8 @@ class BlenderWeightAnim():
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
 
         # retrieve number of targets
-        nb_targets = 0
-        for prim in gltf.data.meshes[gltf.data.nodes[node_idx].mesh].primitives:
-            if prim.targets:
-                if len(prim.targets) > nb_targets:
-                    nb_targets = len(prim.targets)
+        pymesh = gltf.data.meshes[gltf.data.nodes[node_idx].mesh]
+        nb_targets = len(pymesh.shapekey_names)
 
         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
             offset = nb_targets
@@ -92,8 +89,8 @@ class BlenderWeightAnim():
         group = action.groups[group_name]
 
         for sk in range(nb_targets):
-            if gltf.shapekeys[sk] is not None: # Do not animate shapekeys not created
-                kb_name = obj.data.shape_keys.key_blocks[gltf.shapekeys[sk]].name
+            if pymesh.shapekey_names[sk] is not None: # Do not animate shapekeys not created
+                kb_name = pymesh.shapekey_names[sk]
                 data_path = "key_blocks[" + json.dumps(kb_name) + "].value"
                 fcurve = action.fcurves.new(data_path=data_path)
                 fcurve.group = group
