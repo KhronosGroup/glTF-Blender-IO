@@ -14,10 +14,11 @@
 
 import bpy
 import bmesh
+from mathutils import Vector
 
+from .gltf2_blender_material import BlenderMaterial
 from .gltf2_blender_primitive import BlenderPrimitive
 from ...io.imp.gltf2_io_binary import BinaryData
-from ...io.com.gltf2_io_color_management import color_linear_to_srgb
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender
 
 
@@ -31,21 +32,48 @@ class BlenderMesh():
         """Mesh creation."""
         pymesh = gltf.data.meshes[mesh_idx]
 
-        # Geometry
-        if pymesh.name:
-            mesh_name = pymesh.name
-        else:
-            mesh_name = "Mesh_" + str(mesh_idx)
+        # Create one bmesh, add all primitives to it, and then convert it to a
+        # mesh.
+        bme = bmesh.new()
 
-        mesh = bpy.data.meshes.new(mesh_name)
-        verts = []
-        edges = []
-        faces = []
+        # List of all the materials this mesh will use. The material each
+        # primitive uses is set by giving an index into this list.
+        materials = []
+
+        # Process all primitives
         for prim in pymesh.primitives:
-            verts, edges, faces = BlenderPrimitive.create(gltf, prim, verts, edges, faces)
+            prim.blender_texcoord = {}
 
-        mesh.from_pydata(verts, edges, faces)
-        mesh.validate()
+            if prim.material is None:
+                material_idx = None
+            else:
+                pymaterial = gltf.data.materials[prim.material]
+
+                vertex_color = None
+                if 'COLOR_0' in prim.attributes:
+                    vertex_color = 'COLOR_0'
+
+                # Create Blender material if needed
+                if vertex_color not in pymaterial.blender_material:
+                    BlenderMaterial.create(gltf, prim.material, vertex_color)
+                material_name = pymaterial.blender_material[vertex_color]
+                material = bpy.data.materials[material_name]
+
+                try:
+                    material_idx = materials.index(material)
+                except ValueError:
+                    materials.append(material)
+                    material_idx = len(materials) - 1
+
+            BlenderPrimitive.add_primitive_to_bmesh(gltf, bme, pymesh, prim, material_idx)
+
+        name = pymesh.name or 'Mesh_' + str(mesh_idx)
+        mesh = bpy.data.meshes.new(name)
+        BlenderMesh.bmesh_to_mesh(gltf, pymesh, bme, mesh)
+        bme.free()
+        for material in materials:
+            mesh.materials.append(material)
+        mesh.update()
 
         pymesh.blender_name = mesh.name
 
@@ -53,31 +81,7 @@ class BlenderMesh():
 
     @staticmethod
     def set_mesh(gltf, pymesh, mesh, obj):
-        """Set all data after mesh creation."""
-        # Normals
-        offset = 0
-        custom_normals = [[0.0, 0.0, 0.0]] * len(mesh.vertices)
-
-        if gltf.import_settings['import_shading'] == "NORMALS":
-            mesh.create_normals_split()
-
-        for prim in pymesh.primitives:
-            offset = BlenderPrimitive.set_normals(gltf, prim, mesh, offset, custom_normals)
-
-        mesh.update()
-
-        # manage UV
-        offset = 0
-        for prim in pymesh.primitives:
-            offset = BlenderPrimitive.set_UV(gltf, prim, obj, mesh, offset)
-
-        mesh.update()
-
-        # Normals, now that every update is done
-        if gltf.import_settings['import_shading'] == "NORMALS":
-            mesh.normals_split_custom_set_from_vertices(custom_normals)
-            mesh.use_auto_smooth = True
-
+        """Sets mesh data after creation."""
         # Object and UV are now created, we can set UVMap into material
         for prim in pymesh.primitives:
             vertex_color = None
@@ -85,162 +89,87 @@ class BlenderMesh():
                 vertex_color = 'COLOR_0'
             BlenderPrimitive.set_UV_in_mat(gltf, prim, obj, vertex_color)
 
-        # Assign materials to mesh
-        offset = 0
-        cpt_index_mat = 0
-        bm = bmesh.new()
-        bm.from_mesh(obj.data)
-        bm.faces.ensure_lookup_table()
-        for prim in pymesh.primitives:
-            offset, cpt_index_mat = BlenderPrimitive.assign_material(gltf, prim, obj, bm, offset, cpt_index_mat)
-
-        bm.to_mesh(obj.data)
-        bm.free()
-
-        # Create shapekeys if needed
-        max_shape_to_create = 0
-        for prim in pymesh.primitives:
-            if prim.targets:
-                if len(prim.targets) > max_shape_to_create:
-                    max_shape_to_create = len(prim.targets)
-
-        # Create basis shape key
-        if max_shape_to_create > 0:
-            obj.shape_key_add(name="Basis")
-
-        current_shapekey_index = 0
-        for sk in range(max_shape_to_create):
-
-            # Check if this target has POSITION
-            if 'POSITION' not in prim.targets[sk].keys():
-                gltf.shapekeys[sk] = None
-                continue
-
-            # Check if glTF file has some extras with targetNames
-            shapekey_name = None
-            if pymesh.extras is not None:
-                if 'targetNames' in pymesh.extras.keys() and sk < len(pymesh.extras['targetNames']):
-                    shapekey_name = pymesh.extras['targetNames'][sk]
-
-            if shapekey_name is None:
-                shapekey_name = "target_" + str(sk)
-
-            obj.shape_key_add(name=shapekey_name)
-            current_shapekey_index += 1
-
-            offset_idx = 0
-            for prim in pymesh.primitives:
-                if prim.targets is None:
-                    continue
-                if sk >= len(prim.targets):
-                    continue
-
-                bm = bmesh.new()
-                bm.from_mesh(mesh)
-
-                shape_layer = bm.verts.layers.shape[current_shapekey_index]
-                gltf.shapekeys[sk] = current_shapekey_index
-
-                original_pos = BinaryData.get_data_from_accessor(gltf, prim.targets[sk]['POSITION'])
-
-                tmp_indices = {}
-                tmp_idx = 0
-                pos = []
-                for i in prim.tmp_indices:
-                    if i[0] not in tmp_indices.keys():
-                        tmp_indices[i[0]] = tmp_idx
-                        tmp_idx += 1
-                        pos.append(original_pos[i[0]])
-
-                for vert in bm.verts:
-                    if vert.index not in range(offset_idx, offset_idx + prim.vertices_length):
-                        continue
-
-                    shape = vert[shape_layer]
-
-                    co = loc_gltf_to_blender(list(pos[vert.index - offset_idx]))
-                    shape.x = obj.data.vertices[vert.index].co.x + co[0]
-                    shape.y = obj.data.vertices[vert.index].co.y + co[1]
-                    shape.z = obj.data.vertices[vert.index].co.z + co[2]
-
-                bm.to_mesh(obj.data)
-                bm.free()
-                offset_idx += prim.vertices_length
-
         # set default weights for shape keys, and names, if not set by convention on extras data
         if pymesh.weights is not None:
-            for i in range(max_shape_to_create):
-                if i < len(pymesh.weights):
-                    if gltf.shapekeys[i] is None: # No default value if shapekeys was not created
-                        continue
-                    obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].value = pymesh.weights[i]
-                    if shapekey_name is None: # No names set for now
-                        if gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name is not None:
-                            obj.data.shape_keys.key_blocks[gltf.shapekeys[i]].name = \
-                                gltf.data.accessors[pymesh.primitives[0].targets[i]['POSITION']].name
+            for i in range(len(pymesh.weights)):
+                if pymesh.shapekey_names[i] is None: # No default value if shapekeys was not created
+                    continue
+                obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]].value = pymesh.weights[i]
 
-        # Apply vertex color.
-        vertex_color = None
-        offset = 0
+    @staticmethod
+    def bmesh_to_mesh(gltf, pymesh, bme, mesh):
+        bme.to_mesh(mesh)
+
+        # Unfortunately need to do shapekeys/normals/smoothing ourselves.
+
+        # Shapekeys
+        if len(bme.verts.layers.shape) != 0:
+            # The only way I could find to create a shape key was to temporarily
+            # parent mesh to an object and use obj.shape_key_add.
+            tmp_ob = None
+            try:
+                tmp_ob = bpy.data.objects.new('##gltf-import:tmp-object##', mesh)
+                tmp_ob.shape_key_add(name='Basis')
+                mesh.shape_keys.name = mesh.name
+                for layer_name in bme.verts.layers.shape.keys():
+                    tmp_ob.shape_key_add(name=layer_name)
+                    key_block = mesh.shape_keys.key_blocks[layer_name]
+                    layer = bme.verts.layers.shape[layer_name]
+
+                    for i, v in enumerate(bme.verts):
+                        key_block.data[i].co = v[layer]
+            finally:
+                if tmp_ob:
+                    bpy.data.objects.remove(tmp_ob)
+
+        # Normals
+        mesh.update()
+
+        if gltf.import_settings['import_shading'] == "NORMALS":
+            mesh.create_normals_split()
+
+        # use_smooth for faces
+        face_idx = 0
         for prim in pymesh.primitives:
-            if 'COLOR_0' in prim.attributes.keys():
-                # Create vertex color, once only per object
-                if vertex_color is None:
-                    vertex_color = obj.data.vertex_colors.new(name="COLOR_0")
+            if 'NORMAL' not in prim.attributes:
+                face_idx += prim.num_faces
+                continue
 
-                original_color_data = BinaryData.get_data_from_accessor(gltf, prim.attributes['COLOR_0'])
-
-                tmp_indices = {}
-                tmp_idx = 0
-                color_data = []
-                for i in prim.tmp_indices:
-                    if i[0] not in tmp_indices.keys():
-                        tmp_indices[i[0]] = tmp_idx
-                        tmp_idx += 1
-                        color_data.append(original_color_data[i[0]])
-
-                for poly in mesh.polygons:
+            if gltf.import_settings['import_shading'] == "FLAT":
+                for fi in range(face_idx, face_idx + prim.num_faces):
+                    mesh.polygons[fi].use_smooth = False
+            elif gltf.import_settings['import_shading'] == "SMOOTH":
+                for fi in range(face_idx, face_idx + prim.num_faces):
+                    mesh.polygons[fi].use_smooth = True
+            elif gltf.import_settings['import_shading'] == "NORMALS":
+                for fi in range(face_idx, face_idx + prim.num_faces):
+                    poly = mesh.polygons[fi]
+                    calc_norm_vertices = []
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                         vert_idx = mesh.loops[loop_idx].vertex_index
-                        if vert_idx in range(offset, offset + prim.vertices_length):
-                            cpt_idx = vert_idx - offset
-                            # Need to convert from linear (glTF to sRGB (blender))
-                            if bpy.app.version < (2, 80, 0):
-                                # manage post 2.79b versions
-                                if len(vertex_color.data[loop_idx].color) == 4:
-                                    if len(color_data[cpt_idx]) == 3:
-                                        # TODO : no alpha in vertex color
-                                        srgb_color = [
-                                            color_linear_to_srgb(color_data[cpt_idx][0]),
-                                            color_linear_to_srgb(color_data[cpt_idx][1]),
-                                            color_linear_to_srgb(color_data[cpt_idx][2]),
-                                            1.0]
-                                    else:
-                                        srgb_color = [
-                                            color_linear_to_srgb(color_data[cpt_idx][0]),
-                                            color_linear_to_srgb(color_data[cpt_idx][1]),
-                                            color_linear_to_srgb(color_data[cpt_idx][2]),
-                                            color_data[cpt_idx][3]]
-                                    vertex_color.data[loop_idx].color = srgb_color
-                                else:
-                                    srgb_color = [
-                                        color_linear_to_srgb(color_data[cpt_idx][0]),
-                                        color_linear_to_srgb(color_data[cpt_idx][1]),
-                                        color_linear_to_srgb(color_data[cpt_idx][2])]
-                                    vertex_color.data[loop_idx].color = srgb_color
-                            else:
-                                # check dimension, and add alpha if needed
-                                if len(color_data[cpt_idx]) == 3:
-                                    srgb_color = [
-                                        color_linear_to_srgb(color_data[cpt_idx][0]),
-                                        color_linear_to_srgb(color_data[cpt_idx][1]),
-                                        color_linear_to_srgb(color_data[cpt_idx][2]),
-                                        1.0]
-                                else:
-                                    srgb_color = [
-                                        color_linear_to_srgb(color_data[cpt_idx][0]),
-                                        color_linear_to_srgb(color_data[cpt_idx][1]),
-                                        color_linear_to_srgb(color_data[cpt_idx][2]),
-                                        color_data[cpt_idx][3]]
-                                vertex_color.data[loop_idx].color = srgb_color
-            offset = offset + prim.vertices_length
+                        calc_norm_vertices.append(vert_idx)
+
+                        if len(calc_norm_vertices) == 3:
+                            # Calcul normal
+                            vert0 = mesh.vertices[calc_norm_vertices[0]].co
+                            vert1 = mesh.vertices[calc_norm_vertices[1]].co
+                            vert2 = mesh.vertices[calc_norm_vertices[2]].co
+                            calc_normal = (vert1 - vert0).cross(vert2 - vert0).normalized()
+
+                            # Compare normal to vertex normal
+                            for i in calc_norm_vertices:
+                                vec = Vector(bme.verts[i].normal)
+                                if not calc_normal.dot(vec) > 0.9999999:
+                                    poly.use_smooth = True
+                                    break
+            else:
+                # shouldn't happen
+                pass
+
+            face_idx += prim.num_faces
+
+        # Custom normals, now that every update is done
+        if gltf.import_settings['import_shading'] == "NORMALS":
+            custom_normals = [v.normal for v in bme.verts]
+            mesh.normals_split_custom_set_from_vertices(custom_normals)
+            mesh.use_auto_smooth = True
