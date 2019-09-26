@@ -40,6 +40,8 @@ class BlenderMesh():
         # primitive uses is set by giving an index into this list.
         materials = []
 
+
+        gltf.accessor_cache = {} # Caching accessor data when all primitives share accessor
         # Process all primitives
         for prim in pymesh.primitives:
             prim.blender_texcoord = {}
@@ -76,6 +78,8 @@ class BlenderMesh():
         mesh.update()
 
         pymesh.blender_name = mesh.name
+
+        gltf.accessor_cache = None # Remove cache
 
         return mesh
 

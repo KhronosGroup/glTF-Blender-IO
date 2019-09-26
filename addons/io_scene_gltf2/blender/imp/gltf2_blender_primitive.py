@@ -44,9 +44,14 @@ class BlenderPrimitive():
             pyprimitive.num_faces = 0
             return
 
-        positions = BinaryData.get_data_from_accessor(gltf, attributes['POSITION'])
+        if attributes['POSITION'] not in gltf.accessor_cache.keys():
+            positions = BinaryData.get_data_from_accessor(gltf, attributes['POSITION'])
+            gltf.accessor_cache[attributes['POSITION']] = positions
+        else:
+            positions = gltf.accessor_cache[attributes['POSITION']]
 
         if pyprimitive.indices is not None:
+            # Not using cache, this is no usefull for indices
             indices = BinaryData.get_data_from_accessor(gltf, pyprimitive.indices)
             indices = [i[0] for i in indices]
         else:
@@ -109,7 +114,12 @@ class BlenderPrimitive():
 
         # Set normals
         if 'NORMAL' in attributes:
-            normals = BinaryData.get_data_from_accessor(gltf, attributes['NORMAL'])
+            if attributes['NORMAL'] not in gltf.accessor_cache.keys():
+                normals = BinaryData.get_data_from_accessor(gltf, attributes['NORMAL'])
+                gltf.accessor_cache[attributes['NORMAL']] = normals
+            else:
+                normals = gltf.accessor_cache[attributes['NORMAL']]
+
             for bidx, pidx in vert_idxs:
                 bme_verts[bidx].normal = normals[pidx]
 
@@ -125,7 +135,11 @@ class BlenderPrimitive():
             layer_name = 'COLOR_%d' % set_num
             layer = BlenderPrimitive.get_layer(bme.loops.layers.color, layer_name)
 
-            colors = BinaryData.get_data_from_accessor(gltf, attributes[layer_name])
+            if attributes[layer_name] not in gltf.accessor_cache.keys():
+                colors = BinaryData.get_data_from_accessor(gltf, attributes[layer_name])
+                gltf.accessor_cache[attributes[layer_name]] = colors
+            else:
+                colors = gltf.accessor_cache[attributes[layer_name]]
 
             # Check whether Blender takes RGB or RGBA colors (old versions only take RGB)
             num_components = len(colors[0])
@@ -163,7 +177,11 @@ class BlenderPrimitive():
 
             pyprimitive.blender_texcoord[set_num] = layer_name
 
-            uvs = BinaryData.get_data_from_accessor(gltf, attributes[layer_name])
+            if attributes[layer_name] not in gltf.accessor_cache.keys():
+                uvs = BinaryData.get_data_from_accessor(gltf, attributes[layer_name])
+                gltf.accessor_cache[attributes[layer_name]] = uvs
+            else:
+                uvs = gltf.accessor_cache[attributes[layer_name]]
 
             for bidx, pidx in vert_idxs:
                 # UV transform
@@ -180,8 +198,18 @@ class BlenderPrimitive():
         weight_sets = []
         set_num = 0
         while 'JOINTS_%d' % set_num in attributes and 'WEIGHTS_%d' % set_num in attributes:
-            joint_data = BinaryData.get_data_from_accessor(gltf, attributes['JOINTS_%d' % set_num])
-            weight_data = BinaryData.get_data_from_accessor(gltf, attributes['WEIGHTS_%d' % set_num])
+            if attributes['JOINTS_%d' % set_num] not in gltf.accessor_cache.keys():
+                joint_data = BinaryData.get_data_from_accessor(gltf, attributes['JOINTS_%d' % set_num])
+                gltf.accessor_cache[attributes['JOINTS_%d' % set_num]] = joint_data
+            else:
+                joint_data = gltf.accessor_cache[attributes['JOINTS_%d' % set_num]]
+
+            if attributes['WEIGHTS_%d' % set_num] not in gltf.accessor_cache.keys()
+                weight_data = BinaryData.get_data_from_accessor(gltf, attributes['WEIGHTS_%d' % set_num])
+                gltf.accessor_cache[attributes['WEIGHTS_%d' % set_num]] = weight_data
+            else:
+                weight_data = gltf.accessor_cache[attributes['WEIGHTS_%d' % set_num]]
+
             joint_sets.append(joint_data)
             weight_sets.append(weight_data)
 
@@ -206,7 +234,11 @@ class BlenderPrimitive():
             layer_name = pymesh.shapekey_names[sk]
             layer = BlenderPrimitive.get_layer(bme.verts.layers.shape, layer_name)
 
-            morph_positions = BinaryData.get_data_from_accessor(gltf, target['POSITION'])
+            if target['POSITION'] not in gltf.accessor_cache.keys():
+                morph_positions = BinaryData.get_data_from_accessor(gltf, target['POSITION'])
+                gltf.accessor_cache[target['POSITION']] = morph_positions
+            else:
+                morph_positions = gltf.accessor_cache[target['POSITION']]
 
             for bidx, pidx in vert_idxs:
                 bme_verts[bidx][layer] = (
