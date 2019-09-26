@@ -29,6 +29,7 @@ class glTFImporter():
         self.filename = filename
         self.import_settings = import_settings
         self.buffers = {}
+        self.accessor_cache = {}
 
         if 'loglevel' not in self.import_settings.keys():
             self.import_settings['loglevel'] = logging.ERROR
