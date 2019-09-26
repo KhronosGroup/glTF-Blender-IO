@@ -46,8 +46,11 @@ class BinaryData():
         return buffer[accessor_offset + bufferview_offset:accessor_offset + bufferview_offset + bufferView.byte_length]
 
     @staticmethod
-    def get_data_from_accessor(gltf, accessor_idx):
+    def get_data_from_accessor(gltf, accessor_idx, cache=False):
         """Get data from accessor."""
+        if accessor_idx in gltf.accessor_cache:
+            return gltf.accessor_cache[accessor_idx]
+
         accessor = gltf.data.accessors[accessor_idx]
 
         bufferView = gltf.data.buffer_views[accessor.buffer_view]  # TODO initialize with 0 when not present!
@@ -101,6 +104,9 @@ class BinaryData():
                     else:
                         new_tuple += (float(i),)
                 data[idx] = new_tuple
+
+        if cache:
+            gltf.accessor_cache[accessor_idx] = data
 
         return data
 
