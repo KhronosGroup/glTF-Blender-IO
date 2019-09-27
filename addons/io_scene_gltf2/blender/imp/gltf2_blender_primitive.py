@@ -165,8 +165,6 @@ class BlenderPrimitive():
             layer_name = 'TEXCOORD_%d' % set_num
             layer = BlenderPrimitive.get_layer(bme.loops.layers.uv, layer_name)
 
-            pyprimitive.blender_texcoord[set_num] = layer_name
-
             uvs = BinaryData.get_data_from_accessor(gltf, attributes[layer_name], cache=True)
 
             for bidx, pidx in vert_idxs:
@@ -292,34 +290,3 @@ class BlenderPrimitive():
             raise Exception('primitive mode unimplemented: %d' % mode)
 
         return es, fs
-
-    @staticmethod
-    def set_UV_in_mat(gltf, pyprimitive, obj, vertex_color):
-        """After nodetree creation, set UVMap in nodes."""
-        if pyprimitive.material is None:
-            return
-        if gltf.data.materials[pyprimitive.material].extensions \
-                and "KHR_materials_pbrSpecularGlossiness" in \
-                    gltf.data.materials[pyprimitive.material].extensions.keys():
-            if pyprimitive.material is not None \
-                    and gltf.data.materials[pyprimitive.material].extensions[
-                        'KHR_materials_pbrSpecularGlossiness'
-                    ]['diffuse_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
-                BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj, vertex_color)
-            else:
-                if pyprimitive.material is not None \
-                        and gltf.data.materials[pyprimitive.material].extensions[
-                            'KHR_materials_pbrSpecularGlossiness'
-                        ]['specgloss_type'] in [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
-                    BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj, vertex_color)
-
-        else:
-            if pyprimitive.material is not None \
-                    and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.color_type in \
-                    [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
-                BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj, vertex_color)
-            else:
-                if pyprimitive.material is not None \
-                        and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.metallic_type in \
-                        [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
-                    BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj, vertex_color)

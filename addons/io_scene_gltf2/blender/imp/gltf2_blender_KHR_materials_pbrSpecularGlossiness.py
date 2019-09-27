@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_texture import BlenderTextureInfo
-from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
+from .gltf2_blender_material_utils import make_texture_block
+from ...io.com.gltf2_io import TextureInfo
 
 
 class BlenderKHR_materials_pbrSpecularGlossiness():
@@ -87,18 +87,15 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
                 math_vc_B = node_tree.nodes.new('ShaderNodeMath')
                 math_vc_B.operation = 'MULTIPLY'
 
-            BlenderTextureInfo.create(gltf, pbrSG['diffuseTexture'], dict_=True)
-
             # create UV Map / Mapping / Texture nodes / separate & math and combine
-            text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            if gltf.data.images[
-                gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name is not None:
-                text_node.image = \
-                    bpy.data.images[
-                        gltf.data.images[
-                            gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name
-                    ]
-            text_node.location = -1000, 500
+            text_node = make_texture_block(
+                gltf,
+                node_tree,
+                TextureInfo.from_dict(pbrSG['diffuseTexture']),
+                location=(-1000, 500),
+                label='DIFFUSE',
+                name='diffuseTexture',
+            )
 
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
             combine.location = -250, 500
@@ -120,31 +117,6 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
             separate.location = -750, 500
-
-            mapping = node_tree.nodes.new('ShaderNodeMapping')
-            mapping.location = -1500, 500
-            mapping.vector_type = 'POINT'
-            tex_transform = text_node.image['tex_transform'][str(pbrSG['diffuseTexture']['index'])]
-            if bpy.app.version < (2, 81, 8):
-                mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-            else:
-                mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-
-            uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            uvmap.location = -2000, 500
-            if 'texCoord' in pbrSG['diffuseTexture'].keys():
-                uvmap["gltf2_texcoord"] = pbrSG['diffuseTexture']['texCoord']  # Set custom flag to retrieve TexCoord
-            else:
-                uvmap["gltf2_texcoord"] = 0  # TODO: set in precompute instead of here?
-            # UV Map will be set after object/UVMap creation
 
             # Create links
             if vertex_color:
@@ -169,15 +141,11 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             node_tree.links.new(math_G.inputs[0], separate.outputs[1])
             node_tree.links.new(math_B.inputs[0], separate.outputs[2])
 
-            node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
-            node_tree.links.new(text_node.inputs[0], mapping.outputs[0])
             node_tree.links.new(separate.inputs[0], text_node.outputs[0])
 
             node_tree.links.new(diffuse.inputs[0], combine.outputs[0])
 
         elif pbrSG['diffuse_type'] == gltf.TEXTURE:
-
-            BlenderTextureInfo.create(gltf, pbrSG['diffuseTexture'], dict_=True)
 
             # TODO alpha ?
             if vertex_color:
@@ -208,48 +176,18 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
                 separate.location = -1500, 500
 
             # create UV Map / Mapping / Texture nodes / separate & math and combine
-            text_node = node_tree.nodes.new('ShaderNodeTexImage')
-            if gltf.data.images[
-                gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name is not None:
-                text_node.image = bpy.data.images[
-                    gltf.data.images[gltf.data.textures[pbrSG['diffuseTexture']['index']].source].blender_image_name
-                ]
             if vertex_color:
-                text_node.location = -2000, 500
+                location = (-2000, 500)
             else:
-                text_node.location = -500, 500
-
-            mapping = node_tree.nodes.new('ShaderNodeMapping')
-            if vertex_color:
-                mapping.location = -2500, 500
-            else:
-                mapping.location = -1500, 500
-            mapping.vector_type = 'POINT'
-            tex_transform = text_node.image['tex_transform'][str(pbrSG['diffuseTexture']['index'])]
-            if bpy.app.version < (2, 81, 8):
-                mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-            else:
-                mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-
-
-            uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            if vertex_color:
-                uvmap.location = -3000, 500
-            else:
-                uvmap.location = -2000, 500
-            if 'texCoord' in pbrSG['diffuseTexture'].keys():
-                uvmap["gltf2_texcoord"] = pbrSG['diffuseTexture']['texCoord']  # Set custom flag to retrieve TexCoord
-            else:
-                uvmap["gltf2_texcoord"] = 0  # TODO: set in precompute instead of here?
-            # UV Map will be set after object/UVMap creation
+                location = (-500, 500)
+            text_node = text_node = make_texture_block(
+                gltf,
+                node_tree,
+                TextureInfo.from_dict(pbrSG['diffuseTexture']),
+                location=location,
+                label='DIFFUSE',
+                name='diffuseTexture',
+            )
 
             # Create links
             if vertex_color:
@@ -274,11 +212,6 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             else:
                 node_tree.links.new(diffuse.inputs[0], text_node.outputs[0])
 
-            # Common for both mode (non vertex color / vertex color)
-
-            node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
-            node_tree.links.new(text_node.inputs[0], mapping.outputs[0])
-
         if pbrSG['specgloss_type'] == gltf.SIMPLE:
 
             combine = node_tree.nodes.new('ShaderNodeCombineRGB')
@@ -290,104 +223,35 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             node_tree.links.new(glossy.inputs[0], combine.outputs[0])
 
         elif pbrSG['specgloss_type'] == gltf.TEXTURE:
-            BlenderTextureInfo.create(gltf, pbrSG['specularGlossinessTexture'], dict_=True)
-            spec_text = node_tree.nodes.new('ShaderNodeTexImage')
-            if gltf.data.images[
-                gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
-            ].blender_image_name is not None:
-                spec_text.image = bpy.data.images[
-                    gltf.data.images[
-                        gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
-                    ].blender_image_name
-                ]
-            if bpy.app.version < (2, 80, 0):
-                spec_text.color_space = 'NONE'
-            else:
-                if spec_text.image:
-                    spec_text.image.colorspace_settings.is_data = True
-            spec_text.location = -500, 0
-
-            spec_mapping = node_tree.nodes.new('ShaderNodeMapping')
-            spec_mapping.location = -1000, 0
-            spec_mapping.vector_type = 'POINT'
-            tex_transform = spec_text.image['tex_transform'][str(pbrSG['specularGlossinessTexture']['index'])]
-            if bpy.app.version < (2, 81, 8):
-                spec_mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                spec_mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                spec_mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                spec_mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                spec_mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-            else:
-                spec_mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                spec_mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                spec_mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                spec_mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                spec_mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-
-
-            spec_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            spec_uvmap.location = -1500, 0
-            if 'texCoord' in pbrSG['specularGlossinessTexture'].keys():
-                # Set custom flag to retrieve TexCoord
-                spec_uvmap["gltf2_texcoord"] = pbrSG['specularGlossinessTexture']['texCoord']
-            else:
-                spec_uvmap["gltf2_texcoord"] = 0  # TODO: set in precompute instead of here?
+            spec_text = make_texture_block(
+                gltf,
+                node_tree,
+                TextureInfo.from_dict(pbrSG['specularGlossinessTexture']),
+                location=(-1000, 0),
+                label='SPECULAR GLOSSINESS',
+                name='specularGlossinessTexture',
+                colorspace='NONE',
+            )
 
             # links
             node_tree.links.new(glossy.inputs[0], spec_text.outputs[0])
             node_tree.links.new(mix.inputs[0], spec_text.outputs[1])
 
-            node_tree.links.new(spec_mapping.inputs[0], spec_uvmap.outputs[0])
-            node_tree.links.new(spec_text.inputs[0], spec_mapping.outputs[0])
-
         elif pbrSG['specgloss_type'] == gltf.TEXTURE_FACTOR:
-            BlenderTextureInfo.create(gltf, pbrSG['specularGlossinessTexture'], dict_=True)
-
-            spec_text = node_tree.nodes.new('ShaderNodeTexImage')
-            if gltf.data.images[
-                gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
-            ].blender_image_name is not None:
-                spec_text.image = bpy.data.images[gltf.data.images[
-                    gltf.data.textures[pbrSG['specularGlossinessTexture']['index']].source
-                ].blender_image_name]
-            if bpy.app.version < (2, 80, 0):
-                spec_text.color_space = 'NONE'
-            else:
-                if spec_text.image:
-                    spec_text.image.colorspace_settings.is_data = True
-            spec_text.location = -1000, 0
+            spec_text = make_texture_block(
+                gltf,
+                node_tree,
+                TextureInfo.from_dict(pbrSG['specularGlossinessTexture']),
+                location=(-1000, 0),
+                label='SPECULAR GLOSSINESS',
+                name='specularGlossinessTexture',
+                colorspace='NONE',
+            )
 
             spec_math = node_tree.nodes.new('ShaderNodeMath')
             spec_math.operation = 'MULTIPLY'
             spec_math.inputs[0].default_value = pbrSG['glossinessFactor']
             spec_math.location = -250, 100
-
-            spec_mapping = node_tree.nodes.new('ShaderNodeMapping')
-            spec_mapping.location = -1000, 0
-            spec_mapping.vector_type = 'POINT'
-            tex_transform = spec_text.image['tex_transform'][str(pbrSG['specularGlossinessTexture']['index'])]
-            if bpy.app.version < (2, 81, 8):
-                spec_mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                spec_mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                spec_mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                spec_mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                spec_mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-            else:
-                spec_mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                spec_mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                spec_mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                spec_mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                spec_mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-
-
-
-            spec_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            spec_uvmap.location = -1500, 0
-            if 'texCoord' in pbrSG['specularGlossinessTexture'].keys():
-                # Set custom flag to retrieve TexCoord
-                spec_uvmap["gltf2_texcoord"] = pbrSG['specularGlossinessTexture']['texCoord']
-            else:
-                spec_uvmap["gltf2_texcoord"] = 0  # TODO: set in precompute instead of here?
 
             # links
 
@@ -395,9 +259,6 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
             node_tree.links.new(mix.inputs[0], spec_text.outputs[1])
             node_tree.links.new(glossy.inputs[1], spec_math.outputs[0])
             node_tree.links.new(glossy.inputs[0], spec_text.outputs[0])
-
-            node_tree.links.new(spec_mapping.inputs[0], spec_uvmap.outputs[0])
-            node_tree.links.new(spec_text.inputs[0], spec_mapping.outputs[0])
 
         # link node to output
         node_tree.links.new(mix.inputs[2], diffuse.outputs[0])

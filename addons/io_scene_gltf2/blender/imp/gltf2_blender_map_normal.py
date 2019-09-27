@@ -13,8 +13,7 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_texture import BlenderTextureInfo
-from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
+from .gltf2_blender_material_utils import make_texture_block
 
 
 class BlenderNormalMap():
@@ -36,8 +35,6 @@ class BlenderNormalMap():
         material = bpy.data.materials[pymaterial.blender_material[vertex_color]]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(gltf, pymaterial.normal_texture)
-
         # retrieve principled node and output node
         principled = None
         diffuse = None
@@ -50,52 +47,26 @@ class BlenderNormalMap():
             glossy = [node for node in node_tree.nodes if node.type == "BSDF_GLOSSY"][0]
 
         # add nodes
-        mapping = node_tree.nodes.new('ShaderNodeMapping')
-        mapping.location = -1000, -500
-        uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-        uvmap.location = -1500, -500
-        if pymaterial.normal_texture.tex_coord is not None:
-            uvmap["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord  # Set custom flag to retrieve TexCoord
-        else:
-            uvmap["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
-
-        text = node_tree.nodes.new('ShaderNodeTexImage')
-        if gltf.data.images[
-            gltf.data.textures[pymaterial.normal_texture.index].source
-        ].blender_image_name is not None:
-            text.image = bpy.data.images[gltf.data.images[
-                gltf.data.textures[pymaterial.normal_texture.index].source
-            ].blender_image_name]
-        text.label = 'NORMALMAP'
-        if bpy.app.version < (2, 80, 0):
-            text.color_space = 'NONE'
-        else:
-            if text.image:
-                text.image.colorspace_settings.is_data = True
-        text.location = -500, -500
-        if text.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
-            tex_transform = text.image['tex_transform'][str(pymaterial.normal_texture.index)]
-            if bpy.app.version < (2, 81, 8):
-                mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-            else:
-                mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-
+        text = make_texture_block(
+            gltf,
+            node_tree,
+            pymaterial.normal_texture,
+            location=(-500, -500),
+            label='NORMALMAP',
+            name='normalTexture',
+            colorspace='NONE',
+        )
 
         normalmap_node = node_tree.nodes.new('ShaderNodeNormalMap')
         normalmap_node.location = -250, -500
-        if pymaterial.normal_texture.tex_coord is not None:
-            # Set custom flag to retrieve TexCoord
-            normalmap_node["gltf2_texcoord"] = pymaterial.normal_texture.tex_coord
-        else:
-            normalmap_node["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
+
+        tex_info = pymaterial.normal_texture
+        texcoord_idx = tex_info.tex_coord or 0
+        if tex_info.extensions and 'KHR_texture_transform' in tex_info.extensions:
+            if 'texCoord' in tex_info.extensions['KHR_texture_transform']:
+                texcoord_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
+
+        normalmap_node.uv_map = 'TEXCOORD_%d' % texcoord_idx
 
         # Set strength
         if pymaterial.normal_texture.scale is not None:
@@ -104,8 +75,6 @@ class BlenderNormalMap():
             normalmap_node.inputs[0].default_value = 1.0 # Default
 
         # create links
-        node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
-        node_tree.links.new(text.inputs[0], mapping.outputs[0])
         node_tree.links.new(normalmap_node.inputs[1], text.outputs[0])
 
         # following links will modify PBR node tree

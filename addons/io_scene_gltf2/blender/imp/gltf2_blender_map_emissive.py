@@ -13,9 +13,8 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_texture import BlenderTextureInfo
+from .gltf2_blender_material_utils import make_texture_block
 from ..com.gltf2_blender_material_helpers import get_preoutput_node_output
-from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
 
 
 class BlenderEmissiveMap():
@@ -36,9 +35,6 @@ class BlenderEmissiveMap():
 
         material = bpy.data.materials[pymaterial.blender_material[vertex_color]]
         node_tree = material.node_tree
-
-        if factor_only is False:
-            BlenderTextureInfo.create(gltf, pymaterial.emissive_texture)
 
         # check if there is some emissive_factor on material
         if pymaterial.emissive_factor is None:
@@ -65,43 +61,16 @@ class BlenderEmissiveMap():
                                                             pymaterial.emissive_factor[2],
                                                             1.0,
                                                             ]
-            mapping = node_tree.nodes.new('ShaderNodeMapping')
-            mapping.location = -1500, 1000
-            uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            uvmap.location = -2000, 1000
-            if pymaterial.emissive_texture.tex_coord is not None:
-                uvmap["gltf2_texcoord"] = pymaterial.emissive_texture.tex_coord  # Set custom flag to retrieve TexCoord
-            else:
-                uvmap["gltf2_texcoord"] = 0  # TODO: set in precompute instead of here?
-
-            text = node_tree.nodes.new('ShaderNodeTexImage')
-            if gltf.data.images[
-                gltf.data.textures[pymaterial.emissive_texture.index].source
-            ].blender_image_name is not None:
-                text.image = bpy.data.images[gltf.data.images[
-                    gltf.data.textures[pymaterial.emissive_texture.index].source
-                ].blender_image_name]
-            text.label = 'EMISSIVE'
-            text.location = -1000, 1000
-            if text.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
-                tex_transform = text.image['tex_transform'][str(pymaterial.emissive_texture.index)]
-                if bpy.app.version < (2, 81, 8):
-                    mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                    mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                    mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                    mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                    mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-                else:
-                    mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                    mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                    mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                    mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                    mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-
+            text = make_texture_block(
+                gltf,
+                node_tree,
+                pymaterial.emissive_texture,
+                location=(-1000, 1000),
+                label='EMISSIVE',
+                name='emissiveTexture',
+            )
 
             # create links
-            node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
-            node_tree.links.new(text.inputs[0], mapping.outputs[0])
             if pymaterial.emissive_factor != [1.0, 1.0, 1.0]:
                 node_tree.links.new(mult_node.inputs[1], text.outputs[0])
                 node_tree.links.new(emit.inputs[0], mult_node.outputs[0])
