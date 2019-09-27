@@ -83,11 +83,13 @@ class BlenderOcclusionMap():
         if not found:
             # Need to create the texture node & separate node
             separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
+            separate.location = -500, 1500
+            ao_node.location = 0, 1500
             text = make_texture_block(
                 gltf,
                 node_tree,
                 pymaterial.occlusion_texture,
-                location=(0, 0),
+                location=(-1000, 1500),
                 label='OCCLUSION',
                 name='occlusionTexture',
             )
