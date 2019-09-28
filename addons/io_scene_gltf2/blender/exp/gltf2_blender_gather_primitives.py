@@ -28,6 +28,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
+from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 
 
 @cached
@@ -69,7 +70,7 @@ def gather_primitives(
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
-            extensions=None,
+            extensions=internal_primitive['extensions'],
             extras=None,
             indices=internal_primitive['indices'],
             material=material,
@@ -101,7 +102,8 @@ def __gather_cache_primitives(
             "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
             "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
             "material": internal_primitive['material'],
-            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
+            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
+            "extensions": __gather_extensions(internal_primitive, blender_mesh, modifiers, export_settings),
         }
         primitives.append(primitive)
 
@@ -136,6 +138,12 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
         element_type,
         export_settings
     )
+
+
+def __gather_extensions(blender_primitive, blender_mesh, modifiers, export_settings):
+    return {
+        'FB_ngon_encoding': Extension('FB_ngon_encoding', {}, required=False),
+    }
 
 
 def __gather_attributes(blender_primitive, blender_mesh, modifiers, export_settings):

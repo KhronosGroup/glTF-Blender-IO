@@ -566,6 +566,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             modifier = modifiers_dict["ARMATURE"]
             armature = modifier.object
 
+    first_idx_of_last_tri = -1  # for FB_ngon_encoding
 
     #
     # Convert polygon to primitive indices and eliminate invalid ones. Assign to material.
@@ -605,9 +606,13 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
         indices = primitive[INDICES_ID]
 
         loop_index_list = []
+        is_quad = False
 
         if len(blender_polygon.loop_indices) == 3:
             loop_index_list.extend(blender_polygon.loop_indices)
+        elif len(blender_polygon.loop_indices) == 4:
+            loop_index_list.extend(blender_polygon.loop_indices)
+            is_quad = True
         elif len(blender_polygon.loop_indices) > 3:
             # Triangulation of polygon. Using internal function, as non-convex polygons could exist.
             polyline = []
@@ -629,6 +634,37 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
                     loop_index_list.append(blender_polygon.loop_indices[triangle_index])
         else:
             continue
+
+
+        # FB_ngon_encoding handling
+        idxs = loop_index_list
+
+        if not is_quad:
+            # Re-order tri indices so no tri is adjacent to a tri with the same
+            # first index.
+            for f in range(0, len(idxs), 3):
+                if first_idx_of_last_tri != idxs[f]:
+                    pass
+                else:
+                    idxs[f], idxs[f+1], idxs[f+2] = idxs[f+1], idxs[f+2], idxs[f]
+                first_idx_of_last_tri = idxs[f]
+
+        else:
+            # Split quad into two tris with the same first index.
+            if first_idx_of_last_tri != idxs[0]:
+                idxs = [
+                    idxs[0], idxs[1], idxs[2],
+                    idxs[0], idxs[2], idxs[3],
+                ]
+            else:
+                idxs = [
+                    idxs[2], idxs[0], idxs[1],
+                    idxs[2], idxs[3], idxs[0],
+                ]
+            first_idx_of_last_tri = idxs[0]
+
+        loop_index_list = idxs
+
 
         for loop_index in loop_index_list:
             vertex_index = blender_mesh.loops[loop_index].vertex_index
