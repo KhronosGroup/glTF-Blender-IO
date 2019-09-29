@@ -14,7 +14,11 @@
 
 
 import bpy
-from io_scene_gltf2.blender.com import gltf2_blender_json
+from .gltf2_blender_json import is_json_convertible
+
+
+# Custom properties, which are in most cases present and should not be imported/exported.
+BLACK_LIST = ['cycles', 'cycles_visibility', 'cycles_curves', '_RNA_UI']
 
 
 def generate_extras(blender_element):
@@ -24,21 +28,16 @@ def generate_extras(blender_element):
 
     extras = {}
 
-    # Custom properties, which are in most cases present and should not be exported.
-    black_list = ['cycles', 'cycles_visibility', 'cycles_curves', '_RNA_UI']
-
-    count = 0
     for custom_property in blender_element.keys():
-        if custom_property in black_list:
+        if custom_property in BLACK_LIST:
             continue
 
         value = __to_json_compatible(blender_element[custom_property])
 
         if value is not None:
             extras[custom_property] = value
-            count += 1
 
-    if count == 0:
+    if not extras:
         return None
 
     return extras
@@ -71,7 +70,21 @@ def __to_json_compatible(value):
 
     elif hasattr(value, "to_dict"):
         value = value.to_dict()
-        if gltf2_blender_json.is_json_convertible(value):
+        if is_json_convertible(value):
             return value
 
     return None
+
+
+def set_extras(blender_element, extras, exclude=[]):
+    """Copy extras onto a Blender object."""
+    if not extras or not isinstance(extras, dict):
+        return
+
+    for custom_property, value in extras.items():
+        if custom_property in BLACK_LIST:
+            continue
+        if custom_property in exclude:
+            continue
+
+        blender_element[custom_property] = value

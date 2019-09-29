@@ -19,7 +19,7 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animations
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
+from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 
 
@@ -124,5 +124,5 @@ def __gather_animations(blender_scene, export_settings):
 
 def __gather_extras(blender_object, export_settings):
     if export_settings[gltf2_blender_export_keys.EXTRAS]:
-        return gltf2_blender_generate_extras.generate_extras(blender_object)
+        return generate_extras(blender_object)
     return None

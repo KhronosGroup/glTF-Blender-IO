@@ -23,7 +23,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_occlusion_t
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
-from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
+from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 
 
@@ -146,7 +146,7 @@ def __gather_extensions(blender_material, export_settings):
 
 def __gather_extras(blender_material, export_settings):
     if export_settings['gltf_extras']:
-        return gltf2_blender_generate_extras.generate_extras(blender_material)
+        return generate_extras(blender_material)
     return None
 
 

@@ -25,7 +25,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
-from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
+from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 
@@ -228,7 +228,7 @@ def __gather_extensions(blender_object, export_settings):
 
 def __gather_extras(blender_object, export_settings):
     if export_settings['gltf_extras']:
-        return gltf2_blender_generate_extras.generate_extras(blender_object)
+        return generate_extras(blender_object)
     return None
 
 
