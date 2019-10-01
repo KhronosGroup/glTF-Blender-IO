@@ -81,7 +81,7 @@ class BlenderPrimitive():
         bme_verts.ensure_lookup_table()
 
         # Add edges/faces to bmesh
-        mode = pyprimitive.mode or 4
+        mode = 4 if pyprimitive.mode is None else pyprimitive.mode
         edges, faces = BlenderPrimitive.edges_and_faces(mode, indices)
         # NOTE: edges and vertices are in terms of pidxs!
         for edge in edges:
