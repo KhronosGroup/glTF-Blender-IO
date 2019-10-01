@@ -71,7 +71,7 @@ def __gather_animations(blender_scene, export_settings):
             animations += animations_
 
     if export_settings['gltf_nla_strips'] is False:
-        # Fake an animation witha all animations of the scene
+        # Fake an animation with all animations of the scene
         merged_tracks = {}
         merged_tracks['Animation'] = []
         for idx, animation in enumerate(animations):

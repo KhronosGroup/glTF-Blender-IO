@@ -72,7 +72,7 @@ class BlenderGlTF():
         #          Bone head defined a point
         #          Calcul of distance between point and line
         #          If < threshold --> In a chain
-        # Based on an idea of @Menithal, but added alignement detection to avoid some bad cases
+        # Based on an idea of @Menithal, but added alignment detection to avoid some bad cases
 
         threshold = 0.001
         for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:

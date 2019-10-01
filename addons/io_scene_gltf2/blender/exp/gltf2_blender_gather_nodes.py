@@ -301,7 +301,7 @@ def __gather_mesh(blender_object, export_settings):
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
-    # we can't instanciate multiple object at different location, skined by same armature
+    # we can't instantiate multiple object at different location, skined by same armature
     blender_object_for_skined_data = None
     if export_settings[gltf2_blender_export_keys.SKINS]:
         for idx, modifier in enumerate(blender_object.modifiers):
