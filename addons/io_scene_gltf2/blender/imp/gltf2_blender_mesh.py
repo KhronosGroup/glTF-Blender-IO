@@ -145,26 +145,17 @@ class BlenderMesh():
                 for fi in range(face_idx, face_idx + prim.num_faces):
                     mesh.polygons[fi].use_smooth = True
             elif gltf.import_settings['import_shading'] == "NORMALS":
+                mesh_loops = mesh.loops
                 for fi in range(face_idx, face_idx + prim.num_faces):
                     poly = mesh.polygons[fi]
-                    calc_norm_vertices = []
+                    # "Flat normals" are when all the vertices in poly have the
+                    # poly's normal. Otherwise, smooth the poly.
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
-                        vert_idx = mesh.loops[loop_idx].vertex_index
-                        calc_norm_vertices.append(vert_idx)
+                        vi = mesh_loops[loop_idx].vertex_index
+                        if poly.normal.dot(bme.verts[vi].normal) <= 0.9999999:
+                            poly.use_smooth = True
+                            break
 
-                        if len(calc_norm_vertices) == 3:
-                            # Calcul normal
-                            vert0 = mesh.vertices[calc_norm_vertices[0]].co
-                            vert1 = mesh.vertices[calc_norm_vertices[1]].co
-                            vert2 = mesh.vertices[calc_norm_vertices[2]].co
-                            calc_normal = (vert1 - vert0).cross(vert2 - vert0).normalized()
-
-                            # Compare normal to vertex normal
-                            for i in calc_norm_vertices:
-                                vec = Vector(bme.verts[i].normal)
-                                if not calc_normal.dot(vec) > 0.9999999:
-                                    poly.use_smooth = True
-                                    break
             else:
                 # shouldn't happen
                 pass
