@@ -378,6 +378,7 @@ NLA Strip animations will be exported if the Animation → NLA Strips option is
 selected (on by default). All glTF animations are imported as NLA Strip
 animations.
 
+If option is disabled, Blender NLA strip actions will be ignored. Only active action of each objects will be taken into account, and merged into a single glTF animation.
 
 Custom Properties
 -----------------
