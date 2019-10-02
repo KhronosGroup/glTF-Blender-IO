@@ -299,7 +299,7 @@ class BlenderGlTF():
                 mesh.is_weight_animated = False
 
         # Calculate names for each mesh's shapekeys
-        for mesh in gltf.data.meshes:
+        for mesh in gltf.data.meshes or []:
             mesh.shapekey_names = []
             used_names = set()
 
