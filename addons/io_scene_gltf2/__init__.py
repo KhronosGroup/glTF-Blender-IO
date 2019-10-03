@@ -247,7 +247,7 @@ class ExportGLTF2_Base:
     export_force_sampling = BoolProperty(
         name='Always Sample Animations',
         description='Apply sampling to all animations',
-        default=False
+        default=True
     )
 
     export_nla_strips = BoolProperty(
