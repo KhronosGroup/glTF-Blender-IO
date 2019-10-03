@@ -615,6 +615,11 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
                         let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                         let gltfDstPath = path.resolve(outDirPath, `${dir}${ext}`);
+                        let gltfOptionsPath = `roundtrip/${dir}/${dir}_options.txt`;
+                        let options = args;
+                        if (fs.existsSync(gltfOptionsPath)) {
+                            options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
+                        }
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
@@ -647,7 +652,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
                                 done();
                             });
-                        }, args);
+                        }, options);
                     });
                 });
             });
