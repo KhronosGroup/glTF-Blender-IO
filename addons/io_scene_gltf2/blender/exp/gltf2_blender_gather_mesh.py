@@ -24,6 +24,7 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 @cached
 def gather_mesh(blender_mesh: bpy.types.Mesh,
+                blender_object: Optional[bpy.types.Object],
                 vertex_groups: Optional[bpy.types.VertexGroups],
                 modifiers: Optional[bpy.types.ObjectModifiers],
                 skip_filter: bool,
@@ -37,7 +38,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
         extensions=__gather_extensions(blender_mesh, vertex_groups, modifiers, export_settings),
         extras=__gather_extras(blender_mesh, vertex_groups, modifiers, export_settings),
         name=__gather_name(blender_mesh, vertex_groups, modifiers, export_settings),
-        primitives=__gather_primitives(blender_mesh, vertex_groups, modifiers, material_names, export_settings),
+        primitives=__gather_primitives(blender_mesh, blender_object, vertex_groups, modifiers, material_names, export_settings),
         weights=__gather_weights(blender_mesh, vertex_groups, modifiers, export_settings)
     )
 
@@ -102,12 +103,14 @@ def __gather_name(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_primitives(blender_mesh: bpy.types.Mesh,
+                        blender_object: Optional[bpy.types.Object],
                         vertex_groups: Optional[bpy.types.VertexGroups],
                         modifiers: Optional[bpy.types.ObjectModifiers],
                         material_names: Tuple[str],
                         export_settings
                         ) -> List[gltf2_io.MeshPrimitive]:
     return gltf2_blender_gather_primitives.gather_primitives(blender_mesh,
+                                                             blender_object,
                                                              vertex_groups,
                                                              modifiers,
                                                              material_names,

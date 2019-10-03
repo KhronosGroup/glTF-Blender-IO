@@ -615,6 +615,11 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
                         let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                         let gltfDstPath = path.resolve(outDirPath, `${dir}${ext}`);
+                        let gltfOptionsPath = `roundtrip/${dir}/${dir}_options.txt`;
+                        let options = args;
+                        if (fs.existsSync(gltfOptionsPath)) {
+                            options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
+                        }
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
@@ -636,11 +641,18 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                 let srcInfo = reduceKeys(gltfSrcReport.info, info_keys);
                                 let dstInfo = reduceKeys(gltfDstReport.info, info_keys);
 
-                                assert.deepStrictEqual(dstInfo, srcInfo);
+                                try {
+                                    assert.deepStrictEqual(dstInfo, srcInfo);
+                                } catch (ex) {
+                                    done(new Error("Validation summary mismatch.\nExpected summary:\n" +
+                                        JSON.stringify(srcInfo, null, '  ') +
+                                        "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
+                                    return;
+                                }
 
                                 done();
                             });
-                        }, args);
+                        }, options);
                     });
                 });
             });

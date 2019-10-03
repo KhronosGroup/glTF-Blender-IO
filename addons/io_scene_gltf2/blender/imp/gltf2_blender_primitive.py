@@ -18,7 +18,12 @@ from mathutils import Vector
 from .gltf2_blender_material import BlenderMaterial
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender
 from ...io.imp.gltf2_io_binary import BinaryData
+from ...io.com.gltf2_io_color_management import color_linear_to_srgb
+from ...io.com import gltf2_io_debug
 
+
+MAX_NUM_COLOR_SETS = 8
+MAX_NUM_TEXCOORD_SETS = 8
 
 class BlenderPrimitive():
     """Blender Primitive."""
@@ -26,62 +31,193 @@ class BlenderPrimitive():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, pyprimitive, verts, edges, faces):
-        """Primitive creation."""
-        pyprimitive.blender_texcoord = {}
+    def get_layer(bme_layers, name):
+        if name not in bme_layers:
+            return bme_layers.new(name)
+        return bme_layers[name]
 
-        current_length = len(verts)
-        pos = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['POSITION'])
+    @staticmethod
+    def add_primitive_to_bmesh(gltf, bme, pymesh, pyprimitive, material_index):
+        attributes = pyprimitive.attributes
+
+        if 'POSITION' not in attributes:
+            pyprimitive.num_faces = 0
+            return
+
+        positions = BinaryData.get_data_from_accessor(gltf, attributes['POSITION'], cache=True)
+
         if pyprimitive.indices is not None:
+            # Not using cache, this is not useful for indices
             indices = BinaryData.get_data_from_accessor(gltf, pyprimitive.indices)
+            indices = [i[0] for i in indices]
         else:
-            indices = [(i,) for i in range(len(pos))]
+            indices = list(range(len(positions)))
 
-        pyprimitive.tmp_indices = indices
+        bme_verts = bme.verts
+        bme_edges = bme.edges
+        bme_faces = bme.faces
 
-        # Manage only vertices that are in indices tab
-        indice_equivalents = {}
-        new_pos = []
-        new_pos_idx = 0
-        for i in indices:
-            if i[0] not in indice_equivalents.keys():
-                indice_equivalents[i[0]] = new_pos_idx
-                new_pos.append(pos[i[0]])
-                new_pos_idx += 1
+        # Every vertex has an index into the primitive's attribute arrays and a
+        #  *different* index into the BMesh's list of verts. Call the first one the
+        #  pidx and the second the bidx. Need to keep them straight!
 
-        prim_verts = [loc_gltf_to_blender(vert) for vert in new_pos]
+        # The pidx of all the vertices that are actually used by the primitive (only
+        # indices that appear in the pyprimitive.indices list are actually used)
+        used_pidxs = set(indices)
+        # Contains a pair (bidx, pidx) for every vertex in the primitive
+        vert_idxs = []
+        # pidx_to_bidx[pidx] will be the bidx of the vertex with that pidx (or -1 if
+        # unused)
+        pidx_to_bidx = [-1] * len(positions)
+        bidx = len(bme_verts)
+        if bpy.app.debug:
+            used_pidxs = list(used_pidxs)
+            used_pidxs.sort()
+        for pidx in used_pidxs:
+            bme_verts.new(positions[pidx])
+            vert_idxs.append((bidx, pidx))
+            pidx_to_bidx[pidx] = bidx
+            bidx += 1
+        bme_verts.ensure_lookup_table()
 
+        # Add edges/faces to bmesh
         mode = 4 if pyprimitive.mode is None else pyprimitive.mode
-        prim_edges, prim_faces = BlenderPrimitive.edges_and_faces(mode, indices)
+        edges, faces = BlenderPrimitive.edges_and_faces(mode, indices)
+        # NOTE: edges and vertices are in terms of pidxs!
+        for edge in edges:
+            try:
+                bme_edges.new((
+                    bme_verts[pidx_to_bidx[edge[0]]],
+                    bme_verts[pidx_to_bidx[edge[1]]],
+                ))
+            except ValueError:
+                # Ignores duplicate/degenerate edges
+                pass
+        pyprimitive.num_faces = 0
+        for face in faces:
+            try:
+                face = bme_faces.new(tuple(
+                    bme_verts[pidx_to_bidx[i]]
+                    for i in face
+                ))
 
-        verts.extend(prim_verts)
-        pyprimitive.vertices_length = len(prim_verts)
-        edges.extend(
-            tuple(indice_equivalents[y] + current_length for y in e)
-            for e in prim_edges
-        )
-        faces.extend(
-            tuple(indice_equivalents[y] + current_length for y in f)
-            for f in prim_faces
-        )
+                if material_index is not None:
+                    face.material_index = material_index
 
-        # manage material of primitive
-        if pyprimitive.material is not None:
+                pyprimitive.num_faces += 1
 
-            vertex_color = None
-            if 'COLOR_0' in pyprimitive.attributes.keys():
-                vertex_color = 'COLOR_0'
+            except ValueError:
+                # Ignores duplicate/degenerate faces
+                pass
 
-            # Create Blender material if needed
-            if vertex_color is None:
-                if None not in gltf.data.materials[pyprimitive.material].blender_material.keys():
-                    BlenderMaterial.create(gltf, pyprimitive.material, vertex_color)
-            else:
-                if vertex_color not in gltf.data.materials[pyprimitive.material].blender_material.keys():
-                    BlenderMaterial.create(gltf, pyprimitive.material, vertex_color)
+        # Set normals
+        if 'NORMAL' in attributes:
+            normals = BinaryData.get_data_from_accessor(gltf, attributes['NORMAL'], cache=True)
 
+            for bidx, pidx in vert_idxs:
+                bme_verts[bidx].normal = normals[pidx]
 
-        return verts, edges, faces
+        # Set vertex colors. Add them in the order COLOR_0, COLOR_1, etc.
+        set_num = 0
+        while 'COLOR_%d' % set_num in attributes:
+            if set_num >= MAX_NUM_COLOR_SETS:
+                gltf2_io_debug.print_console("WARNING",
+                    "too many color sets; COLOR_%d will be ignored" % set_num
+                )
+                break
+
+            layer_name = 'COLOR_%d' % set_num
+            layer = BlenderPrimitive.get_layer(bme.loops.layers.color, layer_name)
+
+            colors = BinaryData.get_data_from_accessor(gltf, attributes[layer_name], cache=True)
+
+            # Check whether Blender takes RGB or RGBA colors (old versions only take RGB)
+            num_components = len(colors[0])
+            blender_num_components = len(bme_verts[0].link_loops[0][layer])
+            if num_components == 3 and blender_num_components == 4:
+                # RGB -> RGBA
+                colors = [color+(1,) for color in colors]
+            if num_components == 4 and blender_num_components == 3:
+                # RGBA -> RGB
+                colors = [color[:3] for color in colors]
+                gltf2_io_debug.print_console("WARNING",
+                    "this Blender doesn't support RGBA vertex colors; dropping A"
+                )
+
+            for bidx, pidx in vert_idxs:
+                for loop in bme_verts[bidx].link_loops:
+                    loop[layer] = tuple(
+                        color_linear_to_srgb(c)
+                        for c in colors[pidx]
+                    )
+
+            set_num += 1
+
+        # Set texcoords
+        set_num = 0
+        while 'TEXCOORD_%d' % set_num in attributes:
+            if set_num >= MAX_NUM_TEXCOORD_SETS:
+                gltf2_io_debug.print_console("WARNING",
+                    "too many UV sets; TEXCOORD_%d will be ignored" % set_num
+                )
+                break
+
+            layer_name = 'TEXCOORD_%d' % set_num
+            layer = BlenderPrimitive.get_layer(bme.loops.layers.uv, layer_name)
+
+            pyprimitive.blender_texcoord[set_num] = layer_name
+
+            uvs = BinaryData.get_data_from_accessor(gltf, attributes[layer_name], cache=True)
+
+            for bidx, pidx in vert_idxs:
+                # UV transform
+                u, v = uvs[pidx]
+                uv = (u, 1 - v)
+
+                for loop in bme_verts[bidx].link_loops:
+                    loop[layer].uv = uv
+
+            set_num += 1
+
+        # Set joints/weights for skinning (multiple sets allow > 4 influences)
+        joint_sets = []
+        weight_sets = []
+        set_num = 0
+        while 'JOINTS_%d' % set_num in attributes and 'WEIGHTS_%d' % set_num in attributes:
+            joint_data = BinaryData.get_data_from_accessor(gltf, attributes['JOINTS_%d' % set_num], cache=True)
+            weight_data = BinaryData.get_data_from_accessor(gltf, attributes['WEIGHTS_%d' % set_num], cache=True)
+
+            joint_sets.append(joint_data)
+            weight_sets.append(weight_data)
+
+            set_num += 1
+
+        if joint_sets:
+            layer = BlenderPrimitive.get_layer(bme.verts.layers.deform, 'Vertex Weights')
+
+            for joint_set, weight_set in zip(joint_sets, weight_sets):
+                for bidx, pidx in vert_idxs:
+                    for j in range(0, 4):
+                        weight = weight_set[pidx][j]
+                        if weight != 0.0:
+                            joint = joint_set[pidx][j]
+                            bme_verts[bidx][layer][joint] = weight
+
+        # Set morph target positions (no normals/tangents)
+        for sk, target in enumerate(pyprimitive.targets or []):
+            if pymesh.shapekey_names[sk] is None:
+                continue
+
+            layer_name = pymesh.shapekey_names[sk]
+            layer = BlenderPrimitive.get_layer(bme.verts.layers.shape, layer_name)
+
+            morph_positions = BinaryData.get_data_from_accessor(gltf, target['POSITION'], cache=True)
+
+            for bidx, pidx in vert_idxs:
+                bme_verts[bidx][layer] = (
+                    Vector(positions[pidx]) +
+                    Vector(morph_positions[pidx])
+                )
 
     @staticmethod
     def edges_and_faces(mode, indices):
@@ -100,7 +236,7 @@ class BlenderPrimitive():
             #  /   /
             # 0   2
             es = [
-                (indices[i][0], indices[i + 1][0])
+                (indices[i], indices[i + 1])
                 for i in range(0, len(indices), 2)
             ]
         elif mode == 2:
@@ -109,17 +245,17 @@ class BlenderPrimitive():
             #  /     \
             # 0-------3
             es = [
-                (indices[i][0], indices[i + 1][0])
+                (indices[i], indices[i + 1])
                 for i in range(0, len(indices) - 1)
             ]
-            es.append((indices[-1][0], indices[0][0]))
+            es.append((indices[-1], indices[0]))
         elif mode == 3:
             # LINE STRIP
             #   1---2
             #  /     \
             # 0       3
             es = [
-                (indices[i][0], indices[i + 1][0])
+                (indices[i], indices[i + 1])
                 for i in range(0, len(indices) - 1)
             ]
         elif mode == 4:
@@ -128,7 +264,7 @@ class BlenderPrimitive():
             #  / \   / \
             # 0---1 4---5
             fs = [
-                (indices[i][0], indices[i + 1][0], indices[i + 2][0])
+                (indices[i], indices[i + 1], indices[i + 2])
                 for i in range(0, len(indices), 3)
             ]
         elif mode == 5:
@@ -140,7 +276,7 @@ class BlenderPrimitive():
                 even = i % 2 == 0
                 return xs if even else (xs[0], xs[2], xs[1])
             fs = [
-                alternate(i, (indices[i][0], indices[i + 1][0], indices[i + 2][0]))
+                alternate(i, (indices[i], indices[i + 1], indices[i + 2]))
                 for i in range(0, len(indices) - 2)
             ]
         elif mode == 6:
@@ -149,7 +285,7 @@ class BlenderPrimitive():
             #  / \ / \
             # 4---0---1
             fs = [
-                (indices[0][0], indices[i][0], indices[i + 1][0])
+                (indices[0], indices[i], indices[i + 1])
                 for i in range(1, len(indices) - 1)
             ]
         else:
@@ -157,91 +293,7 @@ class BlenderPrimitive():
 
         return es, fs
 
-    def set_normals(gltf, pyprimitive, mesh, offset, custom_normals):
-        """Set Normal."""
-        if 'NORMAL' in pyprimitive.attributes.keys():
-            original_normal_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes['NORMAL'])
-
-            tmp_indices = {}
-            tmp_idx = 0
-            normal_data = []
-            for i in pyprimitive.tmp_indices:
-                if i[0] not in tmp_indices.keys():
-                    tmp_indices[i[0]] = tmp_idx
-                    tmp_idx += 1
-                    normal_data.append(original_normal_data[i[0]])
-
-            for poly in mesh.polygons:
-                if gltf.import_settings['import_shading'] == "NORMALS":
-                    calc_norm_vertices = []
-                    for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
-                        vert_idx = mesh.loops[loop_idx].vertex_index
-                        if vert_idx in range(offset, offset + pyprimitive.vertices_length):
-                            cpt_vert = vert_idx - offset
-                            mesh.vertices[vert_idx].normal = normal_data[cpt_vert]
-                            custom_normals[vert_idx] = list(normal_data[cpt_vert])
-                            calc_norm_vertices.append(vert_idx)
-
-                        if len(calc_norm_vertices) == 3:
-                            # Calcul normal
-                            vert0 = mesh.vertices[calc_norm_vertices[0]].co
-                            vert1 = mesh.vertices[calc_norm_vertices[1]].co
-                            vert2 = mesh.vertices[calc_norm_vertices[2]].co
-                            calc_normal = (vert1 - vert0).cross(vert2 - vert0).normalized()
-
-                            # Compare normal to vertex normal
-                            for i in calc_norm_vertices:
-                                cpt_vert = vert_idx - offset
-                                vec = Vector(
-                                    (normal_data[cpt_vert][0], normal_data[cpt_vert][1], normal_data[cpt_vert][2])
-                                )
-                                if not calc_normal.dot(vec) > 0.9999999:
-                                    poly.use_smooth = True
-                                    break
-                elif gltf.import_settings['import_shading'] == "FLAT":
-                    poly.use_smooth = False
-                elif gltf.import_settings['import_shading'] == "SMOOTH":
-                    poly.use_smooth = True
-                else:
-                    pass  # Should not happen
-
-        offset = offset + pyprimitive.vertices_length
-        return offset
-
-    def set_UV(gltf, pyprimitive, obj, mesh, offset):
-        """Set UV Map."""
-        for texcoord in [attr for attr in pyprimitive.attributes.keys() if attr[:9] == "TEXCOORD_"]:
-            if bpy.app.version < (2, 80, 0):
-                if texcoord not in mesh.uv_textures:
-                    mesh.uv_textures.new(texcoord)
-                pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
-            else:
-                if texcoord not in mesh.uv_layers:
-                    mesh.uv_layers.new(name=texcoord)
-                pyprimitive.blender_texcoord[int(texcoord[9:])] = texcoord
-
-            original_texcoord_data = BinaryData.get_data_from_accessor(gltf, pyprimitive.attributes[texcoord])
-
-
-            tmp_indices = {}
-            tmp_idx = 0
-            texcoord_data = []
-            for i in pyprimitive.tmp_indices:
-                if i[0] not in tmp_indices.keys():
-                    tmp_indices[i[0]] = tmp_idx
-                    tmp_idx += 1
-                    texcoord_data.append(original_texcoord_data[i[0]])
-
-            for poly in mesh.polygons:
-                for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
-                    vert_idx = mesh.loops[loop_idx].vertex_index
-                    if vert_idx in range(offset, offset + pyprimitive.vertices_length):
-                        obj.data.uv_layers[texcoord].data[loop_idx].uv = \
-                            Vector((texcoord_data[vert_idx - offset][0], 1 - texcoord_data[vert_idx - offset][1]))
-
-        offset = offset + pyprimitive.vertices_length
-        return offset
-
+    @staticmethod
     def set_UV_in_mat(gltf, pyprimitive, obj, vertex_color):
         """After nodetree creation, set UVMap in nodes."""
         if pyprimitive.material is None:
@@ -271,21 +323,3 @@ class BlenderPrimitive():
                         and gltf.data.materials[pyprimitive.material].pbr_metallic_roughness.metallic_type in \
                         [gltf.TEXTURE, gltf.TEXTURE_FACTOR]:
                     BlenderMaterial.set_uvmap(gltf, pyprimitive.material, pyprimitive, obj, vertex_color)
-
-    def assign_material(gltf, pyprimitive, obj, bm, offset, cpt_index_mat):
-        """Assign material to faces of primitives."""
-        if pyprimitive.material is not None:
-
-            vertex_color = None
-            if 'COLOR_0' in pyprimitive.attributes.keys():
-                vertex_color = 'COLOR_0'
-
-            obj.data.materials.append(bpy.data.materials[gltf.data.materials[pyprimitive.material].blender_material[vertex_color]])
-            for vert in bm.verts:
-                if vert.index in range(offset, offset + pyprimitive.vertices_length):
-                    for loop in vert.link_loops:
-                        face = loop.face.index
-                        bm.faces[face].material_index = cpt_index_mat
-            cpt_index_mat += 1
-        offset = offset + pyprimitive.vertices_length
-        return offset, cpt_index_mat

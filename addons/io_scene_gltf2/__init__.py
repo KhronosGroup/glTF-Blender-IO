@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (0, 9, 61),
+    "version": (1, 0, 0),
     'blender': (2, 81, 6),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -219,7 +219,8 @@ class ExportGLTF2_Base:
 
     export_apply = BoolProperty(
         name='Apply Modifiers',
-        description='Apply modifiers (excluding Armatures) to mesh objects',
+        description='Apply modifiers (excluding Armatures) to mesh objects -'
+                    'WARNING: prevents exporting shape keys',
         default=False
     )
 
@@ -246,7 +247,13 @@ class ExportGLTF2_Base:
     export_force_sampling = BoolProperty(
         name='Always Sample Animations',
         description='Apply sampling to all animations',
-        default=False
+        default=True
+    )
+
+    export_nla_strips = BoolProperty(
+        name='NLA Strips',
+        description='Export NLA Strip animations',
+        default=True
     )
 
     export_def_bones = BoolProperty(
@@ -392,6 +399,7 @@ class ExportGLTF2_Base:
                 export_settings['gltf_def_bones'] = self.export_def_bones
             else:
                 export_settings['gltf_def_bones'] = False
+            export_settings['gltf_nla_strips'] = self.export_nla_strips
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
@@ -706,6 +714,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_range')
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
+        layout.prop(operator, 'export_nla_strips')
 
         row = layout.row()
         row.active = operator.export_force_sampling

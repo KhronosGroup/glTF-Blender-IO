@@ -18,52 +18,13 @@ from mathutils import Matrix
 
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_to_matrix
 from ...io.imp.gltf2_io_binary import BinaryData
-from .gltf2_blender_animation_utils import simulate_stash, restore_last_action
+from .gltf2_blender_animation_utils import simulate_stash, make_fcurve
 
 
 class BlenderBoneAnim():
     """Blender Bone Animation."""
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("%s should not be instantiated" % cls)
-
-    @staticmethod
-    def set_interpolation(interpolation, kf):
-        """Set interpolation."""
-        if interpolation == "LINEAR":
-            kf.interpolation = 'LINEAR'
-        elif interpolation == "STEP":
-            kf.interpolation = 'CONSTANT'
-        elif interpolation == "CUBICSPLINE":
-            kf.interpolation = 'BEZIER'
-            kf.handle_right_type = 'AUTO'
-            kf.handle_left_type = 'AUTO'
-        else:
-            kf.interpolation = 'LINEAR'
-
-    @staticmethod
-    def stash_action(gltf, anim_idx, node_idx, action_name):
-        node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[gltf.data.skins[node.skin_id].blender_armature_name]
-
-        if anim_idx not in node.animations.keys():
-            return
-
-        if (obj.name, action_name) in gltf.actions_stashed.keys():
-            return
-
-        start_frame = bpy.context.scene.frame_start
-
-        animation_name = gltf.data.animations[anim_idx].name
-        simulate_stash(obj, animation_name, bpy.data.actions[action_name], start_frame)
-
-        gltf.actions_stashed[(obj.name, action_name)] = True
-
-    @staticmethod
-    def restore_last_action(gltf, node_idx):
-        node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[gltf.data.skins[node.skin_id].blender_armature_name]
-
-        restore_last_action(obj)
 
     @staticmethod
     def parse_translation_channel(gltf, node, obj, bone, channel, animation):
@@ -254,28 +215,23 @@ class BlenderBoneAnim():
         coords = [0] * (2 * len(keys))
         coords[::2] = (key[0] * fps for key in keys)
 
-        if group_name not in action.groups:
-            action.groups.new(group_name)
-        group = action.groups[group_name]
-
         for i in range(0, len(values[0])):
-            fcurve = action.fcurves.new(data_path=blender_path, index=i)
-            fcurve.group = group
-
-            fcurve.keyframe_points.add(len(keys))
             coords[1::2] = (vals[i] for vals in values)
-            fcurve.keyframe_points.foreach_set('co', coords)
-
-            # Setting interpolation
-            for kf in fcurve.keyframe_points:
-                BlenderBoneAnim.set_interpolation(interpolation, kf)
-            fcurve.update() # force updating tangents (this may change when tangent will be managed)
+            make_fcurve(
+                action,
+                coords,
+                data_path=blender_path,
+                index=i,
+                group_name=group_name,
+                interpolation=interpolation,
+            )
 
     @staticmethod
     def anim(gltf, anim_idx, node_idx):
         """Manage animation."""
         node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[gltf.data.skins[node.skin_id].blender_armature_name]
+        blender_armature_name = gltf.data.skins[node.skin_id].blender_armature_name
+        obj = bpy.data.objects[blender_armature_name]
         bone = obj.pose.bones[node.blender_bone_name]
 
         if anim_idx not in node.animations.keys():
@@ -283,38 +239,16 @@ class BlenderBoneAnim():
 
         animation = gltf.data.animations[anim_idx]
 
-        if animation.name:
-            name = animation.name + "_" + obj.name
-        else:
-            name = "Animation_" + str(anim_idx) + "_" + obj.name
-        if len(name) >= 63:
-            # Name is too long to be kept, we are going to keep only animation name for now
-            name = animation.name
-            if len(name) >= 63:
-                # Very long name!
-                name = "Animation_" + str(anim_idx)
-        if name not in bpy.data.actions:
+        action = gltf.arma_cache.get(blender_armature_name)
+        if not action:
+            name = animation.track_name + "_" + obj.name
             action = bpy.data.actions.new(name)
-        else:
-            if name in gltf.animation_managed:
-                # multiple animation with same name in glTF file
-                # Create a new action with new name if needed
-                if name in gltf.current_animation_names.keys():
-                    action = bpy.data.actions[gltf.current_animation_names[name]]
-                    name = gltf.current_animation_names[name]
-                else:
-                    action = bpy.data.actions.new(name)
-            else:
-                action = bpy.data.actions[name]
-                # Check if this action has some users.
-                # If no user (only 1 indeed), that means that this action must be deleted
-                # (is an action from a deleted object)
-                if action.users == 1:
-                    bpy.data.actions.remove(action)
-                    action = bpy.data.actions.new(name)
+            gltf.needs_stash.append((obj, animation.track_name, action))
+            gltf.arma_cache[blender_armature_name] = action
+
         if not obj.animation_data:
             obj.animation_data_create()
-        obj.animation_data.action = bpy.data.actions[action.name]
+        obj.animation_data.action = action
 
         for channel_idx in node.animations[anim_idx]:
             channel = animation.channels[channel_idx]
@@ -327,6 +261,3 @@ class BlenderBoneAnim():
 
             elif channel.target.path == "scale":
                 BlenderBoneAnim.parse_scale_channel(gltf, node, obj, bone, channel, animation)
-
-        if action.name not in gltf.current_animation_names.keys():
-            gltf.current_animation_names[name] = action.name

@@ -68,7 +68,10 @@ def __gather_node(blender_object, blender_scene, export_settings):
         translation=None,
         weights=__gather_weights(blender_object, export_settings)
     )
-    node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
+
+    # If node mesh is skined, transforms should be ignored at import, so no need to set them here
+    if node.skin is None:
+        node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
 
     if export_settings[gltf2_blender_export_keys.YUP]:
         if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS]:
@@ -300,7 +303,18 @@ def __gather_mesh(blender_object, export_settings):
         skip_filter = False
 
     material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
+
+    # retrieve armature
+    # Because mesh data will be transforms to skeleton space,
+    # we can't instantiate multiple object at different location, skined by same armature
+    blender_object_for_skined_data = None
+    if export_settings[gltf2_blender_export_keys.SKINS]:
+        for idx, modifier in enumerate(blender_object.modifiers):
+            if modifier.type == 'ARMATURE':
+                blender_object_for_skined_data = blender_object
+
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
+                                                   blender_object_for_skined_data,
                                                    vertex_groups,
                                                    modifiers,
                                                    skip_filter,
@@ -341,18 +355,18 @@ def __gather_trans_rot_scale(blender_object, export_settings):
         # Decomposing matrix_local gives less accuracy, but is needed if matrix_parent_inverse is not the identity.
         trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, export_settings)
 
-    trans = gltf2_blender_extract.convert_swizzle_location(trans, export_settings)
+    trans = gltf2_blender_extract.convert_swizzle_location(trans, None, None, export_settings)
     rot = gltf2_blender_extract.convert_swizzle_rotation(rot, export_settings)
     sca = gltf2_blender_extract.convert_swizzle_scale(sca, export_settings)
 
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
             trans = -gltf2_blender_extract.convert_swizzle_location(
-                blender_object.dupli_group.dupli_offset, export_settings)
+                blender_object.dupli_group.dupli_offset, None, None, export_settings)
     else:
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
             trans = -gltf2_blender_extract.convert_swizzle_location(
-                blender_object.instance_collection.instance_offset, export_settings)
+                blender_object.instance_collection.instance_offset, None, None, export_settings)
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
                                    gltf2_blender_math.round_if_near(trans[2], 0.0)
@@ -390,7 +404,7 @@ def __gather_skin(blender_object, export_settings):
         return None
 
     # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, blender_object, export_settings)
+    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):

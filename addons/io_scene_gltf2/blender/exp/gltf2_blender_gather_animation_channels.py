@@ -32,31 +32,33 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                               ) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
+
+    # First calculate range of animation for baking
+    # This is need if user set 'Force sampling' and in case we need to bake
+    bake_range_start = None
+    bake_range_end = None
+    groups = __get_channel_groups(blender_action, blender_object, export_settings)
+    for chans in groups:
+        ranges = [channel.range() for channel in chans]
+        if bake_range_start is None:
+            bake_range_start = min([channel.range()[0] for channel in chans])
+        else:
+            bake_range_start = min(bake_range_start, min([channel.range()[0] for channel in chans]))
+        if bake_range_end is None:
+            bake_range_end = max([channel.range()[1] for channel in chans])
+        else:
+            bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans]))
+
+
     if blender_object.type == "ARMATURE" and export_settings['gltf_force_sampling'] is True:
         # We have to store sampled animation data for every deformation bones
 
-        # First calculate range of animation for baking
-        bake_range_start = None
-        bake_range_end = None
-        groups = __get_channel_groups(blender_action, blender_object, export_settings)
-        for chans in groups:
-            ranges = [channel.range() for channel in chans]
-            if bake_range_start is None:
-                bake_range_start = min([channel.range()[0] for channel in chans])
-            else:
-                bake_range_start = min(bake_range_start, min([channel.range()[0] for channel in chans]))
-            if bake_range_end is None:
-                bake_range_end = max([channel.range()[1] for channel in chans])
-            else:
-                bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans]))
+        # Check that there are some anim in this action
+        if bake_range_start is None:
+            return []
 
-        # Then bake all bones or only def bones
-        if export_settings['gltf_def_bones'] is True:
-            bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
-        else:
-            bones = blender_object.data.bones
-
-        for bone in bones:
+        # Then bake all bones
+        for bone in blender_object.data.bones:
             for p in ["location", "rotation_quaternion", "scale"]:
                 channel = __gather_animation_channel(
                     (),
@@ -71,7 +73,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
     else:
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
             channel_group_sorted = __get_channel_group_sorted(channel_group, blender_object)
-            channel = __gather_animation_channel(channel_group_sorted, blender_object, export_settings, None, None, None, None, blender_action.name)
+            channel = __gather_animation_channel(channel_group_sorted, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name)
             if channel is not None:
                 channels.append(channel)
 

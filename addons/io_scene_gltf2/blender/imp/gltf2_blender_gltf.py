@@ -72,7 +72,7 @@ class BlenderGlTF():
         #          Bone head defined a point
         #          Calcul of distance between point and line
         #          If < threshold --> In a chain
-        # Based on an idea of @Menithal, but added alignement detection to avoid some bad cases
+        # Based on an idea of @Menithal, but added alignment detection to avoid some bad cases
 
         threshold = 0.001
         for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
@@ -129,10 +129,6 @@ class BlenderGlTF():
         # Check if there is animation on object
         # Init is to False, and will be set to True during creation
         gltf.animation_object = False
-
-        # Store shapekeys equivalent between target & shapekey index
-        # For example when no POSITION on target
-        gltf.shapekeys = {}
 
         # Blender material
         if gltf.data.materials:
@@ -277,7 +273,14 @@ class BlenderGlTF():
             for node_idx, node in enumerate(gltf.data.nodes):
                 node.animations = {}
 
+            track_names = set()
             for anim_idx, anim in enumerate(gltf.data.animations):
+                # Pick pair-wise unique name for each animation to use as a name
+                # for its NLA tracks.
+                desired_name = anim.name or "Anim_%d" % anim_idx
+                anim.track_name = BlenderGlTF.find_unused_name(track_names, desired_name)
+                track_names.add(anim.track_name)
+
                 for channel_idx, channel in enumerate(anim.channels):
                     if channel.target.node is None:
                         continue
@@ -294,3 +297,52 @@ class BlenderGlTF():
             for mesh in gltf.data.meshes:
                 mesh.blender_name = None
                 mesh.is_weight_animated = False
+
+        # Calculate names for each mesh's shapekeys
+        for mesh in gltf.data.meshes or []:
+            mesh.shapekey_names = []
+            used_names = set()
+
+            for sk, target in enumerate(mesh.primitives[0].targets or []):
+                if 'POSITION' not in target:
+                    mesh.shapekey_names.append(None)
+                    continue
+
+                # Check if glTF file has some extras with targetNames. Otherwise
+                # use the name of the POSITION accessor on the first primitive.
+                shapekey_name = None
+                if mesh.extras is not None:
+                    if 'targetNames' in mesh.extras and sk < len(mesh.extras['targetNames']):
+                        shapekey_name = mesh.extras['targetNames'][sk]
+                if shapekey_name is None:
+                    if gltf.data.accessors[target['POSITION']].name is not None:
+                        shapekey_name = gltf.data.accessors[target['POSITION']].name
+                if shapekey_name is None:
+                    shapekey_name = "target_" + str(sk)
+
+                shapekey_name = BlenderGlTF.find_unused_name(used_names, shapekey_name)
+                used_names.add(shapekey_name)
+
+                mesh.shapekey_names.append(shapekey_name)
+
+    @staticmethod
+    def find_unused_name(haystack, desired_name):
+        """Finds a name not in haystack and <= 63 UTF-8 bytes.
+        (the limit on the size of a Blender name.)
+        If a is taken, tries a.001, then a.002, etc.
+        """
+        stem = desired_name[:63]
+        suffix = ''
+        cntr = 1
+        while True:
+            name = stem + suffix
+
+            if len(name.encode('utf-8')) > 63:
+                stem = stem[:-1]
+                continue
+
+            if name not in haystack:
+                return name
+
+            suffix = '.%03d' % cntr
+            cntr += 1

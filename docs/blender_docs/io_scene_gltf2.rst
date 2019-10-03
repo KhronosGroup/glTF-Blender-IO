@@ -364,6 +364,21 @@ Only certain types of animation are supported:
 
 Animation of other properties, like lights or materials, will be ignored.
 
+An *NLA Strip animation* consists of multiple actions on multiple objects that
+should play together. To create an NLA strip animation with the name "My
+Animation", push the action that should play each object onto an NLA track for
+that object with the name "My Animation".
+
+.. figure:: /images/addons_io-gltf2_animation-nla-strip-animation-example.png
+
+   Will be exported as an animation called "My Animation" with ConeAction
+   playing on the Cone and CubeAction playing on the Cube.
+
+NLA Strip animations will be exported if the Animation → NLA Strips option is
+selected (on by default). All glTF animations are imported as NLA Strip
+animations.
+
+If option is disabled, Blender NLA strip actions will be ignored. Only active action of each objects will be taken into account, and merged into a single glTF animation.
 
 Custom Properties
 -----------------
@@ -504,6 +519,8 @@ Sampling Rate
    How often to evaluate animated values (in frames).
 Always Sample Animations
    Apply sampling to all animations.
+NLA Strips
+   Whether to export NLA strip animations.
 Skinning
    Export skinning (armature) data.
 Bake Skinning Constraints
