@@ -86,10 +86,8 @@ def bonecache(func):
             func.__bonecache = result
             func.__current_action_name = args[6]
             func.__current_armature_name = args[0]
-            print("Using cache (first) for bone ", pose_bone_if_armature.name)
             return result[args[7]][pose_bone_if_armature.name]
         else:
-            print("Using cache for bone ", pose_bone_if_armature.name)
             return func.__bonecache[args[7]][pose_bone_if_armature.name]
     return wrapper_bonecache
 
