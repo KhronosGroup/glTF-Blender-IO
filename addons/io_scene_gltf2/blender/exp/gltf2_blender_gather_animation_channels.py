@@ -58,7 +58,14 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             return []
 
         # Then bake all bones
-        for bone in blender_object.data.bones:
+        bones_to_be_animated = []
+        if export_settings["gltf_def_bones"] is False:
+            bones_to_be_animated = blender_object.data.bones
+        else:
+            bones_to_be_animated, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
+            bones_to_be_animated = [blender_object.pose.bones[b.name] for b in bones_to_be_animated]
+
+        for bone in bones_to_be_animated:
             for p in ["location", "rotation_quaternion", "scale"]:
                 channel = __gather_animation_channel(
                     (),
