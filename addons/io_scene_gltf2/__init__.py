@@ -57,7 +57,8 @@ import bpy
 from bpy.props import (StringProperty,
                        BoolProperty,
                        EnumProperty,
-                       IntProperty)
+                       IntProperty,
+                       CollectionProperty)
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
@@ -791,6 +792,11 @@ class ImportGLTF2(Operator, ImportHelper):
 
     filter_glob = StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
+    files = CollectionProperty(
+        name="File Path",
+        type=bpy.types.OperatorFileListElement,
+    )
+
     loglevel = IntProperty(
         name='Log Level',
         description="Log Level")
@@ -819,14 +825,30 @@ class ImportGLTF2(Operator, ImportHelper):
         return self.import_gltf2(context)
 
     def import_gltf2(self, context):
-        import time
-        from .io.imp.gltf2_io_gltf import glTFImporter
-        from .blender.imp.gltf2_blender_gltf import BlenderGlTF
+        import os
 
         self.set_debug_log()
         import_settings = self.as_keywords()
 
-        self.gltf_importer = glTFImporter(self.filepath, import_settings)
+        if self.files:
+            # Multiple file import
+            ret = {'CANCELLED'}
+            dirname = os.path.dirname(self.filepath)
+            for file in self.files:
+                path = os.path.join(dirname, file.name)
+                if self.unit_import(path, import_settings) == {'FINISHED'}:
+                    ret = {'FINISHED'}
+            return ret
+        else:
+            # Single file import
+            return self.unit_import(self.filepath, import_settings)
+
+    def unit_import(self, filename, import_settings):
+        import time
+        from .io.imp.gltf2_io_gltf import glTFImporter
+        from .blender.imp.gltf2_blender_gltf import BlenderGlTF
+
+        self.gltf_importer = glTFImporter(filename, import_settings)
         success, txt = self.gltf_importer.read()
         if not success:
             self.report({'ERROR'}, txt)
