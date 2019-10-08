@@ -303,27 +303,29 @@ class BlenderGlTF():
             mesh.shapekey_names = []
             used_names = set()
 
-            for sk, target in enumerate(mesh.primitives[0].targets or []):
-                if 'POSITION' not in target:
-                    mesh.shapekey_names.append(None)
-                    continue
+            # Some invalid glTF files has empty primitive tab
+            if len(mesh.primitives) > 0:
+                for sk, target in enumerate(mesh.primitives[0].targets or []):
+                    if 'POSITION' not in target:
+                        mesh.shapekey_names.append(None)
+                        continue
 
-                # Check if glTF file has some extras with targetNames. Otherwise
-                # use the name of the POSITION accessor on the first primitive.
-                shapekey_name = None
-                if mesh.extras is not None:
-                    if 'targetNames' in mesh.extras and sk < len(mesh.extras['targetNames']):
-                        shapekey_name = mesh.extras['targetNames'][sk]
-                if shapekey_name is None:
-                    if gltf.data.accessors[target['POSITION']].name is not None:
-                        shapekey_name = gltf.data.accessors[target['POSITION']].name
-                if shapekey_name is None:
-                    shapekey_name = "target_" + str(sk)
+                    # Check if glTF file has some extras with targetNames. Otherwise
+                    # use the name of the POSITION accessor on the first primitive.
+                    shapekey_name = None
+                    if mesh.extras is not None:
+                        if 'targetNames' in mesh.extras and sk < len(mesh.extras['targetNames']):
+                            shapekey_name = mesh.extras['targetNames'][sk]
+                    if shapekey_name is None:
+                        if gltf.data.accessors[target['POSITION']].name is not None:
+                            shapekey_name = gltf.data.accessors[target['POSITION']].name
+                    if shapekey_name is None:
+                        shapekey_name = "target_" + str(sk)
 
-                shapekey_name = BlenderGlTF.find_unused_name(used_names, shapekey_name)
-                used_names.add(shapekey_name)
+                    shapekey_name = BlenderGlTF.find_unused_name(used_names, shapekey_name)
+                    used_names.add(shapekey_name)
 
-                mesh.shapekey_names.append(shapekey_name)
+                    mesh.shapekey_names.append(shapekey_name)
 
     @staticmethod
     def find_unused_name(haystack, desired_name):
