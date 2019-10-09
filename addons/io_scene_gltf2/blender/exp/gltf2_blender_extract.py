@@ -617,9 +617,8 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             triangles = tessellate_polygon((polyline,))
 
             for triangle in triangles:
-                loop_index_list.append(blender_polygon.loop_indices[triangle[0]])
-                loop_index_list.append(blender_polygon.loop_indices[triangle[2]])
-                loop_index_list.append(blender_polygon.loop_indices[triangle[1]])
+                for triangle_index in triangle:
+                    loop_index_list.append(blender_polygon.loop_indices[triangle_index])
         else:
             continue
 
