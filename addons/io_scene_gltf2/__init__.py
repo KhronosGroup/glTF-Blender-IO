@@ -60,7 +60,6 @@ from bpy.props import (StringProperty,
                        IntProperty)
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
-from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
 
 
 #
@@ -72,6 +71,7 @@ class ExportGLTF2_Base:
     # TODO: refactor to avoid boilerplate
 
     def __init__(self):
+        from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
         self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
 
     bl_options = {'UNDO', 'PRESET'}
@@ -613,6 +613,7 @@ class GLTF_PT_export_geometry_compression(bpy.types.Panel):
     bl_options = {'DEFAULT_CLOSED'}
 
     def __init__(self):
+        from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
         self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
 
     @classmethod
