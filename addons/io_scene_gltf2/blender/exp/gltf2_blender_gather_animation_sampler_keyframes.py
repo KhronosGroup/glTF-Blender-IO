@@ -29,6 +29,7 @@ class Keyframe:
         self.seconds = frame / bpy.context.scene.render.fps
         self.frame = frame
         self.fps = bpy.context.scene.render.fps
+        self.__length_morph = 0
         # Note: channels has some None items only for SK if some SK are not animated
         if bake_channel is None:
             self.target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
