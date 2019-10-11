@@ -29,9 +29,14 @@ class Keyframe:
         self.seconds = frame / bpy.context.scene.render.fps
         self.frame = frame
         self.fps = bpy.context.scene.render.fps
+        # Note: channels has some None items only for SK if some SK are not animated
         if bake_channel is None:
-            self.target = channels[0].data_path.split('.')[-1]
-            self.__indices = [c.array_index for c in channels]
+            self.target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
+            if self.target != "value":
+                self.__indices = [c.array_index for c in channels]
+            else:
+                self.__indices = [i for i, c in enumerate(channels) if c is not None]
+                self.__length_morph = len(channels)
         else:
             self.target = bake_channel
             self.__indices = []
@@ -53,7 +58,7 @@ class Keyframe:
             "rotation_euler": 3,
             "rotation_quaternion": 4,
             "scale": 3,
-            "value": 1
+            "value": self.__length_morph
         }.get(self.target)
 
         if length is None:
@@ -62,17 +67,18 @@ class Keyframe:
         return length
 
     def __set_indexed(self, value):
-        # 'value' targets don't use keyframe.array_index
-        if self.target == "value":
-            return value
         # Sometimes blender animations only reference a subset of components of a data target. Keyframe should always
         # contain a complete Vector/ Quaternion --> use the array_index value of the keyframe to set components in such
         # structures
+        # For SK, must contains all SK values
         result = [0.0] * self.get_target_len()
         for i, v in zip(self.__indices, value):
             result[i] = v
-        result = gltf2_blender_math.list_to_mathutils(result, self.target)
-        return result
+        if self.target == "value":
+            return result
+        else:
+            result = gltf2_blender_math.list_to_mathutils(result, self.target)
+            return result
 
     def get_indices(self):
         return self.__indices
@@ -167,10 +173,11 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
     if bake_bone is None:
         # Find the start and end of the whole action group
-        ranges = [channel.range() for channel in channels]
+        # Note: channels has some None items only for SK if some SK are not animated
+        ranges = [channel.range() for channel in channels if channel is not None]
 
-        start_frame = min([channel.range()[0] for channel in channels])
-        end_frame = max([channel.range()[1] for channel in channels])
+        start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
+        end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
     else:
         start_frame = bake_range_start
         end_frame = bake_range_end
@@ -221,25 +228,27 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     "scale": scale
                 }[target_property]
             else:
-                key.value = [c.evaluate(frame) for c in channels]
+                # Note: channels has some None items only for SK if some SK are not animated
+                key.value = [c.evaluate(frame) for c in channels if c is not None]
                 complete_key(key, non_keyed_values)
             keyframes.append(key)
             frame += step
     else:
         # Just use the keyframes as they are specified in blender
-        frames = [keyframe.co[0] for keyframe in channels[0].keyframe_points]
+        # Note: channels has some None items only for SK if some SK are not animated
+        frames = [keyframe.co[0] for keyframe in [c for c in channels if c is not None][0].keyframe_points]
         # some weird files have duplicate frame at same time, removed them
         frames = sorted(set(frames))
         for i, frame in enumerate(frames):
             key = Keyframe(channels, frame, bake_channel)
             # key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
-            key.value = [c.evaluate(frame) for c in channels]
+            key.value = [c.evaluate(frame) for c in channels if c is not None]
             # Complete key with non keyed values, if needed
-            if len(channels) != key.get_target_len():
+            if len([c for c in channels if c is not None]) != key.get_target_len():
                 complete_key(key, non_keyed_values)
 
             # compute tangents for cubic spline interpolation
-            if channels[0].keyframe_points[0].interpolation == "BEZIER":
+            if [c for c in channels if c is not None][0].keyframe_points[0].interpolation == "BEZIER":
                 # Construct the in tangent
                 if frame == frames[0]:
                     # start in-tangent should become all zero
@@ -251,7 +260,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     key.in_tangent = [
                         c.keyframe_points[i].co[1] + ((c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]
                                                        ) / (frame - frames[i - 1]))
-                        for c in channels
+                        for c in channels if c is not None
                     ]
                 # Construct the out tangent
                 if frame == frames[-1]:
@@ -264,7 +273,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     key.out_tangent = [
                         c.keyframe_points[i].co[1] + ((c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]
                                                        ) / (frames[i + 1] - frame))
-                        for c in channels
+                        for c in channels if c is not None
                     ]
 
             keyframes.append(key)
@@ -276,12 +285,9 @@ def complete_key(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[f
     """
     Complete keyframe with non keyed values
     """
-
-    if key.target == "value":
-        return # No array_index
     for i in range(0, key.get_target_len()):
         if i in key.get_indices():
-            continue # this is a keyed array_index
+            continue # this is a keyed array_index or a SK animated
         key.set_value_index(i, non_keyed_values[i])
 
 def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
@@ -296,12 +302,14 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
     def all_equal(lst):
         return lst[1:] == lst[:-1]
 
+    # Note: channels has some None items only for SK if some SK are not animated
+
     # Sampling is forced
     if export_settings[gltf2_blender_export_keys.FORCE_SAMPLING]:
         return True
 
     # Sampling due to unsupported interpolation
-    interpolation = channels[0].keyframe_points[0].interpolation
+    interpolation = [c for c in channels if c is not None][0].keyframe_points[0].interpolation
     if interpolation not in ["BEZIER", "LINEAR", "CONSTANT"]:
         gltf2_io_debug.print_console("WARNING",
                                      "Baking animation because of an unsupported interpolation method: {}".format(
@@ -309,7 +317,7 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
                                      )
         return True
 
-    if any(any(k.interpolation != interpolation for k in c.keyframe_points) for c in channels):
+    if any(any(k.interpolation != interpolation for k in c.keyframe_points) for c in channels if c is not None):
         # There are different interpolation methods in one action group
         gltf2_io_debug.print_console("WARNING",
                                      "Baking animation because there are keyframes with different "
@@ -317,24 +325,24 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
                                      )
         return True
 
-    if not all_equal([len(c.keyframe_points) for c in channels]):
+    if not all_equal([len(c.keyframe_points) for c in channels if c is not None]):
         gltf2_io_debug.print_console("WARNING",
                                      "Baking animation because the number of keyframes is not "
                                      "equal for all channel tracks")
         return True
 
-    if len(channels[0].keyframe_points) <= 1:
+    if len([c for c in channels if c is not None][0].keyframe_points) <= 1:
         # we need to bake to 'STEP', as at least two keyframes are required to interpolate
         return True
 
-    if not all_equal(list(zip([[k.co[0] for k in c.keyframe_points] for c in channels]))):
+    if not all_equal(list(zip([[k.co[0] for k in c.keyframe_points] for c in channels if c is not None]))):
         # The channels have differently located keyframes
         gltf2_io_debug.print_console("WARNING",
                                      "Baking animation because of differently located keyframes in one channel")
         return True
 
     if blender_object_if_armature is not None:
-        animation_target = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, channels[0].data_path)
+        animation_target = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature, [c for c in channels if c is not None][0].data_path)
         if isinstance(animation_target, bpy.types.PoseBone):
             if len(animation_target.constraints) != 0:
                 # Constraints such as IK act on the bone -> can not be represented in glTF atm

@@ -37,16 +37,17 @@ def gather_animation_channels(blender_action: bpy.types.Action,
     bake_range_start = None
     bake_range_end = None
     groups = __get_channel_groups(blender_action, blender_object, export_settings)
+    # Note: channels has some None items only for SK if some SK are not animated
     for chans in groups:
-        ranges = [channel.range() for channel in chans]
+        ranges = [channel.range() for channel in chans  if channel is not None]
         if bake_range_start is None:
-            bake_range_start = min([channel.range()[0] for channel in chans])
+            bake_range_start = min([channel.range()[0] for channel in chans  if channel is not None])
         else:
-            bake_range_start = min(bake_range_start, min([channel.range()[0] for channel in chans]))
+            bake_range_start = min(bake_range_start, min([channel.range()[0] for channel in chans  if channel is not None]))
         if bake_range_end is None:
-            bake_range_end = max([channel.range()[1] for channel in chans])
+            bake_range_end = max([channel.range()[1] for channel in chans  if channel is not None])
         else:
-            bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans]))
+            bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans  if channel is not None]))
 
 
     if blender_object.type == "ARMATURE" and export_settings['gltf_force_sampling'] is True:
@@ -55,7 +56,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
         # Check that there are some anim in this action
         if bake_range_start is None:
             return []
-            
+
         # Then bake all bones
         for bone in blender_object.data.bones:
             for p in ["location", "rotation_quaternion", "scale"]:
@@ -96,7 +97,21 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
                 shapekeys_idx[sk.name] = cpt_sk
                 cpt_sk += 1
 
-            return tuple(sorted(channels, key=lambda x: shapekeys_idx[blender_object.data.shape_keys.path_resolve(get_target_object_path(x.data_path)).name]))
+            # Note: channels will have some None items only for SK if some SK are not animated
+            idx_channel_mapping = []
+            all_sorted_channels = []
+            for sk_c in channels:
+                sk_name = blender_object.data.shape_keys.path_resolve(get_target_object_path(sk_c.data_path)).name
+                idx = shapekeys_idx[sk_name]
+                idx_channel_mapping.append((shapekeys_idx[sk_name], sk_c))
+            existing_idx = dict(idx_channel_mapping)
+            for i in range(0, cpt_sk):
+                if i not in existing_idx.keys():
+                    all_sorted_channels.append(None)
+                else:
+                    all_sorted_channels.append(existing_idx[i])
+
+            return tuple(all_sorted_channels)
 
     # if not shapekeys, stay in same order, because order doesn't matter
     return channels

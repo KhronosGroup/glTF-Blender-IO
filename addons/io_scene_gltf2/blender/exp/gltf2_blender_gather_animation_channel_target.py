@@ -78,7 +78,8 @@ def __gather_path(channels: typing.Tuple[bpy.types.FCurve],
                   bake_channel: typing.Union[str, None]
                   ) -> str:
     if bake_channel is None:
-        target = channels[0].data_path.split('.')[-1]
+        # Note: channels has some None items only for SK if some SK are not animated
+        target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
     else:
         target = bake_channel
     path = {

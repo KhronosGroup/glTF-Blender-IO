@@ -82,45 +82,38 @@ def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
 
     non_keyed_values = []
 
-    if bake_channel is None:
-        target = channels[0].data_path.split('.')[-1]
-    else:
-        target = bake_channel
-    if target == "value":
-        return ()
+    # Note: channels has some None items only for SK if some SK are not animated
+    if None not in channels:
+        # classic case for object TRS or bone TRS
+        # Or if all morph target are animated
 
-    indices = [c.array_index for c in channels]
-    indices.sort()
-    length = {
-        "delta_location": 3,
-        "delta_rotation_euler": 3,
-        "location": 3,
-        "rotation_axis_angle": 4,
-        "rotation_euler": 3,
-        "rotation_quaternion": 4,
-        "scale": 3,
-        "value": 1
-    }.get(target)
-
-    if length is None:
-        # This is not a known target
-        return ()
-
-    for i in range(0, length):
-        if bake_channel is not None:
-            non_keyed_values.append({
-                "delta_location" : blender_object.delta_location,
-                "delta_rotation_euler" : blender_object.delta_rotation_euler,
-                "location" : blender_object.location,
-                "rotation_axis_angle" : blender_object.rotation_axis_angle,
-                "rotation_euler" : blender_object.rotation_euler,
-                "rotation_quaternion" : blender_object.rotation_quaternion,
-                "scale" : blender_object.scale
-            }[target][i])
-        elif i in indices:
-            non_keyed_values.append(None)
+        if bake_channel is None:
+            target = channels[0].data_path.split('.')[-1]
         else:
-            if blender_object_if_armature is None:
+            target = bake_channel
+        if target == "value":
+            # All morph targets are animated
+            return tuple([None] * len(channels))
+
+        indices = [c.array_index for c in channels]
+        indices.sort()
+        length = {
+            "delta_location": 3,
+            "delta_rotation_euler": 3,
+            "location": 3,
+            "rotation_axis_angle": 4,
+            "rotation_euler": 3,
+            "rotation_quaternion": 4,
+            "scale": 3,
+            "value": len(channels)
+        }.get(target)
+
+        if length is None:
+            # This is not a known target
+            return ()
+
+        for i in range(0, length):
+            if bake_channel is not None:
                 non_keyed_values.append({
                     "delta_location" : blender_object.delta_location,
                     "delta_rotation_euler" : blender_object.delta_rotation_euler,
@@ -130,18 +123,55 @@ def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
                     "rotation_quaternion" : blender_object.rotation_quaternion,
                     "scale" : blender_object.scale
                 }[target][i])
+            elif i in indices:
+                non_keyed_values.append(None)
             else:
-                 # TODO, this is not working if the action is not active (NLA case for example)
-                 trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
-                 non_keyed_values.append({
-                    "location": trans,
-                    "rotation_axis_angle": rot,
-                    "rotation_euler": rot,
-                    "rotation_quaternion": rot,
-                    "scale": scale
+                if blender_object_if_armature is None:
+                    non_keyed_values.append({
+                        "delta_location" : blender_object.delta_location,
+                        "delta_rotation_euler" : blender_object.delta_rotation_euler,
+                        "location" : blender_object.location,
+                        "rotation_axis_angle" : blender_object.rotation_axis_angle,
+                        "rotation_euler" : blender_object.rotation_euler,
+                        "rotation_quaternion" : blender_object.rotation_quaternion,
+                        "scale" : blender_object.scale
                     }[target][i])
+                else:
+                     # TODO, this is not working if the action is not active (NLA case for example)
+                     trans, rot, scale = pose_bone_if_armature.matrix_basis.decompose()
+                     non_keyed_values.append({
+                        "location": trans,
+                        "rotation_axis_angle": rot,
+                        "rotation_euler": rot,
+                        "rotation_quaternion": rot,
+                        "scale": scale
+                        }[target][i])
 
-    return tuple(non_keyed_values)
+        return tuple(non_keyed_values)
+
+    else:
+        # We are in case of morph target, where all targets are not animated
+        # So channels has some None items
+        first_channel = [c for c in channels if c is not None][0]
+        object_path = get_target_object_path(first_channel.data_path)
+        if object_path:
+            shapekeys_idx = {}
+            cpt_sk = 0
+            for sk in blender_object.data.shape_keys.key_blocks:
+                if sk == sk.relative_key:
+                    continue
+                if sk.mute is True:
+                    continue
+                shapekeys_idx[cpt_sk] = sk.name
+                cpt_sk += 1
+
+        for idx_c, channel in enumerate(channels):
+            if channel is None:
+                non_keyed_values.append(blender_object.data.shape_keys.key_blocks[shapekeys_idx[idx_c]].value)
+            else:
+                non_keyed_values.append(None)
+
+        return tuple(non_keyed_values)
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
                         blender_object_if_armature: typing.Optional[bpy.types.Object],
@@ -201,17 +231,18 @@ def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
                            bake_bone: typing.Union[str, None],
                            bake_channel: typing.Union[str, None]
                            ) -> str:
+    # Note: channels has some None items only for SK if some SK are not animated
     if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(blender_object_if_armature,
                                                                      channels,
                                                                      export_settings):
         if bake_bone is not None:
             return 'LINEAR'
         else:
-            max_keyframes = max([len(ch.keyframe_points) for ch in channels])
+            max_keyframes = max([len(ch.keyframe_points) for ch in channels if ch is not None])
             # If only single keyframe revert to STEP
             return 'STEP' if max_keyframes < 2 else 'LINEAR'
 
-    blender_keyframe = channels[0].keyframe_points[0]
+    blender_keyframe = [c for c in channels if c is not None][0].keyframe_points[0]
 
     # Select the interpolation method. Any unsupported method will fallback to STEP
     return {
@@ -246,7 +277,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     if bake_bone is not None:
         target_datapath = "pose.bones['" + bake_bone + "']." + bake_channel
     else:
-        target_datapath = channels[0].data_path
+        target_datapath = [c for c in channels if c is not None][0].data_path
 
     is_yup = export_settings[gltf2_blender_export_keys.YUP]
 
