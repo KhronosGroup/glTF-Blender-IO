@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+from ..com.gltf2_blender_extras import set_extras
 
 
 class BlenderCamera():
@@ -29,6 +30,7 @@ class BlenderCamera():
             pycamera.name = "Camera"
 
         cam = bpy.data.cameras.new(pycamera.name)
+        set_extras(cam, pycamera.extras)
 
         # Blender create a perspective camera by default
         if pycamera.type == "orthographic":

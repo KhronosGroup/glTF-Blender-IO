@@ -18,7 +18,7 @@ from .gltf2_blender_export_keys import MORPH
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
-from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
+from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
@@ -76,7 +76,7 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     extras = {}
 
     if export_settings['gltf_extras']:
-        extras = gltf2_blender_generate_extras.generate_extras(blender_mesh) or {}
+        extras = generate_extras(blender_mesh) or {}
 
     if export_settings[MORPH] and blender_mesh.shape_keys:
         morph_max = len(blender_mesh.shape_keys.key_blocks) - 1

@@ -17,6 +17,7 @@ import math
 from typing import Optional, List, Dict, Any
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from ..com.gltf2_blender_extras import generate_extras
 
 from io_scene_gltf2.io.com import gltf2_io_lights_punctual
 from io_scene_gltf2.io.com import gltf2_io_debug
@@ -112,6 +113,8 @@ def __gather_extensions(blender_lamp, export_settings) -> Optional[dict]:
 
 
 def __gather_extras(blender_lamp, export_settings) -> Optional[Any]:
+    if export_settings['gltf_extras']:
+        return generate_extras(blender_lamp)
     return None
 
 

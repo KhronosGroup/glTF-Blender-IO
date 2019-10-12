@@ -14,7 +14,7 @@
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.blender.exp import gltf2_blender_generate_extras
+from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 
 import bpy
@@ -46,7 +46,7 @@ def __gather_extensions(blender_camera, export_settings):
 
 def __gather_extras(blender_camera, export_settings):
     if export_settings['gltf_extras']:
-        return gltf2_blender_generate_extras.generate_extras(blender_camera)
+        return generate_extras(blender_camera)
     return None
 
 

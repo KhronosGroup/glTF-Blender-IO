@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
 from .gltf2_blender_skin import BlenderSkin
@@ -76,6 +77,7 @@ class BlenderNode():
                     name = "Object_" + str(node_idx)
 
             obj = bpy.data.objects.new(name, mesh)
+            set_extras(obj, pynode.extras)
             obj.rotation_mode = 'QUATERNION'
             if bpy.app.version < (2, 80, 0):
                 bpy.data.scenes[gltf.blender_scene].objects.link(obj)
@@ -107,6 +109,7 @@ class BlenderNode():
             else:
                 gltf.log.info("Blender create Camera node")
             obj = BlenderCamera.create(gltf, pynode.camera)
+            set_extras(obj, pynode.extras)
             BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent)  # TODO default rotation of cameras ?
             pynode.blender_object = obj.name
             BlenderNode.set_parent(gltf, obj, parent)
@@ -137,6 +140,7 @@ class BlenderNode():
         if pynode.extensions is not None:
             if 'KHR_lights_punctual' in pynode.extensions.keys():
                 obj = BlenderLight.create(gltf, pynode.extensions['KHR_lights_punctual']['light'])
+                set_extras(obj, pynode.extras)
                 obj.rotation_mode = 'QUATERNION'
                 BlenderNode.set_transforms(gltf, node_idx, pynode, obj, parent, correction=True)
                 pynode.blender_object = obj.name
@@ -157,6 +161,7 @@ class BlenderNode():
         else:
             gltf.log.info("Blender create Empty node")
             obj = bpy.data.objects.new("Node", None)
+        set_extras(obj, pynode.extras)
         obj.rotation_mode = 'QUATERNION'
         if bpy.app.version < (2, 80, 0):
             bpy.data.scenes[gltf.blender_scene].objects.link(obj)

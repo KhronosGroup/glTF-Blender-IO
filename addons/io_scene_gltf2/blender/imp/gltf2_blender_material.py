@@ -13,6 +13,8 @@
 # limitations under the License.
 
 import bpy
+
+from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_pbrMetallicRoughness import BlenderPbr
 from .gltf2_blender_KHR_materials_pbrSpecularGlossiness import BlenderKHR_materials_pbrSpecularGlossiness
 from .gltf2_blender_KHR_materials_unlit import BlenderKHR_materials_unlit
@@ -48,6 +50,8 @@ class BlenderMaterial():
 
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material[vertex_color] = mat.name
+
+        set_extras(mat, pymaterial.extras)
 
         if bpy.app.version < (2, 80, 0):
             pass # Blender 2.79 did not have a per-material double-sided flag.
