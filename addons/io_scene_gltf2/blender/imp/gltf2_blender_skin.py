@@ -17,7 +17,7 @@ import bpy
 from mathutils import Vector, Matrix
 from ..com.gltf2_blender_conversion import matrix_gltf_to_blender, scale_to_matrix
 from ...io.imp.gltf2_io_binary import BinaryData
-
+from ..com.gltf2_blender_extras import set_extras
 
 class BlenderSkin():
     """Blender Skinning / Armature."""
@@ -154,10 +154,14 @@ class BlenderSkin():
         pynode.blender_bone_name = bone.name
         pynode.blender_armature_name = pyskin.blender_armature_name
         bone.tail = Vector((0.0, 1.0, 0.0))  # Needed to keep bone alive
+        # Custom prop on edit bone
+        set_extras(bone, pynode.extras)
 
         # set bind and pose transforms
         BlenderSkin.set_bone_transforms(gltf, skin_id, bone, node_id, parent)
         bpy.ops.object.mode_set(mode="OBJECT")
+        # Custom prop on pose bone
+        set_extras(obj.pose.bones[bone.name], pynode.extras)
 
     @staticmethod
     def create_vertex_groups(gltf, skin_id):
