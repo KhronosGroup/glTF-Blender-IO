@@ -18,6 +18,7 @@ import typing
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
+from ..com.gltf2_blender_extras import generate_extras
 
 
 def gather_animations(blender_object: bpy.types.Object,
@@ -139,6 +140,9 @@ def __gather_extras(blender_action: bpy.types.Action,
                     blender_object: bpy.types.Object,
                     export_settings
                     ) -> typing.Any:
+
+    if export_settings['gltf_extras']:
+        return generate_extras(blender_action)
     return None
 
 

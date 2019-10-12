@@ -97,6 +97,14 @@ def __gather_animations(blender_scene, export_settings):
 
             to_delete_idx.append(anim_idx)
 
+            # Merging extras
+            # Warning, some values can be overwritten if present in multiple merged animations
+            if animations[anim_idx].extras is not None:
+                for k in animations[anim_idx].extras.keys():
+                    if animations[base_animation_idx].extras is None:
+                        animations[base_animation_idx].extras = {}
+                    animations[base_animation_idx].extras[k] = animations[anim_idx].extras[k]
+
             offset_sampler = len(animations[base_animation_idx].samplers)
             for sampler in animations[anim_idx].samplers:
                 animations[base_animation_idx].samplers.append(sampler)
