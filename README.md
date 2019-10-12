@@ -11,6 +11,11 @@ Documentation
 | 2.80    | https://docs.blender.org/manual/en/2.80/addons/io_scene_gltf2.html |
 | dev     | https://docs.blender.org/manual/en/dev/addons/import_export/io_scene_gltf2.html  |
 
+Notes:
+* 2.80 is the current stable release
+* 2.81 is currently in beta, no new features can be added, only critical bugs. Check blender-v2.81-release branch
+* master branch of this addon is mirrored in Blender master, that will become 2.82
+
 Credits
 -------
 
