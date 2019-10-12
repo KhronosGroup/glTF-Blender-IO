@@ -9,7 +9,7 @@ Documentation
 | Blender Version | Documentation |
 |---------|---------------------|
 | 2.80    | https://docs.blender.org/manual/en/2.80/addons/io_scene_gltf2.html |
-| dev     | https://docs.blender.org/manual/en/dev/addons/io_scene_gltf2.html  |
+| dev     | https://docs.blender.org/manual/en/dev/addons/import_export/io_scene_gltf2.html  |
 
 Credits
 -------
