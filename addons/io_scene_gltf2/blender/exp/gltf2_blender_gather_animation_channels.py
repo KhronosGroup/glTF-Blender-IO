@@ -199,7 +199,6 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
-    print("get channel groups")
     targets = {}
     check_multiple_rotation_mode = {}
     multiple_rotation_mode_detected = False
