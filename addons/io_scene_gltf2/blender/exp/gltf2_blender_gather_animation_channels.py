@@ -200,6 +200,9 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
     targets = {}
+    check_multiple_rotation_mode = {}
+    multiple_rotation_mode_detected = False
+    rotation_modes = ['rotation_euler', 'rotation_quaternion', 'delta_rotation_euler', 'rotation_axis_angle']
     for fcurve in blender_action.fcurves:
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
@@ -239,6 +242,17 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                     gltf2_io_debug.print_console("WARNING", "Animation target {} not found".format(object_path))
                     continue
 
+        # Detect that object or bone are not multiple keyed for euler and quaternion
+        if target_property in rotation_modes:
+            if target.name not in check_multiple_rotation_mode:
+                check_multiple_rotation_mode[target.name] = []
+            if target_property not in check_multiple_rotation_mode[target.name]:
+                for i in [i for i in rotation_modes if i != target_property]:
+                    if i in check_multiple_rotation_mode[target.name]:
+                        multiple_rotation_mode_detected = True
+                        continue
+            check_multiple_rotation_mode[target.name].append(target_property)
+
         # group channels by target object and affected property of the target
         target_properties = targets.get(target, {})
         channels = target_properties.get(target_property, [])
@@ -249,5 +263,9 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
     groups = []
     for p in targets.values():
         groups += list(p.values())
+
+    if multiple_rotation_mode_detected is True:
+        gltf2_io_debug.print_console("WARNING", "Multiple rotation mode detected for {}".format(blender_object.name))
+
 
     return map(tuple, groups)
