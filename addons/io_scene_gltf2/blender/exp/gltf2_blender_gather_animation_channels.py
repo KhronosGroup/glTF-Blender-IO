@@ -199,6 +199,7 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
+    print("get channel groups")
     targets = {}
     check_multiple_rotation_mode = {}
     multiple_rotation_mode_detected = False
@@ -243,6 +244,7 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                     continue
 
         # Detect that object or bone are not multiple keyed for euler and quaternion
+        multiple_rotation_mode_detected_here = False
         if target_property in rotation_modes:
             if target.name not in check_multiple_rotation_mode:
                 check_multiple_rotation_mode[target.name] = []
@@ -250,7 +252,10 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                 for i in [i for i in rotation_modes if i != target_property]:
                     if i in check_multiple_rotation_mode[target.name]:
                         multiple_rotation_mode_detected = True
-                        continue
+                        multiple_rotation_mode_detected_here = True
+                        break
+                if multiple_rotation_mode_detected_here is True:
+                    continue
             check_multiple_rotation_mode[target.name].append(target_property)
 
         # group channels by target object and affected property of the target
