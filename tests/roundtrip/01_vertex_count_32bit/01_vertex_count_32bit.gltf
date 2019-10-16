@@ -1,0 +1,134 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v1.0.3",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0,
+                1,
+                2
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "name" : "Cube",
+            "mesh" : 0
+        },
+        {
+            "name" : "Lamp",
+            "rotation" : [
+                0.16907575726509094,
+                0.7558803558349609,
+                -0.27217137813568115,
+                0.570947527885437
+            ],
+            "translation" : [
+                4.076245307922363,
+                5.903861999511719,
+                -1.0054539442062378
+            ]
+        },
+        {
+            "name" : "Camera",
+            "rotation" : [
+                0.483536034822464,
+                0.33687159419059753,
+                -0.20870360732078552,
+                0.7804827094078064
+            ],
+            "translation" : [
+                7.481131553649902,
+                5.34366512298584,
+                6.5076398849487305
+            ]
+        }
+    ],
+    "materials" : [
+        {
+            "name" : "Material",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.14538942277431488,
+                    0.21291355788707733,
+                    0.8000000715255737,
+                    1
+                ],
+                "roughnessFactor" : 0.10000000149011612,
+                "metallicFactor" : 0
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Cube",
+            "primitives" : [
+                {
+                    "material" : 0,
+                    "indices" : 2,
+                    "attributes" : {
+                        "NORMAL" : 0,
+                        "POSITION" : 1
+                    }
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "type" : "VEC3",
+            "count" : 65536,
+            "componentType" : 5126
+        },
+        {
+            "min" : [
+                -1.000000238418579,
+                -1,
+                -2.626537799835205
+            ],
+            "bufferView" : 1,
+            "type" : "VEC3",
+            "count" : 65536,
+            "max" : [
+                1.000000238418579,
+                1,
+                2.8000006675720215
+            ],
+            "componentType" : 5126
+        },
+        {
+            "bufferView" : 2,
+            "type" : "SCALAR",
+            "count" : 391140,
+            "componentType" : 5125
+        }
+    ],
+    "bufferViews" : [
+        {
+            "byteOffset" : 0,
+            "buffer" : 0,
+            "byteLength" : 786432
+        },
+        {
+            "byteOffset" : 786432,
+            "buffer" : 0,
+            "byteLength" : 786432
+        },
+        {
+            "byteOffset" : 1572864,
+            "buffer" : 0,
+            "byteLength" : 1564560
+        }
+    ],
+    "buffers" : [
+        {
+            "uri" : "01_vertex_count_32bit.bin",
+            "byteLength" : 3137424
+        }
+    ]
+}
