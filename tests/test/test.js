@@ -316,6 +316,40 @@ describe('Exporter', function() {
                 assert.strictEqual(cubeBluePrimitive.attributes.NORMAL, cubeRedPrimitive.attributes.NORMAL);
             });
 
+            it('exports UNSIGNED_SHORT when count is 65535', function() {
+                let gltfPath = path.resolve(outDirPath, '01_vertex_count_16bit.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 1);
+                assert.strictEqual(asset.meshes[0].primitives.length, 1);
+
+                const primitive = asset.meshes[0].primitives[0];
+
+                // There are 65535 vertices, numbered 0 to 65534, avoiding the
+                // primitive restart value at 65535 (the highest 16-bit unsigned integer value).
+                assert.strictEqual(asset.accessors[primitive.attributes.POSITION].count, 65535);
+
+                // The indices componentType should be 5123 (UNSIGNED_SHORT).
+                assert.strictEqual(asset.accessors[primitive.indices].componentType, 5123);
+            });
+
+            it('exports UNSIGNED_INT when count is 65536', function() {
+                let gltfPath = path.resolve(outDirPath, '01_vertex_count_32bit.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 1);
+                assert.strictEqual(asset.meshes[0].primitives.length, 1);
+
+                const primitive = asset.meshes[0].primitives[0];
+
+                // There are 65536 vertices, numbered 0 to 65535.  Because of the primitive
+                // restart value, 32-bit indicies are required at this point and beyond.
+                assert.strictEqual(asset.accessors[primitive.attributes.POSITION].count, 65536);
+
+                // The indices componentType should be 5125 (UNSIGNED_INT).
+                assert.strictEqual(asset.accessors[primitive.indices].componentType, 5125);
+            });
+
             // ORM tests, source images:
             // Occlusion: Black square in upper-left on white background, grayscale image
             // Roughness: Black square in upper-right on white background, grayscale image
@@ -849,6 +883,44 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(emissiveTransform.rotation, 0.7);
                 assert.equalEpsilon(emissiveTransform.scale[0], 8);
                 assert.equalEpsilon(emissiveTransform.scale[1], 9);
+            });
+
+            it('roundtrips UNSIGNED_SHORT when count is 65535', function() {
+                let dir = '01_vertex_count_16bit';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 1);
+                assert.strictEqual(asset.meshes[0].primitives.length, 1);
+
+                const primitive = asset.meshes[0].primitives[0];
+
+                // There are 65535 vertices, numbered 0 to 65534, avoiding the
+                // primitive restart value at 65535 (the highest 16-bit unsigned integer value).
+                assert.strictEqual(asset.accessors[primitive.attributes.POSITION].count, 65535);
+
+                // The indices componentType should be 5123 (UNSIGNED_SHORT).
+                assert.strictEqual(asset.accessors[primitive.indices].componentType, 5123);
+            });
+
+            it('roundtrips UNSIGNED_INT when count is 65536', function() {
+                let dir = '01_vertex_count_32bit';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 1);
+                assert.strictEqual(asset.meshes[0].primitives.length, 1);
+
+                const primitive = asset.meshes[0].primitives[0];
+
+                // There are 65536 vertices, numbered 0 to 65535.  Because of the primitive
+                // restart value, 32-bit indicies are required at this point and beyond.
+                assert.strictEqual(asset.accessors[primitive.attributes.POSITION].count, 65536);
+
+                // The indices componentType should be 5125 (UNSIGNED_INT).
+                assert.strictEqual(asset.accessors[primitive.indices].componentType, 5125);
             });
 
             it('roundtrips some custom normals', function() {
