@@ -1,2 +1,12 @@
 # This helps the doc8 linter not find "whitespace" at the end of every line.
 *.rst text eol=lf
+# glTF and JSON files are written with Unix-style line endings.
+*.gltf text eol=lf
+*.json text eol=lf
+# Turn off text-based EOL adaptations for various binary formats.
+*.jpg binary
+*.png binary
+*.hdr binary
+*.bin binary
+*.glb binary
+*.blend binary
