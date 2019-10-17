@@ -55,8 +55,17 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
         #i = [input for input in blender_material.node_tree.inputs]
         #o = [output for output in blender_material.node_tree.outputs]
         if name == "Emissive":
+            # Check for a dedicated Emission node first, it must supersede the newer built-in one
+            # because the newer one is always present in all Principled BSDF materials.
             type = bpy.types.ShaderNodeEmission
             name = "Color"
+            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+            inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
+            if inputs:
+                return inputs[0]
+            # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission socket.
+            name = "Emission"
+            type = bpy.types.ShaderNodeBsdfPrincipled
         elif name == "Background":
             type = bpy.types.ShaderNodeBackground
             name = "Color"

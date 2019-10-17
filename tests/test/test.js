@@ -215,19 +215,22 @@ describe('Exporter', function() {
             const args = variant[1];
             describe(blenderVersion + '_export' + variant[0], function() {
                 blenderSampleScenes.forEach((scene) => {
-                    it(scene, function(done) {
-                        let outDirName = 'out' + blenderVersion + variant[0];
-                        let blenderPath = `scenes/${scene}.blend`;
-                        let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
-                        let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
-                        let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
-                        blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
-                            if (error)
-                                return done(error);
+                    // The next line causes Blender 2.79b to avoid scenes matching "*_280.blend"
+                    if ((blenderVersion !== 'blender279b') || !scene.endsWith('_280')) {
+                        it(scene, function(done) {
+                            let outDirName = 'out' + blenderVersion + variant[0];
+                            let blenderPath = `scenes/${scene}.blend`;
+                            let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
+                            let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
+                            let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
+                            blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
+                                if (error)
+                                    return done(error);
 
-                            validateGltf(dstPath, done);
-                        }, args);
-                    });
+                                validateGltf(dstPath, done);
+                            }, args);
+                        });
+                    }
                 });
             });
         });
@@ -260,7 +263,7 @@ describe('Exporter', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
             });
 
-            it('can export an emissive map', function() {
+            it('can export an emissive map from the Emission node', function() {
                 let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -272,6 +275,22 @@ describe('Exporter', function() {
                 assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
             });
+
+            if (blenderVersion !== 'blender279b') {
+                // Only Blender 2.80 and above has an Emission socket on the Principled BSDF node.
+                it('can export an emissive map from the Principled BSDF node', function() {
+                    let gltfPath = path.resolve(outDirPath, '01_principled_material_280.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    const textureIndex = asset.materials[0].emissiveTexture.index;
+                    const imageIndex = asset.textures[textureIndex].source;
+
+                    assert.strictEqual(asset.images[imageIndex].uri, '01_principled_emissive.png');
+                    assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
+                    assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
+                });
+            }
 
             it('can create instances of a mesh with different materials', function() {
                 let gltfPath = path.resolve(outDirPath, '02_material_instancing.gltf');
