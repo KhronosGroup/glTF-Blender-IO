@@ -131,7 +131,6 @@ class glTFImporter():
                     return False, "Bad GLB: length of BIN chunk doesn't match"
                 self.buffers[0] = data
 
-        self.content = None
         return True, None
 
     def load_chunk(self, offset):
@@ -157,19 +156,19 @@ class glTFImporter():
 
         # glTF file
         if not self.is_glb_format:
+            content = self.content.decode('utf-8')
             self.content = None
-            with open(self.filename, 'r') as f:
-                content = f.read()
-                try:
-                    self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
-                    return True, None
-                except ValueError as e:
-                    return False, e.args[0]
+            try:
+                self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
+                return True, None
+            except ValueError as e:
+                return False, e.args[0]
 
         # glb file
         else:
             # Parsing glb file
             success, txt = self.load_glb()
+            self.content = None
             return success, txt
 
     def is_node_joint(self, node_idx):
