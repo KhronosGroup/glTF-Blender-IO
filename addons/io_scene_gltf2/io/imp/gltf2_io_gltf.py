@@ -114,13 +114,14 @@ class glTFImporter():
         offset = 12  # header size = 12
 
         # JSON chunk is first
-        type_, len_, str_json, offset = self.load_chunk(offset)
+        type_, len_, json_bytes, offset = self.load_chunk(offset)
         if type_ != b"JSON":
             return False, "Bad GLB: first chunk not JSON"
-        if len_ != len(str_json):
+        if len_ != len(json_bytes):
             return False, "Bad GLB: length of json chunk doesn't match"
         try:
-            json_ = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
+            json_str = str(json_bytes, encoding='utf-8')
+            json_ = json.loads(json_str, parse_constant=glTFImporter.bad_json_value)
             self.data = gltf_from_dict(json_)
         except ValueError as e:
             return False, e.args[0]
@@ -152,13 +153,13 @@ class glTFImporter():
 
         # Check if file is gltf or glb
         with open(self.filename, 'rb') as f:
-            self.content = f.read()
+            self.content = memoryview(f.read())
 
         self.is_glb_format = self.content[:4] == b'glTF'
 
         # glTF file
         if not self.is_glb_format:
-            content = self.content.decode('utf-8')
+            content = str(self.content, encoding='utf-8')
             self.content = None
             try:
                 self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
@@ -207,12 +208,12 @@ class glTFImporter():
             idx = uri.find(sep)
             if idx != -1:
                 data = uri[idx + len(sep):]
-                return base64.b64decode(data), None
+                return memoryview(base64.b64decode(data)), None
 
         path = join(dirname(self.filename), unquote(uri))
         try:
             with open(path, 'rb') as f_:
-                return f_.read(), basename(path)
+                return memoryview(f_.read()), basename(path)
         except Exception:
             self.log.error("Couldn't read file: " + path)
             return None, None
