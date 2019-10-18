@@ -29,6 +29,7 @@ class glTFImporter():
         """initialization."""
         self.filename = filename
         self.import_settings = import_settings
+        self.glb_buffer = None
         self.buffers = {}
         self.accessor_cache = {}
 
@@ -130,7 +131,7 @@ class glTFImporter():
             if type_ == b"BIN\0":
                 if len_ != len(data):
                     return False, "Bad GLB: length of BIN chunk doesn't match"
-                self.buffers[0] = data
+                self.glb_buffer = data
 
         return True, None
 
@@ -191,6 +192,11 @@ class glTFImporter():
             data, _file_name = self.load_uri(buffer.uri)
             if data is not None:
                 self.buffers[buffer_idx] = data
+
+        else:
+            # GLB-stored buffer
+            if buffer_idx == 0 and self.glb_buffer is not None:
+                self.buffers[buffer_idx] = self.glb_buffer
 
     def load_uri(self, uri):
         """Loads a URI.
