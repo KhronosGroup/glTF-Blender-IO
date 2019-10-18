@@ -18,7 +18,7 @@ import logging
 import json
 import struct
 import base64
-from os.path import dirname, join, getsize, isfile
+from os.path import dirname, join, isfile
 
 
 class glTFImporter():
@@ -104,34 +104,32 @@ class glTFImporter():
             return False, "This file is not a glTF/glb file"
 
         if self.version != 2:
-            return False, "glTF version doesn't match to 2"
+            return False, "GLB version %d unsupported" % self.version
 
-        if self.file_size != getsize(self.filename):
-            return False, "File size doesn't match"
+        if self.file_size != len(self.content):
+            return False, "Bad GLB: file size doesn't match"
 
         offset = 12  # header size = 12
 
-        # TODO check json type for chunk 0, and BIN type for next ones
-
-        # json
-        type, len_, str_json, offset = self.load_chunk(offset)
+        # JSON chunk is first
+        type_, len_, str_json, offset = self.load_chunk(offset)
+        if type_ != b"JSON":
+            return False, "Bad GLB: first chunk not JSON"
         if len_ != len(str_json):
-            return False, "Length of json part doesn't match"
+            return False, "Bad GLB: length of json chunk doesn't match"
         try:
             json_ = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
             self.data = gltf_from_dict(json_)
         except ValueError as e:
             return False, e.args[0]
 
-        # binary data
-        chunk_cpt = 0
-        while offset < len(self.content):
-            type, len_, data, offset = self.load_chunk(offset)
-            if len_ != len(data):
-                return False, "Length of bin buffer " + str(chunk_cpt) + " doesn't match"
-
-            self.buffers[chunk_cpt] = data
-            chunk_cpt += 1
+        # BIN chunk is second (if it exists)
+        if offset < len(self.content):
+            type_, len_, data, offset = self.load_chunk(offset)
+            if type_ == b"BIN\0":
+                if len_ != len(data):
+                    return False, "Bad GLB: length of BIN chunk doesn't match"
+                self.buffers[0] = data
 
         self.content = None
         return True, None
