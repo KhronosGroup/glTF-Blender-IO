@@ -161,8 +161,8 @@ class BlenderSkin():
         BlenderSkin.set_bone_transforms(gltf, skin_id, bone, node_id, parent)
         bpy.ops.object.mode_set(mode="OBJECT")
         # Custom prop on pose bone
-        if bone.name in obj.pose.bones:
-            set_extras(obj.pose.bones[bone.name], pynode.extras)
+        if pynode.blender_bone_name in obj.pose.bones:
+            set_extras(obj.pose.bones[pynode.blender_bone_name], pynode.extras)
 
     @staticmethod
     def create_vertex_groups(gltf, skin_id):
