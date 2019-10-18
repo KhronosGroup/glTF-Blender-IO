@@ -18,7 +18,8 @@ import logging
 import json
 import struct
 import base64
-from os.path import dirname, join, isfile
+from os.path import dirname, join, isfile, basename
+from urllib.parse import unquote
 
 
 class glTFImporter():
@@ -187,13 +188,25 @@ class glTFImporter():
         buffer = self.data.buffers[buffer_idx]
 
         if buffer.uri:
-            sep = ';base64,'
-            if buffer.uri[:5] == 'data:':
-                idx = buffer.uri.find(sep)
-                if idx != -1:
-                    data = buffer.uri[idx + len(sep):]
-                    self.buffers[buffer_idx] = base64.b64decode(data)
-                    return
+            data, _file_name = self.load_uri(buffer.uri)
+            if data is not None:
+                self.buffers[buffer_idx] = data
 
-            with open(join(dirname(self.filename), buffer.uri), 'rb') as f_:
-                self.buffers[buffer_idx] = f_.read()
+    def load_uri(self, uri):
+        """Loads a URI.
+        Returns the data and the filename of the resource, if there is one.
+        """
+        sep = ';base64,'
+        if uri.startswith('data:'):
+            idx = uri.find(sep)
+            if idx != -1:
+                data = uri[idx + len(sep):]
+                return base64.b64decode(data), None
+
+        path = join(dirname(self.filename), unquote(uri))
+        try:
+            with open(path, 'rb') as f_:
+                return f_.read(), basename(path)
+        except Exception:
+            self.log.error("Couldn't read file: " + path)
+            return None, None
