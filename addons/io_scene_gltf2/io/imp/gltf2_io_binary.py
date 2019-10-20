@@ -84,7 +84,18 @@ class BinaryData():
             fmt = '<' + (fmt_char * component_nb)
             default_stride = struct.calcsize(fmt)
 
-            # TODO data alignment stuff
+            # Special layouts for certain formats; see the section about
+            # data alignment in the glTF 2.0 spec.
+            component_size = struct.calcsize('<' + fmt_char)
+            if accessor.type == 'MAT2' and component_size == 1:
+                fmt = '<FFxxFF'.replace('F', fmt_char)
+                default_stride = 8
+            elif accessor.type == 'MAT3' and component_size == 1:
+                fmt = '<FFFxFFFxFFF'.replace('F', fmt_char)
+                default_stride = 12
+            elif accessor.type == 'MAT3' and component_size == 2:
+                fmt = '<FFFxxFFFxxFFF'.replace('F', fmt_char)
+                default_stride = 24
 
             stride = bufferView.byte_stride or default_stride
 
