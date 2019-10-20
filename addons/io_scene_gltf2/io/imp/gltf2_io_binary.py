@@ -96,8 +96,12 @@ class BinaryData():
             ]
 
         else:
-            # TODO: initialize with zeros
-            pass
+            # No buffer view; initialize to zeros
+            component_nb = gltf.component_nb_dict[accessor.type]
+            data = [
+                (0,) * component_nb
+                for i in range(accessor.count)
+            ]
 
         if accessor.sparse:
             sparse_indices_obj = Accessor.from_dict({
