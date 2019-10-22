@@ -111,7 +111,7 @@ class Keyframe:
 
     @property
     def out_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
-        return self.__in_tangent
+        return self.__out_tangent
 
     @out_tangent.setter
     def out_tangent(self, value: typing.List[float]):
