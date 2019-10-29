@@ -97,6 +97,8 @@ class Keyframe:
 
     @property
     def value(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
+        if self.target == "value":
+            return self.__value
         return gltf2_blender_math.list_to_mathutils(self.__value, self.target)
 
     @value.setter
@@ -107,6 +109,8 @@ class Keyframe:
     def in_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
         if self.__in_tangent is None:
             return None
+        if self.target == "value":
+            return self.__in_tangent
         return gltf2_blender_math.list_to_mathutils(self.__in_tangent, self.target)
 
     @in_tangent.setter
@@ -117,6 +121,8 @@ class Keyframe:
     def out_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
         if self.__out_tangent is None:
             return None
+        if self.target == "value":
+            return self.__out_tangent
         return gltf2_blender_math.list_to_mathutils(self.__out_tangent, self.target)
 
     @out_tangent.setter
