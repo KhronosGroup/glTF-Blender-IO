@@ -60,22 +60,34 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
                 diffuse.inputs[0].default_value = pbrSG['diffuseFactor']
 
             else:
-                # Create attribute node to get COLOR_0 data
-                attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                attribute_node.attribute_name = 'COLOR_0'
-                attribute_node.location = -500, 0
+                # Create vertexcolor node to get COLOR_0 data
+                if bpy.app.version < (2, 81, 8):
+                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
+                    attribute_node.attribute_name = 'COLOR_0'
+                    attribute_node.location = -500, 0
+                else:
+                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
+                    vertexcolor_node.layer_name = 'COLOR_0'
+                    vertexcolor_node.location = -500, 0
 
                 # links
-                node_tree.links.new(diffuse.inputs[0], attribute_node.outputs[0])
+                if bpy.app.version < (2, 81, 8):
+                    node_tree.links.new(diffuse.inputs[0], attribute_node.outputs[0])
+                else:
+                    node_tree.links.new(diffuse.inputs[0], vertexcolor_node.outputs[0])
 
         elif pbrSG['diffuse_type'] == gltf.TEXTURE_FACTOR:
 
             # TODO alpha ?
             if vertex_color:
                 # TODO tree locations
-                # Create attribute / separate / math nodes
-                attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                attribute_node.attribute_name = 'COLOR_0'
+                # Create vertexcolor / separate / math nodes
+                if bpy.app.version < (2, 81, 8):
+                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
+                    attribute_node.attribute_name = 'COLOR_0'
+                else:
+                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
+                    vertexcolor_node.layer_name = 'COLOR_0'
 
                 separate_vertex_color = node_tree.nodes.new('ShaderNodeSeparateRGB')
                 math_vc_R = node_tree.nodes.new('ShaderNodeMath')
@@ -148,7 +160,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             # Create links
             if vertex_color:
-                node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
+                if bpy.app.version < (2, 81, 8):
+                    node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
+                else:
+                    node_tree.links.new(separate_vertex_color.inputs[0], vertexcolor_node.outputs[0])
                 node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
                 node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
                 node_tree.links.new(math_vc_B.inputs[1], separate_vertex_color.outputs[2])
@@ -181,10 +196,15 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             # TODO alpha ?
             if vertex_color:
-                # Create attribute / separate / math nodes
-                attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                attribute_node.attribute_name = 'COLOR_0'
-                attribute_node.location = -2000, 250
+                # Create vertexcolor / separate / math nodes
+                if bpy.app.version < (2, 81, 8):
+                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
+                    attribute_node.attribute_name = 'COLOR_0'
+                    attribute_node.location = -2000, 250
+                else:
+                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
+                    vertexcolor_node.layer_name = 'COLOR_0'
+                    vertexcolor_node.location = -2000, 250
 
                 separate_vertex_color = node_tree.nodes.new('ShaderNodeSeparateRGB')
                 separate_vertex_color.location = -1500, 250
@@ -253,7 +273,10 @@ class BlenderKHR_materials_pbrSpecularGlossiness():
 
             # Create links
             if vertex_color:
-                node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
+                if bpy.app.version < (2, 81, 8):
+                    node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
+                else:
+                    node_tree.links.new(separate_vertex_color.inputs[0], vertexcolor_node.outputs[0])
 
                 node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
                 node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])

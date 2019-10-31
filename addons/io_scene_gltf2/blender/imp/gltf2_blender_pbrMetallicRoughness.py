@@ -75,9 +75,14 @@ class BlenderPbr():
 
             else:
                 # Create attribute node to get COLOR_0 data
-                attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                attribute_node.attribute_name = 'COLOR_0'
-                attribute_node.location = -500, 0
+                if bpy.app.version < (2, 81, 8):
+                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
+                    attribute_node.attribute_name = 'COLOR_0'
+                    attribute_node.location = -500, 0
+                else:
+                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
+                    vertexcolor_node.layer_name = 'COLOR_0'
+                    vertexcolor_node.location = -500, 0
 
                 if nodetype == "principled":
                     # TODO : currently set metallic & specular in same way
@@ -89,7 +94,10 @@ class BlenderPbr():
                 rgb_node.blend_type = 'MULTIPLY'
                 rgb_node.inputs['Fac'].default_value = 1.0
                 rgb_node.inputs['Color1'].default_value = pypbr.base_color_factor
-                node_tree.links.new(rgb_node.inputs['Color2'], attribute_node.outputs[0])
+                if bpy.app.version < (2, 81, 8):
+                    node_tree.links.new(rgb_node.inputs['Color2'], attribute_node.outputs[0])
+                else:
+                    node_tree.links.new(rgb_node.inputs['Color2'], vertexcolor_node.outputs[0])
                 node_tree.links.new(main_node.inputs[0], rgb_node.outputs[0])
 
         elif pypbr.color_type == gltf.TEXTURE_FACTOR:
@@ -98,8 +106,12 @@ class BlenderPbr():
             if vertex_color:
                 # TODO tree locations
                 # Create attribute / separate / math nodes
-                attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                attribute_node.attribute_name = 'COLOR_0'
+                if bpy.app.version < (2, 81, 8):
+                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
+                    attribute_node.attribute_name = 'COLOR_0'
+                else:
+                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
+                    vertexcolor_node.layer_name = 'COLOR_0'
 
                 vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
                 vc_mult_node.blend_type = 'MULTIPLY'
@@ -158,7 +170,10 @@ class BlenderPbr():
 
             # Create links
             if vertex_color:
-                node_tree.links.new(vc_mult_node.inputs[2], attribute_node.outputs[0])
+                if bpy.app.version < (2, 81, 8):
+                    node_tree.links.new(vc_mult_node.inputs[2], attribute_node.outputs[0])
+                else:
+                    node_tree.links.new(vc_mult_node.inputs[2], vertexcolor_node.outputs[0])
                 node_tree.links.new(vc_mult_node.inputs[1], mult_node.outputs[0])
                 node_tree.links.new(main_node.inputs[0], vc_mult_node.outputs[0])
 
@@ -177,9 +192,14 @@ class BlenderPbr():
             # TODO alpha ?
             if vertex_color:
                 # Create attribute / separate / math nodes
-                attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                attribute_node.attribute_name = 'COLOR_0'
-                attribute_node.location = -2000, 250
+                if bpy.app.version < (2, 81, 8):
+                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
+                    attribute_node.attribute_name = 'COLOR_0'
+                    attribute_node.location = -2000, 250
+                else:
+                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
+                    vertexcolor_node.layer_name = 'COLOR_0'
+                    vertexcolor_node.location = -2000, 250
 
                 vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
                 vc_mult_node.blend_type = 'MULTIPLY'
@@ -234,7 +254,10 @@ class BlenderPbr():
 
             # Create links
             if vertex_color:
-                node_tree.links.new(vc_mult_node.inputs[2], attribute_node.outputs[0])
+                if bpy.app.version < (2, 81, 8):
+                    node_tree.links.new(vc_mult_node.inputs[2], attribute_node.outputs[0])
+                else:
+                    node_tree.links.new(vc_mult_node.inputs[2], vertexcolor_node.outputs[0])
                 node_tree.links.new(vc_mult_node.inputs[1], text_node.outputs[0])
                 node_tree.links.new(main_node.inputs[0], vc_mult_node.outputs[0])
 
