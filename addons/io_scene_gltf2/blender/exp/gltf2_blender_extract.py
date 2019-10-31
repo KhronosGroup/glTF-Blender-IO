@@ -575,7 +575,10 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
 
         #
 
-        if not blender_polygon.material_index in material_idx_to_primitives:
+        if export_settings['gltf_materials'] is False:
+            primitive = material_idx_to_primitives[0]
+            vertex_index_to_new_indices = material_map[0]
+        elif not blender_polygon.material_index in material_idx_to_primitives:
             primitive = material_idx_to_primitives[0]
             vertex_index_to_new_indices = material_map[0]
         else:
