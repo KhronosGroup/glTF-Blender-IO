@@ -75,17 +75,19 @@ class Keyframe:
         result = [0.0] * self.get_target_len()
         for i, v in zip(self.__indices, value):
             result[i] = v
-        if self.target == "value":
-            return result
-        else:
-            result = gltf2_blender_math.list_to_mathutils(result, self.target)
-            return result
+        return result
 
     def get_indices(self):
         return self.__indices
 
     def set_value_index(self, idx, val):
         self.__value[idx] = val
+
+    def set_value_index_in(self, idx, val):
+        self.__in_tangent[idx] = val
+
+    def set_value_index_out(self, idx, val):
+        self.__out_tangent[idx] = val
 
     def set_first_tangent(self):
         self.__in_tangent = self.__value
@@ -95,7 +97,9 @@ class Keyframe:
 
     @property
     def value(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
-        return self.__value
+        if self.target == "value":
+            return self.__value
+        return gltf2_blender_math.list_to_mathutils(self.__value, self.target)
 
     @value.setter
     def value(self, value: typing.List[float]):
@@ -103,7 +107,11 @@ class Keyframe:
 
     @property
     def in_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
-        return self.__in_tangent
+        if self.__in_tangent is None:
+            return None
+        if self.target == "value":
+            return self.__in_tangent
+        return gltf2_blender_math.list_to_mathutils(self.__in_tangent, self.target)
 
     @in_tangent.setter
     def in_tangent(self, value: typing.List[float]):
@@ -111,7 +119,11 @@ class Keyframe:
 
     @property
     def out_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
-        return self.__out_tangent
+        if self.__out_tangent is None:
+            return None
+        if self.target == "value":
+            return self.__out_tangent
+        return gltf2_blender_math.list_to_mathutils(self.__out_tangent, self.target)
 
     @out_tangent.setter
     def out_tangent(self, value: typing.List[float]):
@@ -277,6 +289,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                         for c in channels if c is not None
                     ]
 
+                complete_key_tangents(key, non_keyed_values)
+
             keyframes.append(key)
 
     return keyframes
@@ -290,6 +304,18 @@ def complete_key(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[f
         if i in key.get_indices():
             continue # this is a keyed array_index or a SK animated
         key.set_value_index(i, non_keyed_values[i])
+
+def complete_key_tangents(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[float]]):
+    """
+    Complete keyframe with non keyed values for tangents
+    """
+    for i in range(0, key.get_target_len()):
+        if i in key.get_indices():
+            continue # this is a keyed array_index or a SK animated
+        if key.in_tangent is not None:
+            key.set_value_index_in(i, non_keyed_values[i])
+        if key.out_tangent is not None:
+            key.set_value_index_out(i, non_keyed_values[i])
 
 def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
                  channels: typing.Tuple[bpy.types.FCurve],
