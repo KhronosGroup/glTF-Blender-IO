@@ -151,7 +151,7 @@ def __dispose_memory(node):
 def __compress_node(node, dll, export_settings):
     """Compress a single node."""
     if not (node.mesh is None):
-        print_console("INFO", "Compressing mesh " + node.name)
+        print_console('INFO', 'Draco exporter: Compressing mesh "%s".' % node.name)
         for primitive in node.mesh.primitives:
             __compress_primitive(primitive, dll, export_settings)
 
@@ -168,11 +168,16 @@ def __compress_primitive(primitive, dll, export_settings):
 
     # Positions are the only attribute type required to be present.
     if 'POSITION' not in attributes:
-        print('Draco exporter: Mesh without positions encountered. Skipping.')
+        print_console('WARNING', 'Draco exporter: Primitive without positions encountered. Skipping.')
         pass
 
     # Both, normals and texture coordinates are optional attribute types.
     enableNormals = 'NORMAL' in attributes
+    texCoordAttributes = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
+
+    print_console('INFO', ('Draco exporter: Compressing primitive %s normal attribute and with %d ' + 
+        'texture coordinate attributes, along with positions.') %
+        ('with' if enableNormals else 'without', len(texCoordAttributes)))
 
     # Begin mesh.
     compressor = dll.createCompressor()
@@ -185,7 +190,7 @@ def __compress_primitive(primitive, dll, export_settings):
         dll.addNormalAttribute(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
 
     # Process texture coordinate attributes.
-    for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
+    for attribute in texCoordAttributes:
         dll.addTexCoordAttribute(compressor, attribute.count, attribute.buffer_view.data)
 
     # Process faces.
