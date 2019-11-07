@@ -172,12 +172,12 @@ def __compress_primitive(primitive, dll, export_settings):
         pass
 
     # Both, normals and texture coordinates are optional attribute types.
-    enableNormals = 'NORMAL' in attributes
-    texCoordAttributes = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
+    enable_normals = 'NORMAL' in attributes
+    tex_coord_attrs = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
 
     print_console('INFO', ('Draco exporter: Compressing primitive %s normal attribute and with %d ' + 
         'texture coordinate attributes, along with positions.') %
-        ('with' if enableNormals else 'without', len(texCoordAttributes)))
+        ('with' if enable_normals else 'without', len(tex_coord_attrs)))
 
     # Begin mesh.
     compressor = dll.createCompressor()
@@ -186,11 +186,11 @@ def __compress_primitive(primitive, dll, export_settings):
     dll.addPositionAttribute(compressor, attributes['POSITION'].count, attributes['POSITION'].buffer_view.data)
 
     # Process normal attributes.
-    if enableNormals:
+    if enable_normals:
         dll.addNormalAttribute(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
 
     # Process texture coordinate attributes.
-    for attribute in texCoordAttributes:
+    for attribute in tex_coord_attrs:
         dll.addTexCoordAttribute(compressor, attribute.count, attribute.buffer_view.data)
 
     # Process faces.
@@ -241,7 +241,7 @@ def __compress_primitive(primitive, dll, export_settings):
             }
         }
 
-        if enableNormals:
+        if enable_normals:
             extension['attributes']['NORMAL'] = dll.getNormalAttributeId(compressor)
 
         for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
