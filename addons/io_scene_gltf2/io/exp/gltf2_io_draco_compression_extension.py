@@ -143,8 +143,8 @@ def __dispose_memory(node):
 
             # Drop attributes.
             attributes = primitive.attributes
-            attributes['POSITION'].buffer_view = None
-            attributes['NORMAL'].buffer_view = None
+            if 'NORMAL' in attributes:
+                attributes['NORMAL'].buffer_view = None
             for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
                 attribute.buffer_view = None
 
@@ -166,6 +166,12 @@ def __traverse_node(node, f):
 def __compress_primitive(primitive, dll, export_settings):
     attributes = primitive.attributes
 
+    # This is the only attribute type required to be present.
+    enableNormals = 'NORMAL' in attributes
+    if 'POSITION' not in attributes:
+        print('Draco exporter: Mesh without positions encountered. Skipping.')
+        pass
+
     # Begin mesh.
     compressor = dll.createCompressor()
 
@@ -173,7 +179,8 @@ def __compress_primitive(primitive, dll, export_settings):
     dll.addPositionAttribute(compressor, attributes['POSITION'].count, attributes['POSITION'].buffer_view.data)
 
     # Process normal attributes.
-    dll.addNormalAttribute(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
+    if enableNormals:
+        dll.addNormalAttribute(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
 
     # Process texture coordinate attributes.
     for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
@@ -219,19 +226,21 @@ def __compress_primitive(primitive, dll, export_settings):
         if primitive.extensions is None:
             primitive.extensions = {}
 
-        tex_coord_ids = {}
-        for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
-            tex_coord_ids["TEXCOORD_" + str(id)] = dll.getTexCoordAttributeId(compressor, id)
-
         # Register draco compression extension into primitive.
-        primitive.extensions["KHR_draco_mesh_compression"] = {
+        extension = {
             'bufferView': BinaryData(compressed_data),
             'attributes': {
-                'POSITION': dll.getPositionAttributeId(compressor),
-                'NORMAL': dll.getNormalAttributeId(compressor),
-                **tex_coord_ids,
+                'POSITION': dll.getPositionAttributeId(compressor)
             }
         }
+
+        if enableNormals:
+            extension.attributes['NORMAL'] = dll.getNormalAttributeId(compressor)
+
+        for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
+            extension['attributes']['TEXCOORD_' + str(id)] = dll.getTexCoordAttributeId(compressor, id)
+
+        primitive.extensions['KHR_draco_mesh_compression'] = extension
 
         # Set to triangle list mode.
         primitive.mode = 4
