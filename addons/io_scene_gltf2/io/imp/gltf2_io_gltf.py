@@ -18,7 +18,8 @@ import logging
 import json
 import struct
 import base64
-from os.path import dirname, join, getsize, isfile
+from os.path import dirname, join, isfile, basename
+from urllib.parse import unquote
 
 
 class glTFImporter():
@@ -28,6 +29,7 @@ class glTFImporter():
         """initialization."""
         self.filename = filename
         self.import_settings = import_settings
+        self.glb_buffer = None
         self.buffers = {}
         self.accessor_cache = {}
 
@@ -104,36 +106,34 @@ class glTFImporter():
             return False, "This file is not a glTF/glb file"
 
         if self.version != 2:
-            return False, "glTF version doesn't match to 2"
+            return False, "GLB version %d unsupported" % self.version
 
-        if self.file_size != getsize(self.filename):
-            return False, "File size doesn't match"
+        if self.file_size != len(self.content):
+            return False, "Bad GLB: file size doesn't match"
 
         offset = 12  # header size = 12
 
-        # TODO check json type for chunk 0, and BIN type for next ones
-
-        # json
-        type, len_, str_json, offset = self.load_chunk(offset)
-        if len_ != len(str_json):
-            return False, "Length of json part doesn't match"
+        # JSON chunk is first
+        type_, len_, json_bytes, offset = self.load_chunk(offset)
+        if type_ != b"JSON":
+            return False, "Bad GLB: first chunk not JSON"
+        if len_ != len(json_bytes):
+            return False, "Bad GLB: length of json chunk doesn't match"
         try:
-            json_ = json.loads(str_json.decode('utf-8'), parse_constant=glTFImporter.bad_json_value)
+            json_str = str(json_bytes, encoding='utf-8')
+            json_ = json.loads(json_str, parse_constant=glTFImporter.bad_json_value)
             self.data = gltf_from_dict(json_)
         except ValueError as e:
             return False, e.args[0]
 
-        # binary data
-        chunk_cpt = 0
-        while offset < len(self.content):
-            type, len_, data, offset = self.load_chunk(offset)
-            if len_ != len(data):
-                return False, "Length of bin buffer " + str(chunk_cpt) + " doesn't match"
+        # BIN chunk is second (if it exists)
+        if offset < len(self.content):
+            type_, len_, data, offset = self.load_chunk(offset)
+            if type_ == b"BIN\0":
+                if len_ != len(data):
+                    return False, "Bad GLB: length of BIN chunk doesn't match"
+                self.glb_buffer = data
 
-            self.buffers[chunk_cpt] = data
-            chunk_cpt += 1
-
-        self.content = None
         return True, None
 
     def load_chunk(self, offset):
@@ -153,25 +153,25 @@ class glTFImporter():
 
         # Check if file is gltf or glb
         with open(self.filename, 'rb') as f:
-            self.content = f.read()
+            self.content = memoryview(f.read())
 
         self.is_glb_format = self.content[:4] == b'glTF'
 
         # glTF file
         if not self.is_glb_format:
+            content = str(self.content, encoding='utf-8')
             self.content = None
-            with open(self.filename, 'r') as f:
-                content = f.read()
-                try:
-                    self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
-                    return True, None
-                except ValueError as e:
-                    return False, e.args[0]
+            try:
+                self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
+                return True, None
+            except ValueError as e:
+                return False, e.args[0]
 
         # glb file
         else:
             # Parsing glb file
             success, txt = self.load_glb()
+            self.content = None
             return success, txt
 
     def is_node_joint(self, node_idx):
@@ -190,13 +190,30 @@ class glTFImporter():
         buffer = self.data.buffers[buffer_idx]
 
         if buffer.uri:
-            sep = ';base64,'
-            if buffer.uri[:5] == 'data:':
-                idx = buffer.uri.find(sep)
-                if idx != -1:
-                    data = buffer.uri[idx + len(sep):]
-                    self.buffers[buffer_idx] = base64.b64decode(data)
-                    return
+            data, _file_name = self.load_uri(buffer.uri)
+            if data is not None:
+                self.buffers[buffer_idx] = data
 
-            with open(join(dirname(self.filename), buffer.uri), 'rb') as f_:
-                self.buffers[buffer_idx] = f_.read()
+        else:
+            # GLB-stored buffer
+            if buffer_idx == 0 and self.glb_buffer is not None:
+                self.buffers[buffer_idx] = self.glb_buffer
+
+    def load_uri(self, uri):
+        """Loads a URI.
+        Returns the data and the filename of the resource, if there is one.
+        """
+        sep = ';base64,'
+        if uri.startswith('data:'):
+            idx = uri.find(sep)
+            if idx != -1:
+                data = uri[idx + len(sep):]
+                return memoryview(base64.b64decode(data)), None
+
+        path = join(dirname(self.filename), unquote(uri))
+        try:
+            with open(path, 'rb') as f_:
+                return memoryview(f_.read()), basename(path)
+        except Exception:
+            self.log.error("Couldn't read file: " + path)
+            return None, None

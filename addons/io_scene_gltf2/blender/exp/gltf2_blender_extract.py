@@ -575,7 +575,10 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
 
         #
 
-        if not blender_polygon.material_index in material_idx_to_primitives:
+        if export_settings['gltf_materials'] is False:
+            primitive = material_idx_to_primitives[0]
+            vertex_index_to_new_indices = material_map[0]
+        elif not blender_polygon.material_index in material_idx_to_primitives:
             primitive = material_idx_to_primitives[0]
             vertex_index_to_new_indices = material_map[0]
         else:
@@ -617,6 +620,11 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             triangles = tessellate_polygon((polyline,))
 
             for triangle in triangles:
+                if bpy.app.version < (2, 81, 15):
+                    # tessellate_polygon winding-order is reversed in old versions of Blender
+                    # See https://developer.blender.org/T70594
+                    triangle = (triangle[0], triangle[2], triangle[1])
+
                 for triangle_index in triangle:
                     loop_index_list.append(blender_polygon.loop_indices[triangle_index])
         else:

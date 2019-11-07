@@ -14,8 +14,6 @@
 
 import struct
 import base64
-from os.path import dirname, join, isfile, basename
-from urllib.parse import unquote
 
 
 class BinaryData():
@@ -27,23 +25,31 @@ class BinaryData():
     def get_binary_from_accessor(gltf, accessor_idx):
         """Get binary from accessor."""
         accessor = gltf.data.accessors[accessor_idx]
-        bufferView = gltf.data.buffer_views[accessor.buffer_view]  # TODO initialize with 0 when not present!
-        if bufferView.buffer in gltf.buffers.keys():
-            buffer = gltf.buffers[bufferView.buffer]
-        else:
-            # load buffer
-            gltf.load_buffer(bufferView.buffer)
-            buffer = gltf.buffers[bufferView.buffer]
+        data = BinaryData.get_buffer_view(gltf, accessor.buffer_view) # TODO initialize with 0 when not present!
 
         accessor_offset = accessor.byte_offset
-        bufferview_offset = bufferView.byte_offset
-
         if accessor_offset is None:
             accessor_offset = 0
-        if bufferview_offset is None:
-            bufferview_offset = 0
 
-        return buffer[accessor_offset + bufferview_offset:accessor_offset + bufferview_offset + bufferView.byte_length]
+        return data[accessor_offset:]
+
+    @staticmethod
+    def get_buffer_view(gltf, buffer_view_idx):
+        """Get binary data for buffer view."""
+        buffer_view = gltf.data.buffer_views[buffer_view_idx]
+
+        if buffer_view.buffer in gltf.buffers.keys():
+            buffer = gltf.buffers[buffer_view.buffer]
+        else:
+            # load buffer
+            gltf.load_buffer(buffer_view.buffer)
+            buffer = gltf.buffers[buffer_view.buffer]
+
+        byte_offset = buffer_view.byte_offset
+        if byte_offset is None:
+            byte_offset = 0
+
+        return buffer[byte_offset:byte_offset + buffer_view.byte_length]
 
     @staticmethod
     def get_data_from_accessor(gltf, accessor_idx, cache=False):
@@ -153,39 +159,16 @@ class BinaryData():
     def get_image_data(gltf, img_idx):
         """Get data from image."""
         pyimage = gltf.data.images[img_idx]
-
         image_name = "Image_" + str(img_idx)
 
-        if pyimage.uri:
-            sep = ';base64,'
-            if pyimage.uri[:5] == 'data:':
-                idx = pyimage.uri.find(sep)
-                if idx != -1:
-                    data = pyimage.uri[idx + len(sep):]
-                    return base64.b64decode(data), image_name
+        assert(not (pyimage.uri is not None and pyimage.buffer_view is not None))
 
-            if isfile(join(dirname(gltf.filename), unquote(pyimage.uri))):
-                with open(join(dirname(gltf.filename), unquote(pyimage.uri)), 'rb') as f_:
-                    return f_.read(), basename(join(dirname(gltf.filename), unquote(pyimage.uri)))
-            else:
-                gltf.log.error("Missing file (index " + str(img_idx) + "): " + pyimage.uri)
-                return None, None
+        if pyimage.uri is not None:
+            data, file_name = gltf.load_uri(pyimage.uri)
+            return data, file_name or image_name
 
-        if pyimage.buffer_view is None:
-            return None, None
+        elif pyimage.buffer_view is not None:
+            data = BinaryData.get_buffer_view(gltf, pyimage.buffer_view)
+            return data, image_name
 
-        bufferView = gltf.data.buffer_views[pyimage.buffer_view]
-
-        if bufferView.buffer in gltf.buffers.keys():
-            buffer = gltf.buffers[bufferView.buffer]
-        else:
-            # load buffer
-            gltf.load_buffer(bufferView.buffer)
-            buffer = gltf.buffers[bufferView.buffer]
-
-        bufferview_offset = bufferView.byte_offset
-
-        if bufferview_offset is None:
-            bufferview_offset = 0
-
-        return buffer[bufferview_offset:bufferview_offset + bufferView.byte_length], image_name
+        return None, None
