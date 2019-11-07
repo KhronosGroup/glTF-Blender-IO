@@ -242,7 +242,7 @@ def __compress_primitive(primitive, dll, export_settings):
         }
 
         if enableNormals:
-            extension.attributes['NORMAL'] = dll.getNormalAttributeId(compressor)
+            extension['attributes']['NORMAL'] = dll.getNormalAttributeId(compressor)
 
         for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
             extension['attributes']['TEXCOORD_' + str(id)] = dll.getTexCoordAttributeId(compressor, id)
