@@ -166,11 +166,13 @@ def __traverse_node(node, f):
 def __compress_primitive(primitive, dll, export_settings):
     attributes = primitive.attributes
 
-    # This is the only attribute type required to be present.
-    enableNormals = 'NORMAL' in attributes
+    # Positions are the only attribute type required to be present.
     if 'POSITION' not in attributes:
         print('Draco exporter: Mesh without positions encountered. Skipping.')
         pass
+
+    # Both, normals and texture coordinates are optional attribute types.
+    enableNormals = 'NORMAL' in attributes
 
     # Begin mesh.
     compressor = dll.createCompressor()
