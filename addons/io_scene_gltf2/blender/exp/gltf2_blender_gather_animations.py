@@ -198,6 +198,16 @@ def __get_blender_actions(blender_object: bpy.types.Object,
         if blender_object.animation_data.action is not None:
             blender_actions.append(blender_object.animation_data.action)
             blender_tracks[blender_object.animation_data.action.name] = None
+        
+        #Export all actions outside of NLA track
+        if export_settings['gltf_all_actions'] is True:
+            for action in bpy.data.actions:
+                if action is None:
+                    continue
+            
+                blender_actions.append(action)
+                blender_tracks[action.name] = None
+
 
         # Collect associated strips from NLA tracks.
         if export_settings['gltf_nla_strips'] is True:
@@ -231,5 +241,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))
+    # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
+    blender_actions.sort(key = lambda a: a.name.lower())
 
     return [(blender_action, blender_tracks[blender_action.name]) for blender_action in blender_actions]

@@ -256,6 +256,12 @@ class ExportGLTF2_Base:
         description='Export NLA Strip animations',
         default=True
     )
+    
+    export_all_actions = BoolProperty(
+        name='Export All Actions',
+        description='Include actions outside of NLA strips',
+        default=True
+    )
 
     export_def_bones = BoolProperty(
         name='Export Deformation bones only',
@@ -401,6 +407,7 @@ class ExportGLTF2_Base:
             else:
                 export_settings['gltf_def_bones'] = False
             export_settings['gltf_nla_strips'] = self.export_nla_strips
+            export_settings['gltf_all_actions'] = self.export_all_actions
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
@@ -717,6 +724,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
         layout.prop(operator, 'export_nla_strips')
+        layout.prop(operator, 'export_all_actions')
 
         row = layout.row()
         row.active = operator.export_force_sampling
