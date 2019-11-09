@@ -143,15 +143,15 @@ def __dispose_memory(node):
 
             # Drop attributes.
             attributes = primitive.attributes
-            attributes['POSITION'].buffer_view = None
-            attributes['NORMAL'].buffer_view = None
+            if 'NORMAL' in attributes:
+                attributes['NORMAL'].buffer_view = None
             for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
                 attribute.buffer_view = None
 
 def __compress_node(node, dll, export_settings):
     """Compress a single node."""
     if not (node.mesh is None):
-        print_console("INFO", "Compressing mesh " + node.name)
+        print_console('INFO', 'Draco exporter: Compressing mesh "%s".' % node.name)
         for primitive in node.mesh.primitives:
             __compress_primitive(primitive, dll, export_settings)
 
@@ -166,6 +166,19 @@ def __traverse_node(node, f):
 def __compress_primitive(primitive, dll, export_settings):
     attributes = primitive.attributes
 
+    # Positions are the only attribute type required to be present.
+    if 'POSITION' not in attributes:
+        print_console('WARNING', 'Draco exporter: Primitive without positions encountered. Skipping.')
+        pass
+
+    # Both, normals and texture coordinates are optional attribute types.
+    enable_normals = 'NORMAL' in attributes
+    tex_coord_attrs = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
+
+    print_console('INFO', ('Draco exporter: Compressing primitive %s normal attribute and with %d ' + 
+        'texture coordinate attributes, along with positions.') %
+        ('with' if enable_normals else 'without', len(tex_coord_attrs)))
+
     # Begin mesh.
     compressor = dll.createCompressor()
 
@@ -173,10 +186,11 @@ def __compress_primitive(primitive, dll, export_settings):
     dll.addPositionAttribute(compressor, attributes['POSITION'].count, attributes['POSITION'].buffer_view.data)
 
     # Process normal attributes.
-    dll.addNormalAttribute(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
+    if enable_normals:
+        dll.addNormalAttribute(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
 
     # Process texture coordinate attributes.
-    for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
+    for attribute in tex_coord_attrs:
         dll.addTexCoordAttribute(compressor, attribute.count, attribute.buffer_view.data)
 
     # Process faces.
@@ -219,19 +233,21 @@ def __compress_primitive(primitive, dll, export_settings):
         if primitive.extensions is None:
             primitive.extensions = {}
 
-        tex_coord_ids = {}
-        for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
-            tex_coord_ids["TEXCOORD_" + str(id)] = dll.getTexCoordAttributeId(compressor, id)
-
         # Register draco compression extension into primitive.
-        primitive.extensions["KHR_draco_mesh_compression"] = {
+        extension = {
             'bufferView': BinaryData(compressed_data),
             'attributes': {
-                'POSITION': dll.getPositionAttributeId(compressor),
-                'NORMAL': dll.getNormalAttributeId(compressor),
-                **tex_coord_ids,
+                'POSITION': dll.getPositionAttributeId(compressor)
             }
         }
+
+        if enable_normals:
+            extension['attributes']['NORMAL'] = dll.getNormalAttributeId(compressor)
+
+        for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
+            extension['attributes']['TEXCOORD_' + str(id)] = dll.getTexCoordAttributeId(compressor, id)
+
+        primitive.extensions['KHR_draco_mesh_compression'] = extension
 
         # Set to triangle list mode.
         primitive.mode = 4
