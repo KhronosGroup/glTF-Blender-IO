@@ -23,6 +23,8 @@ class BinaryData():
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("%s should not be instantiated" % cls)
 
+# Note that this function is not used in Blender importer, but is kept in
+# Source code to be used in any pipeline that want to manage gltf/glb file in python
     @staticmethod
     def get_binary_from_accessor(gltf, accessor_idx):
         """Get binary from accessor."""
