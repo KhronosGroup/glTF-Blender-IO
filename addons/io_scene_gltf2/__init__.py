@@ -252,14 +252,15 @@ class ExportGLTF2_Base:
     )
 
     export_nla_strips = BoolProperty(
-        name='NLA Strips',
-        description='Export NLA Strip animations',
+        name='Multiple Animations (from NLA Strips)',
+        description='Each animated object will use NLA strips for exported animations. Actions outside NLA strips will NOT be exported.',
         default=True
     )
     
     export_all_actions = BoolProperty(
         name='Export All Actions',
-        description='Include all actions outside of NLA strips',
+        description='Include all actions outside of NLA strips. '
+                    'WARNING: Multi-object scenes may export duplicate actions',
         default=False
     )
 
@@ -689,6 +690,8 @@ class GLTF_PT_export_animation(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, 'export_current_frame')
+        layout.prop(operator, 'export_nla_strips')
+        layout.prop(operator, 'export_all_actions')
 
 
 class GLTF_PT_export_animation_export(bpy.types.Panel):
@@ -723,8 +726,6 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_range')
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
-        layout.prop(operator, 'export_nla_strips')
-        layout.prop(operator, 'export_all_actions')
 
         row = layout.row()
         row.active = operator.export_force_sampling
