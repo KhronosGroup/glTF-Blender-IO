@@ -15,6 +15,8 @@
 import struct
 import base64
 
+from ..com.gltf2_io import Accessor
+
 
 class BinaryData():
     """Binary reader."""
@@ -25,7 +27,10 @@ class BinaryData():
     def get_binary_from_accessor(gltf, accessor_idx):
         """Get binary from accessor."""
         accessor = gltf.data.accessors[accessor_idx]
-        data = BinaryData.get_buffer_view(gltf, accessor.buffer_view) # TODO initialize with 0 when not present!
+        if accessor.buffer_view is None:
+            return None
+
+        data = BinaryData.get_buffer_view(gltf, accessor.buffer_view)
 
         accessor_offset = accessor.byte_offset
         if accessor_offset is None:
@@ -58,40 +63,78 @@ class BinaryData():
             return gltf.accessor_cache[accessor_idx]
 
         accessor = gltf.data.accessors[accessor_idx]
+        data = BinaryData.get_data_from_accessor_obj(gltf, accessor)
 
-        bufferView = gltf.data.buffer_views[accessor.buffer_view]  # TODO initialize with 0 when not present!
-        buffer_data = BinaryData.get_binary_from_accessor(gltf, accessor_idx)
+        if cache:
+            gltf.accessor_cache[accessor_idx] = data
 
-        fmt_char = gltf.fmt_char_dict[accessor.component_type]
-        component_nb = gltf.component_nb_dict[accessor.type]
-        fmt = '<' + (fmt_char * component_nb)
-        stride_ = struct.calcsize(fmt)
-        # TODO data alignment stuff
+        return data
 
-        if bufferView.byte_stride:
-            stride = bufferView.byte_stride
+    @staticmethod
+    def get_data_from_accessor_obj(gltf, accessor):
+        if accessor.buffer_view is not None:
+            bufferView = gltf.data.buffer_views[accessor.buffer_view]
+            buffer_data = BinaryData.get_buffer_view(gltf, accessor.buffer_view)
+
+            accessor_offset = accessor.byte_offset or 0
+            buffer_data = buffer_data[accessor_offset:]
+
+            fmt_char = gltf.fmt_char_dict[accessor.component_type]
+            component_nb = gltf.component_nb_dict[accessor.type]
+            fmt = '<' + (fmt_char * component_nb)
+            default_stride = struct.calcsize(fmt)
+
+            # Special layouts for certain formats; see the section about
+            # data alignment in the glTF 2.0 spec.
+            component_size = struct.calcsize('<' + fmt_char)
+            if accessor.type == 'MAT2' and component_size == 1:
+                fmt = '<FFxxFF'.replace('F', fmt_char)
+                default_stride = 8
+            elif accessor.type == 'MAT3' and component_size == 1:
+                fmt = '<FFFxFFFxFFF'.replace('F', fmt_char)
+                default_stride = 12
+            elif accessor.type == 'MAT3' and component_size == 2:
+                fmt = '<FFFxxFFFxxFFF'.replace('F', fmt_char)
+                default_stride = 24
+
+            stride = bufferView.byte_stride or default_stride
+
+            # Decode
+            unpack_from = struct.Struct(fmt).unpack_from
+            data = [
+                unpack_from(buffer_data, offset)
+                for offset in range(0, accessor.count*stride, stride)
+            ]
+
         else:
-            stride = stride_
-
-        unpack_from = struct.Struct(fmt).unpack_from
-        data = [
-            unpack_from(buffer_data, offset)
-            for offset in range(0, accessor.count*stride, stride)
-        ]
+            # No buffer view; initialize to zeros
+            component_nb = gltf.component_nb_dict[accessor.type]
+            data = [
+                (0,) * component_nb
+                for i in range(accessor.count)
+            ]
 
         if accessor.sparse:
-            sparse_indices_data = BinaryData.get_data_from_sparse(gltf, accessor.sparse, "indices")
-            sparse_values_values = BinaryData.get_data_from_sparse(
-                gltf,
-                accessor.sparse,
-                "values",
-                accessor.type,
-                accessor.component_type
-            )
+            sparse_indices_obj = Accessor.from_dict({
+                'count': accessor.sparse.count,
+                'bufferView': accessor.sparse.indices.buffer_view,
+                'byteOffset': accessor.sparse.indices.byte_offset or 0,
+                'componentType': accessor.sparse.indices.component_type,
+                'type': 'SCALAR',
+            })
+            sparse_values_obj = Accessor.from_dict({
+                'count': accessor.sparse.count,
+                'bufferView': accessor.sparse.values.buffer_view,
+                'byteOffset': accessor.sparse.values.byte_offset or 0,
+                'componentType': accessor.component_type,
+                'type': accessor.type,
+            })
+            sparse_indices = BinaryData.get_data_from_accessor_obj(gltf, sparse_indices_obj)
+            sparse_values = BinaryData.get_data_from_accessor_obj(gltf, sparse_values_obj)
 
-            # apply sparse
-            for cpt_idx, idx in enumerate(sparse_indices_data):
-                data[idx[0]] = sparse_values_values[cpt_idx]
+            # Apply sparse
+            for i in range(accessor.sparse.count):
+                data[sparse_indices[i][0]] = sparse_values[i]
 
         # Normalization
         if accessor.normalized:
@@ -109,49 +152,6 @@ class BinaryData():
                     else:
                         new_tuple += (float(i),)
                 data[idx] = new_tuple
-
-        if cache:
-            gltf.accessor_cache[accessor_idx] = data
-
-        return data
-
-    @staticmethod
-    def get_data_from_sparse(gltf, sparse, type_, type_val=None, comp_type=None):
-        """Get data from sparse."""
-        if type_ == "indices":
-            bufferView = gltf.data.buffer_views[sparse.indices.buffer_view]
-            offset = sparse.indices.byte_offset
-            component_nb = gltf.component_nb_dict['SCALAR']
-            fmt_char = gltf.fmt_char_dict[sparse.indices.component_type]
-        elif type_ == "values":
-            bufferView = gltf.data.buffer_views[sparse.values.buffer_view]
-            offset = sparse.values.byte_offset
-            component_nb = gltf.component_nb_dict[type_val]
-            fmt_char = gltf.fmt_char_dict[comp_type]
-
-        if bufferView.buffer in gltf.buffers.keys():
-            buffer = gltf.buffers[bufferView.buffer]
-        else:
-            # load buffer
-            gltf.load_buffer(bufferView.buffer)
-            buffer = gltf.buffers[bufferView.buffer]
-
-        bin_data = buffer[bufferView.byte_offset + offset:bufferView.byte_offset + offset + bufferView.byte_length]
-
-        fmt = '<' + (fmt_char * component_nb)
-        stride_ = struct.calcsize(fmt)
-        # TODO data alignment stuff ?
-
-        if bufferView.byte_stride:
-            stride = bufferView.byte_stride
-        else:
-            stride = stride_
-
-        unpack_from = struct.Struct(fmt).unpack_from
-        data = [
-            unpack_from(bin_data, offset)
-            for offset in range(0, sparse.count*stride, stride)
-        ]
 
         return data
 
