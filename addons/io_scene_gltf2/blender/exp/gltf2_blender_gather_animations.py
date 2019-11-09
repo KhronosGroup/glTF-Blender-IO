@@ -202,9 +202,6 @@ def __get_blender_actions(blender_object: bpy.types.Object,
         #Export all actions outside of NLA track
         if export_settings['gltf_all_actions'] is True:
             for action in bpy.data.actions:
-                if action is None:
-                    continue
-            
                 blender_actions.append(action)
                 blender_tracks[action.name] = None
 

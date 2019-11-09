@@ -259,8 +259,8 @@ class ExportGLTF2_Base:
     
     export_all_actions = BoolProperty(
         name='Export All Actions',
-        description='Include actions outside of NLA strips',
-        default=True
+        description='Include all actions outside of NLA strips',
+        default=False
     )
 
     export_def_bones = BoolProperty(
