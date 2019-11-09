@@ -15,7 +15,7 @@
 import bpy
 import typing
 
-from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name
+from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -200,9 +200,6 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
     targets = {}
-    check_multiple_rotation_mode = {}
-    multiple_rotation_mode_detected = False
-    rotation_modes = ['rotation_euler', 'rotation_quaternion', 'delta_rotation_euler', 'rotation_axis_angle']
     for fcurve in blender_action.fcurves:
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
@@ -243,19 +240,10 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                     continue
 
         # Detect that object or bone are not multiple keyed for euler and quaternion
-        multiple_rotation_mode_detected_here = False
-        if target_property in rotation_modes:
-            if target.name not in check_multiple_rotation_mode:
-                check_multiple_rotation_mode[target.name] = []
-            if target_property not in check_multiple_rotation_mode[target.name]:
-                for i in [i for i in rotation_modes if i != target_property]:
-                    if i in check_multiple_rotation_mode[target.name]:
-                        multiple_rotation_mode_detected = True
-                        multiple_rotation_mode_detected_here = True
-                        break
-                if multiple_rotation_mode_detected_here is True:
-                    continue
-            check_multiple_rotation_mode[target.name].append(target_property)
+        # Keep only the current rotation mode used by object / bone
+        if target.rotation_mode not in get_rotation_modes(target_property):
+            multiple_rotation_mode_detected = True
+            continue
 
         # group channels by target object and affected property of the target
         target_properties = targets.get(target, {})
