@@ -249,6 +249,13 @@ def __compress_primitive(primitive, dll, export_settings):
 
         primitive.extensions['KHR_draco_mesh_compression'] = extension
 
+        # Remove buffer views from the accessors of the attributes which compressed.
+        attributes['POSITION'].buffer_view = None
+        if enable_normals:
+            attributes['NORMAL'].buffer_view = None
+        for tex_coord in tex_coord_attrs:
+            tex_coord.buffer_view = None
+
         # Set to triangle list mode.
         primitive.mode = 4
 
