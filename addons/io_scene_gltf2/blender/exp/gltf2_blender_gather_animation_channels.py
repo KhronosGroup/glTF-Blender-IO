@@ -200,6 +200,7 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
     targets = {}
+    multiple_rotation_mode_detected = False
     for fcurve in blender_action.fcurves:
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
@@ -241,9 +242,10 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
 
         # Detect that object or bone are not multiple keyed for euler and quaternion
         # Keep only the current rotation mode used by object / bone
-        if target.rotation_mode not in get_rotation_modes(target_property):
-            multiple_rotation_mode_detected = True
-            continue
+        if target_property != "value":
+            if target.rotation_mode not in get_rotation_modes(target_property):
+                multiple_rotation_mode_detected = True
+                continue
 
         # group channels by target object and affected property of the target
         target_properties = targets.get(target, {})
