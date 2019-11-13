@@ -46,7 +46,11 @@ def restore_animation_on_object(obj, anim_name):
     obj.animation_data.action = None
 
 def make_fcurve(action, co, data_path, index=0, group_name=None, interpolation=None):
-    fcurve = action.fcurves.new(data_path=data_path, index=index)
+    try:
+        fcurve = action.fcurves.new(data_path=data_path, index=index)
+    except:
+        # Some non valid files can have multiple target path
+        return None
 
     if group_name:
         if group_name not in action.groups:
