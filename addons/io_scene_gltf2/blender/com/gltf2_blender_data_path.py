@@ -25,3 +25,14 @@ def get_target_object_path(data_path: str) -> str:
     if self_targeting:
         return ""
     return path_split[0]
+
+def get_rotation_modes(target_property: str) -> str:
+    """Retrieve rotation modes based on target_property"""
+    if target_property in ["rotation_euler", "delta_rotation_euler"]:
+        return True, ["XYZ", "XZY", "YXZ", "YZX", "ZXY", "ZYX"]
+    elif target_property in ["rotation_quaternion", "delta_rotation_quaternion"]:
+        return True, ["QUATERNION"]
+    elif target_property in ["rotation_axis_angle"]:
+        return True, ["AXIS_ANGLE"]
+    else:
+        return False, []

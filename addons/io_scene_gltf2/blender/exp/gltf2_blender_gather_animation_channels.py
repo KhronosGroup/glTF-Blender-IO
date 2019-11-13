@@ -15,7 +15,7 @@
 import bpy
 import typing
 
-from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name
+from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -200,6 +200,7 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
     targets = {}
+    multiple_rotation_mode_detected = False
     for fcurve in blender_action.fcurves:
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
@@ -239,6 +240,13 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                     gltf2_io_debug.print_console("WARNING", "Animation target {} not found".format(object_path))
                     continue
 
+        # Detect that object or bone are not multiple keyed for euler and quaternion
+        # Keep only the current rotation mode used by object / bone
+        rotation, rotation_modes = get_rotation_modes(target_property)
+        if rotation and target.rotation_mode not in rotation_modes:
+            multiple_rotation_mode_detected = True
+            continue
+
         # group channels by target object and affected property of the target
         target_properties = targets.get(target, {})
         channels = target_properties.get(target_property, [])
@@ -249,5 +257,9 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
     groups = []
     for p in targets.values():
         groups += list(p.values())
+
+    if multiple_rotation_mode_detected is True:
+        gltf2_io_debug.print_console("WARNING", "Multiple rotation mode detected for {}".format(blender_object.name))
+
 
     return map(tuple, groups)
