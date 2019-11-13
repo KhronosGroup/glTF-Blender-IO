@@ -13,9 +13,9 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_texture import BlenderTextureInfo
+from .gltf2_blender_image import BlenderImage
+from .gltf2_blender_material_utils import make_texture_block
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name
-from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
 
 
 class BlenderOcclusionMap():
@@ -33,19 +33,18 @@ class BlenderOcclusionMap():
     def create_nodetree(gltf, material_idx, vertex_color):
         """Nodetree creation."""
         pymaterial = gltf.data.materials[material_idx]
+        pytexture = gltf.data.textures[pymaterial.occlusion_texture.index]
 
         material = bpy.data.materials[pymaterial.blender_material[vertex_color]]
         node_tree = material.node_tree
 
-        BlenderTextureInfo.create(gltf, pymaterial.occlusion_texture)
-
         # Pack texture. Occlusion is calculated from Cycles or Eevee, so do nothing
-        if gltf.data.images[gltf.data.textures[
-            pymaterial.occlusion_texture.index
-        ].source].blender_image_name is not None:
-            bpy.data.images[gltf.data.images[gltf.data.textures[
-                pymaterial.occlusion_texture.index
-            ].source].blender_image_name].use_fake_user = True
+        blender_image_name = None
+        if pytexture.source is not None:
+            BlenderImage.create(gltf, pytexture.source)
+            pyimg = gltf.data.images[pytexture.source]
+            blender_image_name = pyimg.blender_image_name
+            bpy.data.images[blender_image_name].use_fake_user = True
 
         # Create a fake node group for exporter
         gltf_node_group_name = get_gltf_node_name()
@@ -66,58 +65,35 @@ class BlenderOcclusionMap():
 
         # Check if the texture node already exists (if used by other parameter metal / roughness)
         found = False
-        for node in [node for node in node_tree.nodes if node.type == "TEX_IMAGE"]:
-            if gltf.data.images[gltf.data.textures[
-                pymaterial.occlusion_texture.index
-            ].source].blender_image_name == node.image.name:
-                # This is our image !
-                # Retrieve separate node if found
-                if node.outputs['Color'].is_linked:
-                    for link in node.outputs['Color'].links:
-                        if link.to_node.type == 'SEPRGB':
-                            node_tree.links.new(ao_node.inputs[0], link.to_node.outputs[0])
-                            found = True
-                            break
+        if blender_image_name is not None:
+            for node in [node for node in node_tree.nodes if node.type == "TEX_IMAGE"]:
+                if node.image and blender_image_name == node.image.name:
+                    # This is our image !
+                    # Retrieve separate node if found
+                    if node.outputs['Color'].is_linked:
+                        for link in node.outputs['Color'].links:
+                            if link.to_node.type == 'SEPRGB':
+                                node_tree.links.new(ao_node.inputs[0], link.to_node.outputs[0])
+                                found = True
+                                break
 
-                if found == True:
-                    break
+                    if found:
+                        break
 
-        if found == False:
+        if not found:
             # Need to create the texture node & separate node
-            mapping = node_tree.nodes.new('ShaderNodeMapping')
-            uvmap = node_tree.nodes.new('ShaderNodeUVMap')
             separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-            if pymaterial.occlusion_texture.tex_coord is not None:
-                uvmap["gltf2_texcoord"] = pymaterial.occlusion_texture.tex_coord  # Set custom flag to retrieve TexCoord
-            else:
-                uvmap["gltf2_texcoord"] = 0  # TODO set in pre_compute instead of here
-
-            text = node_tree.nodes.new('ShaderNodeTexImage')
-            if gltf.data.images[
-                gltf.data.textures[pymaterial.occlusion_texture.index].source
-            ].blender_image_name is not None:
-                text.image = bpy.data.images[gltf.data.images[
-                    gltf.data.textures[pymaterial.occlusion_texture.index].source
-                ].blender_image_name]
-            text.label = 'OCCLUSION'
-            if text.image is not None: # Sometimes images can't be retrieved (bad gltf file ...)
-                tex_transform = text.image['tex_transform'][str(pymaterial.occlusion_texture.index)]
-                if bpy.app.version < (2, 81, 8):
-                    mapping.translation[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                    mapping.translation[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                    mapping.rotation[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                    mapping.scale[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                    mapping.scale[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-                else:
-                    mapping.inputs['Location'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['offset'][0]
-                    mapping.inputs['Location'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['offset'][1]
-                    mapping.inputs['Rotation'].default_value[2] = texture_transform_gltf_to_blender(tex_transform)['rotation']
-                    mapping.inputs['Scale'].default_value[0] = texture_transform_gltf_to_blender(tex_transform)['scale'][0]
-                    mapping.inputs['Scale'].default_value[1] = texture_transform_gltf_to_blender(tex_transform)['scale'][1]
-
+            separate.location = -500, 1500
+            ao_node.location = 0, 1500
+            text = make_texture_block(
+                gltf,
+                node_tree,
+                pymaterial.occlusion_texture,
+                location=(-1000, 1500),
+                label='OCCLUSION',
+                name='occlusionTexture',
+            )
 
             # Links
-            node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
-            node_tree.links.new(text.inputs[0], mapping.outputs[0])
             node_tree.links.new(separate.inputs[0], text.outputs[0])
             node_tree.links.new(ao_node.inputs[0], separate.outputs[0])

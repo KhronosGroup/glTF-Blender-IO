@@ -43,8 +43,6 @@ class BlenderMesh():
 
         # Process all primitives
         for prim in pymesh.primitives:
-            prim.blender_texcoord = {}
-
             if prim.material is None:
                 material_idx = None
             else:
@@ -88,13 +86,6 @@ class BlenderMesh():
     @staticmethod
     def set_mesh(gltf, pymesh, mesh, obj):
         """Sets mesh data after creation."""
-        # Object and UV are now created, we can set UVMap into material
-        for prim in pymesh.primitives:
-            vertex_color = None
-            if 'COLOR_0' in prim.attributes.keys():
-                vertex_color = 'COLOR_0'
-            BlenderPrimitive.set_UV_in_mat(gltf, prim, obj, vertex_color)
-
         # set default weights for shape keys, and names, if not set by convention on extras data
         if pymesh.weights is not None:
             for i in range(len(pymesh.weights)):
