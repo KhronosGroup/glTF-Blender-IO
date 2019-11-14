@@ -16,7 +16,7 @@ These instructions are considered experimental.  They describe how to attach a P
 
 6. In Blender -> Edit -> Preferences -> Files, there is a blank entry for "Scripts" about 4th from the top.  Paste in the full path to the glTF-Blender-IO local git repository on your drive.  Save the preferences.
 
-7. Download the [blender-debugger-for-vscode](https://github.com/AlansCodeLog/blender-debugger-for-vscode) addon. Place it in the addons/ folder of the glTF-Blenders-IO git repository. By installing the debugging addon there, instead of in the default Blender addons directory, you'll be able to keep it installed when upgrading Blender later.
+7. Download the [blender-debugger-for-vscode](https://github.com/AlansCodeLog/blender-debugger-for-vscode) addon. Place it in the addons/ folder of the glTF-Blender-IO git repository. By installing the debugging addon there, instead of in the default Blender addons directory, you'll be able to keep it installed when upgrading Blender later.
 
 8. In Blender -> Edit -> Preferences -> Add-ons, search for the word "Debug", and enable the addon "Development: Debugger for VS Code".  It should automatically pick up the location of where ptvsd was installed on this panel.  Save the preferences.
 
