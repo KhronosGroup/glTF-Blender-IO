@@ -12,13 +12,13 @@ These instructions are considered experimental.  They describe how to attach a P
 
 4. Launch VSCode, go to the "Extensions" tab, and install the `ms-python.python` extension from the "recommended" list.  (For more info see the [market page](https://marketplace.visualstudio.com/items?itemName=ms-python.python)).
 
-5. Download the [blender-debugger-for-vscode](https://github.com/AlansCodeLog/blender-debugger-for-vscode) addon.  **NOTE:** For Blender 2.80, as of this writing you will need the [update-to-2.8 branch](https://github.com/AlansCodeLog/blender-debugger-for-vscode/tree/update-to-2.8) because the master branch is for 2.79x.  Place it in the Blender addons folder, or use the Blender preferences panel to install the addon.
+5. If you're using Blender 2.80 that bundles a copy of the glTF addon, remove that folder from the install, as this will use the git source tree instead.
 
-6. If you're using Blender 2.80 that bundles a copy of the glTF addon, remove that folder from the install, as this will use the git source tree instead.
+6. In Blender -> Edit -> Preferences -> Files, there is a blank entry for "Scripts" about 4th from the top.  Paste in the full path to the glTF-Blender-IO local git repository on your drive.  Save the preferences.
 
-7. In Blender -> Edit -> Preferences -> Add-ons, search for the word "Debug", and enable the addon "Development: Debugger for VS Code".  It should automatically pick up the location of where ptvsd was installed on this panel.  Save the preferences.
+7. Download the [blender-debugger-for-vscode](https://github.com/AlansCodeLog/blender-debugger-for-vscode) addon. Place it in the addons/ folder of the glTF-Blenders-IO git repository. By installing the debugging addon there, instead of in the default Blender addons directory, you'll be able to keep it installed when upgrading Blender later.
 
-8. In Blender -> Edit -> Preferences -> Files, there is a blank entry for "Scripts" about 4th from the top.  Paste in the full path to the glTF-Blender-IO local git repository on your drive.  Save the preferences.
+8. In Blender -> Edit -> Preferences -> Add-ons, search for the word "Debug", and enable the addon "Development: Debugger for VS Code".  It should automatically pick up the location of where ptvsd was installed on this panel.  Save the preferences.
 
 9. Quit and re-start Blender.  Make sure the glTF import/export options are available, indicating the addon is running from the new location.
 
