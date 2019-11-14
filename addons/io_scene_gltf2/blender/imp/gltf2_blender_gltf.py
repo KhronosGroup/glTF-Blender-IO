@@ -15,6 +15,7 @@
 import bpy
 from .gltf2_blender_scene import BlenderScene
 from ...io.com.gltf2_io_trs import TRS
+from .gltf2_blender_animation_material import BlenderMaterialAnim
 
 
 class BlenderGlTF():
@@ -119,6 +120,16 @@ class BlenderGlTF():
                 bpy.context.scene.objects.active = bpy.data.objects[active_object_name_at_end]
             else:
                 bpy.context.view_layer.objects.active = bpy.data.objects[active_object_name_at_end]
+
+        # Import material animations
+        if gltf.data.animations:
+
+            for anim_idx, anim in enumerate(gltf.data.animations):
+                BlenderMaterialAnim.anim(gltf, anim_idx)
+
+            # Restore first animation
+            anim_name = gltf.data.animations[0].track_name
+            BlenderMaterialAnim.restore_animation(gltf, anim_name)
 
     @staticmethod
     def pre_compute(gltf):
