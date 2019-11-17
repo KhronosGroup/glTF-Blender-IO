@@ -64,13 +64,13 @@ def __gather_name(blender_shader_node, export_settings):
 
 
 def __gather_wrap_s(blender_shader_node, export_settings):
-    if blender_shader_node.extension == 'CLIP':
+    if blender_shader_node.extension == 'EXTEND':
         return 33071
     return None
 
 
 def __gather_wrap_t(blender_shader_node, export_settings):
-    if blender_shader_node.extension == 'CLIP':
+    if blender_shader_node.extension == 'EXTEND':
         return 33071
     return None
 
@@ -79,7 +79,7 @@ def __gather_wrap_t(blender_shader_node, export_settings):
 def gather_sampler_from_texture_slot(blender_texture: bpy.types.TextureSlot, export_settings):
     magFilter = 9729
     wrap = 10497
-    if blender_texture.texture.extension == 'CLIP':
+    if blender_texture.texture.extension == 'EXTEND':
         wrap = 33071
 
     minFilter = 9986

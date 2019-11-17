@@ -15,6 +15,9 @@
 import bpy
 from .gltf2_blender_image import BlenderImage
 from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
+from io_scene_gltf2.io.com.gltf2_io import Sampler
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
+from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
 
 def make_texture_block(gltf, node_tree, tex_info, location, label, name=None, colorspace=None):
     """Creates a block of Shader Nodes for the given TextureInfo.
@@ -48,7 +51,12 @@ def make_texture_block(gltf, node_tree, tex_info, location, label, name=None, co
             if tex_img.image:
                 tex_img.image.colorspace_settings.is_data = True
 
-    # TODO do sampler
+    if pytexture.sampler is not None:
+        pysampler = gltf.data.samplers[pytexture.sampler]
+    else:
+        pysampler = Sampler.from_dict({})
+    set_filtering(tex_img, pysampler)
+    set_wrap_mode(tex_img, pysampler)
 
     # Mapping (transforms UVs for KHR_texture_transform)
 
@@ -93,3 +101,58 @@ def make_texture_block(gltf, node_tree, tex_info, location, label, name=None, co
     node_tree.links.new(tex_img.inputs[0], mapping.outputs[0])
 
     return tex_img
+
+def set_filtering(tex_img, pysampler):
+    """Set the filtering/interpolation on an Image Texture from the glTf sampler."""
+    minf = pysampler.min_filter
+    magf = pysampler.mag_filter
+
+    # Ignore mipmapping
+    if minf in [TextureFilter.NearestMipmapNearest, TextureFilter.NearestMipmapLinear]:
+        minf = TextureFilter.Nearest
+    elif minf in [TextureFilter.LinearMipmapNearest, TextureFilter.LinearMipmapLinear]:
+        minf = TextureFilter.Linear
+
+    # If both are nearest or the only specified one was nearest, use nearest.
+    if (minf, magf) in [
+        (TextureFilter.Nearest, TextureFilter.Nearest),
+        (TextureFilter.Nearest, None),
+        (None, TextureFilter.Nearest),
+    ]:
+        tex_img.interpolation = 'Closest'
+    else:
+        tex_img.interpolation = 'Linear'
+
+def set_wrap_mode(tex_img, pysampler):
+    """Set the extension on an Image Texture node from the pysampler."""
+    wrap_s = pysampler.wrap_s
+    wrap_t = pysampler.wrap_t
+
+    if wrap_s is None:
+        wrap_s = TextureWrap.Repeat
+    if wrap_t is None:
+        wrap_t = TextureWrap.Repeat
+
+    # The extension property on the Image Texture node can only handle the case
+    # where both directions are the same and are either REPEAT or CLAMP_TO_EDGE.
+    if (wrap_s, wrap_t) == (TextureWrap.Repeat, TextureWrap.Repeat):
+        extension = TextureWrap.Repeat
+    elif (wrap_s, wrap_t) == (TextureWrap.ClampToEdge, TextureWrap.ClampToEdge):
+        extension = TextureWrap.ClampToEdge
+    else:
+        print_console('WARNING',
+            'texture wrap mode unsupported: (%s, %s)' % (wrap_name(wrap_s), wrap_name(wrap_t)),
+        )
+        # Default to repeat
+        extension = TextureWrap.Repeat
+
+    if extension == TextureWrap.Repeat:
+        tex_img.extension = 'REPEAT'
+    elif extension == TextureWrap.ClampToEdge:
+        tex_img.extension = 'EXTEND'
+
+def wrap_name(wrap):
+    if wrap == TextureWrap.ClampToEdge: return 'CLAMP_TO_EDGE'
+    if wrap == TextureWrap.MirroredRepeat: return 'MIRRORED_REPEAT'
+    if wrap == TextureWrap.Repeat: return 'REPEAT'
+    return 'UNKNOWN (%s)' % wrap

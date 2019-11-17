@@ -103,6 +103,21 @@ class DataType:
         }[num_elems]
 
 
+class TextureFilter(IntEnum):
+    Nearest = 9728
+    Linear = 9729
+    NearestMipmapNearest = 9984
+    LinearMipmapNearest = 9985
+    NearestMipmapLinear = 9986
+    LinearMipmapLinear = 9987
+
+
+class TextureWrap(IntEnum):
+    ClampToEdge = 33071
+    MirroredRepeat = 33648
+    Repeat = 10497
+
+
 #################
 # LEGACY DEFINES
 
