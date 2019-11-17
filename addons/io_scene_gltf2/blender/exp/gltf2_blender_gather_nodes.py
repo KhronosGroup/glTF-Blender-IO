@@ -302,6 +302,7 @@ def __gather_mesh(blender_object, export_settings):
     else:
         blender_mesh = blender_object.data
         skip_filter = False
+        modifiers = None
 
     material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
 
