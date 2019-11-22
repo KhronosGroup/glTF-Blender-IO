@@ -32,14 +32,15 @@ jobs:
               ln -s /opt/blender279/blender /usr/local/bin/blender279b
             fi
             if [[ $FILTER =~ blender28 ]]; then
-              echo "Installing Blender 2.81"
-              BLENDER281_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
-                grep -oe '[^\"]*blender-2\.81[^\"]*linux[^\"]*-x86_64[^\"]*')"
-              mkdir /opt/blender281
-              echo "Downloading from: $BLENDER281_URL"
-              curl -SL "$BLENDER281_URL" | \
-                tar -jx -C /opt/blender281 --strip-components=1
-              ln -s /opt/blender281/blender /usr/local/bin/blender28
+              BLENDER28_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
+                grep -oe '[^\"]*blender-2\.8[^\"]*linux[^\"]*-x86_64[^\"]*')"
+              BLENDER28_VERSION=$(echo $BLENDER28_URL | grep -Po 'blender-2\.\K[0-9]+')
+              echo "Installing Blender 2.${BLENDER28_VERSION}"
+              mkdir /opt/blender28
+              echo "Downloading from: $BLENDER28_URL"
+              curl -SL "$BLENDER28_URL" | \
+                tar -jx -C /opt/blender28 --strip-components=1
+              ln -s /opt/blender28/blender /usr/local/bin/blender28
             fi
       - run:
           name: Setup Tests
@@ -51,8 +52,8 @@ jobs:
               cp -r addons/io_scene_gltf2 /opt/blender279/2.79/scripts/addons/io_scene_gltf2
             fi
             if [[ $FILTER =~ blender28 ]]; then
-              rm -rf /opt/blender281/2.81/scripts/addons/io_scene_gltf2
-              cp -r addons/io_scene_gltf2 /opt/blender281/2.81/scripts/addons/io_scene_gltf2
+              rm -rf /opt/blender28/2.8*/scripts/addons/io_scene_gltf2
+              cp -r addons/io_scene_gltf2 /opt/blender28/2.8*/scripts/addons
             fi
             cd tests
             yarn install
