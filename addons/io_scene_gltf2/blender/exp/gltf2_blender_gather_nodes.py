@@ -303,7 +303,7 @@ def __gather_mesh(blender_object, export_settings):
         blender_mesh = blender_object.data
         skip_filter = False
         modifiers = None # avoid cache miss
-        # If no skin are exported, no need to have vertex groups, this is create a cache miss
+        # If no skin are exported, no need to have vertex group, this will create a cache miss
         if not export_settings[gltf2_blender_export_keys.SKINS]:
             vertex_groups = None
         else:
