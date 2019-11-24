@@ -94,6 +94,11 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
         first_channel = channels[0]
         object_path = get_target_object_path(first_channel.data_path)
         if object_path:
+            if not blender_object.data.shape_keys:
+                # Something is wrong. Maybe the user assigned an armature action
+                # to a mesh object. Returning without sorting
+                return channels
+
             # This is shapekeys, we need to sort channels
             shapekeys_idx = {}
             cpt_sk = 0
