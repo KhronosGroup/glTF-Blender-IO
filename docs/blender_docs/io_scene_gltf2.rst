@@ -91,7 +91,9 @@ The material export process handles the settings described below.
 
 .. tip::
 
-   To create Shadeless (Unlit) materials, use the Background material type.
+   To create Shadeless (Unlit) materials, use the Background or Emission material types. If a
+   Principled BSDF node is also used, it takes precedence and the material is no longer considered
+   Unlit.
 
 
 Base Color

@@ -109,6 +109,10 @@ def __gather_double_sided(blender_material, mesh_double_sided, export_settings):
 
 
 def __gather_emissive_factor(blender_material, export_settings):
+    # An Emission node, alone, should be considered an Unlit material.
+    if not __has_node_of_type(blender_material, bpy.types.ShaderNodeBsdfPrincipled):
+        return None
+
     emissive_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
     if emissive_socket is None:
         emissive_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "EmissiveFactor")
@@ -123,6 +127,10 @@ def __gather_emissive_factor(blender_material, export_settings):
 
 
 def __gather_emissive_texture(blender_material, export_settings):
+    # An Emission node, alone, should be considered an Unlit material.
+    if not __has_node_of_type(blender_material, bpy.types.ShaderNodeBsdfPrincipled):
+        return None
+
     emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
     if emissive is None:
         emissive = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "Emissive")
@@ -136,10 +144,15 @@ def __gather_extensions(blender_material, export_settings):
         if blender_material.use_shadeless:
             extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
     else:
-        if gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background") is not None:
-            extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
-
-    # TODO specular glossiness extension
+        if blender_material.node_tree and blender_material.use_nodes:
+            # Materials using at least one Background or Emissive node, without a
+            # Principled BSDF node, should be considered Unlit.
+            # See: https://github.com/KhronosGroup/glTF-Blender-IO/issues/554
+            has_background = __has_node_of_type(blender_material, bpy.types.ShaderNodeBackground)
+            has_emission = __has_node_of_type(blender_material, bpy.types.ShaderNodeEmission)
+            has_principled = __has_node_of_type(blender_material, bpy.types.ShaderNodeBsdfPrincipled)
+            if not has_principled and (has_background or has_emission):
+                extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
 
     return extensions if extensions else None
 
@@ -224,3 +237,7 @@ def __has_image_node_from_socket(socket):
     if not result:
         return False
     return True
+
+def __has_node_of_type(blender_material, type):
+    nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+    return len(nodes) > 0
