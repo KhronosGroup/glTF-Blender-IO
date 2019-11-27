@@ -20,6 +20,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, boneca
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
 
@@ -167,6 +168,13 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
                 else:
                     matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
             data[frame][pbone.name] = matrix
+
+
+        # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
+        drivers_to_manage = get_sk_drivers(blender_object_if_armature)
+        for dr_obj, dr_fcurves in drivers_to_manage:
+            vals = get_sk_driver_values(dr_obj, frame, dr_fcurves)
+
         frame += step
 
     return data
@@ -181,10 +189,11 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      bake_range_start,
                      bake_range_end,
                      action_name: str,
+                     driver_obj,
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
-    if bake_bone is None:
+    if bake_bone is None and driver_obj is None:
         # Find the start and end of the whole action group
         # Note: channels has some None items only for SK if some SK are not animated
         ranges = [channel.range() for channel in channels if channel is not None]
@@ -200,7 +209,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
 
-        if blender_object_if_armature is not None:
+        if blender_object_if_armature is not None and driver_obj is None:
             if bake_bone is None:
                 pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
                                                                                channels[0].data_path)
@@ -241,9 +250,13 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     "scale": scale
                 }[target_property]
             else:
-                # Note: channels has some None items only for SK if some SK are not animated
-                key.value = [c.evaluate(frame) for c in channels if c is not None]
-                complete_key(key, non_keyed_values)
+                if driver_obj is None:
+                    # Note: channels has some None items only for SK if some SK are not animated
+                    key.value = [c.evaluate(frame) for c in channels if c is not None]
+                    complete_key(key, non_keyed_values)
+                else:
+                    key.value = get_sk_driver_values(driver_obj, frame, channels)
+                    complete_key(key, non_keyed_values)
             keyframes.append(key)
             frame += step
     else:

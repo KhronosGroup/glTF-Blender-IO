@@ -15,39 +15,59 @@
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.com import gltf2_blender_conversion
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import skdriverdiscovercache, skdrivervalues
+from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_object_path
 
 
-def gather_drivers(blender_object, export_settings):
-    """
-    Get driver impacted objects of the scene.
-
-    :return: targets transform to be animated
-    """
-
-    # Only this cases are managed for now:
-    # * Driver on location / rotation / scale of object, managed by:
-    #       location / rotation / scale of another object
-
+@skdriverdiscovercache
+def get_sk_drivers(blender_armature):
 
     drivers = []
 
-    # Check if this object has driver on transforms
-    if not blender_object.animation_data:
-        continue
-    if not blender_object.animation_data.drivers:
-        continue
-    if len(blender_object.animation_data.drivers) == 0:
-        continue
-    for dr in blender_object.animation_data.drivers:
-        if not dr.driver:
+    for child in blender_armature.children:
+        if not child.data:
             continue
-        if not dr.driver.is_valid:
+        if not child.data.shape_keys:
             continue
-        for var in dr.driver.variables:
-            if dr.driver.type == "SCRIPTED" and var.name not in dr.driver.expression:
-                continue
-            if var.type == "TRANSFORMS":
-                # Store info about this driver
-                drivers.append(gltf2_blender_conversion.get_target(dr.data_path))
+        if not child.data.shape_keys.animation_data:
+            continue
+        if not child.data.shape_keys.animation_data.drivers:
+            continue
+        if len(child.data.shape_keys.animation_data.drivers) <= 0:
+            continue
 
-    return drivers if len(drivers) != 0 else None
+        shapekeys_idx = {}
+        cpt_sk = 0
+        for sk in child.data.shape_keys.key_blocks:
+            if sk == sk.relative_key:
+                continue
+            if sk.mute is True:
+                continue
+            shapekeys_idx[sk.name] = cpt_sk
+            cpt_sk += 1
+
+        # Note: channels will have some None items only for SK if some SK are not animated
+        idx_channel_mapping = []
+        all_sorted_channels = []
+        for sk_c in child.data.shape_keys.animation_data.drivers:
+            sk_name = child.data.shape_keys.path_resolve(get_target_object_path(sk_c.data_path)).name
+            idx = shapekeys_idx[sk_name]
+            idx_channel_mapping.append((shapekeys_idx[sk_name], sk_c))
+        existing_idx = dict(idx_channel_mapping)
+        for i in range(0, cpt_sk):
+            if i not in existing_idx.keys():
+                all_sorted_channels.append(None)
+            else:
+                all_sorted_channels.append(existing_idx[i])
+
+        drivers.append((child, tuple(all_sorted_channels)))
+
+    return tuple(drivers)
+
+@skdrivervalues
+def get_sk_driver_values(blender_object, frame, fcurves):
+    sk_values = []
+    for f in [f for f in fcurves if f is not None]:
+        sk_values.append(blender_object.data.shape_keys.path_resolve(get_target_object_path(f.data_path)).value)
+
+    return tuple(sk_values)
