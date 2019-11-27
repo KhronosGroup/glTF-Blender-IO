@@ -274,8 +274,12 @@ class ExportGLTF2_Base:
     )
 
     export_nla_strips: BoolProperty(
-        name='NLA Strips',
-        description='Export NLA Strip animations',
+        name='Group by NLA Track',
+        description=(
+            "When on, multiple actions become part of the same glTF animation if\n"
+            "they're pushed onto NLA tracks with the same name.\n"
+            "When off, all the currently assigned actions become one glTF animation"
+        ),
         default=True
     )
 
