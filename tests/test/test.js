@@ -88,23 +88,23 @@ function validateGltf(gltfPath, done) {
 var assert = require('assert');
 
 // This tests floating-point numbers for equality, ignoring roundoff errors.
-assert.equalEpsilon = function(actual, expected) {
+assert.equalEpsilon = function(actual, expected, message) {
     if (typeof actual !== 'number') {
         throw new Error("Expected " + actual + " to be a number.");
     }
     let epsilon = 1e-6;
     epsilon = Math.max(epsilon, Math.abs(expected * epsilon));
     if (Math.abs(actual - expected) > epsilon) {
-        throw new Error("Expected " + actual + " to equal " + expected);
+        throw new Error(`${message ? message + ': ' : ''}Expected ${actual} to equal ${expected}`);
     }
 };
 
-assert.equalEpsilonArray = function(actual, expected) {
+assert.equalEpsilonArray = function(actual, expected, message) {
     const length = expected.length;
-    assert.strictEqual(actual.length, length);
+    assert.strictEqual(actual.length, length, message);
 
     for (let i = 0; i < length; ++i) {
-        assert.equalEpsilon(actual[i], expected[i]);
+        assert.equalEpsilon(actual[i], expected[i], message);
     }
 };
 
