@@ -143,19 +143,6 @@ def __get_image_data(sockets_or_slots, export_settings) -> gltf2_blender_image.E
     # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
-    def split_pixels_by_channels(image: bpy.types.Image, export_settings) -> typing.Optional[typing.List[typing.List[float]]]:
-        channelcache = export_settings['gltf_channelcache']
-        if image.name in channelcache:
-            return channelcache[image.name]
-
-        pixels = np.array(image.pixels[:])
-        pixels = pixels.reshape((pixels.shape[0] // image.channels, image.channels))
-        channels = np.split(pixels, pixels.shape[1], axis=1)
-
-        channelcache[image.name] = channels
-
-        return channels
-
     if __is_socket(sockets_or_slots):
         results = [__get_tex_from_socket(socket, export_settings) for socket in sockets_or_slots]
         composed_image = None
