@@ -239,5 +239,7 @@ def __has_image_node_from_socket(socket):
     return True
 
 def __has_node_of_type(blender_material, type):
+    if not blender_material.node_tree or not blender_material.use_nodes:
+        return False
     nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
     return len(nodes) > 0
