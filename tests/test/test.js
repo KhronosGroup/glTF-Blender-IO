@@ -642,6 +642,34 @@ describe('Exporter', function() {
                 };
                 assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
             });
+
+            it('exports unlit materials', function() {
+                let gltfPath = path.resolve(outDirPath, '11_unlit_material_280.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 3);
+
+                const emission = asset.materials.find((material) => material.name === 'Emission');
+                const background = asset.materials.find((material) => material.name === 'Background');
+                const principled = asset.materials.find((material) => material.name === 'Principled');
+
+                // Emission node exports as unlit.
+                assert.deepEqual(emission.extensions.KHR_materials_unlit, {}, 'emission has unlit extension');
+                assert.equalEpsilonArray(emission.pbrMetallicRoughness.baseColorFactor, [1, 0.000821215, 0, 1], 'emission has baseColorFactor');
+                assert.strictEqual(emission.pbrMetallicRoughness.emissiveFactor, undefined, 'emission has emissiveFactor');
+
+                // Background node exports as unlit.
+                assert.deepEqual(background.extensions.KHR_materials_unlit, {}, 'background has unlit extension');
+                assert.equalEpsilonArray(background.pbrMetallicRoughness.baseColorFactor, [0.003751097, 0.800000071, 0, 1], 'background has baseColorFactor');
+                assert.strictEqual(background.pbrMetallicRoughness.emissiveFactor, undefined, 'background has emissiveFactor');
+
+                // Emission + Principled node exports as emissive PBR.
+                assert.strictEqual(principled.extensions, undefined, 'principled has no extensions');
+                assert.equalEpsilonArray(principled.pbrMetallicRoughness.baseColorFactor, [0, 0.010257001, 0.800000071, 1], 'principled has baseColorFactor');
+                assert.equalEpsilonArray(principled.emissiveFactor, [0.015274960, 0.015274960, 0.015274960], 'principled has emissiveFactor');
+                assert.equalEpsilon(principled.pbrMetallicRoughness.roughnessFactor, 0.4, 'principled has roughnessFactor');
+                assert.equalEpsilon(principled.pbrMetallicRoughness.metallicFactor, 0, 'principled has metallicFactor');
+            });
         });
     });
 });
