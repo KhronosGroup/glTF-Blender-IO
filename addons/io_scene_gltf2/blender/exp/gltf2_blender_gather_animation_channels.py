@@ -100,6 +100,9 @@ def gather_animation_channels(blender_action: bpy.types.Action,
     else:
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
             channel_group_sorted = __get_channel_group_sorted(channel_group, blender_object)
+            if len(channel_group_sorted) == 0:
+                # Only errors on channels, ignoring
+                continue
             channel = __gather_animation_channel(channel_group_sorted, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
             if channel is not None:
                 channels.append(channel)
@@ -113,6 +116,11 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
         first_channel = channels[0]
         object_path = get_target_object_path(first_channel.data_path)
         if object_path:
+            if not blender_object.data.shape_keys:
+                # Something is wrong. Maybe the user assigned an armature action
+                # to a mesh object. Returning without sorting
+                return channels
+
             # This is shapekeys, we need to sort channels
             shapekeys_idx = {}
             cpt_sk = 0
@@ -128,9 +136,14 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
             idx_channel_mapping = []
             all_sorted_channels = []
             for sk_c in channels:
-                sk_name = blender_object.data.shape_keys.path_resolve(get_target_object_path(sk_c.data_path)).name
-                idx = shapekeys_idx[sk_name]
-                idx_channel_mapping.append((shapekeys_idx[sk_name], sk_c))
+                try:
+                    sk_name = blender_object.data.shape_keys.path_resolve(get_target_object_path(sk_c.data_path)).name
+                    idx = shapekeys_idx[sk_name]
+                    idx_channel_mapping.append((shapekeys_idx[sk_name], sk_c))
+                except:
+                    # Something is wrong. For example, an armature action linked to a mesh object
+                    continue
+
             existing_idx = dict(idx_channel_mapping)
             for i in range(0, cpt_sk):
                 if i not in existing_idx.keys():
