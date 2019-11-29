@@ -176,6 +176,14 @@ class ExportGLTF2_Base:
         max=30
     )
 
+    export_draco_generic_quantization = IntProperty(
+        name='Generic quantization bits',
+        description='Quantization bits for generic coordinate values like weights or joints (0 = no quantization)',
+        default=12,
+        min=0,
+        max=30
+    )
+
     export_tangents = BoolProperty(
         name='Tangents',
         description='Export vertex tangents with meshes',
@@ -380,6 +388,7 @@ class ExportGLTF2_Base:
             export_settings['gltf_draco_position_quantization'] = self.export_draco_position_quantization
             export_settings['gltf_draco_normal_quantization'] = self.export_draco_normal_quantization
             export_settings['gltf_draco_texcoord_quantization'] = self.export_draco_texcoord_quantization
+            export_settings['gltf_draco_generic_quantization'] = self.export_draco_generic_quantization
         else:
             export_settings['gltf_draco_mesh_compression'] = False
 
@@ -475,6 +484,7 @@ class ExportGLTF2_Base:
                     col.prop(self, 'export_draco_position_quantization')
                     col.prop(self, 'export_draco_normal_quantization')
                     col.prop(self, 'export_draco_texcoord_quantization')
+                    col.prop(self, 'export_draco_generic_quantization')
 
         def draw_object_settings(self):
             col = self.layout.box().column()
@@ -657,6 +667,7 @@ class GLTF_PT_export_geometry_compression(bpy.types.Panel):
         col.prop(operator, 'export_draco_position_quantization', text="Quantize Position")
         col.prop(operator, 'export_draco_normal_quantization', text="Normal")
         col.prop(operator, 'export_draco_texcoord_quantization', text="Tex Coords")
+        col.prop(operator, 'export_draco_generic_quantization', text="Generic")
 
 
 class GLTF_PT_export_animation(bpy.types.Panel):
