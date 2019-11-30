@@ -213,7 +213,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
                      bake_range_start,
                      bake_range_end,
                      action_name,
-                     driver
+                     driver_obj
                      ) -> gltf2_io.AnimationSampler:
     return gltf2_blender_gather_animation_samplers.gather_animation_sampler(
         channels,
@@ -223,7 +223,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
         bake_range_start,
         bake_range_end,
         action_name,
-        driver,
+        driver_obj,
         export_settings
     )
 
