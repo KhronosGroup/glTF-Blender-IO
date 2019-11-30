@@ -39,7 +39,7 @@ jobs:
               mkdir /opt/blender28
               echo "Downloading from: $BLENDER28_URL"
               curl -SL "$BLENDER28_URL" | \
-                tar -jx -C /opt/blender28 --strip-components=1
+                tar -Jx -C /opt/blender28 --strip-components=1
               ln -s /opt/blender28/blender /usr/local/bin/blender28
             fi
       - run:
