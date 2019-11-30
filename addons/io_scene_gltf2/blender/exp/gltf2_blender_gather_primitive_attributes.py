@@ -33,6 +33,7 @@ def gather_primitive_attributes(blender_primitive, export_settings):
     attributes.update(__gather_texcoord(blender_primitive, export_settings))
     attributes.update(__gather_colors(blender_primitive, export_settings))
     attributes.update(__gather_skins(blender_primitive, export_settings))
+    attributes.update(__gather_custom(blender_primitive, export_settings))
     return attributes
 
 
@@ -155,6 +156,31 @@ def __gather_colors(blender_primitive, export_settings):
             )
             color_index += 1
             color_id = 'COLOR_' + str(color_index)
+    return attributes
+
+
+def __gather_custom(blender_primitive, export_settings):
+    attributes = {}
+    if export_settings[gltf2_blender_export_keys.CUSTOM_ATTRIBUTES]:
+        for attribute_id in blender_primitive["attributes"]:
+            if not attribute_id.startswith("_"):
+                continue
+            internal_values = blender_primitive["attributes"][attribute_id]
+            attributes[attribute_id] = gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData.from_list(
+                    internal_values, gltf2_io_constants.ComponentType.Float),
+                byte_offset=None,
+                component_type=gltf2_io_constants.ComponentType.Float,
+                count=len(internal_values) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Vec4),
+                extensions=None,
+                extras=None,
+                max=None,
+                min=None,
+                name=None,
+                normalized=None,
+                sparse=None,
+                type=gltf2_io_constants.DataType.Vec4
+            )
     return attributes
 
 

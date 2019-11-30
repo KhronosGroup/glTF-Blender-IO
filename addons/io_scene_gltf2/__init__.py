@@ -194,6 +194,12 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    export_custom_attributes = BoolProperty(
+        name='Custom Attributes',
+        description='Export named vertex colors as custom vertex attributes, skipping sRGB->Linear conversion',
+        default=False
+    )
+
     export_cameras = BoolProperty(
         name='Cameras',
         description='Export cameras',
@@ -385,6 +391,7 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
+        export_settings['gltf_custom_attributes'] = self.export_custom_attributes
         export_settings['gltf_cameras'] = self.export_cameras
         export_settings['gltf_selected'] = self.export_selected
         export_settings['gltf_layers'] = True  # self.export_layers
@@ -461,6 +468,7 @@ class ExportGLTF2_Base:
             if self.export_normals:
                 col.prop(self, 'export_tangents')
             col.prop(self, 'export_colors')
+            col.prop(self, 'export_custom_attributes')
             col.prop(self, 'export_materials')
             if self.export_materials:
                 col.prop(self, 'export_image_format')
@@ -613,6 +621,7 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         col.active = operator.export_normals
         col.prop(operator, 'export_tangents')
         layout.prop(operator, 'export_colors')
+        layout.prop(operator, 'export_custom_attributes')
         layout.prop(operator, 'export_materials')
         col = layout.column()
         col.active = operator.export_materials

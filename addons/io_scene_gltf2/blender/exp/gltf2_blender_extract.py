@@ -26,6 +26,8 @@ from ...io.com.gltf2_io_color_management import color_srgb_to_scene_linear
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 import bpy
 
+import re
+
 #
 # Globals
 #
@@ -46,7 +48,7 @@ TANGENT_ATTRIBUTE = 'TANGENT'
 NORMAL_ATTRIBUTE = 'NORMAL'
 POSITION_ATTRIBUTE = 'POSITION'
 
-GLTF_MAX_COLORS = 2
+GLTF_MAX_COLORS = 4
 
 
 #
@@ -289,150 +291,6 @@ def extract_primitive_floor(a, indices, use_tangents):
 
     return result_primitive
 
-
-def extract_primitive_pack(a, indices, use_tangents):
-    """Pack indices, that the first one starts with 0. Current indices can have gaps."""
-    attributes = {
-        POSITION_ATTRIBUTE: [],
-        NORMAL_ATTRIBUTE: []
-    }
-
-    if use_tangents:
-        attributes[TANGENT_ATTRIBUTE] = []
-
-    result_primitive = {
-        MATERIAL_ID: a[MATERIAL_ID],
-        INDICES_ID: [],
-        ATTRIBUTES_ID: attributes
-    }
-
-    source_attributes = a[ATTRIBUTES_ID]
-
-    #
-
-    tex_coord_index = 0
-    process_tex_coord = True
-    while process_tex_coord:
-        tex_coord_id = TEXCOORD_PREFIX + str(tex_coord_index)
-
-        if source_attributes.get(tex_coord_id) is not None:
-            attributes[tex_coord_id] = []
-            tex_coord_index += 1
-        else:
-            process_tex_coord = False
-
-    tex_coord_max = tex_coord_index
-
-    #
-
-    color_index = 0
-    process_color = True
-    while process_color:
-        color_id = COLOR_PREFIX + str(color_index)
-
-        if source_attributes.get(color_id) is not None:
-            attributes[color_id] = []
-            color_index += 1
-        else:
-            process_color = False
-
-    color_max = color_index
-
-    #
-
-    bone_index = 0
-    process_bone = True
-    while process_bone:
-        joint_id = JOINTS_PREFIX + str(bone_index)
-        weight_id = WEIGHTS_PREFIX + str(bone_index)
-
-        if source_attributes.get(joint_id) is not None:
-            attributes[joint_id] = []
-            attributes[weight_id] = []
-            bone_index += 1
-        else:
-            process_bone = False
-
-    bone_max = bone_index
-
-    #
-
-    morph_index = 0
-    process_morph = True
-    while process_morph:
-        morph_position_id = MORPH_POSITION_PREFIX + str(morph_index)
-        morph_normal_id = MORPH_NORMAL_PREFIX + str(morph_index)
-        morph_tangent_id = MORPH_TANGENT_PREFIX + str(morph_index)
-
-        if source_attributes.get(morph_position_id) is not None:
-            attributes[morph_position_id] = []
-            attributes[morph_normal_id] = []
-            if use_tangents:
-                attributes[morph_tangent_id] = []
-            morph_index += 1
-        else:
-            process_morph = False
-
-    morph_max = morph_index
-
-    #
-
-    old_to_new_indices = {}
-    new_to_old_indices = {}
-
-    new_index = 0
-    for old_index in indices:
-        if old_to_new_indices.get(old_index) is None:
-            old_to_new_indices[old_index] = new_index
-            new_to_old_indices[new_index] = old_index
-            new_index += 1
-
-        result_primitive[INDICES_ID].append(old_to_new_indices[old_index])
-
-    end_new_index = new_index
-
-    for new_index in range(0, end_new_index):
-        old_index = new_to_old_indices[new_index]
-
-        for vi in range(0, 3):
-            attributes[POSITION_ATTRIBUTE].append(source_attributes[POSITION_ATTRIBUTE][old_index * 3 + vi])
-            attributes[NORMAL_ATTRIBUTE].append(source_attributes[NORMAL_ATTRIBUTE][old_index * 3 + vi])
-
-        if use_tangents:
-            for vi in range(0, 4):
-                attributes[TANGENT_ATTRIBUTE].append(source_attributes[TANGENT_ATTRIBUTE][old_index * 4 + vi])
-
-        for tex_coord_index in range(0, tex_coord_max):
-            tex_coord_id = TEXCOORD_PREFIX + str(tex_coord_index)
-            for vi in range(0, 2):
-                attributes[tex_coord_id].append(source_attributes[tex_coord_id][old_index * 2 + vi])
-
-        for color_index in range(0, color_max):
-            color_id = COLOR_PREFIX + str(color_index)
-            for vi in range(0, 4):
-                attributes[color_id].append(source_attributes[color_id][old_index * 4 + vi])
-
-        for bone_index in range(0, bone_max):
-            joint_id = JOINTS_PREFIX + str(bone_index)
-            weight_id = WEIGHTS_PREFIX + str(bone_index)
-            for vi in range(0, 4):
-                attributes[joint_id].append(source_attributes[joint_id][old_index * 4 + vi])
-                attributes[weight_id].append(source_attributes[weight_id][old_index * 4 + vi])
-
-        for morph_index in range(0, morph_max):
-            morph_position_id = MORPH_POSITION_PREFIX + str(morph_index)
-            morph_normal_id = MORPH_NORMAL_PREFIX + str(morph_index)
-            morph_tangent_id = MORPH_TANGENT_PREFIX + str(morph_index)
-            for vi in range(0, 3):
-                attributes[morph_position_id].append(source_attributes[morph_position_id][old_index * 3 + vi])
-                attributes[morph_normal_id].append(source_attributes[morph_normal_id][old_index * 3 + vi])
-            if use_tangents:
-                for vi in range(0, 4):
-                    attributes[morph_tangent_id].append(source_attributes[morph_tangent_id][old_index * 4 + vi])
-
-    return result_primitive
-
-
 def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups, modifiers, export_settings):
     """
     Extract primitives from a mesh. Polygons are triangulated and sorted by material.
@@ -519,11 +377,19 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
     #
 
     vertex_colors = {}
+    vertex_colors_ids = {}
 
     color_index = 0
+    next_color_id = 0
     for vertex_color in blender_mesh.vertex_colors:
-        vertex_color_name = COLOR_PREFIX + str(color_index)
-        vertex_colors[vertex_color_name] = vertex_color
+        vertex_color_id = COLOR_PREFIX + str(next_color_id)
+        if export_settings[gltf2_blender_export_keys.CUSTOM_ATTRIBUTES] and not vertex_color.name.startswith("Col"):
+            vertex_color_id = "_" + re.sub("[^0-9a-zA-Z_]+", "", vertex_color.name)
+        else:
+            next_color_id += 1
+
+        vertex_colors[vertex_color_id] = vertex_color
+        vertex_colors_ids[color_index] = vertex_color_id
 
         color_index += 1
         if color_index >= GLTF_MAX_COLORS:
@@ -572,6 +438,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
     #
     for blender_polygon in blender_mesh.polygons:
         export_color = True
+        export_custom = True
 
         #
 
@@ -646,6 +513,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             colors = []
             joints = []
             weights = []
+            custom = []
 
             target_positions = []
             target_normals = []
@@ -685,9 +553,13 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
 
             if color_max > 0 and export_color:
                 for color_index in range(0, color_max):
-                    color_name = COLOR_PREFIX + str(color_index)
-                    color = vertex_colors[color_name].data[loop_index].color
-                    if len(color) == 3:
+                    color_id = vertex_colors_ids[color_index]
+                    color = vertex_colors[color_id].data[loop_index].color
+                    if not color_id.startswith(COLOR_PREFIX):
+                        # Export named vertex color sets as custom attributes, if enabled. These
+                        # are considered non-color data, and not converted sRGB -> linear.
+                        colors.append(color)
+                    elif len(color) == 3:
                         colors.append([
                             color_srgb_to_scene_linear(color[0]),
                             color_srgb_to_scene_linear(color[1]),
@@ -701,6 +573,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
                             color_srgb_to_scene_linear(color[2]),
                             color[3]
                         ])
+
 
             #
 
@@ -847,7 +720,12 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
                     for color_index in range(0, color_max):
                         color = colors[color_index]
 
-                        color_id = COLOR_PREFIX + str(color_index)
+                        color_id = vertex_colors_ids[color_index]
+
+                        if not color_id.startswith(COLOR_PREFIX):
+                            # TODO(donmccurdy): I don't really know what's going on here.
+                            continue
+
                         for i in range(0, 3):
                             # Alpha is always 1.0 - see above.
                             current_color = attributes[color_id][current_new_index * 4 + i]
@@ -933,7 +811,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
 
             if export_color:
                 for color_index in range(0, color_max):
-                    color_id = COLOR_PREFIX + str(color_index)
+                    color_id = vertex_colors_ids[color_index]
 
                     if attributes.get(color_id) is None:
                         attributes[color_id] = []
