@@ -40,14 +40,15 @@ def dll_path() -> Path:
     return path if path is not None else ''
 
 
-def dll_exists() -> bool:
+def dll_exists(quite=False) -> bool:
     """
     Checks whether the DLL path exists.
     :return: True if the DLL exists.
     """
     exists = dll_path().exists()
-    print("'{}' ".format(dll_path().absolute()) + ("exists, draco mesh compression is available" if exists else
-                                                   "does not exist, draco mesh compression not available"))
+    if quite is False:
+        print("'{}' ".format(dll_path().absolute()) + ("exists, draco mesh compression is available" if exists else
+                                                       "does not exist, draco mesh compression not available"))
     return exists
 
 
@@ -175,7 +176,7 @@ def __compress_primitive(primitive, dll, export_settings):
     enable_normals = 'NORMAL' in attributes
     tex_coord_attrs = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
 
-    print_console('INFO', ('Draco exporter: Compressing primitive %s normal attribute and with %d ' + 
+    print_console('INFO', ('Draco exporter: Compressing primitive %s normal attribute and with %d ' +
         'texture coordinate attributes, along with positions.') %
         ('with' if enable_normals else 'without', len(tex_coord_attrs)))
 
