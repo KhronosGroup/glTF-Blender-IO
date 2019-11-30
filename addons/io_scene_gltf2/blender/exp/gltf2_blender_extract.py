@@ -384,7 +384,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
     for vertex_color in blender_mesh.vertex_colors:
         vertex_color_id = COLOR_PREFIX + str(next_color_id)
         if export_settings[gltf2_blender_export_keys.CUSTOM_ATTRIBUTES] and not vertex_color.name.startswith("Col"):
-            vertex_color_id = "_" + re.sub("[^0-9a-zA-Z_]+", "", vertex_color.name)
+            vertex_color_id = "_" + re.sub("[^0-9a-zA-Z_]+", "", vertex_color.name).upper()
         else:
             next_color_id += 1
 
