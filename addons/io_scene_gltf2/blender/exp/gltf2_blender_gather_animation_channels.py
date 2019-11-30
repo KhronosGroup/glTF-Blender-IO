@@ -107,6 +107,11 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             if channel is not None:
                 channels.append(channel)
 
+
+    # resetting driver caches
+    gltf2_blender_gather_drivers.get_sk_driver_values.reset_cache()
+    gltf2_blender_gather_drivers.get_sk_drivers.reset_cache()
+
     return channels
 
 def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender_object: bpy.types.Object):
