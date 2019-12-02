@@ -40,13 +40,13 @@ def dll_path() -> Path:
     return path if path is not None else ''
 
 
-def dll_exists(quite=False) -> bool:
+def dll_exists(quiet=False) -> bool:
     """
     Checks whether the DLL path exists.
     :return: True if the DLL exists.
     """
     exists = dll_path().exists()
-    if quite is False:
+    if quiet is False:
         print("'{}' ".format(dll_path().absolute()) + ("exists, draco mesh compression is available" if exists else
                                                        "does not exist, draco mesh compression not available"))
     return exists
