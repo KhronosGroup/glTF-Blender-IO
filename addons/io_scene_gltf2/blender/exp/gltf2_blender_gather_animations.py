@@ -231,5 +231,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))
+    # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
+    blender_actions.sort(key = lambda a: a.name.lower())
 
     return [(blender_action, blender_tracks[blender_action.name]) for blender_action in blender_actions]
