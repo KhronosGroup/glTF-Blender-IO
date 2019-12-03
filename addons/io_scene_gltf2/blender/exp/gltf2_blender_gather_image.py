@@ -37,8 +37,8 @@ def gather_image(
         return None
 
     image_data = __get_image_data(blender_shader_sockets_or_texture_slots, export_settings)
-    if image_data is None:
-        # The blender image has no data
+    if image_data.empty():
+        # The export image has no data
         return None
 
     mime_type = __gather_mime_type(blender_shader_sockets_or_texture_slots, export_settings)

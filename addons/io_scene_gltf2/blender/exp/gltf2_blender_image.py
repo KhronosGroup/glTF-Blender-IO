@@ -83,6 +83,9 @@ class ExportImage:
     def is_filled(self, chan: Channel) -> bool:
         return chan in self.fills
 
+    def empty(self) -> bool:
+        return not self.fills
+
     def __on_happy_path(self) -> bool:
         # Whether there is an existing Blender image we can use for this
         # ExportImage because all the channels come from the matching
