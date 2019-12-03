@@ -628,7 +628,7 @@ class GLTF_PT_export_geometry_compression(bpy.types.Panel):
 
     def __init__(self):
         from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
-        self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
+        self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists(quiet=True)
 
     @classmethod
     def poll(cls, context):
