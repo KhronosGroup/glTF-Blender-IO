@@ -94,7 +94,7 @@ def make_texture_block(gltf, node_tree, tex_info, location, label, name=None, co
         if 'texCoord' in tex_info.extensions['KHR_texture_transform']:
             texcoord_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
 
-    uv_map.uv_map = 'TEXCOORD_%d' % texcoord_idx
+    uv_map.uv_map = 'UVMap' if texcoord_idx == 0 else 'UVMap.%03d' % texcoord_idx
 
     # Links
     node_tree.links.new(mapping.inputs[0], uv_map.outputs[0])

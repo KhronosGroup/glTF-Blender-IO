@@ -161,10 +161,10 @@ class BlenderPrimitive():
                 )
                 break
 
-            layer_name = 'TEXCOORD_%d' % set_num
+            layer_name = 'UVMap' if set_num == 0 else 'UVMap.%03d' % set_num
             layer = BlenderPrimitive.get_layer(bme.loops.layers.uv, layer_name)
 
-            uvs = BinaryData.get_data_from_accessor(gltf, attributes[layer_name], cache=True)
+            uvs = BinaryData.get_data_from_accessor(gltf, attributes['TEXCOORD_%d' % set_num], cache=True)
 
             for bidx, pidx in vert_idxs:
                 # UV transform
