@@ -194,22 +194,27 @@ class ExportImage:
                 with open(src_path, 'rb') as f:
                     return f.read()
 
+        # Save to a tempfile and read back
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpfilename = tmpdirname + "/img"
-
-            # Save original values
-            orig_filepath_raw = image.filepath_raw
-            orig_file_format = image.file_format
-            try:
-                image.filepath_raw = tmpfilename
-                image.file_format = file_format
-
-                image.save()
-
-            finally:
-                # Restore original values
-                image.filepath_raw = orig_filepath_raw
-                image.file_format = orig_file_format
-
+            _save_copy_of_image(image, tmpfilename, file_format)
             with open(tmpfilename, "rb") as f:
                 return f.read()
+
+def _save_copy_of_image(image: bpy.types.Image, path: str, file_format: str):
+    # Only way to save copy of an image seems to be to use image.save_render
+    # which picks up render settings from a scene. Create a temp scene with
+    # the settings we want to use.
+    tmp_scene = None
+    try:
+        tmp_scene = bpy.data.scenes.new('##gltf-export:tmp-scene##')
+
+        tmp_scene.render.image_settings.file_format = file_format
+        tmp_scene.display_settings.display_device = 'None'
+        tmp_scene.render.dither_intensity = 0.0
+
+        image.save_render(path, scene=tmp_scene)
+
+    finally:
+        if tmp_scene is not None:
+            bpy.data.scenes.remove(tmp_scene, do_unlink=True)
