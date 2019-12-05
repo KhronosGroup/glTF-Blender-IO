@@ -126,10 +126,10 @@ class BlenderPrimitive():
                 )
                 break
 
-            layer_name = 'COLOR_%d' % set_num
+            layer_name = 'Col' if set_num == 0 else 'Col.%03d' % set_num
             layer = BlenderPrimitive.get_layer(bme.loops.layers.color, layer_name)
 
-            colors = BinaryData.get_data_from_accessor(gltf, attributes[layer_name], cache=True)
+            colors = BinaryData.get_data_from_accessor(gltf, attributes['COLOR_%d' % set_num], cache=True)
 
             # Check whether Blender takes RGB or RGBA colors (old versions only take RGB)
             is_rgba = len(colors[0]) == 4
