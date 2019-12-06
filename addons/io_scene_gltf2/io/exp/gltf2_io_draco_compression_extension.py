@@ -16,6 +16,7 @@ import bpy
 import sys
 from ctypes import c_void_p, c_uint32, c_uint64, c_bool, c_char_p, cdll
 from pathlib import Path
+import struct
 
 from io_scene_gltf2.io.exp.gltf2_io_binary_data import BinaryData
 from ...io.com.gltf2_io_debug import print_console
@@ -63,73 +64,94 @@ def compress_scene_primitives(scenes, export_settings):
     # Nearly all functions take the compressor as the first argument.
     dll = cdll.LoadLibrary(str(dll_path().resolve()))
 
-    dll.createCompressor.restype = c_void_p
-    dll.createCompressor.argtypes = []
+    # Initialization:
 
-    dll.setCompressionLevel.restype = None
-    dll.setCompressionLevel.argtypes = [c_void_p, c_uint32]
+    dll.create_compressor.restype = c_void_p
+    dll.create_compressor.argtypes = []
 
-    dll.setPositionQuantizationBits.restype = None
-    dll.setPositionQuantizationBits.argtypes = [c_void_p, c_uint32]
+    dll.destroy_compressor.restype = None
+    dll.destroy_compressor.argtypes = [c_void_p]
 
-    dll.setNormalQuantizationBits.restype = None
-    dll.setNormalQuantizationBits.argtypes = [c_void_p, c_uint32]
+    # Configuration:
 
-    dll.setTexCoordQuantizationBits.restype = None
-    dll.setTexCoordQuantizationBits.argtypes = [c_void_p, c_uint32]
+    dll.set_compression_level.restype = None
+    dll.set_compression_level.argtypes = [c_void_p, c_uint32]
+
+    dll.set_position_quantization.restype = None
+    dll.set_position_quantization.argtypes = [c_void_p, c_uint32]
+
+    dll.set_normal_quantization.restype = None
+    dll.set_normal_quantization.argtypes = [c_void_p, c_uint32]
+
+    dll.set_uv_quantization.restype = None
+    dll.set_uv_quantization.argtypes = [c_void_p, c_uint32]
+
+    dll.set_generic_quantization.restype = None
+    dll.set_generic_quantization.argtypes = [c_void_p, c_uint32]
+
+    # Data transfer:
+
+    dll.set_faces.restype = None
+    dll.set_faces.argtypes = [
+        c_void_p, # Compressor
+        c_uint32, # Index count
+        c_uint32, # Index byte length
+        c_char_p  # Indices
+    ]
+
+    add_attribute_fn_restype = c_uint32 # Draco id
+    add_attribute_fn_argtypes = [
+        c_void_p, # Compressor
+        c_uint32, # Attribute count
+        c_char_p  # Values
+    ]
+
+    dll.add_positions_f32.restype = add_attribute_fn_restype
+    dll.add_positions_f32.argtypes = add_attribute_fn_argtypes
+
+    dll.add_normals_f32.restype = add_attribute_fn_restype
+    dll.add_normals_f32.argtypes = add_attribute_fn_argtypes
+
+    dll.add_uvs_f32.restype = add_attribute_fn_restype
+    dll.add_uvs_f32.argtypes = add_attribute_fn_argtypes
+
+    dll.add_weights_f32.restype = add_attribute_fn_restype
+    dll.add_weights_f32.argtypes = add_attribute_fn_argtypes
+
+    dll.add_joints_u16.restype = add_attribute_fn_restype
+    dll.add_joints_u16.argtypes = add_attribute_fn_argtypes
+
+    # Compression:
 
     dll.compress.restype = c_bool
-    dll.compress.argtypes = [c_void_p]
+    dll.compress.argtypes = [
+        c_void_p # Compressor
+    ]
 
-    dll.compressedSize.restype = c_uint64
-    dll.compressedSize.argtypes = [c_void_p]
+    dll.compress_morphed.restype = c_bool
+    dll.compress_morphed.argtypes = [
+        c_void_p # Compressor
+    ]
 
-    dll.disposeCompressor.restype = None
-    dll.disposeCompressor.argtypes = [c_void_p]
+    dll.get_compressed_size.restype = c_uint64
+    dll.get_compressed_size.argtypes = [
+        c_void_p # Compressor
+    ]
 
-    dll.setFaces.restype = None
-    dll.setFaces.argtypes = [c_void_p, c_uint32, c_uint32, c_void_p]
+    dll.copy_to_bytes.restype = None
+    dll.copy_to_bytes.argtypes = [
+        c_void_p, # Compressor
+        c_char_p  # Destination pointer
+    ]
 
-    dll.addPositionAttribute.restype = None
-    dll.addPositionAttribute.argtypes = [c_void_p, c_uint32, c_char_p]
-
-    dll.addNormalAttribute.restype = None
-    dll.addNormalAttribute.argtypes = [c_void_p, c_uint32, c_char_p]
-
-    dll.addTexCoordAttribute.restype = None
-    dll.addTexCoordAttribute.argtypes = [c_void_p, c_uint32, c_char_p]
-
-    dll.copyToBytes.restype = None
-    dll.copyToBytes.argtypes = [c_void_p, c_char_p]
-
-    dll.getTexCoordAttributeIdCount.restype = c_uint32
-    dll.getTexCoordAttributeIdCount.argtypes = [c_void_p]
-
-    dll.getTexCoordAttributeId.restype = c_uint32
-    dll.getTexCoordAttributeId.argtypes = [c_void_p, c_uint32]
-
-    dll.getPositionAttributeId.restype = c_uint32
-    dll.getPositionAttributeId.argtypes = [c_void_p]
-
-    dll.getNormalAttributeId.restype = c_uint32
-    dll.getNormalAttributeId.argtypes = [c_void_p]
-
-    dll.setCompressionLevel.restype = None
-    dll.setCompressionLevel.argtypes = [c_void_p, c_uint32]
-
-    dll.setPositionQuantizationBits.restype = None
-    dll.setPositionQuantizationBits.argtypes = [c_void_p, c_uint32]
-
-    dll.setNormalQuantizationBits.restype = None
-    dll.setNormalQuantizationBits.argtypes = [c_void_p, c_uint32]
-
-    dll.setTexCoordQuantizationBits.restype = None
-    dll.setTexCoordQuantizationBits.argtypes = [c_void_p, c_uint32]
-
+    # Traverse nodes.
     for scene in scenes:
         for node in scene.nodes:
             __traverse_node(node, lambda node: __compress_node(node, dll, export_settings))
 
+    # Cleanup memory.
+    # May be shared amongst nodes because of non-unique primitive parents, so memory
+    # release happens delayed.
     for scene in scenes:
         for node in scene.nodes:
             __traverse_node(node, __dispose_memory)
@@ -165,51 +187,86 @@ def __traverse_node(node, f):
 
 
 def __compress_primitive(primitive, dll, export_settings):
+
     attributes = primitive.attributes
+    indices = primitive.indices
 
-    # Positions are the only attribute type required to be present.
-    if 'POSITION' not in attributes:
-        print_console('WARNING', 'Draco exporter: Primitive without positions encountered. Skipping.')
-        pass
-
-    # Both, normals and texture coordinates are optional attribute types.
-    enable_normals = 'NORMAL' in attributes
-    tex_coord_attrs = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
-
-    print_console('INFO', ('Draco exporter: Compressing primitive %s normal attribute and with %d ' +
-        'texture coordinate attributes, along with positions.') %
-        ('with' if enable_normals else 'without', len(tex_coord_attrs)))
-
-    # Begin mesh.
-    compressor = dll.createCompressor()
-
-    # Process position attributes.
-    dll.addPositionAttribute(compressor, attributes['POSITION'].count, attributes['POSITION'].buffer_view.data)
-
-    # Process normal attributes.
-    if enable_normals:
-        dll.addNormalAttribute(compressor, attributes['NORMAL'].count, attributes['NORMAL'].buffer_view.data)
-
-    # Process texture coordinate attributes.
-    for attribute in tex_coord_attrs:
-        dll.addTexCoordAttribute(compressor, attribute.count, attribute.buffer_view.data)
-
-    # Process faces.
-    index_byte_length = {
+    # Maps component types to their byte length.
+    component_type_byte_length = {
         'Byte': 1,
         'UnsignedByte': 1,
         'Short': 2,
         'UnsignedShort': 2,
         'UnsignedInt': 4,
     }
-    indices = primitive.indices
-    dll.setFaces(compressor, indices.count, index_byte_length[indices.component_type.name], indices.buffer_view.data)
+
+    # Positions are the only attribute type required to be present.
+    if 'POSITION' not in attributes:
+        print_console('WARNING', 'Draco exporter: Primitive without positions encountered. Skipping.')
+        return
+
+    positions = attributes['POSITION']
+    normals = attributes['NORMAL'] if 'NORMAL' in attributes else None
+    uvs = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
+    weights = [attributes[attr] for attr in attributes if attr.startswith('WEIGHTS_')]
+    joints = [attributes[attr] for attr in attributes if attr.startswith('JOINTS_')]
+
+    print_console('INFO', 'Draco exporter: %s normals, %d uvs, %d weights, %d joints' %
+        ('without' if normals is None else 'with', len(uvs), len(weights), len(joints)))
+
+    # Begin mesh.
+    compressor = dll.create_compressor()
+
+    # Each attribute must have the same count of elements.
+    count = positions.count
+
+    # Add attributes to mesh compressor, remembering each attribute's Draco id.
+
+    position_id = dll.add_positions_f32(compressor, count, positions.buffer_view.data)
+
+    normal_id = None
+    if normals is not None:
+        if normals.count != count:
+            print_console('INFO', 'Draco exporter: Mismatching normal count. Skipping.')
+            dll.disposeCompressor(compressor)
+            return
+        normal_id = dll.add_normals_f32(compressor, normals.count, normals.buffer_view.data)
+
+    uv_ids = []
+    for uv in uvs:
+        if uv.count != count:
+            print_console('INFO', 'Draco exporter: Mismatching uv count. Skipping.')
+            dll.disposeCompressor(compressor)
+            return
+        uv_ids.append(dll.add_uvs_f32(compressor, uv.count, uv.buffer_view.data))
+
+    weight_ids = []
+    for weight in weights:
+        if weight.count != count:
+            print_console('INFO', 'Draco exporter: Mismatching weight count. Skipping.')
+            dll.disposeCompressor(compressor)
+            return
+        weight_ids.append(dll.add_weights_f32(compressor, weight.count, weight.buffer_view.data))
+
+    joint_ids = []
+    for joint in joints:
+        if joint.count != count:
+            print_console('INFO', 'Draco exporter: Mismatching joint count. Skipping.')
+            dll.disposeCompressor(compressor)
+            return
+        joint_ids.append(dll.add_joints_u16(compressor, joint.count, joint.buffer_view.data))
+
+    # Add face indices to mesh compressor.
+    dll.set_faces(compressor, indices.count, component_type_byte_length[indices.component_type.name], indices.buffer_view.data)
 
     # Set compression parameters.
-    dll.setCompressionLevel(compressor, export_settings['gltf_draco_mesh_compression_level'])
-    dll.setPositionQuantizationBits(compressor, export_settings['gltf_draco_position_quantization'])
-    dll.setNormalQuantizationBits(compressor, export_settings['gltf_draco_normal_quantization'])
-    dll.setTexCoordQuantizationBits(compressor, export_settings['gltf_draco_texcoord_quantization'])
+    dll.set_compression_level(compressor, export_settings['gltf_draco_mesh_compression_level'])
+    dll.set_position_quantization(compressor, export_settings['gltf_draco_position_quantization'])
+    dll.set_normal_quantization(compressor, export_settings['gltf_draco_normal_quantization'])
+    dll.set_uv_quantization(compressor, export_settings['gltf_draco_texcoord_quantization'])
+    dll.set_generic_quantization(compressor, export_settings['gltf_draco_generic_quantization'])
+
+    compress_fn = dll.compress if not primitive.targets else dll.compress_morphed
 
     # After all point and connectivity data has been written to the compressor,
     # it can finally be compressed.
@@ -225,42 +282,58 @@ def __compress_primitive(primitive, dll, export_settings):
         # }
 
         # Query size necessary to hold all the compressed data.
-        compression_size = dll.compressedSize(compressor)
+        compression_size = dll.get_compressed_size(compressor)
 
         # Allocate byte buffer and write compressed data to it.
         compressed_data = bytes(compression_size)
-        dll.copyToBytes(compressor, compressed_data)
+        dll.copy_to_bytes(compressor, compressed_data)
 
         if primitive.extensions is None:
             primitive.extensions = {}
 
-        # Register draco compression extension into primitive.
+        # Write Draco extension into primitive, including attribute ids:
+
         extension = {
             'bufferView': BinaryData(compressed_data),
             'attributes': {
-                'POSITION': dll.getPositionAttributeId(compressor)
+                'POSITION': position_id
             }
         }
 
-        if enable_normals:
-            extension['attributes']['NORMAL'] = dll.getNormalAttributeId(compressor)
+        if normals is not None:
+            extension['attributes']['NORMAL'] = normal_id
 
-        for id in range(0, dll.getTexCoordAttributeIdCount(compressor)):
-            extension['attributes']['TEXCOORD_' + str(id)] = dll.getTexCoordAttributeId(compressor, id)
+        for (k, id) in enumerate(uvs):
+            extension['attributes']['TEXCOORD_' + str(k)] = id
+
+        for (k, id) in enumerate(weight_ids):
+            extension['attributes']['WEIGHTS_' + str(k)] = id
+
+        for (k, id) in enumerate(joint_ids):
+            extension['attributes']['JOINTS_' + str(k)] = id
 
         primitive.extensions['KHR_draco_mesh_compression'] = extension
 
-        # Remove buffer views from the accessors of the attributes which compressed.
-        attributes['POSITION'].buffer_view = None
-        if enable_normals:
-            attributes['NORMAL'].buffer_view = None
-        for tex_coord in tex_coord_attrs:
-            tex_coord.buffer_view = None
+        # Remove buffer views from the accessors of the attributes which compressed:
+
+        positions.buffer_view = None
+
+        if normals is not None:
+            normals.buffer_view = None
+
+        for uv in uvs:
+            uv.buffer_view = None
+
+        for weight in weights:
+            weight.buffer_view = None
+
+        for joint in joints:
+            joint.buffer_view = None
 
         # Set to triangle list mode.
         primitive.mode = 4
 
     # Afterwards, the compressor can be released.
-    dll.disposeCompressor(compressor)
+    dll.destroy_compressor(compressor)
 
-    pass
+    return
