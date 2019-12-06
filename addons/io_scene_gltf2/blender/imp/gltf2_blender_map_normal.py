@@ -66,7 +66,7 @@ class BlenderNormalMap():
             if 'texCoord' in tex_info.extensions['KHR_texture_transform']:
                 texcoord_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
 
-        normalmap_node.uv_map = 'TEXCOORD_%d' % texcoord_idx
+        normalmap_node.uv_map = 'UVMap' if texcoord_idx == 0 else 'UVMap.%03d' % texcoord_idx
 
         # Set strength
         if pymaterial.normal_texture.scale is not None:

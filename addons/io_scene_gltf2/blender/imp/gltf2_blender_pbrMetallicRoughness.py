@@ -77,11 +77,11 @@ class BlenderPbr():
                 # Create attribute node to get COLOR_0 data
                 if bpy.app.version < (2, 81, 8):
                     attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'COLOR_0'
+                    attribute_node.attribute_name = 'Col'
                     attribute_node.location = -500, 0
                 else:
                     vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'COLOR_0'
+                    vertexcolor_node.layer_name = 'Col'
                     vertexcolor_node.location = -500, 0
 
                 if nodetype == "principled":
@@ -108,10 +108,10 @@ class BlenderPbr():
                 # Create attribute / separate / math nodes
                 if bpy.app.version < (2, 81, 8):
                     attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'COLOR_0'
+                    attribute_node.attribute_name = 'Col'
                 else:
                     vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'COLOR_0'
+                    vertexcolor_node.layer_name = 'Col'
 
                 vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
                 vc_mult_node.blend_type = 'MULTIPLY'
@@ -159,11 +159,11 @@ class BlenderPbr():
                 # Create attribute / separate / math nodes
                 if bpy.app.version < (2, 81, 8):
                     attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'COLOR_0'
+                    attribute_node.attribute_name = 'Col'
                     attribute_node.location = -2000, 250
                 else:
                     vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'COLOR_0'
+                    vertexcolor_node.layer_name = 'Col'
                     vertexcolor_node.location = -2000, 250
 
                 vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
