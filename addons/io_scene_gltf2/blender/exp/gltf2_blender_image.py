@@ -189,6 +189,9 @@ class ExportImage:
         tmp_image = None
         try:
             tmp_image = image.copy()
+            if image.is_dirty:
+                tmp_image.pixels = image.pixels[:]
+
             return _encode_temp_image(tmp_image, self.file_format)
         finally:
             if tmp_image is not None:
