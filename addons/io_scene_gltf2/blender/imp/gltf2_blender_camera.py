@@ -35,6 +35,11 @@ class BlenderCamera():
         # Blender create a perspective camera by default
         if pycamera.type == "orthographic":
             cam.type = "ORTHO"
+        else:
+            if hasattr(pycamera.perspective, "yfov"):
+                cam.angle_y = pycamera.perspective.yfov
+                cam.lens_unit = "FOV"
+                cam.sensor_fit = "VERTICAL"
 
         # TODO: lot's of work for camera here...
         if hasattr(pycamera, "znear"):
