@@ -153,7 +153,7 @@ class BlenderSkin():
         bone = obj.data.edit_bones.new(name)
         pynode.blender_bone_name = bone.name
         pynode.blender_armature_name = pyskin.blender_armature_name
-        bone.tail = Vector((0.0, 1.0, 0.0))  # Needed to keep bone alive
+        bone.tail = Vector((0.0, 1.0 / obj.matrix_world.to_scale()[1], 0.0))  # Needed to keep bone alive
         # Custom prop on edit bone
         set_extras(bone, pynode.extras)
 
