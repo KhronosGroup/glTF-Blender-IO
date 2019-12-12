@@ -298,7 +298,8 @@ class GlTF2Exporter:
         if isinstance(node, gltf2_io_extensions.Extension):
             extension = self.__traverse(node.extension)
             self.__append_unique_and_get_index(self.__gltf.extensions_used, node.name)
-            self.__append_unique_and_get_index(self.__gltf.extensions_required, node.name)
+            if node.required:
+                self.__append_unique_and_get_index(self.__gltf.extensions_required, node.name)
 
             # extensions that lie in the root of the glTF.
             # They need to be converted to a reference at place of occurrence
