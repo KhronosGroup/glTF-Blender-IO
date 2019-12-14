@@ -27,13 +27,14 @@ def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
                                     blender_object: bpy.types.Object,
                                     bake_bone: typing.Union[str, None],
                                     bake_channel: typing.Union[str, None],
+                                    driver_obj,
                                     export_settings
                                     ) -> gltf2_io.AnimationChannelTarget:
 
         animation_channel_target = gltf2_io.AnimationChannelTarget(
             extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
             extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
-            node=__gather_node(channels, blender_object, export_settings, bake_bone),
+            node=__gather_node(channels, blender_object, export_settings, bake_bone, driver_obj),
             path=__gather_path(channels, blender_object, export_settings, bake_bone, bake_channel)
         )
 
@@ -66,8 +67,13 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                   blender_object: bpy.types.Object,
                   export_settings,
-                  bake_bone: typing.Union[str, None]
+                  bake_bone: typing.Union[str, None],
+                  driver_obj
                   ) -> gltf2_io.Node:
+
+    if driver_obj is not None:
+        return gltf2_blender_gather_nodes.gather_node(driver_obj, None, export_settings)
+
     if blender_object.type == "ARMATURE":
         # TODO: get joint from fcurve data_path and gather_joint
 

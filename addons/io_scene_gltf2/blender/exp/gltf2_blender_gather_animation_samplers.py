@@ -38,11 +38,12 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              bake_range_start,
                              bake_range_end,
                              action_name: str,
+                             driver_obj,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
 
     blender_object_if_armature = blender_object if blender_object.type == "ARMATURE" else None
-    if blender_object_if_armature is not None:
+    if blender_object_if_armature is not None and driver_obj is None:
         if bake_bone is None:
             pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
                                                                                channels[0].data_path)
@@ -53,6 +54,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
     non_keyed_values = __gather_non_keyed_values(channels, blender_object,
                                                  blender_object_if_armature, pose_bone_if_armature,
                                                  bake_channel,
+                                                 driver_obj,
                                                  export_settings)
 
 
@@ -60,7 +62,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
         extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         extras=__gather_extras(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         input=__gather_input(channels, blender_object_if_armature, non_keyed_values,
-                             bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, export_settings),
+                             bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, export_settings),
         interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
                                blender_object_if_armature,
@@ -70,6 +72,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                bake_range_start,
                                bake_range_end,
                                action_name,
+                               driver_obj,
                                export_settings)
     )
 
@@ -91,15 +94,22 @@ def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
                               blender_object_if_armature: typing.Optional[bpy.types.Object],
                               pose_bone_if_armature: typing.Optional[bpy.types.PoseBone],
                               bake_channel: typing.Union[str, None],
+                              driver_obj,
                               export_settings
                               ) ->  typing.Tuple[typing.Optional[float]]:
 
     non_keyed_values = []
 
+    obj = blender_object if driver_obj is None else driver_obj
+
     # Note: channels has some None items only for SK if some SK are not animated
     if None not in channels:
         # classic case for object TRS or bone TRS
         # Or if all morph target are animated
+
+        if driver_obj is not None:
+            # driver of SK
+            return tuple([None] * len(channels))
 
         if bake_channel is None:
             target = channels[0].data_path.split('.')[-1]
@@ -129,26 +139,26 @@ def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
         for i in range(0, length):
             if bake_channel is not None:
                 non_keyed_values.append({
-                    "delta_location" : blender_object.delta_location,
-                    "delta_rotation_euler" : blender_object.delta_rotation_euler,
-                    "location" : blender_object.location,
-                    "rotation_axis_angle" : blender_object.rotation_axis_angle,
-                    "rotation_euler" : blender_object.rotation_euler,
-                    "rotation_quaternion" : blender_object.rotation_quaternion,
-                    "scale" : blender_object.scale
+                    "delta_location" : obj.delta_location,
+                    "delta_rotation_euler" : obj.delta_rotation_euler,
+                    "location" : obj.location,
+                    "rotation_axis_angle" : obj.rotation_axis_angle,
+                    "rotation_euler" : obj.rotation_euler,
+                    "rotation_quaternion" : obj.rotation_quaternion,
+                    "scale" : obj.scale
                 }[target][i])
             elif i in indices:
                 non_keyed_values.append(None)
             else:
                 if blender_object_if_armature is None:
                     non_keyed_values.append({
-                        "delta_location" : blender_object.delta_location,
-                        "delta_rotation_euler" : blender_object.delta_rotation_euler,
-                        "location" : blender_object.location,
-                        "rotation_axis_angle" : blender_object.rotation_axis_angle,
-                        "rotation_euler" : blender_object.rotation_euler,
-                        "rotation_quaternion" : blender_object.rotation_quaternion,
-                        "scale" : blender_object.scale
+                        "delta_location" : obj.delta_location,
+                        "delta_rotation_euler" : obj.delta_rotation_euler,
+                        "location" : obj.location,
+                        "rotation_axis_angle" : obj.rotation_axis_angle,
+                        "rotation_euler" : obj.rotation_euler,
+                        "rotation_quaternion" : obj.rotation_quaternion,
+                        "scale" : obj.scale
                     }[target][i])
                 else:
                      # TODO, this is not working if the action is not active (NLA case for example)
@@ -171,7 +181,7 @@ def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
         if object_path:
             shapekeys_idx = {}
             cpt_sk = 0
-            for sk in blender_object.data.shape_keys.key_blocks:
+            for sk in obj.data.shape_keys.key_blocks:
                 if sk == sk.relative_key:
                     continue
                 if sk.mute is True:
@@ -181,7 +191,7 @@ def __gather_non_keyed_values(channels: typing.Tuple[bpy.types.FCurve],
 
         for idx_c, channel in enumerate(channels):
             if channel is None:
-                non_keyed_values.append(blender_object.data.shape_keys.key_blocks[shapekeys_idx[idx_c]].value)
+                non_keyed_values.append(obj.data.shape_keys.key_blocks[shapekeys_idx[idx_c]].value)
             else:
                 non_keyed_values.append(None)
 
@@ -214,6 +224,7 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    bake_range_start,
                    bake_range_end,
                    action_name,
+                   driver_obj,
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes."""
@@ -225,6 +236,7 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   bake_range_start,
                                                                                   bake_range_end,
                                                                                   action_name,
+                                                                                  driver_obj,
                                                                                   export_settings)
     times = [k.seconds for k in keyframes]
 
@@ -276,6 +288,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     bake_range_start,
                     bake_range_end,
                     action_name,
+                    driver_obj,
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
@@ -287,6 +300,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   bake_range_start,
                                                                                   bake_range_end,
                                                                                   action_name,
+                                                                                  driver_obj,
                                                                                   export_settings)
     if bake_bone is not None:
         target_datapath = "pose.bones['" + bake_bone + "']." + bake_channel
