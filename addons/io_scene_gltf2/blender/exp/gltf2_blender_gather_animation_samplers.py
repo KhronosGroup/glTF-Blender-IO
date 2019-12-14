@@ -73,15 +73,15 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                export_settings)
     )
 
-    export_user_extensions('gather_animation_sampler_hook', 
-                            export_settings, 
-                            sampler, 
-                            channels, 
-                            blender_object, 
-                            bake_bone, 
-                            bake_channel, 
-                            bake_range_start, 
-                            bake_range_end, 
+    export_user_extensions('gather_animation_sampler_hook',
+                            export_settings,
+                            sampler,
+                            channels,
+                            blender_object,
+                            bake_bone,
+                            bake_channel,
+                            bake_range_start,
+                            bake_range_end,
                             action_name)
 
     return sampler

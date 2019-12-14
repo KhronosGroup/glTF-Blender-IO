@@ -41,9 +41,9 @@ def gather_material_occlusion_texture_info_class(blender_shader_sockets_or_textu
     if texture_info.index is None:
         return None
 
-    export_user_extensions('gather_material_occlusion_texture_info_class_hook', 
-                           export_settings, 
-                           texture_info, 
+    export_user_extensions('gather_material_occlusion_texture_info_class_hook',
+                           export_settings,
+                           texture_info,
                            blender_shader_sockets_or_texture_slots)
 
     return texture_info

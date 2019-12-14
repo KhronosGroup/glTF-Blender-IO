@@ -157,15 +157,15 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
         target=__gather_target(channels, blender_object, export_settings, bake_bone, bake_channel)
     )
 
-    export_user_extensions('gather_animation_channel_hook', 
-                           export_settings, 
-                           animation_channel, 
-                           channels, 
-                           blender_object, 
-                           bake_bone, 
-                           bake_channel, 
-                           bake_range_start, 
-                           bake_range_end, 
+    export_user_extensions('gather_animation_channel_hook',
+                           export_settings,
+                           animation_channel,
+                           channels,
+                           blender_object,
+                           bake_bone,
+                           bake_channel,
+                           bake_range_start,
+                           bake_range_end,
                            action_name)
 
     return animation_channel

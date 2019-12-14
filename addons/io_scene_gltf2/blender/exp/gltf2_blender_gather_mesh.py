@@ -47,14 +47,14 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
         print_console("WARNING", "Mesh '{}' has no primitives and will be omitted.".format(mesh.name))
         return None
 
-    export_user_extensions('gather_mesh_hook', 
-                           export_settings, 
-                           mesh, 
-                           blender_mesh, 
-                           blender_object, 
-                           vertex_groups, 
-                           modifiers, 
-                           skip_filter, 
+    export_user_extensions('gather_mesh_hook',
+                           export_settings,
+                           mesh,
+                           blender_mesh,
+                           blender_object,
+                           vertex_groups,
+                           modifiers,
+                           skip_filter,
                            material_names)
 
     return mesh

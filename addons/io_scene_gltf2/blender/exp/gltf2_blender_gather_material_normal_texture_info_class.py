@@ -42,9 +42,9 @@ def gather_material_normal_texture_info_class(blender_shader_sockets_or_texture_
     if texture_info.index is None:
         return None
 
-    export_user_extensions('gather_material_normal_texture_info_class_hook', 
-                           export_settings, 
-                           texture_info, 
+    export_user_extensions('gather_material_normal_texture_info_class_hook',
+                           export_settings,
+                           texture_info,
                            blender_shader_sockets_or_texture_slots)
 
     return texture_info

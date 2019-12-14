@@ -357,7 +357,7 @@ class ExportGLTF2_Base:
                         self.has_active_extenions = True
                 except Exception:
                     pass
-        
+
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
@@ -1000,7 +1000,7 @@ def unregister():
     for f in extension_panel_unregister_functors:
         f()
     extension_panel_unregister_functors.clear()
-        
+
     # bpy.utils.unregister_module(__name__)
 
     # remove from the export / import menu
