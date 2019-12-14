@@ -40,10 +40,6 @@ class glTFImporter():
         self.log = log.logger
         self.log_handler = log.hdlr
 
-        self.SIMPLE = 1
-        self.TEXTURE = 2
-        self.TEXTURE_FACTOR = 3
-
         # TODO: move to a com place?
         self.extensions_managed = [
             'KHR_materials_pbrSpecularGlossiness',
