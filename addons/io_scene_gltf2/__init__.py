@@ -346,17 +346,18 @@ class ExportGLTF2_Base:
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
 
-        if bpy.app.version < (2,80,0):
-            pass
+        import sys
+        if bpy.app.version < (2, 80, 0):
+            preferences = bpy.context.user_preferences
         else:
-            import sys
-            for addon_name in bpy.context.preferences.addons.keys():
-                try:
-                    if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
-                        extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
-                        self.has_active_extenions = True
-                except Exception:
-                    pass
+            preferences = bpy.context.preferences
+        for addon_name in preferences.addons.keys():
+            try:
+                if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
+                    extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
+                    self.has_active_extenions = True
+            except Exception:
+                pass
 
         return ExportHelper.invoke(self, context, event)
 
@@ -454,14 +455,15 @@ class ExportGLTF2_Base:
 
         user_extensions = []
 
-        if bpy.app.version < (2,80,0):
-            pass
+        import sys
+        if bpy.app.version < (2, 80, 0):
+            preferences = bpy.context.user_preferences
         else:
-            import sys
-            for addon_name in bpy.context.preferences.addons.keys():
-                if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
-                    extension_ctor = sys.modules[addon_name].glTF2ExportUserExtension
-                    user_extensions.append(extension_ctor())
+            preferences = bpy.context.preferences
+        for addon_name in preferences.addons.keys():
+            if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
+                extension_ctor = sys.modules[addon_name].glTF2ExportUserExtension
+                user_extensions.append(extension_ctor())
         export_settings['gltf_user_extensions'] = user_extensions
 
         return gltf2_blender_export.save(context, export_settings)
