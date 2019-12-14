@@ -67,6 +67,7 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 #  Functions / Classes.
 #
 
+extension_panel_unregister_functors = []
 
 class ExportGLTF2_Base:
     # TODO: refactor to avoid boilerplate
@@ -334,6 +335,7 @@ class ExportGLTF2_Base:
     def invoke(self, context, event):
         settings = context.scene.get(self.scene_key)
         self.will_save_settings = False
+        self.has_active_extenions = False
         if settings:
             try:
                 for (k, v) in settings.items():
@@ -344,6 +346,18 @@ class ExportGLTF2_Base:
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
 
+        if bpy.app.version < (2,80,0):
+            pass
+        else:
+            import sys
+            for addon_name in bpy.context.preferences.addons.keys():
+                try:
+                    if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
+                        extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
+                        self.has_active_extenions = True
+                except Exception:
+                    pass
+        
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
@@ -437,6 +451,18 @@ class ExportGLTF2_Base:
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = os.path.splitext(os.path.basename(
             bpy.path.ensure_ext(self.filepath,self.filename_ext)))[0] + '.bin'
+
+        user_extensions = []
+
+        if bpy.app.version < (2,80,0):
+            pass
+        else:
+            import sys
+            for addon_name in bpy.context.preferences.addons.keys():
+                if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
+                    extension_ctor = sys.modules[addon_name].glTF2ExportUserExtension
+                    user_extensions.append(extension_ctor())
+        export_settings['gltf_user_extensions'] = user_extensions
 
         return gltf2_blender_export.save(context, export_settings)
     if bpy.app.version < (2, 80, 0):
@@ -799,6 +825,25 @@ class GLTF_PT_export_animation_skinning(bpy.types.Panel):
         layout.active = operator.export_skins
         layout.prop(operator, 'export_all_influences')
 
+class GLTF_PT_export_user_extensions(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Extensions"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and operator.has_active_extenions
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
@@ -930,6 +975,7 @@ else:
         GLTF_PT_export_animation_export,
         GLTF_PT_export_animation_shapekeys,
         GLTF_PT_export_animation_skinning,
+        GLTF_PT_export_user_extensions,
         ImportGLTF2
     )
 
@@ -951,6 +997,10 @@ def register():
 def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
+    for f in extension_panel_unregister_functors:
+        f()
+    extension_panel_unregister_functors.clear()
+        
     # bpy.utils.unregister_module(__name__)
 
     # remove from the export / import menu

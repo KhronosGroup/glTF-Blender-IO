@@ -23,6 +23,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_samplers
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channel_target
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 @cached
@@ -149,12 +150,25 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
     if not __filter_animation_channel(channels, blender_object, export_settings):
         return None
 
-    return gltf2_io.AnimationChannel(
+    animation_channel = gltf2_io.AnimationChannel(
         extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
         extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
         sampler=__gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name),
         target=__gather_target(channels, blender_object, export_settings, bake_bone, bake_channel)
     )
+
+    export_user_extensions('gather_animation_channel_hook', 
+                           export_settings, 
+                           animation_channel, 
+                           channels, 
+                           blender_object, 
+                           bake_bone, 
+                           bake_channel, 
+                           bake_range_start, 
+                           bake_range_end, 
+                           action_name)
+
+    return animation_channel
 
 
 def __filter_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
