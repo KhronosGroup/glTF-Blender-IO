@@ -48,7 +48,7 @@ def gather_animations(blender_object: bpy.types.Object,
     for blender_action, track_name in blender_actions:
 
         # Set action as active, to be able to bake if needed
-        if blender_object.animation_data: # Not for shapekeys!
+        if blender_action.id_root == "OBJECT" and blender_object.animation_data: # Not for shapekeys!
             if blender_object.animation_data.action is None \
                     or (blender_object.animation_data.action.name != blender_action.name):
                 if blender_object.animation_data.is_property_readonly('action'):
@@ -62,6 +62,8 @@ def gather_animations(blender_object: bpy.types.Object,
                     error = "Action is readonly. Please check NLA editor"
                     print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
                     continue
+
+        # No need to set active shapekeys animations, this is needed for bone baking
 
         animation = __gather_animation(blender_action, blender_object, export_settings)
         if animation is not None:
