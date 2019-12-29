@@ -204,7 +204,7 @@ def __compress_primitive(primitive, dll, export_settings):
     if 'POSITION' not in attributes:
         print_console('WARNING', 'Draco exporter: Primitive without positions encountered. Skipping.')
         return
-    
+
     positions = attributes['POSITION']
 
     # Skip nodes without a position buffer.
