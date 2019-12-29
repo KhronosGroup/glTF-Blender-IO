@@ -49,19 +49,13 @@ def save(context, export_settings):
 
 
 def __export(export_settings):
-    exporter = GlTF2Exporter(__get_copyright(export_settings))
+    exporter = GlTF2Exporter(export_settings)
     __gather_gltf(exporter, export_settings)
     buffer = __create_buffer(exporter, export_settings)
-    exporter.finalize_images(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
+    exporter.finalize_images()
     json = __fix_json(exporter.glTF.to_dict())
 
     return json, buffer
-
-
-def __get_copyright(export_settings):
-    if export_settings[gltf2_blender_export_keys.COPYRIGHT]:
-        return export_settings[gltf2_blender_export_keys.COPYRIGHT]
-    return None
 
 
 def __gather_gltf(exporter, export_settings):

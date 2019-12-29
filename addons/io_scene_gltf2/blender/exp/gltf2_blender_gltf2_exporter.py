@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import re
+import os
+import urllib.parse
 from typing import List
 
 from ... import get_version_string
@@ -20,6 +22,7 @@ from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
 from io_scene_gltf2.io.exp import gltf2_io_image_data
+from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 
 
 class GlTF2Exporter:
@@ -29,9 +32,11 @@ class GlTF2Exporter:
     Any child properties are replaced with references where necessary
     """
 
-    def __init__(self, copyright=None):
+    def __init__(self, export_settings):
+        self.export_settings = export_settings
         self.__finalized = False
 
+        copyright = export_settings[gltf2_blender_export_keys.COPYRIGHT] or None
         asset = gltf2_io.Asset(
             copyright=copyright,
             extensions=None,
@@ -143,14 +148,15 @@ class GlTF2Exporter:
         self.__gltf.extensions_required.append('KHR_draco_mesh_compression')
         self.__gltf.extensions_used.append('KHR_draco_mesh_compression')
 
-    def finalize_images(self, output_path):
+    def finalize_images(self):
         """
         Write all images.
-
-        Due to a current limitation the output_path must be the same as that of the glTF file
-        :param output_path:
-        :return:
         """
+        output_path = self.export_settings[gltf2_blender_export_keys.TEXTURE_DIRECTORY]
+
+        if self.__images:
+            os.makedirs(output_path, exist_ok=True)
+
         for name, image in self.__images.items():
             dst_path = output_path + "/" + name + image.file_extension
             with open(dst_path, 'wb') as f:
@@ -222,12 +228,17 @@ class GlTF2Exporter:
                 name += "-" + str(count)
 
             count += 1
-        # TODO: we need to know the image url at this point already --> maybe add all options to the constructor of the
-        # exporter
         # TODO: allow embedding of images (base64)
 
         self.__images[name] = image
-        return name + image.file_extension
+
+        texture_dir = self.export_settings[gltf2_blender_export_keys.TEXTURE_DIRECTORY]
+        abs_path = os.path.join(texture_dir, name + image.file_extension)
+        rel_path = os.path.relpath(
+            abs_path,
+            start=self.export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
+        )
+        return _path_to_uri(rel_path)
 
     @classmethod
     def __get_key_path(cls, d: dict, keypath: List[str], default):
@@ -312,3 +323,8 @@ class GlTF2Exporter:
 
         # do nothing for any type that does not match a glTF schema (primitives)
         return node
+
+def _path_to_uri(path):
+    path = os.path.normpath(path)
+    path = path.replace(os.sep, '/')
+    return urllib.parse.quote(path)

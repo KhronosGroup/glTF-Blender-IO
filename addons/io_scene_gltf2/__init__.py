@@ -127,6 +127,12 @@ class ExportGLTF2_Base:
         default='NAME'
     )
 
+    export_texture_dir = StringProperty(
+        name='Textures',
+        description='Folder to place texture files in. Relative to the .gltf file',
+        default='',
+    )
+
     export_texcoords = BoolProperty(
         name='UVs',
         description='Export UVs (texture coordinates) with meshes',
@@ -389,6 +395,10 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_filepath'] = bpy.path.ensure_ext(self.filepath, self.filename_ext)
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
+        export_settings['gltf_texturedirectory'] = os.path.join(
+            export_settings['gltf_filedirectory'],
+            self.export_texture_dir,
+        )
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
@@ -484,6 +494,8 @@ class ExportGLTF2_Base:
         def draw_general_settings(self):
             col = self.layout.box().column()
             col.prop(self, 'export_format')
+            if self.export_format == 'GLTF_SEPARATE':
+                col.prop(self, 'export_texture_dir', icon='FILE_FOLDER')
             col.prop(self, 'export_selected')
             col.prop(self, 'export_apply')
             col.prop(self, 'export_yup')
@@ -565,6 +577,8 @@ class GLTF_PT_export_main(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, 'export_format')
+        if operator.export_format == 'GLTF_SEPARATE':
+            layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
         layout.prop(operator, 'export_copyright')
         layout.prop(operator, 'will_save_settings')
 
