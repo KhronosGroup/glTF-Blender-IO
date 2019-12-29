@@ -257,25 +257,33 @@ def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
                            bake_bone: typing.Union[str, None],
                            bake_channel: typing.Union[str, None]
                            ) -> str:
+
+    max_keyframes = max([len(ch.keyframe_points) for ch in channels if ch is not None])
+    # If only single keyframe revert to STEP
+    if max_keyframes < 2:
+        return 'STEP'
+
     # Note: channels has some None items only for SK if some SK are not animated
+    blender_keyframe = [c for c in channels if c is not None][0].keyframe_points[0]
+
     if gltf2_blender_gather_animation_sampler_keyframes.needs_baking(blender_object_if_armature,
                                                                      channels,
                                                                      export_settings):
-        if bake_bone is not None:
-            return 'LINEAR'
-        else:
-            max_keyframes = max([len(ch.keyframe_points) for ch in channels if ch is not None])
-            # If only single keyframe revert to STEP
-            return 'STEP' if max_keyframes < 2 else 'LINEAR'
 
-    blender_keyframe = [c for c in channels if c is not None][0].keyframe_points[0]
+        # For sampled animations: CONSTANT are STEP, other are LINEAR
+        return {
+            "BEZIER": "LINEAR",
+            "LINEAR": "LINEAR",
+            "CONSTANT": "STEP"
+        }[blender_keyframe.interpolation]
 
-    # Select the interpolation method. Any unsupported method will fallback to STEP
-    return {
-        "BEZIER": "CUBICSPLINE",
-        "LINEAR": "LINEAR",
-        "CONSTANT": "STEP"
-    }[blender_keyframe.interpolation]
+    else:
+        # Select the interpolation method. Any unsupported method will fallback to STEP
+        return {
+            "BEZIER": "CUBICSPLINE",
+            "LINEAR": "LINEAR",
+            "CONSTANT": "STEP"
+        }[blender_keyframe.interpolation]
 
 
 @cached
