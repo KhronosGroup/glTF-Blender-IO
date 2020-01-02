@@ -214,7 +214,7 @@ Emissive
 ^^^^^^^^
 
 An Image Texture node can be connected to an Emission shader node, and
-optionally combined with properties from a Principled BSDF node by way of an Add shader node.
+optionally combined with properties from a Principled BSDF node by way of an Add Shader node.
 
 If the glTF exporter finds an image connected to the Emission shader node,
 it will export that image as the glTF material's emissive texture.
@@ -374,11 +374,12 @@ that object with the name "My Animation".
    Will be exported as an animation called "My Animation" with ConeAction
    playing on the Cone and CubeAction playing on the Cube.
 
-NLA Strip animations will be exported if the Animation → NLA Strips option is
-selected (on by default). All glTF animations are imported as NLA Strip
-animations.
+NLA Strip animations will be exported if the :menuselection:`Animation --> NLA Strips` option is
+selected (on by default). All glTF animations are imported as NLA Strip animations.
 
-If option is disabled, Blender NLA strip actions will be ignored. Only active action of each objects will be taken into account, and merged into a single glTF animation.
+If option is disabled, Blender NLA strip actions will be ignored.
+Only active action of each objects will be taken into account, and merged into a single glTF animation.
+
 
 Custom Properties
 -----------------
@@ -452,29 +453,40 @@ Shading
 Export
 ------
 
-General Tab
-^^^^^^^^^^^
-
 Format
-   See: `File Format Variations`_
-Selected Objects
-   Export selected objects only.
-Apply Modifiers
-   Apply modifiers (excluding armatures) to mesh objects.
-Y Up
-   Export using glTF convention, +Y up.
-Custom Properties
-   Export custom properties as glTF extras.
-Remember Export Settings
-   Store export settings in the Blender file, so they will be recalled next time
-   the file is opened.
+   See: `File Format Variations`_.
 Copyright
    Legal rights and conditions for the model.
+Remember Export Settings
+   Store export settings in the Blender file,
+   so they will be recalled next time the file is opened.
 
 
-Meshes Tab
-^^^^^^^^^^
+Include
+^^^^^^^
 
+Selected Objects
+   Export selected objects only.
+Custom Properties
+   Export custom properties as glTF extras.
+Cameras
+   Export cameras.
+Punctual Lights
+   Export directional, point, and spot lights. Uses the ``KHR_lights_punctual`` glTF extension.
+
+
+Transform
+^^^^^^^^^
+
+Y Up
+   Export using glTF convention, +Y up.
+
+
+Geometry
+^^^^^^^^
+
+Apply Modifiers
+   Apply modifiers (excluding armatures) to mesh objects.
 UVs
    Export UVs (texture coordinates) with meshes.
 Normals
@@ -485,34 +497,40 @@ Vertex Colors
    Export vertex colors with meshes.
 Materials
    Export materials.
-Draco mesh compression
-   Compress meshes using Google Draco.
-Compression level
+Images
+   Todo.
+
+
+Compression
+"""""""""""
+
+Compress meshes using Google Draco.
+
+Compression Level
    Higher compression results in slower encoding and decoding.
-Position quantization bits
+Quantization Position
    Higher values result in better compression rates.
-Normal quantization bits
+Normal
    Higher values result in better compression rates.
-Texcoord quantization bits
+Texture Coordinates
+   Higher values result in better compression rates.
+Generic
    Higher values result in better compression rates.
 
 
-Objects Tab
-^^^^^^^^^^^
-
-Cameras
-   Export cameras.
-Punctual Lights
-   Export directional, point, and spot lights. Uses the ``KHR_lights_punctual`` glTF extension.
-
-
-Animation Tab
-^^^^^^^^^^^^^
+Animation
+^^^^^^^^^
 
 Use Current Frame
    Export the scene in the current animation frame.
-Animations
-   Exports active actions and NLA tracks as glTF animations.
+
+
+Animation
+"""""""""
+
+Exports active actions and NLA tracks as glTF animations.
+
+
 Limit to Playback Range
    Clips animations to selected playback range.
 Sampling Rate
@@ -521,18 +539,28 @@ Always Sample Animations
    Apply sampling to all animations.
 NLA Strips
    Whether to export NLA strip animations.
-Skinning
-   Export skinning (armature) data.
-Bake Skinning Constraints
-   Apply skinning constraints to armatures.
-Include All Bone Influences
-   Allow >4 joint vertex influences. Models may appear incorrectly in many viewers.
+Export Deformation Bones Only
+   Todo.
+
+
 Shape Keys
-   Export shape keys (morph targets).
+""""""""""
+
+Export shape keys (morph targets).
+
 Shape Key Normals
    Export vertex normals with shape keys (morph targets).
 Shape Key Tangents
    Export vertex tangents with shape keys (morph targets).
+
+
+Skinning
+""""""""
+
+Export skinning (armature) data.
+
+Include All Bone Influences
+   Allow >4 joint vertex influences. Models may appear incorrectly in many viewers.
 
 
 Contributing
