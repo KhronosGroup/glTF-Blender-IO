@@ -19,6 +19,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from ..com.gltf2_blender_extras import generate_extras
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 def gather_animations(blender_object: bpy.types.Object,
@@ -47,7 +48,7 @@ def gather_animations(blender_object: bpy.types.Object,
     for blender_action, track_name in blender_actions:
 
         # Set action as active, to be able to bake if needed
-        if blender_object.animation_data: # Not for shapekeys!
+        if blender_action.id_root == "OBJECT" and blender_object.animation_data: # Not for shapekeys!
             if blender_object.animation_data.action is None \
                     or (blender_object.animation_data.action.name != blender_action.name):
                 if blender_object.animation_data.is_property_readonly('action'):
@@ -61,6 +62,8 @@ def gather_animations(blender_object: bpy.types.Object,
                     error = "Action is readonly. Please check NLA editor"
                     print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
                     continue
+
+        # No need to set active shapekeys animations, this is needed for bone baking
 
         animation = __gather_animation(blender_action, blender_object, export_settings)
         if animation is not None:
@@ -107,6 +110,8 @@ def __gather_animation(blender_action: bpy.types.Action,
 
     if not animation.channels:
         return None
+
+    export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object)
 
     return animation
 

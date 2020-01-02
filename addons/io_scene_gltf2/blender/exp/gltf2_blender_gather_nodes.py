@@ -28,6 +28,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 def gather_node(blender_object, blender_scene, export_settings):
@@ -85,6 +86,8 @@ def __gather_node(blender_object, blender_scene, export_settings):
             correction_node.camera = node.camera
             node.children.append(correction_node)
         node.camera = None
+
+    export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
     return node
 

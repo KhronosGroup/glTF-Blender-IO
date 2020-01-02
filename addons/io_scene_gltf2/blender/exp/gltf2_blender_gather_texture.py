@@ -21,6 +21,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_sampler
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_image
 from io_scene_gltf2.io.com import gltf2_io_debug
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 @cached
@@ -50,6 +51,8 @@ def gather_texture(
     # although valid, most viewers can't handle missing source properties
     if texture.source is None:
         return None
+
+    export_user_extensions('gather_texture_hook', export_settings, texture, blender_shader_sockets_or_texture_slots)
 
     return texture
 

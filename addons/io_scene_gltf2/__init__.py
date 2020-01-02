@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 1, 22),
+    "version": (1, 1, 29),
     'blender': (2, 81, 6),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -67,6 +67,7 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 #  Functions / Classes.
 #
 
+extension_panel_unregister_functors = []
 
 class ExportGLTF2_Base:
     # TODO: refactor to avoid boilerplate
@@ -124,6 +125,12 @@ class ExportGLTF2_Base:
             'applications due to the smaller file size'
         ),
         default='NAME'
+    )
+
+    export_texture_dir = StringProperty(
+        name='Textures',
+        description='Folder to place texture files in. Relative to the .gltf file',
+        default='',
     )
 
     export_texcoords = BoolProperty(
@@ -334,6 +341,7 @@ class ExportGLTF2_Base:
     def invoke(self, context, event):
         settings = context.scene.get(self.scene_key)
         self.will_save_settings = False
+        self.has_active_extenions = False
         if settings:
             try:
                 for (k, v) in settings.items():
@@ -343,6 +351,19 @@ class ExportGLTF2_Base:
             except (AttributeError, TypeError):
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
+
+        import sys
+        if bpy.app.version < (2, 80, 0):
+            preferences = bpy.context.user_preferences
+        else:
+            preferences = bpy.context.preferences
+        for addon_name in preferences.addons.keys():
+            try:
+                if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
+                    extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
+                    self.has_active_extenions = True
+            except Exception:
+                pass
 
         return ExportHelper.invoke(self, context, event)
 
@@ -374,6 +395,10 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_filepath'] = bpy.path.ensure_ext(self.filepath, self.filename_ext)
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
+        export_settings['gltf_texturedirectory'] = os.path.join(
+            export_settings['gltf_filedirectory'],
+            self.export_texture_dir,
+        )
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
@@ -438,6 +463,23 @@ class ExportGLTF2_Base:
         export_settings['gltf_binaryfilename'] = os.path.splitext(os.path.basename(
             bpy.path.ensure_ext(self.filepath,self.filename_ext)))[0] + '.bin'
 
+        user_extensions = []
+
+        import sys
+        if bpy.app.version < (2, 80, 0):
+            preferences = bpy.context.user_preferences
+        else:
+            preferences = bpy.context.preferences
+        for addon_name in preferences.addons.keys():
+            if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
+                extension_ctor = sys.modules[addon_name].glTF2ExportUserExtension
+                user_extensions.append(extension_ctor())
+            if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
+                extension_ctors = sys.modules[addon_name].glTF2ExportUserExtensions
+                for extension_ctor in extension_ctors:
+                    user_extensions.append(extension_ctor())
+        export_settings['gltf_user_extensions'] = user_extensions
+
         return gltf2_blender_export.save(context, export_settings)
     if bpy.app.version < (2, 80, 0):
         def draw(self, context):
@@ -456,6 +498,8 @@ class ExportGLTF2_Base:
         def draw_general_settings(self):
             col = self.layout.box().column()
             col.prop(self, 'export_format')
+            if self.export_format == 'GLTF_SEPARATE':
+                col.prop(self, 'export_texture_dir', icon='FILE_FOLDER')
             col.prop(self, 'export_selected')
             col.prop(self, 'export_apply')
             col.prop(self, 'export_yup')
@@ -537,6 +581,8 @@ class GLTF_PT_export_main(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, 'export_format')
+        if operator.export_format == 'GLTF_SEPARATE':
+            layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
         layout.prop(operator, 'export_copyright')
         layout.prop(operator, 'will_save_settings')
 
@@ -799,6 +845,25 @@ class GLTF_PT_export_animation_skinning(bpy.types.Panel):
         layout.active = operator.export_skins
         layout.prop(operator, 'export_all_influences')
 
+class GLTF_PT_export_user_extensions(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Extensions"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and operator.has_active_extenions
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
@@ -930,6 +995,7 @@ else:
         GLTF_PT_export_animation_export,
         GLTF_PT_export_animation_shapekeys,
         GLTF_PT_export_animation_skinning,
+        GLTF_PT_export_user_extensions,
         ImportGLTF2
     )
 
@@ -951,6 +1017,10 @@ def register():
 def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
+    for f in extension_panel_unregister_functors:
+        f()
+    extension_panel_unregister_functors.clear()
+
     # bpy.utils.unregister_module(__name__)
 
     # remove from the export / import menu

@@ -26,6 +26,7 @@ from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 @cached
@@ -47,7 +48,7 @@ def gather_image(
     uri = __gather_uri(image_data, mime_type, name, export_settings)
     buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
-    return __make_image(
+    image = __make_image(
         buffer_view,
         __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings),
         __gather_extras(blender_shader_sockets_or_texture_slots, export_settings),
@@ -56,6 +57,10 @@ def gather_image(
         uri,
         export_settings
     )
+
+    export_user_extensions('gather_image_hook', export_settings, image, blender_shader_sockets_or_texture_slots)
+
+    return image
 
 @cached
 def __make_image(buffer_view, extensions, extras, mime_type, name, uri, export_settings):

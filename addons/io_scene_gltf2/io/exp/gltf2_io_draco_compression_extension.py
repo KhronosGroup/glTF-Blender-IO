@@ -206,6 +206,12 @@ def __compress_primitive(primitive, dll, export_settings):
         return
 
     positions = attributes['POSITION']
+
+    # Skip nodes without a position buffer.
+    # This happens with Blender instances, i.e. multiple nodes sharing the same mesh.
+    if attributes['POSITION'].buffer_view is None:
+        return
+
     normals = attributes['NORMAL'] if 'NORMAL' in attributes else None
     uvs = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
     weights = [attributes[attr] for attr in attributes if attr.startswith('WEIGHTS_')]

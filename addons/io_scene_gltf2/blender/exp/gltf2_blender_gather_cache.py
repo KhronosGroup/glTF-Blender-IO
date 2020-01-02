@@ -94,3 +94,48 @@ def bonecache(func):
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
 call_or_fetch = cached
 unique = cached
+
+def skdriverdiscovercache(func):
+
+    def reset_cache_skdriverdiscovercache():
+        func.__current_armature_name = None
+        func.__skdriverdiscover = {}
+
+    func.reset_cache = reset_cache_skdriverdiscovercache
+
+    @functools.wraps(func)
+    def wrapper_skdriverdiscover(*args, **kwargs):
+        if not hasattr(func, "__current_armature_name") or func.__current_armature_name is None:
+            func.__current_armature_name = None
+            func.reset_cache()
+
+        if args[0] != func.__current_armature_name:
+            result = func(*args)
+            func.__skdriverdiscover[args[0]] = result
+            func.__current_armature_name = args[0]
+            return result
+        else:
+            return func.__skdriverdiscover[args[0]]
+    return wrapper_skdriverdiscover
+
+def skdrivervalues(func):
+
+    def reset_cache_skdrivervalues():
+        func.__skdrivervalues = {}
+
+    func.reset_cache = reset_cache_skdrivervalues
+
+    @functools.wraps(func)
+    def wrapper_skdrivervalues(*args, **kwargs):
+        if not hasattr(func, "__skdrivervalues") or func.__skdrivervalues is None:
+            func.reset_cache()
+
+        if args[0].name not in func.__skdrivervalues.keys():
+            func.__skdrivervalues[args[0].name] = {}
+        if args[1] not in func.__skdrivervalues[args[0].name]:
+            vals = func(*args)
+            func.__skdrivervalues[args[0].name][args[1]] = vals
+            return vals
+        else:
+            return func.__skdrivervalues[args[0].name][args[1]]
+    return wrapper_skdrivervalues
