@@ -14,7 +14,6 @@
 
 import bpy
 from .gltf2_blender_scene import BlenderScene
-from ...io.com.gltf2_io_trs import TRS
 
 
 class BlenderGlTF():
@@ -38,87 +37,7 @@ class BlenderGlTF():
         else:
             gltf.display_total_nodes = "?"
 
-        active_object_name_at_end = None
-        if gltf.data.scenes is not None:
-            for scene_idx, scene in enumerate(gltf.data.scenes):
-                BlenderScene.create(gltf, scene_idx)
-            # keep active object name if needed (to be able to set as active object at end)
-            if gltf.data.scene is not None:
-                if scene_idx == gltf.data.scene:
-                    if bpy.app.version < (2, 80, 0):
-                        active_object_name_at_end = bpy.context.scene.objects.active.name
-                    else:
-                        active_object_name_at_end = bpy.context.view_layer.objects.active.name
-            else:
-                if scene_idx == 0:
-                    if bpy.app.version < (2, 80, 0):
-                        active_object_name_at_end = bpy.context.scene.objects.active.name
-                    else:
-                        active_object_name_at_end = bpy.context.view_layer.objects.active.name
-        else:
-            # special case where there is no scene in glTF file
-            # generate all objects in current scene
-            BlenderScene.create(gltf, None)
-            if bpy.app.version < (2, 80, 0):
-                active_object_name_at_end = bpy.context.scene.objects.active.name
-            else:
-                active_object_name_at_end = bpy.context.view_layer.objects.active.name
-
-        # Armature correction
-        # Try to detect bone chains, and set bone lengths
-        # To detect if a bone is in a chain, we try to detect if a bone head is aligned
-        # with parent_bone :
-        #          Parent bone defined a line (between head & tail)
-        #          Bone head defined a point
-        #          Calcul of distance between point and line
-        #          If < threshold --> In a chain
-        # Based on an idea of @Menithal, but added alignment detection to avoid some bad cases
-
-        threshold = 0.001
-        for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
-            if bpy.app.version < (2, 80, 0):
-                # Take into account only armature from this scene
-                if armobj.name not in bpy.context.scene.objects:
-                    continue
-                bpy.context.scene.objects.active = armobj
-            else:
-                # Take into account only armature from this scene
-                if armobj.name not in bpy.context.view_layer.objects:
-                    continue
-                bpy.context.view_layer.objects.active = armobj
-            armature = armobj.data
-            bpy.ops.object.mode_set(mode="EDIT")
-            for bone in armature.edit_bones:
-                if bone.parent is None:
-                    continue
-
-                parent = bone.parent
-
-                # case where 2 bones are aligned (not in chain, same head)
-                if (bone.head - parent.head).length < threshold:
-                    continue
-
-                u = (parent.tail - parent.head).normalized()
-                point = bone.head
-                distance = ((point - parent.head).cross(u)).length / u.length
-                if distance < threshold:
-                    save_parent_direction = (parent.tail - parent.head).normalized().copy()
-                    save_parent_tail = parent.tail.copy()
-                    parent.tail = bone.head
-
-                    # case where 2 bones are aligned (not in chain, same head)
-                    # bone is no more is same direction
-                    if (parent.tail - parent.head).normalized().dot(save_parent_direction) < 0.9:
-                        parent.tail = save_parent_tail
-
-            bpy.ops.object.mode_set(mode="OBJECT")
-
-        # Set active object
-        if active_object_name_at_end is not None:
-            if bpy.app.version < (2, 80, 0):
-                bpy.context.scene.objects.active = bpy.data.objects[active_object_name_at_end]
-            else:
-                bpy.context.view_layer.objects.active = bpy.data.objects[active_object_name_at_end]
+        BlenderScene.create(gltf)
 
     @staticmethod
     def pre_compute(gltf):
@@ -229,45 +148,6 @@ class BlenderGlTF():
             # Lights management
             node.correction_needed = False
 
-            # transform management
-            if node.matrix:
-                node.transform = node.matrix
-                continue
-
-            # No matrix, but TRS
-            mat = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]  # init
-
-            if node.scale:
-                mat = TRS.scale_to_matrix(node.scale)
-
-            if node.rotation:
-                q_mat = TRS.quaternion_to_matrix(node.rotation)
-                mat = TRS.matrix_multiply(q_mat, mat)
-
-            if node.translation:
-                loc_mat = TRS.translation_to_matrix(node.translation)
-                mat = TRS.matrix_multiply(loc_mat, mat)
-
-            node.transform = mat
-
-
-        # joint management
-        for node_idx, node in enumerate(gltf.data.nodes):
-            is_joint, skin_idx = gltf.is_node_joint(node_idx)
-            if is_joint:
-                node.is_joint = True
-                node.skin_id = skin_idx
-            else:
-                node.is_joint = False
-
-        if gltf.data.skins:
-            for skin_id, skin in enumerate(gltf.data.skins):
-                # init blender values
-                skin.blender_armature_name = None
-                # if skin.skeleton and skin.skeleton not in skin.joints:
-                #     gltf.data.nodes[skin.skeleton].is_joint = True
-                #     gltf.data.nodes[skin.skeleton].skin_id  = skin_id
-
         # Dispatch animation
         if gltf.data.animations:
             for node_idx, node in enumerate(gltf.data.nodes):
@@ -295,7 +175,7 @@ class BlenderGlTF():
         # Meshes
         if gltf.data.meshes:
             for mesh in gltf.data.meshes:
-                mesh.blender_name = None
+                mesh.blender_name = {}  # cache Blender mesh (keyed by skin_idx)
                 mesh.is_weight_animated = False
 
         # Calculate names for each mesh's shapekeys

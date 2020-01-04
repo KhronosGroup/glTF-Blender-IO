@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 from .gltf2_blender_material import BlenderMaterial
-from ..com.gltf2_blender_conversion import loc_gltf_to_blender
+from ..com.gltf2_blender_conversion import loc_gltf_to_blender, matrix_gltf_to_blender
 from ...io.imp.gltf2_io_binary import BinaryData
 from ...io.com.gltf2_io_color_management import color_linear_to_srgb
 from ...io.com import gltf2_io_debug
@@ -37,7 +37,7 @@ class BlenderPrimitive():
         return bme_layers[name]
 
     @staticmethod
-    def add_primitive_to_bmesh(gltf, bme, pymesh, pyprimitive, material_index):
+    def add_primitive_to_bmesh(gltf, bme, pymesh, pyprimitive, skin_idx, material_index):
         attributes = pyprimitive.attributes
 
         if 'POSITION' not in attributes:
@@ -57,6 +57,72 @@ class BlenderPrimitive():
         bme_edges = bme.edges
         bme_faces = bme.faces
 
+        # Gather up the joints/weights (multiple sets allow >4 influences)
+        joint_sets = []
+        weight_sets = []
+        set_num = 0
+        while 'JOINTS_%d' % set_num in attributes and 'WEIGHTS_%d' % set_num in attributes:
+            joint_data = BinaryData.get_data_from_accessor(gltf, attributes['JOINTS_%d' % set_num], cache=True)
+            weight_data = BinaryData.get_data_from_accessor(gltf, attributes['WEIGHTS_%d' % set_num], cache=True)
+
+            joint_sets.append(joint_data)
+            weight_sets.append(weight_data)
+
+            set_num += 1
+
+        # For skinned meshes, we will need to calculate the position of the
+        # verts in the bind pose, ie. the pose the edit bones are in.
+        if skin_idx is not None:
+            pyskin = gltf.data.skins[skin_idx]
+            if pyskin.inverse_bind_matrices is not None:
+                inv_binds = BinaryData.get_data_from_accessor(gltf, pyskin.inverse_bind_matrices)
+                inv_binds = [matrix_gltf_to_blender(m) for m in inv_binds]
+            else:
+                inv_binds = [Matrix.Identity(4) for i in range(len(pyskin.joints))]
+            arma_mats = [gltf.vnodes[joint].bone_arma_mat for joint in pyskin.joints]
+
+            def skin_vert(pos, pidx):
+                # Spec says weights should already sum to 1 but some models
+                # don't do it (ex. CesiumMan), so normalize.
+                weight_sum = 0
+                for weight_set in weight_sets:
+                    weight_sum += weight_set[pidx][0] + weight_set[pidx][1] + \
+                        weight_set[pidx][2] + weight_set[pidx][3]
+
+                pos = Vector(pos)
+                out = Vector((0, 0, 0))
+                for joint_set, weight_set in zip(joint_sets, weight_sets):
+                    for j in range(0, 4):
+                        weight = weight_set[pidx][j] / weight_sum
+                        if weight != 0.0:
+                            joint = joint_set[pidx][j]
+                            if bpy.app.version < (2, 80, 0):
+                                out += weight * (arma_mats[joint] * (inv_binds[joint] * pos.to_4d())).to_3d()
+                            else:
+                                out += weight * (arma_mats[joint] @ (inv_binds[joint] @ pos))
+                return out
+
+            def skin_normal(norm, pidx):
+                weight_sum = 0
+                for weight_set in weight_sets:
+                    weight_sum += weight_set[pidx][0] + weight_set[pidx][1] + \
+                        weight_set[pidx][2] + weight_set[pidx][3]
+
+                # TODO: not sure this is right
+                norm = Vector(norm+(0,))
+                out = Vector((0, 0, 0, 0))
+                for joint_set, weight_set in zip(joint_sets, weight_sets):
+                    for j in range(0, 4):
+                        weight = weight_set[pidx][j] / weight_sum
+                        if weight != 0.0:
+                            joint = joint_set[pidx][j]
+                            if bpy.app.version < (2, 80, 0):
+                                out += weight * (arma_mats[joint] * (inv_binds[joint] * norm))
+                            else:
+                                out += weight * (arma_mats[joint] @ (inv_binds[joint] @ norm))
+                out = out.to_3d().normalized()
+                return out
+
         # Every vertex has an index into the primitive's attribute arrays and a
         #  *different* index into the BMesh's list of verts. Call the first one the
         #  pidx and the second the bidx. Need to keep them straight!
@@ -74,7 +140,11 @@ class BlenderPrimitive():
             used_pidxs = list(used_pidxs)
             used_pidxs.sort()
         for pidx in used_pidxs:
-            bme_verts.new(positions[pidx])
+            pos = positions[pidx]
+            if skin_idx is not None:
+                pos = skin_vert(pos, pidx)
+
+            bme_verts.new(pos)
             vert_idxs.append((bidx, pidx))
             pidx_to_bidx[pidx] = bidx
             bidx += 1
@@ -114,8 +184,12 @@ class BlenderPrimitive():
         if 'NORMAL' in attributes:
             normals = BinaryData.get_data_from_accessor(gltf, attributes['NORMAL'], cache=True)
 
-            for bidx, pidx in vert_idxs:
-                bme_verts[bidx].normal = normals[pidx]
+            if skin_idx is None:
+                for bidx, pidx in vert_idxs:
+                    bme_verts[bidx].normal = normals[pidx]
+            else:
+                for bidx, pidx in vert_idxs:
+                    bme_verts[bidx].normal = skin_normal(normals[pidx], pidx)
 
         # Set vertex colors. Add them in the order COLOR_0, COLOR_1, etc.
         set_num = 0
@@ -176,19 +250,7 @@ class BlenderPrimitive():
 
             set_num += 1
 
-        # Set joints/weights for skinning (multiple sets allow > 4 influences)
-        joint_sets = []
-        weight_sets = []
-        set_num = 0
-        while 'JOINTS_%d' % set_num in attributes and 'WEIGHTS_%d' % set_num in attributes:
-            joint_data = BinaryData.get_data_from_accessor(gltf, attributes['JOINTS_%d' % set_num], cache=True)
-            weight_data = BinaryData.get_data_from_accessor(gltf, attributes['WEIGHTS_%d' % set_num], cache=True)
-
-            joint_sets.append(joint_data)
-            weight_sets.append(weight_data)
-
-            set_num += 1
-
+        # Set joints/weights for skinning
         if joint_sets:
             layer = BlenderPrimitive.get_layer(bme.verts.layers.deform, 'Vertex Weights')
 
@@ -210,11 +272,19 @@ class BlenderPrimitive():
 
             morph_positions = BinaryData.get_data_from_accessor(gltf, target['POSITION'], cache=True)
 
-            for bidx, pidx in vert_idxs:
-                bme_verts[bidx][layer] = (
-                    Vector(positions[pidx]) +
-                    Vector(morph_positions[pidx])
-                )
+            if skin_idx is None:
+                for bidx, pidx in vert_idxs:
+                    bme_verts[bidx][layer] = (
+                        Vector(positions[pidx]) +
+                        Vector(morph_positions[pidx])
+                    )
+            else:
+                for bidx, pidx in vert_idxs:
+                    pos = (
+                        Vector(positions[pidx]) +
+                        Vector(morph_positions[pidx])
+                    )
+                    bme_verts[bidx][layer] = skin_vert(pos, pidx)
 
     @staticmethod
     def edges_and_faces(mode, indices):

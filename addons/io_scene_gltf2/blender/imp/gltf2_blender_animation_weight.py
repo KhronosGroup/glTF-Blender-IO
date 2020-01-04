@@ -25,10 +25,16 @@ class BlenderWeightAnim():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def anim(gltf, anim_idx, node_idx):
+    def anim(gltf, anim_idx, vnode_id):
         """Manage animation."""
+        vnode = gltf.vnodes[vnode_id]
+
+        node_idx = vnode.mesh_node_idx
+        if node_idx is None:
+            return
+
         node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[node.blender_object]
+        obj = vnode.blender_object
         fps = bpy.context.scene.render.fps
 
         animation = gltf.data.animations[anim_idx]

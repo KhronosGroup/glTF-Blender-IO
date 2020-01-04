@@ -16,9 +16,9 @@ import bpy
 from mathutils import Vector
 
 from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_gltf_to_blender
-from ..com.gltf2_blender_conversion import correction_rotation
 from ...io.imp.gltf2_io_binary import BinaryData
 from .gltf2_blender_animation_utils import simulate_stash, make_fcurve
+from .gltf2_blender_vnode import VNode
 
 
 class BlenderNodeAnim():
@@ -30,7 +30,8 @@ class BlenderNodeAnim():
     def anim(gltf, anim_idx, node_idx):
         """Manage animation."""
         node = gltf.data.nodes[node_idx]
-        obj = bpy.data.objects[node.blender_object]
+        vnode = gltf.vnodes[node_idx]
+        obj = vnode.blender_object
         fps = bpy.context.scene.render.fps
 
         animation = gltf.data.animations[anim_idx]
@@ -62,10 +63,6 @@ class BlenderNodeAnim():
             if channel.target.path not in ['translation', 'rotation', 'scale']:
                 continue
 
-            # There is an animation on object
-            # We can't remove Yup2Zup object
-            gltf.animation_object = True
-
             if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
                 # TODO manage tangent?
                 values = [values[idx * 3 + 1] for idx in range(0, len(keys))]
@@ -74,26 +71,20 @@ class BlenderNodeAnim():
                 blender_path = "location"
                 group_name = "Location"
                 num_components = 3
-                values = [loc_gltf_to_blender(vals) for vals in values]
+
+                if vnode.parent is not None and gltf.vnodes[vnode.parent].type == VNode.Bone:
+                    # Nodes with a bone parent need to be translated
+                    # backwards by their bone length (always 1 currently)
+                    off = Vector((0, -1, 0))
+                    values = [Vector(loc_gltf_to_blender(vals)) + off for vals in values]
+                else:
+                    values = [loc_gltf_to_blender(vals) for vals in values]
 
             elif channel.target.path == "rotation":
                 blender_path = "rotation_quaternion"
                 group_name = "Rotation"
                 num_components = 4
-                if node.correction_needed is True:
-                    if bpy.app.version < (2, 80, 0):
-                        values = [
-                            (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() * correction_rotation()).to_quaternion()
-                            for vals in values
-                        ]
-                    else:
-                        values = [
-                            (quaternion_gltf_to_blender(vals).to_matrix().to_4x4() @ correction_rotation()).to_quaternion()
-                            for vals in values
-                        ]
-                else:
-                    values = [quaternion_gltf_to_blender(vals) for vals in values]
-
+                values = [quaternion_gltf_to_blender(vals) for vals in values]
 
                 # Manage antipodal quaternions
                 for i in range(1, len(values)):

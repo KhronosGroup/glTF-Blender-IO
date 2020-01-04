@@ -33,19 +33,11 @@ def quaternion_gltf_to_blender(q):
     """Quaternion from glTF to Blender."""
     return Quaternion([q[3], q[0], q[1], q[2]])
 
-def scale_to_matrix(scale):
-    """Scale to matrix."""
-    mat = Matrix()
-    for i in range(3):
-        mat[i][i] = scale[i]
-
-    return mat
-
 def correction_rotation():
     """Correction of Rotation."""
     # Correction is needed for lamps, because Yup2Zup is not written in vertices
     # and lamps has no vertices :)
-    return Quaternion((sqrt(2)/2, -sqrt(2)/2, 0.0, 0.0)).to_matrix().to_4x4()
+    return Quaternion((sqrt(2)/2, -sqrt(2)/2, 0.0, 0.0))
 
 def texture_transform_blender_to_gltf(mapping_transform):
     """
