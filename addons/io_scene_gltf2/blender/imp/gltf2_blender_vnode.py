@@ -15,9 +15,6 @@
 import bpy
 from mathutils import Vector, Quaternion, Matrix
 
-from ..com.gltf2_blender_conversion import \
-    loc_gltf_to_blender, quaternion_gltf_to_blender, scale_gltf_to_blender, matrix_gltf_to_blender
-
 def compute_vnodes(gltf):
     """Computes the tree of virtual nodes.
     Copies the glTF nodes into a tree of VNodes, then performs a series of
@@ -27,6 +24,7 @@ def compute_vnodes(gltf):
     create_bones_and_armas(gltf)
     move_skinned_meshes(gltf)
     move_instances_off(gltf)
+    correct_cameras_and_lights(gltf)
     calc_bone_matrices(gltf)
 
 
@@ -68,7 +66,7 @@ def init_vnodes(gltf):
         gltf.vnodes[i] = vnode
         vnode.name = pynode.name or 'Node_%d' % i
         vnode.children = list(pynode.children or [])
-        vnode.trs = get_node_trs(pynode)
+        vnode.trs = get_node_trs(gltf, pynode)
         if pynode.mesh is not None:
             vnode.mesh_node_idx = i
         if pynode.camera is not None:
@@ -90,15 +88,15 @@ def init_vnodes(gltf):
     for root in roots:
         gltf.vnodes[root].parent = 'root'
 
-def get_node_trs(pynode):
+def get_node_trs(gltf, pynode):
     if pynode.matrix is not None:
-        m = matrix_gltf_to_blender(pynode.matrix)
+        m = gltf.matrix_gltf_to_blender(pynode.matrix)
         return m.decompose()
 
-    t = loc_gltf_to_blender(pynode.translation or [0, 0, 0])
-    r = quaternion_gltf_to_blender(pynode.rotation or [0, 0, 0, 1])
-    s = scale_gltf_to_blender(pynode.scale or [1, 1, 1])
-    return Vector(t), Quaternion(r), Vector(s)
+    t = gltf.loc_gltf_to_blender(pynode.translation or [0, 0, 0])
+    r = gltf.quaternion_gltf_to_blender(pynode.rotation or [0, 0, 0, 1])
+    s = gltf.scale_gltf_to_blender(pynode.scale or [1, 1, 1])
+    return t, r, s
 
 
 def create_bones_and_armas(gltf):
@@ -258,6 +256,45 @@ def move_instances_off(gltf):
                 vnode.children.append(new_id)
                 vnode.light_node_idx = None
             needs_move = True
+
+
+def correct_cameras_and_lights(gltf):
+    """
+    Depending on the coordinate change, lights and cameras might need to be
+    rotated to match Blender conventions for which axes they point along.
+    """
+    if gltf.camera_correction is None:
+        return
+
+    trs = (Vector((0, 0, 0)), gltf.camera_correction, Vector((1, 1, 1)))
+
+    ids = list(gltf.vnodes.keys())
+    for id in ids:
+        vnode = gltf.vnodes[id]
+
+        # Move the camera/light onto a new child and set its rotation
+        # TODO: "hard apply" the rotation without creating a new node
+        #       (like we'll need to do for bones)
+
+        if vnode.camera_node_idx is not None:
+            new_id = str(id) + '.camera-correction'
+            gltf.vnodes[new_id] = VNode()
+            gltf.vnodes[new_id].name = vnode.name + ' Correction'
+            gltf.vnodes[new_id].trs = trs
+            gltf.vnodes[new_id].camera_node_idx = vnode.camera_node_idx
+            gltf.vnodes[new_id].parent = id
+            vnode.children.append(new_id)
+            vnode.camera_node_idx = None
+
+        if vnode.light_node_idx is not None:
+            new_id = str(id) + '.light-correction'
+            gltf.vnodes[new_id] = VNode()
+            gltf.vnodes[new_id].name = vnode.name + ' Correction'
+            gltf.vnodes[new_id].trs = trs
+            gltf.vnodes[new_id].light_node_idx = vnode.light_node_idx
+            gltf.vnodes[new_id].parent = id
+            vnode.children.append(new_id)
+            vnode.light_node_idx = None
 
 
 def calc_bone_matrices(gltf):

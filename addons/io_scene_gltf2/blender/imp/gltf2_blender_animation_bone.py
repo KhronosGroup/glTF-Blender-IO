@@ -16,7 +16,6 @@ import json
 import bpy
 from mathutils import Vector
 
-from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_gltf_to_blender
 from ...io.imp.gltf2_io_binary import BinaryData
 from .gltf2_blender_animation_utils import simulate_stash, make_fcurve
 
@@ -53,23 +52,23 @@ class BlenderBoneAnim():
         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
             # TODO manage tangent?
             translation_keyframes = (
-                loc_gltf_to_blender(values[idx * 3 + 1])
+                gltf.loc_gltf_to_blender(values[idx * 3 + 1])
                 for idx in range(0, len(keys))
             )
         else:
-            translation_keyframes = (loc_gltf_to_blender(vals) for vals in values)
+            translation_keyframes = (gltf.loc_gltf_to_blender(vals) for vals in values)
 
         bind_trans, bind_rot, _ = vnode.trs
         bind_rot_inv = bind_rot.conjugated()
 
         if bpy.app.version < (2, 80, 0):
             final_translations = [
-                bind_rot_inv * (Vector(trans) - bind_trans)
+                bind_rot_inv * (trans - bind_trans)
                 for trans in translation_keyframes
             ]
         else:
             final_translations = [
-                bind_rot_inv @ (Vector(trans) - bind_trans)
+                bind_rot_inv @ (trans - bind_trans)
                 for trans in translation_keyframes
             ]
 
@@ -94,11 +93,11 @@ class BlenderBoneAnim():
         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
             # TODO manage tangent?
             quat_keyframes = [
-                quaternion_gltf_to_blender(values[idx * 3 + 1])
+                gltf.quaternion_gltf_to_blender(values[idx * 3 + 1])
                 for idx in range(0, len(keys))
             ]
         else:
-            quat_keyframes = [quaternion_gltf_to_blender(vals) for vals in values]
+            quat_keyframes = [gltf.quaternion_gltf_to_blender(vals) for vals in values]
 
         _, bind_rot, _ = vnode.trs
         bind_rot_inv = bind_rot.conjugated()
@@ -141,11 +140,11 @@ class BlenderBoneAnim():
         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
             # TODO manage tangent?
             final_scales = [
-                scale_gltf_to_blender(values[idx * 3 + 1])
+                gltf.scale_gltf_to_blender(values[idx * 3 + 1])
                 for idx in range(0, len(keys))
             ]
         else:
-            final_scales = [scale_gltf_to_blender(vals) for vals in values]
+            final_scales = [gltf.scale_gltf_to_blender(vals) for vals in values]
 
         BlenderBoneAnim.fill_fcurves(
             obj.animation_data.action,

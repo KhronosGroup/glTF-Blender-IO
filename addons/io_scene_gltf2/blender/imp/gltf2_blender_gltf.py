@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+from mathutils import Vector, Quaternion, Matrix
 from .gltf2_blender_scene import BlenderScene
 
 
@@ -29,6 +30,7 @@ class BlenderGlTF():
         else:
             if bpy.context.scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
                 bpy.context.scene.render.engine = 'BLENDER_EEVEE'
+        BlenderGlTF.set_convert_functions(gltf)
         BlenderGlTF.pre_compute(gltf)
 
         gltf.display_current_node = 0
@@ -38,6 +40,49 @@ class BlenderGlTF():
             gltf.display_total_nodes = "?"
 
         BlenderScene.create(gltf)
+
+    @staticmethod
+    def set_convert_functions(gltf):
+        yup2zup = bpy.app.debug_value != 100
+
+        if yup2zup:
+            # glTF Y-Up space --> Blender Z-up space
+            # X,Y,Z --> X,-Z,Y
+            def convert_loc(x): return Vector([x[0], -x[2], x[1]])
+            def convert_quat(q): return Quaternion([q[3], q[0], -q[2], q[1]])
+            def convert_normal(n): return Vector([n[0], -n[2], n[1]])
+            def convert_scale(s): return Vector([s[0], s[2], s[1]])
+            def convert_matrix(m):
+                return Matrix([
+                    [ m[0], -m[ 8],  m[4],  m[12]],
+                    [-m[2],  m[10], -m[6], -m[14]],
+                    [ m[1], -m[ 9],  m[5],  m[13]],
+                    [ m[3], -m[11],  m[7],  m[15]],
+                ])
+
+            # Correction for cameras and lights.
+            # glTF: right = +X, forward = -Z, up = +Y
+            # glTF after Yup2Zup: right = +X, forward = +Y, up = +Z
+            # Blender: right = +X, forward = -Z, up = +Y
+            # Need to carry Blender --> glTF after Yup2Zup
+            gltf.camera_correction = Quaternion((2**0.5/2, 2**0.5/2, 0.0, 0.0))
+
+        else:
+            def convert_loc(x): return Vector(x)
+            def convert_quat(q): return Quaternion([q[3], q[0], q[1], q[2]])
+            def convert_normal(n): return Vector(n)
+            def convert_scale(s): return Vector(s)
+            def convert_matrix(m):
+                return Matrix([m[0::4], m[1::4], m[2::4], m[3::4]])
+
+            # Same convention, no correction needed.
+            gltf.camera_correction = None
+
+        gltf.loc_gltf_to_blender = convert_loc
+        gltf.quaternion_gltf_to_blender = convert_quat
+        gltf.normal_gltf_to_blender = convert_normal
+        gltf.scale_gltf_to_blender = convert_scale
+        gltf.matrix_gltf_to_blender = convert_matrix
 
     @staticmethod
     def pre_compute(gltf):

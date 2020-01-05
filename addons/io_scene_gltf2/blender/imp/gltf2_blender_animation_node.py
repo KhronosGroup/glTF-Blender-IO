@@ -15,7 +15,6 @@
 import bpy
 from mathutils import Vector
 
-from ..com.gltf2_blender_conversion import loc_gltf_to_blender, quaternion_gltf_to_blender, scale_gltf_to_blender
 from ...io.imp.gltf2_io_binary import BinaryData
 from .gltf2_blender_animation_utils import simulate_stash, make_fcurve
 from .gltf2_blender_vnode import VNode
@@ -76,15 +75,15 @@ class BlenderNodeAnim():
                     # Nodes with a bone parent need to be translated
                     # backwards by their bone length (always 1 currently)
                     off = Vector((0, -1, 0))
-                    values = [Vector(loc_gltf_to_blender(vals)) + off for vals in values]
+                    values = [gltf.loc_gltf_to_blender(vals) + off for vals in values]
                 else:
-                    values = [loc_gltf_to_blender(vals) for vals in values]
+                    values = [gltf.loc_gltf_to_blender(vals) for vals in values]
 
             elif channel.target.path == "rotation":
                 blender_path = "rotation_quaternion"
                 group_name = "Rotation"
                 num_components = 4
-                values = [quaternion_gltf_to_blender(vals) for vals in values]
+                values = [gltf.quaternion_gltf_to_blender(vals) for vals in values]
 
                 # Manage antipodal quaternions
                 for i in range(1, len(values)):
@@ -95,7 +94,7 @@ class BlenderNodeAnim():
                 blender_path = "scale"
                 group_name = "Scale"
                 num_components = 3
-                values = [scale_gltf_to_blender(vals) for vals in values]
+                values = [gltf.scale_gltf_to_blender(vals) for vals in values]
 
             coords = [0] * (2 * len(keys))
             coords[::2] = (key[0] * fps for key in keys)

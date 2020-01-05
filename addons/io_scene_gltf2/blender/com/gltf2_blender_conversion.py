@@ -15,30 +15,6 @@
 from mathutils import Matrix, Quaternion
 from math import sqrt, sin, cos
 
-def matrix_gltf_to_blender(mat_input):
-    """Matrix from glTF format to Blender format."""
-    mat = Matrix([mat_input[0:4], mat_input[4:8], mat_input[8:12], mat_input[12:16]])
-    mat.transpose()
-    return mat
-
-def loc_gltf_to_blender(loc):
-    """Location."""
-    return loc
-
-def scale_gltf_to_blender(scale):
-    """Scaling."""
-    return scale
-
-def quaternion_gltf_to_blender(q):
-    """Quaternion from glTF to Blender."""
-    return Quaternion([q[3], q[0], q[1], q[2]])
-
-def correction_rotation():
-    """Correction of Rotation."""
-    # Correction is needed for lamps, because Yup2Zup is not written in vertices
-    # and lamps has no vertices :)
-    return Quaternion((sqrt(2)/2, -sqrt(2)/2, 0.0, 0.0))
-
 def texture_transform_blender_to_gltf(mapping_transform):
     """
     Converts the offset/rotation/scale from a Mapping node applied in Blender's

@@ -16,7 +16,6 @@ import bpy
 from mathutils import Vector, Matrix
 
 from .gltf2_blender_material import BlenderMaterial
-from ..com.gltf2_blender_conversion import loc_gltf_to_blender, matrix_gltf_to_blender
 from ...io.imp.gltf2_io_binary import BinaryData
 from ...io.com.gltf2_io_color_management import color_linear_to_srgb
 from ...io.com import gltf2_io_debug
@@ -76,7 +75,7 @@ class BlenderPrimitive():
             pyskin = gltf.data.skins[skin_idx]
             if pyskin.inverse_bind_matrices is not None:
                 inv_binds = BinaryData.get_data_from_accessor(gltf, pyskin.inverse_bind_matrices)
-                inv_binds = [matrix_gltf_to_blender(m) for m in inv_binds]
+                inv_binds = [gltf.matrix_gltf_to_blender(m) for m in inv_binds]
             else:
                 inv_binds = [Matrix.Identity(4) for i in range(len(pyskin.joints))]
             arma_mats = [gltf.vnodes[joint].bone_arma_mat for joint in pyskin.joints]
@@ -89,7 +88,6 @@ class BlenderPrimitive():
                     weight_sum += weight_set[pidx][0] + weight_set[pidx][1] + \
                         weight_set[pidx][2] + weight_set[pidx][3]
 
-                pos = Vector(pos)
                 out = Vector((0, 0, 0))
                 for joint_set, weight_set in zip(joint_sets, weight_sets):
                     for j in range(0, 4):
@@ -109,7 +107,7 @@ class BlenderPrimitive():
                         weight_set[pidx][2] + weight_set[pidx][3]
 
                 # TODO: not sure this is right
-                norm = Vector(norm+(0,))
+                norm = Vector([norm[0], norm[1], norm[2], 0])
                 out = Vector((0, 0, 0, 0))
                 for joint_set, weight_set in zip(joint_sets, weight_sets):
                     for j in range(0, 4):
@@ -140,7 +138,7 @@ class BlenderPrimitive():
             used_pidxs = list(used_pidxs)
             used_pidxs.sort()
         for pidx in used_pidxs:
-            pos = positions[pidx]
+            pos = gltf.loc_gltf_to_blender(positions[pidx])
             if skin_idx is not None:
                 pos = skin_vert(pos, pidx)
 
@@ -186,10 +184,11 @@ class BlenderPrimitive():
 
             if skin_idx is None:
                 for bidx, pidx in vert_idxs:
-                    bme_verts[bidx].normal = normals[pidx]
+                    bme_verts[bidx].normal = gltf.normal_gltf_to_blender(normals[pidx])
             else:
                 for bidx, pidx in vert_idxs:
-                    bme_verts[bidx].normal = skin_normal(normals[pidx], pidx)
+                    normal = gltf.normal_gltf_to_blender(normals[pidx])
+                    bme_verts[bidx].normal = skin_normal(normal, pidx)
 
         # Set vertex colors. Add them in the order COLOR_0, COLOR_1, etc.
         set_num = 0
@@ -275,14 +274,14 @@ class BlenderPrimitive():
             if skin_idx is None:
                 for bidx, pidx in vert_idxs:
                     bme_verts[bidx][layer] = (
-                        Vector(positions[pidx]) +
-                        Vector(morph_positions[pidx])
+                        gltf.loc_gltf_to_blender(positions[pidx]) +
+                        gltf.loc_gltf_to_blender(morph_positions[pidx])
                     )
             else:
                 for bidx, pidx in vert_idxs:
                     pos = (
-                        Vector(positions[pidx]) +
-                        Vector(morph_positions[pidx])
+                        gltf.loc_gltf_to_blender(positions[pidx]) +
+                        gltf.loc_gltf_to_blender(morph_positions[pidx])
                     )
                     bme_verts[bidx][layer] = skin_vert(pos, pidx)
 

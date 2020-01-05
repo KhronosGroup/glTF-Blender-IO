@@ -20,7 +20,6 @@ from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
 from .gltf2_blender_primitive import BlenderPrimitive
 from ...io.imp.gltf2_io_binary import BinaryData
-from ..com.gltf2_blender_conversion import loc_gltf_to_blender
 
 
 class BlenderMesh():

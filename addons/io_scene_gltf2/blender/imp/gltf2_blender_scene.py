@@ -49,10 +49,6 @@ class BlenderScene():
 
         BlenderScene.create_animations(gltf)
 
-        if bpy.app.debug_value != 100:
-            # TODO: get rid of this by applying the conversions when we read from the glTF
-            BlenderScene.add_yup2zup(gltf)
-
         if bpy.app.version < (2, 80, 0):
             scene.render.engine = "CYCLES"
         else:
@@ -77,21 +73,3 @@ class BlenderScene():
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
             BlenderAnimation.restore_animation(gltf, 'root', anim_name)
-
-    @staticmethod
-    def add_yup2zup(gltf):
-        # Create Yup2Zup empty
-        obj_rotation = bpy.data.objects.new("Yup2Zup", None)
-        obj_rotation.rotation_mode = 'QUATERNION'
-        obj_rotation.rotation_quaternion = Quaternion((sqrt(2) / 2, sqrt(2) / 2, 0.0, 0.0))
-
-        if bpy.app.version < (2, 80, 0):
-            bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
-        else:
-            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj_rotation)
-
-        if gltf.vnodes['root'].type == VNode.DummyRoot:
-            for child in gltf.vnodes['root'].children:
-                gltf.vnodes[child].blender_object.parent = obj_rotation
-        else:
-            gltf.vnodes['root'].blender_object.parent = obj_rotation
