@@ -213,20 +213,19 @@ the correct image and will copy the strength setting into the glTF.
 Emissive
 ^^^^^^^^
 
-An Image Texture node can be connected to an Emission shader node, and
-optionally combined with properties from a Principled BSDF node by way of an Add Shader node.
+An Image Texture node can be connected to the Emission input on the Principled BSDF node
+to include an emissive map with the glTF material. Alternately, the Image Texture node
+can be connected to an Emission shader node, and optionally combined with properties
+from a Principled BSDF node by way of an Add Shader node.
 
-If the glTF exporter finds an image connected to the Emission shader node,
-it will export that image as the glTF material's emissive texture.
+If the emissive map is alone in the material, it is best to set the Base Color default
+to black, and the Roughness default to 1.0. This minimizes the influence of the other
+channels if they are not needed.
 
 .. figure:: /images/addons_io-gltf2_material-emissive.png
 
-   An Emission node can be added to existing nodes.
-
-.. note::
-
-   The *Emission* input of the Principled BSDF node is not yet supported by this exporter.
-   This may change in a future version.
+   This arrangement is supported for backwards compatibility. It is simpler to use
+   the Principled BSDF node directly.
 
 
 Double Sided / Backface Culling
@@ -455,6 +454,8 @@ Export
 
 Format
    See: `File Format Variations`_.
+Textures
+   Folder to place texture files in. Relative to the .gltf file.
 Copyright
    Legal rights and conditions for the model.
 Remember Export Settings
@@ -498,7 +499,8 @@ Vertex Colors
 Materials
    Export materials.
 Images
-   Todo.
+   Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable
+   for web applications due to the smaller file size.
 
 
 Compression
@@ -540,7 +542,7 @@ Always Sample Animations
 NLA Strips
    Whether to export NLA strip animations.
 Export Deformation Bones Only
-   Todo.
+   Export Deformation bones only (and needed bones for hierarchy).
 
 
 Shape Keys
