@@ -55,6 +55,10 @@ class BlenderScene():
             if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
                 scene.render.engine = "BLENDER_EEVEE"
 
+        if bpy.context.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+        BlenderScene.set_active_object(gltf)
+
     @staticmethod
     def create_animations(gltf):
         """Create animations."""
@@ -73,3 +77,26 @@ class BlenderScene():
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
             BlenderAnimation.restore_animation(gltf, 'root', anim_name)
+
+    @staticmethod
+    def set_active_object(gltf):
+        """Make the first root object from the default glTF scene active.
+        If no default scene, use the first scene, or just any root object.
+        """
+        if gltf.data.scenes:
+            pyscene = gltf.data.scenes[gltf.data.scene or 0]
+            vnode = gltf.vnodes[pyscene.nodes[0]]
+            if gltf.vnodes[vnode.parent].type != VNode.DummyRoot:
+                vnode = gltf.vnodes[vnode.parent]
+
+        else:
+            vnode = gltf.vnodes['root']
+            if vnode.type == VNode.DummyRoot:
+                if not vnode.children:
+                    return  # no nodes
+                vnode = gltf.vnodes[vnode.children[0]]
+
+        if bpy.app.version < (2, 80, 0):
+            bpy.context.scene.objects.active = vnode.blender_object
+        else:
+            bpy.context.view_layer.objects.active = vnode.blender_object
