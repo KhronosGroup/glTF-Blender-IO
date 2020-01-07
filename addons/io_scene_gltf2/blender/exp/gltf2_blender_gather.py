@@ -21,6 +21,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_animations
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 def gather_gltf2(export_settings):
@@ -55,6 +56,8 @@ def __gather_scene(blender_scene, export_settings):
             node = gltf2_blender_gather_nodes.gather_node(blender_object, blender_scene, export_settings)
             if node is not None:
                 scene.nodes.append(node)
+
+    export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)
 
     return scene
 
