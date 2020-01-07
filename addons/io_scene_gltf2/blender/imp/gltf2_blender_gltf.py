@@ -25,20 +25,8 @@ class BlenderGlTF():
     @staticmethod
     def create(gltf):
         """Create glTF main method."""
-        if bpy.app.version < (2, 80, 0):
-            bpy.context.scene.render.engine = 'CYCLES'
-        else:
-            if bpy.context.scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
-                bpy.context.scene.render.engine = 'BLENDER_EEVEE'
         BlenderGlTF.set_convert_functions(gltf)
         BlenderGlTF.pre_compute(gltf)
-
-        gltf.display_current_node = 0
-        if gltf.data.nodes is not None:
-            gltf.display_total_nodes = len(gltf.data.nodes)
-        else:
-            gltf.display_total_nodes = "?"
-
         BlenderScene.create(gltf)
 
     @staticmethod

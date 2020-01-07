@@ -186,8 +186,6 @@ class BlenderNode():
             name = mesh_name
 
         obj = bpy.data.objects.new(name, mesh)
-        set_extras(obj, pynode.extras)
-        obj.rotation_mode = 'QUATERNION'
 
         if instance == False:
             BlenderMesh.set_mesh(gltf, gltf.data.meshes[pynode.mesh], obj)

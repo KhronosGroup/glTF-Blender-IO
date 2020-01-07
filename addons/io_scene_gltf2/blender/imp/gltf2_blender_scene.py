@@ -37,6 +37,11 @@ class BlenderScene():
         else:
             if bpy.context.collection.name in bpy.data.collections: # avoid master collection
                 gltf.blender_active_collection = bpy.context.collection.name
+        if bpy.app.version < (2, 80, 0):
+            scene.render.engine = "CYCLES"
+        else:
+            if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
+                scene.render.engine = "BLENDER_EEVEE"
 
         compute_vnodes(gltf)
 
@@ -48,12 +53,6 @@ class BlenderScene():
             BlenderSkin.create_armature_modifiers(gltf)
 
         BlenderScene.create_animations(gltf)
-
-        if bpy.app.version < (2, 80, 0):
-            scene.render.engine = "CYCLES"
-        else:
-            if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
-                scene.render.engine = "BLENDER_EEVEE"
 
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
