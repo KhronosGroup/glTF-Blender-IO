@@ -31,6 +31,10 @@ class BlenderNode():
         vnode = gltf.vnodes[vnode_id]
         name = vnode.name
 
+        gltf.display_current_node += 1
+        if bpy.app.debug_value == 101:
+            gltf.log.critical("Node %d of %d (id %s)", gltf.display_current_node, len(gltf.vnodes), vnode_id)
+
         if vnode.type == VNode.Object:
             BlenderNode.create_object(gltf, vnode_id)
 

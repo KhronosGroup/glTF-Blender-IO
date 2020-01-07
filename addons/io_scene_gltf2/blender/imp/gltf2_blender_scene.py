@@ -45,6 +45,7 @@ class BlenderScene():
 
         compute_vnodes(gltf)
 
+        gltf.display_current_node = 0  # for debugging
         BlenderNode.create_vnode(gltf, 'root')
 
         # Now that all mesh / bones are created, create vertex groups on mesh
