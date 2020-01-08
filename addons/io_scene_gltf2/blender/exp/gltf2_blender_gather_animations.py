@@ -77,10 +77,15 @@ def gather_animations(blender_object: bpy.types.Object,
                         tracks[track_name] = []
                     tracks[track_name].append(offset + len(animations)-1) # Store index of animation in animations
 
-    # Restore current action
+    # Restore action status
     if blender_object.animation_data:
-        if blender_object.animation_data.action is not None and current_action is not None and blender_object.animation_data.action.name != current_action.name:
-            blender_object.animation_data.action = current_action
+        if blender_object.animation_data.action is not None:
+            if current_action is None:
+                # remove last exported action
+                blender_object.animation_data.action = None
+            elif blender_object.animation_data.action.name != current_action.name:
+                # Restore action that was active at start of exporting
+                blender_object.animation_data.action = current_action
 
     return animations, tracks
 
