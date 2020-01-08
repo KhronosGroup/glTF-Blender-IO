@@ -106,7 +106,7 @@ def create_bones_and_armas(gltf):
     joint as a bone.
     """
     for skin in gltf.data.skins or []:
-        descendants = skin.joints
+        descendants = list(skin.joints)
         if skin.skeleton is not None:
             descendants.append(skin.skeleton)
         arma_id = deepest_common_ancestor(gltf, descendants)
