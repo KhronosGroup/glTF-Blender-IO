@@ -78,8 +78,7 @@ class BlenderEmissiveMap():
                 node_tree.links.new(emit.inputs[0], text.outputs[0])
 
         else:
-            emissive_color = pymaterial.emissive_factor
-            emissive_color.append(1.0) # add alpha
+            emissive_color = pymaterial.emissive_factor + [1] # add alpha
             emit.inputs[0].default_value = emissive_color
 
 
