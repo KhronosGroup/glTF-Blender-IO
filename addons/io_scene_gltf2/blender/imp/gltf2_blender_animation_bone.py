@@ -187,12 +187,12 @@ class BlenderBoneAnim():
 
         animation = gltf.data.animations[anim_idx]
 
-        action = gltf.arma_cache.get(obj.name)
+        action = gltf.action_cache.get(obj.name)
         if not action:
             name = animation.track_name + "_" + obj.name
             action = bpy.data.actions.new(name)
             gltf.needs_stash.append((obj, animation.track_name, action))
-            gltf.arma_cache[obj.name] = action
+            gltf.action_cache[obj.name] = action
 
         if not obj.animation_data:
             obj.animation_data_create()

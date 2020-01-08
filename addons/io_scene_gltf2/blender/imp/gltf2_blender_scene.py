@@ -64,8 +64,8 @@ class BlenderScene():
         """Create animations."""
         if gltf.data.animations:
             for anim_idx, anim in enumerate(gltf.data.animations):
-                # Blender armature name -> action all its bones should use
-                gltf.arma_cache = {}
+                # Caches the action for each object (keyed by object name)
+                gltf.action_cache = {}
                 # Things we need to stash when we're done.
                 gltf.needs_stash = []
 
