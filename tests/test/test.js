@@ -181,7 +181,7 @@ function buildVectorHash(accessorData) {
 
         key = key.replace(/-0\.000/g, '0.000');
 
-        if (vectorHashTable.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(vectorHashTable, key)) {
             ++vectorHashTable[key];
         } else {
             vectorHashTable[key] = 1;
