@@ -37,9 +37,12 @@ class BlenderNode():
 
         if vnode.type == VNode.Object:
             BlenderNode.create_object(gltf, vnode_id)
+            if vnode.is_arma:
+                BlenderNode.create_bones(gltf, vnode_id)
 
         elif vnode.type == VNode.Bone:
-            BlenderNode.create_bone(gltf, vnode_id)
+            # These are created with their armature
+            pass
 
         elif vnode.type == VNode.DummyRoot:
             # Don't actually create this
@@ -104,12 +107,23 @@ class BlenderNode():
         return obj
 
     @staticmethod
-    def create_bone(gltf, vnode_id):
-        vnode = gltf.vnodes[vnode_id]
-        blender_arma = gltf.vnodes[vnode.bone_arma].blender_object
+    def create_bones(gltf, arma_id):
+        arma = gltf.vnodes[arma_id]
+        blender_arma = arma.blender_object
         armature = blender_arma.data
 
-        # Switch into edit mode to create edit bone
+        # Find all bones for this arma
+        bone_ids = []
+        def visit(id):  # Depth-first walk
+            if gltf.vnodes[id].type == VNode.Bone:
+                bone_ids.append(id)
+                for child in gltf.vnodes[id].children:
+                    visit(child)
+        for child in arma.children:
+            visit(child)
+
+        # Switch into edit mode to create all edit bones
+
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
         if bpy.app.version < (2, 80, 0):
@@ -119,43 +133,51 @@ class BlenderNode():
             bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
             bpy.context.view_layer.objects.active = blender_arma
         bpy.ops.object.mode_set(mode="EDIT")
-        editbone = armature.edit_bones.new(vnode.name)
-        vnode.blender_bone_name = editbone.name
 
-        # Set extras (if came from a glTF node)
-        if isinstance(vnode_id, int):
-            pynode = gltf.data.nodes[vnode_id]
-            set_extras(editbone, pynode.extras)
+        for id in bone_ids:
+            vnode = gltf.vnodes[id]
+            editbone = armature.edit_bones.new(vnode.name)
+            vnode.blender_bone_name = editbone.name
+            editbone.use_connect = False  # TODO?
 
-        # TODO
-        editbone.use_connect = False
+            # Give the position of the bone in armature space
+            arma_mat = vnode.bone_arma_mat
+            if bpy.app.version < (2, 80, 0):
+                editbone.head = arma_mat * Vector((0, 0, 0))
+                editbone.tail = arma_mat * Vector((0, 1, 0))
+                editbone.align_roll(arma_mat * Vector((0, 0, 1)) - editbone.head)
+            else:
+                editbone.head = arma_mat @ Vector((0, 0, 0))
+                editbone.tail = arma_mat @ Vector((0, 1, 0))
+                editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
 
-        # Give the position of the bone in armature space
-        arma_mat = vnode.bone_arma_mat
-        if bpy.app.version < (2, 80, 0):
-            editbone.head = arma_mat * Vector((0, 0, 0))
-            editbone.tail = arma_mat * Vector((0, 1, 0))
-            editbone.align_roll(arma_mat * Vector((0, 0, 1)) - editbone.head)
-        else:
-            editbone.head = arma_mat @ Vector((0, 0, 0))
-            editbone.tail = arma_mat @ Vector((0, 1, 0))
-            editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
+            if isinstance(id, int):
+                pynode = gltf.data.nodes[id]
+                set_extras(editbone, pynode.extras)
 
-        # Set parent
-        parent_vnode = gltf.vnodes[vnode.parent]
-        if parent_vnode.type == VNode.Bone:
-            editbone.parent = armature.edit_bones[parent_vnode.blender_bone_name]
+        # Set all bone parents
+        for id in bone_ids:
+            vnode = gltf.vnodes[id]
+            parent_vnode = gltf.vnodes[vnode.parent]
+            if parent_vnode.type == VNode.Bone:
+                editbone = armature.edit_bones[vnode.blender_bone_name]
+                parent_editbone = armature.edit_bones[parent_vnode.blender_bone_name]
+                editbone.parent = parent_editbone
 
+        # Switch back to object mode and do pose bones
         bpy.ops.object.mode_set(mode="OBJECT")
-        pose_bone = blender_arma.pose.bones[vnode.blender_bone_name]
 
-        # Put scale on the pose bone (can't go on the edit bone)
-        _, _, s = vnode.trs
-        pose_bone.scale = s
+        for id in bone_ids:
+            vnode = gltf.vnodes[id]
+            pose_bone = blender_arma.pose.bones[vnode.blender_bone_name]
 
-        if isinstance(vnode_id, int):
-            pynode = gltf.data.nodes[vnode_id]
-            set_extras(pose_bone, pynode.extras)
+            # Put scale on pose bone (edit bones have no scale)
+            _, _, s = vnode.trs
+            pose_bone.scale = s
+
+            if isinstance(id, int):
+                pynode = gltf.data.nodes[id]
+                set_extras(pose_bone, pynode.extras)
 
     @staticmethod
     def create_mesh_object(gltf, pynode, name):
