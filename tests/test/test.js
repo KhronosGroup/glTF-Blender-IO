@@ -23,6 +23,20 @@ const blenderVersions = [
     "blender279b"
 ];
 
+const validator_info_keys = [
+    'version',
+    'animationCount',
+    'materialCount',
+    'hasMorphTargets',
+    'hasSkins',
+    'hasTextures',
+    'hasDefaultScene',
+    'drawCallCount',
+    'totalTriangleCount',
+    'maxUVs',
+    'maxInfluences'
+];
+
 function blenderFileToGltf(blenderVersion, blenderPath, outDirName, done, options='') {
     const { exec } = require('child_process');
     const cmd = `${blenderVersion} -b --addons io_scene_gltf2 -noaudio ${blenderPath} --python export_gltf.py -- ${outDirName} ${options}`;
@@ -681,7 +695,6 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                 if (error)
                                     return done(error);
 
-                                const info_keys = ['version', 'hasAnimations', 'hasMaterials', 'hasMorphTargets', 'hasSkins', 'hasTextures', 'hasDefaultScene', 'primitivesCount'/*, 'maxAttributesUsed'*/];
                                 let reduceKeys = function(raw, allowed) {
                                     return Object.keys(raw)
                                         .filter(key => allowed.includes(key))
@@ -691,8 +704,8 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                         }, {});
                                 };
 
-                                let srcInfo = reduceKeys(gltfSrcReport.info, info_keys);
-                                let dstInfo = reduceKeys(gltfDstReport.info, info_keys);
+                                let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
+                                let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
 
                                 try {
                                     assert.deepStrictEqual(dstInfo, srcInfo);
