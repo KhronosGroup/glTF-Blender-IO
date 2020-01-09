@@ -1,9 +1,0 @@
-__pycache__/
-blender/__pycache__/
-blender/common/__pycache__/
-blender/export/__pycache__/
-blender/import/__pycache__/
-io/common/__pycache__/
-io/export/__pycache__/
-io/import/__pycache__/
-**.pyc
