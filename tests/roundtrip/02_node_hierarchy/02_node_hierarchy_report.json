@@ -1,8 +1,8 @@
 {
-    "uri": "scenes/out/02_node_hierarchy.gltf",
+    "uri": "roundtrip/02_node_hierarchy/02_node_hierarchy.gltf",
     "mimeType": "model/gltf+json",
-    "validatorVersion": "2.0.0-dev.2.5",
-    "validatedAt": "2018-10-29T16:02:18.021832Z",
+    "validatorVersion": "2.0.0-dev.3.0",
+    "validatedAt": "2020-01-09T22:38:08.372Z",
     "issues": {
         "numErrors": 0,
         "numWarnings": 0,
@@ -10,16 +10,16 @@
         "numHints": 0,
         "messages": [
             {
-                "code": "MESH_PRIMITIVE_UNUSED_TEXCOORD",
-                "message": "Material does not use texture coordinates sets with indices (0).",
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
                 "severity": 2,
-                "pointer": "/meshes/0/primitives/0/material"
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_0"
             },
             {
-                "code": "MESH_PRIMITIVE_UNUSED_TEXCOORD",
-                "message": "Material does not use texture coordinates sets with indices (0).",
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
                 "severity": 2,
-                "pointer": "/meshes/1/primitives/0/material"
+                "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_0"
             },
             {
                 "code": "NODE_EMPTY",
@@ -42,13 +42,17 @@
                 "byteLength": 6708
             }
         ],
-        "hasAnimations": false,
-        "hasMaterials": true,
+        "animationCount": 0,
+        "materialCount": 1,
         "hasMorphTargets": false,
         "hasSkins": false,
         "hasTextures": false,
         "hasDefaultScene": true,
-        "primitivesCount": 2,
-        "maxAttributesUsed": 4
+        "drawCallCount": 2,
+        "totalVertexCount": 136,
+        "totalTriangleCount": 60,
+        "maxUVs": 1,
+        "maxInfluences": 0,
+        "maxAttributes": 4
     }
 }
