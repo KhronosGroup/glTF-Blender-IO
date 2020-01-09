@@ -79,45 +79,45 @@ class BlenderPrimitive():
             else:
                 inv_binds = [Matrix.Identity(4) for i in range(len(pyskin.joints))]
             arma_mats = [gltf.vnodes[joint].bone_arma_mat for joint in pyskin.joints]
+            if bpy.app.version < (2, 80, 0):
+                joint_mats = [arma_mat * inv_bind for arma_mat, inv_bind in zip(arma_mats, inv_binds)]
+            else:
+                joint_mats = [arma_mat @ inv_bind for arma_mat, inv_bind in zip(arma_mats, inv_binds)]
 
             def skin_vert(pos, pidx):
+                out = Vector((0, 0, 0))
                 # Spec says weights should already sum to 1 but some models
                 # don't do it (ex. CesiumMan), so normalize.
                 weight_sum = 0
-                for weight_set in weight_sets:
-                    weight_sum += weight_set[pidx][0] + weight_set[pidx][1] + \
-                        weight_set[pidx][2] + weight_set[pidx][3]
-
-                out = Vector((0, 0, 0))
                 for joint_set, weight_set in zip(joint_sets, weight_sets):
                     for j in range(0, 4):
-                        weight = weight_set[pidx][j] / weight_sum
+                        weight = weight_set[pidx][j]
                         if weight != 0.0:
+                            weight_sum += weight
                             joint = joint_set[pidx][j]
                             if bpy.app.version < (2, 80, 0):
-                                out += weight * (arma_mats[joint] * (inv_binds[joint] * pos.to_4d())).to_3d()
+                                out += weight * (joint_mats[joint] * pos.to_4d()).to_3d()
                             else:
-                                out += weight * (arma_mats[joint] @ (inv_binds[joint] @ pos))
+                                out += weight * (joint_mats[joint] @ pos)
+                out /= weight_sum
                 return out
 
             def skin_normal(norm, pidx):
-                weight_sum = 0
-                for weight_set in weight_sets:
-                    weight_sum += weight_set[pidx][0] + weight_set[pidx][1] + \
-                        weight_set[pidx][2] + weight_set[pidx][3]
-
                 # TODO: not sure this is right
                 norm = Vector([norm[0], norm[1], norm[2], 0])
                 out = Vector((0, 0, 0, 0))
+                weight_sum = 0
                 for joint_set, weight_set in zip(joint_sets, weight_sets):
                     for j in range(0, 4):
-                        weight = weight_set[pidx][j] / weight_sum
+                        weight = weight_set[pidx][j]
                         if weight != 0.0:
+                            weight_sum += weight
                             joint = joint_set[pidx][j]
                             if bpy.app.version < (2, 80, 0):
-                                out += weight * (arma_mats[joint] * (inv_binds[joint] * norm))
+                                out += weight * (joint_mats[joint] * norm)
                             else:
-                                out += weight * (arma_mats[joint] @ (inv_binds[joint] @ norm))
+                                out += weight * (joint_mats[joint] @ norm)
+                out /= weight_sum
                 out = out.to_3d().normalized()
                 return out
 
