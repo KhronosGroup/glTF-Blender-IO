@@ -19,6 +19,10 @@
 # TODO: add __slots__ to all classes by extending the generator
 
 # TODO: REMOVE traceback import
+
+# NOTE: this file is modified for addonExtension use. See
+# https://github.com/KhronosGroup/glTF-Blender-IO/commit/62ff119d8ffeab48f66e9d2699741407d532fe0f
+
 import sys
 import traceback
 
