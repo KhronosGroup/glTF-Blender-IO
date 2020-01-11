@@ -21,9 +21,9 @@ def compute_vnodes(gltf):
     passes to transform it into a form that we can import into Blender.
     """
     init_vnodes(gltf)
-    create_bones_and_armas(gltf)
+    mark_bones_and_armas(gltf)
     move_skinned_meshes(gltf)
-    move_instances_off(gltf)
+    fixup_multitype_nodes(gltf)
     correct_cameras_and_lights(gltf)
     calc_bone_matrices(gltf)
 
@@ -99,9 +99,9 @@ def get_node_trs(gltf, pynode):
     return t, r, s
 
 
-def create_bones_and_armas(gltf):
+def mark_bones_and_armas(gltf):
     """
-    Turn nodes into armatures so that every node that is used as joint is a
+    Mark nodes as armatures so that every node that is used as joint is a
     descendant of an armature. Mark everything between an armature and a
     joint as a bone.
     """
@@ -209,7 +209,7 @@ def move_skinned_meshes(gltf):
         vnode.mesh_node_idx = None
 
 
-def move_instances_off(gltf):
+def fixup_multitype_nodes(gltf):
     """
     Blender only lets each object have one of: an armature, a mesh, a
     camera, a light. Also bones cannot have any of these either. Find any
