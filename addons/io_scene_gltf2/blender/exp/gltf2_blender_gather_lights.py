@@ -67,7 +67,7 @@ def __gather_intensity(blender_lamp, _) -> Optional[float]:
         if blender_lamp.type != 'SUN':
             # When using cycles, the strength should be influenced by a LightFalloff node
             result = gltf2_blender_search_node_tree.from_socket(
-                emission_node.get("Strength"),
+                emission_node.inputs.get("Strength"),
                 gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeLightFalloff)
             )
             if result:
@@ -121,7 +121,11 @@ def __gather_extras(blender_lamp, export_settings) -> Optional[Any]:
 def __get_cycles_emission_node(blender_lamp) -> Optional[bpy.types.ShaderNodeEmission]:
     if blender_lamp.use_nodes and blender_lamp.node_tree:
         for currentNode in blender_lamp.node_tree.nodes:
-            if isinstance(currentNode, bpy.types.ShaderNodeOutputLamp):
+            if bpy.app.version < (2, 80, 0):
+                is_shadernode_output =isinstance(currentNode, bpy.types.ShaderNodeOutputLamp)
+            else:
+                is_shadernode_output =isinstance(currentNode, bpy.types.ShaderNodeOutputLight)
+            if is_shadernode_output:
                 if not currentNode.is_active_output:
                     continue
                 result = gltf2_blender_search_node_tree.from_socket(
