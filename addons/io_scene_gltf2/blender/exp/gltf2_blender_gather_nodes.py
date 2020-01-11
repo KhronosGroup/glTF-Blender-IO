@@ -252,7 +252,8 @@ def __gather_mesh(blender_object, export_settings):
 
     modifier_normal_types = [
         "NORMAL_EDIT",
-        "WEIGHTED_NORMAL"
+        "WEIGHTED_NORMAL",
+        "BEVEL"
     ]
 
     # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
