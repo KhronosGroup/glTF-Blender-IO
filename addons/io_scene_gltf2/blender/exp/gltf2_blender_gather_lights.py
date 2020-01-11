@@ -122,9 +122,9 @@ def __get_cycles_emission_node(blender_lamp) -> Optional[bpy.types.ShaderNodeEmi
     if blender_lamp.use_nodes and blender_lamp.node_tree:
         for currentNode in blender_lamp.node_tree.nodes:
             if bpy.app.version < (2, 80, 0):
-                is_shadernode_output =isinstance(currentNode, bpy.types.ShaderNodeOutputLamp)
+                is_shadernode_output = isinstance(currentNode, bpy.types.ShaderNodeOutputLamp)
             else:
-                is_shadernode_output =isinstance(currentNode, bpy.types.ShaderNodeOutputLight)
+                is_shadernode_output = isinstance(currentNode, bpy.types.ShaderNodeOutputLight)
             if is_shadernode_output:
                 if not currentNode.is_active_output:
                     continue
