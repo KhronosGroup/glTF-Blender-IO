@@ -1,8 +1,8 @@
 {
-    "uri": "scenes/out/05_metallic_sphere_light.gltf",
+    "uri": "roundtrip/05_metallic_sphere_light/05_metallic_sphere_light.gltf",
     "mimeType": "model/gltf+json",
-    "validatorVersion": "2.0.0-dev.2.5",
-    "validatedAt": "2018-10-29T16:02:25.038827Z",
+    "validatorVersion": "2.0.0-dev.3.0",
+    "validatedAt": "2020-01-09T22:38:19.049Z",
     "issues": {
         "numErrors": 0,
         "numWarnings": 0,
@@ -10,16 +10,16 @@
         "numHints": 0,
         "messages": [
             {
-                "code": "MESH_PRIMITIVE_UNUSED_TEXCOORD",
-                "message": "Material does not use texture coordinates sets with indices (0).",
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
                 "severity": 2,
-                "pointer": "/meshes/0/primitives/0/material"
+                "pointer": "/meshes/0/primitives/0/attributes/TEXCOORD_0"
             },
             {
-                "code": "MESH_PRIMITIVE_UNUSED_TEXCOORD",
-                "message": "Material does not use texture coordinates sets with indices (0).",
+                "code": "UNUSED_OBJECT",
+                "message": "This object may be unused.",
                 "severity": 2,
-                "pointer": "/meshes/1/primitives/0/material"
+                "pointer": "/meshes/1/primitives/0/attributes/TEXCOORD_0"
             },
             {
                 "code": "NODE_EMPTY",
@@ -54,13 +54,17 @@
                 "byteLength": 30012
             }
         ],
-        "hasAnimations": true,
-        "hasMaterials": true,
+        "animationCount": 1,
+        "materialCount": 2,
         "hasMorphTargets": false,
         "hasSkins": false,
         "hasTextures": false,
         "hasDefaultScene": true,
-        "primitivesCount": 2,
-        "maxAttributesUsed": 4
+        "drawCallCount": 2,
+        "totalVertexCount": 503,
+        "totalTriangleCount": 962,
+        "maxUVs": 1,
+        "maxInfluences": 0,
+        "maxAttributes": 4
     }
 }

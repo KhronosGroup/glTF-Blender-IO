@@ -1,8 +1,8 @@
 {
-    "uri": "01_single_vs_double_sided.gltf",
+    "uri": "roundtrip/01_single_vs_double_sided/01_single_vs_double_sided.gltf",
     "mimeType": "model/gltf+json",
-    "validatorVersion": "2.0.0-dev.2.7",
-    "validatedAt": "2019-05-21T18:15:33.145Z",
+    "validatorVersion": "2.0.0-dev.3.0",
+    "validatedAt": "2020-01-09T22:37:46.310Z",
     "issues": {
         "numErrors": 0,
         "numWarnings": 0,
@@ -22,13 +22,17 @@
                 "byteLength": 26040
             }
         ],
-        "hasAnimations": false,
-        "hasMaterials": true,
+        "animationCount": 0,
+        "materialCount": 2,
         "hasMorphTargets": false,
         "hasSkins": false,
         "hasTextures": false,
         "hasDefaultScene": true,
-        "primitivesCount": 2,
-        "maxAttributesUsed": 2
+        "drawCallCount": 2,
+        "totalVertexCount": 900,
+        "totalTriangleCount": 1480,
+        "maxUVs": 0,
+        "maxInfluences": 0,
+        "maxAttributes": 2
     }
 }
