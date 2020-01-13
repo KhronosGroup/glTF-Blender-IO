@@ -7,10 +7,10 @@ bl_info = {
     "blender": (2, 80, 0),
     'location': 'File > Export > glTF 2.0',
     'description': 'Example addon to add a custom extension to an exported glTF file.',
-    'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",
+    'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",  # Replace with your issue tracker
     'isDraft': False,
-    'developer': "KDAB",
-    'url': 'https://www.kdab.com',
+    'developer': "(Your name here)", # Replace this
+    'url': 'https://your_url_here',  # Replace this
 }
 
 # glTF extensions are named following a convention with known prefixes.
