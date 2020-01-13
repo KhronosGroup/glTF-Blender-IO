@@ -1,8 +1,8 @@
 {
-    "uri": "scenes/out/03_all_animations.gltf",
+    "uri": "roundtrip/03_all_animations/03_all_animations.gltf",
     "mimeType": "model/gltf+json",
-    "validatorVersion": "2.0.0-dev.2.5",
-    "validatedAt": "2018-10-29T16:02:20.376446Z",
+    "validatorVersion": "2.0.0-dev.3.0",
+    "validatedAt": "2020-01-09T22:38:11.808Z",
     "issues": {
         "numErrors": 0,
         "numWarnings": 0,
@@ -30,13 +30,17 @@
                 "byteLength": 18540
             }
         ],
-        "hasAnimations": true,
-        "hasMaterials": true,
+        "animationCount": 3,
+        "materialCount": 1,
         "hasMorphTargets": false,
         "hasSkins": false,
         "hasTextures": false,
         "hasDefaultScene": true,
-        "primitivesCount": 3,
-        "maxAttributesUsed": 2
+        "drawCallCount": 3,
+        "totalVertexCount": 518,
+        "totalTriangleCount": 976,
+        "maxUVs": 0,
+        "maxInfluences": 0,
+        "maxAttributes": 2
     }
 }

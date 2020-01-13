@@ -1,8 +1,8 @@
 {
-    "uri": "01_unlit.gltf",
+    "uri": "roundtrip/01_unlit/01_unlit.gltf",
     "mimeType": "model/gltf+json",
-    "validatorVersion": "2.0.0-dev.2.7",
-    "validatedAt": "2019-06-17T15:24:14.909Z",
+    "validatorVersion": "2.0.0-dev.3.0",
+    "validatedAt": "2020-01-09T22:37:51.564Z",
     "issues": {
         "numErrors": 0,
         "numWarnings": 0,
@@ -29,13 +29,17 @@
                 "byteLength": 2568
             }
         ],
-        "hasAnimations": false,
-        "hasMaterials": true,
+        "animationCount": 0,
+        "materialCount": 2,
         "hasMorphTargets": false,
         "hasSkins": false,
         "hasTextures": false,
         "hasDefaultScene": true,
-        "primitivesCount": 2,
-        "maxAttributesUsed": 2
+        "drawCallCount": 2,
+        "totalVertexCount": 192,
+        "totalTriangleCount": 88,
+        "maxUVs": 0,
+        "maxInfluences": 0,
+        "maxAttributes": 2
     }
 }

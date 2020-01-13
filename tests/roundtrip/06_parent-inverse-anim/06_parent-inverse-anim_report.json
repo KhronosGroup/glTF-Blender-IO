@@ -1,8 +1,8 @@
 {
-    "uri": "scenes/out/06_parent-inverse-anim.gltf",
+    "uri": "roundtrip/06_parent-inverse-anim/06_parent-inverse-anim.gltf",
     "mimeType": "model/gltf+json",
-    "validatorVersion": "2.0.0-dev.2.5",
-    "validatedAt": "2018-10-29T16:02:26.394724Z",
+    "validatorVersion": "2.0.0-dev.3.0",
+    "validatedAt": "2020-01-09T22:38:21.148Z",
     "issues": {
         "numErrors": 0,
         "numWarnings": 0,
@@ -36,13 +36,17 @@
                 "byteLength": 6784
             }
         ],
-        "hasAnimations": true,
-        "hasMaterials": true,
+        "animationCount": 5,
+        "materialCount": 1,
         "hasMorphTargets": false,
         "hasSkins": false,
         "hasTextures": false,
         "hasDefaultScene": true,
-        "primitivesCount": 10,
-        "maxAttributesUsed": 2
+        "drawCallCount": 10,
+        "totalVertexCount": 240,
+        "totalTriangleCount": 120,
+        "maxUVs": 0,
+        "maxInfluences": 0,
+        "maxAttributes": 2
     }
 }

@@ -1,8 +1,8 @@
 {
-    "uri": "scenes/out/01_cs_scale.gltf",
+    "uri": "roundtrip/01_cs_scale/01_cs_scale.gltf",
     "mimeType": "model/gltf+json",
-    "validatorVersion": "2.0.0-dev.2.5",
-    "validatedAt": "2018-10-29T16:02:07.739715Z",
+    "validatorVersion": "2.0.0-dev.3.0",
+    "validatedAt": "2020-01-09T22:37:36.631Z",
     "issues": {
         "numErrors": 0,
         "numWarnings": 0,
@@ -30,13 +30,17 @@
                 "byteLength": 732
             }
         ],
-        "hasAnimations": true,
-        "hasMaterials": true,
+        "animationCount": 1,
+        "materialCount": 1,
         "hasMorphTargets": false,
         "hasSkins": false,
         "hasTextures": false,
         "hasDefaultScene": true,
-        "primitivesCount": 1,
-        "maxAttributesUsed": 2
+        "drawCallCount": 1,
+        "totalVertexCount": 24,
+        "totalTriangleCount": 12,
+        "maxUVs": 0,
+        "maxInfluences": 0,
+        "maxAttributes": 2
     }
 }
