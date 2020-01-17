@@ -565,10 +565,10 @@ globals@^12.1.0:
   dependencies:
     type-fest "^0.8.1"
 
-gltf-validator@^2.0.0-dev.3.0:
-  version "2.0.0-dev.3.0"
-  resolved "https://registry.yarnpkg.com/gltf-validator/-/gltf-validator-2.0.0-dev.3.0.tgz#428768d6888ba20b2b1009f99ae705201c97c127"
-  integrity sha512-7MDn7ep2fc/JZC+NpJI6HDGSN/H+3MYfNho81gpfixYA262mmYP+HVy80E+aVqymAF/DD58TTQa1nGxSLbTvXw==
+gltf-validator@^2.0.0-dev.3.1:
+  version "2.0.0-dev.3.1"
+  resolved "https://registry.yarnpkg.com/gltf-validator/-/gltf-validator-2.0.0-dev.3.1.tgz#c20e8b5f5010030cc1eb41e84bc837d64b94e2cd"
+  integrity sha512-sjnbPhJMEZ94haW87BnTI8aP9cxA8g5A5xEGMN6nafbsM2XYDMVhd1aO+hN28e7nAQSzFgirE4dGttwzbLlNwQ==
 
 graceful-fs@^4.1.2, graceful-fs@^4.1.6:
   version "4.2.0"
