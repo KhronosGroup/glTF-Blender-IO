@@ -42,7 +42,7 @@ def gather_image(
         # The export image has no data
         return None
 
-    mime_type = __gather_mime_type(blender_shader_sockets_or_texture_slots, export_settings)
+    mime_type = __gather_mime_type(blender_shader_sockets_or_texture_slots, image_data, export_settings)
     name = __gather_name(blender_shader_sockets_or_texture_slots, export_settings)
 
     uri = __gather_uri(image_data, mime_type, name, export_settings)
@@ -95,27 +95,20 @@ def __gather_extras(sockets_or_slots, export_settings):
     return None
 
 
-def __gather_mime_type(sockets_or_slots, export_settings):
+def __gather_mime_type(sockets_or_slots, export_image, export_settings):
     # force png if Alpha contained so we can export alpha
     for socket in sockets_or_slots:
         if socket.name == "Alpha":
             return "image/png"
 
-    if export_settings["gltf_image_format"] == "NAME":
-        extension = __get_extension_from_slot(sockets_or_slots, export_settings)
-        extension = extension.lower()
-        if extension in [".jpeg", ".jpg", ".png"]:
-            return {
-                ".jpeg": "image/jpeg",
-                ".jpg": "image/jpeg",
-                ".png": "image/png",
-            }[extension]
+    if export_settings["gltf_image_format"] == "AUTO":
+        image = export_image.blender_image()
+        if image is not None and image.file_format == 'JPEG':
+            return "image/jpeg"
         return "image/png"
 
     elif export_settings["gltf_image_format"] == "JPEG":
         return "image/jpeg"
-    else:
-        return "image/png"
 
 
 def __gather_name(sockets_or_slots, export_settings):
@@ -245,23 +238,3 @@ def __get_texname_from_slot(sockets_or_slots, export_settings):
 
     elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
         return sockets_or_slots[0].texture.image.name
-
-
-@cached
-def __get_extension_from_slot(sockets_or_slots, export_settings):
-    if __is_socket(sockets_or_slots):
-        for socket in sockets_or_slots:
-            node = __get_tex_from_socket(socket, export_settings)
-            if node is not None:
-                image_name = node.shader_node.image.name
-                filepath = bpy.data.images[image_name].filepath
-                name, extension = os.path.splitext(filepath)
-                if extension:
-                    return extension
-        return '.png'
-
-    elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
-        image_name = sockets_or_slots[0].texture.image.name
-        filepath = bpy.data.images[image_name].filepath
-        name, extension = os.path.splitext(filepath)
-        return extension

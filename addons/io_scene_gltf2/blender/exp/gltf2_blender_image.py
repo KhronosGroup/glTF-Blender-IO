@@ -86,15 +86,18 @@ class ExportImage:
     def empty(self) -> bool:
         return not self.fills
 
+    def blender_image(self) -> Optional[bpy.types.Image]:
+        """If there's an existing Blender image we can use,
+        returns it. Otherwise (if channels need packing),
+        returns None.
+        """
+        if self.__on_happy_path():
+            for fill in self.fills.values():
+                return fill.image
+        return None
+
     def __on_happy_path(self) -> bool:
-        # Whether there is an existing Blender image we can use for this
-        # ExportImage because all the channels come from the matching
-        # channel of that image, eg.
-        #
-        #     self.fills = {
-        #         Channel.R: FillImage(image=im, src_chan=Channel.R),
-        #         Channel.G: FillImage(image=im, src_chan=Channel.G),
-        #     }
+        # All src_chans match their dst_chan and come from the same image
         return (
             all(isinstance(fill, FillImage) for fill in self.fills.values()) and
             all(dst_chan == fill.src_chan for dst_chan, fill in self.fills.items()) and
@@ -115,8 +118,7 @@ class ExportImage:
         return self.__encode_unhappy()
 
     def __encode_happy(self) -> bytes:
-        for fill in self.fills.values():
-            return self.__encode_from_image(fill.image)
+        return self.__encode_from_image(self.blender_image())
 
     def __encode_unhappy(self) -> bytes:
         result = self.__encode_unhappy_with_compositor()
