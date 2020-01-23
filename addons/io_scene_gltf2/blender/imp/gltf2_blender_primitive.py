@@ -96,9 +96,10 @@ class BlenderPrimitive():
         pyprimitive.num_faces = 0
         for face in faces:
             try:
-                face = bme_faces.new(tuple(
-                    bme_verts[pidx_to_bidx[i]]
-                    for i in face
+                face = bme_faces.new((
+                    bme_verts[pidx_to_bidx[face[0]]],
+                    bme_verts[pidx_to_bidx[face[1]]],
+                    bme_verts[pidx_to_bidx[face[2]]],
                 ))
 
                 if material_index is not None:
