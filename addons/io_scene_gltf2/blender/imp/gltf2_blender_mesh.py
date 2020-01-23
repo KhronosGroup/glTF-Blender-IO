@@ -125,19 +125,14 @@ class BlenderMesh():
         if gltf.import_settings['import_shading'] == "NORMALS":
             mesh.create_normals_split()
 
-        # use_smooth for faces
+        use_smooths = []  # whether to smooth for each poly
         face_idx = 0
         for prim in pymesh.primitives:
-            if 'NORMAL' not in prim.attributes:
-                face_idx += prim.num_faces
-                continue
-
-            if gltf.import_settings['import_shading'] == "FLAT":
-                for fi in range(face_idx, face_idx + prim.num_faces):
-                    mesh.polygons[fi].use_smooth = False
+            if gltf.import_settings['import_shading'] == "FLAT" or \
+                    'NORMAL' not in prim.attributes:
+                use_smooths += [False] * prim.num_faces
             elif gltf.import_settings['import_shading'] == "SMOOTH":
-                for fi in range(face_idx, face_idx + prim.num_faces):
-                    mesh.polygons[fi].use_smooth = True
+                use_smooths += [True] * prim.num_faces
             elif gltf.import_settings['import_shading'] == "NORMALS":
                 mesh_loops = mesh.loops
                 for fi in range(face_idx, face_idx + prim.num_faces):
@@ -147,14 +142,16 @@ class BlenderMesh():
                     for loop_idx in range(poly.loop_start, poly.loop_start + poly.loop_total):
                         vi = mesh_loops[loop_idx].vertex_index
                         if poly.normal.dot(bme.verts[vi].normal) <= 0.9999999:
-                            poly.use_smooth = True
+                            use_smooths.append(True)
                             break
-
+                    else:
+                        use_smooths.append(False)
             else:
                 # shouldn't happen
-                pass
+                assert False
 
             face_idx += prim.num_faces
+        mesh.polygons.foreach_set('use_smooth', use_smooths)
 
         # Custom normals, now that every update is done
         if gltf.import_settings['import_shading'] == "NORMALS":
