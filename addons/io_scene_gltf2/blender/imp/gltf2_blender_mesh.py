@@ -20,7 +20,6 @@ from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
 from .gltf2_blender_primitive import BlenderPrimitive
 from ...io.imp.gltf2_io_binary import BinaryData
-from ..com.gltf2_blender_conversion import loc_gltf_to_blender
 
 
 class BlenderMesh():
@@ -29,7 +28,7 @@ class BlenderMesh():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, mesh_idx, node_idx, parent):
+    def create(gltf, mesh_idx, skin_idx):
         """Mesh creation."""
         pymesh = gltf.data.meshes[mesh_idx]
 
@@ -64,7 +63,7 @@ class BlenderMesh():
                     materials.append(material.name)
                     material_idx = len(materials) - 1
 
-            BlenderPrimitive.add_primitive_to_bmesh(gltf, bme, pymesh, prim, material_idx)
+            BlenderPrimitive.add_primitive_to_bmesh(gltf, bme, pymesh, prim, skin_idx, material_idx)
 
         name = pymesh.name or 'Mesh_' + str(mesh_idx)
         mesh = bpy.data.meshes.new(name)
@@ -76,7 +75,7 @@ class BlenderMesh():
 
         set_extras(mesh, pymesh.extras, exclude=['targetNames'])
 
-        pymesh.blender_name = mesh.name
+        pymesh.blender_name[skin_idx] = mesh.name
 
         # Clear accessor cache after all primitives are done
         gltf.accessor_cache = {}
@@ -84,7 +83,7 @@ class BlenderMesh():
         return mesh
 
     @staticmethod
-    def set_mesh(gltf, pymesh, mesh, obj):
+    def set_mesh(gltf, pymesh, obj):
         """Sets mesh data after creation."""
         # set default weights for shape keys, and names, if not set by convention on extras data
         if pymesh.weights is not None:

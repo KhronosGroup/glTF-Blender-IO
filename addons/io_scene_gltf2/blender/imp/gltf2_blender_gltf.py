@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import bpy
+from mathutils import Vector, Quaternion, Matrix
 from .gltf2_blender_scene import BlenderScene
-from ...io.com.gltf2_io_trs import TRS
 
 
 class BlenderGlTF():
@@ -25,100 +25,52 @@ class BlenderGlTF():
     @staticmethod
     def create(gltf):
         """Create glTF main method."""
-        if bpy.app.version < (2, 80, 0):
-            bpy.context.scene.render.engine = 'CYCLES'
-        else:
-            if bpy.context.scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
-                bpy.context.scene.render.engine = 'BLENDER_EEVEE'
+        BlenderGlTF.set_convert_functions(gltf)
         BlenderGlTF.pre_compute(gltf)
+        BlenderScene.create(gltf)
 
-        gltf.display_current_node = 0
-        if gltf.data.nodes is not None:
-            gltf.display_total_nodes = len(gltf.data.nodes)
+    @staticmethod
+    def set_convert_functions(gltf):
+        yup2zup = bpy.app.debug_value != 100
+
+        if yup2zup:
+            # glTF Y-Up space --> Blender Z-up space
+            # X,Y,Z --> X,-Z,Y
+            def convert_loc(x): return Vector([x[0], -x[2], x[1]])
+            def convert_quat(q): return Quaternion([q[3], q[0], -q[2], q[1]])
+            def convert_normal(n): return Vector([n[0], -n[2], n[1]])
+            def convert_scale(s): return Vector([s[0], s[2], s[1]])
+            def convert_matrix(m):
+                return Matrix([
+                    [ m[0], -m[ 8],  m[4],  m[12]],
+                    [-m[2],  m[10], -m[6], -m[14]],
+                    [ m[1], -m[ 9],  m[5],  m[13]],
+                    [ m[3], -m[11],  m[7],  m[15]],
+                ])
+
+            # Correction for cameras and lights.
+            # glTF: right = +X, forward = -Z, up = +Y
+            # glTF after Yup2Zup: right = +X, forward = +Y, up = +Z
+            # Blender: right = +X, forward = -Z, up = +Y
+            # Need to carry Blender --> glTF after Yup2Zup
+            gltf.camera_correction = Quaternion((2**0.5/2, 2**0.5/2, 0.0, 0.0))
+
         else:
-            gltf.display_total_nodes = "?"
+            def convert_loc(x): return Vector(x)
+            def convert_quat(q): return Quaternion([q[3], q[0], q[1], q[2]])
+            def convert_normal(n): return Vector(n)
+            def convert_scale(s): return Vector(s)
+            def convert_matrix(m):
+                return Matrix([m[0::4], m[1::4], m[2::4], m[3::4]])
 
-        active_object_name_at_end = None
-        if gltf.data.scenes is not None:
-            for scene_idx, scene in enumerate(gltf.data.scenes):
-                BlenderScene.create(gltf, scene_idx)
-            # keep active object name if needed (to be able to set as active object at end)
-            if gltf.data.scene is not None:
-                if scene_idx == gltf.data.scene:
-                    if bpy.app.version < (2, 80, 0):
-                        active_object_name_at_end = bpy.context.scene.objects.active.name
-                    else:
-                        active_object_name_at_end = bpy.context.view_layer.objects.active.name
-            else:
-                if scene_idx == 0:
-                    if bpy.app.version < (2, 80, 0):
-                        active_object_name_at_end = bpy.context.scene.objects.active.name
-                    else:
-                        active_object_name_at_end = bpy.context.view_layer.objects.active.name
-        else:
-            # special case where there is no scene in glTF file
-            # generate all objects in current scene
-            BlenderScene.create(gltf, None)
-            if bpy.app.version < (2, 80, 0):
-                active_object_name_at_end = bpy.context.scene.objects.active.name
-            else:
-                active_object_name_at_end = bpy.context.view_layer.objects.active.name
+            # Same convention, no correction needed.
+            gltf.camera_correction = None
 
-        # Armature correction
-        # Try to detect bone chains, and set bone lengths
-        # To detect if a bone is in a chain, we try to detect if a bone head is aligned
-        # with parent_bone :
-        #          Parent bone defined a line (between head & tail)
-        #          Bone head defined a point
-        #          Calcul of distance between point and line
-        #          If < threshold --> In a chain
-        # Based on an idea of @Menithal, but added alignment detection to avoid some bad cases
-
-        threshold = 0.001
-        for armobj in [obj for obj in bpy.data.objects if obj.type == "ARMATURE"]:
-            if bpy.app.version < (2, 80, 0):
-                # Take into account only armature from this scene
-                if armobj.name not in bpy.context.scene.objects:
-                    continue
-                bpy.context.scene.objects.active = armobj
-            else:
-                # Take into account only armature from this scene
-                if armobj.name not in bpy.context.view_layer.objects:
-                    continue
-                bpy.context.view_layer.objects.active = armobj
-            armature = armobj.data
-            bpy.ops.object.mode_set(mode="EDIT")
-            for bone in armature.edit_bones:
-                if bone.parent is None:
-                    continue
-
-                parent = bone.parent
-
-                # case where 2 bones are aligned (not in chain, same head)
-                if (bone.head - parent.head).length < threshold:
-                    continue
-
-                u = (parent.tail - parent.head).normalized()
-                point = bone.head
-                distance = ((point - parent.head).cross(u)).length / u.length
-                if distance < threshold:
-                    save_parent_direction = (parent.tail - parent.head).normalized().copy()
-                    save_parent_tail = parent.tail.copy()
-                    parent.tail = bone.head
-
-                    # case where 2 bones are aligned (not in chain, same head)
-                    # bone is no more is same direction
-                    if (parent.tail - parent.head).normalized().dot(save_parent_direction) < 0.9:
-                        parent.tail = save_parent_tail
-
-            bpy.ops.object.mode_set(mode="OBJECT")
-
-        # Set active object
-        if active_object_name_at_end is not None:
-            if bpy.app.version < (2, 80, 0):
-                bpy.context.scene.objects.active = bpy.data.objects[active_object_name_at_end]
-            else:
-                bpy.context.view_layer.objects.active = bpy.data.objects[active_object_name_at_end]
+        gltf.loc_gltf_to_blender = convert_loc
+        gltf.quaternion_gltf_to_blender = convert_quat
+        gltf.normal_gltf_to_blender = convert_normal
+        gltf.scale_gltf_to_blender = convert_scale
+        gltf.matrix_gltf_to_blender = convert_matrix
 
     @staticmethod
     def pre_compute(gltf):
@@ -229,45 +181,6 @@ class BlenderGlTF():
             # Lights management
             node.correction_needed = False
 
-            # transform management
-            if node.matrix:
-                node.transform = node.matrix
-                continue
-
-            # No matrix, but TRS
-            mat = [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0]  # init
-
-            if node.scale:
-                mat = TRS.scale_to_matrix(node.scale)
-
-            if node.rotation:
-                q_mat = TRS.quaternion_to_matrix(node.rotation)
-                mat = TRS.matrix_multiply(q_mat, mat)
-
-            if node.translation:
-                loc_mat = TRS.translation_to_matrix(node.translation)
-                mat = TRS.matrix_multiply(loc_mat, mat)
-
-            node.transform = mat
-
-
-        # joint management
-        for node_idx, node in enumerate(gltf.data.nodes):
-            is_joint, skin_idx = gltf.is_node_joint(node_idx)
-            if is_joint:
-                node.is_joint = True
-                node.skin_id = skin_idx
-            else:
-                node.is_joint = False
-
-        if gltf.data.skins:
-            for skin_id, skin in enumerate(gltf.data.skins):
-                # init blender values
-                skin.blender_armature_name = None
-                # if skin.skeleton and skin.skeleton not in skin.joints:
-                #     gltf.data.nodes[skin.skeleton].is_joint = True
-                #     gltf.data.nodes[skin.skeleton].skin_id  = skin_id
-
         # Dispatch animation
         if gltf.data.animations:
             for node_idx, node in enumerate(gltf.data.nodes):
@@ -295,7 +208,7 @@ class BlenderGlTF():
         # Meshes
         if gltf.data.meshes:
             for mesh in gltf.data.meshes:
-                mesh.blender_name = None
+                mesh.blender_name = {}  # cache Blender mesh (keyed by skin_idx)
                 mesh.is_weight_animated = False
 
         # Calculate names for each mesh's shapekeys

@@ -42,14 +42,6 @@ class BlenderLight():
 
         # TODO range
 
-        if bpy.app.version < (2, 80, 0):
-            bpy.data.scenes[gltf.blender_scene].objects.link(obj)
-        else:
-            if gltf.blender_active_collection is not None:
-                bpy.data.collections[gltf.blender_active_collection].objects.link(obj)
-            else:
-                bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
-
         set_extras(obj.data, pylight.get('extras'))
 
         return obj

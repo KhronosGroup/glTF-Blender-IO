@@ -19,6 +19,7 @@ from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_skin import BlenderSkin
 from .gltf2_blender_animation import BlenderAnimation
 from .gltf2_blender_animation_utils import simulate_stash
+from .gltf2_blender_vnode import VNode, compute_vnodes
 
 
 class BlenderScene():
@@ -27,209 +28,75 @@ class BlenderScene():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, scene_idx):
+    def create(gltf):
         """Scene creation."""
-        gltf.blender_active_collection = None
-        if scene_idx is not None:
-            pyscene = gltf.data.scenes[scene_idx]
-            list_nodes = pyscene.nodes
-
-            # Create a new scene only if not already exists in .blend file
-            # TODO : put in current scene instead ?
-            if pyscene.name not in [scene.name for scene in bpy.data.scenes]:
-                # TODO: There is a bug in 2.8 alpha that break CLEAR_KEEP_TRANSFORM
-                # if we are creating a new scene
-                if bpy.app.version < (2, 80, 0):
-                    if pyscene.name:
-                        scene = bpy.data.scenes.new(pyscene.name)
-                    else:
-                        scene = bpy.context.scene
-                else:
-                    scene = bpy.context.scene
-                    if bpy.context.collection.name in bpy.data.collections: # avoid master collection
-                        gltf.blender_active_collection = bpy.context.collection.name
-                if bpy.app.version < (2, 80, 0):
-                    scene.render.engine = "CYCLES"
-                else:
-                    if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
-                        scene.render.engine = "BLENDER_EEVEE"
-
-                gltf.blender_scene = scene.name
-            else:
-                gltf.blender_scene = pyscene.name
-
-            # Switch to newly created main scene
-            if bpy.app.version < (2, 80, 0):
-                bpy.context.screen.scene = bpy.data.scenes[gltf.blender_scene]
-            else:
-                bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
-                if bpy.context.collection.name in bpy.data.collections: # avoid master collection
-                    gltf.blender_active_collection = bpy.context.collection.name
-            if bpy.app.version < (2, 80, 0):
-                scene = bpy.context.scene
-                scene.render.engine = "CYCLES"
-
+        scene = bpy.context.scene
+        gltf.blender_scene = scene.name
+        if bpy.app.version < (2, 80, 0):
+            pass
         else:
-            # No scene in glTF file, create all objects in current scene
-            scene = bpy.context.scene
-            if bpy.app.version < (2, 80, 0):
-                scene.render.engine = "CYCLES"
-            else:
-                if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
-                    scene.render.engine = "BLENDER_EEVEE"
-                if bpy.context.collection.name in bpy.data.collections: # avoid master collection
-                    gltf.blender_active_collection = bpy.context.collection.name
-            gltf.blender_scene = scene.name
-            list_nodes = BlenderScene.get_root_nodes(gltf)
+            if bpy.context.collection.name in bpy.data.collections: # avoid master collection
+                gltf.blender_active_collection = bpy.context.collection.name
+        if bpy.app.version < (2, 80, 0):
+            scene.render.engine = "CYCLES"
+        else:
+            if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
+                scene.render.engine = "BLENDER_EEVEE"
 
-        if bpy.app.debug_value != 100:
-            # Create Yup2Zup empty
-            obj_rotation = bpy.data.objects.new("Yup2Zup", None)
-            obj_rotation.rotation_mode = 'QUATERNION'
-            obj_rotation.rotation_quaternion = Quaternion((sqrt(2) / 2, sqrt(2) / 2, 0.0, 0.0))
+        compute_vnodes(gltf)
 
-            if bpy.app.version < (2, 80, 0):
-                bpy.data.scenes[gltf.blender_scene].objects.link(obj_rotation)
-            else:
-                if gltf.blender_active_collection is not None:
-                    bpy.data.collections[gltf.blender_active_collection].objects.link(obj_rotation)
-                else:
-                    bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj_rotation)
-
-        if list_nodes is not None:
-            for node_idx in list_nodes:
-                BlenderNode.create(gltf, node_idx, None)  # None => No parent
+        gltf.display_current_node = 0  # for debugging
+        BlenderNode.create_vnode(gltf, 'root')
 
         # Now that all mesh / bones are created, create vertex groups on mesh
         if gltf.data.skins:
-            for skin_id, skin in enumerate(gltf.data.skins):
-                if hasattr(skin, "node_ids"):
-                    BlenderSkin.create_vertex_groups(gltf, skin_id)
+            BlenderSkin.create_vertex_groups(gltf)
+            BlenderSkin.create_armature_modifiers(gltf)
 
-            for skin_id, skin in enumerate(gltf.data.skins):
-                if hasattr(skin, "node_ids"):
-                    BlenderSkin.create_armature_modifiers(gltf, skin_id)
+        BlenderScene.create_animations(gltf)
 
+        if bpy.context.mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+        BlenderScene.set_active_object(gltf)
+
+    @staticmethod
+    def create_animations(gltf):
+        """Create animations."""
         if gltf.data.animations:
             for anim_idx, anim in enumerate(gltf.data.animations):
-                # Blender armature name -> action all its bones should use
-                gltf.arma_cache = {}
+                # Caches the action for each object (keyed by object name)
+                gltf.action_cache = {}
                 # Things we need to stash when we're done.
                 gltf.needs_stash = []
 
-                if list_nodes is not None:
-                    for node_idx in list_nodes:
-                        BlenderAnimation.anim(gltf, anim_idx, node_idx)
+                BlenderAnimation.anim(gltf, anim_idx, 'root')
 
                 for (obj, anim_name, action) in gltf.needs_stash:
                     simulate_stash(obj, anim_name, action)
 
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
-            for node_idx in list_nodes:
-                BlenderAnimation.restore_animation(gltf, node_idx, anim_name)
-
-        if bpy.app.debug_value != 100:
-            # Parent root node to rotation object
-            if list_nodes is not None:
-                exclude_nodes = []
-                for node_idx in list_nodes:
-                    if gltf.data.nodes[node_idx].is_joint:
-                        # Do not change parent if root node is already parented (can be the case for skinned mesh)
-                        if not bpy.data.objects[gltf.data.nodes[node_idx].blender_armature_name].parent:
-                            bpy.data.objects[gltf.data.nodes[node_idx].blender_armature_name].parent = obj_rotation
-                        else:
-                            exclude_nodes.append(node_idx)
-                    else:
-                        # Do not change parent if root node is already parented (can be the case for skinned mesh)
-                        if not bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent:
-                            bpy.data.objects[gltf.data.nodes[node_idx].blender_object].parent = obj_rotation
-                        else:
-                            exclude_nodes.append(node_idx)
-
-                if gltf.animation_object is False:
-
-                    if bpy.app.version < (2, 80, 0):
-                        for node_idx in list_nodes:
-                            for obj_ in bpy.context.scene.objects:
-                                obj_.select = False
-
-                            if node_idx in exclude_nodes:
-                                continue # for root node that are parented by the process
-                                # for example skinned meshes
-
-                            if gltf.data.nodes[node_idx].is_joint:
-                                bpy.data.objects[gltf.data.nodes[node_idx].blender_armature_name].select = True
-                                bpy.context.scene.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_armature_name]
-                            else:
-                                bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select = True
-                                bpy.context.scene.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_object]
-                            bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-
-                        # remove object
-                        bpy.context.scene.objects.unlink(obj_rotation)
-                        bpy.data.objects.remove(obj_rotation)
-                    else:
-
-                        # Avoid rotation bug if collection is hidden or disabled
-                        if gltf.blender_active_collection is not None:
-                            gltf.collection_hide_viewport = bpy.data.collections[gltf.blender_active_collection].hide_viewport
-                            bpy.data.collections[gltf.blender_active_collection].hide_viewport = False
-                            # TODO for visibility ... but seems not exposed on bpy for now
-
-                        for node_idx in list_nodes:
-
-                            if node_idx in exclude_nodes:
-                                continue # for root node that are parented by the process
-                                # for example skinned meshes
-
-                            for obj_ in bpy.context.scene.objects:
-                                obj_.select_set(False)
-                            if gltf.data.nodes[node_idx].is_joint:
-                                bpy.data.objects[gltf.data.nodes[node_idx].blender_armature_name].select_set(True)
-                                bpy.context.view_layer.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_armature_name]
-
-                            else:
-                                bpy.data.objects[gltf.data.nodes[node_idx].blender_object].select_set(True)
-                                bpy.context.view_layer.objects.active = bpy.data.objects[gltf.data.nodes[node_idx].blender_object]
-
-                            bpy.ops.object.parent_clear(type='CLEAR_KEEP_TRANSFORM')
-
-                        # remove object
-                        #bpy.context.scene.collection.objects.unlink(obj_rotation)
-                        bpy.data.objects.remove(obj_rotation)
-
-                        # Restore collection hidden / disabled values
-                        if gltf.blender_active_collection is not None:
-                            bpy.data.collections[gltf.blender_active_collection].hide_viewport = gltf.collection_hide_viewport
-                            # TODO restore visibility when expose in bpy
-
-        # Make first root object the new active one
-        if list_nodes is not None:
-            if gltf.data.nodes[list_nodes[0]].blender_object:
-                bl_name = gltf.data.nodes[list_nodes[0]].blender_object
-            else:
-                bl_name = gltf.data.nodes[list_nodes[0]].blender_armature_name
-            if bpy.app.version < (2, 80, 0):
-                bpy.context.scene.objects.active = bpy.data.objects[bl_name]
-            else:
-                bpy.context.view_layer.objects.active = bpy.data.objects[bl_name]
+            BlenderAnimation.restore_animation(gltf, 'root', anim_name)
 
     @staticmethod
-    def get_root_nodes(gltf):
-        if gltf.data.nodes is None:
-            return None
+    def set_active_object(gltf):
+        """Make the first root object from the default glTF scene active.
+        If no default scene, use the first scene, or just any root object.
+        """
+        if gltf.data.scenes:
+            pyscene = gltf.data.scenes[gltf.data.scene or 0]
+            vnode = gltf.vnodes[pyscene.nodes[0]]
+            if gltf.vnodes[vnode.parent].type != VNode.DummyRoot:
+                vnode = gltf.vnodes[vnode.parent]
 
-        parents = {}
-        for idx, node  in enumerate(gltf.data.nodes):
-            pynode = gltf.data.nodes[idx]
-            if pynode.children:
-                for child_idx in pynode.children:
-                    parents[child_idx] = idx
+        else:
+            vnode = gltf.vnodes['root']
+            if vnode.type == VNode.DummyRoot:
+                if not vnode.children:
+                    return  # no nodes
+                vnode = gltf.vnodes[vnode.children[0]]
 
-        roots = []
-        for idx, node in enumerate(gltf.data.nodes):
-            if idx not in parents.keys():
-                roots.append(idx)
-
-        return roots
+        if bpy.app.version < (2, 80, 0):
+            bpy.context.scene.objects.active = vnode.blender_object
+        else:
+            bpy.context.view_layer.objects.active = vnode.blender_object
