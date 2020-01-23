@@ -164,9 +164,10 @@ class BlenderPrimitive():
         pyprimitive.num_faces = 0
         for face in faces:
             try:
-                face = bme_faces.new(tuple(
-                    bme_verts[pidx_to_bidx[i]]
-                    for i in face
+                face = bme_faces.new((
+                    bme_verts[pidx_to_bidx[face[0]]],
+                    bme_verts[pidx_to_bidx[face[1]]],
+                    bme_verts[pidx_to_bidx[face[2]]],
                 ))
 
                 if material_index is not None:
@@ -213,15 +214,15 @@ class BlenderPrimitive():
                 )
 
             for bidx, pidx in vert_idxs:
+                color = colors[pidx]
+                col = (
+                    color_linear_to_srgb(color[0]),
+                    color_linear_to_srgb(color[1]),
+                    color_linear_to_srgb(color[2]),
+                    color[3] if is_rgba else 1.0,
+                )[:blender_num_components]
                 for loop in bme_verts[bidx].link_loops:
-                    color = colors[pidx]
-                    col = (
-                        color_linear_to_srgb(color[0]),
-                        color_linear_to_srgb(color[1]),
-                        color_linear_to_srgb(color[2]),
-                        color[3] if is_rgba else 1.0,
-                    )
-                    loop[layer] = col[:blender_num_components]
+                    loop[layer] = col
 
             set_num += 1
 
