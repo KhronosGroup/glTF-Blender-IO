@@ -92,7 +92,7 @@ class BlenderImage():
             # Create a temp image, pack, and delete image
             tmp_image = tempfile.NamedTemporaryFile(delete=False)
             img_data, img_name = BinaryData.get_image_data(gltf, img_idx)
-            if img_name is not None:
+            if img_data is not None:
                 tmp_image.write(img_data)
                 tmp_image.close()
 
