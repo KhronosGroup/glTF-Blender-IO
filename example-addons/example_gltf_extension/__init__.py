@@ -1,22 +1,37 @@
 import bpy
 
 bl_info = {
-    "name": "KDAB_example_extension",
+    "name": "Example glTF Extension",
     "category": "Generic",
-    "blender": (2,80,0),
+    "version": (1, 0, 0),
+    "blender": (2, 80, 0),
+    'location': 'File > Export > glTF 2.0',
+    'description': 'Example addon to add a custom extension to an exported glTF file.',
+    'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",  # Replace with your issue tracker
     'isDraft': False,
-    'developer': "KDAB",
-    'url': 'https://www.kdab.com',
+    'developer': "(Your name here)", # Replace this
+    'url': 'https://your_url_here',  # Replace this
 }
+
+# glTF extensions are named following a convention with known prefixes.
+# See: https://github.com/KhronosGroup/glTF/tree/master/extensions#about-gltf-extensions
+# also: https://github.com/KhronosGroup/glTF/blob/master/extensions/Prefixes.md
+glTF_extension_name = "EXT_example_extension"
+
+# Support for an extension is "required" if a typical glTF viewer cannot be expected
+# to load a given model without understanding the contents of the extension.
+# For example, a compression scheme or new image format (with no fallback included)
+# would be "required", but physics metadata or app-specific settings could be optional.
+extension_is_required = False
 
 class ExampleExtensionProperties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
-        name='ExampleExtension_enabled',
-        description='This is an example of a BoolProperty used by a UserExtension.',
+        name=bl_info["name"],
+        description='Include this extension in the exported glTF file.',
         default=True
         )
     float_property: bpy.props.FloatProperty(
-        name='ExampleExtension_enabled',
+        name='Sample FloatProperty',
         description='This is an example of a FloatProperty used by a UserExtension.',
         default=1.0
         )
@@ -27,7 +42,7 @@ def register():
 
 def register_panel():
     # Register the panel on demand, we need to be sure to only register it once
-    # This is necessary because the panel is a child of the extensions panel, 
+    # This is necessary because the panel is a child of the extensions panel,
     # which may not be registered when we try to register this extension
     try:
         bpy.utils.register_class(GLTF_PT_UserExtensionPanel)
@@ -45,7 +60,7 @@ def unregister_panel():
         bpy.utils.unregister_class(GLTF_PT_UserExtensionPanel)
     except Exception:
         pass
-        
+
 
 def unregister():
     unregister_panel()
@@ -56,7 +71,7 @@ class GLTF_PT_UserExtensionPanel(bpy.types.Panel):
 
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Example Extension"
+    bl_label = "Enabled"
     bl_parent_id = "GLTF_PT_export_user_extensions"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -75,11 +90,11 @@ class GLTF_PT_UserExtensionPanel(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
+        props = bpy.context.scene.ExampleExtensionProperties
+        layout.active = props.enabled
 
         box = layout.box()
-        box.label(text="Is draft: " + str(bl_info['isDraft']))
-        box.label(text="Developer: " + str(bl_info['developer']))
-        box.label(text="url: " + str(bl_info['url']))
+        box.label(text=glTF_extension_name)
 
         props = bpy.context.scene.ExampleExtensionProperties
         layout.prop(props, 'float_property', text="Some float value")
@@ -91,16 +106,16 @@ class glTF2ExportUserExtension:
         # We need to wait until we create the gltf2UserExtension to import the gltf2 modules
         # Otherwise, it may fail because the gltf2 may not be loaded yet
         from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
-        self.Extension = Extension 
+        self.Extension = Extension
         self.properties = bpy.context.scene.ExampleExtensionProperties
 
     def gather_node_hook(self, gltf2_object, blender_object, export_settings):
         if self.properties.enabled:
             if gltf2_object.extensions is None:
                 gltf2_object.extensions = {}
-            gltf2_object.extensions[bl_info['name']] = self.Extension(
-                name= bl_info['name'], 
+            gltf2_object.extensions[glTF_extension_name] = self.Extension(
+                name=glTF_extension_name,
                 extension={"float": self.properties.float_property},
-                required=False
+                required=extension_is_required
             )
 
