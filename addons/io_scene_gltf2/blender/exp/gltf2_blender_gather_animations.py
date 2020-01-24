@@ -214,9 +214,9 @@ def __get_blender_actions(blender_object: bpy.types.Object,
             for track in blender_object.animation_data.nla_tracks:
                 # Multi-strip tracks do not export correctly yet (they need to be baked),
                 # so skip them for now and only write single-strip tracks.
-                if track.strips is None or len(track.strips) != 1:
+                if track.strips is None or len([strip for strip in track.strips if strip.mute is False]) != 1:
                     continue
-                for strip in [strip for strip in track.strips if strip.action is not None]:
+                for strip in [strip for strip in track.strips if strip.action is not None and strip.mute is False]:
                     blender_actions.append(strip.action)
                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
 
@@ -233,9 +233,9 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                 for track in blender_object.data.shape_keys.animation_data.nla_tracks:
                     # Multi-strip tracks do not export correctly yet (they need to be baked),
                     # so skip them for now and only write single-strip tracks.
-                    if track.strips is None or len(track.strips) != 1:
+                    if track.strips is None or len([strip for strip in track.strips if strip.mute is False]) != 1:
                         continue
-                    for strip in track.strips:
+                    for strip in [strip for strip in track.strips if strip.mute is False]:
                         blender_actions.append(strip.action)
                         blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
 
