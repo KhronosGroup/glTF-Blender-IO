@@ -284,6 +284,7 @@ class ExportImage:
         tmp_image = None
         try:
             tmp_image = image.copy()
+            tmp_image.update()
             if image.is_dirty:
                 tmp_image.pixels = image.pixels[:]
 
@@ -298,9 +299,6 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str) -> bytes:
         tmpfilename = tmpdirname + '/img'
         tmp_image.filepath_raw = tmpfilename
 
-        # NOT A TYPO!!! If you delete this line, the
-        # assignment on the next line will not work.
-        tmp_image.file_format
         tmp_image.file_format = file_format
 
         tmp_image.save()
