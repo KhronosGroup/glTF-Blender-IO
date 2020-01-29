@@ -160,6 +160,8 @@ def __get_image_data(sockets_or_slots, export_settings) -> ExportImage:
                         'G': Channel.G,
                         'B': Channel.B,
                     }[elem.from_socket.name]
+                if elem.from_socket.name == 'Alpha':
+                    src_chan = Channel.A
 
             dst_chan = None
 
