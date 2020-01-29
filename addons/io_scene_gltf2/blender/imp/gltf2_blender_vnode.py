@@ -178,12 +178,11 @@ def move_skinned_meshes(gltf):
     joints in its skin affect it.
 
     To do this in Blender:
-     * Move a skinned mesh to become a child of the armature that affects it
+     * Move a skinned mesh to become a child of the armature that skins it.
+       Have to ensure the mesh and arma have the same world transform.
      * When we do mesh creation, we will also need to put all the verts in
        their rest pose (ie. the pose the edit bones are in)
     """
-    # TODO: this leaves behind empty "husk" nodes where the skinned meshes
-    #       used to be, which is ugly.
     ids = list(gltf.vnodes.keys())
     for id in ids:
         vnode = gltf.vnodes[id]
@@ -199,14 +198,52 @@ def move_skinned_meshes(gltf):
         pyskin = gltf.data.skins[skin]
         arma = gltf.vnodes[pyskin.joints[0]].bone_arma
 
+        # First try moving the whole node if we can do it without
+        # messing anything up.
+        is_animated = (
+            gltf.data.animations and
+            isinstance(id, int) and
+            gltf.data.nodes[id].animations
+        )
+        ok_to_move = (
+            not is_animated and
+            vnode.type == VNode.Object and
+            not vnode.is_arma and
+            not vnode.children and
+            vnode.camera_node_idx is None and
+            vnode.light_node_idx is None
+        )
+        if ok_to_move:
+            reparent(gltf, id, new_parent=arma)
+            vnode.trs = (
+                Vector((0, 0, 0)),
+                Quaternion((1, 0, 0, 0)),
+                Vector((1, 1, 1)),
+            )
+            continue
+
+        # Otherwise, create a new child of the arma and move
+        # the mesh instance there, leaving the node behind.
         new_id = str(id) + '.skinned'
         gltf.vnodes[new_id] = VNode()
         gltf.vnodes[new_id].name = gltf.data.meshes[mesh].name or 'Mesh_%d' % mesh
         gltf.vnodes[new_id].parent = arma
         gltf.vnodes[arma].children.append(new_id)
-
         gltf.vnodes[new_id].mesh_node_idx = vnode.mesh_node_idx
         vnode.mesh_node_idx = None
+
+def reparent(gltf, vnode_id, new_parent):
+    """Moves a VNode to a new parent."""
+    vnode = gltf.vnodes[vnode_id]
+    if vnode.parent == new_parent:
+        return
+    if vnode.parent is not None:
+        parent_vnode = gltf.vnodes[vnode.parent]
+        index = parent_vnode.children.index(vnode_id)
+        del parent_vnode.children[index]
+    vnode.parent = new_parent
+    gltf.vnodes[new_parent].children.append(vnode_id)
+
 
 
 def fixup_multitype_nodes(gltf):
