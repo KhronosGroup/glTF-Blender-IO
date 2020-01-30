@@ -134,7 +134,7 @@ class BlenderNode():
             editbone.use_connect = False  # TODO?
 
             # Give the position of the bone in armature space
-            arma_mat = vnode.bone_arma_mat
+            arma_mat = vnode.editbone_arma_mat
             editbone.head = arma_mat @ Vector((0, 0, 0))
             editbone.tail = arma_mat @ Vector((0, 1, 0))
             editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
@@ -159,8 +159,13 @@ class BlenderNode():
             vnode = gltf.vnodes[id]
             pose_bone = blender_arma.pose.bones[vnode.blender_bone_name]
 
-            # Put scale on pose bone (edit bones have no scale)
-            _, _, s = vnode.trs
+            # BoneTRS = EditBone * PoseBone
+            # Set PoseBone to make BoneTRS = vnode.trs.
+            t, r, s = vnode.trs
+            et, er = vnode.editbone_trans, vnode.editbone_rot
+            pose_bone.location = er.conjugated() @ (t - et)
+            pose_bone.rotation_mode = 'QUATERNION'
+            pose_bone.rotation_quaternion = er.conjugated() @ r
             pose_bone.scale = s
 
             if isinstance(id, int):

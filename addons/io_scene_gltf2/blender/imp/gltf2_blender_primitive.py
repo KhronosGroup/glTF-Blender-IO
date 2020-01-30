@@ -78,8 +78,8 @@ class BlenderPrimitive():
                 inv_binds = [gltf.matrix_gltf_to_blender(m) for m in inv_binds]
             else:
                 inv_binds = [Matrix.Identity(4) for i in range(len(pyskin.joints))]
-            arma_mats = [gltf.vnodes[joint].bone_arma_mat for joint in pyskin.joints]
-            joint_mats = [arma_mat @ inv_bind for arma_mat, inv_bind in zip(arma_mats, inv_binds)]
+            bind_mats = [gltf.vnodes[joint].bind_arma_mat for joint in pyskin.joints]
+            joint_mats = [bind_mat @ inv_bind for bind_mat, inv_bind in zip(bind_mats, inv_binds)]
 
             def skin_vert(pos, pidx):
                 out = Vector((0, 0, 0))
