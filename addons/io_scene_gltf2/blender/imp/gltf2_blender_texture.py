@@ -64,10 +64,16 @@ def texture(
     x -= 340
 
     # UV Transform (for KHR_texture_transform)
-    mapping = mh.node_tree.nodes.new('ShaderNodeMapping')
-    mapping.location = x - 160, y + 30
-    mapping.vector_type = 'POINT'
-    if tex_info.extensions and 'KHR_texture_transform' in tex_info.extensions:
+    needs_tex_transform = 'KHR_texture_transform' in (tex_info.extensions or {})
+    if needs_tex_transform:
+        mapping = mh.node_tree.nodes.new('ShaderNodeMapping')
+        mapping.location = x - 160, y + 30
+        mapping.vector_type = 'POINT'
+        # Outputs
+        mh.node_tree.links.new(uv_socket, mapping.outputs[0])
+        # Inputs
+        uv_socket = mapping.inputs[0]
+
         transform = tex_info.extensions['KHR_texture_transform']
         transform = texture_transform_gltf_to_blender(transform)
         mapping.inputs['Location'].default_value[0] = transform['offset'][0]
@@ -75,12 +81,8 @@ def texture(
         mapping.inputs['Rotation'].default_value[2] = transform['rotation']
         mapping.inputs['Scale'].default_value[0] = transform['scale'][0]
         mapping.inputs['Scale'].default_value[1] = transform['scale'][1]
-    # Outputs
-    mh.node_tree.links.new(uv_socket, mapping.outputs[0])
-    # Inputs
-    uv_socket = mapping.inputs[0]
 
-    x -= 260
+        x -= 260
 
     # UV Map
     uv_map = mh.node_tree.nodes.new('ShaderNodeUVMap')
