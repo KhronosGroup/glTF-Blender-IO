@@ -85,17 +85,17 @@ def texture(
         x -= 260
 
     # UV Map
-    uv_map = mh.node_tree.nodes.new('ShaderNodeUVMap')
-    uv_map.location = x - 160, y - 70
-    # Get UVMap
     uv_idx = tex_info.tex_coord or 0
     try:
         uv_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
     except Exception:
         pass
-    uv_map.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
-    # Outputs
-    mh.node_tree.links.new(uv_socket, uv_map.outputs[0])
+    if uv_idx != 0 or needs_tex_transform:
+        uv_map = mh.node_tree.nodes.new('ShaderNodeUVMap')
+        uv_map.location = x - 160, y - 70
+        uv_map.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
+        # Outputs
+        mh.node_tree.links.new(uv_socket, uv_map.outputs[0])
 
 def set_filtering(tex_img, pysampler):
     """Set the filtering/interpolation on an Image Texture from the glTf sampler."""
