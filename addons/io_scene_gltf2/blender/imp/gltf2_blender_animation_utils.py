@@ -32,7 +32,7 @@ def simulate_stash(obj, track_name, action, start_frame=None):
 
 def restore_animation_on_object(obj, anim_name):
     if not getattr(obj, 'animation_data', None):
-        return
+        return None
 
     for track in obj.animation_data.nla_tracks:
         if track.name != anim_name:
@@ -41,9 +41,10 @@ def restore_animation_on_object(obj, anim_name):
             continue
 
         obj.animation_data.action = track.strips[0].action
-        return
+        return track.strips[0].action
 
     obj.animation_data.action = None
+    return None
 
 def make_fcurve(action, co, data_path, index=0, group_name=None, interpolation=None):
     try:

@@ -41,21 +41,25 @@ class BlenderAnimation():
             BlenderAnimation.anim(gltf, anim_idx, child)
 
     @staticmethod
-    def restore_animation(gltf, vnode_id, animation_name):
-        """Restores the actions for an animation by its track name on
-        the subtree starting at node_idx."""
-        vnode = gltf.vnodes[vnode_id]
+    def restore_animation(gltf, animation_name):
+        """Restore the actions for an animation by its track name."""
+        frame_end = 0
 
-        obj = None
-        if vnode.type == VNode.Bone:
-            obj = gltf.vnodes[vnode.bone_arma].blender_object
-        elif vnode.type == VNode.Object:
-            obj = vnode.blender_object
+        for vnode in gltf.vnodes.values():
+            if vnode.type == VNode.Object:
+                obj = vnode.blender_object
+            else:
+                continue
 
-        if obj is not None:
-            restore_animation_on_object(obj, animation_name)
+            action = restore_animation_on_object(obj, animation_name)
+            if action is not None:
+                frame_end = max(frame_end, action.frame_range[1])
+
             if obj.data and hasattr(obj.data, 'shape_keys'):
-                restore_animation_on_object(obj.data.shape_keys, animation_name)
+                action = restore_animation_on_object(obj.data.shape_keys, animation_name)
+                if action is not None:
+                    frame_end = max(frame_end, action.frame_range[1])
 
-        for child in gltf.vnodes[vnode_id].children:
-            BlenderAnimation.restore_animation(gltf, child, animation_name)
+        bpy.context.scene.frame_start = 0
+        bpy.context.scene.frame_end = frame_end
+

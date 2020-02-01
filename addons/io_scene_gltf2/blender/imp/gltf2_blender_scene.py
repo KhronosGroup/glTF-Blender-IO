@@ -76,7 +76,7 @@ class BlenderScene():
 
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
-            BlenderAnimation.restore_animation(gltf, 'root', anim_name)
+            BlenderAnimation.restore_animation(gltf, anim_name)
 
     @staticmethod
     def set_active_object(gltf):
