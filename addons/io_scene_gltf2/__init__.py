@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 2, 17),
+    "version": (1, 2, 18),
     'blender': (2, 81, 6),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -471,11 +471,15 @@ class ExportGLTF2_Base:
         else:
             preferences = bpy.context.preferences
         for addon_name in preferences.addons.keys():
-            if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
-                extension_ctor = sys.modules[addon_name].glTF2ExportUserExtension
+            try:
+                module = sys.modules[addon_name]
+            except Exception:
+                continue
+            if hasattr(module, 'glTF2ExportUserExtension'):
+                extension_ctor = module.glTF2ExportUserExtension
                 user_extensions.append(extension_ctor())
-            if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
-                extension_ctors = sys.modules[addon_name].glTF2ExportUserExtensions
+            if hasattr(module, 'glTF2ExportUserExtensions'):
+                extension_ctors = module.glTF2ExportUserExtensions
                 for extension_ctor in extension_ctors:
                     user_extensions.append(extension_ctor())
         export_settings['gltf_user_extensions'] = user_extensions
