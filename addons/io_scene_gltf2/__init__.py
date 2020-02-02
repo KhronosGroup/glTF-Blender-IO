@@ -471,11 +471,15 @@ class ExportGLTF2_Base:
         else:
             preferences = bpy.context.preferences
         for addon_name in preferences.addons.keys():
-            if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension'):
-                extension_ctor = sys.modules[addon_name].glTF2ExportUserExtension
+            try:
+                module = sys.modules[addon_name]
+            except Exception:
+                continue
+            if hasattr(module, 'glTF2ExportUserExtension'):
+                extension_ctor = module.glTF2ExportUserExtension
                 user_extensions.append(extension_ctor())
-            if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
-                extension_ctors = sys.modules[addon_name].glTF2ExportUserExtensions
+            if hasattr(module, 'glTF2ExportUserExtensions'):
+                extension_ctors = module.glTF2ExportUserExtensions
                 for extension_ctor in extension_ctors:
                     user_extensions.append(extension_ctor())
         export_settings['gltf_user_extensions'] = user_extensions
