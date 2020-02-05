@@ -77,17 +77,27 @@ class BlenderScene():
         """Make the first root object from the default glTF scene active.
         If no default scene, use the first scene, or just any root object.
         """
-        if gltf.data.scenes:
-            pyscene = gltf.data.scenes[gltf.data.scene or 0]
-            vnode = gltf.vnodes[pyscene.nodes[0]]
-            if gltf.vnodes[vnode.parent].type != VNode.DummyRoot:
-                vnode = gltf.vnodes[vnode.parent]
+        vnode = None
 
-        else:
+        if gltf.data.scene is not None:
+            pyscene = gltf.data.scenes[gltf.data.scene]
+            if pyscene.nodes:
+                vnode = gltf.vnodes[pyscene.nodes[0]]
+
+        if not vnode:
+            for pyscene in gltf.data.scenes or []:
+                if pyscene.nodes:
+                    vnode = gltf.vnodes[pyscene.nodes[0]]
+                    break
+
+        if not vnode:
             vnode = gltf.vnodes['root']
             if vnode.type == VNode.DummyRoot:
                 if not vnode.children:
                     return  # no nodes
                 vnode = gltf.vnodes[vnode.children[0]]
+
+        if gltf.vnodes[vnode.parent].type != VNode.DummyRoot:
+            vnode = gltf.vnodes[vnode.parent]
 
         bpy.context.view_layer.objects.active = vnode.blender_object
