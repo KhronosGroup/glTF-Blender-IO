@@ -31,7 +31,7 @@ from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
-def gather_node(blender_object, blender_scene, export_settings):
+def gather_node(blender_object, blender_scene, dupli_object_parent, export_settings):
     # custom cache to avoid cache miss when called from animation
     # with blender_scene=None
 
@@ -43,12 +43,12 @@ def gather_node(blender_object, blender_scene, export_settings):
     if blender_scene is None and blender_object.name in gather_node.__cache:
         return gather_node.__cache[blender_object.name]
 
-    node = __gather_node(blender_object, blender_scene, export_settings)
+    node = __gather_node(blender_object, blender_scene, dupli_object_parent, export_settings)
     gather_node.__cache[blender_object.name] = node
     return node
 
 @cached
-def __gather_node(blender_object, blender_scene, export_settings):
+def __gather_node(blender_object, blender_scene, dupli_object_parent, export_settings):
     # If blender_scene is None, we are coming from animation export
     # Check to know if object is exported is already done, so we don't check
     # again if object is instanced in scene : this check was already done when exporting object itself
@@ -133,20 +133,20 @@ def __gather_children(blender_object, blender_scene, export_settings):
             # as the object should be a child of the specific bone,
             # not the Armature object
             continue
-        node = gather_node(child_object, blender_scene, export_settings)
+        node = gather_node(child_object, blender_scene, None, export_settings)
         if node is not None:
             children.append(node)
     # blender dupli objects
     if bpy.app.version < (2, 80, 0):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
             for dupli_object in blender_object.dupli_group.objects:
-                node = gather_node(dupli_object, blender_scene, export_settings)
+                node = gather_node(dupli_object, blender_scene, blender_object.name, export_settings)
                 if node is not None:
                     children.append(node)
     else:
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
             for dupli_object in blender_object.instance_collection.objects:
-                node = gather_node(dupli_object, blender_scene, export_settings)
+                node = gather_node(dupli_object, blender_scene, blender_object.name, export_settings)
                 if node is not None:
                     children.append(node)
 
@@ -178,7 +178,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             parent_joint = find_parent_joint(root_joints, child.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(child, None, export_settings)
+            child_node = gather_node(child, None, None, export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
@@ -350,12 +350,12 @@ def __gather_name(blender_object, export_settings):
         if blender_object.dupli_type == 'GROUP' and blender_object.dupli_group:
             return "Duplication_Offset_" + blender_object.name
     else:
-        if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            return "Duplication_Offset_" + blender_object.name
+        return blender_object.name
     return blender_object.name
 
 
 def __gather_trans_rot_scale(blender_object, export_settings):
+    print("...", blender_object.name)
     if blender_object.matrix_parent_inverse == Matrix.Identity(4):
         trans = blender_object.location
 
@@ -380,7 +380,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
                 blender_object.dupli_group.dupli_offset, None, None, export_settings)
     else:
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            trans = -gltf2_blender_extract.convert_swizzle_location(
+            trans -= gltf2_blender_extract.convert_swizzle_location(
                 blender_object.instance_collection.instance_offset, None, None, export_settings)
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
