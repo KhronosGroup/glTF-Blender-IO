@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
 
 def color_srgb_to_scene_linear(c):
     """
@@ -29,8 +30,53 @@ def color_linear_to_srgb(c):
     Convert from linear to sRGB color space.
 
     Source: Cycles addon implementation, node_color.h.
+    c may be a single color value or an array.
     """
-    if c < 0.0031308:
-        return 0.0 if c < 0.0 else c * 12.92
+    if type(c) in ([], np.ndarray):
+        colors = np.array(c, np.float32)
+        not_small = colors >= 0.0031308
+        small_result = np.where(colors<0.0, 0.0, colors * 12.92)
+        large_result = 1.055 * np.power(colors, 1.0 / 2.4, where=not_small) - 0.055
+        return np.where(not_small, large_result, small_result)
     else:
-        return 1.055 * pow(c, 1.0 / 2.4) - 0.055
+        if c < 0.0031308:
+            return 0.0 if c < 0.0 else c * 12.92
+        else:
+            return 1.055 * pow(c, 1.0 / 2.4) - 0.055
+
+def test_color_linear_to_srgb():
+    """Ensure the array version gives the right results and is fast"""
+    from pytest import approx
+    from numpy.random import default_rng
+    import time
+
+    n_elements = 10000000              # test this many random values
+    expect_elements_per_sec = 10000000 # as of 2020 on an Intel i7; conservative
+    expect_max_time = n_elements / expect_elements_per_sec # in sec
+
+    rng = default_rng()
+    a = rng.uniform(-10, 100, size=n_elements)
+    # Should be fast with numpy
+    t0 = time.perf_counter()
+    srgb = color_linear_to_srgb(a)
+    assert time.perf_counter() - t0 < expect_max_time
+    assert a.shape == srgb.shape
+    # Just compare some of them, for speed
+    for i in range(0, min(100000, len(a))):
+        assert srgb[i] == approx(color_linear_to_srgb(a[i]))
+
+def test_color_linear_to_srgb_2d():
+    """Ensure it works with a 2d array of colors where each element is RGB/RGBA"""
+    from pytest import approx
+
+    a = np.array([[0, 1, 2], [2, 3, 4]], dtype=np.float32)
+    srgb = color_linear_to_srgb(a)
+    assert a.shape == srgb.shape
+    for i in range(len(a.flatten())):
+        assert srgb.flatten()[i] == approx(color_linear_to_srgb(a.flatten()[i]))
+
+    a = np.array([[0, 1, 2, 0.1], [2, 3, 4, 0.5]], dtype=np.float32)
+    srgb = color_linear_to_srgb(a)
+    assert a.shape == srgb.shape
+    for i in range(len(a.flatten())):
+        assert srgb.flatten()[i] == approx(color_linear_to_srgb(a.flatten()[i]))

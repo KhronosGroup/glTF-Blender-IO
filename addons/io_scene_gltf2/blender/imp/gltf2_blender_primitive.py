@@ -14,6 +14,8 @@
 
 import bpy
 from mathutils import Vector, Matrix
+import numpy as np
+# import time
 
 from .gltf2_blender_material import BlenderMaterial
 from ...io.imp.gltf2_io_binary import BinaryData
@@ -194,20 +196,30 @@ class BlenderPrimitive():
             layer_name = 'Col' if set_num == 0 else 'Col.%03d' % set_num
             layer = BlenderPrimitive.get_layer(bme.loops.layers.color, layer_name)
 
-            colors = BinaryData.get_data_from_accessor(gltf, attributes['COLOR_%d' % set_num], cache=True)
+            # colors is a 2d array: [N][3 or 4]
+            gltf_attr_name = 'COLOR_%d' % set_num
+            colors_raw = BinaryData.get_data_from_accessor(gltf, attributes[gltf_attr_name], cache=True)
+            colors = np.array(colors_raw, dtype=np.float32)
 
             is_rgba = len(colors[0]) == 4
+            if not is_rgba:
+                # RGB -> RGBA
+                ones = np.ones((colors.shape[0], 1))
+                colors = np.concatenate((colors, ones), axis=1) # add alpha channel
 
+            srgb_colors = color_linear_to_srgb(colors)
+            # t = time.perf_counter()
+            # This needs to be a tight loop because it runs over all vertices,
+            # which is why this code looks a little odd.
             for bidx, pidx in vert_idxs:
-                color = colors[pidx]
-                col = (
-                    color_linear_to_srgb(color[0]),
-                    color_linear_to_srgb(color[1]),
-                    color_linear_to_srgb(color[2]),
-                    color[3] if is_rgba else 1.0,
-                )
+                color = srgb_colors[pidx]
+                if blender_num_components == 4:
+                    col = (color[0], color[1], color[2], color[3]) # fastest this way
+                else:
+                    col = (color[0], color[1], color[2])
                 for loop in bme_verts[bidx].link_loops:
                     loop[layer] = col
+            # print(f'store colors: {time.perf_counter() - t}')
 
             set_num += 1
 
