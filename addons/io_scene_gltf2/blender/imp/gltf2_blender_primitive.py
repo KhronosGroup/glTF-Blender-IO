@@ -193,6 +193,7 @@ class BlenderPrimitive():
                 )
                 break
 
+            gltf_layer_name = 'COLOR_%d' % set_num
             layer_name = 'Col' if set_num == 0 else 'Col.%03d' % set_num
             layer = BlenderPrimitive.get_layer(bme.loops.layers.color, layer_name)
 
