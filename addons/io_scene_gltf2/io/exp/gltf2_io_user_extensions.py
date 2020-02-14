@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def export_user_extensions(hook_name, export_settings, gltf2_object, *args):
-    if gltf2_object.extensions is None:
-        gltf2_object.extensions = {}
+def export_user_extensions(hook_name, export_settings, *args):
+    if args and hasattr(args[0], "extensions"):
+        if args[0].extensions is None:
+            args[0].extensions = {}
 
     for extension in export_settings['gltf_user_extensions']:
         hook = getattr(extension, hook_name, None)
         if hook is not None:
-            hook(gltf2_object, *args, export_settings)
+            hook(*args, export_settings)
