@@ -99,10 +99,7 @@ class BlenderNode():
                 # backwards by their bone length (always 1 currently)
                 obj.location += Vector((0, -1, 0))
 
-        if bpy.app.version < (2, 80, 0):
-            bpy.data.scenes[gltf.blender_scene].objects.link(obj)
-        else:
-            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
+        bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
         return obj
 
@@ -126,12 +123,8 @@ class BlenderNode():
 
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
-        if bpy.app.version < (2, 80, 0):
-            bpy.context.screen.scene = bpy.data.scenes[gltf.blender_scene]
-            bpy.data.scenes[gltf.blender_scene].objects.active = blender_arma
-        else:
-            bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
-            bpy.context.view_layer.objects.active = blender_arma
+        bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
+        bpy.context.view_layer.objects.active = blender_arma
         bpy.ops.object.mode_set(mode="EDIT")
 
         for id in bone_ids:
@@ -142,14 +135,9 @@ class BlenderNode():
 
             # Give the position of the bone in armature space
             arma_mat = vnode.bone_arma_mat
-            if bpy.app.version < (2, 80, 0):
-                editbone.head = arma_mat * Vector((0, 0, 0))
-                editbone.tail = arma_mat * Vector((0, 1, 0))
-                editbone.align_roll(arma_mat * Vector((0, 0, 1)) - editbone.head)
-            else:
-                editbone.head = arma_mat @ Vector((0, 0, 0))
-                editbone.tail = arma_mat @ Vector((0, 1, 0))
-                editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
+            editbone.head = arma_mat @ Vector((0, 0, 0))
+            editbone.tail = arma_mat @ Vector((0, 1, 0))
+            editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
 
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]

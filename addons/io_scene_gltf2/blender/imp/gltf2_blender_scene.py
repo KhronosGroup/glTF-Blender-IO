@@ -32,16 +32,10 @@ class BlenderScene():
         """Scene creation."""
         scene = bpy.context.scene
         gltf.blender_scene = scene.name
-        if bpy.app.version < (2, 80, 0):
-            pass
-        else:
-            if bpy.context.collection.name in bpy.data.collections: # avoid master collection
-                gltf.blender_active_collection = bpy.context.collection.name
-        if bpy.app.version < (2, 80, 0):
-            scene.render.engine = "CYCLES"
-        else:
-            if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
-                scene.render.engine = "BLENDER_EEVEE"
+        if bpy.context.collection.name in bpy.data.collections: # avoid master collection
+            gltf.blender_active_collection = bpy.context.collection.name
+        if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
+            scene.render.engine = "BLENDER_EEVEE"
 
         compute_vnodes(gltf)
 
@@ -96,7 +90,5 @@ class BlenderScene():
                     return  # no nodes
                 vnode = gltf.vnodes[vnode.children[0]]
 
-        if bpy.app.version < (2, 80, 0):
-            bpy.context.scene.objects.active = vnode.blender_object
-        else:
-            bpy.context.view_layer.objects.active = vnode.blender_object
+        bpy.context.view_layer.objects.active = vnode.blender_object
+

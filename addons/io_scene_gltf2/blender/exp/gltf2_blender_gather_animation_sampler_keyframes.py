@@ -163,10 +163,7 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
                 matrix = pbone.matrix_basis
             else:
                 matrix = pbone.matrix
-                if bpy.app.version < (2, 80, 0):
-                    matrix = blender_object_if_armature.convert_space(pbone, matrix, 'POSE', 'LOCAL')
-                else:
-                    matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
+                matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
             data[frame][pbone.name] = matrix
 
 

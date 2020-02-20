@@ -45,11 +45,8 @@ def texture(
             tex_img.image = bpy.data.images[blender_image_name]
     # Set colorspace for data images
     if is_data:
-        if bpy.app.version < (2, 80, 0):
-            tex_img.color_space = 'NONE'
-        else:
-            if tex_img.image:
-                tex_img.image.colorspace_settings.is_data = True
+        if tex_img.image:
+            tex_img.image.colorspace_settings.is_data = True
     # Set wrapping/filtering
     if pytexture.sampler is not None:
         pysampler = mh.gltf.data.samplers[pytexture.sampler]
@@ -68,35 +65,22 @@ def texture(
 
     # UV Transform (for KHR_texture_transform)
     mapping = mh.node_tree.nodes.new('ShaderNodeMapping')
-    if bpy.app.version < (2, 81, 8):
-        mapping.location = x - 320, y
-    else:
-        mapping.location = x - 160, y + 30
+    mapping.location = x - 160, y + 30
     mapping.vector_type = 'POINT'
     if tex_info.extensions and 'KHR_texture_transform' in tex_info.extensions:
         transform = tex_info.extensions['KHR_texture_transform']
         transform = texture_transform_gltf_to_blender(transform)
-        if bpy.app.version < (2, 81, 8):
-            mapping.translation[0] = transform['offset'][0]
-            mapping.translation[1] = transform['offset'][1]
-            mapping.rotation[2] = transform['rotation']
-            mapping.scale[0] = transform['scale'][0]
-            mapping.scale[1] = transform['scale'][1]
-        else:
-            mapping.inputs['Location'].default_value[0] = transform['offset'][0]
-            mapping.inputs['Location'].default_value[1] = transform['offset'][1]
-            mapping.inputs['Rotation'].default_value[2] = transform['rotation']
-            mapping.inputs['Scale'].default_value[0] = transform['scale'][0]
-            mapping.inputs['Scale'].default_value[1] = transform['scale'][1]
+        mapping.inputs['Location'].default_value[0] = transform['offset'][0]
+        mapping.inputs['Location'].default_value[1] = transform['offset'][1]
+        mapping.inputs['Rotation'].default_value[2] = transform['rotation']
+        mapping.inputs['Scale'].default_value[0] = transform['scale'][0]
+        mapping.inputs['Scale'].default_value[1] = transform['scale'][1]
     # Outputs
     mh.node_tree.links.new(uv_socket, mapping.outputs[0])
     # Inputs
     uv_socket = mapping.inputs[0]
 
-    if bpy.app.version < (2, 81, 8):
-        x -= 420
-    else:
-        x -= 260
+    x -= 260
 
     # UV Map
     uv_map = mh.node_tree.nodes.new('ShaderNodeUVMap')

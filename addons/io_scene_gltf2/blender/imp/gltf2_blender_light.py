@@ -53,10 +53,7 @@ class BlenderLight():
         if 'name' not in pylight.keys():
             pylight['name'] = "Sun"
 
-        if bpy.app.version < (2, 80, 0):
-            sun = bpy.data.lamps.new(name=pylight['name'], type="SUN")
-        else:
-            sun = bpy.data.lights.new(name=pylight['name'], type="SUN")
+        sun = bpy.data.lights.new(name=pylight['name'], type="SUN")
         obj = bpy.data.objects.new(pylight['name'], sun)
         return obj
 
@@ -67,10 +64,7 @@ class BlenderLight():
         if 'name' not in pylight.keys():
             pylight['name'] = "Point"
 
-        if bpy.app.version < (2, 80, 0):
-            point = bpy.data.lamps.new(name=pylight['name'], type="POINT")
-        else:
-            point = bpy.data.lights.new(name=pylight['name'], type="POINT")
+        point = bpy.data.lights.new(name=pylight['name'], type="POINT")
         obj = bpy.data.objects.new(pylight['name'], point)
         return obj
 
@@ -81,10 +75,7 @@ class BlenderLight():
         if 'name' not in pylight.keys():
             pylight['name'] = "Spot"
 
-        if bpy.app.version < (2, 80, 0):
-            spot = bpy.data.lamps.new(name=pylight['name'], type="SPOT")
-        else:
-            spot = bpy.data.lights.new(name=pylight['name'], type="SPOT")
+        spot = bpy.data.lights.new(name=pylight['name'], type="SPOT")
         obj = bpy.data.objects.new(pylight['name'], spot)
 
         # Angles

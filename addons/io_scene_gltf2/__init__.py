@@ -78,7 +78,7 @@ class ExportGLTF2_Base:
 
     bl_options = {'UNDO', 'PRESET'}
 
-    export_format = EnumProperty(
+    export_format: EnumProperty(
         name='Format',
         items=(('GLB', 'glTF Binary (.glb)',
                 'Exports a single file, with all data packed in binary form. '
@@ -96,7 +96,7 @@ class ExportGLTF2_Base:
         default='GLB'
     )
 
-    ui_tab = EnumProperty(
+    ui_tab: EnumProperty(
         items=(('GENERAL', "General", "General settings"),
                ('MESHES', "Meshes", "Mesh settings"),
                ('OBJECTS', "Objects", "Object settings"),
@@ -105,13 +105,13 @@ class ExportGLTF2_Base:
         description="Export setting categories",
     )
 
-    export_copyright = StringProperty(
+    export_copyright: StringProperty(
         name='Copyright',
         description='Legal rights and conditions for the model',
         default=''
     )
 
-    export_image_format = EnumProperty(
+    export_image_format: EnumProperty(
         name='Images',
         items=(('AUTO', 'Automatic',
                 'Save PNGs as PNGs and JPEGs as JPEGs.\n'
@@ -127,31 +127,31 @@ class ExportGLTF2_Base:
         default='AUTO'
     )
 
-    export_texture_dir = StringProperty(
+    export_texture_dir: StringProperty(
         name='Textures',
         description='Folder to place texture files in. Relative to the .gltf file',
         default='',
     )
 
-    export_texcoords = BoolProperty(
+    export_texcoords: BoolProperty(
         name='UVs',
         description='Export UVs (texture coordinates) with meshes',
         default=True
     )
 
-    export_normals = BoolProperty(
+    export_normals: BoolProperty(
         name='Normals',
         description='Export vertex normals with meshes',
         default=True
     )
 
-    export_draco_mesh_compression_enable = BoolProperty(
+    export_draco_mesh_compression_enable: BoolProperty(
         name='Draco mesh compression',
         description='Compress mesh using Draco',
         default=False
     )
 
-    export_draco_mesh_compression_level = IntProperty(
+    export_draco_mesh_compression_level: IntProperty(
         name='Compression level',
         description='Compression level (0 = most speed, 6 = most compression, higher values currently not supported)',
         default=6,
@@ -159,7 +159,7 @@ class ExportGLTF2_Base:
         max=6
     )
 
-    export_draco_position_quantization = IntProperty(
+    export_draco_position_quantization: IntProperty(
         name='Position quantization bits',
         description='Quantization bits for position values (0 = no quantization)',
         default=14,
@@ -167,7 +167,7 @@ class ExportGLTF2_Base:
         max=30
     )
 
-    export_draco_normal_quantization = IntProperty(
+    export_draco_normal_quantization: IntProperty(
         name='Normal quantization bits',
         description='Quantization bits for normal values (0 = no quantization)',
         default=10,
@@ -175,7 +175,7 @@ class ExportGLTF2_Base:
         max=30
     )
 
-    export_draco_texcoord_quantization = IntProperty(
+    export_draco_texcoord_quantization: IntProperty(
         name='Texcoord quantization bits',
         description='Quantization bits for texture coordinate values (0 = no quantization)',
         default=12,
@@ -183,7 +183,7 @@ class ExportGLTF2_Base:
         max=30
     )
 
-    export_draco_generic_quantization = IntProperty(
+    export_draco_generic_quantization: IntProperty(
         name='Generic quantization bits',
         description='Quantization bits for generic coordinate values like weights or joints (0 = no quantization)',
         default=12,
@@ -191,68 +191,68 @@ class ExportGLTF2_Base:
         max=30
     )
 
-    export_tangents = BoolProperty(
+    export_tangents: BoolProperty(
         name='Tangents',
         description='Export vertex tangents with meshes',
         default=False
     )
 
-    export_materials = BoolProperty(
+    export_materials: BoolProperty(
         name='Materials',
         description='Export materials',
         default=True
     )
 
-    export_colors = BoolProperty(
+    export_colors: BoolProperty(
         name='Vertex Colors',
         description='Export vertex colors with meshes',
         default=True
     )
 
-    export_cameras = BoolProperty(
+    export_cameras: BoolProperty(
         name='Cameras',
         description='Export cameras',
         default=False
     )
 
-    export_selected = BoolProperty(
+    export_selected: BoolProperty(
         name='Selected Objects',
         description='Export selected objects only',
         default=False
     )
 
-    export_extras = BoolProperty(
+    export_extras: BoolProperty(
         name='Custom Properties',
         description='Export custom properties as glTF extras',
         default=False
     )
 
-    export_yup = BoolProperty(
+    export_yup: BoolProperty(
         name='+Y Up',
         description='Export using glTF convention, +Y up',
         default=True
     )
 
-    export_apply = BoolProperty(
+    export_apply: BoolProperty(
         name='Apply Modifiers',
         description='Apply modifiers (excluding Armatures) to mesh objects -'
                     'WARNING: prevents exporting shape keys',
         default=False
     )
 
-    export_animations = BoolProperty(
+    export_animations: BoolProperty(
         name='Animations',
         description='Exports active actions and NLA tracks as glTF animations',
         default=True
     )
 
-    export_frame_range = BoolProperty(
+    export_frame_range: BoolProperty(
         name='Limit to Playback Range',
         description='Clips animations to selected playback range',
         default=True
     )
 
-    export_frame_step = IntProperty(
+    export_frame_step: IntProperty(
         name='Sampling Rate',
         description='How often to evaluate animated values (in frames)',
         default=1,
@@ -260,75 +260,75 @@ class ExportGLTF2_Base:
         max=120
     )
 
-    export_force_sampling = BoolProperty(
+    export_force_sampling: BoolProperty(
         name='Always Sample Animations',
         description='Apply sampling to all animations',
         default=True
     )
 
-    export_nla_strips = BoolProperty(
+    export_nla_strips: BoolProperty(
         name='NLA Strips',
         description='Export NLA Strip animations',
         default=True
     )
 
-    export_def_bones = BoolProperty(
+    export_def_bones: BoolProperty(
         name='Export Deformation bones only',
         description='Export Deformation bones only (and needed bones for hierarchy)',
         default=False
     )
 
-    export_current_frame = BoolProperty(
+    export_current_frame: BoolProperty(
         name='Use Current Frame',
         description='Export the scene in the current animation frame',
         default=False
     )
 
-    export_skins = BoolProperty(
+    export_skins: BoolProperty(
         name='Skinning',
         description='Export skinning (armature) data',
         default=True
     )
 
-    export_all_influences = BoolProperty(
+    export_all_influences: BoolProperty(
         name='Include All Bone Influences',
         description='Allow >4 joint vertex influences. Models may appear incorrectly in many viewers',
         default=False
     )
 
-    export_morph = BoolProperty(
+    export_morph: BoolProperty(
         name='Shape Keys',
         description='Export shape keys (morph targets)',
         default=True
     )
 
-    export_morph_normal = BoolProperty(
+    export_morph_normal: BoolProperty(
         name='Shape Key Normals',
         description='Export vertex normals with shape keys (morph targets)',
         default=True
     )
 
-    export_morph_tangent = BoolProperty(
+    export_morph_tangent: BoolProperty(
         name='Shape Key Tangents',
         description='Export vertex tangents with shape keys (morph targets)',
         default=False
     )
 
-    export_lights = BoolProperty(
+    export_lights: BoolProperty(
         name='Punctual Lights',
         description='Export directional, point, and spot lights. '
                     'Uses "KHR_lights_punctual" glTF extension',
         default=False
     )
 
-    export_displacement = BoolProperty(
+    export_displacement: BoolProperty(
         name='Displacement Textures (EXPERIMENTAL)',
         description='EXPERIMENTAL: Export displacement textures. '
                     'Uses incomplete "KHR_materials_displacement" glTF extension',
         default=False
     )
 
-    will_save_settings = BoolProperty(
+    will_save_settings: BoolProperty(
         name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
         default=False)
@@ -353,10 +353,7 @@ class ExportGLTF2_Base:
                 del context.scene[self.scene_key]
 
         import sys
-        if bpy.app.version < (2, 80, 0):
-            preferences = bpy.context.user_preferences
-        else:
-            preferences = bpy.context.preferences
+        preferences = bpy.context.preferences
         for addon_name in preferences.addons.keys():
             try:
                 if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
@@ -466,10 +463,7 @@ class ExportGLTF2_Base:
         user_extensions = []
 
         import sys
-        if bpy.app.version < (2, 80, 0):
-            preferences = bpy.context.user_preferences
-        else:
-            preferences = bpy.context.preferences
+        preferences = bpy.context.preferences
         for addon_name in preferences.addons.keys():
             try:
                 module = sys.modules[addon_name]
@@ -485,81 +479,9 @@ class ExportGLTF2_Base:
         export_settings['gltf_user_extensions'] = user_extensions
 
         return gltf2_blender_export.save(context, export_settings)
-    if bpy.app.version < (2, 80, 0):
-        def draw(self, context):
-            self.layout.prop(self, 'ui_tab', expand=True)
-            if self.ui_tab == 'GENERAL':
-                self.draw_general_settings()
-            elif self.ui_tab == 'MESHES':
-                self.draw_mesh_settings()
-            elif self.ui_tab == 'OBJECTS':
-                self.draw_object_settings()
-            elif self.ui_tab == 'MATERIALS':
-                self.draw_material_settings()
-            elif self.ui_tab == 'ANIMATION':
-                self.draw_animation_settings()
 
-        def draw_general_settings(self):
-            col = self.layout.box().column()
-            col.prop(self, 'export_format')
-            if self.export_format == 'GLTF_SEPARATE':
-                col.prop(self, 'export_texture_dir', icon='FILE_FOLDER')
-            col.prop(self, 'export_selected')
-            col.prop(self, 'export_apply')
-            col.prop(self, 'export_yup')
-            col.prop(self, 'export_extras')
-            col.prop(self, 'will_save_settings')
-            col.prop(self, 'export_copyright')
-
-        def draw_mesh_settings(self):
-            col = self.layout.box().column()
-            col.prop(self, 'export_texcoords')
-            col.prop(self, 'export_normals')
-            if self.export_normals:
-                col.prop(self, 'export_tangents')
-            col.prop(self, 'export_colors')
-            col.prop(self, 'export_materials')
-            if self.export_materials:
-                col.prop(self, 'export_image_format')
-
-            # Add Draco compression option only if the DLL could be found.
-            if self.is_draco_available:
-                col.prop(self, 'export_draco_mesh_compression_enable')
-
-                # Display options when Draco compression is enabled.
-                if self.export_draco_mesh_compression_enable:
-                    col.prop(self, 'export_draco_mesh_compression_level')
-                    col.prop(self, 'export_draco_position_quantization')
-                    col.prop(self, 'export_draco_normal_quantization')
-                    col.prop(self, 'export_draco_texcoord_quantization')
-                    col.prop(self, 'export_draco_generic_quantization')
-
-        def draw_object_settings(self):
-            col = self.layout.box().column()
-            col.prop(self, 'export_cameras')
-            col.prop(self, 'export_lights')
-
-        def draw_animation_settings(self):
-            col = self.layout.box().column()
-            col.prop(self, 'export_current_frame')
-            col.prop(self, 'export_animations')
-            if self.export_animations:
-                col.prop(self, 'export_frame_range')
-                col.prop(self, 'export_frame_step')
-                col.prop(self, 'export_force_sampling')
-                if self.export_force_sampling:
-                    col.prop(self, 'export_def_bones')
-            col.prop(self, 'export_skins')
-            if self.export_skins:
-                col.prop(self, 'export_all_influences')
-            col.prop(self, 'export_morph')
-            if self.export_morph:
-                col.prop(self, 'export_morph_normal')
-                if self.export_morph_normal:
-                    col.prop(self, 'export_morph_tangent')
-    else:
-        def draw(self, context):
-            pass
+    def draw(self, context):
+        pass
 
 
 class GLTF_PT_export_main(bpy.types.Panel):
@@ -876,7 +798,7 @@ class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
 
     filename_ext = ''
 
-    filter_glob = StringProperty(default='*.glb;*.gltf', options={'HIDDEN'})
+    filter_glob: StringProperty(default='*.glb;*.gltf', options={'HIDDEN'})
 
 
 def menu_func_export(self, context):
@@ -888,24 +810,24 @@ class ImportGLTF2(Operator, ImportHelper):
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
 
-    filter_glob = StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
+    filter_glob: StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
-    files = CollectionProperty(
+    files: CollectionProperty(
         name="File Path",
         type=bpy.types.OperatorFileListElement,
     )
 
-    loglevel = IntProperty(
+    loglevel: IntProperty(
         name='Log Level',
         description="Log Level")
 
-    import_pack_images = BoolProperty(
+    import_pack_images: BoolProperty(
         name='Pack images',
         description='Pack all images into .blend file',
         default=True
     )
 
-    import_shading = EnumProperty(
+    import_shading: EnumProperty(
         name="Shading",
         items=(("NORMALS", "Use Normal Data", ""),
                ("FLAT", "Flat Shading", ""),
@@ -982,26 +904,20 @@ def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
-if bpy.app.version < (2, 80, 0):
-    classes = (
-        ExportGLTF2,
-        ImportGLTF2
-    )
-else:
-    classes = (
-        ExportGLTF2,
-        GLTF_PT_export_main,
-        GLTF_PT_export_include,
-        GLTF_PT_export_transform,
-        GLTF_PT_export_geometry,
-        GLTF_PT_export_geometry_compression,
-        GLTF_PT_export_animation,
-        GLTF_PT_export_animation_export,
-        GLTF_PT_export_animation_shapekeys,
-        GLTF_PT_export_animation_skinning,
-        GLTF_PT_export_user_extensions,
-        ImportGLTF2
-    )
+classes = (
+    ExportGLTF2,
+    GLTF_PT_export_main,
+    GLTF_PT_export_include,
+    GLTF_PT_export_transform,
+    GLTF_PT_export_geometry,
+    GLTF_PT_export_geometry_compression,
+    GLTF_PT_export_animation,
+    GLTF_PT_export_animation_export,
+    GLTF_PT_export_animation_shapekeys,
+    GLTF_PT_export_animation_skinning,
+    GLTF_PT_export_user_extensions,
+    ImportGLTF2
+)
 
 
 def register():
@@ -1010,12 +926,8 @@ def register():
     # bpy.utils.register_module(__name__)
 
     # add to the export / import menu
-    if bpy.app.version < (2, 80, 0):
-        bpy.types.INFO_MT_file_export.append(menu_func_export)
-        bpy.types.INFO_MT_file_import.append(menu_func_import)
-    else:
-        bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
-        bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
+    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 
 def unregister():
@@ -1028,9 +940,5 @@ def unregister():
     # bpy.utils.unregister_module(__name__)
 
     # remove from the export / import menu
-    if bpy.app.version < (2, 80, 0):
-        bpy.types.INFO_MT_file_export.remove(menu_func_export)
-        bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    else:
-        bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-        bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)

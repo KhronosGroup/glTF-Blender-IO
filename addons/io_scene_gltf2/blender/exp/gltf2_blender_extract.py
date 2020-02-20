@@ -74,12 +74,8 @@ def convert_swizzle_normal_and_tangent(loc, armature, blender_object, export_set
             return Vector((loc[0], loc[1], loc[2]))
     else:
         # Mesh is skined, we have to apply armature transforms on data
-        if bpy.app.version < (2, 80, 0):
-            apply_matrix = armature.matrix_world.inverted() * blender_object.matrix_world
-            new_loc = (armature.matrix_world * apply_matrix * Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
-        else:
-            apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-            new_loc = apply_matrix.to_quaternion() @ loc
+        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+        new_loc = apply_matrix.to_quaternion() @ loc
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((new_loc[0], new_loc[2], -new_loc[1]))
         else:
@@ -95,12 +91,8 @@ def convert_swizzle_location(loc, armature, blender_object, export_settings):
             return Vector((loc[0], loc[1], loc[2]))
     else:
         # Mesh is skined, we have to apply armature transforms on data
-        if bpy.app.version < (2, 80, 0):
-            apply_matrix = armature.matrix_world.inverted() * blender_object.matrix_world
-            new_loc = (armature.matrix_world * apply_matrix * Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
-        else:
-            apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-            new_loc = (armature.matrix_world @ apply_matrix @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
+        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+        new_loc = (armature.matrix_world @ apply_matrix @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
 
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((new_loc[0], new_loc[2], -new_loc[1]))
@@ -121,12 +113,8 @@ def convert_swizzle_tangent(tan, armature, blender_object, export_settings):
             return Vector((tan[0], tan[1], tan[2], 1.0))
     else:
         # Mesh is skined, we have to apply armature transforms on data
-        if bpy.app.version < (2, 80, 0):
-            apply_matrix = armature.matrix_world.inverted() * blender_object.matrix_world
-            new_tan = (armature.matrix_world * apply_matrix * Matrix.Translation(Vector((tan[0], tan[1], tan[2])))).to_translation()
-        else:
-            apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-            new_tan = apply_matrix.to_quaternion() @ tan
+        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+        new_tan = apply_matrix.to_quaternion() @ tan
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((new_tan[0], new_tan[2], -new_tan[1], 1.0))
         else:
@@ -620,10 +608,6 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             triangles = tessellate_polygon((polyline,))
 
             for triangle in triangles:
-                if bpy.app.version < (2, 81, 15):
-                    # tessellate_polygon winding-order is reversed in old versions of Blender
-                    # See https://developer.blender.org/T70594
-                    triangle = (triangle[0], triangle[2], triangle[1])
 
                 for triangle_index in triangle:
                     loop_index_list.append(blender_polygon.loop_indices[triangle_index])
@@ -993,3 +977,4 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
     print_console('INFO', 'Primitives created: ' + str(len(result_primitives)))
 
     return result_primitives
+

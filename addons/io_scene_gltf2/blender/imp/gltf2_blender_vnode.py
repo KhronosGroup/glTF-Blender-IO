@@ -348,12 +348,8 @@ def calc_bone_matrices(gltf):
                 parent_arma_mat = Matrix.Identity(4)
 
             t, r, _ = vnode.trs
-            if bpy.app.version < (2, 80, 0):
-                local_to_parent = Matrix.Translation(t) * Quaternion(r).to_matrix().to_4x4()
-                vnode.bone_arma_mat = parent_arma_mat * local_to_parent
-            else:
-                local_to_parent = Matrix.Translation(t) @ Quaternion(r).to_matrix().to_4x4()
-                vnode.bone_arma_mat = parent_arma_mat @ local_to_parent
+            local_to_parent = Matrix.Translation(t) @ Quaternion(r).to_matrix().to_4x4()
+            vnode.bone_arma_mat = parent_arma_mat @ local_to_parent
 
         for child in vnode.children:
             visit(child)

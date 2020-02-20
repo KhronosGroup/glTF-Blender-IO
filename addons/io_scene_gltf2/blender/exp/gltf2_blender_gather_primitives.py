@@ -55,10 +55,7 @@ def gather_primitives(
         material = None
         try:
             blender_material = bpy.data.materials[material_names[material_idx]]
-            if bpy.app.version < (2, 80, 0):
-                double_sided = blender_mesh.show_double_sided
-            else:
-                double_sided = not blender_material.use_backface_culling
+            double_sided = not blender_material.use_backface_culling
             material = gltf2_blender_gather_materials.gather_material(blender_material,
                                                                   double_sided,
                                                                   export_settings)
