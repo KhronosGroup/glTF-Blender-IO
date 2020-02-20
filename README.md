@@ -35,7 +35,7 @@ The shared codebase is organized into common (Blender-independent) and Blender-s
 ![Packages](docs/packages.png)  
 Package organisation  
 
-This structure allows easier Blender 2.79 to 2.80 updates, and enables common code to be reused by third-party Python packages working with the glTF 2.0 format.
+This structure allows common code to be reused by third-party Python packages working with the glTF 2.0 format.
 
 ![Process](docs/io_process.png)  
 Import & export process
@@ -70,8 +70,8 @@ These quality-assurance checks improve the reliability of Blender glTF I/O.
 Running the Tests Locally
 -------------------------
 
-To run the tests locally, your system should be modified to include `blender279b` and `blender28` as shell scripts (or Windows `.bat` files) in the path that launch their respective versions of Blender, including all command-line arguments.
+To run the tests locally, your system should be modified to include `blender28` as shell scripts (or Windows `.bat` files) in the path that launch their respective versions of Blender, including all command-line arguments.
 
 The latest version of [Yarn](https://yarnpkg.com/en/) should also be installed.
 
-Then, in the `tests` folder of this repository, run `yarn install`, followed by `yarn run test`.  You can limit the test suite to one version of Blender with `yarn run test-blender279b` or `yarn run test-blender28`.
+Then, in the `tests` folder of this repository, run `yarn install`, followed by `yarn run test`.  You can limit the test suite to one version of Blender with `yarn run test-blender28`.
