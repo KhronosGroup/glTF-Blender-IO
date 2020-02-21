@@ -481,7 +481,7 @@ class ExportGLTF2_Base:
         return gltf2_blender_export.save(context, export_settings)
 
     def draw(self, context):
-        pass
+        pass # Is needed to get panels available
 
 
 class GLTF_PT_export_main(bpy.types.Panel):
