@@ -196,13 +196,7 @@ class BlenderPrimitive():
 
             colors = BinaryData.get_data_from_accessor(gltf, attributes['COLOR_%d' % set_num], cache=True)
 
-            # Check whether Blender takes RGB or RGBA colors (old versions only take RGB)
             is_rgba = len(colors[0]) == 4
-            blender_num_components = len(bme_verts[0].link_loops[0][layer])
-            if is_rgba and blender_num_components == 3:
-                gltf2_io_debug.print_console("WARNING",
-                    "this Blender doesn't support RGBA vertex colors; dropping A"
-                )
 
             for bidx, pidx in vert_idxs:
                 color = colors[pidx]
@@ -211,7 +205,7 @@ class BlenderPrimitive():
                     color_linear_to_srgb(color[1]),
                     color_linear_to_srgb(color[2]),
                     color[3] if is_rgba else 1.0,
-                )[:blender_num_components]
+                )
                 for loop in bme_verts[bidx].link_loops:
                     loop[layer] = col
 
