@@ -15,77 +15,60 @@
 import bpy
 from ...io.com.gltf2_io import TextureInfo
 from .gltf2_blender_pbrMetallicRoughness import \
-    base_color, emission, normal, occlusion, make_output_nodes, make_settings_node
+    base_color, emission, normal, occlusion, make_output_nodes
 from .gltf2_blender_texture import texture
 
 
 def pbr_specular_glossiness(mh):
     """Creates node tree for pbrSpecularGlossiness materials."""
-    # This does option #1 from
-    # https://github.com/KhronosGroup/glTF-Blender-IO/issues/303
+    # Need to be be in Eevee mode to use the Specular node
+    scene = bpy.data.scenes[mh.gltf.blender_scene]
+    if scene.render.engine != "BLENDER_EEVEE":
+        scene.render.engine = "BLENDER_EEVEE"
 
-    # Sum a Glossy and Diffuse Shader
-    glossy_node = mh.node_tree.nodes.new('ShaderNodeBsdfGlossy')
-    diffuse_node = mh.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-    add_node = mh.node_tree.nodes.new('ShaderNodeAddShader')
-    glossy_node.location = 10, 220
-    diffuse_node.location = 10, 0
-    add_node.location = 230, 100
-    mh.node_tree.links.new(add_node.inputs[0], glossy_node.outputs[0])
-    mh.node_tree.links.new(add_node.inputs[1], diffuse_node.outputs[0])
+    spec_node = mh.node_tree.nodes.new('ShaderNodeEeveeSpecular')
+    spec_node.location = 10, 300
 
-    emission_socket, alpha_socket = make_output_nodes(
+    _emission_socket, alpha_socket = make_output_nodes(
         mh,
-        location=(370, 250),
-        shader_socket=add_node.outputs[0],
-        make_emission_socket=mh.needs_emissive(),
+        location=(250, 260),
+        shader_socket=spec_node.outputs[0],
+        make_emission_socket=False,
         make_alpha_socket=not mh.is_opaque(),
     )
 
     emission(
         mh,
         location=(-200, 860),
-        color_socket=emission_socket,
+        color_socket=spec_node.inputs['Emissive Color'],
     )
 
     base_color(
         mh,
         is_diffuse=True,
         location=(-200, 380),
-        color_socket=diffuse_node.inputs['Color'],
+        color_socket=spec_node.inputs['Base Color'],
         alpha_socket=alpha_socket,
     )
 
     specular_glossiness(
         mh,
         location=(-200, -100),
-        specular_socket=glossy_node.inputs['Color'],
-        roughness_socket=glossy_node.inputs['Roughness'],
-    )
-    copy_socket(
-        mh,
-        copy_from=glossy_node.inputs['Roughness'],
-        copy_to=diffuse_node.inputs['Roughness'],
+        specular_socket=spec_node.inputs['Specular'],
+        roughness_socket=spec_node.inputs['Roughness'],
     )
 
     normal(
         mh,
         location=(-200, -580),
-        normal_socket=glossy_node.inputs['Normal'],
-    )
-    copy_socket(
-        mh,
-        copy_from=glossy_node.inputs['Normal'],
-        copy_to=diffuse_node.inputs['Normal'],
+        normal_socket=spec_node.inputs['Normal'],
     )
 
-    if mh.pymat.occlusion_texture is not None:
-        node = make_settings_node(mh, location=(610, -1060))
-        occlusion(
-            mh,
-            location=(510, -970),
-            occlusion_socket=node.inputs['Occlusion'],
-        )
+    occlusion(
+        mh,
+        location=(-200, -1060),
+        occlusion_socket=spec_node.inputs['Ambient Occlusion'],
+    )
 
 
 # [Texture] => [Spec/Gloss Factor] => [Gloss to Rough] =>
@@ -155,10 +138,3 @@ def specular_glossiness(mh, location, specular_socket, roughness_socket):
         color_socket=specular_socket,
         alpha_socket=glossiness_socket,
     )
-
-
-def copy_socket(mh, copy_from, copy_to):
-    """Copy the links/default value from one socket to another."""
-    copy_to.default_value = copy_from.default_value
-    for link in copy_from.links:
-        mh.node_tree.links.new(copy_to, link.from_socket)
