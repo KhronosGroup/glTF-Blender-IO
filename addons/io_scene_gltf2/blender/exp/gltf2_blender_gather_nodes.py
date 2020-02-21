@@ -188,7 +188,10 @@ def __gather_children(blender_object, blender_scene, export_settings):
             if trans is None:
                 trans = [0, 0, 0]
             # bones go down their local y axis
-            bone_tail = [0, blender_bone.length / blender_bone.matrix.to_scale()[1], 0]
+            if blender_bone.matrix.to_scale()[1] >= 1e-6:
+                bone_tail = [0, blender_bone.length / blender_bone.matrix.to_scale()[1], 0]
+            else:
+                bone_tail = [0,0,0] # If scale is 0, tail == head
             child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
 
             parent_joint.children.append(child_node)
