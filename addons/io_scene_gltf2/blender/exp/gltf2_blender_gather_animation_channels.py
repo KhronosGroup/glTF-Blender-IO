@@ -21,6 +21,7 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_samplers
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channel_target
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_sampler_keyframes
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
@@ -124,6 +125,8 @@ def gather_animation_channels(blender_action: bpy.types.Action,
     # resetting driver caches
     gltf2_blender_gather_drivers.get_sk_driver_values.reset_cache()
     gltf2_blender_gather_drivers.get_sk_drivers.reset_cache()
+    # resetting bone caches
+    gltf2_blender_gather_animation_sampler_keyframes.get_bone_matrix.reset_cache()
 
     return channels
 

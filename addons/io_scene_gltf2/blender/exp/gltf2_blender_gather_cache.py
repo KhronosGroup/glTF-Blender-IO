@@ -69,6 +69,13 @@ def cached(func):
 
 def bonecache(func):
 
+    def reset_cache_bonecache():
+        func.__current_action_name = None
+        func.__current_armature_name = None
+        func.__bonecache = {}
+
+    func.reset_cache = reset_cache_bonecache
+
     @functools.wraps(func)
     def wrapper_bonecache(*args, **kwargs):
         if args[2] is None:
@@ -78,9 +85,7 @@ def bonecache(func):
             pose_bone_if_armature = args[0].pose.bones[args[2]]
 
         if not hasattr(func, "__current_action_name"):
-            func.__current_action_name = None
-            func.__current_armature_name = None
-            func.__bonecache = {}
+            func.reset_cache()
         if args[6] != func.__current_action_name or args[0] != func.__current_armature_name:
             result = func(*args)
             func.__bonecache = result
@@ -106,7 +111,6 @@ def skdriverdiscovercache(func):
     @functools.wraps(func)
     def wrapper_skdriverdiscover(*args, **kwargs):
         if not hasattr(func, "__current_armature_name") or func.__current_armature_name is None:
-            func.__current_armature_name = None
             func.reset_cache()
 
         if args[0] != func.__current_armature_name:
