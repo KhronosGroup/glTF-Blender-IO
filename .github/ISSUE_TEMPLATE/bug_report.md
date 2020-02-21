@@ -28,7 +28,7 @@ If applicable, a zipped folder containing a .blend file for exporter issues and 
 
 **Version**
  - OS: [e.g. macOS, linux]
- - Blender Version [e.g. 2.79, 2.80 (2019-03-18)]
+ - Blender Version [e.g. 2.82, 2.83, or build date]
 
 **Additional context**
 Add any other context about the problem here.

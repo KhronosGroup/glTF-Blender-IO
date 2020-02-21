@@ -5,7 +5,6 @@ services:
       context: .
     volumes:
       - "./addons:/root/.config/blender/2.80/scripts/addons:ro"
-      - "./addons:/root/.config/blender/2.79/scripts/addons:ro"
       - "./tests/gltf:/tests/gltf:ro"
       - "./tests/pbr_node:/tests/pbr_node:ro"
       - "./tests/roundtrip:/tests/roundtrip:ro"

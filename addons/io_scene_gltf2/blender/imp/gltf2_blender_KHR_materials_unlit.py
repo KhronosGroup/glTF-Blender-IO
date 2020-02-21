@@ -36,11 +36,8 @@ def unlit(mh):
     mh.node_tree.links.new(mix_node.inputs[1], transparent_node.outputs[0])
     mh.node_tree.links.new(mix_node.inputs[2], emission_node.outputs[0])
     # Using transparency requires alpha blending for Eevee
-    if bpy.app.version < (2, 80, 0):
-        pass # Not needed for Cycles
-    else:
-        if mh.is_opaque():
-            mh.mat.blend_method = 'HASHED' # TODO check best result in eevee
+    if mh.is_opaque():
+        mh.mat.blend_method = 'HASHED' # TODO check best result in eevee
 
     _emission_socket, alpha_socket = make_output_nodes(
         mh,

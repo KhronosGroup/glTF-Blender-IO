@@ -24,7 +24,7 @@ These instructions are considered experimental.  They describe how to attach a P
 
 ## Usage
 
-1. In Blender, press <kbd>F3</kbd> (in Blender 2.80) or <kbd>SPACE</kbd> (in Blender 2.79) to bring up the tools search window.  Search for the word "Debug", and then click "Debug: Start Debug Server for VS Code."
+1. In Blender, press <kbd>F3</kbd> (in Blender 2.80+) to bring up the tools search window.  Search for the word "Debug", and then click "Debug: Start Debug Server for VS Code."
 
 2. In VSCode, with the glTF-Blender-IO folder opened, press <kbd>F5</kbd> or choose "Start Debugging" from the Debug menu.
 
@@ -47,4 +47,3 @@ See the documentation and video included with [blender-debugger-for-vscode](http
 ## Stop Debugging
 
 In VSCode, the far-right icon on the debug toolbar is a red square with a disconnected plug, with a "Disconnect" tool-tip.  Clicking this will detach the debugger and let Blender continue.  The ptvsd server is likely still running for the remainder of the Blender session, so you can re-attach by asking VSCode to launch the debugger again.
-
