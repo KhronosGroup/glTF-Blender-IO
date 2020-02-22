@@ -37,12 +37,17 @@ def color_linear_to_srgb(c):
     """
     if type(c) in (list, np.ndarray):
         colors = np.array(c, np.float32) if type(c) == list else c
-        not_small = colors >= 0.0031308
-        small_result = np.where(colors<0.0, 0.0, colors * 12.92)
-        large_result = 1.055 * np.power(colors, 1.0 / 2.4, where=not_small) - 0.055
+        if  colors.ndim > 1 and colors.shape[-1] == 4:
+            colors_noa = colors[..., 0:3] # only process RGB for speed
+        else:
+            colors_noa = colors
+        not_small = colors_noa >= 0.0031308
+        small_result = np.where(colors_noa < 0.0, 0.0, colors_noa * 12.92)
+        large_result = 1.055 * np.power(colors_noa, 1.0 / 2.4, where=not_small) - 0.055
         result = np.where(not_small, large_result, small_result)
         if  colors.ndim > 1 and colors.shape[-1] == 4:
-            result[..., 3] = colors[..., 3]
+            # copy alpha from original
+            result = np.concatenate((result, colors[..., 3, np.newaxis]), axis=-1)
         return result
     else:
         if c < 0.0031308:
