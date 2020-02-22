@@ -160,7 +160,7 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
         bpy.context.scene.frame_set(frame)
         for pbone in blender_object_if_armature.pose.bones:
             if bake_bone is None:
-                matrix = pbone.matrix_basis
+                matrix = pbone.matrix_basis.copy()
             else:
                 matrix = pbone.matrix
                 matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
