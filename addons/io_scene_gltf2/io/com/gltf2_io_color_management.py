@@ -31,13 +31,25 @@ def color_linear_to_srgb(c):
 
     Source: Cycles addon implementation, node_color.h.
     c may be a single color value or an array.
+
+    If c's last dimension is 4, it's assumed to be RGBA and the
+    alpha channel is not converted.
     """
-    if type(c) in ([], np.ndarray):
-        colors = np.array(c, np.float32)
+    if type(c) in (list, np.ndarray):
+        colors = np.array(c, np.float32) if type(c) == list else c
+        ignore_alpha = False
+        if colors.ndim > 1 and colors.shape[-1] == 4:
+            ignore_alpha = True
+            alpha_mask = np.zeros(colors.shape, np.bool)
+            alpha_mask[..., 3] = True
         not_small = colors >= 0.0031308
         small_result = np.where(colors<0.0, 0.0, colors * 12.92)
         large_result = 1.055 * np.power(colors, 1.0 / 2.4, where=not_small) - 0.055
-        return np.where(not_small, large_result, small_result)
+        if ignore_alpha:
+            return np.where(alpha_mask, colors,
+                            np.where(not_small, large_result, small_result))
+        else:
+            return np.where(not_small, large_result, small_result)
     else:
         if c < 0.0031308:
             return 0.0 if c < 0.0 else c * 12.92
@@ -72,11 +84,12 @@ def test_color_linear_to_srgb_2d():
     a = np.array([[0, 1, 2], [2, 3, 4]], dtype=np.float32)
     srgb = color_linear_to_srgb(a)
     assert a.shape == srgb.shape
-    for i in range(len(a.flatten())):
-        assert srgb.flatten()[i] == approx(color_linear_to_srgb(a.flatten()[i]))
+    expected = np.reshape([color_linear_to_srgb(x) for x in a.flatten()], a.shape)
+    np.testing.assert_allclose(srgb, expected)
 
     a = np.array([[0, 1, 2, 0.1], [2, 3, 4, 0.5]], dtype=np.float32)
     srgb = color_linear_to_srgb(a)
     assert a.shape == srgb.shape
-    for i in range(len(a.flatten())):
-        assert srgb.flatten()[i] == approx(color_linear_to_srgb(a.flatten()[i]))
+    expected = np.reshape([color_linear_to_srgb(x) for x in a.flatten()], a.shape)
+    expected[:, 3] = a[:, 3] # it shouldn't process alpha
+    np.testing.assert_allclose(srgb, expected)
