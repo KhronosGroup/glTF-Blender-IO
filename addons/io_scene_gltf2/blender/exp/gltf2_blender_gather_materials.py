@@ -80,22 +80,16 @@ def __filter_material(blender_material, export_settings):
 
 
 def __gather_alpha_cutoff(blender_material, export_settings):
-    if bpy.app.version < (2, 80, 0):
-        return None
-    else:
-        if blender_material.blend_method == 'CLIP':
-            return blender_material.alpha_threshold
+    if blender_material.blend_method == 'CLIP':
+        return blender_material.alpha_threshold
     return None
 
 
 def __gather_alpha_mode(blender_material, export_settings):
-    if bpy.app.version < (2, 80, 0):
-        return None
-    else:
-        if blender_material.blend_method == 'CLIP':
-            return 'MASK'
-        elif blender_material.blend_method == 'BLEND':
-            return 'BLEND'
+    if blender_material.blend_method == 'CLIP':
+        return 'MASK'
+    elif blender_material.blend_method == 'BLEND':
+        return 'BLEND'
     return None
 
 
@@ -135,12 +129,8 @@ def __gather_emissive_texture(blender_material, export_settings):
 def __gather_extensions(blender_material, export_settings):
     extensions = {}
 
-    if bpy.app.version < (2, 80, 0):
-        if blender_material.use_shadeless:
-            extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
-    else:
-        if gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background") is not None:
-            extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
+    if gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background") is not None:
+        extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
 
     # TODO specular glossiness extension
 

@@ -13,280 +13,477 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_material_utils import make_texture_block
-from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
+from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
+from ..com.gltf2_blender_material_helpers import get_gltf_node_name
+from .gltf2_blender_texture import texture
 
 
-class BlenderPbr():
-    """Blender Pbr."""
-    def __new__(cls, *args, **kwargs):
-        raise RuntimeError("%s should not be instantiated" % cls)
+class MaterialHelper:
+    """Helper class. Stores material stuff to be passed around everywhere."""
+    def __init__(self, gltf, pymat, mat, vertex_color):
+        self.gltf = gltf
+        self.pymat = pymat
+        self.mat = mat
+        self.node_tree = mat.node_tree
+        self.vertex_color = vertex_color
+        if pymat.pbr_metallic_roughness is None:
+            pymat.pbr_metallic_roughness = \
+                MaterialPBRMetallicRoughness.from_dict({})
 
-    def create(gltf, pypbr, mat_name, vertex_color):
-        """Pbr creation."""
-        engine = bpy.context.scene.render.engine
-        if engine in ['CYCLES', 'BLENDER_EEVEE']:
-            BlenderPbr.create_nodetree(gltf, pypbr, mat_name, vertex_color)
+    def is_opaque(self):
+        alpha_mode = self.pymat.alpha_mode
+        return alpha_mode is None or alpha_mode == 'OPAQUE'
 
-    def create_nodetree(gltf, pypbr, mat_name, vertex_color, nodetype='principled'):
-        """Nodetree creation."""
-        material = bpy.data.materials[mat_name]
-        material.use_nodes = True
-        node_tree = material.node_tree
+    def needs_emissive(self):
+        return (
+            self.pymat.emissive_texture is not None or
+            (self.pymat.emissive_factor or [0, 0, 0]) != [0, 0, 0]
+        )
 
-        # If there is no diffuse texture, but only a color, wihtout
-        # vertex_color, we set this color in viewport color
-        if pypbr.color_type == gltf.SIMPLE and not vertex_color:
-            if bpy.app.version < (2, 80, 0):
-                material.diffuse_color = pypbr.base_color_factor[:3]
-            else:
-                # Manage some change in beta version on 20190129
-                if len(material.diffuse_color) == 3:
-                    material.diffuse_color = pypbr.base_color_factor[:3]
-                else:
-                    material.diffuse_color = pypbr.base_color_factor
 
-        # delete all nodes except output
-        for node in list(node_tree.nodes):
-            if not node.type == 'OUTPUT_MATERIAL':
-                node_tree.nodes.remove(node)
+def pbr_metallic_roughness(mh: MaterialHelper):
+    """Creates node tree for pbrMetallicRoughness materials."""
+    pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
+    pbr_node.location = 10, 300
 
-        output_node = node_tree.nodes[0]
-        output_node.location = 1250, 0
+    # Create material output.
+    # TODO: when the exporter can understand them, use the emission/alpha
+    #       socket on the Principled node instead
+    emission_socket, alpha_socket = make_output_nodes(
+        mh,
+        location=(250, 260),
+        shader_socket=pbr_node.outputs[0],
+        make_emission_socket=mh.needs_emissive(),
+        make_alpha_socket=not mh.is_opaque(),
+    )
 
-        # create Main node
-        if nodetype == "principled":
-            main_node = node_tree.nodes.new('ShaderNodeBsdfPrincipled')
-            main_node.location = 0, 0
-        elif nodetype == "unlit":
-            main_node = node_tree.nodes.new('ShaderNodeEmission')
-            main_node.location = 750, -300
+    emission(
+        mh,
+        location=(-200, 860),
+        color_socket=emission_socket,
+    )
 
-        if pypbr.color_type == gltf.SIMPLE:
+    base_color(
+        mh,
+        location=(-200, 380),
+        color_socket=pbr_node.inputs['Base Color'],
+        alpha_socket=alpha_socket,
+    )
 
-            if not vertex_color:
+    metallic_roughness(
+        mh,
+        location=(-200, -100),
+        metallic_socket=pbr_node.inputs['Metallic'],
+        roughness_socket=pbr_node.inputs['Roughness'],
+    )
 
-                # change input values
-                main_node.inputs[0].default_value = pypbr.base_color_factor
-                if nodetype == "principled":
-                    # TODO : currently set metallic & specular in same way
-                    main_node.inputs[5].default_value = pypbr.metallic_factor
-                    main_node.inputs[7].default_value = pypbr.roughness_factor
+    normal(
+        mh,
+        location=(-200, -580),
+        normal_socket=pbr_node.inputs['Normal'],
+    )
 
-            else:
-                # Create attribute node to get COLOR_0 data
-                if bpy.app.version < (2, 81, 8):
-                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'Col'
-                    attribute_node.location = -500, 0
-                else:
-                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'Col'
-                    vertexcolor_node.location = -500, 0
+    if mh.pymat.occlusion_texture is not None:
+        node = make_settings_node(mh, location=(610, -1060))
+        occlusion(
+            mh,
+            location=(510, -970),
+            occlusion_socket=node.inputs['Occlusion'],
+        )
 
-                if nodetype == "principled":
-                    # TODO : currently set metallic & specular in same way
-                    main_node.inputs[5].default_value = pypbr.metallic_factor
-                    main_node.inputs[7].default_value = pypbr.roughness_factor
 
-                # links
-                rgb_node = node_tree.nodes.new('ShaderNodeMixRGB')
-                rgb_node.blend_type = 'MULTIPLY'
-                rgb_node.inputs['Fac'].default_value = 1.0
-                rgb_node.inputs['Color1'].default_value = pypbr.base_color_factor
-                if bpy.app.version < (2, 81, 8):
-                    node_tree.links.new(rgb_node.inputs['Color2'], attribute_node.outputs[0])
-                else:
-                    node_tree.links.new(rgb_node.inputs['Color2'], vertexcolor_node.outputs[0])
-                node_tree.links.new(main_node.inputs[0], rgb_node.outputs[0])
+# These functions each create one piece of the node graph, slotting
+# their outputs into the given socket, or setting its default value.
+# location is roughly the upper-right corner of where to put nodes.
 
-        elif pypbr.color_type == gltf.TEXTURE_FACTOR:
 
-            # TODO alpha ?
-            if vertex_color:
-                # TODO tree locations
-                # Create attribute / separate / math nodes
-                if bpy.app.version < (2, 81, 8):
-                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'Col'
-                else:
-                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'Col'
+# [Texture] => [Emissive Factor] =>
+def emission(mh: MaterialHelper, location, color_socket):
+    x, y = location
+    emissive_factor = mh.pymat.emissive_factor or [0, 0, 0]
 
-                vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
-                vc_mult_node.blend_type = 'MULTIPLY'
-                vc_mult_node.inputs['Fac'].default_value = 1.0
+    if color_socket is None:
+        return
 
-            # create UV Map / Mapping / Texture nodes / separate & math and combine
-            text_node = make_texture_block(
-                gltf,
-                node_tree,
-                pypbr.base_color_texture,
-                location=(-1000, 500),
-                label='BASE COLOR',
-                name='baseColorTexture',
-            )
+    if mh.pymat.emissive_texture is None:
+        color_socket.default_value = emissive_factor + [1]
+        return
 
-            mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
-            mult_node.blend_type = 'MULTIPLY'
-            mult_node.inputs['Fac'].default_value = 1.0
-            mult_node.inputs['Color2'].default_value = [
-                                                        pypbr.base_color_factor[0],
-                                                        pypbr.base_color_factor[1],
-                                                        pypbr.base_color_factor[2],
-                                                        pypbr.base_color_factor[3],
-                                                        ]
+    # Mix emissive factor
+    if emissive_factor != [1, 1, 1]:
+        node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+        node.label = 'Emissive Factor'
+        node.location = x - 140, y
+        node.blend_type = 'MULTIPLY'
+        # Outputs
+        mh.node_tree.links.new(color_socket, node.outputs[0])
+        # Inputs
+        node.inputs['Fac'].default_value = 1.0
+        color_socket = node.inputs['Color1']
+        node.inputs['Color2'].default_value = emissive_factor + [1]
 
-            # Create links
-            if vertex_color:
-                if bpy.app.version < (2, 81, 8):
-                    node_tree.links.new(vc_mult_node.inputs[2], attribute_node.outputs[0])
-                else:
-                    node_tree.links.new(vc_mult_node.inputs[2], vertexcolor_node.outputs[0])
-                node_tree.links.new(vc_mult_node.inputs[1], mult_node.outputs[0])
-                node_tree.links.new(main_node.inputs[0], vc_mult_node.outputs[0])
+        x -= 200
 
-            else:
-                node_tree.links.new(main_node.inputs[0], mult_node.outputs[0])
+    texture(
+        mh,
+        tex_info=mh.pymat.emissive_texture,
+        label='EMISSIVE',
+        location=(x, y),
+        color_socket=color_socket,
+    )
 
-            # Common for both mode (non vertex color / vertex color)
-            node_tree.links.new(mult_node.inputs[1], text_node.outputs[0])
 
-        elif pypbr.color_type == gltf.TEXTURE:
+#      [Texture] => [Mix Colors] => [Color Factor] =>
+# [Vertex Color] => [Mix Alphas] => [Alpha Factor] =>
+def base_color(
+    mh: MaterialHelper,
+    location,
+    color_socket,
+    alpha_socket=None,
+    is_diffuse=False,
+):
+    """Handle base color (= baseColorTexture * vertexColor * baseColorFactor)."""
+    x, y = location
+    pbr = mh.pymat.pbr_metallic_roughness
+    if not is_diffuse:
+        base_color_factor = pbr.base_color_factor
+        base_color_texture = pbr.base_color_texture
+    else:
+        # Handle pbrSpecularGlossiness's diffuse with this function too,
+        # since it's almost exactly the same as base color.
+        base_color_factor = \
+            mh.pymat.extensions['KHR_materials_pbrSpecularGlossiness'] \
+            .get('diffuseFactor', [1, 1, 1, 1])
+        base_color_texture = \
+            mh.pymat.extensions['KHR_materials_pbrSpecularGlossiness'] \
+            .get('diffuseTexture', None)
+        if base_color_texture is not None:
+            base_color_texture = TextureInfo.from_dict(base_color_texture)
 
-            # TODO alpha ?
-            if vertex_color:
-                # Create attribute / separate / math nodes
-                if bpy.app.version < (2, 81, 8):
-                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'Col'
-                    attribute_node.location = -2000, 250
-                else:
-                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'Col'
-                    vertexcolor_node.location = -2000, 250
+    if base_color_factor is None:
+        base_color_factor = [1, 1, 1, 1]
 
-                vc_mult_node = node_tree.nodes.new('ShaderNodeMixRGB')
-                vc_mult_node.blend_type = 'MULTIPLY'
-                vc_mult_node.inputs['Fac'].default_value = 1.0
+    if base_color_texture is None and not mh.vertex_color:
+        color_socket.default_value = base_color_factor
+        if alpha_socket is not None:
+            alpha_socket.default_value = base_color_factor[3]
+        return
 
-            # create UV Map / Mapping / Texture nodes / separate & math and combine
-            if vertex_color:
-                location = -2000, 500
-            else:
-                location = -500, 500
-            text_node = make_texture_block(
-                gltf,
-                node_tree,
-                pypbr.base_color_texture,
-                location=location,
-                label='BASE COLOR',
-                name='baseColorTexture',
-            )
+    # Mix in base color factor
+    needs_color_factor = base_color_factor[:3] != [1, 1, 1]
+    needs_alpha_factor = base_color_factor[3] != 1.0 and alpha_socket is not None
+    if needs_color_factor or needs_alpha_factor:
+        # For now, always create the color factor node because the exporter
+        # reads the alpha value from here. Can get rid of "or needs_alpha_factor"
+        # when it learns to understand the alpha socket.
+        if needs_color_factor or needs_alpha_factor:
+            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node.label = 'Color Factor'
+            node.location = x - 140, y
+            node.blend_type = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(color_socket, node.outputs[0])
+            # Inputs
+            node.inputs['Fac'].default_value = 1.0
+            color_socket = node.inputs['Color1']
+            node.inputs['Color2'].default_value = base_color_factor
 
-            # Create links
-            if vertex_color:
-                if bpy.app.version < (2, 81, 8):
-                    node_tree.links.new(vc_mult_node.inputs[2], attribute_node.outputs[0])
-                else:
-                    node_tree.links.new(vc_mult_node.inputs[2], vertexcolor_node.outputs[0])
-                node_tree.links.new(vc_mult_node.inputs[1], text_node.outputs[0])
-                node_tree.links.new(main_node.inputs[0], vc_mult_node.outputs[0])
+        if needs_alpha_factor:
+            node = mh.node_tree.nodes.new('ShaderNodeMath')
+            node.label = 'Alpha Factor'
+            node.location = x - 140, y - 200
+            # Outputs
+            mh.node_tree.links.new(alpha_socket, node.outputs[0])
+            # Inputs
+            node.operation = 'MULTIPLY'
+            alpha_socket = node.inputs[0]
+            node.inputs[1].default_value = base_color_factor[3]
 
-            else:
-                node_tree.links.new(main_node.inputs[0], text_node.outputs[0])
+        x -= 200
 
-        if nodetype == 'principled':
-            # Says metallic, but it means metallic & Roughness values
-            if pypbr.metallic_type == gltf.SIMPLE:
-                main_node.inputs[4].default_value = pypbr.metallic_factor
-                main_node.inputs[7].default_value = pypbr.roughness_factor
+    # These are where the texture/vertex color node will put its output.
+    texture_color_socket = color_socket
+    texture_alpha_socket = alpha_socket
+    vcolor_color_socket = color_socket
+    vcolor_alpha_socket = alpha_socket
 
-            elif pypbr.metallic_type == gltf.TEXTURE:
+    # Mix texture and vertex color together
+    if base_color_texture is not None and mh.vertex_color:
+        node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+        node.label = 'Mix Vertex Color'
+        node.location = x - 140, y
+        node.blend_type = 'MULTIPLY'
+        # Outputs
+        mh.node_tree.links.new(color_socket, node.outputs[0])
+        # Inputs
+        node.inputs['Fac'].default_value = 1.0
+        texture_color_socket = node.inputs['Color1']
+        vcolor_color_socket = node.inputs['Color2']
 
-                metallic_text = make_texture_block(
-                    gltf,
-                    node_tree,
-                    pypbr.metallic_roughness_texture,
-                    location=(-500, 0),
-                    label='METALLIC ROUGHNESS',
-                    name='metallicRoughnessTexture',
-                    colorspace='NONE',
-                )
+        if alpha_socket is not None:
+            node = mh.node_tree.nodes.new('ShaderNodeMath')
+            node.label = 'Mix Vertex Alpha'
+            node.location = x - 140, y - 200
+            node.operation = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(alpha_socket, node.outputs[0])
+            # Inputs
+            texture_alpha_socket = node.inputs[0]
+            vcolor_alpha_socket = node.inputs[1]
 
-                metallic_separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-                metallic_separate.location = -250, 0
+        x -= 200
 
-                # links
-                node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
-                node_tree.links.new(main_node.inputs[4], metallic_separate.outputs[2])  # metallic
-                node_tree.links.new(main_node.inputs[7], metallic_separate.outputs[1])  # Roughness
+    # Vertex Color
+    if mh.vertex_color:
+        node = mh.node_tree.nodes.new('ShaderNodeVertexColor')
+        node.layer_name = 'Col'
+        node.location = x - 250, y - 240
+        # Outputs
+        mh.node_tree.links.new(vcolor_color_socket, node.outputs['Color'])
+        if vcolor_alpha_socket is not None:
+            mh.node_tree.links.new(vcolor_alpha_socket, node.outputs['Alpha'])
 
-            elif pypbr.metallic_type == gltf.TEXTURE_FACTOR:
+        x -= 280
 
-                metallic_text = make_texture_block(
-                    gltf,
-                    node_tree,
-                    pypbr.metallic_roughness_texture,
-                    location=(-1000, 0),
-                    label='METALLIC ROUGHNESS',
-                    name='metallicRoughnessTexture',
-                    colorspace='NONE',
-                )
+    # Texture
+    if base_color_texture is not None:
+        texture(
+            mh,
+            tex_info=base_color_texture,
+            label='BASE COLOR' if not is_diffuse else 'DIFFUSE',
+            location=(x, y),
+            color_socket=texture_color_socket,
+            alpha_socket=texture_alpha_socket,
+        )
 
-                metallic_separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-                metallic_separate.location = -500, 0
 
-                metallic_math = node_tree.nodes.new('ShaderNodeMath')
-                metallic_math.operation = 'MULTIPLY'
-                metallic_math.inputs[1].default_value = pypbr.metallic_factor
-                metallic_math.location = -250, 100
+# [Texture] => [Separate GB] => [Metal/Rough Factor] =>
+def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_socket):
+    x, y = location
+    pbr = mh.pymat.pbr_metallic_roughness
+    metal_factor = pbr.metallic_factor
+    rough_factor = pbr.roughness_factor
+    if metal_factor is None:
+        metal_factor = 1.0
+    if rough_factor is None:
+        rough_factor = 1.0
 
-                roughness_math = node_tree.nodes.new('ShaderNodeMath')
-                roughness_math.operation = 'MULTIPLY'
-                roughness_math.inputs[1].default_value = pypbr.roughness_factor
-                roughness_math.location = -250, -100
+    if pbr.metallic_roughness_texture is None:
+        metallic_socket.default_value = metal_factor
+        roughness_socket.default_value = rough_factor
+        return
 
-                # links
-                node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
+    if metal_factor != 1.0 or rough_factor != 1.0:
+        # Mix metal factor
+        if metal_factor != 1.0:
+            node = mh.node_tree.nodes.new('ShaderNodeMath')
+            node.label = 'Metallic Factor'
+            node.location = x - 140, y
+            node.operation = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(metallic_socket, node.outputs[0])
+            # Inputs
+            metallic_socket = node.inputs[0]
+            node.inputs[1].default_value = metal_factor
 
-                # metallic
-                node_tree.links.new(metallic_math.inputs[0], metallic_separate.outputs[2])
-                node_tree.links.new(main_node.inputs[4], metallic_math.outputs[0])
+        # Mix rough factor
+        if rough_factor != 1.0:
+            node = mh.node_tree.nodes.new('ShaderNodeMath')
+            node.label = 'Roughness Factor'
+            node.location = x - 140, y - 200
+            node.operation = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(roughness_socket, node.outputs[0])
+            # Inputs
+            roughness_socket = node.inputs[0]
+            node.inputs[1].default_value = rough_factor
 
-                # roughness
-                node_tree.links.new(roughness_math.inputs[0], metallic_separate.outputs[1])
-                node_tree.links.new(main_node.inputs[7], roughness_math.outputs[0])
+        x -= 200
 
-        # link node to output
-        if nodetype == 'principled':
-            node_tree.links.new(output_node.inputs[0], main_node.outputs[0])
-        elif nodetype == 'unlit':
-            mix = node_tree.nodes.new('ShaderNodeMixShader')
-            mix.location = 1000, 0
-            path = node_tree.nodes.new('ShaderNodeLightPath')
-            path.location = 500, 300
-            if pypbr.color_type != gltf.SIMPLE:
-                math = node_tree.nodes.new('ShaderNodeMath')
-                math.location = 750, 200
-                math.operation = 'MULTIPLY'
+    # Separate RGB
+    node = mh.node_tree.nodes.new('ShaderNodeSeparateRGB')
+    node.location = x - 150, y - 75
+    # Outputs
+    mh.node_tree.links.new(metallic_socket, node.outputs['B'])
+    mh.node_tree.links.new(roughness_socket, node.outputs['G'])
+    # Inputs
+    color_socket = node.inputs[0]
 
-                # Set material alpha mode to blend
-                # This is needed for Eevee
-                if bpy.app.version < (2, 80, 0):
-                    pass # Not needed for Cycles
-                else:
-                    material.blend_method = 'HASHED' # TODO check best result in eevee
+    x -= 200
 
-            transparent = node_tree.nodes.new('ShaderNodeBsdfTransparent')
-            transparent.location = 750, 0
+    texture(
+        mh,
+        tex_info=pbr.metallic_roughness_texture,
+        label='METALLIC ROUGHNESS',
+        location=(x, y),
+        is_data=True,
+        color_socket=color_socket,
+    )
 
-            node_tree.links.new(output_node.inputs[0], mix.outputs[0])
-            node_tree.links.new(mix.inputs[2], main_node.outputs[0])
-            node_tree.links.new(mix.inputs[1], transparent.outputs[0])
-            if pypbr.color_type != gltf.SIMPLE:
-                node_tree.links.new(math.inputs[0], path.outputs[0])
-                node_tree.links.new(math.inputs[1], text_node.outputs[1])
-                node_tree.links.new(mix.inputs[0], math.outputs[0])
-            else:
-                node_tree.links.new(mix.inputs[0], path.outputs[0])
+
+# [Texture] => [Normal Map] =>
+def normal(mh: MaterialHelper, location, normal_socket):
+    x,y = location
+    tex_info = mh.pymat.normal_texture
+
+    if tex_info is None:
+        return
+
+    # Normal map
+    node = mh.node_tree.nodes.new('ShaderNodeNormalMap')
+    node.location = x - 150, y - 40
+    # Set UVMap
+    uv_idx = tex_info.tex_coord or 0
+    try:
+        uv_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
+    except Exception:
+        pass
+    node.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
+    # Set strength
+    scale = tex_info.scale
+    scale = scale if scale is not None else 1
+    node.inputs['Strength'].default_value = scale
+    # Outputs
+    mh.node_tree.links.new(normal_socket, node.outputs['Normal'])
+    # Inputs
+    color_socket = node.inputs['Color']
+
+    x -= 200
+
+    texture(
+        mh,
+        tex_info=tex_info,
+        label='NORMALMAP',
+        location=(x, y),
+        is_data=True,
+        color_socket=color_socket,
+    )
+
+
+# [Texture] => [Separate R] =>
+def occlusion(mh: MaterialHelper, location, occlusion_socket):
+    x, y = location
+
+    if mh.pymat.occlusion_texture is None:
+        return
+
+    # Separate RGB
+    node = mh.node_tree.nodes.new('ShaderNodeSeparateRGB')
+    node.location = x - 150, y - 75
+    # Outputs
+    mh.node_tree.links.new(occlusion_socket, node.outputs['R'])
+    # Inputs
+    color_socket = node.inputs[0]
+
+    x -= 200
+
+    texture(
+        mh,
+        tex_info=mh.pymat.occlusion_texture,
+        label='OCCLUSION',
+        location=(x, y),
+        is_data=True,
+        color_socket=color_socket,
+    )
+
+
+# => [Add Emission] => [Mix Alpha] => [Material Output]
+def make_output_nodes(
+    mh: MaterialHelper,
+    location,
+    shader_socket,
+    make_emission_socket,
+    make_alpha_socket,
+):
+    """
+    Creates the Material Output node and connects shader_socket to it.
+    If requested, it can also create places to hookup the emission/alpha
+    in between shader_socket and the Output node too.
+
+    :return: a pair containing the sockets you should put emission and alpha
+    in (None if not requested).
+    """
+    x, y = location
+    emission_socket = None
+    alpha_socket = None
+
+    # Create an Emission node and add it to the shader.
+    if make_emission_socket:
+        # Emission
+        node = mh.node_tree.nodes.new('ShaderNodeEmission')
+        node.location = x + 50, y + 250
+        # Inputs
+        emission_socket = node.inputs[0]
+        # Outputs
+        emission_output = node.outputs[0]
+
+        # Add
+        node = mh.node_tree.nodes.new('ShaderNodeAddShader')
+        node.location = x + 250, y + 160
+        # Inputs
+        mh.node_tree.links.new(node.inputs[0], emission_output)
+        mh.node_tree.links.new(node.inputs[1], shader_socket)
+        # Outputs
+        shader_socket = node.outputs[0]
+
+        if make_alpha_socket:
+            x += 200
+            y += 175
+        else:
+            x += 380
+            y += 125
+
+    # Mix with a Transparent BSDF. Mixing factor is the alpha value.
+    if make_alpha_socket:
+        # Transparent BSDF
+        node = mh.node_tree.nodes.new('ShaderNodeBsdfTransparent')
+        node.location = x + 100, y - 350
+        # Outputs
+        transparent_out = node.outputs[0]
+
+        # Mix
+        node = mh.node_tree.nodes.new('ShaderNodeMixShader')
+        node.location = x + 340, y - 180
+        # Inputs
+        alpha_socket = node.inputs[0]
+        mh.node_tree.links.new(node.inputs[1], transparent_out)
+        mh.node_tree.links.new(node.inputs[2], shader_socket)
+        # Outputs
+        shader_socket = node.outputs[0]
+
+
+        x += 480
+        y -= 210
+
+    # Material output
+    node = mh.node_tree.nodes.new('ShaderNodeOutputMaterial')
+    node.location = x + 70, y + 10
+    # Outputs
+    mh.node_tree.links.new(node.inputs[0], shader_socket)
+
+    return emission_socket, alpha_socket
+
+
+def make_settings_node(mh, location):
+    """
+    Make a Group node with a hookup for Occlusion. No effect in Blender, but
+    used to tell the exporter what the occlusion map should be.
+    """
+    node = mh.node_tree.nodes.new('ShaderNodeGroup')
+    node.node_tree = get_settings_group()
+    node.location = location
+    return node
+
+
+def get_settings_group():
+    gltf_node_group_name = get_gltf_node_name()
+    if gltf_node_group_name in bpy.data.node_groups:
+        gltf_node_group = bpy.data.node_groups[gltf_node_group_name]
+    else:
+        # Create a new node group
+        gltf_node_group = bpy.data.node_groups.new(gltf_node_group_name, 'ShaderNodeTree')
+        gltf_node_group.inputs.new("NodeSocketFloat", "Occlusion")
+        gltf_node_group.nodes.new('NodeGroupOutput')
+        gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
+        gltf_node_group_input.location = -200, 0
+    return gltf_node_group

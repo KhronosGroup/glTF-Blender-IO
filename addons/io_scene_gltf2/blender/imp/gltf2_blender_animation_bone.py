@@ -61,16 +61,10 @@ class BlenderBoneAnim():
         bind_trans, bind_rot, _ = vnode.trs
         bind_rot_inv = bind_rot.conjugated()
 
-        if bpy.app.version < (2, 80, 0):
-            final_translations = [
-                bind_rot_inv * (trans - bind_trans)
-                for trans in translation_keyframes
-            ]
-        else:
-            final_translations = [
-                bind_rot_inv @ (trans - bind_trans)
-                for trans in translation_keyframes
-            ]
+        final_translations = [
+            bind_rot_inv @ (trans - bind_trans)
+            for trans in translation_keyframes
+        ]
 
         BlenderBoneAnim.fill_fcurves(
             obj.animation_data.action,
@@ -103,16 +97,10 @@ class BlenderBoneAnim():
         bind_rot_inv = bind_rot.conjugated()
 
 
-        if bpy.app.version < (2, 80, 0):
-            final_rots = [
-                bind_rot_inv * rot
-                for rot in quat_keyframes
-            ]
-        else:
-            final_rots = [
-                bind_rot_inv @ rot
-                for rot in quat_keyframes
-            ]
+        final_rots = [
+            bind_rot_inv @ rot
+            for rot in quat_keyframes
+        ]
 
         # Manage antipodal quaternions
         for i in range(1, len(final_rots)):

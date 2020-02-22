@@ -113,10 +113,7 @@ def __gather_tex_coord(blender_shader_sockets_or_texture_slots, export_settings)
 
         # Try to gather map index.
         for blender_mesh in bpy.data.meshes:
-            if bpy.app.version < (2, 80, 0):
-                texCoordIndex = blender_mesh.uv_textures.find(input_node.uv_map)
-            else:
-                texCoordIndex = blender_mesh.uv_layers.find(input_node.uv_map)
+            texCoordIndex = blender_mesh.uv_layers.find(input_node.uv_map)
             if texCoordIndex >= 0:
                 return texCoordIndex
 

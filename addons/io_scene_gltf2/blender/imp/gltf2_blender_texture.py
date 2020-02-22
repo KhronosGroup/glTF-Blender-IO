@@ -19,88 +19,81 @@ from io_scene_gltf2.io.com.gltf2_io import Sampler
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
 
-def make_texture_block(gltf, node_tree, tex_info, location, label, name=None, colorspace=None):
-    """Creates a block of Shader Nodes for the given TextureInfo.
-    Will look like this:
-        [UV Map] -> [Mapping] -> [Image Texture]
-    The [Image Texture] node is placed at the given location.
-    The [Image Texture] node is given the given label.
-    The [Image Texture] node is returned.
-    """
-    # Image Texture (samples image)
+def texture(
+    mh,
+    tex_info,
+    location, # Upper-right corner of the TexImage node
+    label, # Label for the TexImg node
+    color_socket,
+    alpha_socket=None,
+    is_data=False,
+):
+    """Creates nodes for a TextureInfo and hooks up the color/alpha outputs."""
+    x, y = location
 
-    tex_img = node_tree.nodes.new('ShaderNodeTexImage')
-    if name:
-        tex_img.name = name + '.tex_img'
-    tex_img.location = location
+    # Image Texture
+    tex_img = mh.node_tree.nodes.new('ShaderNodeTexImage')
+    tex_img.location = x - 240, y
     tex_img.label = label
-
-    pytexture = gltf.data.textures[tex_info.index]
-
+    # Get image
+    pytexture = mh.gltf.data.textures[tex_info.index]
     if pytexture.source is not None:
-        BlenderImage.create(gltf, pytexture.source)
-        pyimg = gltf.data.images[pytexture.source]
+        BlenderImage.create(mh.gltf, pytexture.source)
+        pyimg = mh.gltf.data.images[pytexture.source]
         blender_image_name = pyimg.blender_image_name
         if blender_image_name:
             tex_img.image = bpy.data.images[blender_image_name]
-
-    if colorspace == 'NONE':
-        if bpy.app.version < (2, 80, 0):
-            tex_img.color_space = 'NONE'
-        else:
-            if tex_img.image:
-                tex_img.image.colorspace_settings.is_data = True
-
+    # Set colorspace for data images
+    if is_data:
+        if tex_img.image:
+            tex_img.image.colorspace_settings.is_data = True
+    # Set wrapping/filtering
     if pytexture.sampler is not None:
-        pysampler = gltf.data.samplers[pytexture.sampler]
+        pysampler = mh.gltf.data.samplers[pytexture.sampler]
     else:
         pysampler = Sampler.from_dict({})
     set_filtering(tex_img, pysampler)
     set_wrap_mode(tex_img, pysampler)
+    # Outputs
+    mh.node_tree.links.new(color_socket, tex_img.outputs['Color'])
+    if alpha_socket is not None:
+        mh.node_tree.links.new(alpha_socket, tex_img.outputs['Alpha'])
+    # Inputs
+    uv_socket = tex_img.inputs[0]
 
-    # Mapping (transforms UVs for KHR_texture_transform)
+    x -= 340
 
-    mapping = node_tree.nodes.new('ShaderNodeMapping')
-    if name:
-        mapping.name = name + '.mapping'
-    mapping.location = location[0] - 500, location[1]
+    # UV Transform (for KHR_texture_transform)
+    mapping = mh.node_tree.nodes.new('ShaderNodeMapping')
+    mapping.location = x - 160, y + 30
     mapping.vector_type = 'POINT'
-
     if tex_info.extensions and 'KHR_texture_transform' in tex_info.extensions:
         transform = tex_info.extensions['KHR_texture_transform']
         transform = texture_transform_gltf_to_blender(transform)
-        if bpy.app.version < (2, 81, 8):
-            mapping.translation[0] = transform['offset'][0]
-            mapping.translation[1] = transform['offset'][1]
-            mapping.rotation[2] = transform['rotation']
-            mapping.scale[0] = transform['scale'][0]
-            mapping.scale[1] = transform['scale'][1]
-        else:
-            mapping.inputs['Location'].default_value[0] = transform['offset'][0]
-            mapping.inputs['Location'].default_value[1] = transform['offset'][1]
-            mapping.inputs['Rotation'].default_value[2] = transform['rotation']
-            mapping.inputs['Scale'].default_value[0] = transform['scale'][0]
-            mapping.inputs['Scale'].default_value[1] = transform['scale'][1]
+        mapping.inputs['Location'].default_value[0] = transform['offset'][0]
+        mapping.inputs['Location'].default_value[1] = transform['offset'][1]
+        mapping.inputs['Rotation'].default_value[2] = transform['rotation']
+        mapping.inputs['Scale'].default_value[0] = transform['scale'][0]
+        mapping.inputs['Scale'].default_value[1] = transform['scale'][1]
+    # Outputs
+    mh.node_tree.links.new(uv_socket, mapping.outputs[0])
+    # Inputs
+    uv_socket = mapping.inputs[0]
 
-    # UV Map (retrieves UV)
+    x -= 260
 
-    uv_map = node_tree.nodes.new('ShaderNodeUVMap')
-    if name:
-        uv_map.name = name + '.uv_map'
-    uv_map.location = location[0] - 1000, location[1]
-
-    texcoord_idx = tex_info.tex_coord or 0
-    if tex_info.extensions and 'KHR_texture_transform' in tex_info.extensions:
-        if 'texCoord' in tex_info.extensions['KHR_texture_transform']:
-            texcoord_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
-
-    uv_map.uv_map = 'UVMap' if texcoord_idx == 0 else 'UVMap.%03d' % texcoord_idx
-
-    # Links
-    node_tree.links.new(mapping.inputs[0], uv_map.outputs[0])
-    node_tree.links.new(tex_img.inputs[0], mapping.outputs[0])
-
-    return tex_img
+    # UV Map
+    uv_map = mh.node_tree.nodes.new('ShaderNodeUVMap')
+    uv_map.location = x - 160, y - 70
+    # Get UVMap
+    uv_idx = tex_info.tex_coord or 0
+    try:
+        uv_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
+    except Exception:
+        pass
+    uv_map.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
+    # Outputs
+    mh.node_tree.links.new(uv_socket, uv_map.outputs[0])
 
 def set_filtering(tex_img, pysampler):
     """Set the filtering/interpolation on an Image Texture from the glTf sampler."""

@@ -13,36 +13,43 @@
 # limitations under the License.
 
 import bpy
-from ...io.com.gltf2_io import MaterialPBRMetallicRoughness
-from .gltf2_blender_pbrMetallicRoughness import BlenderPbr
+from .gltf2_blender_pbrMetallicRoughness import base_color, make_output_nodes
 
-class BlenderKHR_materials_unlit():
-    """Blender KHR_materials_unlit extension."""
-    def __new__(cls, *args, **kwargs):
-        raise RuntimeError("%s should not be instantiated" % cls)
 
-    @staticmethod
-    def create(gltf, material_index, unlit, mat_name, vertex_color):
-        """KHR_materials_unlit creation."""
-        engine = bpy.context.scene.render.engine
-        if engine in ['CYCLES', 'BLENDER_EEVEE']:
-            BlenderKHR_materials_unlit.create_nodetree(gltf, material_index, unlit, mat_name, vertex_color)
+def unlit(mh):
+    """Creates node tree for unlit materials."""
+    # Emission node for the base color
+    emission_node = mh.node_tree.nodes.new('ShaderNodeEmission')
+    emission_node.location = 10, 126
 
-    @staticmethod
-    def create_nodetree(gltf, material_index, unlit, mat_name, vertex_color):
-        """Node tree creation."""
-        material = bpy.data.materials[mat_name]
-        material.use_nodes = True
+    # Lightpath trick: makes Emission visible only to camera rays.
+    # [Is Camera Ray] => [Mix] =>
+    #   [Transparent] => [   ]
+    #      [Emission] => [   ]
+    lightpath_node = mh.node_tree.nodes.new('ShaderNodeLightPath')
+    transparent_node = mh.node_tree.nodes.new('ShaderNodeBsdfTransparent')
+    mix_node = mh.node_tree.nodes.new('ShaderNodeMixShader')
+    lightpath_node.location = 10, 600
+    transparent_node.location = 10, 240
+    mix_node.location = 260, 320
+    mh.node_tree.links.new(mix_node.inputs['Fac'], lightpath_node.outputs['Is Camera Ray'])
+    mh.node_tree.links.new(mix_node.inputs[1], transparent_node.outputs[0])
+    mh.node_tree.links.new(mix_node.inputs[2], emission_node.outputs[0])
+    # Using transparency requires alpha blending for Eevee
+    if mh.is_opaque():
+        mh.mat.blend_method = 'HASHED' # TODO check best result in eevee
 
-        pymaterial = gltf.data.materials[material_index]
-        if pymaterial.pbr_metallic_roughness is None:
-            # If no pbr material is set, we need to apply all default of pbr
-            pbr = {}
-            pbr["baseColorFactor"] = [1.0, 1.0, 1.0, 1.0]
-            pbr["metallicFactor"] = 1.0
-            pbr["roughnessFactor"] = 1.0
-            pymaterial.pbr_metallic_roughness = MaterialPBRMetallicRoughness.from_dict(pbr)
-            pymaterial.pbr_metallic_roughness.color_type = gltf.SIMPLE
-            pymaterial.pbr_metallic_roughness.metallic_type = gltf.SIMPLE
+    _emission_socket, alpha_socket = make_output_nodes(
+        mh,
+        location=(420, 280) if mh.is_opaque() else (150, 130),
+        shader_socket=mix_node.outputs[0],
+        make_emission_socket=False,
+        make_alpha_socket=not mh.is_opaque(),
+    )
 
-        BlenderPbr.create_nodetree(gltf, pymaterial.pbr_metallic_roughness, mat_name, vertex_color, nodetype='unlit')
+    base_color(
+        mh,
+        location=(-200, 380),
+        color_socket=emission_node.inputs['Color'],
+        alpha_socket=alpha_socket,
+    )

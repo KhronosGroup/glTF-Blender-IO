@@ -58,31 +58,25 @@ def make_fcurve(action, co, data_path, index=0, group_name=None, interpolation=N
         group = action.groups[group_name]
         fcurve.group = group
 
-    # Set the default keyframe type in the prefs, then make keyframes
-    if bpy.app.version < (2, 80, 0):
-        prefs = bpy.context.user_preferences.edit
-    else:
-        prefs = bpy.context.preferences.edit
-    try:
-        orig_interp_type = prefs.keyframe_new_interpolation_type
-        orig_handle_type = prefs.keyframe_new_handle_type
-
-        if interpolation == 'CUBICSPLINE':
-            prefs.keyframe_new_interpolation_type = 'BEZIER'
-            prefs.keyframe_new_handle_type = 'AUTO'
-        elif interpolation == 'STEP':
-            prefs.keyframe_new_interpolation_type = 'CONSTANT'
-        elif interpolation == 'LINEAR':
-            prefs.keyframe_new_interpolation_type = 'LINEAR'
-
-        fcurve.keyframe_points.add(len(co) // 2)
-
-    finally:
-        # Restore original prefs
-        prefs.keyframe_new_interpolation_type = orig_interp_type
-        prefs.keyframe_new_handle_type = orig_handle_type
-
+    fcurve.keyframe_points.add(len(co) // 2)
     fcurve.keyframe_points.foreach_set('co', co)
+
+    # Setting interpolation
+    if interpolation == 'CUBICSPLINE':
+        for kf in fcurve.keyframe_points:
+            kf.interpolation = 'BEZIER'
+            kf.handle_right_type = 'AUTO'
+            kf.handle_left_type = 'AUTO'
+    else:
+        if interpolation == 'LINEAR':
+            blender_interpolation = 'LINEAR'
+        elif interpolation == 'STEP':
+            blender_interpolation = 'CONSTANT'
+        else:
+            blender_interpolation = 'LINEAR'
+        for kf in fcurve.keyframe_points:
+            kf.interpolation = blender_interpolation
+
     fcurve.update() # force updating tangents (this may change when tangent will be managed)
 
     return fcurve

@@ -103,7 +103,7 @@ def __gather_base_color_texture(blender_material, export_settings):
         inputs = (base_color_socket, alpha_socket, )
     else:
         inputs = (base_color_socket,)
- 
+
     return gltf2_blender_gather_texture_info.gather_texture_info(inputs, export_settings)
 
 

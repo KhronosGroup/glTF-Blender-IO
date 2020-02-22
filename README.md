@@ -10,12 +10,13 @@ Documentation
 |---------|---------------------|
 | 2.80    | https://docs.blender.org/manual/en/2.80/addons/io_scene_gltf2.html |
 | 2.81    | https://docs.blender.org/manual/en/2.81/addons/import_export/io_scene_gltf2.html |
-| dev     | https://docs.blender.org/manual/en/dev/addons/import_export/io_scene_gltf2.html  |
+| 2.82    | https://docs.blender.org/manual/en/2.82/addons/import_export/scene_gltf2.html  |
+| dev     | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
-* 2.80 is the previous stable release.
-* 2.81 is the current stable release. Check the `blender-v2.81-release` branch.
-* master branch of this addon is mirrored in Blender master, that will become 2.82
+* 2.80 - 2.81 are previous stable releases.
+* 2.82 is the current stable release. Check the `blender-v2.82-release` branch.
+* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become 2.83.
 
 Credits
 -------
@@ -34,7 +35,7 @@ The shared codebase is organized into common (Blender-independent) and Blender-s
 ![Packages](docs/packages.png)  
 Package organisation  
 
-This structure allows easier Blender 2.79 to 2.80 updates, and enables common code to be reused by third-party Python packages working with the glTF 2.0 format.
+This structure allows common code to be reused by third-party Python packages working with the glTF 2.0 format.
 
 ![Process](docs/io_process.png)  
 Import & export process
@@ -69,8 +70,8 @@ These quality-assurance checks improve the reliability of Blender glTF I/O.
 Running the Tests Locally
 -------------------------
 
-To run the tests locally, your system should be modified to include `blender279b` and `blender28` as shell scripts (or Windows `.bat` files) in the path that launch their respective versions of Blender, including all command-line arguments.
+To run the tests locally, your system should be modified to include `blender28` as shell scripts (or Windows `.bat` files) in the path that launch their respective versions of Blender, including all command-line arguments.
 
 The latest version of [Yarn](https://yarnpkg.com/en/) should also be installed.
 
-Then, in the `tests` folder of this repository, run `yarn install`, followed by `yarn run test`.  You can limit the test suite to one version of Blender with `yarn run test-blender279b` or `yarn run test-blender28`.
+Then, in the `tests` folder of this repository, run `yarn install`, followed by `yarn run test`.  You can limit the test suite to one version of Blender with `yarn run test-blender28`.

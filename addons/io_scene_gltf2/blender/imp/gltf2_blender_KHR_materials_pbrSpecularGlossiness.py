@@ -13,277 +13,152 @@
 # limitations under the License.
 
 import bpy
-from .gltf2_blender_material_utils import make_texture_block
 from ...io.com.gltf2_io import TextureInfo
+from .gltf2_blender_pbrMetallicRoughness import \
+    base_color, emission, normal, occlusion, make_output_nodes, make_settings_node
+from .gltf2_blender_texture import texture
 
 
-class BlenderKHR_materials_pbrSpecularGlossiness():
-    """Blender KHR_materials_pbrSpecularGlossiness extension."""
-    def __new__(cls, *args, **kwargs):
-        raise RuntimeError("%s should not be instantiated" % cls)
+def pbr_specular_glossiness(mh):
+    """Creates node tree for pbrSpecularGlossiness materials."""
+    # This does option #1 from
+    # https://github.com/KhronosGroup/glTF-Blender-IO/issues/303
 
-    @staticmethod
-    def create(gltf, pbrSG, mat_name, vertex_color):
-        """KHR_materials_pbrSpecularGlossiness creation."""
-        engine = bpy.context.scene.render.engine
-        if engine in ['CYCLES', 'BLENDER_EEVEE']:
-            BlenderKHR_materials_pbrSpecularGlossiness.create_nodetree(gltf, pbrSG, mat_name, vertex_color)
+    # Sum a Glossy and Diffuse Shader
+    glossy_node = mh.node_tree.nodes.new('ShaderNodeBsdfGlossy')
+    diffuse_node = mh.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
+    add_node = mh.node_tree.nodes.new('ShaderNodeAddShader')
+    glossy_node.location = 10, 220
+    diffuse_node.location = 10, 0
+    add_node.location = 230, 100
+    mh.node_tree.links.new(add_node.inputs[0], glossy_node.outputs[0])
+    mh.node_tree.links.new(add_node.inputs[1], diffuse_node.outputs[0])
 
-    @staticmethod
-    def create_nodetree(gltf, pbrSG, mat_name, vertex_color):
-        """Node tree creation."""
-        material = bpy.data.materials[mat_name]
-        material.use_nodes = True
-        node_tree = material.node_tree
+    emission_socket, alpha_socket = make_output_nodes(
+        mh,
+        location=(370, 250),
+        shader_socket=add_node.outputs[0],
+        make_emission_socket=mh.needs_emissive(),
+        make_alpha_socket=not mh.is_opaque(),
+    )
 
-        # delete all nodes except output
-        for node in list(node_tree.nodes):
-            if not node.type == 'OUTPUT_MATERIAL':
-                node_tree.nodes.remove(node)
+    emission(
+        mh,
+        location=(-200, 860),
+        color_socket=emission_socket,
+    )
 
-        output_node = node_tree.nodes[0]
-        output_node.location = 1000, 0
+    base_color(
+        mh,
+        is_diffuse=True,
+        location=(-200, 380),
+        color_socket=diffuse_node.inputs['Color'],
+        alpha_socket=alpha_socket,
+    )
 
-        # create PBR node
-        diffuse = node_tree.nodes.new('ShaderNodeBsdfDiffuse')
-        diffuse.location = 0, 0
-        glossy = node_tree.nodes.new('ShaderNodeBsdfGlossy')
-        glossy.location = 0, 100
-        mix = node_tree.nodes.new('ShaderNodeMixShader')
-        mix.location = 500, 0
+    specular_glossiness(
+        mh,
+        location=(-200, -100),
+        specular_socket=glossy_node.inputs['Color'],
+        roughness_socket=glossy_node.inputs['Roughness'],
+    )
+    copy_socket(
+        mh,
+        copy_from=glossy_node.inputs['Roughness'],
+        copy_to=diffuse_node.inputs['Roughness'],
+    )
 
-        glossy.inputs[1].default_value = 1 - pbrSG['glossinessFactor']
+    normal(
+        mh,
+        location=(-200, -580),
+        normal_socket=glossy_node.inputs['Normal'],
+    )
+    copy_socket(
+        mh,
+        copy_from=glossy_node.inputs['Normal'],
+        copy_to=diffuse_node.inputs['Normal'],
+    )
 
-        if pbrSG['diffuse_type'] == gltf.SIMPLE:
-            if not vertex_color:
-                # change input values
-                diffuse.inputs[0].default_value = pbrSG['diffuseFactor']
+    if mh.pymat.occlusion_texture is not None:
+        node = make_settings_node(mh, location=(610, -1060))
+        occlusion(
+            mh,
+            location=(510, -970),
+            occlusion_socket=node.inputs['Occlusion'],
+        )
 
-            else:
-                # Create vertexcolor node to get COLOR_0 data
-                if bpy.app.version < (2, 81, 8):
-                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'Col'
-                    attribute_node.location = -500, 0
-                else:
-                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'Col'
-                    vertexcolor_node.location = -500, 0
 
-                # links
-                if bpy.app.version < (2, 81, 8):
-                    node_tree.links.new(diffuse.inputs[0], attribute_node.outputs[0])
-                else:
-                    node_tree.links.new(diffuse.inputs[0], vertexcolor_node.outputs[0])
+# [Texture] => [Spec/Gloss Factor] => [Gloss to Rough] =>
+def specular_glossiness(mh, location, specular_socket, roughness_socket):
+    x, y = location
+    spec_factor = mh.pymat.extensions \
+        ['KHR_materials_pbrSpecularGlossiness'] \
+        .get('specularFactor', [1, 1, 1])
+    gloss_factor = mh.pymat.extensions \
+        ['KHR_materials_pbrSpecularGlossiness'] \
+        .get('glossinessFactor', 1)
+    spec_gloss_texture = mh.pymat.extensions \
+        ['KHR_materials_pbrSpecularGlossiness'] \
+        .get('specularGlossinessTexture', None)
+    if spec_gloss_texture is not None:
+        spec_gloss_texture = TextureInfo.from_dict(spec_gloss_texture)
 
-        elif pbrSG['diffuse_type'] == gltf.TEXTURE_FACTOR:
+    if spec_gloss_texture is None:
+        specular_socket.default_value = spec_factor + [1]
+        roughness_socket.default_value = 1 - gloss_factor
+        return
 
-            # TODO alpha ?
-            if vertex_color:
-                # TODO tree locations
-                # Create vertexcolor / separate / math nodes
-                if bpy.app.version < (2, 81, 8):
-                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'Col'
-                else:
-                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'Col'
+    # (1 - x) converts glossiness to roughness
+    node = mh.node_tree.nodes.new('ShaderNodeInvert')
+    node.label = 'Invert (Gloss to Rough)'
+    node.location = x - 140, y - 75
+    # Outputs
+    mh.node_tree.links.new(roughness_socket, node.outputs[0])
+    # Inputs
+    node.inputs['Fac'].default_value = 1
+    glossiness_socket = node.inputs['Color']
 
-                separate_vertex_color = node_tree.nodes.new('ShaderNodeSeparateRGB')
-                math_vc_R = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_R.operation = 'MULTIPLY'
+    x -= 250
 
-                math_vc_G = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_G.operation = 'MULTIPLY'
+    # Mix in spec/gloss factor
+    if spec_factor != [1, 1, 1] or gloss_factor != 1:
+        if spec_factor != [1, 1, 1]:
+            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node.label = 'Specular Factor'
+            node.location = x - 140, y
+            node.blend_type = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(specular_socket, node.outputs[0])
+            # Inputs
+            node.inputs['Fac'].default_value = 1.0
+            specular_socket = node.inputs['Color1']
+            node.inputs['Color2'].default_value = spec_factor + [1]
 
-                math_vc_B = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_B.operation = 'MULTIPLY'
+        if gloss_factor != 1:
+            node = mh.node_tree.nodes.new('ShaderNodeMath')
+            node.label = 'Glossiness Factor'
+            node.location = x - 140, y - 200
+            node.operation = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(glossiness_socket, node.outputs[0])
+            # Inputs
+            glossiness_socket = node.inputs[0]
+            node.inputs[1].default_value = gloss_factor
 
-            # create UV Map / Mapping / Texture nodes / separate & math and combine
-            text_node = make_texture_block(
-                gltf,
-                node_tree,
-                TextureInfo.from_dict(pbrSG['diffuseTexture']),
-                location=(-1000, 500),
-                label='DIFFUSE',
-                name='diffuseTexture',
-            )
+        x -= 200
 
-            combine = node_tree.nodes.new('ShaderNodeCombineRGB')
-            combine.location = -250, 500
+    texture(
+        mh,
+        tex_info=spec_gloss_texture,
+        label='SPECULAR GLOSSINESS',
+        location=(x, y),
+        color_socket=specular_socket,
+        alpha_socket=glossiness_socket,
+    )
 
-            math_R = node_tree.nodes.new('ShaderNodeMath')
-            math_R.location = -500, 750
-            math_R.operation = 'MULTIPLY'
-            math_R.inputs[1].default_value = pbrSG['diffuseFactor'][0]
 
-            math_G = node_tree.nodes.new('ShaderNodeMath')
-            math_G.location = -500, 500
-            math_G.operation = 'MULTIPLY'
-            math_G.inputs[1].default_value = pbrSG['diffuseFactor'][1]
-
-            math_B = node_tree.nodes.new('ShaderNodeMath')
-            math_B.location = -500, 250
-            math_B.operation = 'MULTIPLY'
-            math_B.inputs[1].default_value = pbrSG['diffuseFactor'][2]
-
-            separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-            separate.location = -750, 500
-
-            # Create links
-            if vertex_color:
-                if bpy.app.version < (2, 81, 8):
-                    node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
-                else:
-                    node_tree.links.new(separate_vertex_color.inputs[0], vertexcolor_node.outputs[0])
-                node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
-                node_tree.links.new(math_vc_B.inputs[1], separate_vertex_color.outputs[2])
-                node_tree.links.new(math_vc_R.inputs[0], math_R.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[0], math_G.outputs[0])
-                node_tree.links.new(math_vc_B.inputs[0], math_B.outputs[0])
-                node_tree.links.new(combine.inputs[0], math_vc_R.outputs[0])
-                node_tree.links.new(combine.inputs[1], math_vc_G.outputs[0])
-                node_tree.links.new(combine.inputs[2], math_vc_B.outputs[0])
-
-            else:
-                node_tree.links.new(combine.inputs[0], math_R.outputs[0])
-                node_tree.links.new(combine.inputs[1], math_G.outputs[0])
-                node_tree.links.new(combine.inputs[2], math_B.outputs[0])
-
-            # Common for both mode (non vertex color / vertex color)
-            node_tree.links.new(math_R.inputs[0], separate.outputs[0])
-            node_tree.links.new(math_G.inputs[0], separate.outputs[1])
-            node_tree.links.new(math_B.inputs[0], separate.outputs[2])
-
-            node_tree.links.new(separate.inputs[0], text_node.outputs[0])
-
-            node_tree.links.new(diffuse.inputs[0], combine.outputs[0])
-
-        elif pbrSG['diffuse_type'] == gltf.TEXTURE:
-
-            # TODO alpha ?
-            if vertex_color:
-                # Create vertexcolor / separate / math nodes
-                if bpy.app.version < (2, 81, 8):
-                    attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
-                    attribute_node.attribute_name = 'Col'
-                    attribute_node.location = -2000, 250
-                else:
-                    vertexcolor_node = node_tree.nodes.new('ShaderNodeVertexColor')
-                    vertexcolor_node.layer_name = 'Col'
-                    vertexcolor_node.location = -2000, 250
-
-                separate_vertex_color = node_tree.nodes.new('ShaderNodeSeparateRGB')
-                separate_vertex_color.location = -1500, 250
-
-                math_vc_R = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_R.operation = 'MULTIPLY'
-                math_vc_R.location = -1000, 750
-
-                math_vc_G = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_G.operation = 'MULTIPLY'
-                math_vc_G.location = -1000, 500
-
-                math_vc_B = node_tree.nodes.new('ShaderNodeMath')
-                math_vc_B.operation = 'MULTIPLY'
-                math_vc_B.location = -1000, 250
-
-                combine = node_tree.nodes.new('ShaderNodeCombineRGB')
-                combine.location = -500, 500
-
-                separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-                separate.location = -1500, 500
-
-            # create UV Map / Mapping / Texture nodes / separate & math and combine
-            if vertex_color:
-                location = (-2000, 500)
-            else:
-                location = (-500, 500)
-            text_node = text_node = make_texture_block(
-                gltf,
-                node_tree,
-                TextureInfo.from_dict(pbrSG['diffuseTexture']),
-                location=location,
-                label='DIFFUSE',
-                name='diffuseTexture',
-            )
-
-            # Create links
-            if vertex_color:
-                if bpy.app.version < (2, 81, 8):
-                    node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
-                else:
-                    node_tree.links.new(separate_vertex_color.inputs[0], vertexcolor_node.outputs[0])
-
-                node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
-                node_tree.links.new(math_vc_B.inputs[1], separate_vertex_color.outputs[2])
-
-                node_tree.links.new(combine.inputs[0], math_vc_R.outputs[0])
-                node_tree.links.new(combine.inputs[1], math_vc_G.outputs[0])
-                node_tree.links.new(combine.inputs[2], math_vc_B.outputs[0])
-
-                node_tree.links.new(separate.inputs[0], text_node.outputs[0])
-
-                node_tree.links.new(diffuse.inputs[0], combine.outputs[0])
-
-                node_tree.links.new(math_vc_R.inputs[0], separate.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[0], separate.outputs[1])
-                node_tree.links.new(math_vc_B.inputs[0], separate.outputs[2])
-
-            else:
-                node_tree.links.new(diffuse.inputs[0], text_node.outputs[0])
-
-        if pbrSG['specgloss_type'] == gltf.SIMPLE:
-
-            combine = node_tree.nodes.new('ShaderNodeCombineRGB')
-            combine.inputs[0].default_value = pbrSG['specularFactor'][0]
-            combine.inputs[1].default_value = pbrSG['specularFactor'][1]
-            combine.inputs[2].default_value = pbrSG['specularFactor'][2]
-
-            # links
-            node_tree.links.new(glossy.inputs[0], combine.outputs[0])
-
-        elif pbrSG['specgloss_type'] == gltf.TEXTURE:
-            spec_text = make_texture_block(
-                gltf,
-                node_tree,
-                TextureInfo.from_dict(pbrSG['specularGlossinessTexture']),
-                location=(-1000, 0),
-                label='SPECULAR GLOSSINESS',
-                name='specularGlossinessTexture',
-                colorspace='NONE',
-            )
-
-            # links
-            node_tree.links.new(glossy.inputs[0], spec_text.outputs[0])
-            node_tree.links.new(mix.inputs[0], spec_text.outputs[1])
-
-        elif pbrSG['specgloss_type'] == gltf.TEXTURE_FACTOR:
-            spec_text = make_texture_block(
-                gltf,
-                node_tree,
-                TextureInfo.from_dict(pbrSG['specularGlossinessTexture']),
-                location=(-1000, 0),
-                label='SPECULAR GLOSSINESS',
-                name='specularGlossinessTexture',
-                colorspace='NONE',
-            )
-
-            spec_math = node_tree.nodes.new('ShaderNodeMath')
-            spec_math.operation = 'MULTIPLY'
-            spec_math.inputs[0].default_value = pbrSG['glossinessFactor']
-            spec_math.location = -250, 100
-
-            # links
-
-            node_tree.links.new(spec_math.inputs[1], spec_text.outputs[0])
-            node_tree.links.new(mix.inputs[0], spec_text.outputs[1])
-            node_tree.links.new(glossy.inputs[1], spec_math.outputs[0])
-            node_tree.links.new(glossy.inputs[0], spec_text.outputs[0])
-
-        # link node to output
-        node_tree.links.new(mix.inputs[2], diffuse.outputs[0])
-        node_tree.links.new(mix.inputs[1], glossy.outputs[0])
-        node_tree.links.new(output_node.inputs[0], mix.outputs[0])
+def copy_socket(mh, copy_from, copy_to):
+    """Copy the links/default value from one socket to another."""
+    copy_to.default_value = copy_from.default_value
+    for link in copy_from.links:
+        mh.node_tree.links.new(copy_to, link.from_socket)

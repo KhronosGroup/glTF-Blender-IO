@@ -79,10 +79,7 @@ class BlenderPrimitive():
             else:
                 inv_binds = [Matrix.Identity(4) for i in range(len(pyskin.joints))]
             arma_mats = [gltf.vnodes[joint].bone_arma_mat for joint in pyskin.joints]
-            if bpy.app.version < (2, 80, 0):
-                joint_mats = [arma_mat * inv_bind for arma_mat, inv_bind in zip(arma_mats, inv_binds)]
-            else:
-                joint_mats = [arma_mat @ inv_bind for arma_mat, inv_bind in zip(arma_mats, inv_binds)]
+            joint_mats = [arma_mat @ inv_bind for arma_mat, inv_bind in zip(arma_mats, inv_binds)]
 
             def skin_vert(pos, pidx):
                 out = Vector((0, 0, 0))
@@ -95,10 +92,7 @@ class BlenderPrimitive():
                         if weight != 0.0:
                             weight_sum += weight
                             joint = joint_set[pidx][j]
-                            if bpy.app.version < (2, 80, 0):
-                                out += weight * (joint_mats[joint] * pos.to_4d()).to_3d()
-                            else:
-                                out += weight * (joint_mats[joint] @ pos)
+                            out += weight * (joint_mats[joint] @ pos)
                 out /= weight_sum
                 return out
 
@@ -113,10 +107,7 @@ class BlenderPrimitive():
                         if weight != 0.0:
                             weight_sum += weight
                             joint = joint_set[pidx][j]
-                            if bpy.app.version < (2, 80, 0):
-                                out += weight * (joint_mats[joint] * norm)
-                            else:
-                                out += weight * (joint_mats[joint] @ norm)
+                            out += weight * (joint_mats[joint] @ norm)
                 out /= weight_sum
                 out = out.to_3d().normalized()
                 return out

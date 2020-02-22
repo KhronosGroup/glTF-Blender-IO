@@ -6,12 +6,6 @@ RUN apt -q update && apt install --no-install-recommends -y -q \
     libxi6 \
     && rm -rf /var/lib/apt/lists/*
 
-ARG BLENDER279_URL=https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
-RUN mkdir /opt/blender279 && \
-	curl -SL "$BLENDER279_URL" | \
-	tar -jx -C /opt/blender279 --strip-components=1 && \
-    ln -s /opt/blender279/blender /usr/local/bin/blender279b
-
 RUN mkdir /opt/blender280 && \
     BLENDER280_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
     grep -oe '[^\"]*blender-2\.80[^\"]*linux[^\"]*-x86_64[^\"]*')"; \

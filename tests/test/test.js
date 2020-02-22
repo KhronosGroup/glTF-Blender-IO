@@ -19,8 +19,7 @@ const validator = require('gltf-validator');
 const OUT_PREFIX = process.env.OUT_PREFIX || '../tests_out';
 
 const blenderVersions = [
-    "blender28",
-    "blender279b"
+    "blender28"
 ];
 
 const validator_info_keys = [
@@ -229,22 +228,19 @@ describe('Exporter', function() {
             const args = variant[1];
             describe(blenderVersion + '_export' + variant[0], function() {
                 blenderSampleScenes.forEach((scene) => {
-                    // The next line causes Blender 2.79b to avoid scenes matching "*_280.blend"
-                    if ((blenderVersion !== 'blender279b') || !scene.endsWith('_280')) {
-                        it(scene, function(done) {
-                            let outDirName = 'out' + blenderVersion + variant[0];
-                            let blenderPath = `scenes/${scene}.blend`;
-                            let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
-                            let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
-                            let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
-                            blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
-                                if (error)
-                                    return done(error);
+                      it(scene, function(done) {
+                          let outDirName = 'out' + blenderVersion + variant[0];
+                          let blenderPath = `scenes/${scene}.blend`;
+                          let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
+                          let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
+                          let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
+                          blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
+                              if (error)
+                                  return done(error);
 
-                                validateGltf(dstPath, done);
-                            }, args);
-                        });
-                    }
+                              validateGltf(dstPath, done);
+                          }, args);
+                      });
                 });
             });
         });
@@ -290,21 +286,18 @@ describe('Exporter', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
             });
 
-            if (blenderVersion !== 'blender279b') {
-                // Only Blender 2.80 and above has an Emission socket on the Principled BSDF node.
-                it('can export an emissive map from the Principled BSDF node', function() {
-                    let gltfPath = path.resolve(outDirPath, '01_principled_material_280.gltf');
-                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+            it('can export an emissive map from the Principled BSDF node', function() {
+                  let gltfPath = path.resolve(outDirPath, '01_principled_material_280.gltf');
+                  const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                    assert.strictEqual(asset.materials.length, 1);
-                    const textureIndex = asset.materials[0].emissiveTexture.index;
-                    const imageIndex = asset.textures[textureIndex].source;
+                  assert.strictEqual(asset.materials.length, 1);
+                  const textureIndex = asset.materials[0].emissiveTexture.index;
+                  const imageIndex = asset.textures[textureIndex].source;
 
-                    assert.strictEqual(asset.images[imageIndex].uri, '01_principled_emissive.png');
-                    assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
-                    assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
-                });
-            }
+                  assert.strictEqual(asset.images[imageIndex].uri, '01_principled_emissive.png');
+                  assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
+                  assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
+              });
 
             it('can create instances of a mesh with different materials', function() {
                 let gltfPath = path.resolve(outDirPath, '02_material_instancing.gltf');
@@ -727,55 +720,50 @@ describe('Importer / Exporter (Roundtrip)', function() {
         describe(blenderVersion + '_roundtrip_results', function() {
             let outDirName = 'out' + blenderVersion;
 
-            if (blenderVersion !== 'blender279b') {
-                // Only Blender 2.80 and above will roundtrip alpha blend mode.
-                it('roundtrips alpha blend mode', function() {
-                    let dir = '01_alpha_blend';
-                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+            it('roundtrips alpha blend mode', function() {
+                let dir = '01_alpha_blend';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                    assert.strictEqual(asset.materials.length, 2);
+                assert.strictEqual(asset.materials.length, 2);
 
-                    const opaqueMaterials = asset.materials.filter(m => m.name === 'Cube');
-                    assert.strictEqual(opaqueMaterials.length, 1);
-                    assert.strictEqual(opaqueMaterials[0].alphaMode, undefined);
+                const opaqueMaterials = asset.materials.filter(m => m.name === 'Cube');
+                assert.strictEqual(opaqueMaterials.length, 1);
+                assert.strictEqual(opaqueMaterials[0].alphaMode, undefined);
 
-                    const blendedMaterials = asset.materials.filter(m => m.name === 'Transparent_Plane');
-                    assert.strictEqual(blendedMaterials.length, 1);
-                    assert.strictEqual(blendedMaterials[0].alphaMode, 'BLEND');
-                });
+                const blendedMaterials = asset.materials.filter(m => m.name === 'Transparent_Plane');
+                assert.strictEqual(blendedMaterials.length, 1);
+                assert.strictEqual(blendedMaterials[0].alphaMode, 'BLEND');
+            });
 
-                // Only Blender 2.80 and above will roundtrip alpha mask mode.
-                it('roundtrips alpha mask mode', function() {
-                    let dir = '01_alpha_mask';
-                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+            it('roundtrips alpha mask mode', function() {
+                let dir = '01_alpha_mask';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                    assert.strictEqual(asset.materials.length, 1);
-                    assert.strictEqual(asset.materials[0].alphaMode, 'MASK');
-                    assert.equalEpsilon(asset.materials[0].alphaCutoff, 0.42);
-                });
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.materials[0].alphaMode, 'MASK');
+                assert.equalEpsilon(asset.materials[0].alphaCutoff, 0.42);
+            });
 
-                // Only Blender 2.80 and above will roundtrip the doubleSided flag.
-                it('roundtrips the doubleSided flag', function() {
-                    let dir = '01_single_vs_double_sided';
-                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+            it('roundtrips the doubleSided flag', function() {
+                let dir = '01_single_vs_double_sided';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                    assert.strictEqual(asset.materials.length, 2);
+                assert.strictEqual(asset.materials.length, 2);
 
-                    const singleSidedMaterials = asset.materials.filter(m => m.name === 'mat_single');
-                    assert.strictEqual(singleSidedMaterials.length, 1);
-                    assert.strictEqual(singleSidedMaterials[0].doubleSided, undefined);
+                const singleSidedMaterials = asset.materials.filter(m => m.name === 'mat_single');
+                assert.strictEqual(singleSidedMaterials.length, 1);
+                assert.strictEqual(singleSidedMaterials[0].doubleSided, undefined);
 
-                    const doubleSidedMaterials = asset.materials.filter(m => m.name === 'mat_double');
-                    assert.strictEqual(doubleSidedMaterials.length, 1);
-                    assert.strictEqual(doubleSidedMaterials[0].doubleSided, true);
-                });
-            }
+                const doubleSidedMaterials = asset.materials.filter(m => m.name === 'mat_double');
+                assert.strictEqual(doubleSidedMaterials.length, 1);
+                assert.strictEqual(doubleSidedMaterials[0].doubleSided, true);
+            });
 
             it('roundtrips a morph target animation', function() {
                 let dir = '01_morphed_cube';

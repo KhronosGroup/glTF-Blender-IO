@@ -135,6 +135,14 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
                      export_settings
                      ) -> Optional[List[float]]:
 
+    # Seems that in some files, when using Apply Modifier, shape_keys return an error
+    # ReferenceError: StructRNA of type Mesh has been removed
+    # Because shapekeys are not exported in that case, we can return None
+    try:
+        blender_mesh.shape_keys
+    except:
+        return None
+
     if not export_settings[MORPH] or not blender_mesh.shape_keys:
         return None
 
