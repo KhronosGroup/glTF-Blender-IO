@@ -174,39 +174,42 @@ class BlenderNode():
 
     @staticmethod
     def create_mesh_object(gltf, pynode, name):
-        instance = False
-        if gltf.data.meshes[pynode.mesh].blender_name.get(pynode.skin) is not None:
-            # Mesh is already created, only create instance
-            # Except is current node is animated with path weight
-            # Or if previous instance is animation at node level
-            if pynode.weight_animation is True:
-                instance = False
-            else:
-                if gltf.data.meshes[pynode.mesh].is_weight_animated is True:
-                    instance = False
-                else:
-                    instance = True
-                    mesh = bpy.data.meshes[gltf.data.meshes[pynode.mesh].blender_name[pynode.skin]]
+        pymesh = gltf.data.meshes[pynode.mesh]
+        name = pymesh.name or name
 
-        if instance is False:
-            if pynode.name:
-                gltf.log.info("Blender create Mesh node " + pynode.name)
+        # Key to cache the Blender mesh by.
+        # Same cache key = instances of the same Blender mesh.
+        cache_key = None
+        if not pymesh.shapekey_names:
+            cache_key = (pynode.skin,)
+        else:
+            # Unlike glTF, all instances of a Blender mesh share shapekeys.
+            # So two instances that might have different morph weights need
+            # different cache keys.
+            if pynode.weight_animation is False:
+                cache_key = (pynode.skin, tuple(pynode.weights or []))
             else:
-                gltf.log.info("Blender create Mesh node")
+                cache_key = None  # don't use the cache at all
 
+        if cache_key is not None and cache_key in pymesh.blender_name:
+            mesh = bpy.data.meshes[pymesh.blender_name[cache_key]]
+        else:
+            gltf.log.info("Blender create Mesh node %s", name)
             mesh = BlenderMesh.create(gltf, pynode.mesh, pynode.skin)
-
-        if pynode.weight_animation is True:
-            # flag this mesh instance as created only for this node, because of weight animation
-            gltf.data.meshes[pynode.mesh].is_weight_animated = True
-
-        mesh_name = gltf.data.meshes[pynode.mesh].name
-        if not name and mesh_name:
-            name = mesh_name
+            if cache_key is not None:
+                pymesh.blender_name[cache_key] = mesh.name
 
         obj = bpy.data.objects.new(name, mesh)
 
-        if instance == False:
-            BlenderMesh.set_mesh(gltf, gltf.data.meshes[pynode.mesh], obj)
+        if pymesh.shapekey_names:
+            BlenderNode.set_morph_weights(gltf, pynode, obj)
 
         return obj
+
+    @staticmethod
+    def set_morph_weights(gltf, pynode, obj):
+        pymesh = gltf.data.meshes[pynode.mesh]
+        weights = pynode.weights or pymesh.weights or []
+        for i, weight in enumerate(weights):
+            if pymesh.shapekey_names[i] is not None:
+                obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]].value = weight

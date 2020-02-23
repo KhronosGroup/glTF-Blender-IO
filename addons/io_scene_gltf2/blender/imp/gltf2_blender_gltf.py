@@ -96,20 +96,9 @@ class BlenderGlTF():
             # Something is wrong in file, there is no nodes
             return
 
-        for node_idx, node in enumerate(gltf.data.nodes):
-
+        for node in gltf.data.nodes:
             # Weight animation management
             node.weight_animation = False
-
-            # skin management
-            if node.skin is not None and node.mesh is not None:
-                if not hasattr(gltf.data.skins[node.skin], "node_ids"):
-                    gltf.data.skins[node.skin].node_ids = []
-
-                gltf.data.skins[node.skin].node_ids.append(node_idx)
-
-            # Lights management
-            node.correction_needed = False
 
         # Dispatch animation
         if gltf.data.animations:
@@ -138,8 +127,7 @@ class BlenderGlTF():
         # Meshes
         if gltf.data.meshes:
             for mesh in gltf.data.meshes:
-                mesh.blender_name = {}  # cache Blender mesh (keyed by skin_idx)
-                mesh.is_weight_animated = False
+                mesh.blender_name = {}  # caches Blender mesh name
 
         # Calculate names for each mesh's shapekeys
         for mesh in gltf.data.meshes or []:
