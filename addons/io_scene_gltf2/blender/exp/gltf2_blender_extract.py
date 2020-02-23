@@ -64,7 +64,7 @@ class ShapeKey:
 # Functions
 #
 
-def convert_swizzle_normal_and_tangent(loc, armature, blender_object, export_settings):
+def convert_swizzle_normal(loc, armature, blender_object, export_settings):
     """Convert a normal data from Blender coordinate system to glTF coordinate system."""
     if not armature:
         # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
@@ -74,8 +74,10 @@ def convert_swizzle_normal_and_tangent(loc, armature, blender_object, export_set
             return Vector((loc[0], loc[1], loc[2]))
     else:
         # Mesh is skined, we have to apply armature transforms on data
-        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-        new_loc = apply_matrix.to_quaternion() @ loc
+        apply_matrix = (armature.matrix_world.inverted() @ blender_object.matrix_world).to_3x3().inverted()
+        apply_matrix.transpose()
+        new_loc = ((armature.matrix_world.to_3x3() @ apply_matrix).to_4x4() @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
+
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((new_loc[0], new_loc[2], -new_loc[1]))
         else:
@@ -640,14 +642,14 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             v = convert_swizzle_location(vertex.co, armature, blender_object, export_settings)
             if blender_polygon.use_smooth or blender_mesh.use_auto_smooth:
                 if blender_mesh.has_custom_normals:
-                    n = convert_swizzle_normal_and_tangent(blender_mesh.loops[loop_index].normal, armature, blender_object, export_settings)
+                    n = convert_swizzle_normal(blender_mesh.loops[loop_index].normal, armature, blender_object, export_settings)
                 else:
-                    n = convert_swizzle_normal_and_tangent(vertex.normal, armature, blender_object, export_settings)
+                    n = convert_swizzle_normal(vertex.normal, armature, blender_object, export_settings)
                 if use_tangents:
                     t = convert_swizzle_tangent(blender_mesh.loops[loop_index].tangent, armature, blender_object, export_settings)
                     b = convert_swizzle_location(blender_mesh.loops[loop_index].bitangent, armature, blender_object, export_settings)
             else:
-                n = convert_swizzle_normal_and_tangent(face_normal, armature, blender_object, export_settings)
+                n = convert_swizzle_normal(face_normal, armature, blender_object, export_settings)
                 if use_tangents:
                     t = convert_swizzle_tangent(face_tangent, armature, blender_object, export_settings)
                     b = convert_swizzle_location(face_bitangent, armature, blender_object, export_settings)
@@ -766,7 +768,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
                             temp_normals[blender_polygon.index * 3 + 0], temp_normals[blender_polygon.index * 3 + 1],
                             temp_normals[blender_polygon.index * 3 + 2])
 
-                    n_morph = convert_swizzle_normal_and_tangent(Vector(n_morph), armature, blender_object, export_settings)
+                    n_morph = convert_swizzle_normal(Vector(n_morph), armature, blender_object, export_settings)
 
                     # Store delta.
                     n_morph -= n
@@ -969,4 +971,3 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
     print_console('INFO', 'Primitives created: ' + str(len(result_primitives)))
 
     return result_primitives
-
