@@ -46,28 +46,25 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     pbr_node.location = 10, 300
 
-    # Create material output.
-    # TODO: when the exporter can understand them, use the emission/alpha
-    #       socket on the Principled node instead
-    emission_socket, alpha_socket = make_output_nodes(
+    make_output_nodes(
         mh,
         location=(250, 260),
         shader_socket=pbr_node.outputs[0],
-        make_emission_socket=mh.needs_emissive(),
-        make_alpha_socket=not mh.is_opaque(),
+        make_emission_socket=False,
+        make_alpha_socket=False,
     )
 
     emission(
         mh,
         location=(-200, 860),
-        color_socket=emission_socket,
+        color_socket=pbr_node.inputs['Emission'],
     )
 
     base_color(
         mh,
         location=(-200, 380),
         color_socket=pbr_node.inputs['Base Color'],
-        alpha_socket=alpha_socket,
+        alpha_socket=pbr_node.inputs['Alpha'] if not mh.is_opaque() else None,
     )
 
     metallic_roughness(
