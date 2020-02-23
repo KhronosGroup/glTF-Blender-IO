@@ -349,35 +349,13 @@ def correct_cameras_and_lights(gltf):
     if gltf.camera_correction is None:
         return
 
-    trs = (Vector((0, 0, 0)), gltf.camera_correction, Vector((1, 1, 1)))
+    for id, vnode in gltf.vnodes.items():
+        needs_correction = \
+           vnode.camera_node_idx is not None or \
+           vnode.light_node_idx is not None
 
-    ids = list(gltf.vnodes.keys())
-    for id in ids:
-        vnode = gltf.vnodes[id]
-
-        # Move the camera/light onto a new child and set its rotation
-        # TODO: "hard apply" the rotation without creating a new node
-        #       (like we'll need to do for bones)
-
-        if vnode.camera_node_idx is not None:
-            new_id = str(id) + '.camera-correction'
-            gltf.vnodes[new_id] = VNode()
-            gltf.vnodes[new_id].name = vnode.name + ' Correction'
-            gltf.vnodes[new_id].base_trs = trs
-            gltf.vnodes[new_id].camera_node_idx = vnode.camera_node_idx
-            gltf.vnodes[new_id].parent = id
-            vnode.children.append(new_id)
-            vnode.camera_node_idx = None
-
-        if vnode.light_node_idx is not None:
-            new_id = str(id) + '.light-correction'
-            gltf.vnodes[new_id] = VNode()
-            gltf.vnodes[new_id].name = vnode.name + ' Correction'
-            gltf.vnodes[new_id].base_trs = trs
-            gltf.vnodes[new_id].light_node_idx = vnode.light_node_idx
-            gltf.vnodes[new_id].parent = id
-            vnode.children.append(new_id)
-            vnode.light_node_idx = None
+        if needs_correction:
+            local_rotation(gltf, id, gltf.camera_correction)
 
 
 def pick_bind_pose(gltf):
