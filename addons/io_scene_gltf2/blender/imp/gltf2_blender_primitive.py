@@ -193,7 +193,6 @@ class BlenderPrimitive():
                 )
                 break
 
-            gltf_layer_name = 'COLOR_%d' % set_num
             layer_name = 'Col' if set_num == 0 else 'Col.%03d' % set_num
             layer = BlenderPrimitive.get_layer(bme.loops.layers.color, layer_name)
 
@@ -214,10 +213,7 @@ class BlenderPrimitive():
             # which is why this code looks a little odd.
             for bidx, pidx in vert_idxs:
                 color = srgb_colors[pidx]
-                if blender_num_components == 4:
-                    col = (color[0], color[1], color[2], color[3]) # fastest this way
-                else:
-                    col = (color[0], color[1], color[2])
+                col = (color[0], color[1], color[2], color[3]) # fastest this way
                 for loop in bme_verts[bidx].link_loops:
                     loop[layer] = col
             # print(f'store colors: {time.perf_counter() - t}')
