@@ -73,20 +73,21 @@ class BlenderNodeAnim():
                 blender_path = "location"
                 group_name = "Location"
                 num_components = 3
+                values = [gltf.loc_gltf_to_blender(vals) for vals in values]
+                values = vnode.base_locs_to_final_locs(values)
 
                 if vnode.parent is not None and gltf.vnodes[vnode.parent].type == VNode.Bone:
                     # Nodes with a bone parent need to be translated
                     # backwards by their bone length (always 1 currently)
                     off = Vector((0, -1, 0))
-                    values = [gltf.loc_gltf_to_blender(vals) + off for vals in values]
-                else:
-                    values = [gltf.loc_gltf_to_blender(vals) for vals in values]
+                    values = [vals + off for vals in values]
 
             elif channel.target.path == "rotation":
                 blender_path = "rotation_quaternion"
                 group_name = "Rotation"
                 num_components = 4
                 values = [gltf.quaternion_gltf_to_blender(vals) for vals in values]
+                values = vnode.base_rots_to_final_rots(values)
 
                 # Manage antipodal quaternions
                 for i in range(1, len(values)):
@@ -98,6 +99,7 @@ class BlenderNodeAnim():
                 group_name = "Scale"
                 num_components = 3
                 values = [gltf.scale_gltf_to_blender(vals) for vals in values]
+                values = vnode.base_scales_to_final_scales(values)
 
             coords = [0] * (2 * len(keys))
             coords[::2] = (key[0] * fps for key in keys)

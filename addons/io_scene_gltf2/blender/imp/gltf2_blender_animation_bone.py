@@ -58,12 +58,14 @@ class BlenderBoneAnim():
         else:
             translation_keyframes = (gltf.loc_gltf_to_blender(vals) for vals in values)
 
+        final_translations = vnode.base_locs_to_final_locs(translation_keyframes)
+
         # Calculate pose bone trans from final bone trans
         edit_trans, edit_rot = vnode.editbone_trans, vnode.editbone_rot
         edit_rot_inv = edit_rot.conjugated()
         pose_translations = [
             edit_rot_inv @ (trans - edit_trans)
-            for trans in translation_keyframes
+            for trans in final_translations
         ]
 
         BlenderBoneAnim.fill_fcurves(
@@ -93,12 +95,14 @@ class BlenderBoneAnim():
         else:
             quat_keyframes = [gltf.quaternion_gltf_to_blender(vals) for vals in values]
 
+        final_rots = vnode.base_rots_to_final_rots(quat_keyframes)
+
         # Calculate pose bone rotation from final bone rotation
         edit_rot = vnode.editbone_rot
         edit_rot_inv = edit_rot.conjugated()
         pose_rots = [
             edit_rot_inv @ rot
-            for rot in quat_keyframes
+            for rot in final_rots
         ]
 
         # Manage antipodal quaternions
@@ -133,10 +137,13 @@ class BlenderBoneAnim():
         else:
             scale_keyframes = [gltf.scale_gltf_to_blender(vals) for vals in values]
 
+        final_scales = vnode.base_scales_to_final_scales(scale_keyframes)
+        pose_scales = final_scales  # no change needed
+
         BlenderBoneAnim.fill_fcurves(
             obj.animation_data.action,
             keys,
-            scale_keyframes,
+            pose_scales,
             group_name,
             blender_path,
             animation.samplers[channel.sampler].interpolation

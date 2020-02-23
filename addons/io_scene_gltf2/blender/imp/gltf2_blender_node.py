@@ -78,7 +78,7 @@ class BlenderNode():
             set_extras(obj, pynode.extras)
 
         # Set transform
-        trans, rot, scale = vnode.trs
+        trans, rot, scale = vnode.trs()
         obj.location = trans
         obj.rotation_mode = 'QUATERNION'
         obj.rotation_quaternion = rot
@@ -161,7 +161,7 @@ class BlenderNode():
 
             # BoneTRS = EditBone * PoseBone
             # Set PoseBone to make BoneTRS = vnode.trs.
-            t, r, s = vnode.trs
+            t, r, s = vnode.trs()
             et, er = vnode.editbone_trans, vnode.editbone_rot
             pose_bone.location = er.conjugated() @ (t - et)
             pose_bone.rotation_mode = 'QUATERNION'
