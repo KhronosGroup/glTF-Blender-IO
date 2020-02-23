@@ -28,6 +28,7 @@ def compute_vnodes(gltf):
     fixup_multitype_nodes(gltf)
     correct_cameras_and_lights(gltf)
     pick_bind_pose(gltf)
+    prettify_bones(gltf)
     calc_bone_matrices(gltf)
 
 
@@ -376,6 +377,36 @@ def pick_bind_pose(gltf):
             vnode.editbone_rot = Quaternion(vnode.bind_rot)
 
 
+def prettify_bones(gltf):
+    """
+    Prettify bone lengths/directions.
+    """
+    def visit(vnode_id):  # Depth-first walk
+        vnode = gltf.vnodes[vnode_id]
+
+        if vnode.type == VNode.Bone:
+            rotate_edit_bone(gltf, vnode_id, Quaternion((2**0.5/2,2**0.5/2,0,0)))
+
+        for child in vnode.children:
+            visit(child)
+
+    visit('root')
+
+def rotate_edit_bone(gltf, bone_id, rot):
+    """Rotate one edit bone without affecting anything else."""
+    gltf.vnodes[bone_id].editbone_rot @= rot
+    # Cancel out the rotation so children aren't affected.
+    rot_inv = rot.conjugated()
+    for child_id in gltf.vnodes[bone_id].children:
+        child = gltf.vnodes[child_id]
+        if child.type == VNode.Bone:
+            child.editbone_trans = rot_inv @ child.editbone_trans
+            child.editbone_rot = rot_inv @ child.editbone_rot
+    # Need to rotate the bone's final TRS by the same amount so skinning
+    # isn't affected.
+    local_rotation(gltf, bone_id, rot)
+
+
 def calc_bone_matrices(gltf):
     """
     Calculate the transformations from bone space to arma space in the bind
@@ -403,6 +434,3 @@ def calc_bone_matrices(gltf):
             visit(child)
 
     visit('root')
-
-
-# TODO: add pass to rotate/resize bones so they look pretty
