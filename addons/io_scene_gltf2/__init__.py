@@ -841,9 +841,12 @@ class ImportGLTF2(Operator, ImportHelper):
             ("BLENDER", "Blender (+Y)",
                 "Round-trips bone directions in glTFs exported from Blender.\n"
                 "Bone tips are placed on their local +Y axis (in glTF space)"),
+            ("TEMPERANCE", "Temperance",
+                "Okay for many different models.\n"
+                "Bone tips are placed at a child's root")
         ),
         description="Heuristic for placing bone tips. Tries to make bones pretty",
-        default="BLENDER",
+        default="TEMPERANCE",
     )
 
     def draw(self, context):

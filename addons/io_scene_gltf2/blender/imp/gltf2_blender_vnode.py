@@ -15,7 +15,7 @@
 import bpy
 from mathutils import Vector, Quaternion, Matrix
 
-from ..com.gltf2_blender_math import scale_rot_swap_matrix
+from ..com.gltf2_blender_math import scale_rot_swap_matrix, nearby_signed_perm_matrix
 
 def compute_vnodes(gltf):
     """Computes the tree of virtual nodes.
@@ -381,17 +381,18 @@ def prettify_bones(gltf):
     """
     Prettify bone lengths/directions.
     """
-    def visit(vnode_id):  # Depth-first walk
+    def visit(vnode_id, parent_rot=None):  # Depth-first walk
         vnode = gltf.vnodes[vnode_id]
+        rot = None
 
         if vnode.type == VNode.Bone:
             vnode.bone_length = pick_bone_length(gltf, vnode_id)
-            rot = pick_bone_rotation(gltf, vnode_id)
+            rot = pick_bone_rotation(gltf, vnode_id, parent_rot)
             if rot is not None:
                 rotate_edit_bone(gltf, vnode_id, rot)
 
         for child in vnode.children:
-            visit(child)
+            visit(child, parent_rot=rot)
 
     visit('root')
 
@@ -418,14 +419,33 @@ def pick_bone_length(gltf, bone_id):
 
     return 1
 
-def pick_bone_rotation(gltf, bone_id):
+def pick_bone_rotation(gltf, bone_id, parent_rot):
     """Heuristic for bone rotation.
     A bone's tip lies on its local +Y axis so rotating a bone let's us
     adjust the bone direction.
     """
     if gltf.import_settings['bone_tip_heuristic'] == 'BLENDER':
         return Quaternion((2**0.5/2, 2**0.5/2, 0, 0))
+    elif gltf.import_settings['bone_tip_heuristic'] == 'TEMPERANCE':
+        return temperance(gltf, bone_id, parent_rot)
 
+def temperance(gltf, bone_id, parent_rot):
+    vnode = gltf.vnodes[bone_id]
+
+    # Try to put our tip at the centroid of our children
+    child_locs = [
+        gltf.vnodes[child].editbone_trans
+        for child in vnode.children
+        if gltf.vnodes[child].type == VNode.Bone
+    ]
+    child_locs = [loc for loc in child_locs if loc.length > MIN_BONE_LENGTH]
+    if child_locs:
+        centroid = sum(child_locs, Vector((0, 0, 0)))
+        rot = Vector((0, 1, 0)).rotation_difference(centroid)
+        rot = nearby_signed_perm_matrix(rot).to_quaternion()
+        return rot
+
+    return parent_rot
 
 def rotate_edit_bone(gltf, bone_id, rot):
     """Rotate one edit bone without affecting anything else."""
