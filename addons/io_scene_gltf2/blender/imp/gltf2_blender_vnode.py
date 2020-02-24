@@ -424,6 +424,9 @@ def pick_bone_rotation(gltf, bone_id, parent_rot):
     A bone's tip lies on its local +Y axis so rotating a bone let's us
     adjust the bone direction.
     """
+    if bpy.app.debug_value == 100:
+        return None
+
     if gltf.import_settings['bone_tip_heuristic'] == 'BLENDER':
         return Quaternion((2**0.5/2, 2**0.5/2, 0, 0))
     elif gltf.import_settings['bone_tip_heuristic'] == 'TEMPERANCE':
