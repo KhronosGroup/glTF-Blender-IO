@@ -835,11 +835,23 @@ class ImportGLTF2(Operator, ImportHelper):
         description="How normals are computed during import",
         default="NORMALS")
 
+    bone_tip_heuristic: EnumProperty(
+        name="Bone Dir",
+        items=(
+            ("BLENDER", "Blender (+Y)",
+                "Round-trips bone directions in glTFs exported from Blender.\n"
+                "Bone tips are placed on their local +Y axis (in glTF space)"),
+        ),
+        description="Heuristic for placing bone tips. Tries to make bones pretty",
+        default="BLENDER",
+    )
+
     def draw(self, context):
         layout = self.layout
 
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'import_shading')
+        layout.prop(self, 'bone_tip_heuristic')
 
     def execute(self, context):
         return self.import_gltf2(context)

@@ -386,7 +386,9 @@ def prettify_bones(gltf):
 
         if vnode.type == VNode.Bone:
             vnode.bone_length = pick_bone_length(gltf, vnode_id)
-            rotate_edit_bone(gltf, vnode_id, Quaternion((2**0.5/2,2**0.5/2,0,0)))
+            rot = pick_bone_rotation(gltf, vnode_id)
+            if rot is not None:
+                rotate_edit_bone(gltf, vnode_id, rot)
 
         for child in vnode.children:
             visit(child)
@@ -415,6 +417,15 @@ def pick_bone_length(gltf, bone_id):
         return vnode.editbone_trans.length
 
     return 1
+
+def pick_bone_rotation(gltf, bone_id):
+    """Heuristic for bone rotation.
+    A bone's tip lies on its local +Y axis so rotating a bone let's us
+    adjust the bone direction.
+    """
+    if gltf.import_settings['bone_tip_heuristic'] == 'BLENDER':
+        return Quaternion((2**0.5/2, 2**0.5/2, 0, 0))
+
 
 def rotate_edit_bone(gltf, bone_id, rot):
     """Rotate one edit bone without affecting anything else."""
