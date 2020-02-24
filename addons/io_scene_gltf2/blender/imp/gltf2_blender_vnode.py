@@ -393,8 +393,28 @@ def prettify_bones(gltf):
 
     visit('root')
 
+MIN_BONE_LENGTH = 0.004  # too small and bones get deleted
+
 def pick_bone_length(gltf, bone_id):
-    return 0.5
+    """Heuristic for bone length."""
+    vnode = gltf.vnodes[bone_id]
+
+    child_locs = [
+        gltf.vnodes[child].editbone_trans
+        for child in vnode.children
+        if gltf.vnodes[child].type == VNode.Bone
+    ]
+    child_locs = [loc for loc in child_locs if loc.length > MIN_BONE_LENGTH]
+    if child_locs:
+        return min(loc.length for loc in child_locs)
+
+    if gltf.vnodes[vnode.parent].type == VNode.Bone:
+        return gltf.vnodes[vnode.parent].bone_length
+
+    if vnode.editbone_trans.length > MIN_BONE_LENGTH:
+        return vnode.editbone_trans.length
+
+    return 1
 
 def rotate_edit_bone(gltf, bone_id, rot):
     """Rotate one edit bone without affecting anything else."""
