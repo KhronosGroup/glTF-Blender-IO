@@ -96,8 +96,8 @@ class BlenderNode():
                 obj.parent_bone = parent_vnode.blender_bone_name
 
                 # Nodes with a bone parent need to be translated
-                # backwards by their bone length (always 1 currently)
-                obj.location += Vector((0, -1, 0))
+                # backwards from the tip to the root
+                obj.location += Vector((0, -parent_vnode.bone_length, 0))
 
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
@@ -138,6 +138,7 @@ class BlenderNode():
             editbone.head = arma_mat @ Vector((0, 0, 0))
             editbone.tail = arma_mat @ Vector((0, 1, 0))
             editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
+            editbone.length = vnode.bone_length
 
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]

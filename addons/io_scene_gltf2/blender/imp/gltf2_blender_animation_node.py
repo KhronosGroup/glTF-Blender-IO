@@ -78,8 +78,9 @@ class BlenderNodeAnim():
 
                 if vnode.parent is not None and gltf.vnodes[vnode.parent].type == VNode.Bone:
                     # Nodes with a bone parent need to be translated
-                    # backwards by their bone length (always 1 currently)
-                    off = Vector((0, -1, 0))
+                    # backwards from the tip to the root
+                    bone_length = gltf.vnodes[vnode.parent].bone_length
+                    off = Vector((0, -bone_length, 0))
                     values = [vals + off for vals in values]
 
             elif channel.target.path == "rotation":
