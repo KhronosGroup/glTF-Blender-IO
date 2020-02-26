@@ -29,6 +29,7 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 def gather_node(blender_object, blender_scene, export_settings):
@@ -344,7 +345,19 @@ def __gather_trans_rot_scale(blender_object, export_settings):
     else:
         # matrix_local = matrix_parent_inverse*location*rotation*scale
         # Decomposing matrix_local gives less accuracy, but is needed if matrix_parent_inverse is not the identity.
-        trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, export_settings)
+
+
+        if blender_object.matrix_local[3][3] != 0.0:
+            trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, export_settings)
+        else:
+            # Some really weird cases, scale is null (if parent is null when evaluation is done)
+            print_console('WARNING', 'Some nodes are 0 scaled during evaluation. Result can be wrong')
+            trans = blender_object.location
+            if blender_object.rotation_mode in ['QUATERNION', 'AXIS_ANGLE']:
+                rot = blender_object.rotation_quaternion
+            else:
+                rot = blender_object.rotation_euler.to_quaternion()
+            sca = blender_object.scale
 
     trans = gltf2_blender_extract.convert_swizzle_location(trans, None, None, export_settings)
     rot = gltf2_blender_extract.convert_swizzle_rotation(rot, export_settings)
