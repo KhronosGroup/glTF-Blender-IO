@@ -22,10 +22,7 @@ from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_proper
 
 def multiply(a, b):
     """Multiplication."""
-    if bpy.app.version < (2, 80, 0):
-        return a * b
-    else:
-        return a @ b
+    return a @ b
 
 
 def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Union[Vector, Quaternion, Euler]:

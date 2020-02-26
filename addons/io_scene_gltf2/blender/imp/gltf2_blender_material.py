@@ -60,29 +60,18 @@ class BlenderMaterial():
 
     @staticmethod
     def set_double_sided(pymaterial, mat):
-        if bpy.app.version < (2, 80, 0):
-            pass # Blender 2.79 did not have a per-material double-sided flag.
-        else:
-            mat.use_backface_culling = (pymaterial.double_sided != True)
+        mat.use_backface_culling = (pymaterial.double_sided != True)
 
     @staticmethod
     def set_alpha_mode(pymaterial, mat):
         alpha_mode = pymaterial.alpha_mode
-        if bpy.app.version < (2, 80, 0):
-            if alpha_mode == 'BLEND':
-                mat.game_settings.alpha_blend = 'ALPHA'
-            elif alpha_mode == 'MASK':
-                mat.game_settings.alpha_blend = 'CLIP'
-                # No alpha threshold setting, but there'll be a Greater-Than
-                # node to clamp the alpha to 0 or 1.
-        else:
-            if alpha_mode == 'BLEND':
-                mat.blend_method = 'BLEND'
-            elif alpha_mode == 'MASK':
-                mat.blend_method = 'CLIP'
-                alpha_cutoff = pymaterial.alpha_cutoff
-                alpha_cutoff = alpha_cutoff if alpha_cutoff is not None else 0.5
-                mat.alpha_threshold = alpha_cutoff
+        if alpha_mode == 'BLEND':
+            mat.blend_method = 'BLEND'
+        elif alpha_mode == 'MASK':
+            mat.blend_method = 'CLIP'
+            alpha_cutoff = pymaterial.alpha_cutoff
+            alpha_cutoff = alpha_cutoff if alpha_cutoff is not None else 0.5
+            mat.alpha_threshold = alpha_cutoff
 
     @staticmethod
     def set_viewport_color(pymaterial, mat, vertex_color):
@@ -101,8 +90,4 @@ class BlenderMaterial():
                 return
             color = pbr.base_color_factor or [1, 1, 1, 1]
 
-        if bpy.app.version < (2, 82, 0):
-            # Changed on 20190129
-            mat.diffuse_color = color[:len(mat.diffuse_color)]
-        else:
-            mat.diffuse_color = color
+        mat.diffuse_color = color

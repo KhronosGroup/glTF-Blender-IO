@@ -99,10 +99,7 @@ class BlenderNode():
                 # backwards by their bone length (always 1 currently)
                 obj.location += Vector((0, -1, 0))
 
-        if bpy.app.version < (2, 80, 0):
-            bpy.data.scenes[gltf.blender_scene].objects.link(obj)
-        else:
-            bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
+        bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
         return obj
 
@@ -126,12 +123,8 @@ class BlenderNode():
 
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
-        if bpy.app.version < (2, 80, 0):
-            bpy.context.screen.scene = bpy.data.scenes[gltf.blender_scene]
-            bpy.data.scenes[gltf.blender_scene].objects.active = blender_arma
-        else:
-            bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
-            bpy.context.view_layer.objects.active = blender_arma
+        bpy.context.window.scene = bpy.data.scenes[gltf.blender_scene]
+        bpy.context.view_layer.objects.active = blender_arma
         bpy.ops.object.mode_set(mode="EDIT")
 
         for id in bone_ids:
@@ -141,15 +134,10 @@ class BlenderNode():
             editbone.use_connect = False  # TODO?
 
             # Give the position of the bone in armature space
-            arma_mat = vnode.bone_arma_mat
-            if bpy.app.version < (2, 80, 0):
-                editbone.head = arma_mat * Vector((0, 0, 0))
-                editbone.tail = arma_mat * Vector((0, 1, 0))
-                editbone.align_roll(arma_mat * Vector((0, 0, 1)) - editbone.head)
-            else:
-                editbone.head = arma_mat @ Vector((0, 0, 0))
-                editbone.tail = arma_mat @ Vector((0, 1, 0))
-                editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
+            arma_mat = vnode.editbone_arma_mat
+            editbone.head = arma_mat @ Vector((0, 0, 0))
+            editbone.tail = arma_mat @ Vector((0, 1, 0))
+            editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
 
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]
@@ -171,8 +159,13 @@ class BlenderNode():
             vnode = gltf.vnodes[id]
             pose_bone = blender_arma.pose.bones[vnode.blender_bone_name]
 
-            # Put scale on pose bone (edit bones have no scale)
-            _, _, s = vnode.trs
+            # BoneTRS = EditBone * PoseBone
+            # Set PoseBone to make BoneTRS = vnode.trs.
+            t, r, s = vnode.trs
+            et, er = vnode.editbone_trans, vnode.editbone_rot
+            pose_bone.location = er.conjugated() @ (t - et)
+            pose_bone.rotation_mode = 'QUATERNION'
+            pose_bone.rotation_quaternion = er.conjugated() @ r
             pose_bone.scale = s
 
             if isinstance(id, int):
@@ -181,39 +174,42 @@ class BlenderNode():
 
     @staticmethod
     def create_mesh_object(gltf, pynode, name):
-        instance = False
-        if gltf.data.meshes[pynode.mesh].blender_name.get(pynode.skin) is not None:
-            # Mesh is already created, only create instance
-            # Except is current node is animated with path weight
-            # Or if previous instance is animation at node level
-            if pynode.weight_animation is True:
-                instance = False
-            else:
-                if gltf.data.meshes[pynode.mesh].is_weight_animated is True:
-                    instance = False
-                else:
-                    instance = True
-                    mesh = bpy.data.meshes[gltf.data.meshes[pynode.mesh].blender_name[pynode.skin]]
+        pymesh = gltf.data.meshes[pynode.mesh]
+        name = pymesh.name or name
 
-        if instance is False:
-            if pynode.name:
-                gltf.log.info("Blender create Mesh node " + pynode.name)
+        # Key to cache the Blender mesh by.
+        # Same cache key = instances of the same Blender mesh.
+        cache_key = None
+        if not pymesh.shapekey_names:
+            cache_key = (pynode.skin,)
+        else:
+            # Unlike glTF, all instances of a Blender mesh share shapekeys.
+            # So two instances that might have different morph weights need
+            # different cache keys.
+            if pynode.weight_animation is False:
+                cache_key = (pynode.skin, tuple(pynode.weights or []))
             else:
-                gltf.log.info("Blender create Mesh node")
+                cache_key = None  # don't use the cache at all
 
+        if cache_key is not None and cache_key in pymesh.blender_name:
+            mesh = bpy.data.meshes[pymesh.blender_name[cache_key]]
+        else:
+            gltf.log.info("Blender create Mesh node %s", name)
             mesh = BlenderMesh.create(gltf, pynode.mesh, pynode.skin)
-
-        if pynode.weight_animation is True:
-            # flag this mesh instance as created only for this node, because of weight animation
-            gltf.data.meshes[pynode.mesh].is_weight_animated = True
-
-        mesh_name = gltf.data.meshes[pynode.mesh].name
-        if not name and mesh_name:
-            name = mesh_name
+            if cache_key is not None:
+                pymesh.blender_name[cache_key] = mesh.name
 
         obj = bpy.data.objects.new(name, mesh)
 
-        if instance == False:
-            BlenderMesh.set_mesh(gltf, gltf.data.meshes[pynode.mesh], obj)
+        if pymesh.shapekey_names:
+            BlenderNode.set_morph_weights(gltf, pynode, obj)
 
         return obj
+
+    @staticmethod
+    def set_morph_weights(gltf, pynode, obj):
+        pymesh = gltf.data.meshes[pynode.mesh]
+        weights = pynode.weights or pymesh.weights or []
+        for i, weight in enumerate(weights):
+            if pymesh.shapekey_names[i] is not None:
+                obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]].value = weight

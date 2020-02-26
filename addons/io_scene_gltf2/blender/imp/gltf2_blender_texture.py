@@ -45,11 +45,8 @@ def texture(
             tex_img.image = bpy.data.images[blender_image_name]
     # Set colorspace for data images
     if is_data:
-        if bpy.app.version < (2, 80, 0):
-            tex_img.color_space = 'NONE'
-        else:
-            if tex_img.image:
-                tex_img.image.colorspace_settings.is_data = True
+        if tex_img.image:
+            tex_img.image.colorspace_settings.is_data = True
     # Set wrapping/filtering
     if pytexture.sampler is not None:
         pysampler = mh.gltf.data.samplers[pytexture.sampler]
@@ -67,49 +64,38 @@ def texture(
     x -= 340
 
     # UV Transform (for KHR_texture_transform)
-    mapping = mh.node_tree.nodes.new('ShaderNodeMapping')
-    if bpy.app.version < (2, 81, 8):
-        mapping.location = x - 320, y
-    else:
+    needs_tex_transform = 'KHR_texture_transform' in (tex_info.extensions or {})
+    if needs_tex_transform:
+        mapping = mh.node_tree.nodes.new('ShaderNodeMapping')
         mapping.location = x - 160, y + 30
-    mapping.vector_type = 'POINT'
-    if tex_info.extensions and 'KHR_texture_transform' in tex_info.extensions:
+        mapping.vector_type = 'POINT'
+        # Outputs
+        mh.node_tree.links.new(uv_socket, mapping.outputs[0])
+        # Inputs
+        uv_socket = mapping.inputs[0]
+
         transform = tex_info.extensions['KHR_texture_transform']
         transform = texture_transform_gltf_to_blender(transform)
-        if bpy.app.version < (2, 81, 8):
-            mapping.translation[0] = transform['offset'][0]
-            mapping.translation[1] = transform['offset'][1]
-            mapping.rotation[2] = transform['rotation']
-            mapping.scale[0] = transform['scale'][0]
-            mapping.scale[1] = transform['scale'][1]
-        else:
-            mapping.inputs['Location'].default_value[0] = transform['offset'][0]
-            mapping.inputs['Location'].default_value[1] = transform['offset'][1]
-            mapping.inputs['Rotation'].default_value[2] = transform['rotation']
-            mapping.inputs['Scale'].default_value[0] = transform['scale'][0]
-            mapping.inputs['Scale'].default_value[1] = transform['scale'][1]
-    # Outputs
-    mh.node_tree.links.new(uv_socket, mapping.outputs[0])
-    # Inputs
-    uv_socket = mapping.inputs[0]
+        mapping.inputs['Location'].default_value[0] = transform['offset'][0]
+        mapping.inputs['Location'].default_value[1] = transform['offset'][1]
+        mapping.inputs['Rotation'].default_value[2] = transform['rotation']
+        mapping.inputs['Scale'].default_value[0] = transform['scale'][0]
+        mapping.inputs['Scale'].default_value[1] = transform['scale'][1]
 
-    if bpy.app.version < (2, 81, 8):
-        x -= 420
-    else:
         x -= 260
 
     # UV Map
-    uv_map = mh.node_tree.nodes.new('ShaderNodeUVMap')
-    uv_map.location = x - 160, y - 70
-    # Get UVMap
     uv_idx = tex_info.tex_coord or 0
     try:
         uv_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
     except Exception:
         pass
-    uv_map.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
-    # Outputs
-    mh.node_tree.links.new(uv_socket, uv_map.outputs[0])
+    if uv_idx != 0 or needs_tex_transform:
+        uv_map = mh.node_tree.nodes.new('ShaderNodeUVMap')
+        uv_map.location = x - 160, y - 70
+        uv_map.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
+        # Outputs
+        mh.node_tree.links.new(uv_socket, uv_map.outputs[0])
 
 def set_filtering(tex_img, pysampler):
     """Set the filtering/interpolation on an Image Texture from the glTf sampler."""

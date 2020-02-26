@@ -46,28 +46,25 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     pbr_node.location = 10, 300
 
-    # Create material output.
-    # TODO: when the exporter can understand them, use the emission/alpha
-    #       socket on the Principled node instead
-    emission_socket, alpha_socket = make_output_nodes(
+    make_output_nodes(
         mh,
         location=(250, 260),
         shader_socket=pbr_node.outputs[0],
-        make_emission_socket=mh.needs_emissive(),
-        make_alpha_socket=not mh.is_opaque(),
+        make_emission_socket=False,
+        make_alpha_socket=False,
     )
 
     emission(
         mh,
         location=(-200, 860),
-        color_socket=emission_socket,
+        color_socket=pbr_node.inputs['Emission'],
     )
 
     base_color(
         mh,
         location=(-200, 380),
         color_socket=pbr_node.inputs['Base Color'],
-        alpha_socket=alpha_socket,
+        alpha_socket=pbr_node.inputs['Alpha'] if not mh.is_opaque() else None,
     )
 
     metallic_roughness(
@@ -220,39 +217,28 @@ def base_color(
         texture_color_socket = node.inputs['Color1']
         vcolor_color_socket = node.inputs['Color2']
 
-        if bpy.app.version < (2, 81, 8):
-            pass  # No way to get vertex color alpha
-        else:
-            if alpha_socket is not None:
-                node = mh.node_tree.nodes.new('ShaderNodeMath')
-                node.label = 'Mix Vertex Alpha'
-                node.location = x - 140, y - 200
-                node.operation = 'MULTIPLY'
-                # Outputs
-                mh.node_tree.links.new(alpha_socket, node.outputs[0])
-                # Inputs
-                texture_alpha_socket = node.inputs[0]
-                vcolor_alpha_socket = node.inputs[1]
+        if alpha_socket is not None:
+            node = mh.node_tree.nodes.new('ShaderNodeMath')
+            node.label = 'Mix Vertex Alpha'
+            node.location = x - 140, y - 200
+            node.operation = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(alpha_socket, node.outputs[0])
+            # Inputs
+            texture_alpha_socket = node.inputs[0]
+            vcolor_alpha_socket = node.inputs[1]
 
         x -= 200
 
     # Vertex Color
     if mh.vertex_color:
-        if bpy.app.version < (2, 81, 8):
-            node = mh.node_tree.nodes.new('ShaderNodeAttribute')
-            node.attribute_name = 'Col'
-            node.location = x - 270, y - 150
-        else:
-            node = mh.node_tree.nodes.new('ShaderNodeVertexColor')
-            node.layer_name = 'Col'
-            node.location = x - 250, y - 240
+        node = mh.node_tree.nodes.new('ShaderNodeVertexColor')
+        node.layer_name = 'Col'
+        node.location = x - 250, y - 240
         # Outputs
         mh.node_tree.links.new(vcolor_color_socket, node.outputs['Color'])
         if vcolor_alpha_socket is not None:
-            if bpy.app.version < (2, 81, 8):
-                vcolor_alpha_socket.default_value = 1.0
-            else:
-                mh.node_tree.links.new(vcolor_alpha_socket, node.outputs['Alpha'])
+            mh.node_tree.links.new(vcolor_alpha_socket, node.outputs['Alpha'])
 
         x -= 280
 
@@ -462,22 +448,6 @@ def make_output_nodes(
         # Outputs
         shader_socket = node.outputs[0]
 
-        if bpy.app.version < (2, 80, 0):
-            if mh.pymat.alpha_mode == 'MASK':
-                # No alpha clip mode before 2.8, so simulate alpha masking
-                # with a Greater-Than node that clips the alpha to 0 or 1 in
-                # front of the alpha socket.
-                node = mh.node_tree.nodes.new('ShaderNodeMath')
-                node.label = 'Alpha Clip'
-                node.location = x + 50, y - 140
-                node.operation = 'GREATER_THAN'
-                # Outputs
-                mh.node_tree.links.new(alpha_socket, node.outputs[0])
-                # Inputs
-                alpha_socket = node.inputs[0]
-                alpha_cutoff = mh.pymat.alpha_cutoff
-                alpha_cutoff = alpha_cutoff if alpha_cutoff is not None else 0.5
-                node.inputs[1].default_value = alpha_cutoff
 
         x += 480
         y -= 210

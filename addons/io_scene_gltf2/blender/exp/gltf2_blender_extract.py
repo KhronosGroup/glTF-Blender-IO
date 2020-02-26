@@ -64,7 +64,7 @@ class ShapeKey:
 # Functions
 #
 
-def convert_swizzle_normal_and_tangent(loc, armature, blender_object, export_settings):
+def convert_swizzle_normal(loc, armature, blender_object, export_settings):
     """Convert a normal data from Blender coordinate system to glTF coordinate system."""
     if not armature:
         # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
@@ -74,12 +74,10 @@ def convert_swizzle_normal_and_tangent(loc, armature, blender_object, export_set
             return Vector((loc[0], loc[1], loc[2]))
     else:
         # Mesh is skined, we have to apply armature transforms on data
-        if bpy.app.version < (2, 80, 0):
-            apply_matrix = armature.matrix_world.inverted() * blender_object.matrix_world
-            new_loc = (armature.matrix_world * apply_matrix * Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
-        else:
-            apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-            new_loc = apply_matrix.to_quaternion() @ loc
+        apply_matrix = (armature.matrix_world.inverted() @ blender_object.matrix_world).to_3x3().inverted()
+        apply_matrix.transpose()
+        new_loc = ((armature.matrix_world.to_3x3() @ apply_matrix).to_4x4() @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
+
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((new_loc[0], new_loc[2], -new_loc[1]))
         else:
@@ -95,12 +93,8 @@ def convert_swizzle_location(loc, armature, blender_object, export_settings):
             return Vector((loc[0], loc[1], loc[2]))
     else:
         # Mesh is skined, we have to apply armature transforms on data
-        if bpy.app.version < (2, 80, 0):
-            apply_matrix = armature.matrix_world.inverted() * blender_object.matrix_world
-            new_loc = (armature.matrix_world * apply_matrix * Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
-        else:
-            apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-            new_loc = (armature.matrix_world @ apply_matrix @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
+        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+        new_loc = (armature.matrix_world @ apply_matrix @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
 
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((new_loc[0], new_loc[2], -new_loc[1]))
@@ -121,12 +115,8 @@ def convert_swizzle_tangent(tan, armature, blender_object, export_settings):
             return Vector((tan[0], tan[1], tan[2], 1.0))
     else:
         # Mesh is skined, we have to apply armature transforms on data
-        if bpy.app.version < (2, 80, 0):
-            apply_matrix = armature.matrix_world.inverted() * blender_object.matrix_world
-            new_tan = (armature.matrix_world * apply_matrix * Matrix.Translation(Vector((tan[0], tan[1], tan[2])))).to_translation()
-        else:
-            apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-            new_tan = apply_matrix.to_quaternion() @ tan
+        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+        new_tan = apply_matrix.to_quaternion() @ tan
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((new_tan[0], new_tan[2], -new_tan[1], 1.0))
         else:
@@ -620,10 +610,6 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             triangles = tessellate_polygon((polyline,))
 
             for triangle in triangles:
-                if bpy.app.version < (2, 81, 15):
-                    # tessellate_polygon winding-order is reversed in old versions of Blender
-                    # See https://developer.blender.org/T70594
-                    triangle = (triangle[0], triangle[2], triangle[1])
 
                 for triangle_index in triangle:
                     loop_index_list.append(blender_polygon.loop_indices[triangle_index])
@@ -656,14 +642,14 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
             v = convert_swizzle_location(vertex.co, armature, blender_object, export_settings)
             if blender_polygon.use_smooth or blender_mesh.use_auto_smooth:
                 if blender_mesh.has_custom_normals:
-                    n = convert_swizzle_normal_and_tangent(blender_mesh.loops[loop_index].normal, armature, blender_object, export_settings)
+                    n = convert_swizzle_normal(blender_mesh.loops[loop_index].normal, armature, blender_object, export_settings)
                 else:
-                    n = convert_swizzle_normal_and_tangent(vertex.normal, armature, blender_object, export_settings)
+                    n = convert_swizzle_normal(vertex.normal, armature, blender_object, export_settings)
                 if use_tangents:
                     t = convert_swizzle_tangent(blender_mesh.loops[loop_index].tangent, armature, blender_object, export_settings)
                     b = convert_swizzle_location(blender_mesh.loops[loop_index].bitangent, armature, blender_object, export_settings)
             else:
-                n = convert_swizzle_normal_and_tangent(face_normal, armature, blender_object, export_settings)
+                n = convert_swizzle_normal(face_normal, armature, blender_object, export_settings)
                 if use_tangents:
                     t = convert_swizzle_tangent(face_tangent, armature, blender_object, export_settings)
                     b = convert_swizzle_location(face_bitangent, armature, blender_object, export_settings)
@@ -687,20 +673,12 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
                 for color_index in range(0, color_max):
                     color_name = COLOR_PREFIX + str(color_index)
                     color = vertex_colors[color_name].data[loop_index].color
-                    if len(color) == 3:
-                        colors.append([
-                            color_srgb_to_scene_linear(color[0]),
-                            color_srgb_to_scene_linear(color[1]),
-                            color_srgb_to_scene_linear(color[2]),
-                            1.0
-                        ])
-                    else:
-                        colors.append([
-                            color_srgb_to_scene_linear(color[0]),
-                            color_srgb_to_scene_linear(color[1]),
-                            color_srgb_to_scene_linear(color[2]),
-                            color[3]
-                        ])
+                    colors.append([
+                        color_srgb_to_scene_linear(color[0]),
+                        color_srgb_to_scene_linear(color[1]),
+                        color_srgb_to_scene_linear(color[2]),
+                        color[3]
+                    ])
 
             #
 
@@ -790,7 +768,7 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
                             temp_normals[blender_polygon.index * 3 + 0], temp_normals[blender_polygon.index * 3 + 1],
                             temp_normals[blender_polygon.index * 3 + 2])
 
-                    n_morph = convert_swizzle_normal_and_tangent(Vector(n_morph), armature, blender_object, export_settings)
+                    n_morph = convert_swizzle_normal(Vector(n_morph), armature, blender_object, export_settings)
 
                     # Store delta.
                     n_morph -= n

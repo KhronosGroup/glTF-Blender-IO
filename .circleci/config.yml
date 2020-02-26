@@ -3,12 +3,10 @@ jobs:
   build:
     docker:
       - image: node:8-stretch
-    parallelism: 4
+    parallelism: 2
     environment:
       TEST_FILTERS: >-
-        General|blender279b_export
         blender28_export
-        blender279b_roundtrip
         blender28_roundtrip
     steps:
       - checkout
@@ -23,14 +21,6 @@ jobs:
             apt -q update && apt install --no-install-recommends -y -q \
               libglu1-mesa \
               libxi6
-            if [[ $FILTER =~ blender279 ]]; then
-              echo "Installing Blender 2.79"
-              BLENDER279_URL=https://download.blender.org/release/Blender2.79/blender-2.79b-linux-glibc219-x86_64.tar.bz2
-              mkdir /opt/blender279
-              curl -SL "$BLENDER279_URL" | \
-                tar -jx -C /opt/blender279 --strip-components=1
-              ln -s /opt/blender279/blender /usr/local/bin/blender279b
-            fi
             if [[ $FILTER =~ blender28 ]]; then
               BLENDER28_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
                 grep -oe '[^\"]*blender-2\.83[^\"]*linux64[^\"]*' | \
@@ -48,10 +38,6 @@ jobs:
           command: |
             FILTERS=($TEST_FILTERS)
             FILTER=${FILTERS[$CIRCLE_NODE_INDEX]}
-            if [[ $FILTER =~ blender279 ]]; then
-              rm -rf /opt/blender279/2.79/scripts/addons/io_scene_gltf2
-              cp -r addons/io_scene_gltf2 /opt/blender279/2.79/scripts/addons/io_scene_gltf2
-            fi
             if [[ $FILTER =~ blender28 ]]; then
               rm -rf /opt/blender28/2.8*/scripts/addons/io_scene_gltf2
               cp -r addons/io_scene_gltf2 /opt/blender28/2.8*/scripts/addons

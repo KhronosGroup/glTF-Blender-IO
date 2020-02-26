@@ -25,6 +25,7 @@ def compute_vnodes(gltf):
     move_skinned_meshes(gltf)
     fixup_multitype_nodes(gltf)
     correct_cameras_and_lights(gltf)
+    pick_bind_pose(gltf)
     calc_bone_matrices(gltf)
 
 
@@ -181,7 +182,7 @@ def move_skinned_meshes(gltf):
      * Move a skinned mesh to become a child of the armature that skins it.
        Have to ensure the mesh and arma have the same world transform.
      * When we do mesh creation, we will also need to put all the verts in
-       their rest pose (ie. the pose the edit bones are in)
+       the bind pose in arma space.
     """
     ids = list(gltf.vnodes.keys())
     for id in ids:
@@ -334,26 +335,46 @@ def correct_cameras_and_lights(gltf):
             vnode.light_node_idx = None
 
 
+def pick_bind_pose(gltf):
+    """
+    Pick the bind pose for all bones. Skinned meshes will be retargeted onto
+    this bind pose during mesh creation.
+    """
+    for vnode_id in gltf.vnodes:
+        vnode = gltf.vnodes[vnode_id]
+        if vnode.type == VNode.Bone:
+            # For now, use the node TR for bind pose.
+            # TODO: try calculating from inverseBindMatices?
+            vnode.bind_trans = Vector(vnode.trs[0])
+            vnode.bind_rot = Quaternion(vnode.trs[1])
+
+            # Initialize editbones to match bind pose
+            vnode.editbone_trans = Vector(vnode.bind_trans)
+            vnode.editbone_rot = Quaternion(vnode.bind_rot)
+
+
 def calc_bone_matrices(gltf):
     """
-    Calculate bone_arma_mat, the transformation from bone space to armature
-    space for the edit bone, for each bone.
+    Calculate the transformations from bone space to arma space in the bind
+    pose and in the edit bone pose.
     """
     def visit(vnode_id):  # Depth-first walk
         vnode = gltf.vnodes[vnode_id]
         if vnode.type == VNode.Bone:
             if gltf.vnodes[vnode.parent].type == VNode.Bone:
-                parent_arma_mat = gltf.vnodes[vnode.parent].bone_arma_mat
+                parent_bind_mat = gltf.vnodes[vnode.parent].bind_arma_mat
+                parent_editbone_mat = gltf.vnodes[vnode.parent].editbone_arma_mat
             else:
-                parent_arma_mat = Matrix.Identity(4)
+                parent_bind_mat = Matrix.Identity(4)
+                parent_editbone_mat = Matrix.Identity(4)
 
-            t, r, _ = vnode.trs
-            if bpy.app.version < (2, 80, 0):
-                local_to_parent = Matrix.Translation(t) * Quaternion(r).to_matrix().to_4x4()
-                vnode.bone_arma_mat = parent_arma_mat * local_to_parent
-            else:
-                local_to_parent = Matrix.Translation(t) @ Quaternion(r).to_matrix().to_4x4()
-                vnode.bone_arma_mat = parent_arma_mat @ local_to_parent
+            t, r = vnode.bind_trans, vnode.bind_rot
+            local_to_parent = Matrix.Translation(t) @ Quaternion(r).to_matrix().to_4x4()
+            vnode.bind_arma_mat = parent_bind_mat @ local_to_parent
+
+            t, r = vnode.editbone_trans, vnode.editbone_rot
+            local_to_parent = Matrix.Translation(t) @ Quaternion(r).to_matrix().to_4x4()
+            vnode.editbone_arma_mat = parent_editbone_mat @ local_to_parent
 
         for child in vnode.children:
             visit(child)

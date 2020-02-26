@@ -20,8 +20,8 @@ from ...io.imp.gltf2_io_binary import BinaryData
 from .gltf2_blender_animation_utils import simulate_stash, make_fcurve
 
 
-# The glTF curves store the value of the final transform, but in Blender
-# curves animate a pose bone that is relative to the edit bone
+# In Blender we animate a pose bone. The final TRS of the bone depends on
+# both the edit bone and pose bone
 #
 #     Final = EditBone * PoseBone
 #   where
@@ -29,7 +29,7 @@ from .gltf2_blender_animation_utils import simulate_stash, make_fcurve
 #     EditBone = Trans[et] Rot[er]                (edit bones have no scale)
 #     PoseBone = Trans[pt] Rot[pr] Scale[ps]
 #
-# Solving for the PoseBone gives the change we need to apply to the curves
+# Given Final we can solve for the PoseBone we need to use with
 #
 #     pt = Rot[er^{-1}] (ft - et)
 #     pr = er^{-1} fr
@@ -58,24 +58,18 @@ class BlenderBoneAnim():
         else:
             translation_keyframes = (gltf.loc_gltf_to_blender(vals) for vals in values)
 
-        bind_trans, bind_rot, _ = vnode.trs
-        bind_rot_inv = bind_rot.conjugated()
-
-        if bpy.app.version < (2, 80, 0):
-            final_translations = [
-                bind_rot_inv * (trans - bind_trans)
-                for trans in translation_keyframes
-            ]
-        else:
-            final_translations = [
-                bind_rot_inv @ (trans - bind_trans)
-                for trans in translation_keyframes
-            ]
+        # Calculate pose bone trans from final bone trans
+        edit_trans, edit_rot = vnode.editbone_trans, vnode.editbone_rot
+        edit_rot_inv = edit_rot.conjugated()
+        pose_translations = [
+            edit_rot_inv @ (trans - edit_trans)
+            for trans in translation_keyframes
+        ]
 
         BlenderBoneAnim.fill_fcurves(
             obj.animation_data.action,
             keys,
-            final_translations,
+            pose_translations,
             group_name,
             blender_path,
             animation.samplers[channel.sampler].interpolation
@@ -99,30 +93,23 @@ class BlenderBoneAnim():
         else:
             quat_keyframes = [gltf.quaternion_gltf_to_blender(vals) for vals in values]
 
-        _, bind_rot, _ = vnode.trs
-        bind_rot_inv = bind_rot.conjugated()
-
-
-        if bpy.app.version < (2, 80, 0):
-            final_rots = [
-                bind_rot_inv * rot
-                for rot in quat_keyframes
-            ]
-        else:
-            final_rots = [
-                bind_rot_inv @ rot
-                for rot in quat_keyframes
-            ]
+        # Calculate pose bone rotation from final bone rotation
+        edit_rot = vnode.editbone_rot
+        edit_rot_inv = edit_rot.conjugated()
+        pose_rots = [
+            edit_rot_inv @ rot
+            for rot in quat_keyframes
+        ]
 
         # Manage antipodal quaternions
-        for i in range(1, len(final_rots)):
-            if final_rots[i].dot(final_rots[i-1]) < 0:
-                final_rots[i] = -final_rots[i]
+        for i in range(1, len(pose_rots)):
+            if pose_rots[i].dot(pose_rots[i-1]) < 0:
+                pose_rots[i] = -pose_rots[i]
 
         BlenderBoneAnim.fill_fcurves(
             obj.animation_data.action,
             keys,
-            final_rots,
+            pose_rots,
             group_name,
             blender_path,
             animation.samplers[channel.sampler].interpolation
@@ -139,17 +126,17 @@ class BlenderBoneAnim():
 
         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
             # TODO manage tangent?
-            final_scales = [
+            scale_keyframes = [
                 gltf.scale_gltf_to_blender(values[idx * 3 + 1])
                 for idx in range(0, len(keys))
             ]
         else:
-            final_scales = [gltf.scale_gltf_to_blender(vals) for vals in values]
+            scale_keyframes = [gltf.scale_gltf_to_blender(vals) for vals in values]
 
         BlenderBoneAnim.fill_fcurves(
             obj.animation_data.action,
             keys,
-            final_scales,
+            scale_keyframes,
             group_name,
             blender_path,
             animation.samplers[channel.sampler].interpolation
@@ -191,6 +178,7 @@ class BlenderBoneAnim():
         if not action:
             name = animation.track_name + "_" + obj.name
             action = bpy.data.actions.new(name)
+            action.id_root = 'OBJECT'
             gltf.needs_stash.append((obj, animation.track_name, action))
             gltf.action_cache[obj.name] = action
 
