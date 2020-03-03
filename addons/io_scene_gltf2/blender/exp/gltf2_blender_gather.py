@@ -53,7 +53,10 @@ def __gather_scene(blender_scene, export_settings):
 
     for blender_object in blender_scene.objects:
         if blender_object.parent is None:
-            node = gltf2_blender_gather_nodes.gather_node(blender_object, blender_scene, None, export_settings)
+            node = gltf2_blender_gather_nodes.gather_node(
+                blender_object,
+                blender_object.library.name if blender_object.library else None,
+                blender_scene, None, export_settings)
             if node is not None:
                 scene.nodes.append(node)
 
@@ -68,7 +71,9 @@ def __gather_animations(blender_scene, export_settings):
 
     for blender_object in blender_scene.objects:
         # First check if this object is exported or not. Do not export animation of not exported object
-        obj_node = gltf2_blender_gather_nodes.gather_node(blender_object, blender_scene, None, export_settings)
+        obj_node = gltf2_blender_gather_nodes.gather_node(blender_object,
+            blender_object.library.name if blender_object.library else None,
+            blender_scene, None, export_settings)
         if obj_node is not None:
             animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(blender_object, merged_tracks, len(animations), export_settings)
             animations += animations_

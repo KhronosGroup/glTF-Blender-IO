@@ -31,7 +31,7 @@ from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
-def gather_node(blender_object, blender_scene, dupli_object_parent, export_settings):
+def gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
     # custom cache to avoid cache miss when called from animation
     # with blender_scene=None
 
@@ -40,15 +40,15 @@ def gather_node(blender_object, blender_scene, dupli_object_parent, export_setti
         gather_node.__cache = {}
         gather_node.__export_settings = export_settings
 
-    if blender_scene is None and blender_object.name in gather_node.__cache:
-        return gather_node.__cache[blender_object.name]
+    if blender_scene is None and (blender_object.name, library) in gather_node.__cache:
+        return gather_node.__cache[(blender_object.name, library)]
 
-    node = __gather_node(blender_object, blender_scene, dupli_object_parent, export_settings)
-    gather_node.__cache[blender_object.name] = node
+    node = __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings)
+    gather_node.__cache[(blender_object.name, library)] = node
     return node
 
 @cached
-def __gather_node(blender_object, blender_scene, dupli_object_parent, export_settings):
+def __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
     # If blender_scene is None, we are coming from animation export
     # Check to know if object is exported is already done, so we don't check
     # again if object is instanced in scene : this check was already done when exporting object itself
@@ -61,7 +61,7 @@ def __gather_node(blender_object, blender_scene, dupli_object_parent, export_set
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
-        mesh=__gather_mesh(blender_object, export_settings),
+        mesh=__gather_mesh(blender_object, library, export_settings),
         name=__gather_name(blender_object, export_settings),
         rotation=None,
         scale=None,
@@ -126,7 +126,9 @@ def __gather_children(blender_object, blender_scene, export_settings):
             # as the object should be a child of the specific bone,
             # not the Armature object
             continue
-        node = gather_node(child_object, blender_scene, None, export_settings)
+        node = gather_node(child_object,
+            child_object.library.name if child_object.library else None,
+            blender_scene, None, export_settings)
         if node is not None:
             children.append(node)
     # blender dupli objects
@@ -164,7 +166,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             parent_joint = find_parent_joint(root_joints, child.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(child, None, None, export_settings)
+            child_node = gather_node(child, None, None, None, export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
@@ -232,7 +234,7 @@ def __gather_matrix(blender_object, export_settings):
     return []
 
 
-def __gather_mesh(blender_object, export_settings):
+def __gather_mesh(blender_object, library, export_settings):
     if blender_object.type != "MESH":
         return None
 
@@ -309,6 +311,7 @@ def __gather_mesh(blender_object, export_settings):
                 blender_object_for_skined_data = blender_object
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
+                                                   library,
                                                    blender_object_for_skined_data,
                                                    vertex_groups,
                                                    modifiers,
