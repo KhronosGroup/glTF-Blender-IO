@@ -215,7 +215,14 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    # keep it for compatibility (for now)
     export_selected: BoolProperty(
+        name='Selected Objects',
+        description='Export selected objects only',
+        default=False
+    )
+
+    use_selected: BoolProperty(
         name='Selected Objects',
         description='Export selected objects only',
         default=False
@@ -345,7 +352,13 @@ class ExportGLTF2_Base:
         if settings:
             try:
                 for (k, v) in settings.items():
-                    setattr(self, k, v)
+                    if k == "export_selected": # Back compatibility for export_selected --> use_selected
+                        setattr(self, "use_selected", v)
+                        del settings[k]
+                        settings["use_selected"] = v
+                        print("export_selected is now renamed use_selected, and will be deleted in a few release")
+                    else:
+                        setattr(self, k, v)
                 self.will_save_settings = True
 
             except (AttributeError, TypeError):
@@ -417,7 +430,15 @@ class ExportGLTF2_Base:
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
-        export_settings['gltf_selected'] = self.export_selected
+
+        # compatibility after renaming export_selected to use_selected
+        if self.export_selected is True:
+            self.report({"WARNING"}, "export_selected is now renamed use_selected, and will be deleted in a few release")
+            export_settings['gltf_selected'] = self.export_selected
+        else:
+            export_settings['gltf_selected'] = self.use_selected
+
+        # export_settings['gltf_selected'] = self.use_selected This can be uncomment when removing compatibility of export_selected
         export_settings['gltf_layers'] = True  # self.export_layers
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
@@ -535,7 +556,7 @@ class GLTF_PT_export_include(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, 'export_selected')
+        layout.prop(operator, 'use_selected')
         layout.prop(operator, 'export_extras')
         layout.prop(operator, 'export_cameras')
         layout.prop(operator, 'export_lights')
