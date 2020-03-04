@@ -352,7 +352,13 @@ class ExportGLTF2_Base:
         if settings:
             try:
                 for (k, v) in settings.items():
-                    setattr(self, k, v)
+                    if k == "export_selected": # Back compatibility for export_selected --> use_selected
+                        setattr(self, "use_selected", v)
+                        del settings[k]
+                        settings["use_selected"] = v
+                        print("export_selected is now renamed use_selected, and will be deleted in a few release")
+                    else:
+                        setattr(self, k, v)
                 self.will_save_settings = True
 
             except (AttributeError, TypeError):
