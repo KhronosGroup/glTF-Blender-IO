@@ -20,7 +20,7 @@ bl_info = {
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
-    'doc_url': "https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html",
+    'doc_url': "{BLENDER_MANUAL_URL}/addons/import_export/scene_gltf2.html",
     'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",
     'support': 'OFFICIAL',
     'category': 'Import-Export',
