@@ -39,8 +39,8 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
         extensions=__gather_extensions(blender_mesh, vertex_groups, modifiers, export_settings),
         extras=__gather_extras(blender_mesh, vertex_groups, modifiers, export_settings),
         name=__gather_name(blender_mesh, vertex_groups, modifiers, export_settings),
+        weights=__gather_weights(blender_mesh, vertex_groups, modifiers, export_settings),
         primitives=__gather_primitives(blender_mesh, blender_object, vertex_groups, modifiers, material_names, export_settings),
-        weights=__gather_weights(blender_mesh, vertex_groups, modifiers, export_settings)
     )
 
     if len(mesh.primitives) == 0:
@@ -134,15 +134,6 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
                      modifiers: Optional[bpy.types.ObjectModifiers],
                      export_settings
                      ) -> Optional[List[float]]:
-
-    # Seems that in some files, when using Apply Modifier, shape_keys return an error
-    # ReferenceError: StructRNA of type Mesh has been removed
-    # Because shapekeys are not exported in that case, we can return None
-    try:
-        blender_mesh.shape_keys
-    except:
-        return None
-
     if not export_settings[MORPH] or not blender_mesh.shape_keys:
         return None
 
