@@ -51,8 +51,18 @@ def __gather_scene(blender_scene, export_settings):
         nodes=[]
     )
 
-    for blender_object in blender_scene.objects:
-        if blender_object.parent is None:
+    # If there are some library, check if there are some proxy on armatures
+    proxies = {}
+    for blender_object in [obj for obj in blender_scene.objects if obj.proxy is not None]:
+        proxies[blender_object.proxy.name] = blender_object.name
+
+    for _blender_object in [obj for obj in blender_scene.objects if obj.proxy is None]:
+        if _blender_object.parent is None:
+            if _blender_object.name in proxies:
+                blender_object = bpy.data.objects[proxies[_blender_object.name]]
+            else:
+                blender_object = _blender_object
+
             node = gltf2_blender_gather_nodes.gather_node(
                 blender_object,
                 blender_object.library.name if blender_object.library else None,

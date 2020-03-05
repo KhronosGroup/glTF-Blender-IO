@@ -120,7 +120,7 @@ def __gather_camera(blender_object, export_settings):
 def __gather_children(blender_object, blender_scene, export_settings):
     children = []
     # standard children
-    for child_object in blender_object.children:
+    for child_object in [obj for obj in blender_object.children if obj.proxy is None]:
         if child_object.parent_bone:
             # this is handled further down,
             # as the object should be a child of the specific bone,
@@ -134,6 +134,8 @@ def __gather_children(blender_object, blender_scene, export_settings):
     # blender dupli objects
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
         for dupli_object in blender_object.instance_collection.objects:
+            if dupli_object.parent is not None:
+                continue
             node = gather_node(dupli_object,
                 dupli_object.library.name if dupli_object.library else None,
                 blender_scene, blender_object.name, export_settings)
