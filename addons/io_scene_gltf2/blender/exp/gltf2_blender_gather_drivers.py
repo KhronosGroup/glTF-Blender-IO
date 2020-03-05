@@ -29,7 +29,7 @@ def get_sk_drivers(blender_armature):
             continue
         # child.data can be an armature - which has no shapekeys
         if not hasattr(child.data, 'shape_keys'):
-	        continue
+            continue
         if not child.data.shape_keys:
             continue
         if not child.data.shape_keys.animation_data:
