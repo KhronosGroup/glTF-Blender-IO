@@ -134,7 +134,9 @@ def __gather_children(blender_object, blender_scene, export_settings):
     # blender dupli objects
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
         for dupli_object in blender_object.instance_collection.objects:
-            node = gather_node(dupli_object, blender_scene, blender_object.name, export_settings)
+            node = gather_node(dupli_object,
+                dupli_object.library.name if dupli_object.library else None,
+                blender_scene, blender_object.name, export_settings)
             if node is not None:
                 children.append(node)
 
