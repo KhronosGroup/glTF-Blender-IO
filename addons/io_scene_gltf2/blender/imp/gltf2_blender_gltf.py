@@ -23,8 +23,9 @@ class BlenderGlTF():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, profile=False):
+    def create(gltf):
         """Create glTF main method, with optional profiling"""
+        profile = bpy.app.debug_value == 102
         if profile:
             import cProfile, pstats, io
             from pstats import SortKey
