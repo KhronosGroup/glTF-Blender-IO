@@ -24,7 +24,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 
 @cached
-def gather_joint(blender_bone, export_settings):
+def gather_joint(blender_object, blender_bone, export_settings):
     """
     Generate a glTF2 node from a blender bone, as joints in glTF2 are simply nodes.
 

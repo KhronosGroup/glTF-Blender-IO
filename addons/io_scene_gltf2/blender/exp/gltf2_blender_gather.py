@@ -51,18 +51,9 @@ def __gather_scene(blender_scene, export_settings):
         nodes=[]
     )
 
-    # If there are some library, check if there are some proxy on armatures
-    blender_scene['glTF_proxies'] = {}
-    for blender_object in [obj for obj in blender_scene.objects if obj.proxy is not None]:
-        blender_scene['glTF_proxies'][blender_object.proxy.name] = blender_object.name
-
     for _blender_object in [obj for obj in blender_scene.objects if obj.proxy is None]:
         if _blender_object.parent is None:
-            if _blender_object.name in blender_scene['glTF_proxies']:
-                blender_object = bpy.data.objects[blender_scene['glTF_proxies'][_blender_object.name]]
-            else:
-                blender_object = _blender_object
-
+            blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
             node = gltf2_blender_gather_nodes.gather_node(
                 blender_object,
                 blender_object.library.name if blender_object.library else None,
@@ -72,7 +63,6 @@ def __gather_scene(blender_scene, export_settings):
 
     export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)
 
-    del blender_scene['glTF_proxies']
 
     return scene
 
@@ -81,13 +71,17 @@ def __gather_animations(blender_scene, export_settings):
     animations = []
     merged_tracks = {}
 
-    for blender_object in blender_scene.objects:
+    for _blender_object in blender_scene.objects:
+
+        blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
+
         # First check if this object is exported or not. Do not export animation of not exported object
         obj_node = gltf2_blender_gather_nodes.gather_node(blender_object,
             blender_object.library.name if blender_object.library else None,
             blender_scene, None, export_settings)
         if obj_node is not None:
-            animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(blender_object, merged_tracks, len(animations), export_settings)
+            # Check was done on armature, but use here the _proxy object, because this is where the animation is
+            animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(_blender_object, merged_tracks, len(animations), export_settings)
             animations += animations_
 
     if export_settings['gltf_nla_strips'] is False:

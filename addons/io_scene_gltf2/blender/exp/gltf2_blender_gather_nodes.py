@@ -120,17 +120,14 @@ def __gather_camera(blender_object, export_settings):
 def __gather_children(blender_object, blender_scene, export_settings):
     children = []
     # standard children
-    for _child_object in [obj for obj in blender_object.children if obj.proxy is None]:
+    for _child_object in blender_object.children:
         if _child_object.parent_bone:
             # this is handled further down,
             # as the object should be a child of the specific bone,
             # not the Armature object
             continue
 
-        if _child_object.name in blender_scene['glTF_proxies']:
-            child_object = bpy.data.objects[blender_scene['glTF_proxies'][_child_object.name]]
-        else:
-            child_object = _child_object
+        child_object = _child_object.proxy if _child_object.proxy else _child_object
 
         node = gather_node(child_object,
             child_object.library.name if child_object.library else None,
@@ -142,6 +139,8 @@ def __gather_children(blender_object, blender_scene, export_settings):
         for dupli_object in blender_object.instance_collection.objects:
             if dupli_object.parent is not None:
                 continue
+            if dupli_object.type == "ARMATURE":
+                continue # There is probably a proxy
             node = gather_node(dupli_object,
                 dupli_object.library.name if dupli_object.library else None,
                 blender_scene, blender_object.name, export_settings)
@@ -158,7 +157,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             bones = [blender_object.pose.bones[b.name] for b in bones]
         for blender_bone in bones:
             if not blender_bone.parent:
-                joint = gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
+                joint = gltf2_blender_gather_joints.gather_joint(blender_object, blender_bone, export_settings)
                 children.append(joint)
                 root_joints.append(joint)
         # handle objects directly parented to bones
