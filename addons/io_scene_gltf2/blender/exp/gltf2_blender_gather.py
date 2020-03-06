@@ -52,14 +52,14 @@ def __gather_scene(blender_scene, export_settings):
     )
 
     # If there are some library, check if there are some proxy on armatures
-    proxies = {}
+    blender_scene['glTF_proxies'] = {}
     for blender_object in [obj for obj in blender_scene.objects if obj.proxy is not None]:
-        proxies[blender_object.proxy.name] = blender_object.name
+        blender_scene['glTF_proxies'][blender_object.proxy.name] = blender_object.name
 
     for _blender_object in [obj for obj in blender_scene.objects if obj.proxy is None]:
         if _blender_object.parent is None:
-            if _blender_object.name in proxies:
-                blender_object = bpy.data.objects[proxies[_blender_object.name]]
+            if _blender_object.name in blender_scene['glTF_proxies']:
+                blender_object = bpy.data.objects[blender_scene['glTF_proxies'][_blender_object.name]]
             else:
                 blender_object = _blender_object
 
@@ -71,6 +71,8 @@ def __gather_scene(blender_scene, export_settings):
                 scene.nodes.append(node)
 
     export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)
+
+    del blender_scene['glTF_proxies']
 
     return scene
 

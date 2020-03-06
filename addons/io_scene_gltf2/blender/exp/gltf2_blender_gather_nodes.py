@@ -120,12 +120,18 @@ def __gather_camera(blender_object, export_settings):
 def __gather_children(blender_object, blender_scene, export_settings):
     children = []
     # standard children
-    for child_object in [obj for obj in blender_object.children if obj.proxy is None]:
-        if child_object.parent_bone:
+    for _child_object in [obj for obj in blender_object.children if obj.proxy is None]:
+        if _child_object.parent_bone:
             # this is handled further down,
             # as the object should be a child of the specific bone,
             # not the Armature object
             continue
+
+        if _child_object.name in blender_scene['glTF_proxies']:
+            child_object = bpy.data.objects[blender_scene['glTF_proxies'][_child_object.name]]
+        else:
+            child_object = _child_object
+
         node = gather_node(child_object,
             child_object.library.name if child_object.library else None,
             blender_scene, None, export_settings)
