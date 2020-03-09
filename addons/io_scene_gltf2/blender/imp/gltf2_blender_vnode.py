@@ -429,7 +429,7 @@ def pick_bone_rotation(gltf, bone_id, parent_rot):
 
     if gltf.import_settings['bone_heuristic'] == 'BLENDER':
         return Quaternion((2**0.5/2, 2**0.5/2, 0, 0))
-    elif gltf.import_settings['bone_heuristic'] == 'TEMPERANCE':
+    elif gltf.import_settings['bone_heuristic'] in ['TEMPERANCE', 'FORTUNE']:
         return temperance(gltf, bone_id, parent_rot)
 
 def temperance(gltf, bone_id, parent_rot):
@@ -445,7 +445,11 @@ def temperance(gltf, bone_id, parent_rot):
     if child_locs:
         centroid = sum(child_locs, Vector((0, 0, 0)))
         rot = Vector((0, 1, 0)).rotation_difference(centroid)
-        rot = nearby_signed_perm_matrix(rot).to_quaternion()
+        if gltf.import_settings['bone_heuristic'] == 'TEMPERANCE':
+            # Snap to the local axes; required for local_rotation to be
+            # accurate when vnode has a non-uniform scaling.
+            # FORTUNE skips this, so it may look better, but may have errors.
+            rot = nearby_signed_perm_matrix(rot).to_quaternion()
         return rot
 
     return parent_rot
