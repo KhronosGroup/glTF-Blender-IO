@@ -24,7 +24,26 @@ class BlenderGlTF():
 
     @staticmethod
     def create(gltf):
-        """Create glTF main method."""
+        """Create glTF main method, with optional profiling"""
+        profile = bpy.app.debug_value == 102
+        if profile:
+            import cProfile, pstats, io
+            from pstats import SortKey
+            pr = cProfile.Profile()
+            pr.enable()
+            BlenderGlTF._create(gltf)
+            pr.disable()
+            s = io.StringIO()
+            sortby = SortKey.TIME
+            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            ps.print_stats()
+            print(s.getvalue())
+        else:
+            BlenderGlTF._create(gltf)
+
+    @staticmethod
+    def _create(gltf):
+        """Create glTF main worker method."""
         BlenderGlTF.set_convert_functions(gltf)
         BlenderGlTF.pre_compute(gltf)
         BlenderScene.create(gltf)
