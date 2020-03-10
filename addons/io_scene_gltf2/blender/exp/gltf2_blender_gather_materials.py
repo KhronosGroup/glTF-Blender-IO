@@ -271,7 +271,7 @@ def __gather_clearcoat_extension(blender_material, export_settings):
             clearcoat_extension['clearcoatRoughnessTexture'] = combined_texture
 
     if __has_image_node_from_socket(clearcoat_normal_socket):
-        clearcoat_extension['clearcoatNormalTexture'] = gltf2_blender_gather_texture_info.gather_texture_info(
+        clearcoat_extension['clearcoatNormalTexture'] = gltf2_blender_gather_material_normal_texture_info_class.gather_material_normal_texture_info_class(
             (clearcoat_normal_socket,),
             export_settings
         )
