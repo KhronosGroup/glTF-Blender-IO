@@ -15,12 +15,12 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 2, 33),
+    "version": (1, 2, 38),
     'blender': (2, 82, 7),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
-    'wiki_url': "https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html",
+    'doc_url': "{BLENDER_MANUAL_URL}/addons/import_export/scene_gltf2.html",
     'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",
     'support': 'OFFICIAL',
     'category': 'Import-Export',
@@ -215,7 +215,14 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    # keep it for compatibility (for now)
     export_selected: BoolProperty(
+        name='Selected Objects',
+        description='Export selected objects only',
+        default=False
+    )
+
+    use_selected: BoolProperty(
         name='Selected Objects',
         description='Export selected objects only',
         default=False
@@ -345,7 +352,13 @@ class ExportGLTF2_Base:
         if settings:
             try:
                 for (k, v) in settings.items():
-                    setattr(self, k, v)
+                    if k == "export_selected": # Back compatibility for export_selected --> use_selected
+                        setattr(self, "use_selected", v)
+                        del settings[k]
+                        settings["use_selected"] = v
+                        print("export_selected is now renamed use_selected, and will be deleted in a few release")
+                    else:
+                        setattr(self, k, v)
                 self.will_save_settings = True
 
             except (AttributeError, TypeError):
@@ -417,7 +430,15 @@ class ExportGLTF2_Base:
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
-        export_settings['gltf_selected'] = self.export_selected
+
+        # compatibility after renaming export_selected to use_selected
+        if self.export_selected is True:
+            self.report({"WARNING"}, "export_selected is now renamed use_selected, and will be deleted in a few release")
+            export_settings['gltf_selected'] = self.export_selected
+        else:
+            export_settings['gltf_selected'] = self.use_selected
+
+        # export_settings['gltf_selected'] = self.use_selected This can be uncomment when removing compatibility of export_selected
         export_settings['gltf_layers'] = True  # self.export_layers
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
@@ -535,7 +556,7 @@ class GLTF_PT_export_include(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, 'export_selected')
+        layout.prop(operator, 'use_selected')
         layout.prop(operator, 'export_extras')
         layout.prop(operator, 'export_cameras')
         layout.prop(operator, 'export_lights')
@@ -835,11 +856,26 @@ class ImportGLTF2(Operator, ImportHelper):
         description="How normals are computed during import",
         default="NORMALS")
 
+    bone_heuristic: EnumProperty(
+        name="Bone Dir",
+        items=(
+            ("BLENDER", "Blender (+Y)",
+                "Round-trips bone directions in glTFs exported from Blender.\n"
+                "Bone tips are placed on their local +Y axis (in glTF space)"),
+            ("TEMPERANCE", "Temperance",
+                "Okay for many different models.\n"
+                "Bone tips are placed at a child's root")
+        ),
+        description="Heuristic for placing bones. Tries to make bones pretty",
+        default="TEMPERANCE",
+    )
+
     def draw(self, context):
         layout = self.layout
 
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'import_shading')
+        layout.prop(self, 'bone_heuristic')
 
     def execute(self, context):
         return self.import_gltf2(context)

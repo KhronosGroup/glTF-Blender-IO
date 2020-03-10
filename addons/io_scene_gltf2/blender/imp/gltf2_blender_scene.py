@@ -91,4 +91,3 @@ class BlenderScene():
                 vnode = gltf.vnodes[vnode.children[0]]
 
         bpy.context.view_layer.objects.active = vnode.blender_object
-

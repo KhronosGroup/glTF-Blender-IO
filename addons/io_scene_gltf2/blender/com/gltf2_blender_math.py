@@ -170,3 +170,45 @@ def transform_value(value: Vector, _: Matrix = Matrix.Identity(4)) -> Vector:
 def round_if_near(value: float, target: float) -> float:
     """If value is very close to target, round to target."""
     return value if abs(value - target) > 2.0e-6 else target
+
+def scale_rot_swap_matrix(rot):
+    """Returns a matrix m st. Scale[s] Rot[rot] = Rot[rot] Scale[m s].
+    If rot.to_matrix() is a signed permutation matrix, works for any s.
+    Otherwise works only if s is a uniform scaling.
+    """
+    m = nearby_signed_perm_matrix(rot)  # snap to signed perm matrix
+    m.transpose()  # invert permutation
+    for i in range(3):
+        for j in range(3):
+            m[i][j] = abs(m[i][j])  # discard sign
+    return m
+
+def nearby_signed_perm_matrix(rot):
+    """Returns a signed permutation matrix close to rot.to_matrix().
+    (A signed permutation matrix is like a permutation matrix, except
+    the non-zero entries can be ±1.)
+    """
+    m = rot.to_matrix()
+    x, y, z = m[0], m[1], m[2]
+
+    # Set the largest entry in the first row to ±1
+    a, b, c = abs(x[0]), abs(x[1]), abs(x[2])
+    i = 0 if a >= b and a >= c else 1 if b >= c else 2
+    x[i] = 1 if x[i] > 0 else -1
+    x[(i+1) % 3] = 0
+    x[(i+2) % 3] = 0
+
+    # Same for second row: only two columns to consider now.
+    a, b = abs(y[(i+1) % 3]), abs(y[(i+2) % 3])
+    j = (i+1) % 3 if a >= b else (i+2) % 3
+    y[j] = 1 if y[j] > 0 else -1
+    y[(j+1) % 3] = 0
+    y[(j+2) % 3] = 0
+
+    # Same for third row: only one column left
+    k = (0 + 1 + 2) - i - j
+    z[k] = 1 if z[k] > 0 else -1
+    z[(k+1) % 3] = 0
+    z[(k+2) % 3] = 0
+
+    return m
