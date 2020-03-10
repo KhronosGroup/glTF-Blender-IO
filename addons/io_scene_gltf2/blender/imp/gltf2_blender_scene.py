@@ -97,7 +97,7 @@ class BlenderScene():
                     return  # no nodes
                 vnode = gltf.vnodes[vnode.children[0]]
 
-        if gltf.vnodes[vnode.parent].type != VNode.DummyRoot:
-            vnode = gltf.vnodes[vnode.parent]
+        if vnode.type == VNode.Bone:
+            vnode = gltf.vnodes[vnode.bone_arma]
 
         bpy.context.view_layer.objects.active = vnode.blender_object
