@@ -913,11 +913,11 @@ class ImportGLTF2(Operator, ImportHelper):
         if not success:
             self.report({'ERROR'}, txt)
             return {'CANCELLED'}
-        self.gltf_importer.log.critical("Data are loaded, start creating Blender stuff")
+        print("Data are loaded, start creating Blender stuff")
         start_time = time.time()
         BlenderGlTF.create(self.gltf_importer)
         elapsed_s = "{:.2f}s".format(time.time() - start_time)
-        self.gltf_importer.log.critical("glTF import finished in " + elapsed_s)
+        print("glTF import finished in " + elapsed_s)
         self.gltf_importer.log.removeHandler(self.gltf_importer.log_handler)
 
         return {'FINISHED'}
