@@ -58,7 +58,7 @@ class BlenderImage():
                 path = tmp_file.name
 
             num_images = len(bpy.data.images)
-            blender_image = bpy.data.images.load(path, check_existing=img_from_file)
+            blender_image = bpy.data.images.load(os.path.abspath(path), check_existing=img_from_file)
             if len(bpy.data.images) != num_images:  # If created a new image
                 blender_image.name = img_name
                 if gltf.import_settings['import_pack_images'] or not img_from_file:
