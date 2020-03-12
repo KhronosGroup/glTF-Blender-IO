@@ -94,6 +94,11 @@ def __gather_animations(blender_scene, export_settings):
     to_delete_idx = []
     for merged_anim_track in merged_tracks.keys():
         if len(merged_tracks[merged_anim_track]) < 2:
+
+            # There is only 1 animation in the track
+            # If name of the track is not a default name, use this name for action
+            animations[0].name = merged_anim_track
+
             continue
 
         base_animation_idx = None

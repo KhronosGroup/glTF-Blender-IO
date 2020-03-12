@@ -18,6 +18,12 @@ Notes:
 * 2.82 is the current stable release. Check the `blender-v2.82-release` branch.
 * master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become 2.83.
 
+### Legacy 2.79 Support
+
+The final version of this addon with legacy support for Blender 2.79 is available on the [2.79 Release Page](https://github.com/KhronosGroup/glTF-Blender-IO/releases/tag/2.79).
+
+Blender 2.80 and higher bundle this addon in the main Blender install package, so no 3rd-party install is required.
+
 Credits
 -------
 
