@@ -43,6 +43,14 @@ def gather_animations(blender_object: bpy.types.Object,
     current_action = None
     if blender_object.animation_data and blender_object.animation_data.action:
         current_action = blender_object.animation_data.action
+    # Remove any solo (starred) NLA track. Restored after export
+    solo_track = None
+    if blender_object.animation_data:
+        for track in blender_object.animation_data.nla_tracks:
+            if track.is_solo:
+                solo_track = track
+                track.is_solo = False
+                break
 
     # Export all collected actions.
     for blender_action, track_name in blender_actions:
@@ -78,6 +86,7 @@ def gather_animations(blender_object: bpy.types.Object,
                     tracks[track_name].append(offset + len(animations)-1) # Store index of animation in animations
 
     # Restore action status
+    # TODO: do this in a finally
     if blender_object.animation_data:
         if blender_object.animation_data.action is not None:
             if current_action is None:
@@ -86,6 +95,8 @@ def gather_animations(blender_object: bpy.types.Object,
             elif blender_object.animation_data.action.name != current_action.name:
                 # Restore action that was active at start of exporting
                 blender_object.animation_data.action = current_action
+        if solo_track is not None:
+            solo_track.is_solo = True
 
     return animations, tracks
 
