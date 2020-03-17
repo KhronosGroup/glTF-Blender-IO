@@ -87,7 +87,7 @@ def __gather_animations(blender_scene, export_settings):
 
             # There is only 1 animation in the track
             # If name of the track is not a default name, use this name for action
-            animations[0].name = merged_anim_track
+            animations[merged_tracks[merged_anim_track][0]].name = merged_anim_track
 
             continue
 
