@@ -14,6 +14,7 @@
 
 import bpy
 from mathutils import Vector, Quaternion, Matrix
+from ...io.imp.gltf2_io_binary import BinaryData
 
 from ..com.gltf2_blender_math import scale_rot_swap_matrix, nearby_signed_perm_matrix
 
@@ -364,13 +365,42 @@ def pick_bind_pose(gltf):
     Pick the bind pose for all bones. Skinned meshes will be retargeted onto
     this bind pose during mesh creation.
     """
+    if gltf.import_settings['guess_original_bind_pose']:
+        # Record inverse bind matrices. We're going to milk them for information
+        # about the original bind pose.
+        inv_binds = {'root': Matrix.Identity(4)}
+        for skin in gltf.data.skins or []:
+            if skin.inverse_bind_matrices is None:
+                continue
+
+            # Assume inverse bind matrices are calculated relative to the skeleton
+            skel = skin.skeleton
+            if skel is not None:
+                if skel in skin.joints:
+                    skel = gltf.vnodes[skel].parent
+                if skel not in inv_binds:
+                    inv_binds[skel] = Matrix.Identity(4)
+
+            skin_inv_binds = BinaryData.get_data_from_accessor(gltf, skin.inverse_bind_matrices)
+            skin_inv_binds = [gltf.matrix_gltf_to_blender(m) for m in skin_inv_binds]
+            for i, joint in enumerate(skin.joints):
+                inv_binds[joint] = skin_inv_binds[i]
+
     for vnode_id in gltf.vnodes:
         vnode = gltf.vnodes[vnode_id]
         if vnode.type == VNode.Bone:
-            # For now, use the node TR for bind pose.
-            # TODO: try calculating from inverseBindMatices?
+            # Initialize bind pose to default pose (from gltf.data.nodes)
             vnode.bind_trans = Vector(vnode.base_trs[0])
             vnode.bind_rot = Quaternion(vnode.base_trs[1])
+
+            if gltf.import_settings['guess_original_bind_pose']:
+                # Try to guess bind pose from inverse bind matrices
+                if vnode_id in inv_binds and vnode.parent in inv_binds:
+                    # (bind matrix) = (parent bind matrix) (bind local). Solve for bind local...
+                    bind_local = inv_binds[vnode.parent] @ inv_binds[vnode_id].inverted_safe()
+                    t, r, _s = bind_local.decompose()
+                    vnode.bind_trans = t
+                    vnode.bind_rot = r
 
             # Initialize editbones to match bind pose
             vnode.editbone_trans = Vector(vnode.bind_trans)

@@ -870,11 +870,22 @@ class ImportGLTF2(Operator, ImportHelper):
         default="TEMPERANCE",
     )
 
+    guess_original_bind_pose: BoolProperty(
+        name='Guess original bind pose',
+        description=(
+            'Try to guess the original bind pose for skinned meshes from '
+            'the inverse bind matrices.\n'
+            'When off, use default/rest pose as bind pose'
+        ),
+        default=True,
+    )
+
     def draw(self, context):
         layout = self.layout
 
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'import_shading')
+        layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
 
     def execute(self, context):
