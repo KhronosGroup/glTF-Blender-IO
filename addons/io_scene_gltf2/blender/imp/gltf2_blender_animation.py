@@ -21,37 +21,30 @@ from .gltf2_blender_vnode import VNode
 
 
 class BlenderAnimation():
-    """Dispatch Animation to bone or object animation."""
+    """Dispatch Animation to node or morph weights animation."""
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def anim(gltf, anim_idx, vnode_id):
+    def anim(gltf, anim_idx):
         """Dispatch Animation to bone or object."""
-        if isinstance(vnode_id, int):
-            BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
-
-        BlenderWeightAnim.anim(gltf, anim_idx, vnode_id)
-
-        for child in gltf.vnodes[vnode_id].children:
-            BlenderAnimation.anim(gltf, anim_idx, child)
+        for vnode_id in gltf.vnodes:
+            if isinstance(vnode_id, int):
+                BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
+            BlenderWeightAnim.anim(gltf, anim_idx, vnode_id)
 
     @staticmethod
-    def restore_animation(gltf, vnode_id, animation_name):
-        """Restores the actions for an animation by its track name on
-        the subtree starting at node_idx."""
-        vnode = gltf.vnodes[vnode_id]
+    def restore_animation(gltf, animation_name):
+        """Restores the actions for an animation by its track name."""
+        for vnode_id in gltf.vnodes:
+            vnode = gltf.vnodes[vnode_id]
+            if vnode.type == VNode.Bone:
+                obj = gltf.vnodes[vnode.bone_arma].blender_object
+            elif vnode.type == VNode.Object:
+                obj = vnode.blender_object
+            else:
+                continue
 
-        obj = None
-        if vnode.type == VNode.Bone:
-            obj = gltf.vnodes[vnode.bone_arma].blender_object
-        elif vnode.type == VNode.Object:
-            obj = vnode.blender_object
-
-        if obj is not None:
             restore_animation_on_object(obj, animation_name)
             if obj.data and hasattr(obj.data, 'shape_keys'):
                 restore_animation_on_object(obj.data.shape_keys, animation_name)
-
-        for child in gltf.vnodes[vnode_id].children:
-            BlenderAnimation.restore_animation(gltf, child, animation_name)

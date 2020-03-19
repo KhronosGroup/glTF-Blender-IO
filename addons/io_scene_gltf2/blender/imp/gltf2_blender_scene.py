@@ -57,20 +57,20 @@ class BlenderScene():
     def create_animations(gltf):
         """Create animations."""
         if gltf.data.animations:
-            for anim_idx, anim in enumerate(gltf.data.animations):
+            for anim_idx, _anim in enumerate(gltf.data.animations):
                 # Caches the action for each object (keyed by object name)
                 gltf.action_cache = {}
                 # Things we need to stash when we're done.
                 gltf.needs_stash = []
 
-                BlenderAnimation.anim(gltf, anim_idx, 'root')
+                BlenderAnimation.anim(gltf, anim_idx)
 
                 for (obj, anim_name, action) in gltf.needs_stash:
                     simulate_stash(obj, anim_name, action)
 
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
-            BlenderAnimation.restore_animation(gltf, 'root', anim_name)
+            BlenderAnimation.restore_animation(gltf, anim_name)
 
     @staticmethod
     def set_active_object(gltf):
