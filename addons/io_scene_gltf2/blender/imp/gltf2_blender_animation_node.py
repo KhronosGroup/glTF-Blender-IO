@@ -168,8 +168,4 @@ class BlenderNodeAnim():
             gltf.needs_stash.append((obj, anim_name, action))
             gltf.action_cache[obj.name] = action
 
-        if not obj.animation_data:
-            obj.animation_data_create()
-        obj.animation_data.action = action
-
         return action
