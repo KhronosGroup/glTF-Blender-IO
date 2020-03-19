@@ -76,7 +76,7 @@ class ExportGLTF2_Base:
         from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
         self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
 
-    bl_options = {'UNDO', 'PRESET'}
+    bl_options = {'PRESET'}
 
     export_format: EnumProperty(
         name='Format',
