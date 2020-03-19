@@ -14,7 +14,6 @@
 
 import bpy
 
-from .gltf2_blender_animation_bone import BlenderBoneAnim
 from .gltf2_blender_animation_node import BlenderNodeAnim
 from .gltf2_blender_animation_weight import BlenderWeightAnim
 from .gltf2_blender_animation_utils import restore_animation_on_object
@@ -30,10 +29,7 @@ class BlenderAnimation():
     def anim(gltf, anim_idx, vnode_id):
         """Dispatch Animation to bone or object."""
         if isinstance(vnode_id, int):
-            if gltf.vnodes[vnode_id].type == VNode.Bone:
-                BlenderBoneAnim.anim(gltf, anim_idx, vnode_id)
-            elif gltf.vnodes[vnode_id].type == VNode.Object:
-                BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
+            BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
 
         BlenderWeightAnim.anim(gltf, anim_idx, vnode_id)
 
