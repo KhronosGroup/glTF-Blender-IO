@@ -30,7 +30,8 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 def save(context, export_settings):
     """Start the glTF 2.0 export and saves to content either to a .gltf or .glb file."""
     if bpy.context.active_object is not None:
-        bpy.ops.object.mode_set(mode='OBJECT')
+        if bpy.context.active_object.mode != "OBJECT": # For linked object, you can't force OBJECT mode
+            bpy.ops.object.mode_set(mode='OBJECT')
 
     original_frame = bpy.context.scene.frame_current
     if not export_settings['gltf_current_frame']:

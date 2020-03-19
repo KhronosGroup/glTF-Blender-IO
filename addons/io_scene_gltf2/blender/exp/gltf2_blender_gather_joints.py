@@ -24,7 +24,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 
 @cached
-def gather_joint(blender_bone, export_settings):
+def gather_joint(blender_object, blender_bone, export_settings):
     """
     Generate a glTF2 node from a blender bone, as joints in glTF2 are simply nodes.
 
@@ -59,12 +59,12 @@ def gather_joint(blender_bone, export_settings):
 
     if export_settings["gltf_def_bones"] is False:
         for bone in blender_bone.children:
-            children.append(gather_joint(bone, export_settings))
+            children.append(gather_joint(blender_object, bone, export_settings))
     else:
         _, children_, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_bone.id_data)
         if blender_bone.name in children_.keys():
             for bone in children_[blender_bone.name]:
-                children.append(gather_joint(blender_bone.id_data.pose.bones[bone], export_settings))
+                children.append(gather_joint(blender_object, blender_bone.id_data.pose.bones[bone], export_settings))
 
     # finally add to the joints array containing all the joints in the hierarchy
     return gltf2_io.Node(

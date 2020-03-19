@@ -131,10 +131,10 @@ def __gather_joints(blender_object, export_settings):
         # build the hierarchy of nodes out of the bones
         for blender_bone in blender_object.pose.bones:
             if not blender_bone.parent:
-                root_joints.append(gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings))
+                root_joints.append(gltf2_blender_gather_joints.gather_joint(blender_object, blender_bone, export_settings))
     else:
         _, children_, root_joints = get_bone_tree(None, blender_object)
-        root_joints = [gltf2_blender_gather_joints.gather_joint(i, export_settings) for i in root_joints]
+        root_joints = [gltf2_blender_gather_joints.gather_joint(blender_object, i, export_settings) for i in root_joints]
 
     # joints is a flat list containing all nodes belonging to the skin
     joints = []
@@ -147,7 +147,7 @@ def __gather_joints(blender_object, export_settings):
         else:
             if node.name in children_.keys():
                 for child in children_[node.name]:
-                    __collect_joints(gltf2_blender_gather_joints.gather_joint(blender_object.pose.bones[child], export_settings))
+                    __collect_joints(gltf2_blender_gather_joints.gather_joint(blender_object, blender_object.pose.bones[child], export_settings))
 
     for joint in root_joints:
         __collect_joints(joint)

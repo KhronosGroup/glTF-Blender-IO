@@ -32,7 +32,7 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
-def gather_node(blender_object, blender_scene, export_settings):
+def gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
     # custom cache to avoid cache miss when called from animation
     # with blender_scene=None
 
@@ -41,15 +41,15 @@ def gather_node(blender_object, blender_scene, export_settings):
         gather_node.__cache = {}
         gather_node.__export_settings = export_settings
 
-    if blender_scene is None and blender_object.name in gather_node.__cache:
-        return gather_node.__cache[blender_object.name]
+    if blender_scene is None and (blender_object.name, library) in gather_node.__cache:
+        return gather_node.__cache[(blender_object.name, library)]
 
-    node = __gather_node(blender_object, blender_scene, export_settings)
-    gather_node.__cache[blender_object.name] = node
+    node = __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings)
+    gather_node.__cache[(blender_object.name, library)] = node
     return node
 
 @cached
-def __gather_node(blender_object, blender_scene, export_settings):
+def __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
     # If blender_scene is None, we are coming from animation export
     # Check to know if object is exported is already done, so we don't check
     # again if object is instanced in scene : this check was already done when exporting object itself
@@ -62,7 +62,7 @@ def __gather_node(blender_object, blender_scene, export_settings):
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
-        mesh=__gather_mesh(blender_object, export_settings),
+        mesh=__gather_mesh(blender_object, library, export_settings),
         name=__gather_name(blender_object, export_settings),
         rotation=None,
         scale=None,
@@ -121,19 +121,30 @@ def __gather_camera(blender_object, export_settings):
 def __gather_children(blender_object, blender_scene, export_settings):
     children = []
     # standard children
-    for child_object in blender_object.children:
-        if child_object.parent_bone:
+    for _child_object in blender_object.children:
+        if _child_object.parent_bone:
             # this is handled further down,
             # as the object should be a child of the specific bone,
             # not the Armature object
             continue
-        node = gather_node(child_object, blender_scene, export_settings)
+
+        child_object = _child_object.proxy if _child_object.proxy else _child_object
+
+        node = gather_node(child_object,
+            child_object.library.name if child_object.library else None,
+            blender_scene, None, export_settings)
         if node is not None:
             children.append(node)
     # blender dupli objects
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
         for dupli_object in blender_object.instance_collection.objects:
-            node = gather_node(dupli_object, blender_scene, export_settings)
+            if dupli_object.parent is not None:
+                continue
+            if dupli_object.type == "ARMATURE":
+                continue # There is probably a proxy
+            node = gather_node(dupli_object,
+                dupli_object.library.name if dupli_object.library else None,
+                blender_scene, blender_object.name, export_settings)
             if node is not None:
                 children.append(node)
 
@@ -147,7 +158,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             bones = [blender_object.pose.bones[b.name] for b in bones]
         for blender_bone in bones:
             if not blender_bone.parent:
-                joint = gltf2_blender_gather_joints.gather_joint(blender_bone, export_settings)
+                joint = gltf2_blender_gather_joints.gather_joint(blender_object, blender_bone, export_settings)
                 children.append(joint)
                 root_joints.append(joint)
         # handle objects directly parented to bones
@@ -165,7 +176,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             parent_joint = find_parent_joint(root_joints, child.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(child, None, export_settings)
+            child_node = gather_node(child, None, None, None, export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
@@ -236,7 +247,7 @@ def __gather_matrix(blender_object, export_settings):
     return []
 
 
-def __gather_mesh(blender_object, export_settings):
+def __gather_mesh(blender_object, library, export_settings):
     if blender_object.type != "MESH":
         return None
 
@@ -313,6 +324,7 @@ def __gather_mesh(blender_object, export_settings):
                 blender_object_for_skined_data = blender_object
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
+                                                   library,
                                                    blender_object_for_skined_data,
                                                    vertex_groups,
                                                    modifiers,
@@ -327,8 +339,6 @@ def __gather_mesh(blender_object, export_settings):
 
 
 def __gather_name(blender_object, export_settings):
-    if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-        return "Duplication_Offset_" + blender_object.name
     return blender_object.name
 
 
@@ -364,7 +374,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
     sca = gltf2_blender_extract.convert_swizzle_scale(sca, export_settings)
 
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-        trans = -gltf2_blender_extract.convert_swizzle_location(
+        trans -= gltf2_blender_extract.convert_swizzle_location(
             blender_object.instance_collection.instance_offset, None, None, export_settings)
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
