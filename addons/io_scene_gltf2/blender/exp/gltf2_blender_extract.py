@@ -709,6 +709,9 @@ def extract_primitives(glTF, blender_mesh, blender_object, blender_vertex_groups
                     #
 
                     vertex_group_index = group_element.group
+                    
+                    if vertex_group_index < 0 or vertex_group_index >= len(blender_vertex_groups):
+                        continue
                     vertex_group_name = blender_vertex_groups[vertex_group_index].name
 
                     joint_index = None
