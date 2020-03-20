@@ -16,7 +16,7 @@ import bpy
 
 from .gltf2_blender_animation_node import BlenderNodeAnim
 from .gltf2_blender_animation_weight import BlenderWeightAnim
-from .gltf2_blender_animation_utils import restore_animation_on_object
+from .gltf2_blender_animation_utils import simulate_stash, restore_animation_on_object
 from .gltf2_blender_vnode import VNode
 
 
@@ -27,11 +27,19 @@ class BlenderAnimation():
 
     @staticmethod
     def anim(gltf, anim_idx):
-        """Dispatch Animation to bone or object."""
+        """Create actions/tracks for one animation."""
+        # Caches the action for each object (keyed by object name)
+        gltf.action_cache = {}
+        # Things we need to stash when we're done.
+        gltf.needs_stash = []
+
         for vnode_id in gltf.vnodes:
             if isinstance(vnode_id, int):
                 BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
             BlenderWeightAnim.anim(gltf, anim_idx, vnode_id)
+
+        for (obj, anim_name, action) in gltf.needs_stash:
+            simulate_stash(obj, anim_name, action)
 
     @staticmethod
     def restore_animation(gltf, animation_name):

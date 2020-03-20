@@ -18,7 +18,6 @@ from mathutils import Quaternion
 from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_skin import BlenderSkin
 from .gltf2_blender_animation import BlenderAnimation
-from .gltf2_blender_animation_utils import simulate_stash
 from .gltf2_blender_vnode import VNode, compute_vnodes
 
 
@@ -58,15 +57,7 @@ class BlenderScene():
         """Create animations."""
         if gltf.data.animations:
             for anim_idx, _anim in enumerate(gltf.data.animations):
-                # Caches the action for each object (keyed by object name)
-                gltf.action_cache = {}
-                # Things we need to stash when we're done.
-                gltf.needs_stash = []
-
                 BlenderAnimation.anim(gltf, anim_idx)
-
-                for (obj, anim_name, action) in gltf.needs_stash:
-                    simulate_stash(obj, anim_name, action)
 
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
