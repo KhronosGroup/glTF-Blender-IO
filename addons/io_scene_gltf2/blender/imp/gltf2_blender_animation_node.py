@@ -165,7 +165,7 @@ class BlenderNodeAnim():
             name = anim_name + "_" + obj.name
             action = bpy.data.actions.new(name)
             action.id_root = 'OBJECT'
-            gltf.needs_stash.append((obj, anim_name, action))
+            gltf.needs_stash.append((obj, action))
             gltf.action_cache[obj.name] = action
 
         return action

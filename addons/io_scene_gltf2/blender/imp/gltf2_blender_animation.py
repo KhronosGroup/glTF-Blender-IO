@@ -38,8 +38,10 @@ class BlenderAnimation():
                 BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
             BlenderWeightAnim.anim(gltf, anim_idx, vnode_id)
 
-        for (obj, anim_name, action) in gltf.needs_stash:
-            simulate_stash(obj, anim_name, action)
+        # Push all actions onto NLA tracks with this animation's name
+        track_name = gltf.data.animations[anim_idx].track_name
+        for (obj, action) in gltf.needs_stash:
+            simulate_stash(obj, track_name, action)
 
     @staticmethod
     def restore_animation(gltf, animation_name):
