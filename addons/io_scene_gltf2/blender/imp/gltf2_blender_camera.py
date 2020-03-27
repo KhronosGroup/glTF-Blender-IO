@@ -42,10 +42,9 @@ class BlenderCamera():
             cam.clip_end = pycamera.orthographic.zfar
 
         else:
-            if hasattr(pycamera.perspective, "yfov"):
-                cam.angle_y = pycamera.perspective.yfov
-                cam.lens_unit = "FOV"
-                cam.sensor_fit = "VERTICAL"
+            cam.angle_y = pycamera.perspective.yfov
+            cam.lens_unit = "FOV"
+            cam.sensor_fit = "VERTICAL"
 
             # TODO: fov/aspect ratio
 
