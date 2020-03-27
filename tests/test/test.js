@@ -1053,6 +1053,17 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 };
                 assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
             });
+
+            it('roundtrips animation names', function() {
+                let dir = '07_nla-anim';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const expectedAnimNames = ["Action2", "Action1", "Action3"];
+                const animNames = asset.animations.map(anim => anim.name);
+                assert.deepStrictEqual(animNames.sort(), expectedAnimNames.sort());
+            });
         });
     });
 });
