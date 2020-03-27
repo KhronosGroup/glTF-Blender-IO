@@ -48,5 +48,4 @@ class BlenderCamera():
         if hasattr(pycamera, "zfar"):
             cam.clip_end = pycamera.zfar
 
-        obj = bpy.data.objects.new(pycamera.name, cam)
-        return obj
+        return cam

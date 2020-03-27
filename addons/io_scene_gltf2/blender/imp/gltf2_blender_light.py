@@ -28,23 +28,23 @@ class BlenderLight():
         """Light creation."""
         pylight = gltf.data.extensions['KHR_lights_punctual']['lights'][light_id]
         if pylight['type'] == "directional":
-            obj = BlenderLight.create_directional(gltf, light_id)
+            light = BlenderLight.create_directional(gltf, light_id)
         elif pylight['type'] == "point":
-            obj = BlenderLight.create_point(gltf, light_id)
+            light = BlenderLight.create_point(gltf, light_id)
         elif pylight['type'] == "spot":
-            obj = BlenderLight.create_spot(gltf, light_id)
+            light = BlenderLight.create_spot(gltf, light_id)
 
         if 'color' in pylight.keys():
-            obj.data.color = pylight['color']
+            light.color = pylight['color']
 
         if 'intensity' in pylight.keys():
-            obj.data.energy = pylight['intensity']
+            light.energy = pylight['intensity']
 
         # TODO range
 
-        set_extras(obj.data, pylight.get('extras'))
+        set_extras(light, pylight.get('extras'))
 
-        return obj
+        return light
 
     @staticmethod
     def create_directional(gltf, light_id):
@@ -54,8 +54,7 @@ class BlenderLight():
             pylight['name'] = "Sun"
 
         sun = bpy.data.lights.new(name=pylight['name'], type="SUN")
-        obj = bpy.data.objects.new(pylight['name'], sun)
-        return obj
+        return sun
 
     @staticmethod
     def create_point(gltf, light_id):
@@ -65,8 +64,7 @@ class BlenderLight():
             pylight['name'] = "Point"
 
         point = bpy.data.lights.new(name=pylight['name'], type="POINT")
-        obj = bpy.data.objects.new(pylight['name'], point)
-        return obj
+        return point
 
     @staticmethod
     def create_spot(gltf, light_id):
@@ -76,7 +74,6 @@ class BlenderLight():
             pylight['name'] = "Spot"
 
         spot = bpy.data.lights.new(name=pylight['name'], type="SPOT")
-        obj = bpy.data.objects.new(pylight['name'], spot)
 
         # Angles
         if 'spot' in pylight.keys() and 'outerConeAngle' in pylight['spot']:
@@ -89,4 +86,4 @@ class BlenderLight():
         else:
             spot.spot_blend = 1.0
 
-        return obj
+        return spot
