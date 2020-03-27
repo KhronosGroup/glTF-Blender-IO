@@ -66,7 +66,7 @@ class ShapeKey:
 
 def convert_swizzle_normal(loc, armature, blender_object, export_settings):
     """Convert a normal data from Blender coordinate system to glTF coordinate system."""
-    if not armature:
+    if (not armature) or (not blender_object):
         # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((loc[0], loc[2], -loc[1]))
@@ -85,7 +85,7 @@ def convert_swizzle_normal(loc, armature, blender_object, export_settings):
 
 def convert_swizzle_location(loc, armature, blender_object, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""
-    if not armature:
+    if (not armature) or (not blender_object):
         # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((loc[0], loc[2], -loc[1]))
@@ -107,7 +107,7 @@ def convert_swizzle_tangent(tan, armature, blender_object, export_settings):
     if tan[0] == 0.0 and tan[1] == 0.0 and tan[2] == 0.0:
         print_console('WARNING', 'Tangent has zero length.')
 
-    if not armature:
+    if (not armature) or (not blender_object):
         # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((tan[0], tan[2], -tan[1], 1.0))
