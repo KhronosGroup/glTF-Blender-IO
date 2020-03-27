@@ -35,18 +35,27 @@ class BlenderCamera():
         # Blender create a perspective camera by default
         if pycamera.type == "orthographic":
             cam.type = "ORTHO"
+
+            # TODO: xmag/ymag
+
+            cam.clip_start = pycamera.orthographic.znear
+            cam.clip_end = pycamera.orthographic.zfar
+
         else:
             if hasattr(pycamera.perspective, "yfov"):
                 cam.angle_y = pycamera.perspective.yfov
                 cam.lens_unit = "FOV"
                 cam.sensor_fit = "VERTICAL"
 
-        # TODO: lot's of work for camera here...
-        if hasattr(pycamera, "znear"):
-            cam.clip_start = pycamera.znear
+            # TODO: fov/aspect ratio
 
-        if hasattr(pycamera, "zfar"):
-            cam.clip_end = pycamera.zfar
+            cam.clip_start = pycamera.perspective.znear
+            if pycamera.perspective.zfar is not None:
+                cam.clip_end = pycamera.perspective.zfar
+            else:
+                # Infinite projection
+                cam.clip_end = 1e12  # some big number
+
 
         obj = bpy.data.objects.new(pycamera.name, cam)
         return obj
