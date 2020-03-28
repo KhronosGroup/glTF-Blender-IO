@@ -16,7 +16,6 @@ import bpy
 from math import sqrt
 from mathutils import Quaternion
 from .gltf2_blender_node import BlenderNode
-from .gltf2_blender_skin import BlenderSkin
 from .gltf2_blender_animation import BlenderAnimation
 from .gltf2_blender_animation_utils import simulate_stash
 from .gltf2_blender_vnode import VNode, compute_vnodes
@@ -41,11 +40,6 @@ class BlenderScene():
 
         gltf.display_current_node = 0  # for debugging
         BlenderNode.create_vnode(gltf, 'root')
-
-        # Now that all mesh / bones are created, create vertex groups on mesh
-        if gltf.data.skins:
-            BlenderSkin.create_vertex_groups(gltf)
-            BlenderSkin.create_armature_modifiers(gltf)
 
         BlenderScene.create_animations(gltf)
 
