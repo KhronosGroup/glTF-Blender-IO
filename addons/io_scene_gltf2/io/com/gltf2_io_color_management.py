@@ -22,7 +22,7 @@ def color_srgb_to_scene_linear(c):
     if c < 0.04045:
         return 0.0 if c < 0.0 else c * (1.0 / 12.92)
     else:
-        return pow((c + 0.055) * (1.0 / 1.055), 2.4)
+        return ((c + 0.055) * (1.0 / 1.055)) ** 2.4
 
 def color_linear_to_srgb(c):
     """
@@ -33,4 +33,4 @@ def color_linear_to_srgb(c):
     if c < 0.0031308:
         return 0.0 if c < 0.0 else c * 12.92
     else:
-        return 1.055 * pow(c, 1.0 / 2.4) - 0.055
+        return 1.055 * c ** (1.0 / 2.4) - 0.055
