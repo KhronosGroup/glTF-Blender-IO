@@ -44,7 +44,8 @@ class VNode:
     DummyRoot = 2
 
     def __init__(self):
-        self.name = ''
+        self.name = None
+        self.default_name = 'Node'  # fallback when no name
         self.children = []
         self.parent = None
         self.type = VNode.Object
@@ -112,7 +113,8 @@ def init_vnodes(gltf):
     for i, pynode in enumerate(gltf.data.nodes or []):
         vnode = VNode()
         gltf.vnodes[i] = vnode
-        vnode.name = pynode.name or 'Node_%d' % i
+        vnode.name = pynode.name
+        vnode.default_name = 'Node_%d' % i
         vnode.children = list(pynode.children or [])
         vnode.base_trs = get_node_trs(gltf, pynode)
         if pynode.mesh is not None:
@@ -131,7 +133,7 @@ def init_vnodes(gltf):
     roots = [id for id in gltf.vnodes if gltf.vnodes[id].parent is None]
     gltf.vnodes['root'] = VNode()
     gltf.vnodes['root'].type = VNode.DummyRoot
-    gltf.vnodes['root'].name = 'Root'
+    gltf.vnodes['root'].default_name = 'Root'
     gltf.vnodes['root'].children = roots
     for root in roots:
         gltf.vnodes[root].parent = 'root'
@@ -238,7 +240,6 @@ def move_skinned_meshes(gltf):
         if vnode.mesh_node_idx is None:
             continue
 
-        mesh = gltf.data.nodes[vnode.mesh_node_idx].mesh
         skin = gltf.data.nodes[vnode.mesh_node_idx].skin
         if skin is None:
             continue
@@ -274,7 +275,6 @@ def move_skinned_meshes(gltf):
         # the mesh instance there, leaving the node behind.
         new_id = str(id) + '.skinned'
         gltf.vnodes[new_id] = VNode()
-        gltf.vnodes[new_id].name = gltf.data.meshes[mesh].name or 'Mesh_%d' % mesh
         gltf.vnodes[new_id].parent = arma
         gltf.vnodes[arma].children.append(new_id)
         gltf.vnodes[new_id].mesh_node_idx = vnode.mesh_node_idx
@@ -313,7 +313,6 @@ def fixup_multitype_nodes(gltf):
             if needs_move:
                 new_id = str(id) + '.mesh'
                 gltf.vnodes[new_id] = VNode()
-                gltf.vnodes[new_id].name = vnode.name + ' Mesh'
                 gltf.vnodes[new_id].mesh_node_idx = vnode.mesh_node_idx
                 gltf.vnodes[new_id].parent = id
                 vnode.children.append(new_id)
@@ -324,7 +323,6 @@ def fixup_multitype_nodes(gltf):
             if needs_move:
                 new_id = str(id) + '.camera'
                 gltf.vnodes[new_id] = VNode()
-                gltf.vnodes[new_id].name = vnode.name + ' Camera'
                 gltf.vnodes[new_id].camera_node_idx = vnode.camera_node_idx
                 gltf.vnodes[new_id].parent = id
                 vnode.children.append(new_id)
@@ -335,7 +333,6 @@ def fixup_multitype_nodes(gltf):
             if needs_move:
                 new_id = str(id) + '.light'
                 gltf.vnodes[new_id] = VNode()
-                gltf.vnodes[new_id].name = vnode.name + ' Light'
                 gltf.vnodes[new_id].light_node_idx = vnode.light_node_idx
                 gltf.vnodes[new_id].parent = id
                 vnode.children.append(new_id)
