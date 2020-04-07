@@ -448,6 +448,13 @@ Pack Images
    Pack all images into the blend-file.
 Shading
    How normals are computed during import.
+Guess Original Bind Pose
+   Determines the pose for bones (and consequently, skinned meshes) in edit mode.
+   When on, attempts to guess the pose that was used to compute the inverse bind matrices.
+Bone Dir
+   Changes the heuristic the importer uses to decide where to place bone tips.
+   Note that the Fortune setting may cause inaccuracies in models that use non-uniform scalings.
+   Otherwise this is purely aesthetic.
 
 
 Export
