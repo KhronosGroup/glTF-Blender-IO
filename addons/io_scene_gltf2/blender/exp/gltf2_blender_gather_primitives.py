@@ -60,8 +60,6 @@ def gather_primitives(
             material = gltf2_blender_gather_materials.gather_material(blender_material,
                                                                   double_sided,
                                                                   export_settings)
-            # NOTE: gather_material may invalidate blender_mesh (see #932),
-            # so make sure not to access blender_mesh again after this point
         except IndexError:
             # no material at that index
             pass
