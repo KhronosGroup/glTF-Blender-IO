@@ -195,8 +195,13 @@ class ExportImage:
         try:
             tmp_image = image.copy()
             tmp_image.update()
+
             if image.is_dirty:
-                tmp_image.pixels = image.pixels[:]
+                # Copy the pixels to get the changes
+                tmp_buf = np.empty(image.size[0] * image.size[1] * 4, np.float32)
+                image.pixels.foreach_get(tmp_buf)
+                tmp_image.pixels.foreach_set(tmp_buf)
+                tmp_buf = None  # GC this
 
             return _encode_temp_image(tmp_image, self.file_format)
         finally:
