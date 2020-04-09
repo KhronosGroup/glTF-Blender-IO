@@ -16,7 +16,7 @@ bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
     "version": (1, 2, 57),
-    'blender': (2, 82, 7),
+    'blender': (2, 83, 9),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
