@@ -14,48 +14,47 @@
 
 import bpy
 
-from .gltf2_blender_animation_bone import BlenderBoneAnim
 from .gltf2_blender_animation_node import BlenderNodeAnim
 from .gltf2_blender_animation_weight import BlenderWeightAnim
-from .gltf2_blender_animation_utils import restore_animation_on_object
+from .gltf2_blender_animation_utils import simulate_stash, restore_animation_on_object
 from .gltf2_blender_vnode import VNode
 
 
 class BlenderAnimation():
-    """Dispatch Animation to bone or object animation."""
+    """Dispatch Animation to node or morph weights animation."""
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def anim(gltf, anim_idx, vnode_id):
-        """Dispatch Animation to bone or object."""
-        if isinstance(vnode_id, int):
-            if gltf.vnodes[vnode_id].type == VNode.Bone:
-                BlenderBoneAnim.anim(gltf, anim_idx, vnode_id)
-            elif gltf.vnodes[vnode_id].type == VNode.Object:
+    def anim(gltf, anim_idx):
+        """Create actions/tracks for one animation."""
+        # Caches the action for each object (keyed by object name)
+        gltf.action_cache = {}
+        # Things we need to stash when we're done.
+        gltf.needs_stash = []
+
+        for vnode_id in gltf.vnodes:
+            if isinstance(vnode_id, int):
                 BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
+            BlenderWeightAnim.anim(gltf, anim_idx, vnode_id)
 
-        BlenderWeightAnim.anim(gltf, anim_idx, vnode_id)
-
-        for child in gltf.vnodes[vnode_id].children:
-            BlenderAnimation.anim(gltf, anim_idx, child)
+        # Push all actions onto NLA tracks with this animation's name
+        track_name = gltf.data.animations[anim_idx].track_name
+        for (obj, action) in gltf.needs_stash:
+            simulate_stash(obj, track_name, action)
 
     @staticmethod
-    def restore_animation(gltf, vnode_id, animation_name):
-        """Restores the actions for an animation by its track name on
-        the subtree starting at node_idx."""
-        vnode = gltf.vnodes[vnode_id]
+    def restore_animation(gltf, animation_name):
+        """Restores the actions for an animation by its track name."""
+        for vnode_id in gltf.vnodes:
+            vnode = gltf.vnodes[vnode_id]
+            if vnode.type == VNode.Bone:
+                obj = gltf.vnodes[vnode.bone_arma].blender_object
+            elif vnode.type == VNode.Object:
+                obj = vnode.blender_object
+            else:
+                continue
 
-        obj = None
-        if vnode.type == VNode.Bone:
-            obj = gltf.vnodes[vnode.bone_arma].blender_object
-        elif vnode.type == VNode.Object:
-            obj = vnode.blender_object
-
-        if obj is not None:
             restore_animation_on_object(obj, animation_name)
             if obj.data and hasattr(obj.data, 'shape_keys'):
                 restore_animation_on_object(obj.data.shape_keys, animation_name)
-
-        for child in gltf.vnodes[vnode_id].children:
-            BlenderAnimation.restore_animation(gltf, child, animation_name)

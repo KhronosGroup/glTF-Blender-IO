@@ -17,7 +17,6 @@ from math import sqrt
 from mathutils import Quaternion
 from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_animation import BlenderAnimation
-from .gltf2_blender_animation_utils import simulate_stash
 from .gltf2_blender_vnode import VNode, compute_vnodes
 
 
@@ -51,20 +50,12 @@ class BlenderScene():
     def create_animations(gltf):
         """Create animations."""
         if gltf.data.animations:
-            for anim_idx, anim in enumerate(gltf.data.animations):
-                # Caches the action for each object (keyed by object name)
-                gltf.action_cache = {}
-                # Things we need to stash when we're done.
-                gltf.needs_stash = []
-
-                BlenderAnimation.anim(gltf, anim_idx, 'root')
-
-                for (obj, anim_name, action) in gltf.needs_stash:
-                    simulate_stash(obj, anim_name, action)
+            for anim_idx, _anim in enumerate(gltf.data.animations):
+                BlenderAnimation.anim(gltf, anim_idx)
 
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
-            BlenderAnimation.restore_animation(gltf, 'root', anim_name)
+            BlenderAnimation.restore_animation(gltf, anim_name)
 
     @staticmethod
     def set_active_object(gltf):

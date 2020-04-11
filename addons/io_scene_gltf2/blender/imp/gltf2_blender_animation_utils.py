@@ -19,16 +19,16 @@ def simulate_stash(obj, track_name, action, start_frame=None):
     # * add a track
     # * add an action on track
     # * lock & mute the track
-    # * remove active action from object
+    if not obj.animation_data:
+        obj.animation_data_create()
     tracks = obj.animation_data.nla_tracks
     new_track = tracks.new(prev=None)
     new_track.name = track_name
     if start_frame is None:
         start_frame = bpy.context.scene.frame_start
-    strip = new_track.strips.new(action.name, start_frame, action)
+    _strip = new_track.strips.new(action.name, start_frame, action)
     new_track.lock = True
     new_track.mute = True
-    obj.animation_data.action = None
 
 def restore_animation_on_object(obj, anim_name):
     if not getattr(obj, 'animation_data', None):
