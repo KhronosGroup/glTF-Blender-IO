@@ -29,7 +29,6 @@ class BlenderNode():
     def create_vnode(gltf, vnode_id):
         """Create VNode and all its descendants."""
         vnode = gltf.vnodes[vnode_id]
-        name = vnode.name
 
         gltf.display_current_node += 1
         if bpy.app.debug_value == 101:
@@ -56,21 +55,28 @@ class BlenderNode():
         vnode = gltf.vnodes[vnode_id]
 
         if vnode.mesh_node_idx is not None:
-            pynode = gltf.data.nodes[vnode.mesh_node_idx]
-            obj = BlenderNode.create_mesh_object(gltf, pynode, name=vnode.name)
+            obj = BlenderNode.create_mesh_object(gltf, vnode)
+
         elif vnode.camera_node_idx is not None:
             pynode = gltf.data.nodes[vnode.camera_node_idx]
             cam = BlenderCamera.create(gltf, pynode.camera)
-            obj = bpy.data.objects.new(vnode.name, cam)
+            name = vnode.name or cam.name
+            obj = bpy.data.objects.new(name, cam)
+
         elif vnode.light_node_idx is not None:
             pynode = gltf.data.nodes[vnode.light_node_idx]
             light = BlenderLight.create(gltf, pynode.extensions['KHR_lights_punctual']['light'])
-            obj = bpy.data.objects.new(vnode.name, light)
+            name = vnode.name or light.name
+            obj = bpy.data.objects.new(name, light)
+
         elif vnode.is_arma:
             armature = bpy.data.armatures.new(vnode.arma_name)
-            obj = bpy.data.objects.new(vnode.name, armature)
+            name = vnode.name or armature.name
+            obj = bpy.data.objects.new(name, armature)
+
         else:
-            obj = bpy.data.objects.new(vnode.name, None)
+            name = vnode.name or vnode.default_name
+            obj = bpy.data.objects.new(name, None)
 
         vnode.blender_object = obj
 
@@ -131,7 +137,7 @@ class BlenderNode():
 
         for id in bone_ids:
             vnode = gltf.vnodes[id]
-            editbone = armature.edit_bones.new(vnode.name)
+            editbone = armature.edit_bones.new(vnode.name or vnode.default_name)
             vnode.blender_bone_name = editbone.name
             editbone.use_connect = False  # TODO?
 
@@ -176,9 +182,9 @@ class BlenderNode():
                 set_extras(pose_bone, pynode.extras)
 
     @staticmethod
-    def create_mesh_object(gltf, pynode, name):
+    def create_mesh_object(gltf, vnode):
+        pynode = gltf.data.nodes[vnode.mesh_node_idx]
         pymesh = gltf.data.meshes[pynode.mesh]
-        name = pymesh.name or name
 
         # Key to cache the Blender mesh by.
         # Same cache key = instances of the same Blender mesh.
@@ -197,11 +203,12 @@ class BlenderNode():
         if cache_key is not None and cache_key in pymesh.blender_name:
             mesh = bpy.data.meshes[pymesh.blender_name[cache_key]]
         else:
-            gltf.log.info("Blender create Mesh node %s", name)
+            gltf.log.info("Blender create Mesh node %s", pymesh.name or pynode.mesh)
             mesh = BlenderMesh.create(gltf, pynode.mesh, pynode.skin)
             if cache_key is not None:
                 pymesh.blender_name[cache_key] = mesh.name
 
+        name = vnode.name or mesh.name
         obj = bpy.data.objects.new(name, mesh)
 
         if pymesh.shapekey_names:
