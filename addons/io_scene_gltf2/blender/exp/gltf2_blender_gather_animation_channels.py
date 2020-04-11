@@ -191,25 +191,28 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
     if not __filter_animation_channel(channels, blender_object, export_settings):
         return None
 
-    animation_channel = gltf2_io.AnimationChannel(
-        extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
-        extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
-        sampler=__gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj),
-        target=__gather_target(channels, blender_object, export_settings, bake_bone, bake_channel, driver_obj)
-    )
+    __target= __gather_target(channels, blender_object, export_settings, bake_bone, bake_channel, driver_obj)
+    if __target.path is not None:
+        animation_channel = gltf2_io.AnimationChannel(
+            extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
+            extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
+            sampler=__gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj),
+            target=__target
+        )
 
-    export_user_extensions('gather_animation_channel_hook',
-                           export_settings,
-                           animation_channel,
-                           channels,
-                           blender_object,
-                           bake_bone,
-                           bake_channel,
-                           bake_range_start,
-                           bake_range_end,
-                           action_name)
+        export_user_extensions('gather_animation_channel_hook',
+                               export_settings,
+                               animation_channel,
+                               channels,
+                               blender_object,
+                               bake_bone,
+                               bake_channel,
+                               bake_range_start,
+                               bake_range_end,
+                               action_name)
 
-    return animation_channel
+        return animation_channel
+    return None
 
 
 def __filter_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
