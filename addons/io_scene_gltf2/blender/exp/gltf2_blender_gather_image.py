@@ -103,7 +103,7 @@ def __gather_mime_type(sockets_or_slots, export_image, export_settings):
 
     if export_settings["gltf_image_format"] == "AUTO":
         image = export_image.blender_image()
-        if image is not None and image.file_format == 'JPEG':
+        if image is not None and __is_blender_image_a_jpeg(image):
             return "image/jpeg"
         return "image/png"
 
@@ -244,3 +244,10 @@ def __get_texname_from_slot(sockets_or_slots, export_settings):
 
     elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
         return sockets_or_slots[0].texture.image.name
+
+
+def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
+    if image.source != 'FILE':
+        return False
+    path = image.filepath_raw.lower()
+    return path.endswith('.jpg') or path.endswith('.jpeg') or path.endswith('.jpe')
