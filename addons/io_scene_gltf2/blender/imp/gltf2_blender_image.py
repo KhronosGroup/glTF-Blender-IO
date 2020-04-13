@@ -17,6 +17,7 @@ import os
 import tempfile
 from os.path import dirname, join, isfile, basename, normpath
 import urllib.parse
+import re
 
 from ...io.imp.gltf2_io_binary import BinaryData
 
@@ -36,7 +37,7 @@ class BlenderImage():
             # Image is already used somewhere
             return
 
-        tmp_file = None
+        tmp_dir = None
         try:
             if img.uri is not None and not img.uri.startswith('data:'):
                 # Image stored in a file
@@ -52,14 +53,12 @@ class BlenderImage():
                 img_data, img_name = BinaryData.get_image_data(gltf, img_idx)
                 if img_data is None:
                     return
-                tmp_file = tempfile.NamedTemporaryFile(
-                    prefix='gltfimg-',
-                    suffix=_img_extension(img),
-                    delete=False,
-                )
-                tmp_file.write(img_data)
-                tmp_file.close()
-                path = tmp_file.name
+                tmp_dir = tempfile.TemporaryDirectory(prefix='gltfimg-')
+                filename = _filenamify(img_name) or 'Image_%d' % img_idx
+                filename += _img_extension(img)
+                path = join(tmp_dir.name, filename)
+                with open(path, 'wb') as f:
+                    f.write(img_data)
 
             num_images = len(bpy.data.images)
             blender_image = bpy.data.images.load(os.path.abspath(path), check_existing=img_from_file)
@@ -71,9 +70,8 @@ class BlenderImage():
             img.blender_image_name = blender_image.name
 
         finally:
-            if tmp_file is not None:
-                tmp_file.close()
-                os.remove(tmp_file.name)
+            if tmp_dir is not None:
+                tmp_dir.cleanup()
 
 def _uri_to_path(uri):
     uri = urllib.parse.unquote(uri)
@@ -84,4 +82,8 @@ def _img_extension(img):
         return '.png'
     if img.mime_type == 'image/jpeg':
         return '.jpg'
-    return None
+    return ''
+
+def _filenamify(s):
+    s = s.strip().replace(' ', '_')
+    return re.sub(r'(?u)[^-\w.]', '', s)
