@@ -32,6 +32,7 @@ class BlenderImage():
     def create(gltf, img_idx):
         """Image creation."""
         img = gltf.data.images[img_idx]
+        img_name = img.name
 
         if img.blender_image_name is not None:
             # Image is already used somewhere
@@ -43,16 +44,17 @@ class BlenderImage():
                 # Image stored in a file
                 img_from_file = True
                 path = join(dirname(gltf.filename), _uri_to_path(img.uri))
-                img_name = basename(path)
+                img_name = img_name or basename(path)
                 if not isfile(path):
                     gltf.log.error("Missing file (index " + str(img_idx) + "): " + img.uri)
                     return
             else:
                 # Image stored as data => create a tempfile, pack, and delete file
                 img_from_file = False
-                img_data, img_name = BinaryData.get_image_data(gltf, img_idx)
+                img_data = BinaryData.get_image_data(gltf, img_idx)
                 if img_data is None:
                     return
+                img_name = img_name or 'Image_%d' % img_idx
                 tmp_dir = tempfile.TemporaryDirectory(prefix='gltfimg-')
                 filename = _filenamify(img_name) or 'Image_%d' % img_idx
                 filename += _img_extension(img)
