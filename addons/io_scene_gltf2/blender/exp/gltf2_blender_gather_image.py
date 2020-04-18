@@ -24,7 +24,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage
+from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage, FillImage
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
@@ -43,7 +43,7 @@ def gather_image(
         return None
 
     mime_type = __gather_mime_type(blender_shader_sockets_or_texture_slots, image_data, export_settings)
-    name = __gather_name(blender_shader_sockets_or_texture_slots, export_settings)
+    name = __gather_name(image_data, export_settings)
 
     uri = __gather_uri(image_data, mime_type, name, export_settings)
     buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
@@ -111,9 +111,32 @@ def __gather_mime_type(sockets_or_slots, export_image, export_settings):
         return "image/jpeg"
 
 
-def __gather_name(sockets_or_slots, export_settings):
-    image_name = __get_texname_from_slot(sockets_or_slots, export_settings)
-    return image_name
+def __gather_name(export_image, export_settings):
+    # Find all Blender images used in the ExportImage
+    imgs = []
+    for fill in export_image.fills.values():
+        if isinstance(fill, FillImage):
+            img = fill.image
+            if img not in imgs:
+                imgs.append(img)
+
+    # If all the images have the same path, use the common filename
+    filepaths = set(img.filepath for img in imgs)
+    if len(filepaths) == 1:
+        filename = os.path.basename(list(filepaths)[0])
+        name, extension = os.path.splitext(filename)
+        if extension.lower() in ['.png', '.jpg', '.jpeg']:
+            if name:
+                return name
+
+    # Combine the image names: img1-img2-img3
+    names = []
+    for img in imgs:
+        name, extension = os.path.splitext(img.name)
+        names.append(name)
+    name = '-'.join(names)
+    return name or 'Image'
+
 
 
 @cached
@@ -213,37 +236,6 @@ def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket, export_se
 
 def __get_tex_from_slot(blender_texture_slot):
     return blender_texture_slot.texture
-
-
-@cached
-def __get_texname_from_slot(sockets_or_slots, export_settings):
-    if __is_socket(sockets_or_slots):
-        combined_name = None
-        foundNames = []
-        # If multiple images are being combined, combine the names as well.
-        for socket in sockets_or_slots:
-            node = __get_tex_from_socket(socket, export_settings)
-            if node is not None:
-                image_name = node.shader_node.image.name
-                if image_name not in foundNames:
-                    foundNames.append(image_name)
-                    name, extension = os.path.splitext(image_name)
-                    if combined_name is None:
-                        combined_name = name
-                    else:
-                        combined_name += '-' + name
-
-        # If only one image was used, and that image has a real filepath, use the real filepath instead.
-        if len(foundNames) == 1:
-            filename = os.path.basename(bpy.data.images[foundNames[0]].filepath)
-            name, extension = os.path.splitext(filename)
-            if extension.lower() in ['.png', '.jpg', '.jpeg']:
-                return name
-
-        return combined_name
-
-    elif isinstance(sockets_or_slots[0], bpy.types.MaterialTextureSlot):
-        return sockets_or_slots[0].texture.image.name
 
 
 def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
