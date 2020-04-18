@@ -54,9 +54,8 @@ with the following channels of information:
 - Baked Ambient Occlusion
 - Normal Map
 - Emissive
-- Clearcoat (requires ``KHR_materials_clearcoat``)
 
-.. figure:: /images/addons_io-gltf2_material-channels.jpg
+.. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
    An example of the various image maps available in the glTF 2.0 core format. This is
    the `water bottle sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
@@ -102,14 +101,14 @@ The glTF base color is determined by looking for a Base Color input on a Princip
 If the input is unconnected, the input's default color (the color field next to the unconnected socket)
 is used as the Base Color for the glTF material.
 
-.. figure:: /images/addons_io-gltf2_material-baseColor-solidGreen.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-base-color-solid-green.png
 
    A solid base color can be specified directly on the node.
 
 If an Image Texture node is found to be connected to the Base Color input,
 that image will be used as the glTF base color.
 
-.. figure:: /images/addons_io-gltf2_material-baseColor-imageHookup.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-base-color-image-hookup.png
 
    An image is used as the glTF base color.
 
@@ -134,7 +133,7 @@ that will allow it to simply copy the image texture into the glTF file during ex
 
 The Image Texture node for this should have its *Color Space* set to Non-Color.
 
-.. figure:: /images/addons_io-gltf2_material-metalRough.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-metal-rough.png
 
    A metallic/roughness image connected in a manner consistent with the glTF standard,
    allowing it to be used verbatim inside an exported glTF file.
@@ -154,7 +153,7 @@ but this method will allow the exporter to write an occlusion image to the glTF.
 This can be useful to real-time glTF viewers, particularly on platforms where there
 may not be spare power for computing such things at render time.
 
-.. figure:: /images/addons_io-gltf2_material-occlusionOnly.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-occlusion-only.png
 
    A pre-baked ambient occlusion map, connected to a node that doesn't render but will export to glTF.
 
@@ -168,7 +167,7 @@ may not be spare power for computing such things at render time.
 glTF stores occlusion in the red (``R``) channel, allowing it to optionally share
 the same image with the roughness and metallic channels.
 
-.. figure:: /images/addons_io-gltf2_material-orm-hookup.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-orm-hookup.png
 
    This combination of nodes mimics the way glTF packs occlusion, roughness, and
    metallic values into a single image.
@@ -194,7 +193,7 @@ The strength of the normal map can be adjusted on this node.
 The exporter is not exporting these nodes directly, but will use them to locate
 the correct image and will copy the strength setting into the glTF.
 
-.. figure:: /images/addons_io-gltf2_material-normal.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-normal.png
 
    A normal map image connected such that the exporter will find it and copy it
    to the glTF file.
@@ -215,7 +214,7 @@ Emissive
 ^^^^^^^^
 
 An Image Texture node can be connected to the Emission input on the Principled BSDF node
-to include an emissive map with the glTF material. Alternately, the Image Texture node
+to include an emissive map with the glTF material. Alternatively, the Image Texture node
 can be connected to an Emission shader node, and optionally combined with properties
 from a Principled BSDF node by way of an Add Shader node.
 
@@ -223,13 +222,13 @@ If the emissive map is alone in the material, it is best to set the Base Color d
 to black, and the Roughness default to 1.0. This minimizes the influence of the other
 channels if they are not needed.
 
-.. figure:: /images/addons_io-gltf2_material-emissive.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-emissive.png
 
    This arrangement is supported for backwards compatibility. It is simpler to use
    the Principled BSDF node directly.
 
 
-Double Sided / Backface Culling
+Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For materials where only the front faces will be visible, turn on *Backface Culling* in
@@ -238,7 +237,7 @@ you can temporarily switch to Eevee to configure this setting, then switch back.
 
 Leave this box un-checked for double-sided materials.
 
-.. figure:: /images/addons_io-gltf2_material-backfaceCulling.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-backface-culling.png
 
    The inverse of this setting controls glTF's ``DoubleSided`` flag.
 
@@ -254,14 +253,14 @@ the material settings panel. Use this setting to define how alpha values from
 the Base Color channel are treated in glTF. Three settings are supported by glTF:
 
 Opaque
-   Alpha values are ignored (the default).
+   Alpha values are ignored.
 Alpha Blend
    Lower alpha values cause blending with background objects.
 Alpha Clip
    Alpha values below the *Clip Threshold* setting will cause portions
    of the material to not be rendered at all. Everything else is rendered as opaque.
 
-.. figure:: /images/addons_io-gltf2_material-alphaBlend.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-alpha-blend.png
 
    With the Eevee engine selected, a material's blend modes are configurable.
 
@@ -289,7 +288,7 @@ There is a mapping type selector across the top. *Point* is the recommended type
 
 For the *Texture* type, *Scale* X and Y must be equal (uniform scaling).
 
-.. figure:: /images/addons_io-gltf2_material-mapping.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-mapping.png
 
    A deliberate choice of UV mapping.
 
@@ -312,7 +311,7 @@ Example
 A single material may use all of the above at the same time, if desired. This figure shows
 a typical node structure when several of the above options are applied at once:
 
-.. figure:: /images/addons_io-gltf2_material-principled.png
+.. figure:: /images/addons_import-export_scene-gltf2_material-principled.png
 
    A Principled BSDF material with an emissive texture.
 
@@ -365,11 +364,11 @@ Only certain types of animation are supported:
 Animation of other properties, like lights or materials, will be ignored.
 
 An *NLA Strip animation* consists of multiple actions on multiple objects that
-should play together. To create an NLA strip animation with the name "My
-Animation", push the action that should play each object onto an NLA track for
+should play together. To create an NLA strip animation with the name "My Animation",
+push the action that should play each object onto an NLA track for
 that object with the name "My Animation".
 
-.. figure:: /images/addons_io-gltf2_animation-nla-strip-animation-example.png
+.. figure:: /images/addons_import-export_scene-gltf2_nla-strip-animation-example.png
 
    Will be exported as an animation called "My Animation" with ConeAction
    playing on the Cone and CubeAction playing on the Cube.
@@ -463,11 +462,11 @@ Export
 Format
    See: `File Format Variations`_.
 Textures
-   Folder to place texture files in. Relative to the .gltf file.
+   Folder to place texture files in. Relative to the gltf-file.
 Copyright
    Legal rights and conditions for the model.
 Remember Export Settings
-   Store export settings in the Blender file,
+   Store export settings in the blend-file,
    so they will be recalled next time the file is opened.
 
 
@@ -507,8 +506,8 @@ Vertex Colors
 Materials
    Export materials.
 Images
-   Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable
-   for web applications due to the smaller file size.
+   Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
+   web applications due to the smaller file size.
 
 
 Compression
@@ -540,7 +539,6 @@ Animation
 
 Exports active actions and NLA tracks as glTF animations.
 
-
 Limit to Playback Range
    Clips animations to selected playback range.
 Sampling Rate
@@ -550,7 +548,7 @@ Always Sample Animations
 NLA Strips
    Whether to export NLA strip animations.
 Export Deformation Bones Only
-   Export Deformation bones only (and needed bones for hierarchy).
+   Export deformation bones only (and needed bones for hierarchy).
 
 
 Shape Keys
@@ -570,7 +568,7 @@ Skinning
 Export skinning (armature) data.
 
 Include All Bone Influences
-   Allow >4 joint vertex influences. Models may appear incorrectly in many viewers.
+   Allow less than 4 joint vertex influences. Models may appear incorrectly in many viewers.
 
 
 Contributing
@@ -581,5 +579,5 @@ the `glTF-Blender-IO repository <https://github.com/KhronosGroup/glTF-Blender-IO
 where you can file bug reports, submit feature requests, or contribute code.
 
 Discussion and development of the glTF 2.0 format itself takes place on
-the Khronos Group `glTF GitHub repository <https://github.com/KhronosGroup/glTF>`__,
+the Khronos Group `glTF Github repository <https://github.com/KhronosGroup/glTF>`__,
 and feedback there is welcome.
