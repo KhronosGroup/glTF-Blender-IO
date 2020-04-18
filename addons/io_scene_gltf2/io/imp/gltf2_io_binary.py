@@ -161,16 +161,14 @@ class BinaryData():
     def get_image_data(gltf, img_idx):
         """Get data from image."""
         pyimage = gltf.data.images[img_idx]
-        image_name = "Image_" + str(img_idx)
 
-        assert(not (pyimage.uri is not None and pyimage.buffer_view is not None))
+        assert not (
+            pyimage.uri is not None and
+            pyimage.buffer_view is not None
+        )
 
         if pyimage.uri is not None:
-            data, file_name = gltf.load_uri(pyimage.uri)
-            return data, file_name or image_name
-
-        elif pyimage.buffer_view is not None:
-            data = BinaryData.get_buffer_view(gltf, pyimage.buffer_view)
-            return data, image_name
-
-        return None, None
+            return gltf.load_uri(pyimage.uri)
+        if pyimage.buffer_view is not None:
+            return BinaryData.get_buffer_view(gltf, pyimage.buffer_view)
+        return None

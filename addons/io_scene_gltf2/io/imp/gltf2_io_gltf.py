@@ -175,7 +175,7 @@ class glTFImporter():
         buffer = self.data.buffers[buffer_idx]
 
         if buffer.uri:
-            data, _file_name = self.load_uri(buffer.uri)
+            data = self.load_uri(buffer.uri)
             if data is not None:
                 self.buffers[buffer_idx] = data
 
@@ -185,20 +185,18 @@ class glTFImporter():
                 self.buffers[buffer_idx] = self.glb_buffer
 
     def load_uri(self, uri):
-        """Loads a URI.
-        Returns the data and the filename of the resource, if there is one.
-        """
+        """Loads a URI."""
         sep = ';base64,'
         if uri.startswith('data:'):
             idx = uri.find(sep)
             if idx != -1:
                 data = uri[idx + len(sep):]
-                return memoryview(base64.b64decode(data)), None
+                return memoryview(base64.b64decode(data))
 
         path = join(dirname(self.filename), unquote(uri))
         try:
             with open(path, 'rb') as f_:
-                return memoryview(f_.read()), basename(path)
+                return memoryview(f_.read())
         except Exception:
             self.log.error("Couldn't read file: " + path)
-            return None, None
+            return None
