@@ -122,6 +122,6 @@ def __gather_path(channels: typing.Tuple[bpy.types.FCurve],
     }.get(target)
 
     if target is None:
-        raise RuntimeError("Cannot export an animation with {} target".format(target))
+        return None
 
     return path
