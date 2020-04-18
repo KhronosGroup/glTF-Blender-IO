@@ -21,7 +21,7 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
-
+from ..com.gltf2_blender_extras import generate_extras
 
 @cached
 def gather_joint(blender_object, blender_bone, export_settings):
@@ -71,7 +71,7 @@ def gather_joint(blender_object, blender_bone, export_settings):
         camera=None,
         children=children,
         extensions=None,
-        extras=None,
+        extras=__gather_extras(blender_bone, export_settings),
         matrix=None,
         mesh=None,
         name=blender_bone.name,
@@ -81,3 +81,8 @@ def gather_joint(blender_object, blender_bone, export_settings):
         translation=translation,
         weights=None
     )
+
+def __gather_extras(blender_bone, export_settings):
+    if export_settings['gltf_extras']:
+        return generate_extras(blender_bone.bone)
+    return None
