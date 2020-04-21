@@ -19,7 +19,7 @@ const validator = require('gltf-validator');
 const OUT_PREFIX = process.env.OUT_PREFIX || '../tests_out';
 
 const blenderVersions = [
-    "blender28"
+    "blender"
 ];
 
 const validator_info_keys = [
