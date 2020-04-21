@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: node:8-stretch
+      - image: node:12-stretch
     parallelism: 2
     environment:
       TEST_FILTERS: >-
