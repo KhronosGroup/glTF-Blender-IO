@@ -12,7 +12,6 @@
   "scripts": {
     "test": "mocha --reporter mochawesome",
     "test-bail": "mocha -b --reporter mochawesome",
-    "test-blender28": "mocha -b --reporter mochawesome -g blender28",
     "lint": "eslint **/*.js",
     "lint:fix": "eslint --fix **/*.js"
   },

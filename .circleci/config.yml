@@ -5,9 +5,11 @@ jobs:
       - image: node:12-stretch
     parallelism: 2
     environment:
+      BLENDER_MAJOR: 2
+      BLENDER_MINOR: 90
       TEST_FILTERS: >-
-        blender28_export
-        blender28_roundtrip
+        blender_export
+        blender_roundtrip
     steps:
       - checkout
       - run:
@@ -21,27 +23,22 @@ jobs:
             apt -q update && apt install --no-install-recommends -y -q \
               libglu1-mesa \
               libxi6
-            if [[ $FILTER =~ blender28 ]]; then
-              BLENDER28_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
-                grep -oe '[^\"]*blender-2\.83[^\"]*linux64[^\"]*' | \
-                tail -n1)"
-              BLENDER28_VERSION=$(echo $BLENDER28_URL | grep -Po 'blender-2\.\K[0-9]+')
-              echo "Installing Blender 2.${BLENDER28_VERSION}"
-              mkdir /opt/blender28
-              echo "Downloading from: $BLENDER28_URL"
-              curl -SL "$BLENDER28_URL" | \
-                tar -Jx -C /opt/blender28 --strip-components=1
-              ln -s /opt/blender28/blender /usr/local/bin/blender28
-            fi
+            echo "Looking for: Blender $BLENDER_MAJOR.$BLENDER_MINOR"
+            BLENDER_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
+              grep -oe '[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux64[^\"]*' | \
+              tail -n1)"
+            mkdir /opt/blender
+            echo "Downloading from: $BLENDER_URL"
+            curl -SL "$BLENDER_URL" | \
+              tar -Jx -C /opt/blender --strip-components=1
+            ln -s /opt/blender/blender /usr/local/bin/blender
+            blender --version
       - run:
           name: Setup Tests
           command: |
-            FILTERS=($TEST_FILTERS)
-            FILTER=${FILTERS[$CIRCLE_NODE_INDEX]}
-            if [[ $FILTER =~ blender28 ]]; then
-              rm -rf /opt/blender28/2.8*/scripts/addons/io_scene_gltf2
-              cp -r addons/io_scene_gltf2 /opt/blender28/2.8*/scripts/addons
-            fi
+            ADDON_DIR=/opt/blender/$BLENDER_MAJOR.$BLENDER_MINOR/scripts/addons
+            rm -rf $ADDON_DIR/io_scene_gltf2
+            cp -r addons/io_scene_gltf2 $ADDON_DIR
             cd tests
             yarn install
             mkdir -p /out
