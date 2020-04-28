@@ -26,13 +26,13 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-r", "--repo", required=True, help="repo path")
 args = vars(ap.parse_args())
 
-doc = dirname(realpath(__file__)) + "/../docs/blender_docs/io_scene_gltf2.rst"
+doc = dirname(realpath(__file__)) + "/../docs/blender_docs/scene_gltf2.rst"
 images = dirname(realpath(__file__)) + "/../images/"
 
 if not isdir(args["repo"]):
     sys.exit()
 
-shutil.copy(doc, args["repo"] + "/manual/addons/io_scene_gltf2.rst")
+shutil.copy(doc, args["repo"] + "/manual/addons/import_export/scene_gltf2.rst")
 
 images_list = listdir(images)
 for img in images_list:

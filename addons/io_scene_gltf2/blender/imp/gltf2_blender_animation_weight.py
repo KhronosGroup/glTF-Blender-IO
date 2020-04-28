@@ -52,11 +52,7 @@ class BlenderWeightAnim():
         name = animation.track_name + "_" + obj.name
         action = bpy.data.actions.new(name)
         action.id_root = "KEY"
-        gltf.needs_stash.append((obj.data.shape_keys, animation.track_name, action))
-
-        if not obj.data.shape_keys.animation_data:
-            obj.data.shape_keys.animation_data_create()
-        obj.data.shape_keys.animation_data.action = action
+        gltf.needs_stash.append((obj.data.shape_keys, action))
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
