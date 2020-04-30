@@ -54,6 +54,7 @@ with the following channels of information:
 - Baked Ambient Occlusion
 - Normal Map
 - Emissive
+- Clearcoat (requires ``KHR_materials_clearcoat``)
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
