@@ -54,6 +54,7 @@ with the following channels of information:
 - Baked Ambient Occlusion
 - Normal Map
 - Emissive
+- Clearcoat (requires ``KHR_materials_clearcoat``)
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -448,11 +449,11 @@ Pack Images
 Shading
    How normals are computed during import.
 Guess Original Bind Pose
-   Determines the pose for bones (and consequently, skinned meshes) in edit mode.
+   Determines the pose for bones (and consequently, skinned meshes) in Edit Mode.
    When on, attempts to guess the pose that was used to compute the inverse bind matrices.
-Bone Dir
+Bone Direction
    Changes the heuristic the importer uses to decide where to place bone tips.
-   Note that the Fortune setting may cause inaccuracies in models that use non-uniform scalings.
+   Note that the Fortune setting may cause inaccuracies in models that use non-uniform scaling.
    Otherwise this is purely aesthetic.
 
 
@@ -579,5 +580,5 @@ the `glTF-Blender-IO repository <https://github.com/KhronosGroup/glTF-Blender-IO
 where you can file bug reports, submit feature requests, or contribute code.
 
 Discussion and development of the glTF 2.0 format itself takes place on
-the Khronos Group `glTF Github repository <https://github.com/KhronosGroup/glTF>`__,
+the Khronos Group `glTF GitHub repository <https://github.com/KhronosGroup/glTF>`__,
 and feedback there is welcome.
