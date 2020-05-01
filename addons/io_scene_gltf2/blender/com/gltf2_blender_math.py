@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
 import typing
 import math
 from mathutils import Matrix, Vector, Quaternion, Euler
@@ -171,6 +170,7 @@ def round_if_near(value: float, target: float) -> float:
     """If value is very close to target, round to target."""
     return value if abs(value - target) > 2.0e-6 else target
 
+
 def scale_rot_swap_matrix(rot):
     """Returns a matrix m st. Scale[s] Rot[rot] = Rot[rot] Scale[m s].
     If rot.to_matrix() is a signed permutation matrix, works for any s.
@@ -182,6 +182,7 @@ def scale_rot_swap_matrix(rot):
         for j in range(3):
             m[i][j] = abs(m[i][j])  # discard sign
     return m
+
 
 def nearby_signed_perm_matrix(rot):
     """Returns a signed permutation matrix close to rot.to_matrix().

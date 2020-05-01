@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mathutils import Matrix, Quaternion
-from math import sqrt, sin, cos
+from math import sin, cos
 
 def texture_transform_blender_to_gltf(mapping_transform):
     """

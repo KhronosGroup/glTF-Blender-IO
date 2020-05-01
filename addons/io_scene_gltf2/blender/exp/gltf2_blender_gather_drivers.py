@@ -13,8 +13,6 @@
 # limitations under the License.
 
 
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
-from io_scene_gltf2.blender.com import gltf2_blender_conversion
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import skdriverdiscovercache, skdrivervalues
 from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_object_path
 

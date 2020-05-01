@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
 from ...io.com.gltf2_io import TextureInfo
 from .gltf2_blender_pbrMetallicRoughness import \
     base_color, emission, normal, occlusion, make_output_nodes, make_settings_node

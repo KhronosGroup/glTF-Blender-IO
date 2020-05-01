@@ -18,7 +18,7 @@ import logging
 import json
 import struct
 import base64
-from os.path import dirname, join, isfile, basename
+from os.path import dirname, join, isfile
 from urllib.parse import unquote
 
 
