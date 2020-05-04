@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 2, 69),
+    "version": (1, 3, 7),
     'blender': (2, 83, 9),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -274,13 +274,17 @@ class ExportGLTF2_Base:
     )
 
     export_nla_strips: BoolProperty(
-        name='NLA Strips',
-        description='Export NLA Strip animations',
+        name='Group by NLA Track',
+        description=(
+            "When on, multiple actions become part of the same glTF animation if\n"
+            "they're pushed onto NLA tracks with the same name.\n"
+            "When off, all the currently assigned actions become one glTF animation"
+        ),
         default=True
     )
 
     export_def_bones: BoolProperty(
-        name='Export Deformation bones only',
+        name='Export Deformation Bones Only',
         description='Export Deformation bones only (and needed bones for hierarchy)',
         default=False
     )
@@ -556,10 +560,13 @@ class GLTF_PT_export_include(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, 'use_selection')
-        layout.prop(operator, 'export_extras')
-        layout.prop(operator, 'export_cameras')
-        layout.prop(operator, 'export_lights')
+        col = layout.column(heading = "Limit to", align = True)
+        col.prop(operator, 'use_selection')
+
+        col = layout.column(heading = "Data", align = True)
+        col.prop(operator, 'export_extras')
+        col.prop(operator, 'export_cameras')
+        col.prop(operator, 'export_lights')
 
 
 class GLTF_PT_export_transform(bpy.types.Panel):
@@ -843,7 +850,7 @@ class ImportGLTF2(Operator, ImportHelper):
         description="Log Level")
 
     import_pack_images: BoolProperty(
-        name='Pack images',
+        name='Pack Images',
         description='Pack all images into .blend file',
         default=True
     )
@@ -876,7 +883,7 @@ class ImportGLTF2(Operator, ImportHelper):
     )
 
     guess_original_bind_pose: BoolProperty(
-        name='Guess original bind pose',
+        name='Guess Original Bind Pose',
         description=(
             'Try to guess the original bind pose for skinned meshes from '
             'the inverse bind matrices.\n'
@@ -887,6 +894,9 @@ class ImportGLTF2(Operator, ImportHelper):
 
     def draw(self, context):
         layout = self.layout
+
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
 
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'import_shading')
