@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import bpy
+
 from .gltf2_blender_image import BlenderImage
 from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
 from io_scene_gltf2.io.com.gltf2_io import Sampler
-from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
 
 def texture(

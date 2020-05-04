@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import struct
-import base64
 
 from ..com.gltf2_io import Accessor
 

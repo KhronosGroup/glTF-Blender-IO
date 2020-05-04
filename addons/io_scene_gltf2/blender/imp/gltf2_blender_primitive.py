@@ -15,7 +15,6 @@
 import bpy
 from mathutils import Vector, Matrix
 
-from .gltf2_blender_material import BlenderMaterial
 from ...io.imp.gltf2_io_binary import BinaryData
 from ...io.com.gltf2_io_color_management import color_linear_to_srgb
 from ...io.com import gltf2_io_debug

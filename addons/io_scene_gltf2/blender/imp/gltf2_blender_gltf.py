@@ -121,7 +121,7 @@ class BlenderGlTF():
 
         # Dispatch animation
         if gltf.data.animations:
-            for node_idx, node in enumerate(gltf.data.nodes):
+            for node in gltf.data.nodes:
                 node.animations = {}
 
             track_names = set()

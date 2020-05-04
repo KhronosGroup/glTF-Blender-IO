@@ -14,12 +14,10 @@
 
 import bpy
 import bmesh
-from mathutils import Vector
 
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
 from .gltf2_blender_primitive import BlenderPrimitive
-from ...io.imp.gltf2_io_binary import BinaryData
 
 
 class BlenderMesh():
