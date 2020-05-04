@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 3, 7),
+    "version": (1, 2, 73),
     'blender': (2, 83, 9),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -274,8 +274,12 @@ class ExportGLTF2_Base:
     )
 
     export_nla_strips: BoolProperty(
-        name='NLA Strips',
-        description='Export NLA Strip animations',
+        name='Group by NLA Track',
+        description=(
+            "When on, multiple actions become part of the same glTF animation if\n"
+            "they're pushed onto NLA tracks with the same name.\n"
+            "When off, all the currently assigned actions become one glTF animation"
+        ),
         default=True
     )
 

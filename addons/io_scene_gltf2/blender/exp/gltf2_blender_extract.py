@@ -76,6 +76,7 @@ def convert_swizzle_normal(loc, armature, blender_object, export_settings):
         apply_matrix = (armature.matrix_world.inverted() @ blender_object.matrix_world).to_3x3().inverted()
         apply_matrix.transpose()
         new_loc = ((armature.matrix_world.to_3x3() @ apply_matrix).to_4x4() @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
+        new_loc.normalize()
 
         if export_settings[gltf2_blender_export_keys.YUP]:
             return Vector((new_loc[0], new_loc[2], -new_loc[1]))
