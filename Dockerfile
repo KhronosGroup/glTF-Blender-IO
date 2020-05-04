@@ -1,4 +1,4 @@
-FROM node:8-stretch
+FROM node:12-stretch
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt -q update && apt install --no-install-recommends -y -q \

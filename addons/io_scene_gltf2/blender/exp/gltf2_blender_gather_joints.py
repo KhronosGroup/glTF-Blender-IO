@@ -17,7 +17,6 @@ import mathutils
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins

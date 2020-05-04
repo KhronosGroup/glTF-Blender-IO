@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import bpy
-from mathutils import Color
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_search_node_tree

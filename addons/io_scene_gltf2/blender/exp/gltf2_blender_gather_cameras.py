@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io

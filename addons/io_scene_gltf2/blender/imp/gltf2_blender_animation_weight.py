@@ -16,7 +16,7 @@ import json
 import bpy
 
 from ...io.imp.gltf2_io_binary import BinaryData
-from .gltf2_blender_animation_utils import simulate_stash, make_fcurve
+from .gltf2_blender_animation_utils import make_fcurve
 
 
 class BlenderWeightAnim():

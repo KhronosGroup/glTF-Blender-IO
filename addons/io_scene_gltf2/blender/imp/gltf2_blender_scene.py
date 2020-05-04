@@ -13,8 +13,7 @@
 # limitations under the License.
 
 import bpy
-from math import sqrt
-from mathutils import Quaternion
+
 from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_animation import BlenderAnimation
 from .gltf2_blender_vnode import VNode, compute_vnodes

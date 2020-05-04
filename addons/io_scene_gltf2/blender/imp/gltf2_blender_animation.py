@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
-
 from .gltf2_blender_animation_node import BlenderNodeAnim
 from .gltf2_blender_animation_weight import BlenderWeightAnim
 from .gltf2_blender_animation_utils import simulate_stash, restore_animation_on_object

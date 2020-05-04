@@ -103,16 +103,14 @@ def save_gltf(gltf, export_settings, encoder, glb_buffer):
         file.write(struct.pack("I", length_gltf))
         file.write('JSON'.encode())
         file.write(gltf_data)
-        for i in range(0, spaces_gltf):
-            file.write(' '.encode())
+        file.write(b' ' * spaces_gltf)
 
         # Chunk 1 (BIN)
         if length_bin > 0:
             file.write(struct.pack("I", length_bin))
             file.write('BIN\0'.encode())
             file.write(binary)
-            for i in range(0, zeros_bin):
-                file.write('\0'.encode())
+            file.write(b'\0' * zeros_bin)
 
         file.close()
 
