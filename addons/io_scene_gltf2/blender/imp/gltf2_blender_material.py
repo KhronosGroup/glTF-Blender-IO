@@ -33,8 +33,6 @@ class BlenderMaterial():
         name = pymaterial.name
         if name is None:
             name = "Material_" + str(material_idx)
-        if vertex_color is not None:
-            name += "_" + vertex_color
 
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material[vertex_color] = mat.name
