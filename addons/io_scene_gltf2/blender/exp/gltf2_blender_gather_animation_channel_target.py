@@ -92,7 +92,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                 bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
                 if blender_bone.name in [b.name for b in bones]:
                     obj = blender_object.proxy if blender_object.proxy else blender_object
-                    return gltf2_blender_gather_joints.gather_jointb(obj, blender_bone, export_settings)
+                    return gltf2_blender_gather_joints.gather_joint(obj, blender_bone, export_settings)
 
     return gltf2_blender_gather_nodes.gather_node(blender_object,
         blender_object.library.name if blender_object.library else None,
