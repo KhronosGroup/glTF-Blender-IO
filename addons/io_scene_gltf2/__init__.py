@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 2, 74),
+    "version": (1, 2, 75),
     'blender': (2, 83, 9),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -560,14 +560,10 @@ class GLTF_PT_export_include(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        col = layout.column(heading = "Limit to", align = True)
-        col.prop(operator, 'use_selection')
-
-        col = layout.column(heading = "Data", align = True)
-        col.prop(operator, 'export_extras')
-        col.prop(operator, 'export_cameras')
-        col.prop(operator, 'export_lights')
-
+        layout.prop(operator, 'use_selection')
+        layout.prop(operator, 'export_extras')
+        layout.prop(operator, 'export_cameras')
+        layout.prop(operator, 'export_lights')
 
 class GLTF_PT_export_transform(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -894,9 +890,6 @@ class ImportGLTF2(Operator, ImportHelper):
 
     def draw(self, context):
         layout = self.layout
-
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
 
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'import_shading')
