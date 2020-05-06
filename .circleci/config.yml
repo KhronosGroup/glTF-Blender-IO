@@ -6,7 +6,7 @@ jobs:
     parallelism: 2
     environment:
       BLENDER_MAJOR: 2
-      BLENDER_MINOR: 90
+      BLENDER_MINOR: 83
       TEST_FILTERS: >-
         blender_export
         blender_roundtrip
