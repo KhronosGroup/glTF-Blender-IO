@@ -409,63 +409,70 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
             bone_count = 0
 
-            if blender_vertex_groups is not None and vertex.groups is not None and len(vertex.groups) > 0 and export_settings[gltf2_blender_export_keys.SKINS]:
-                joint = []
-                weight = []
-                vertex_groups = vertex.groups
-                if not export_settings['gltf_all_vertex_influences']:
-                    # sort groups by weight descending
-                    vertex_groups = sorted(vertex.groups, key=attrgetter('weight'), reverse=True)
-                for group_element in vertex_groups:
+            # Skin must be ignored if the object is parented to a bone of the armature
+            # (This creates an infinite recursive error)
+            # SO ignoring skin in that case
+            if blender_object.parent_type == "BONE" and blender_object.parent.name == armature.name:
+                bone_max = 0 # joints & weights will be ignored in following code
+            else:
+                # Manage joints & weights
+                if blender_vertex_groups is not None and vertex.groups is not None and len(vertex.groups) > 0 and export_settings[gltf2_blender_export_keys.SKINS]:
+                    joint = []
+                    weight = []
+                    vertex_groups = vertex.groups
+                    if not export_settings['gltf_all_vertex_influences']:
+                        # sort groups by weight descending
+                        vertex_groups = sorted(vertex.groups, key=attrgetter('weight'), reverse=True)
+                    for group_element in vertex_groups:
 
-                    if len(joint) == 4:
+                        if len(joint) == 4:
+                            bone_count += 1
+                            joints.append(joint)
+                            weights.append(weight)
+                            joint = []
+                            weight = []
+
+                        #
+
+                        joint_weight = group_element.weight
+                        if joint_weight <= 0.0:
+                            continue
+
+                        #
+
+                        vertex_group_index = group_element.group
+
+                        if vertex_group_index < 0 or vertex_group_index >= len(blender_vertex_groups):
+                            continue
+                        vertex_group_name = blender_vertex_groups[vertex_group_index].name
+
+                        joint_index = None
+
+                        if armature:
+                            skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
+                            for index, j in enumerate(skin.joints):
+                                if j.name == vertex_group_name:
+                                    joint_index = index
+                                    break
+
+                        #
+                        if joint_index is not None:
+                            joint.append(joint_index)
+                            weight.append(joint_weight)
+
+                    if len(joint) > 0:
                         bone_count += 1
+
+                        for fill in range(0, 4 - len(joint)):
+                            joint.append(0)
+                            weight.append(0.0)
+
                         joints.append(joint)
                         weights.append(weight)
-                        joint = []
-                        weight = []
 
-                    #
-
-                    joint_weight = group_element.weight
-                    if joint_weight <= 0.0:
-                        continue
-
-                    #
-
-                    vertex_group_index = group_element.group
-
-                    if vertex_group_index < 0 or vertex_group_index >= len(blender_vertex_groups):
-                        continue
-                    vertex_group_name = blender_vertex_groups[vertex_group_index].name
-
-                    joint_index = None
-
-                    if armature:
-                        skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
-                        for index, j in enumerate(skin.joints):
-                            if j.name == vertex_group_name:
-                                joint_index = index
-                                break
-
-                    #
-                    if joint_index is not None:
-                        joint.append(joint_index)
-                        weight.append(joint_weight)
-
-                if len(joint) > 0:
-                    bone_count += 1
-
-                    for fill in range(0, 4 - len(joint)):
-                        joint.append(0)
-                        weight.append(0.0)
-
-                    joints.append(joint)
-                    weights.append(weight)
-
-            for fill in range(0, bone_max - bone_count):
-                joints.append([0, 0, 0, 0])
-                weights.append([0.0, 0.0, 0.0, 0.0])
+                for fill in range(0, bone_max - bone_count):
+                    joints.append([0, 0, 0, 0])
+                    weights.append([0.0, 0.0, 0.0, 0.0])
 
             #
 
