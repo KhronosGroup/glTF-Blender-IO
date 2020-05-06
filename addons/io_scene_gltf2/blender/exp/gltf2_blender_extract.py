@@ -411,8 +411,8 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
             # Skin must be ignored if the object is parented to a bone of the armature
             # (This creates an infinite recursive error)
-            # SO ignoring skin in that case
-            if blender_object.parent_type == "BONE" and blender_object.parent.name == armature.name:
+            # So ignoring skin in that case
+            if blender_object and blender_object.parent_type == "BONE" and blender_object.parent.name == armature.name:
                 bone_max = 0 # joints & weights will be ignored in following code
             else:
                 # Manage joints & weights
