@@ -160,23 +160,18 @@ class ExportImage:
         return self.__encode_from_numpy_array(result, dim)
 
     def __encode_from_numpy_array(self, pixels: np.ndarray, dim: Tuple[int, int]) -> bytes:
-        tmp_image = None
-        try:
-            tmp_image = bpy.data.images.new(
+        with TmpImageGuard() as guard:
+            guard.image = bpy.data.images.new(
                 "##gltf-export:tmp-image##",
                 width=dim[0],
                 height=dim[1],
                 alpha=Channel.A in self.fills,
             )
-            assert tmp_image.channels == 4  # 4 regardless of the alpha argument above.
+            tmp_image = guard.image
 
             tmp_image.pixels.foreach_set(pixels)
 
             return _encode_temp_image(tmp_image, self.file_format)
-
-        finally:
-            if tmp_image is not None:
-                bpy.data.images.remove(tmp_image, do_unlink=True)
 
     def __encode_from_image(self, image: bpy.types.Image) -> bytes:
         # See if there is an existing file we can use.
@@ -200,22 +195,10 @@ class ExportImage:
                     return data
 
         # Copy to a temp image and save.
-        tmp_image = None
-        try:
-            tmp_image = image.copy()
-            tmp_image.update()
-
-            if image.is_dirty:
-                # Copy the pixels to get the changes
-                tmp_buf = np.empty(image.size[0] * image.size[1] * 4, np.float32)
-                image.pixels.foreach_get(tmp_buf)
-                tmp_image.pixels.foreach_set(tmp_buf)
-                tmp_buf = None  # GC this
-
+        with TmpImageGuard() as guard:
+            _make_temp_image_copy(guard, src_image=image)
+            tmp_image = guard.image
             return _encode_temp_image(tmp_image, self.file_format)
-        finally:
-            if tmp_image is not None:
-                bpy.data.images.remove(tmp_image, do_unlink=True)
 
 
 def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str) -> bytes:
@@ -229,3 +212,30 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str) -> bytes:
 
         with open(tmpfilename, "rb") as f:
             return f.read()
+
+
+class TmpImageGuard:
+    """Guard to automatically clean up temp images (use it with `with`)."""
+    def __init__(self):
+        self.image = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.image is not None:
+            bpy.data.images.remove(self.image, do_unlink=True)
+
+
+def _make_temp_image_copy(guard: TmpImageGuard, src_image: bpy.types.Image):
+    """Makes a temporary copy of src_image. Will be cleaned up with guard."""
+    guard.image = src_image.copy()
+    tmp_image = guard.image
+
+    tmp_image.update()
+
+    if src_image.is_dirty:
+        # Unsaved changes aren't copied by .copy(), so do them ourselves
+        tmp_buf = np.empty(src_image.size[0] * src_image.size[1] * 4, np.float32)
+        src_image.pixels.foreach_get(tmp_buf)
+        tmp_image.pixels.foreach_set(tmp_buf)
