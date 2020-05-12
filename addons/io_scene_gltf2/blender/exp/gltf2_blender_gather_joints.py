@@ -20,6 +20,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 
 @cached
@@ -66,7 +67,7 @@ def gather_joint(blender_object, blender_bone, export_settings):
                 children.append(gather_joint(blender_object, blender_bone.id_data.pose.bones[bone], export_settings))
 
     # finally add to the joints array containing all the joints in the hierarchy
-    return gltf2_io.Node(
+    node = gltf2_io.Node(
         camera=None,
         children=children,
         extensions=None,
@@ -80,6 +81,10 @@ def gather_joint(blender_object, blender_bone, export_settings):
         translation=translation,
         weights=None
     )
+
+    export_user_extensions('gather_joint_hook', export_settings, node, blender_bone)
+
+    return node
 
 def __gather_extras(blender_bone, export_settings):
     if export_settings['gltf_extras']:
