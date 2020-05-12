@@ -369,6 +369,9 @@ def __gather_trans_rot_scale(blender_object, export_settings):
                 rot = blender_object.rotation_euler.to_quaternion()
             sca = blender_object.scale
 
+    # make sure the rotation is normalized
+    rot.normalize()
+
     trans = gltf2_blender_extract.convert_swizzle_location(trans, None, None, export_settings)
     rot = gltf2_blender_extract.convert_swizzle_rotation(rot, export_settings)
     sca = gltf2_blender_extract.convert_swizzle_scale(sca, export_settings)
