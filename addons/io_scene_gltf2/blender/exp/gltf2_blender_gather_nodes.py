@@ -409,6 +409,15 @@ def __gather_skin(blender_object, export_settings):
     if not any(vertex.groups is not None and len(vertex.groups) > 0 for vertex in blender_mesh.vertices):
         return None
 
+    # Prevent infinite recursive error. A mesh can't have an Armature modifier
+    # and be bone parented to a bone of this armature
+    # In that case, ignore the armature modifier, keep only the bone parenting
+    if blender_object.parent is not None \
+    and blender_object.parent_type == 'BONE' \
+    and blender_object.parent.name == modifiers["ARMATURE"].object.name:
+
+        return None
+
     # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
     return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
 
