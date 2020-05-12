@@ -16,6 +16,8 @@ import bpy
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name
 from .gltf2_blender_texture import texture
+from .gltf2_blender_KHR_materials_clearcoat import \
+    clearcoat, clearcoat_roughness, clearcoat_normal
 
 
 class MaterialHelper:
@@ -88,6 +90,23 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             occlusion_socket=node.inputs['Occlusion'],
         )
 
+    clearcoat(
+        mh,
+        location=(-200, -1060),
+        clearcoat_socket=pbr_node.inputs['Clearcoat'],
+    )
+
+    clearcoat_roughness(
+        mh,
+        location=(-200, -1540),
+        roughness_socket=pbr_node.inputs['Clearcoat Roughness'],
+    )
+
+    clearcoat_normal(
+        mh,
+        location=(-200, -2020),
+        normal_socket=pbr_node.inputs['Clearcoat Normal'],
+    )
 
 # These functions each create one piece of the node graph, slotting
 # their outputs into the given socket, or setting its default value.
