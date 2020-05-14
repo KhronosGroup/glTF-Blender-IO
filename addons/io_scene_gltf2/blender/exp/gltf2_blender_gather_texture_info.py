@@ -24,45 +24,44 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 
 
 @cached
-def gather_texture_info(blender_shader_sockets_or_texture_slots: typing.Union[
-    typing.Tuple[bpy.types.NodeSocket], typing.Tuple[bpy.types.Texture]],
+def gather_texture_info(
+        blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         export_settings):
-    if not __filter_texture_info(blender_shader_sockets_or_texture_slots, export_settings):
+    if not __filter_texture_info(blender_shader_sockets, export_settings):
         return None
 
     texture_info = gltf2_io.TextureInfo(
-        extensions=__gather_extensions(blender_shader_sockets_or_texture_slots, export_settings),
-        extras=__gather_extras(blender_shader_sockets_or_texture_slots, export_settings),
-        index=__gather_index(blender_shader_sockets_or_texture_slots, export_settings),
-        tex_coord=__gather_tex_coord(blender_shader_sockets_or_texture_slots, export_settings)
+        extensions=__gather_extensions(blender_shader_sockets, export_settings),
+        extras=__gather_extras(blender_shader_sockets, export_settings),
+        index=__gather_index(blender_shader_sockets, export_settings),
+        tex_coord=__gather_tex_coord(blender_shader_sockets, export_settings)
     )
 
     if texture_info.index is None:
         return None
 
-    export_user_extensions('gather_texture_info_hook', export_settings, texture_info, blender_shader_sockets_or_texture_slots)
+    export_user_extensions('gather_texture_info_hook', export_settings, texture_info, blender_shader_sockets)
 
     return texture_info
 
 
-def __filter_texture_info(blender_shader_sockets_or_texture_slots, export_settings):
-    if not blender_shader_sockets_or_texture_slots:
+def __filter_texture_info(blender_shader_sockets, export_settings):
+    if not blender_shader_sockets:
         return False
-    if not all([elem is not None for elem in blender_shader_sockets_or_texture_slots]):
+    if not all([elem is not None for elem in blender_shader_sockets]):
         return False
-    if isinstance(blender_shader_sockets_or_texture_slots[0], bpy.types.NodeSocket):
-        if any([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets_or_texture_slots]):
-            # sockets do not lead to a texture --> discard
-            return False
+    if any([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
+        # sockets do not lead to a texture --> discard
+        return False
 
     return True
 
 
-def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings):
-    if not hasattr(blender_shader_sockets_or_texture_slots[0], 'links'):
+def __gather_extensions(blender_shader_sockets, export_settings):
+    if not hasattr(blender_shader_sockets[0], 'links'):
         return None
 
-    tex_nodes = [__get_tex_from_socket(socket).shader_node for socket in blender_shader_sockets_or_texture_slots]
+    tex_nodes = [__get_tex_from_socket(socket).shader_node for socket in blender_shader_sockets]
     texture_node = tex_nodes[0] if (tex_nodes is not None and len(tex_nodes) > 0) else None
     if texture_node is None:
         return None
@@ -74,48 +73,42 @@ def __gather_extensions(blender_shader_sockets_or_texture_slots, export_settings
     return {"KHR_texture_transform": extension}
 
 
-def __gather_extras(blender_shader_sockets_or_texture_slots, export_settings):
+def __gather_extras(blender_shader_sockets, export_settings):
     return None
 
 
-def __gather_index(blender_shader_sockets_or_texture_slots, export_settings):
+def __gather_index(blender_shader_sockets, export_settings):
     # We just put the actual shader into the 'index' member
-    return gltf2_blender_gather_texture.gather_texture(blender_shader_sockets_or_texture_slots, export_settings)
+    return gltf2_blender_gather_texture.gather_texture(blender_shader_sockets, export_settings)
 
 
-def __gather_tex_coord(blender_shader_sockets_or_texture_slots, export_settings):
-    if isinstance(blender_shader_sockets_or_texture_slots[0], bpy.types.NodeSocket):
-        blender_shader_node = __get_tex_from_socket(blender_shader_sockets_or_texture_slots[0]).shader_node
-        if len(blender_shader_node.inputs['Vector'].links) == 0:
-            return 0
-
-        input_node = blender_shader_node.inputs['Vector'].links[0].from_node
-
-        if isinstance(input_node, bpy.types.ShaderNodeMapping):
-
-            if len(input_node.inputs['Vector'].links) == 0:
-                return 0
-
-            input_node = input_node.inputs['Vector'].links[0].from_node
-
-        if not isinstance(input_node, bpy.types.ShaderNodeUVMap):
-            return 0
-
-        if input_node.uv_map == '':
-            return 0
-
-        # Try to gather map index.
-        for blender_mesh in bpy.data.meshes:
-            texCoordIndex = blender_mesh.uv_layers.find(input_node.uv_map)
-            if texCoordIndex >= 0:
-                return texCoordIndex
-
+def __gather_tex_coord(blender_shader_sockets, export_settings):
+    blender_shader_node = __get_tex_from_socket(blender_shader_sockets[0]).shader_node
+    if len(blender_shader_node.inputs['Vector'].links) == 0:
         return 0
-    elif isinstance(blender_shader_sockets_or_texture_slots[0], bpy.types.MaterialTextureSlot):
-        # TODO: implement for texture slots
+
+    input_node = blender_shader_node.inputs['Vector'].links[0].from_node
+
+    if isinstance(input_node, bpy.types.ShaderNodeMapping):
+
+        if len(input_node.inputs['Vector'].links) == 0:
+            return 0
+
+        input_node = input_node.inputs['Vector'].links[0].from_node
+
+    if not isinstance(input_node, bpy.types.ShaderNodeUVMap):
         return 0
-    else:
-        raise NotImplementedError()
+
+    if input_node.uv_map == '':
+        return 0
+
+    # Try to gather map index.
+    for blender_mesh in bpy.data.meshes:
+        texCoordIndex = blender_mesh.uv_layers.find(input_node.uv_map)
+        if texCoordIndex >= 0:
+            return texCoordIndex
+
+    return 0
 
 
 def __get_tex_from_socket(socket):

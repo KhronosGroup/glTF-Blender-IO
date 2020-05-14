@@ -43,13 +43,13 @@ def get_object_from_datapath(blender_object, data_path: str):
     return prop
 
 
-def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
+def get_socket(blender_material: bpy.types.Material, name: str):
     """
-    For a given material input name, retrieve the corresponding node tree socket or blender render texture slot.
+    For a given material input name, retrieve the corresponding node tree socket.
 
-    :param blender_material: a blender material for which to get the socket/slot
-    :param name: the name of the socket/slot
-    :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
+    :param blender_material: a blender material for which to get the socket
+    :param name: the name of the socket
+    :return: a blender NodeSocket
     """
     if blender_material.node_tree and blender_material.use_nodes:
         #i = [input for input in blender_material.node_tree.inputs]
@@ -79,13 +79,13 @@ def get_socket_or_texture_slot(blender_material: bpy.types.Material, name: str):
     return None
 
 
-def get_socket_or_texture_slot_old(blender_material: bpy.types.Material, name: str):
+def get_socket_old(blender_material: bpy.types.Material, name: str):
     """
     For a given material input name, retrieve the corresponding node tree socket in the special glTF node group.
 
-    :param blender_material: a blender material for which to get the socket/slot
-    :param name: the name of the socket/slot
-    :return: either a blender NodeSocket, if the material is a node tree or a blender Texture otherwise
+    :param blender_material: a blender material for which to get the socket
+    :param name: the name of the socket
+    :return: a blender NodeSocket
     """
     gltf_node_group_name = get_gltf_node_name().lower()
     if blender_material.node_tree and blender_material.use_nodes:
