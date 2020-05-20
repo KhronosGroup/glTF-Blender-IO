@@ -19,7 +19,6 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_get
-from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
@@ -128,3 +127,21 @@ def __get_tex_from_socket(socket):
     if result[0].shader_node.image is None:
         return None
     return result[0]
+
+
+def check_same_size_images(
+    blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
+) -> bool:
+    """Check that all sockets leads to images of the same size."""
+    if not blender_shader_sockets or not all(blender_shader_sockets):
+        return False
+
+    sizes = set()
+    for socket in blender_shader_sockets:
+        tex = __get_tex_from_socket(socket)
+        if tex is None:
+            return False
+        size = tex.shader_node.image.size
+        sizes.add((size[0], size[1]))
+
+    return len(sizes) == 1
