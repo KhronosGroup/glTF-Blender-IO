@@ -18,6 +18,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animations
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
@@ -32,6 +33,7 @@ def gather_gltf2(export_settings):
     """
     scenes = []
     animations = []  # unfortunately animations in gltf2 are just as 'root' as scenes.
+    materials = []
     active_scene = None
     for blender_scene in bpy.data.scenes:
         scenes.append(__gather_scene(blender_scene, export_settings))
@@ -39,7 +41,12 @@ def gather_gltf2(export_settings):
             animations += __gather_animations(blender_scene, export_settings)
         if bpy.context.scene.name == blender_scene.name:
             active_scene = len(scenes) -1
-    return active_scene, scenes, animations
+
+    for material in bpy.data.materials:
+        double_sided = not material.use_backface_culling
+        materials.append(gltf2_blender_gather_materials.gather_material(material, double_sided, export_settings))
+
+    return active_scene, scenes, animations, materials
 
 
 @cached

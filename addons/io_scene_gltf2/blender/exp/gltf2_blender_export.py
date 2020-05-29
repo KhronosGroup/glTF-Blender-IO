@@ -61,7 +61,7 @@ def __export(export_settings):
 
 
 def __gather_gltf(exporter, export_settings):
-    active_scene_idx, scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
+    active_scene_idx, scenes, animations, materials = gltf2_blender_gather.gather_gltf2(export_settings)
 
     plan = {'active_scene_idx': active_scene_idx, 'scenes': scenes, 'animations': animations}
     export_user_extensions('gather_gltf_hook', export_settings, plan)
@@ -75,7 +75,8 @@ def __gather_gltf(exporter, export_settings):
         exporter.add_scene(scene, idx==active_scene_idx)
     for animation in animations:
         exporter.add_animation(animation)
-
+    for material in materials:
+        exporter.add_material(material)
 
 def __create_buffer(exporter, export_settings):
     buffer = bytes()

@@ -192,6 +192,18 @@ class GlTF2Exporter:
 
         self.__traverse(animation)
 
+    def add_material(self, material: gltf2_io.Material):
+        """
+        Add an material to the glTF.
+
+        :param material: glTF material, with python style references (names)
+        :return: nothing
+        """
+        if self.__finalized:
+            raise RuntimeError("Tried to add material to finalized glTF file")
+
+        self.__traverse(material)
+
     def __to_reference(self, property):
         """
         Append a child of root property to its respective list and return a reference into said list.
