@@ -203,6 +203,12 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    export_all_materials: BoolProperty(
+        name='All materials',
+        description='Export all avalaible materials',
+        default=False
+    )
+
     export_colors: BoolProperty(
         name='Vertex Colors',
         description='Export vertex colors with meshes',
@@ -432,6 +438,7 @@ class ExportGLTF2_Base:
             export_settings['gltf_draco_mesh_compression'] = False
 
         export_settings['gltf_materials'] = self.export_materials
+        export_settings['gltf_all_materials'] = self.export_all_materials
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
 
@@ -567,6 +574,7 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'export_extras')
         col.prop(operator, 'export_cameras')
         col.prop(operator, 'export_lights')
+        col.prop(operator, 'export_all_materials')
 
 
 class GLTF_PT_export_transform(bpy.types.Panel):

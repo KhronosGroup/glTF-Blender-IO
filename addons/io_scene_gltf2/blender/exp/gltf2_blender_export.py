@@ -75,8 +75,9 @@ def __gather_gltf(exporter, export_settings):
         exporter.add_scene(scene, idx==active_scene_idx)
     for animation in animations:
         exporter.add_animation(animation)
-    for material in materials:
-        exporter.add_material(material)
+    if export_settings['gltf_all_materials']:
+        for material in materials:
+	    exporter.add_material(material)
 
 def __create_buffer(exporter, export_settings):
     buffer = bytes()
