@@ -39,12 +39,10 @@ def gather_gltf2(export_settings):
         scenes.append(__gather_scene(blender_scene, export_settings))
         if export_settings[gltf2_blender_export_keys.ANIMATIONS]:
             animations += __gather_animations(blender_scene, export_settings)
+        if export_settings[gltf2_blender_export_keys.ALL_MATERIALS]:
+            materials += __gather_materials(blender_scene, export_settings)
         if bpy.context.scene.name == blender_scene.name:
             active_scene = len(scenes) -1
-
-    for material in bpy.data.materials:
-        double_sided = not material.use_backface_culling
-        materials.append(gltf2_blender_gather_materials.gather_material(material, double_sided, export_settings))
 
     return active_scene, scenes, animations, materials
 
@@ -153,6 +151,21 @@ def __gather_animations(blender_scene, export_settings):
 
 
     return new_animations
+
+def __gather_materials(blender_scene, export_settings):
+    materials = []
+
+    for _blender_object in blender_scene.objects:
+        blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
+        for slot in blender_object.material_slots:
+            # Check if this slot as assigned material
+            if slot.material is None:
+                continue
+
+            double_sided = not slot.material.use_backface_culling
+            materials.append(gltf2_blender_gather_materials.gather_material(slot.material, double_sided, export_settings))
+
+    return materials
 
 
 def __gather_extras(blender_object, export_settings):
