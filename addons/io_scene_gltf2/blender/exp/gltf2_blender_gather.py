@@ -157,6 +157,15 @@ def __gather_materials(blender_scene, export_settings):
 
     for _blender_object in blender_scene.objects:
         blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
+
+        # Check if this object is exclude from view layer
+        node = gltf2_blender_gather_nodes.gather_node(
+                blender_object,
+                blender_object.library.name if blender_object.library else None,
+                blender_scene, None, export_settings)
+        if node is None:
+            continue
+
         for slot in blender_object.material_slots:
             # Check if this slot as assigned material
             if slot.material is None:
