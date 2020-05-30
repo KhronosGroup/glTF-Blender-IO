@@ -50,25 +50,45 @@ def gather_node(blender_object, library, blender_scene, dupli_object_parent, exp
 
 @cached
 def __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
+    children = __gather_children(blender_object, blender_scene, export_settings)
+
+    camera = None
+    mesh = None
+    skin = None
+    weights = None
+
     # If blender_scene is None, we are coming from animation export
     # Check to know if object is exported is already done, so we don't check
     # again if object is instanced in scene : this check was already done when exporting object itself
     if not __filter_node(blender_object, blender_scene, export_settings):
-        return None
+        if children:
+            # This node should be filtered out, but has un-filtered children present.
+            # So, export this node, excluding its camera, mesh, skin, and weights.
+            # The transformations and animations on this node will have visible effects on children.
+            pass
+        else:
+            # This node is filtered out, and has no un-filtered children or descendants.
+            return None
+    else:
+        # This node is being fully exported.
+        camera = __gather_camera(blender_object, export_settings)
+        mesh = __gather_mesh(blender_object, library, export_settings)
+        skin = __gather_skin(blender_object, export_settings)
+        weights = __gather_weights(blender_object, export_settings)
 
     node = gltf2_io.Node(
-        camera=__gather_camera(blender_object, export_settings),
-        children=__gather_children(blender_object, blender_scene, export_settings),
+        camera=camera,
+        children=children,
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
-        mesh=__gather_mesh(blender_object, library, export_settings),
+        mesh=mesh,
         name=__gather_name(blender_object, export_settings),
         rotation=None,
         scale=None,
-        skin=__gather_skin(blender_object, export_settings),
+        skin=skin,
         translation=None,
-        weights=__gather_weights(blender_object, export_settings)
+        weights=weights
     )
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
@@ -105,6 +125,8 @@ def __filter_node(blender_object, blender_scene, export_settings):
             else:
                 # Not instanced, not linked -> We don't keep this object
                 return False
+    if blender_object.visible_get() is False:
+        return False
     if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
         return False
 
