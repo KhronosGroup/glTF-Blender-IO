@@ -278,6 +278,7 @@ def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
     targets = {}
     multiple_rotation_mode_detected = False
+    delta_rotation_detection = [False, False] # Normal / Delta
     for fcurve in blender_action.fcurves:
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
@@ -318,8 +319,22 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                     continue
 
         # Detect that object or bone are not multiple keyed for euler and quaternion
-        # Keep only the current rotation mode used by object / bone
-        rotation, rotation_modes = get_rotation_modes(target_property)
+        # Keep only the current rotation mode used by object
+        rotation, delta, rotation_modes = get_rotation_modes(target_property)
+
+        # Delta rotation management
+        if delta is False:
+            if delta_rotation_detection[1] is True: # normal rotation coming, but delta is already present
+                multiple_rotation_mode_detected = True
+                continue
+            delta_rotation_detection[0] = True
+        else:
+            if delta_rotation_detection[0] is True: # delta rotation coming, but normal is already present
+                multiple_rotation_mode_detected = True
+                continue
+            delta_rotation_detection[1] = True
+
+
         if rotation and target.rotation_mode not in rotation_modes:
             multiple_rotation_mode_detected = True
             continue
@@ -347,6 +362,8 @@ def __gather_armature_object_channel_groups(blender_action: bpy.types.Action, bl
     if blender_object.type != "ARMATURE":
         return tuple()
 
+    delta_rotation_detection = [False, False] # Normal / Delta
+
     for fcurve in blender_action.fcurves:
         object_path = get_target_object_path(fcurve.data_path)
         if object_path != "":
@@ -363,8 +380,19 @@ def __gather_armature_object_channel_groups(blender_action: bpy.types.Action, bl
         target = gltf2_blender_get.get_object_from_datapath(blender_object, object_path)
 
         # Detect that armature is not multiple keyed for euler and quaternion
-        # Keep only the current rotation mode used by object
-        rotation, rotation_modes = get_rotation_modes(target_property)
+        # Keep only the current rotation mode used by bone
+        rotation, delta, rotation_modes = get_rotation_modes(target_property)
+
+        # Delta rotation management
+        if delta is False:
+            if delta_rotation_detection[1] is True: # normal rotation coming, but delta is already present
+                continue
+            delta_rotation_detection[0] = True
+        else:
+            if delta_rotation_detection[0] is True: # delta rotation coming, but normal is already present
+                continue
+            delta_rotation_detection[1] = True
+
         if rotation and target.rotation_mode not in rotation_modes:
             continue
 
