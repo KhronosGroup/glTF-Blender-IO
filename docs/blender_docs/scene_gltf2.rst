@@ -55,6 +55,7 @@ with the following channels of information:
 - Normal Map
 - Emissive
 - Clearcoat (requires ``KHR_materials_clearcoat``)
+- Transmission (requires ``KHR_materials_transmission``)
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -343,6 +344,8 @@ are supported directly by this add-on:
 
 - ``KHR_draco_mesh_compression``
 - ``KHR_lights_punctual``
+- ``KHR_materials_clearcoat``
+- ``KHR_materials_transmission``
 - ``KHR_materials_unlit``
 - ``KHR_texture_transform``
 
