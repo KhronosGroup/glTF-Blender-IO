@@ -173,6 +173,9 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
                 else:
                     all_sorted_channels.append(existing_idx[i])
 
+            if all([i is None for i in all_sorted_channels]): # all channel in error, and some non keyed SK
+                return channels             # This happen when an armature action is linked to a mesh object with non keyed SK
+
             return tuple(all_sorted_channels)
 
     # if not shapekeys, stay in same order, because order doesn't matter
