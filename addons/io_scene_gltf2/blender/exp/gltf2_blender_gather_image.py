@@ -191,7 +191,7 @@ def __get_image_data(sockets_or_slots, export_settings) -> ExportImage:
                 dst_chan = Channel.B
             elif socket.name == 'Roughness':
                 dst_chan = Channel.G
-            elif socket.name == 'Occlusion' and len(sockets_or_slots) > 1 and sockets_or_slots[1] is not None:
+            elif socket.name == 'Occlusion':
                 dst_chan = Channel.R
             elif socket.name == 'Alpha' and len(sockets_or_slots) > 1 and sockets_or_slots[1] is not None:
                 dst_chan = Channel.A
