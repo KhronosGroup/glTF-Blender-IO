@@ -26,6 +26,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metall
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
@@ -192,7 +193,13 @@ def __gather_orm_texture(blender_material, export_settings):
     else:
         result = (occlusion, roughness_socket, metallic_socket)
 
-    # Double-check this will past the filter in texture_info (otherwise there are different resolutions or other problems).
+    if not gltf2_blender_gather_texture_info.check_same_size_images(result):
+        print_console("INFO",
+            "Occlusion and metal-roughness texture will be exported separately "
+            "(use same-sized images if you want them combined)")
+        return None
+
+    # Double-check this will past the filter in texture_info
     info = gltf2_blender_gather_texture_info.gather_texture_info(result, export_settings)
     if info is None:
         return None
