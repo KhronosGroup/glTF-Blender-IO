@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2020 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -193,7 +193,10 @@ def __gather_orm_texture(blender_material, export_settings):
     else:
         result = (occlusion, roughness_socket, metallic_socket)
 
-    if not gltf2_blender_gather_texture_info.check_same_size_images(result):
+    if export_settings["gltf_image_format"] == "ASIS":
+        return None
+
+    elif not gltf2_blender_gather_texture_info.check_same_size_images(result):
         print_console("INFO",
             "Occlusion and metal-roughness texture will be exported separately "
             "(use same-sized images if you want them combined)")

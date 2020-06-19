@@ -88,12 +88,12 @@ class ExportImage:
 
     def blender_image(self) -> Optional[bpy.types.Image]:
         """If there's an existing Blender image we can use,
-        returns it. Otherwise (if channels need packing),
-        returns None.
+        returns it. Otherwise (if channels need packing or there are multiple
+        Blender images), returns None.
         """
         if self.__on_happy_path():
-            for fill in self.fills.values():
-                return fill.image
+            images = list(set([fill.image for fill in self.fills.values()]))
+            return images[0] if len(images) == 1 else None
         return None
 
     def __on_happy_path(self) -> bool:
