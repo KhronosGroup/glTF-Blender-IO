@@ -309,7 +309,7 @@ def __compress_primitive(primitive, dll, export_settings):
         if normals is not None:
             extension['attributes']['NORMAL'] = normal_id
 
-        for (k, id) in enumerate(uvs):
+        for (k, id) in enumerate(uv_ids):
             extension['attributes']['TEXCOORD_' + str(k)] = id
 
         for (k, id) in enumerate(weight_ids):
