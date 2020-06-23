@@ -39,7 +39,7 @@ def gather_sampler(blender_shader_node: bpy.types.Node, export_settings):
 
 
 def __filter_sampler(blender_shader_node, export_settings):
-    if not blender_shader_node.interpolation == 'Closest' and not blender_shader_node.extension == 'CLIP':
+    if not blender_shader_node.interpolation == 'Closest' and not blender_shader_node.extension == 'EXTEND':
         return False
     return True
 
