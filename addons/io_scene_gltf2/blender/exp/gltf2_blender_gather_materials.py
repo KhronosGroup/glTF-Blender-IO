@@ -98,7 +98,7 @@ def __gather_double_sided(blender_material, mesh_double_sided, export_settings):
     if mesh_double_sided:
         return True
 
-    old_double_sided_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "DoubleSided")
+    old_double_sided_socket = gltf2_blender_get.get_socket_old(blender_material, "DoubleSided")
     if old_double_sided_socket is not None and\
             not old_double_sided_socket.is_linked and\
             old_double_sided_socket.default_value > 0.5:
@@ -107,9 +107,9 @@ def __gather_double_sided(blender_material, mesh_double_sided, export_settings):
 
 
 def __gather_emissive_factor(blender_material, export_settings):
-    emissive_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
+    emissive_socket = gltf2_blender_get.get_socket(blender_material, "Emissive")
     if emissive_socket is None:
-        emissive_socket = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "EmissiveFactor")
+        emissive_socket = gltf2_blender_get.get_socket_old(blender_material, "EmissiveFactor")
     if isinstance(emissive_socket, bpy.types.NodeSocket):
         if emissive_socket.is_linked:
             # In glTF, the default emissiveFactor is all zeros, so if an emission texture is connected,
@@ -121,9 +121,9 @@ def __gather_emissive_factor(blender_material, export_settings):
 
 
 def __gather_emissive_texture(blender_material, export_settings):
-    emissive = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Emissive")
+    emissive = gltf2_blender_get.get_socket(blender_material, "Emissive")
     if emissive is None:
-        emissive = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "Emissive")
+        emissive = gltf2_blender_get.get_socket_old(blender_material, "Emissive")
     return gltf2_blender_gather_texture_info.gather_texture_info((emissive,), export_settings)
 
 
@@ -132,7 +132,7 @@ def __gather_extensions(blender_material, export_settings):
 
     # KHR_materials_unlit
 
-    if gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Background") is not None:
+    if gltf2_blender_get.get_socket(blender_material, "Background") is not None:
         extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
 
     # KHR_materials_clearcoat
@@ -157,9 +157,9 @@ def __gather_name(blender_material, export_settings):
 
 
 def __gather_normal_texture(blender_material, export_settings):
-    normal = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Normal")
+    normal = gltf2_blender_get.get_socket(blender_material, "Normal")
     if normal is None:
-        normal = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "Normal")
+        normal = gltf2_blender_get.get_socket_old(blender_material, "Normal")
     return gltf2_blender_gather_material_normal_texture_info_class.gather_material_normal_texture_info_class(
         (normal,),
         export_settings)
@@ -169,20 +169,20 @@ def __gather_orm_texture(blender_material, export_settings):
     # Check for the presence of Occlusion, Roughness, Metallic sharing a single image.
     # If not fully shared, return None, so the images will be cached and processed separately.
 
-    occlusion = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Occlusion")
+    occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None or not __has_image_node_from_socket(occlusion):
-        occlusion = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "Occlusion")
+        occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
         if occlusion is None or not __has_image_node_from_socket(occlusion):
             return None
 
-    metallic_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Metallic")
-    roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Roughness")
+    metallic_socket = gltf2_blender_get.get_socket(blender_material, "Metallic")
+    roughness_socket = gltf2_blender_get.get_socket(blender_material, "Roughness")
 
     hasMetal = metallic_socket is not None and __has_image_node_from_socket(metallic_socket)
     hasRough = roughness_socket is not None and __has_image_node_from_socket(roughness_socket)
 
     if not hasMetal and not hasRough:
-        metallic_roughness = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "MetallicRoughness")
+        metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not __has_image_node_from_socket(metallic_roughness):
             return None
         result = (occlusion, metallic_roughness)
@@ -211,9 +211,9 @@ def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
         return gltf2_blender_gather_material_occlusion_texture_info_class.gather_material_occlusion_texture_info_class(
             orm_texture,
             export_settings)
-    occlusion = gltf2_blender_get.get_socket_or_texture_slot(blender_material, "Occlusion")
+    occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None:
-        occlusion = gltf2_blender_get.get_socket_or_texture_slot_old(blender_material, "Occlusion")
+        occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
     return gltf2_blender_gather_material_occlusion_texture_info_class.gather_material_occlusion_texture_info_class(
         (occlusion,),
         export_settings)
@@ -241,9 +241,9 @@ def __gather_clearcoat_extension(blender_material, export_settings):
     clearcoat_extension = {}
     clearcoat_roughness_slots = ()
 
-    clearcoat_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, 'Clearcoat')
-    clearcoat_roughness_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, 'Clearcoat Roughness')
-    clearcoat_normal_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, 'Clearcoat Normal')
+    clearcoat_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat')
+    clearcoat_roughness_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat Roughness')
+    clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat Normal')
 
     if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
         clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
