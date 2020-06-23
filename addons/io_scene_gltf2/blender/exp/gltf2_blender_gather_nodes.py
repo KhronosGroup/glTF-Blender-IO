@@ -436,7 +436,7 @@ def __get_correction_node(blender_object, export_settings):
                              correction_quaternion[3], correction_quaternion[0]]
     return gltf2_io.Node(
         camera=None,
-        children=None,
+        children=[],
         extensions=None,
         extras=None,
         matrix=None,
