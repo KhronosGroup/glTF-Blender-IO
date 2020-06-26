@@ -39,7 +39,15 @@ def save(context, export_settings):
 
     __notify_start(context)
     start_time = time.time()
+    pre_export_callbacks = export_settings["pre_export_callbacks"]
+    for callback in pre_export_callbacks:
+        callback(export_settings)
+
     json, buffer = __export(export_settings)
+
+    post_export_callbacks = export_settings["post_export_callbacks"]
+    for callback in post_export_callbacks:
+        callback(export_settings)
     __write_file(json, buffer, export_settings)
 
     end_time = time.time()
