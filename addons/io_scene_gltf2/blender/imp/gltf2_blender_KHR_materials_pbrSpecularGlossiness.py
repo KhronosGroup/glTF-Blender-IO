@@ -79,7 +79,8 @@ def pbr_specular_glossiness(mh):
     )
 
     if mh.pymat.occlusion_texture is not None:
-        node = make_settings_node(mh, location=(610, -1060))
+        node = make_settings_node(mh)
+        node.location = (610, -1060)
         occlusion(
             mh,
             location=(510, -970),
