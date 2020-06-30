@@ -48,7 +48,7 @@ def __filter_pbr_material(blender_material, export_settings):
 
 def __gather_base_color_factor(blender_material, export_settings):
     alpha_socket = gltf2_blender_get.get_socket(blender_material, "Alpha")
-    alpha = alpha_socket.default_value if alpha_socket is not None and not alpha_socket.is_linked else 1
+    alpha = alpha_socket.default_value if alpha_socket is not None and not alpha_socket.is_linked else 1.0
 
     base_color_socket = gltf2_blender_get.get_socket(blender_material, "Base Color")
     if base_color_socket is None:
