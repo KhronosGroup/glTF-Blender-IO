@@ -233,7 +233,7 @@ def base_color(
         base_color_factor = [1, 1, 1, 1]
 
     if base_color_texture is None and not mh.vertex_color:
-        color_socket.default_value = base_color_factor
+        color_socket.default_value = base_color_factor[:3] + [1]
         if alpha_socket is not None:
             alpha_socket.default_value = base_color_factor[3]
         return
@@ -242,10 +242,7 @@ def base_color(
     needs_color_factor = base_color_factor[:3] != [1, 1, 1]
     needs_alpha_factor = base_color_factor[3] != 1.0 and alpha_socket is not None
     if needs_color_factor or needs_alpha_factor:
-        # For now, always create the color factor node because the exporter
-        # reads the alpha value from here. Can get rid of "or needs_alpha_factor"
-        # when it learns to understand the alpha socket.
-        if needs_color_factor or needs_alpha_factor:
+        if needs_color_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
             node.label = 'Color Factor'
             node.location = x - 140, y
@@ -255,7 +252,7 @@ def base_color(
             # Inputs
             node.inputs['Fac'].default_value = 1.0
             color_socket = node.inputs['Color1']
-            node.inputs['Color2'].default_value = base_color_factor
+            node.inputs['Color2'].default_value = base_color_factor[:3] + [1]
 
         if needs_alpha_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
