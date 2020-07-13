@@ -85,9 +85,9 @@ def __gather_position(blender_primitive, export_settings):
 def __gather_normal(blender_primitive, export_settings):
     if not export_settings[gltf2_blender_export_keys.NORMALS]:
         return {}
-    normal = blender_primitive["attributes"].get('NORMAL')
-    if not normal:
+    if 'NORMAL' not in blender_primitive["attributes"]:
         return {}
+    normal = blender_primitive["attributes"]['NORMAL']
     return {
         "NORMAL": array_to_accessor(
             normal,
@@ -100,9 +100,9 @@ def __gather_normal(blender_primitive, export_settings):
 def __gather_tangent(blender_primitive, export_settings):
     if not export_settings[gltf2_blender_export_keys.TANGENTS]:
         return {}
-    tangent = blender_primitive["attributes"].get('TANGENT')
-    if not tangent:
+    if 'TANGENT' not in blender_primitive["attributes"]:
         return {}
+    tangent = blender_primitive["attributes"]['TANGENT']
     return {
         "TANGENT": array_to_accessor(
             tangent,

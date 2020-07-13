@@ -14,6 +14,7 @@
 
 import bpy
 from typing import List, Optional, Tuple
+import numpy as np
 
 from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
@@ -114,21 +115,23 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
     # https://github.com/KhronosGroup/glTF/pull/1476/files
     # Also, UINT8 mode is not supported:
     # https://github.com/KhronosGroup/glTF/issues/1471
-    max_index = max(indices)
+    max_index = indices.max()
     if max_index < 65535:
         component_type = gltf2_io_constants.ComponentType.UnsignedShort
+        indices = indices.astype(np.uint16, copy=False)
     elif max_index < 4294967295:
         component_type = gltf2_io_constants.ComponentType.UnsignedInt
+        indices = indices.astype(np.uint32, copy=False)
     else:
         print_console('ERROR', 'A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
         return None
 
     element_type = gltf2_io_constants.DataType.Scalar
-    binary_data = gltf2_io_binary_data.BinaryData.from_list(indices, component_type)
+    binary_data = gltf2_io_binary_data.BinaryData(indices.tobytes())
     return gltf2_blender_gather_accessors.gather_accessor(
         binary_data,
         component_type,
-        len(indices) // gltf2_io_constants.DataType.num_elements(element_type),
+        len(indices),
         None,
         None,
         element_type,
@@ -156,7 +159,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                 target_normal_id = 'MORPH_NORMAL_' + str(morph_index)
                 target_tangent_id = 'MORPH_TANGENT_' + str(morph_index)
 
-                if blender_primitive["attributes"].get(target_position_id):
+                if blender_primitive["attributes"].get(target_position_id) is not None:
                     target = {}
                     internal_target_position = blender_primitive["attributes"][target_position_id]
                     target["POSITION"] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
@@ -168,7 +171,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
 
                     if export_settings[NORMALS] \
                             and export_settings[MORPH_NORMAL] \
-                            and blender_primitive["attributes"].get(target_normal_id):
+                            and blender_primitive["attributes"].get(target_normal_id) is not None:
 
                         internal_target_normal = blender_primitive["attributes"][target_normal_id]
                         target['NORMAL'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
@@ -179,7 +182,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
 
                     if export_settings[TANGENTS] \
                             and export_settings[MORPH_TANGENT] \
-                            and blender_primitive["attributes"].get(target_tangent_id):
+                            and blender_primitive["attributes"].get(target_tangent_id) is not None:
                         internal_target_tangent = blender_primitive["attributes"][target_tangent_id]
                         target['TANGENT'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
                             internal_target_tangent,
