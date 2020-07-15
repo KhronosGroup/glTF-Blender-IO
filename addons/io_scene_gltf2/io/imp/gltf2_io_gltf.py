@@ -32,6 +32,7 @@ class glTFImporter():
         self.glb_buffer = None
         self.buffers = {}
         self.accessor_cache = {}
+        self.decode_accessor_cache = {}
 
         if 'loglevel' not in self.import_settings.keys():
             self.import_settings['loglevel'] = logging.ERROR
