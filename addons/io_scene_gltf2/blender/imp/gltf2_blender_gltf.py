@@ -50,9 +50,9 @@ class BlenderGlTF():
 
     @staticmethod
     def set_convert_functions(gltf):
-        yup2zup = bpy.app.debug_value != 100
+        gltf.yup2zup = bpy.app.debug_value != 100
 
-        if yup2zup:
+        if gltf.yup2zup:
             # glTF Y-Up space --> Blender Z-up space
             # X,Y,Z --> X,-Z,Y
             def convert_loc(x): return Vector([x[0], -x[2], x[1]])
