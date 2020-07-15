@@ -217,6 +217,14 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     # the cache now that all prims are done.
     gltf.decode_accessor_cache = {}
 
+    if gltf.import_settings['merge_vertices']:
+        vert_locs, vert_normals, vert_joints, vert_weights, \
+        sk_vert_locs, loop_vidxs, edge_vidxs = \
+            merge_duplicate_verts(
+                vert_locs, vert_normals, vert_joints, vert_weights, \
+                sk_vert_locs, loop_vidxs, edge_vidxs\
+            )
+
     # ---------------
     # Convert all the arrays glTF -> Blender
 
@@ -537,3 +545,92 @@ def skin_into_bind_pose(gltf, skin_idx, vert_joints, vert_weights, locs, vert_no
 def mul_mats_vecs(mats, vecs):
     """Given [m1,m2,...] and [v1,v2,...], returns [m1@v1,m2@v2,...]. 3D only."""
     return np.matmul(mats, vecs.reshape(len(vecs), 3, 1)).reshape(len(vecs), 3)
+
+
+def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs):
+    # This function attempts to invert the splitting done when exporting to
+    # glTF. Welds together verts with the same per-vert data (but possibly
+    # different per-loop data).
+    #
+    # Ideally normals would be treated as per-loop data, but that has problems,
+    # so we currently treat the normal as per-vert.
+    #
+    # Strategy is simple: put all the per-vert data into an array of structs
+    # ("dots"), dedupe with np.unique, then take all the data back out.
+
+    # Very often two verts that "morally" should be merged will have normals
+    # with very small differences. Round off the normals to smooth this over.
+    if len(vert_normals) != 0:
+        vert_normals *= 50000
+        vert_normals[:] = np.trunc(vert_normals)
+        vert_normals *= (1/50000)
+
+    dot_fields = [('x', np.float32), ('y', np.float32), ('z', np.float32)]
+    if len(vert_normals) != 0:
+        dot_fields += [('nx', np.float32), ('ny', np.float32), ('nz', np.float32)]
+    for i, _ in enumerate(vert_joints):
+        dot_fields += [
+            ('joint%dx' % i, np.uint32), ('joint%dy' % i, np.uint32),
+            ('joint%dz' % i, np.uint32), ('joint%dw' % i, np.uint32),
+            ('weight%dx' % i, np.float32), ('weight%dy' % i, np.float32),
+            ('weight%dz' % i, np.float32), ('weight%dw' % i, np.float32),
+        ]
+    for i, _ in enumerate(sk_vert_locs):
+        dot_fields += [
+            ('sk%dx' % i, np.float32), ('sk%dy' % i, np.float32), ('sk%dz' % i, np.float32),
+        ]
+    dots = np.empty(len(vert_locs), dtype=np.dtype(dot_fields))
+
+    dots['x'] = vert_locs[:, 0]
+    dots['y'] = vert_locs[:, 1]
+    dots['z'] = vert_locs[:, 2]
+    if len(vert_normals) != 0:
+        dots['nx'] = vert_normals[:, 0]
+        dots['ny'] = vert_normals[:, 1]
+        dots['nz'] = vert_normals[:, 2]
+    for i, (joints, weights) in enumerate(zip(vert_joints, vert_weights)):
+        dots['joint%dx' % i] = joints[:, 0]
+        dots['joint%dy' % i] = joints[:, 1]
+        dots['joint%dz' % i] = joints[:, 2]
+        dots['joint%dw' % i] = joints[:, 3]
+        dots['weight%dx' % i] = weights[:, 0]
+        dots['weight%dy' % i] = weights[:, 1]
+        dots['weight%dz' % i] = weights[:, 2]
+        dots['weight%dw' % i] = weights[:, 3]
+    for i, locs in enumerate(sk_vert_locs):
+        dots['sk%dx' % i] = locs[:, 0]
+        dots['sk%dy' % i] = locs[:, 1]
+        dots['sk%dz' % i] = locs[:, 2]
+
+    unique_dots, inv_indices = np.unique(dots, return_inverse=True)
+
+    loop_vidxs = inv_indices[loop_vidxs]
+    edge_vidxs = inv_indices[edge_vidxs]
+
+    vert_locs = np.empty((len(unique_dots), 3), dtype=np.float32)
+    vert_locs[:, 0] = unique_dots['x']
+    vert_locs[:, 1] = unique_dots['y']
+    vert_locs[:, 2] = unique_dots['z']
+    if len(vert_normals) != 0:
+        vert_normals = np.empty((len(unique_dots), 3), dtype=np.float32)
+        vert_normals[:, 0] = unique_dots['nx']
+        vert_normals[:, 1] = unique_dots['ny']
+        vert_normals[:, 2] = unique_dots['nz']
+    for i in range(len(vert_joints)):
+        vert_joints[i] = np.empty((len(unique_dots), 4), dtype=np.uint32)
+        vert_joints[i][:, 0] = unique_dots['joint%dx' % i]
+        vert_joints[i][:, 1] = unique_dots['joint%dy' % i]
+        vert_joints[i][:, 2] = unique_dots['joint%dz' % i]
+        vert_joints[i][:, 3] = unique_dots['joint%dw' % i]
+        vert_weights[i] = np.empty((len(unique_dots), 4), dtype=np.float32)
+        vert_weights[i][:, 0] = unique_dots['weight%dx' % i]
+        vert_weights[i][:, 1] = unique_dots['weight%dy' % i]
+        vert_weights[i][:, 2] = unique_dots['weight%dz' % i]
+        vert_weights[i][:, 3] = unique_dots['weight%dw' % i]
+    for i in range(len(sk_vert_locs)):
+        sk_vert_locs[i] = np.empty((len(unique_dots), 3), dtype=np.float32)
+        sk_vert_locs[i][:, 0] = unique_dots['sk%dx' % i]
+        sk_vert_locs[i][:, 1] = unique_dots['sk%dy' % i]
+        sk_vert_locs[i][:, 2] = unique_dots['sk%dz' % i]
+
+    return vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs
