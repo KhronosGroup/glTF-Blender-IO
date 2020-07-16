@@ -125,8 +125,6 @@ def __filter_node(blender_object, blender_scene, export_settings):
             else:
                 # Not instanced, not linked -> We don't keep this object
                 return False
-    if blender_object.visible_get() is False:
-        return False
     if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
         return False
 
