@@ -273,19 +273,22 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     # TODO: this is slow :/
     if num_joint_sets:
         pyskin = gltf.data.skins[skin_idx]
-        for _ in pyskin.joints:
+        for i, _ in enumerate(pyskin.joints):
             # ob is a temp object, so don't worry about the name.
-            ob.vertex_groups.new(name='X')
+            ob.vertex_groups.new(name='X%d' % i)
+
+        vgs = list(ob.vertex_groups)
 
         for i in range(num_joint_sets):
             js = vert_joints[i].tolist()  # tolist() is faster
             ws = vert_weights[i].tolist()
             for vi in range(len(vert_locs)):
-                for k in range(4):
-                    joint = js[vi][k]
-                    weight = ws[vi][k]
-                    if weight == 0.0: continue
-                    ob.vertex_groups[joint].add((vi,), weight, 'REPLACE')
+                w0, w1, w2, w3 = ws[vi]
+                j0, j1, j2, j3 = js[vi]
+                if w0 != 0: vgs[j0].add((vi,), w0, 'REPLACE')
+                if w1 != 0: vgs[j1].add((vi,), w1, 'REPLACE')
+                if w2 != 0: vgs[j2].add((vi,), w2, 'REPLACE')
+                if w3 != 0: vgs[j3].add((vi,), w3, 'REPLACE')
 
     # Shapekeys
     if num_shapekeys:
