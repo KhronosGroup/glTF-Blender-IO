@@ -181,14 +181,19 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             morph_vs = morph_vs[unique_indices]
             sk_vert_locs[morph_i] = np.concatenate((sk_vert_locs[morph_i], morph_vs))
 
+        # inv_indices are the indices into the verts just for this prim;
+        # calculate indices into the overall verts array
+        prim_vidxs = inv_indices.astype(np.uint32, copy=False)
+        prim_vidxs += vert_index_base  # offset for verts from previous prims
+
         if edges is not None:
-            edge_vidxs = np.concatenate((edge_vidxs, inv_indices + vert_index_base))
+            edge_vidxs = np.concatenate((edge_vidxs, prim_vidxs))
 
         if tris is not None:
             prim.num_faces = len(indices) // 3
             num_faces += prim.num_faces
 
-            loop_vidxs = np.concatenate((loop_vidxs, inv_indices + vert_index_base))
+            loop_vidxs = np.concatenate((loop_vidxs, prim_vidxs))
 
             for uv_i in range(num_uvs):
                 if ('TEXCOORD_%d' % uv_i) in prim.attributes:
