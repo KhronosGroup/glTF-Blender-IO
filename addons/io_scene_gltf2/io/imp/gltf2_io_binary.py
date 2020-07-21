@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import struct
+import numpy as np
 
 from ..com.gltf2_io import Accessor
 
@@ -22,8 +23,8 @@ class BinaryData():
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("%s should not be instantiated" % cls)
 
-# Note that this function is not used in Blender importer, but is kept in
-# Source code to be used in any pipeline that want to manage gltf/glb file in python
+    # Note that this function is not used in Blender importer, but is kept in
+    # Source code to be used in any pipeline that want to manage gltf/glb file in python
     @staticmethod
     def get_binary_from_accessor(gltf, accessor_idx):
         """Get binary from accessor."""
@@ -63,8 +64,7 @@ class BinaryData():
         if accessor_idx in gltf.accessor_cache:
             return gltf.accessor_cache[accessor_idx]
 
-        accessor = gltf.data.accessors[accessor_idx]
-        data = BinaryData.get_data_from_accessor_obj(gltf, accessor)
+        data = BinaryData.decode_accessor(gltf, accessor_idx).tolist()
 
         if cache:
             gltf.accessor_cache[accessor_idx] = data
@@ -72,7 +72,36 @@ class BinaryData():
         return data
 
     @staticmethod
-    def get_data_from_accessor_obj(gltf, accessor):
+    def decode_accessor(gltf, accessor_idx, cache=False):
+        """Decodes accessor to 2D numpy array (count x num_components)."""
+        if accessor_idx in gltf.decode_accessor_cache:
+            return gltf.accessor_cache[accessor_idx]
+
+        accessor = gltf.data.accessors[accessor_idx]
+        array = BinaryData.decode_accessor_obj(gltf, accessor)
+
+        if cache:
+            gltf.accessor_cache[accessor_idx] = array
+            # Prevent accidentally modifying cached arrays
+            array.flags.writeable = False
+
+        return array
+
+    @staticmethod
+    def decode_accessor_obj(gltf, accessor):
+        # MAT2/3 have special alignment requirements that aren't handled. But it
+        # doesn't matter because nothing uses them.
+        assert accessor.type not in ['MAT2', 'MAT3']
+
+        dtype = {
+            5120: np.int8,
+            5121: np.uint8,
+            5122: np.int16,
+            5123: np.uint16,
+            5125: np.uint32,
+            5126: np.float32,
+        }[accessor.component_type]
+
         if accessor.buffer_view is not None:
             bufferView = gltf.data.buffer_views[accessor.buffer_view]
             buffer_data = BinaryData.get_buffer_view(gltf, accessor.buffer_view)
@@ -80,40 +109,45 @@ class BinaryData():
             accessor_offset = accessor.byte_offset or 0
             buffer_data = buffer_data[accessor_offset:]
 
-            fmt_char = gltf.fmt_char_dict[accessor.component_type]
             component_nb = gltf.component_nb_dict[accessor.type]
-            fmt = '<' + (fmt_char * component_nb)
-            default_stride = struct.calcsize(fmt)
+            bytes_per_elem = dtype(1).nbytes
 
-            # Special layouts for certain formats; see the section about
-            # data alignment in the glTF 2.0 spec.
-            component_size = struct.calcsize('<' + fmt_char)
-            if accessor.type == 'MAT2' and component_size == 1:
-                fmt = '<FFxxFF'.replace('F', fmt_char)
-                default_stride = 8
-            elif accessor.type == 'MAT3' and component_size == 1:
-                fmt = '<FFFxFFFxFFF'.replace('F', fmt_char)
-                default_stride = 12
-            elif accessor.type == 'MAT3' and component_size == 2:
-                fmt = '<FFFxxFFFxxFFF'.replace('F', fmt_char)
-                default_stride = 24
-
+            default_stride = bytes_per_elem * component_nb
             stride = bufferView.byte_stride or default_stride
 
-            # Decode
-            unpack_from = struct.Struct(fmt).unpack_from
-            data = [
-                unpack_from(buffer_data, offset)
-                for offset in range(0, accessor.count*stride, stride)
-            ]
+            if stride == default_stride:
+                array = np.frombuffer(
+                    buffer_data,
+                    dtype=np.dtype(dtype).newbyteorder('<'),
+                    count=accessor.count * component_nb,
+                )
+                array = array.reshape(accessor.count, component_nb)
+
+            else:
+                # The data looks like
+                #   XXXppXXXppXXXppXXX
+                # where X are the components and p are padding.
+                # One XXXpp group is one stride's worth of data.
+                assert stride % bytes_per_elem == 0
+                elems_per_stride = stride // bytes_per_elem
+                num_elems = (accessor.count - 1) * elems_per_stride + component_nb
+
+                array = np.frombuffer(
+                    buffer_data,
+                    dtype=np.dtype(dtype).newbyteorder('<'),
+                    count=num_elems,
+                )
+                assert array.strides[0] == bytes_per_elem
+                array = np.lib.stride_tricks.as_strided(
+                    array,
+                    shape=(accessor.count, component_nb),
+                    strides=(stride, bytes_per_elem),
+                )
 
         else:
             # No buffer view; initialize to zeros
             component_nb = gltf.component_nb_dict[accessor.type]
-            data = [
-                (0,) * component_nb
-                for i in range(accessor.count)
-            ]
+            array = np.zeros((accessor.count, component_nb), dtype=dtype)
 
         if accessor.sparse:
             sparse_indices_obj = Accessor.from_dict({
@@ -123,6 +157,9 @@ class BinaryData():
                 'componentType': accessor.sparse.indices.component_type,
                 'type': 'SCALAR',
             })
+            sparse_indices = BinaryData.decode_accessor_obj(gltf, sparse_indices_obj)
+            sparse_indices = sparse_indices.reshape(len(sparse_indices))
+
             sparse_values_obj = Accessor.from_dict({
                 'count': accessor.sparse.count,
                 'bufferView': accessor.sparse.values.buffer_view,
@@ -130,31 +167,26 @@ class BinaryData():
                 'componentType': accessor.component_type,
                 'type': accessor.type,
             })
-            sparse_indices = BinaryData.get_data_from_accessor_obj(gltf, sparse_indices_obj)
-            sparse_values = BinaryData.get_data_from_accessor_obj(gltf, sparse_values_obj)
+            sparse_values = BinaryData.decode_accessor_obj(gltf, sparse_values_obj)
 
-            # Apply sparse
-            for i in range(accessor.sparse.count):
-                data[sparse_indices[i][0]] = sparse_values[i]
+            if not array.flags.writeable:
+                array = array.copy()
+            array[sparse_indices] = sparse_values
 
         # Normalization
         if accessor.normalized:
-            for idx, tuple in enumerate(data):
-                new_tuple = ()
-                for i in tuple:
-                    if accessor.component_type == 5120:
-                        new_tuple += (max(float(i / 127.0 ), -1.0),)
-                    elif accessor.component_type == 5121:
-                        new_tuple += (float(i / 255.0),)
-                    elif accessor.component_type == 5122:
-                        new_tuple += (max(float(i / 32767.0), -1.0),)
-                    elif accessor.component_type == 5123:
-                        new_tuple += (i / 65535.0,)
-                    else:
-                        new_tuple += (float(i),)
-                data[idx] = new_tuple
+            if accessor.component_type == 5120:  # int8
+                array = np.maximum(-1.0, array / 127.0)
+            elif accessor.component_type == 5121:  # uint8
+                array = array / 255.0
+            elif accessor.component_type == 5122:  # int16
+                array = np.maximum(-1.0, array / 32767.0)
+            elif accessor.component_type == 5123:  # uint16
+                array = array / 65535.0
+            else:
+                array = array.astype(np.float64)
 
-        return data
+        return array
 
     @staticmethod
     def get_image_data(gltf, img_idx):
