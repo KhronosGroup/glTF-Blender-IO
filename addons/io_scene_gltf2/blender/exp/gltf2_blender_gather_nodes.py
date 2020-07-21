@@ -189,8 +189,8 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 rot_quat = Quaternion(rot)
                 axis_basis_change = Matrix(
                     ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, -1.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-                mat = gltf2_blender_math.multiply(child.matrix_parent_inverse, child.matrix_basis)
-                mat = gltf2_blender_math.multiply(mat, axis_basis_change)
+                mat = child.matrix_parent_inverse @ child.matrix_basis
+                mat = mat @ axis_basis_change
 
                 _, rot_quat, _ = mat.decompose()
                 child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
