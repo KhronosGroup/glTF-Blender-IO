@@ -34,10 +34,9 @@ class Prim:
         self.indices = []
 
 class ShapeKey:
-    def __init__(self, shape_key, vertex_normals, polygon_normals):
+    def __init__(self, shape_key, split_normals):
         self.shape_key = shape_key
-        self.vertex_normals = vertex_normals
-        self.polygon_normals = polygon_normals
+        self.split_normals = split_normals
 
 
 #
@@ -210,16 +209,14 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
         for blender_shape_key in blender_mesh.shape_keys.key_blocks:
             if blender_shape_key == blender_shape_key.relative_key or blender_shape_key.mute:
                 continue
+
+            split_normals = None
             if use_morph_normals:
-                vertex_normals = blender_shape_key.normals_vertex_get()
-                polygon_normals = blender_shape_key.normals_polygon_get()
-            else:
-                vertex_normals = None
-                polygon_normals = None
+                split_normals = blender_shape_key.normals_split_get()
+
             shape_keys.append(ShapeKey(
                 blender_shape_key,
-                vertex_normals,
-                polygon_normals,
+                split_normals,
             ))
 
 
@@ -330,20 +327,8 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
                 vert += ((v_morph[0], v_morph[1], v_morph[2]),)
 
                 if use_morph_normals:
-                    if blender_polygon.use_smooth:
-                        normals = shape_key.vertex_normals
-                        n_morph = Vector((
-                            normals[vertex_index * 3 + 0],
-                            normals[vertex_index * 3 + 1],
-                            normals[vertex_index * 3 + 2],
-                        ))
-                    else:
-                        normals = shape_key.polygon_normals
-                        n_morph = Vector((
-                            normals[blender_polygon.index * 3 + 0],
-                            normals[blender_polygon.index * 3 + 1],
-                            normals[blender_polygon.index * 3 + 2],
-                        ))
+                    normals = shape_key.split_normals
+                    n_morph = Vector(normals[loop_index * 3 : loop_index * 3 + 3])
                     n_morph = n_morph - n  # store delta
                     vert += ((n_morph[0], n_morph[1], n_morph[2]),)
 
