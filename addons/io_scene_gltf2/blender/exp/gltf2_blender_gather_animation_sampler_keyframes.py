@@ -161,8 +161,14 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
             if bake_bone is None:
                 matrix = pbone.matrix_basis.copy()
             else:
-                matrix = pbone.matrix
-                matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
+                if (pbone.bone.use_inherit_rotation == False or pbone.bone.inherit_scale != "FULL") and pbone.parent != None:
+                    rest_mat = (pbone.parent.bone.matrix_local.inverted_safe() @ pbone.bone.matrix_local)
+                    matrix = (rest_mat.inverted_safe() @ pbone.parent.matrix.inverted_safe() @ pbone.matrix)
+                else:
+                    matrix = pbone.matrix
+                    matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
+
+
             data[frame][pbone.name] = matrix
 
 

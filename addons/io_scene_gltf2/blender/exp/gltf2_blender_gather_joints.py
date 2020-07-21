@@ -43,7 +43,14 @@ def gather_joint(blender_object, blender_bone, export_settings):
     else:
         correction_matrix_local = gltf2_blender_math.multiply(
             blender_bone.parent.bone.matrix_local.inverted(), blender_bone.bone.matrix_local)
-    matrix_basis = blender_bone.matrix_basis
+
+    if (blender_bone.bone.use_inherit_rotation == False or blender_bone.bone.inherit_scale != "FULL") and blender_bone.parent != None:
+        rest_mat = (blender_bone.parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local)
+        matrix_basis = (rest_mat.inverted_safe() @ blender_bone.parent.matrix.inverted_safe() @ blender_bone.matrix)
+    else:
+        matrix_basis = blender_bone.matrix
+        matrix_basis = blender_object.convert_space(pose_bone=blender_bone, matrix=matrix_basis, from_space='POSE', to_space='LOCAL')
+
     trans, rot, sca = gltf2_blender_extract.decompose_transition(
         gltf2_blender_math.multiply(correction_matrix_local, matrix_basis), export_settings)
     translation, rotation, scale = (None, None, None)
