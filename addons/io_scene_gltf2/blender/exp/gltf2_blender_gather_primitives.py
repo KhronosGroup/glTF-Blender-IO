@@ -21,7 +21,6 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
-from io_scene_gltf2.blender.exp import gltf2_blender_utils
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials
 
 from io_scene_gltf2.io.com import gltf2_io
@@ -160,26 +159,11 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                 if blender_primitive["attributes"].get(target_position_id):
                     target = {}
                     internal_target_position = blender_primitive["attributes"][target_position_id]
-                    binary_data = gltf2_io_binary_data.BinaryData.from_list(
+                    target["POSITION"] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
                         internal_target_position,
-                        gltf2_io_constants.ComponentType.Float
-                    )
-                    target["POSITION"] = gltf2_io.Accessor(
-                        buffer_view=binary_data,
-                        byte_offset=None,
                         component_type=gltf2_io_constants.ComponentType.Float,
-                        count=len(internal_target_position) // gltf2_io_constants.DataType.num_elements(
-                            gltf2_io_constants.DataType.Vec3),
-                        extensions=None,
-                        extras=None,
-                        max=gltf2_blender_utils.max_components(
-                            internal_target_position, gltf2_io_constants.DataType.Vec3),
-                        min=gltf2_blender_utils.min_components(
-                            internal_target_position, gltf2_io_constants.DataType.Vec3),
-                        name=None,
-                        normalized=None,
-                        sparse=None,
-                        type=gltf2_io_constants.DataType.Vec3
+                        data_type=gltf2_io_constants.DataType.Vec3,
+                        include_max_and_min=True,
                     )
 
                     if export_settings[NORMALS] \
@@ -187,48 +171,20 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                             and blender_primitive["attributes"].get(target_normal_id):
 
                         internal_target_normal = blender_primitive["attributes"][target_normal_id]
-                        binary_data = gltf2_io_binary_data.BinaryData.from_list(
+                        target['NORMAL'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
                             internal_target_normal,
-                            gltf2_io_constants.ComponentType.Float,
-                        )
-                        target['NORMAL'] = gltf2_io.Accessor(
-                            buffer_view=binary_data,
-                            byte_offset=None,
                             component_type=gltf2_io_constants.ComponentType.Float,
-                            count=len(internal_target_normal) // gltf2_io_constants.DataType.num_elements(
-                                gltf2_io_constants.DataType.Vec3),
-                            extensions=None,
-                            extras=None,
-                            max=None,
-                            min=None,
-                            name=None,
-                            normalized=None,
-                            sparse=None,
-                            type=gltf2_io_constants.DataType.Vec3
+                            data_type=gltf2_io_constants.DataType.Vec3,
                         )
 
                     if export_settings[TANGENTS] \
                             and export_settings[MORPH_TANGENT] \
                             and blender_primitive["attributes"].get(target_tangent_id):
                         internal_target_tangent = blender_primitive["attributes"][target_tangent_id]
-                        binary_data = gltf2_io_binary_data.BinaryData.from_list(
+                        target['TANGENT'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
                             internal_target_tangent,
-                            gltf2_io_constants.ComponentType.Float,
-                        )
-                        target['TANGENT'] = gltf2_io.Accessor(
-                            buffer_view=binary_data,
-                            byte_offset=None,
                             component_type=gltf2_io_constants.ComponentType.Float,
-                            count=len(internal_target_tangent) // gltf2_io_constants.DataType.num_elements(
-                                gltf2_io_constants.DataType.Vec3),
-                            extensions=None,
-                            extras=None,
-                            max=None,
-                            min=None,
-                            name=None,
-                            normalized=None,
-                            sparse=None,
-                            type=gltf2_io_constants.DataType.Vec3
+                            data_type=gltf2_io_constants.DataType.Vec3,
                         )
                     targets.append(target)
                     morph_index += 1
