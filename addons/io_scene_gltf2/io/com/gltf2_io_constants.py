@@ -35,6 +35,18 @@ class ComponentType(IntEnum):
         }[component_type]
 
     @classmethod
+    def to_numpy_dtype(cls, component_type):
+        import numpy as np
+        return {
+            ComponentType.Byte: np.int8,
+            ComponentType.UnsignedByte: np.uint8,
+            ComponentType.Short: np.int16,
+            ComponentType.UnsignedShort: np.uint16,
+            ComponentType.UnsignedInt: np.uint32,
+            ComponentType.Float: np.float32,
+        }[component_type]
+
+    @classmethod
     def from_legacy_define(cls, type_define):
         return {
             GLTF_COMPONENT_TYPE_BYTE: ComponentType.Byte,
