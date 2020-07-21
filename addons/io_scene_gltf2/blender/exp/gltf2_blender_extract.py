@@ -136,9 +136,7 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
     use_normals = export_settings[gltf2_blender_export_keys.NORMALS]
     if use_normals:
-        if blender_mesh.has_custom_normals:
-            # Custom normals are all (0, 0, 0) until calling calc_normals_split() or calc_tangents().
-            blender_mesh.calc_normals_split()
+        blender_mesh.calc_normals_split()
 
     use_tangents = False
     if use_normals and export_settings[gltf2_blender_export_keys.TANGENTS]:
@@ -236,21 +234,6 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
             prim = Prim()
             prims[material_idx] = prim
 
-        if use_normals:
-            face_normal = None
-            if not (blender_polygon.use_smooth or blender_mesh.use_auto_smooth):
-                # Calc face normal/tangents
-                face_normal = blender_polygon.normal
-                if use_tangents:
-                    face_tangent = Vector((0.0, 0.0, 0.0))
-                    face_bitangent = Vector((0.0, 0.0, 0.0))
-                    for loop_index in blender_polygon.loop_indices:
-                        loop = blender_mesh.loops[loop_index]
-                        face_tangent += loop.tangent
-                        face_bitangent += loop.bitangent
-                    face_tangent.normalize()
-                    face_bitangent.normalize()
-
         for loop_index in loop_tri.loops:
             vertex_index = blender_mesh.loops[loop_index].vertex_index
             vertex = blender_mesh.vertices[vertex_index]
@@ -263,21 +246,11 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
             vert += ((v[0], v[1], v[2]),)
 
             if use_normals:
-                if face_normal is None:
-                    if blender_mesh.has_custom_normals:
-                        n = blender_mesh.loops[loop_index].normal
-                    else:
-                        n = vertex.normal
-                    if use_tangents:
-                        t = blender_mesh.loops[loop_index].tangent
-                        b = blender_mesh.loops[loop_index].bitangent
-                else:
-                    n = face_normal
-                    if use_tangents:
-                        t = face_tangent
-                        b = face_bitangent
+                n = blender_mesh.loops[loop_index].normal
                 vert += ((n[0], n[1], n[2]),)
                 if use_tangents:
+                    t = blender_mesh.loops[loop_index].tangent
+                    b = blender_mesh.loops[loop_index].bitangent
                     vert += ((t[0], t[1], t[2]),)
                     vert += ((b[0], b[1], b[2]),)
                     # TODO: store just bitangent_sign in vert, not whole bitangent?
