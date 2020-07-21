@@ -17,7 +17,6 @@
 #
 
 from mathutils import Vector, Quaternion, Matrix
-from mathutils.geometry import tessellate_polygon
 
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
@@ -232,7 +231,11 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
     prims = {}
 
-    for blender_polygon in blender_mesh.polygons:
+    blender_mesh.calc_loop_triangles()
+
+    for loop_tri in blender_mesh.loop_triangles:
+        blender_polygon = blender_mesh.polygons[loop_tri.polygon_index]
+
         material_idx = -1
         if use_materials:
             material_idx = blender_polygon.material_index
@@ -257,28 +260,7 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
                     face_tangent.normalize()
                     face_bitangent.normalize()
 
-        loop_index_list = []
-
-        if len(blender_polygon.loop_indices) == 3:
-            loop_index_list.extend(blender_polygon.loop_indices)
-        elif len(blender_polygon.loop_indices) > 3:
-            # Triangulation of polygon. Using internal function, as non-convex polygons could exist.
-            polyline = []
-
-            for loop_index in blender_polygon.loop_indices:
-                vertex_index = blender_mesh.loops[loop_index].vertex_index
-                v = blender_mesh.vertices[vertex_index].co
-                polyline.append(Vector((v[0], v[1], v[2])))
-
-            triangles = tessellate_polygon((polyline,))
-
-            for triangle in triangles:
-                for triangle_index in triangle:
-                    loop_index_list.append(blender_polygon.loop_indices[triangle_index])
-        else:
-            continue
-
-        for loop_index in loop_index_list:
+        for loop_index in loop_tri.loops:
             vertex_index = blender_mesh.loops[loop_index].vertex_index
             vertex = blender_mesh.vertices[vertex_index]
 
