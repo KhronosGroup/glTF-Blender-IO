@@ -485,6 +485,8 @@ class ExportGLTF2_Base:
             bpy.path.ensure_ext(self.filepath,self.filename_ext)))[0] + '.bin'
 
         user_extensions = []
+        pre_export_callbacks = []
+        post_export_callbacks = []
 
         import sys
         preferences = bpy.context.preferences
@@ -500,7 +502,13 @@ class ExportGLTF2_Base:
                 extension_ctors = module.glTF2ExportUserExtensions
                 for extension_ctor in extension_ctors:
                     user_extensions.append(extension_ctor())
+            if hasattr(module, 'glTF2_pre_export_callback'):
+                pre_export_callbacks.append(module.glTF2_pre_export_callback)
+            if hasattr(module, 'glTF2_post_export_callback'):
+                post_export_callbacks.append(module.glTF2_post_export_callback)
         export_settings['gltf_user_extensions'] = user_extensions
+        export_settings['pre_export_callbacks'] = pre_export_callbacks
+        export_settings['post_export_callbacks'] = post_export_callbacks
 
         return gltf2_blender_export.save(context, export_settings)
 
