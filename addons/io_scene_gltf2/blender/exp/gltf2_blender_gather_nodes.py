@@ -358,7 +358,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
 
         if blender_object.matrix_local[3][3] != 0.0:
-            trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, export_settings)
+            trans, rot, sca = blender_object.matrix_local.decompose()
         else:
             # Some really weird cases, scale is null (if parent is null when evaluation is done)
             print_console('WARNING', 'Some nodes are 0 scaled during evaluation. Result can be wrong')
