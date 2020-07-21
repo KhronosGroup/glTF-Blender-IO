@@ -862,6 +862,18 @@ class ImportGLTF2(Operator, ImportHelper):
         default=True
     )
 
+    merge_vertices: BoolProperty(
+        name='Merge Vertices',
+        description=(
+            'The glTF format requires discontinuous normals, UVs, and '
+            'other vertex attributes to be stored as separate vertices, '
+            'as required for rendering on typical graphics hardware.\n'
+            'This option attempts to combine co-located vertices where possible.\n'
+            'Currently cannot combine verts with different normals'
+        ),
+        default=False,
+    )
+
     import_shading: EnumProperty(
         name="Shading",
         items=(("NORMALS", "Use Normal Data", ""),
@@ -906,6 +918,7 @@ class ImportGLTF2(Operator, ImportHelper):
         layout.use_property_decorate = False  # No animation.
 
         layout.prop(self, 'import_pack_images')
+        layout.prop(self, 'merge_vertices')
         layout.prop(self, 'import_shading')
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
