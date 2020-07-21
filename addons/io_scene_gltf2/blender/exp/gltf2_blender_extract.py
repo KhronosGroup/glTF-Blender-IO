@@ -122,12 +122,6 @@ def convert_swizzle_scale(scale, export_settings):
         return Vector((scale[0], scale[1], scale[2]))
 
 
-def decompose_transition(matrix, export_settings):
-    translation, rotation, scale = matrix.decompose()
-
-    return translation, rotation, scale
-
-
 def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vertex_groups, modifiers, export_settings):
     """
     Extract primitives from a mesh. Polygons are triangulated and sorted by material.

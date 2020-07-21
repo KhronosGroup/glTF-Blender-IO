@@ -343,10 +343,12 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                          (0.0, 0.0, 1.0, 0.0),
                          (0.0, -1.0, 0.0, 0.0),
                          (0.0, 0.0, 0.0, 1.0)))
-                correction_matrix_local = gltf2_blender_math.multiply(axis_basis_change, bone.bone.matrix_local)
+                correction_matrix_local = axis_basis_change @ bone.bone.matrix_local
             else:
-                correction_matrix_local = gltf2_blender_math.multiply(
-                    bone.parent.bone.matrix_local.inverted(), bone.bone.matrix_local)
+                correction_matrix_local = (
+                    bone.parent.bone.matrix_local.inverted() @
+                    bone.bone.matrix_local
+                )
 
             transform = correction_matrix_local
         else:
