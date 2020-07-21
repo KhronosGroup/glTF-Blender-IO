@@ -3,6 +3,7 @@
 # source control.
 
 The Khronos Group Inc.
-UX3D GmbH
 Julien Duroure
+Scurest
+UX3D GmbH
 Sketchfab
