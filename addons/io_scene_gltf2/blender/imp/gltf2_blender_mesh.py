@@ -352,32 +352,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     # ----
     # Normals
 
-    # Set poly smoothing
-    # TODO: numpyify?
-    smooths = []  # use_smooth for each poly
-    f = 0
-    for prim in pymesh.primitives:
-        if gltf.import_settings['import_shading'] == "FLAT" or \
-                'NORMAL' not in prim.attributes:
-            smooths += [False] * prim.num_faces
-
-        elif gltf.import_settings['import_shading'] == "SMOOTH":
-            smooths += [True] * prim.num_faces
-
-        elif gltf.import_settings['import_shading'] == "NORMALS":
-            for fi in range(f, f + prim.num_faces):
-                # Make the face flat if the face's normal is
-                # equal to all of its loops' normals.
-                poly_normal = mesh.polygons[fi].normal
-                smooths.append(
-                    poly_normal.dot(vert_normals[loop_vidxs[3*fi + 0]]) <= 0.9999999 or
-                    poly_normal.dot(vert_normals[loop_vidxs[3*fi + 1]]) <= 0.9999999 or
-                    poly_normal.dot(vert_normals[loop_vidxs[3*fi + 2]]) <= 0.9999999
-                )
-
-        f += prim.num_faces
-
-    mesh.polygons.foreach_set('use_smooth', smooths)
+    # Set polys smooth/flat
+    set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs)
 
     mesh.validate()
     has_loose_edges = len(edge_vidxs) != 0  # need to calc_loose_edges for them to show up
@@ -551,6 +527,69 @@ def mul_mats_vecs(mats, vecs):
 def normalize_vecs(vectors):
     norms = np.linalg.norm(vectors, axis=1, keepdims=True)
     np.divide(vectors, norms, out=vectors, where=norms != 0)
+
+
+def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
+    num_polys = len(mesh.polygons)
+
+    if gltf.import_settings['import_shading'] == "FLAT":
+        # Polys are flat by default; don't have to do anything
+        return
+
+    if gltf.import_settings['import_shading'] == "SMOOTH":
+        poly_smooths = np.full(num_polys, True)
+        f = 0
+        for prim in pymesh.primitives:
+            if 'NORMAL' not in prim.attributes:
+                # Primitives with no NORMALs should use flat shading
+                poly_smooths[f:f + prim.num_faces].fill(False)
+            f += prim.num_faces
+        mesh.polygons.foreach_set('use_smooth', poly_smooths)
+        return
+
+    assert gltf.import_settings['import_shading'] == "NORMALS"
+
+    # Try to guess which polys should be flat based on the fact that all the
+    # loop normals for a flat poly are = the poly's normal.
+
+    poly_smooths = np.empty(num_polys, dtype=np.bool)
+
+    poly_normals = np.empty(num_polys * 3, dtype=np.float32)
+    mesh.polygons.foreach_get('normal', poly_normals)
+    poly_normals = poly_normals.reshape(num_polys, 3)
+
+    f = 0
+    for prim in pymesh.primitives:
+        if 'NORMAL' not in prim.attributes:
+            # Primitives with no NORMALs should use flat shading
+            poly_smooths[f:f + prim.num_faces].fill(False)
+            f += prim.num_faces
+            continue
+
+        # Check the normals at the three corners against the poly normal.
+        # Two normals are equal iff their dot product is 1.
+
+        poly_ns = poly_normals[f:f + prim.num_faces]
+
+        # Dot product against the first vertex normal in the tri
+        vert_ns = vert_normals[loop_vidxs[3*f:3*(f + prim.num_faces):3]]
+        dot_prods = np.sum(vert_ns * poly_ns, axis=1)  # dot product
+        smooth = (dot_prods <= 0.9999999)
+
+        # Same for the second vertex, etc.
+        vert_ns = vert_normals[loop_vidxs[3*f+1:3*(f + prim.num_faces):3]]
+        dot_prods = np.sum(vert_ns * poly_ns, axis=1)
+        np.logical_or(smooth, dot_prods <= 0.9999999, out=smooth)
+
+        vert_ns = vert_normals[loop_vidxs[3*f+2:3*(f + prim.num_faces):3]]
+        dot_prods = np.sum(vert_ns * poly_ns, axis=1)
+        np.logical_or(smooth, dot_prods <= 0.9999999, out=smooth)
+
+        poly_smooths[f:f + prim.num_faces] = smooth
+
+        f += prim.num_faces
+
+    mesh.polygons.foreach_set('use_smooth', poly_smooths)
 
 
 def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs):
