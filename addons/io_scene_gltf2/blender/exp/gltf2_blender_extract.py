@@ -12,99 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#
-# Imports
-#
-
 import numpy as np
 from mathutils import Vector, Quaternion, Matrix
 
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
-
-
-#
-# Functions
-#
-
-def convert_swizzle_normal(loc, armature, blender_object, export_settings):
-    """Convert a normal data from Blender coordinate system to glTF coordinate system."""
-    if (not armature) or (not blender_object):
-        # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((loc[0], loc[2], -loc[1]))
-        else:
-            return Vector((loc[0], loc[1], loc[2]))
-    else:
-        # Mesh is skined, we have to apply armature transforms on data
-        apply_matrix = (armature.matrix_world.inverted() @ blender_object.matrix_world).to_3x3().inverted()
-        apply_matrix.transpose()
-        new_loc = ((armature.matrix_world.to_3x3() @ apply_matrix).to_4x4() @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
-        new_loc.normalize()
-
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((new_loc[0], new_loc[2], -new_loc[1]))
-        else:
-            return Vector((new_loc[0], new_loc[1], new_loc[2]))
-
-def convert_swizzle_location(loc, armature, blender_object, export_settings):
-    """Convert a location from Blender coordinate system to glTF coordinate system."""
-    if (not armature) or (not blender_object):
-        # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((loc[0], loc[2], -loc[1]))
-        else:
-            return Vector((loc[0], loc[1], loc[2]))
-    else:
-        # Mesh is skined, we have to apply armature transforms on data
-        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-        new_loc = (armature.matrix_world @ apply_matrix @ Matrix.Translation(Vector((loc[0], loc[1], loc[2])))).to_translation()
-
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((new_loc[0], new_loc[2], -new_loc[1]))
-        else:
-            return Vector((new_loc[0], new_loc[1], new_loc[2]))
-
-
-def convert_swizzle_tangent(tan, armature, blender_object, export_settings):
-    """Convert a tangent from Blender coordinate system to glTF coordinate system."""
-    if tan[0] == 0.0 and tan[1] == 0.0 and tan[2] == 0.0:
-        print_console('WARNING', 'Tangent has zero length.')
-
-    if (not armature) or (not blender_object):
-        # Classic case. Mesh is not skined, no need to apply armature transfoms on vertices / normals / tangents
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((tan[0], tan[2], -tan[1]))
-        else:
-            return Vector((tan[0], tan[1], tan[2]))
-    else:
-        # Mesh is skined, we have to apply armature transforms on data
-        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
-        new_tan = apply_matrix.to_quaternion() @ Vector((tan[0], tan[1], tan[2]))
-        if export_settings[gltf2_blender_export_keys.YUP]:
-            return Vector((new_tan[0], new_tan[2], -new_tan[1]))
-        else:
-            return Vector((new_tan[0], new_tan[1], new_tan[2]))
-
-def convert_swizzle_rotation(rot, export_settings):
-    """
-    Convert a quaternion rotation from Blender coordinate system to glTF coordinate system.
-
-    'w' is still at first position.
-    """
-    if export_settings[gltf2_blender_export_keys.YUP]:
-        return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
-    else:
-        return Quaternion((rot[0], rot[1], rot[2], rot[3]))
-
-
-def convert_swizzle_scale(scale, export_settings):
-    """Convert a scale from Blender coordinate system to glTF coordinate system."""
-    if export_settings[gltf2_blender_export_keys.YUP]:
-        return Vector((scale[0], scale[2], scale[1]))
-    else:
-        return Vector((scale[0], scale[1], scale[2]))
 
 
 def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vertex_groups, modifiers, export_settings):
