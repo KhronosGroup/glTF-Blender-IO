@@ -540,11 +540,17 @@ def skin_into_bind_pose(gltf, skin_idx, vert_joints, vert_weights, locs, vert_no
     if len(vert_normals) != 0:
         vert_normals[:] = mul_mats_vecs(skinning_mats_3x3, vert_normals)
         # Don't translate normals!
+        normalize_vecs(vert_normals)
 
 
 def mul_mats_vecs(mats, vecs):
     """Given [m1,m2,...] and [v1,v2,...], returns [m1@v1,m2@v2,...]. 3D only."""
     return np.matmul(mats, vecs.reshape(len(vecs), 3, 1)).reshape(len(vecs), 3)
+
+
+def normalize_vecs(vectors):
+    norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+    np.divide(vectors, norms, out=vectors, where=norms != 0)
 
 
 def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs):
