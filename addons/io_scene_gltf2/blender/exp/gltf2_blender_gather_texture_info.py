@@ -27,11 +27,16 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 def gather_texture_info(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         export_settings):
-    if not __filter_texture_info(blender_shader_sockets, export_settings):
+    is_specular_color = False
+    for socket in blender_shader_sockets:
+        if socket.name == 'Specular' or socket.name == 'Specular Tint':
+            is_specular_color = True
+
+    if not is_specular_color and not __filter_texture_info(blender_shader_sockets, export_settings):
         return None
 
     texture_info = gltf2_io.TextureInfo(
-        extensions=__gather_extensions(blender_shader_sockets, export_settings),
+        extensions=None if is_specular_color else __gather_extensions(blender_shader_sockets, export_settings),
         extras=__gather_extras(blender_shader_sockets, export_settings),
         index=__gather_index(blender_shader_sockets, export_settings),
         tex_coord=__gather_tex_coord(blender_shader_sockets, export_settings)

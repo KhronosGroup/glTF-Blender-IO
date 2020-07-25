@@ -18,6 +18,7 @@ from typing import Optional, Tuple
 import numpy as np
 import tempfile
 import enum
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 class Channel(enum.IntEnum):
@@ -25,6 +26,13 @@ class Channel(enum.IntEnum):
     G = 1
     B = 2
     A = 3
+
+class SpecularColorSource(enum.IntEnum):
+    Specular = 0
+    SpecularTint = 1
+    BaseColor = 2
+    Transmission = 3
+    IOR = 4
 
 # These describe how an ExportImage's channels should be filled.
 
@@ -38,6 +46,54 @@ class FillWhite:
     """Fills a channel with all ones (1.0)."""
     pass
 
+class FillSpecularColor:
+    """Fills a channel of the specular color from a Blender image."""
+    def __init__(self):
+        self.size = None
+        self.images = {}
+        self.src_default_values = {}  # used if image is None
+
+    def append(self, image: bpy.types.Image, src_type: SpecularColorSource, src_default_value):
+        self.images[src_type] = image
+        self.src_default_values[src_type] = src_default_value
+
+        if src_type is SpecularColorSource.IOR and image is not None:
+            # IOR textures not supported
+            self.images[SpecularColorSource.IOR] = None
+            self.src_default_values = 1.0
+
+        if image is not None:
+            if self.size is None:
+                # first image determines size
+                self.size = image.size
+            else:
+                # all other images must have the same size
+                if self.size[0] != image.size[0] or self.size[1] != image.size[1]:
+                    print_console("WARNING",
+                        "Specular, specular tint, transmission and/or base color textures have different "
+                        "sizes. Textures will be ignored.")
+                    self.images[src_type] = None
+
+    def has_image(self, src_type: SpecularColorSource):
+        return src_type in self.images and self.images[src_type] is not None
+
+    def image_size(self):
+        return (self.size[0], self.size[1])
+
+    def as_buffer(self, src_type: SpecularColorSource):
+        width, height = self.image_size()
+        if self.has_image(src_type):
+            out_buf = np.ones(height * width * 4, np.float32)
+            self.images[src_type].pixels.foreach_get(out_buf)
+            out_buf = np.reshape(out_buf, (height, width, 4))
+            if src_type == SpecularColorSource.BaseColor:
+                out_buf = out_buf[:,:,0:3]
+            else:
+                out_buf = out_buf[:,:,0]
+        else:
+            channels = 3 if src_type == SpecularColorSource.BaseColor else 1
+            out_buf = np.full((height, width, channels), self.src_default_values[src_type])
+        return out_buf
 
 class ExportImage:
     """Custom image class.
@@ -66,6 +122,7 @@ class ExportImage:
 
     def __init__(self):
         self.fills = {}
+        self.specular_color_fill = None
 
     @staticmethod
     def from_blender_image(image: bpy.types.Image):
@@ -79,6 +136,12 @@ class ExportImage:
 
     def fill_white(self, dst_chan: Channel):
         self.fills[dst_chan] = FillWhite()
+
+    def fill_specular_color(self, image: bpy.types.Image, src_type: SpecularColorSource, src_default_value):
+        self.fills[Channel.A] = FillWhite()
+        if self.specular_color_fill is None:
+            self.specular_color_fill = FillSpecularColor()
+        self.specular_color_fill.append(image, src_type, src_default_value)
 
     def is_filled(self, chan: Channel) -> bool:
         return chan in self.fills
@@ -109,6 +172,10 @@ class ExportImage:
             "image/jpeg": "JPEG",
             "image/png": "PNG"
         }.get(mime_type, "PNG")
+
+        # Specular color path = we need to bake the specular color image
+        if self.specular_color_fill is not None:
+            return self.__encode_specular_color()
 
         # Happy path = we can just use an existing Blender image
         if self.__on_happy_path():
@@ -203,6 +270,35 @@ class ExportImage:
             tmp_image = guard.image
             return _encode_temp_image(tmp_image, self.file_format)
 
+    def __encode_specular_color(self) -> bytes:
+        lerp = lambda a, b, v: (1-v)*a + v*b
+        luminance = lambda c: 0.3 * c[:,:,0] + 0.6 * c[:,:,1] + 0.1 * c[:,:,2]
+        stack3 = lambda v: np.dstack([v]*3)
+
+        ior = self.specular_color_fill.src_default_values[SpecularColorSource.IOR]
+
+        specular_buf = self.specular_color_fill.as_buffer(SpecularColorSource.Specular)
+        specular_tint_buf = self.specular_color_fill.as_buffer(SpecularColorSource.SpecularTint)
+        base_color_buf = self.specular_color_fill.as_buffer(SpecularColorSource.BaseColor)
+        transmission_buf = self.specular_color_fill.as_buffer(SpecularColorSource.Transmission)
+
+        width, height = self.specular_color_fill.image_size()
+
+        normalized_base_color_buf = base_color_buf / stack3(luminance(base_color_buf))
+
+        has_transmission = np.amax(transmission_buf) > 0
+        if not has_transmission and np.amax(specular_buf) > 0.5:
+            # material is not transmissive, extend specular range by using a high number for IOR
+            ior = 1.788789
+        
+        sc = np.minimum(lerp(1, normalized_base_color_buf, stack3(specular_tint_buf)), 1)
+        plastic = np.minimum(1/((ior - 1) / (ior + 1))**2 * 0.08 * stack3(specular_buf) * sc, 1)
+        glass = sc
+        out_buf = lerp(plastic, glass, stack3(transmission_buf))
+
+        out_buf = np.dstack((out_buf, np.ones((height, width))))
+        out_buf = np.reshape(out_buf, (width * height * 4))
+        return self.__encode_from_numpy_array(out_buf.astype(np.float32), (width, height))
 
 def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str) -> bytes:
     with tempfile.TemporaryDirectory() as tmpdirname:

@@ -72,7 +72,8 @@ def __gather_name(blender_shader_sockets, export_settings):
 
 
 def __gather_sampler(blender_shader_sockets, export_settings):
-    shader_nodes = [__get_tex_from_socket(socket).shader_node for socket in blender_shader_sockets]
+    shader_nodes = [__get_tex_from_socket(socket) for socket in blender_shader_sockets]
+    shader_nodes = [tex.shader_node if tex is not None else None for tex in shader_nodes]
     if len(shader_nodes) > 1:
         gltf2_io_debug.print_console("WARNING",
                                      "More than one shader node tex image used for a texture. "

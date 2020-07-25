@@ -22,7 +22,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage, FillImage
+from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, SpecularColorSource, ExportImage, FillImage
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
@@ -153,27 +153,29 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
     results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
+
+    is_specular_color = False
+    for socket in sockets:
+        if socket.name == 'Specular' or socket.name == 'Specular Tint':
+            is_specular_color = True
+
     composed_image = ExportImage()
     for result, socket in zip(results, sockets):
-        if result.shader_node.image.channels == 0:
-            gltf2_io_debug.print_console("WARNING",
-                                         "Image '{}' has no color channels and cannot be exported.".format(
-                                             result.shader_node.image))
-            continue
-
         # rudimentarily try follow the node tree to find the correct image data.
-        src_chan = Channel.R
-        for elem in result.path:
-            if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
-                src_chan = {
-                    'R': Channel.R,
-                    'G': Channel.G,
-                    'B': Channel.B,
-                }[elem.from_socket.name]
-            if elem.from_socket.name == 'Alpha':
-                src_chan = Channel.A
+        if result:
+            src_chan = Channel.R
+            for elem in result.path:
+                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
+                    src_chan = {
+                        'R': Channel.R,
+                        'G': Channel.G,
+                        'B': Channel.B,
+                    }[elem.from_socket.name]
+                if elem.from_socket.name == 'Alpha':
+                    src_chan = Channel.A
 
         dst_chan = None
+        specular_color_src_type = None
 
         # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
         if socket.name == 'Metallic':
@@ -188,7 +190,23 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
             dst_chan = Channel.R
         elif socket.name == 'Clearcoat Roughness':
             dst_chan = Channel.G
+        elif is_specular_color and socket.name == 'Specular':
+            specular_color_src_type = SpecularColorSource.Specular
+        elif is_specular_color and socket.name == 'Specular Tint':
+            specular_color_src_type = SpecularColorSource.SpecularTint
+        elif is_specular_color and socket.name == 'Base Color':
+            specular_color_src_type = SpecularColorSource.BaseColor
+        elif is_specular_color and socket.name == 'Transmission':
+            specular_color_src_type = SpecularColorSource.Transmission
+        elif is_specular_color and socket.name == 'IOR':
+            specular_color_src_type = SpecularColorSource.IOR
 
+        if specular_color_src_type is None and result.shader_node.image.channels == 0:
+            gltf2_io_debug.print_console("WARNING",
+                                         "Image '{}' has no color channels and cannot be exported.".format(
+                                             result.shader_node.image))
+            continue
+            
         if dst_chan is not None:
             composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
 
@@ -199,8 +217,13 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
             elif socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
                 composed_image.fill_white(Channel.B)
         else:
-            # copy full image...eventually following sockets might overwrite things
-            composed_image = ExportImage.from_blender_image(result.shader_node.image)
+            if specular_color_src_type is not None:
+                # bake specular color texture
+                composed_image.fill_specular_color(result.shader_node.image if result else None, specular_color_src_type, socket.default_value)
+            else:
+                # copy full image...eventually following sockets might overwrite things
+                composed_image = ExportImage.from_blender_image(result.shader_node.image)
+
 
     return composed_image
 

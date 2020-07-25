@@ -141,6 +141,13 @@ def __gather_extensions(blender_material, export_settings):
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
 
+    # KHR_materials_specular and KHR_materials_ior
+    ior_extension, specular_extension = __gather_ior_and_specular_extensions(blender_material, export_settings)
+    if ior_extension:
+        extensions["KHR_materials_ior"] = ior_extension
+    if specular_extension:
+        extensions["KHR_materials_specular"] = specular_extension
+
     # TODO KHR_materials_pbrSpecularGlossiness
 
     return extensions if extensions else None
@@ -284,3 +291,72 @@ def __gather_clearcoat_extension(blender_material, export_settings):
         )
 
     return Extension('KHR_materials_clearcoat', clearcoat_extension, False)
+
+def __gather_ior_and_specular_extensions(blender_material, export_settings):
+    lerp = lambda a, b, v: (1-v)*a + v*b
+    luminance = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
+
+    specular_ext_enabled = False
+    ior_ext_enabled = False
+
+    specular_extension = {}
+    ior_extension = {}
+
+    specular_socket = gltf2_blender_get.get_socket(blender_material, 'Specular')
+    specular_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Specular Tint')
+    base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
+    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
+    ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
+
+    specular_not_linked = isinstance(specular_socket, bpy.types.NodeSocket) and not specular_socket.is_linked
+    specular_tint_not_linked = isinstance(specular_tint_socket, bpy.types.NodeSocket) and not specular_tint_socket.is_linked
+    base_color_not_linked = isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked
+    transmission_not_linked = isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked
+    ior_not_linked = isinstance(ior_socket, bpy.types.NodeSocket) and not ior_socket.is_linked
+
+    specular = specular_socket.default_value if specular_not_linked else None
+    specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
+    base_color = base_color_socket.default_value[0:3] if base_color_not_linked else None
+    transmission = transmission_socket.default_value if transmission_not_linked else None
+    ior = ior_socket.default_value if ior_not_linked else 1.0   # textures not supported
+
+    no_texture = (specular_not_linked and specular_tint_not_linked and
+        (specular_tint == 0.0 or (specular_tint != 0.0 and base_color_not_linked)))
+
+    has_transmission = (transmission_not_linked and transmission > 0) or not transmission_not_linked
+    if has_transmission:
+        ior_ext_enabled = True
+        ior_extension['ior'] = ior
+    else:
+        # If there is no transmission/refraction, we are free to choose
+        # any value for glTF's IOR. Therefore, if specular is overshooting,
+        # we increase the IOR and adjust specular color accordingly in the
+        # next step.
+        if specular_not_linked and specular > 0.5:
+            ior_ext_enabled = True
+            ior_extension['ior'] = 1.788789
+
+    if no_texture:
+        normalized_base_color = [bc / luminance(base_color) if luminance(base_color) > 0 else 0 for bc in base_color]
+        if specular != 0.5 or specular_tint != 0.0:
+            specular_ext_enabled = True
+            specular_color = [min(lerp(1, bc, specular_tint), 1) for bc in normalized_base_color]
+
+            # The IOR dictates the maximal reflection strength, therefore we need to clamp
+            # reflection strenth of non-transmissive (aka plastic) fraction (if any)
+            plastic = [min(1/((ior - 1) / (ior + 1))**2 * 0.08 * specular * sc, 1) for sc in specular_color]
+            glass = specular_color
+            specular_extension['specularColorFactor'] = [lerp(plastic[c], glass[c], transmission) for c in range(0,3)]
+    else:
+        sockets = (specular_socket, specular_tint_socket, base_color_socket, transmission_socket, ior_socket)
+        info = gltf2_blender_gather_texture_info.gather_texture_info(sockets, export_settings)
+        if info is None:
+            return None
+
+        specular_ext_enabled = True
+        specular_extension['specularColorTexture'] = info
+
+    ior_extension = Extension('KHR_materials_ior', ior_extension, False) if ior_ext_enabled else None
+    specular_extension = Extension('KHR_materials_specular', specular_extension, False) if specular_ext_enabled else None
+        
+    return ior_extension, specular_extension
