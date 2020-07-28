@@ -286,6 +286,7 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
                         bones.append((joint, weight))
                 bones.sort(key=lambda x: x[1], reverse=True)
                 bones = tuple(bones)
+                if not bones: bones = ((0, 1.0),)  # HACK for verts with zero weight (#308)
                 vert += (bones,)
 
             for shape_key in shape_keys:
