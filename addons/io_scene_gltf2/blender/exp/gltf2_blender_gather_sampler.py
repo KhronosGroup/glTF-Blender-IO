@@ -16,6 +16,7 @@ import bpy
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
 
 
 @cached
@@ -68,14 +69,14 @@ def __gather_extras(blender_shader_node, export_settings):
 
 def __gather_mag_filter(blender_shader_node, export_settings):
     if blender_shader_node.interpolation == 'Closest':
-        return 9728  # NEAREST
-    return 9729  # LINEAR
+        return TextureFilter.Nearest
+    return TextureFilter.Linear
 
 
 def __gather_min_filter(blender_shader_node, export_settings):
     if blender_shader_node.interpolation == 'Closest':
-        return 9984  # NEAREST_MIPMAP_NEAREST
-    return 9986  # NEAREST_MIPMAP_LINEAR
+        return TextureFilter.NearestMipmapNearest
+    return TextureFilter.NearestMipmapLinear
 
 
 def __gather_name(blender_shader_node, export_settings):
@@ -84,11 +85,11 @@ def __gather_name(blender_shader_node, export_settings):
 
 def __gather_wrap_s(blender_shader_node, export_settings):
     if blender_shader_node.extension == 'EXTEND':
-        return 33071
+        return TextureWrap.ClampToEdge
     return None
 
 
 def __gather_wrap_t(blender_shader_node, export_settings):
     if blender_shader_node.extension == 'EXTEND':
-        return 33071
+        return TextureWrap.ClampToEdge
     return None
