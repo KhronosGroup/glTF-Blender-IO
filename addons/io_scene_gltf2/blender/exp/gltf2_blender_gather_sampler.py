@@ -32,7 +32,30 @@ def gather_sampler(blender_shader_node: bpy.types.Node, export_settings):
 
     export_user_extensions('gather_sampler_hook', export_settings, sampler, blender_shader_node)
 
+    if not sampler.extensions and not sampler.extras and not sampler.name:
+        return __sampler_by_value(
+            sampler.mag_filter,
+            sampler.min_filter,
+            sampler.wrap_s,
+            sampler.wrap_t,
+            export_settings,
+        )
+
     return sampler
+
+
+@cached
+def __sampler_by_value(mag_filter, min_filter, wrap_s, wrap_t, export_settings):
+    # @cached function to dedupe samplers with the same settings.
+    return gltf2_io.Sampler(
+        extensions=None,
+        extras=None,
+        mag_filter=mag_filter,
+        min_filter=min_filter,
+        name=None,
+        wrap_s=wrap_s,
+        wrap_t=wrap_t,
+    )
 
 
 def __gather_extensions(blender_shader_node, export_settings):
