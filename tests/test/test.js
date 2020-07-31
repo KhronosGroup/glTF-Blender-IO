@@ -912,6 +912,30 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
             });
 
+            it('roundtrips baseColorFactor, etc. when used with textures', function() {
+                let dir = '11_factors_and_textures';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+
+                const mat = asset.materials[0];
+                const pbr = mat.pbrMetallicRoughness;
+
+                assert.equalEpsilon(mat.emissiveFactor[0], 1);
+                assert.equalEpsilon(mat.emissiveFactor[1], 0);
+                assert.equalEpsilon(mat.emissiveFactor[2], 0);
+
+                assert.equalEpsilon(pbr.baseColorFactor[0], 0);
+                assert.equalEpsilon(pbr.baseColorFactor[1], 1);
+                assert.equalEpsilon(pbr.baseColorFactor[2], 0);
+                assert.equalEpsilon(pbr.baseColorFactor[3], 0.5);
+
+                assert.equalEpsilon(pbr.metallicFactor, 0.25);
+                assert.equalEpsilon(pbr.roughnessFactor, 0.75);
+            });
+
             it('roundtrips all texture transforms', function() {
                 let dir = '09_texture_transform';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
