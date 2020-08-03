@@ -52,20 +52,31 @@ class BlenderGlTF():
     def set_convert_functions(gltf):
         gltf.yup2zup = bpy.app.debug_value != 100
 
+        if bpy.app.debug_value != 100:
+            # unit_scale = (Blender units) / (meters)
+            gltf.unit_scale = 1.0 / bpy.context.scene.unit_settings.scale_length
+        else:
+            gltf.unit_scale = 1
+        u = gltf.unit_scale
+
         if gltf.yup2zup:
             # glTF Y-Up space --> Blender Z-up space
             # X,Y,Z --> X,-Z,Y
-            def convert_loc(x): return Vector([x[0], -x[2], x[1]])
+            def convert_loc(x): return u * Vector([x[0], -x[2], x[1]])
             def convert_quat(q): return Quaternion([q[3], q[0], -q[2], q[1]])
             def convert_normal(n): return Vector([n[0], -n[2], n[1]])
             def convert_scale(s): return Vector([s[0], s[2], s[1]])
             def convert_matrix(m):
                 return Matrix([
-                    [ m[0], -m[ 8],  m[4],  m[12]],
-                    [-m[2],  m[10], -m[6], -m[14]],
-                    [ m[1], -m[ 9],  m[5],  m[13]],
-                    [ m[3], -m[11],  m[7],  m[15]],
+                    [   m[0],   -m[ 8],    m[4],  m[12]*u],
+                    [  -m[2],    m[10],   -m[6], -m[14]*u],
+                    [   m[1],   -m[ 9],    m[5],  m[13]*u],
+                    [ m[3]/u, -m[11]/u,  m[7]/u,    m[15]],
                 ])
+                # m[3],m[11],m[7] should probably be zero, maybe we don't
+                # need to divide them...
+
+            # TODO: move loc/normal conversion for a numpy array here too
 
             # Correction for cameras and lights.
             # glTF: right = +X, forward = -Z, up = +Y

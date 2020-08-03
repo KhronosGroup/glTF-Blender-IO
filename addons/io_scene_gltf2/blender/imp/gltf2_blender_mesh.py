@@ -238,6 +238,11 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         for sk_locs in sk_vert_locs:
             locs_yup_to_zup(sk_locs)
 
+    if gltf.unit_scale != 1:
+        vert_locs *= gltf.unit_scale
+        for sk_locs in sk_vert_locs:
+            sk_locs *= gltf.unit_scale
+
     if num_joint_sets:
         skin_into_bind_pose(
             gltf, skin_idx, vert_joints, vert_weights,
