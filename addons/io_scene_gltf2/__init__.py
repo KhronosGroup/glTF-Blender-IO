@@ -844,6 +844,7 @@ class ImportGLTF2(Operator, ImportHelper):
     """Load a glTF 2.0 file"""
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
+    bl_options = {'PRESET', 'UNDO'}
 
     filter_glob: StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
