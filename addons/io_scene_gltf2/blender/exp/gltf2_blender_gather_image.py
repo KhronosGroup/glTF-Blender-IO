@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2020 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ def __gather_mime_type(sockets, export_image, export_settings):
         if socket.name == "Alpha":
             return "image/png"
 
-    if export_settings["gltf_image_format"] == "AUTO":
+    if export_settings["gltf_image_format"] in ["AUTO", "ASIS"]:
         image = export_image.blender_image()
         if image is not None and __is_blender_image_a_jpeg(image):
             return "image/jpeg"

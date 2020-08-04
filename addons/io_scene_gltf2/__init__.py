@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2020 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -113,13 +113,16 @@ class ExportGLTF2_Base:
 
     export_image_format: EnumProperty(
         name='Images',
-        items=(('AUTO', 'Automatic',
-                'Save PNGs as PNGs and JPEGs as JPEGs.\n'
-                'If neither one, use PNG'),
-                ('JPEG', 'JPEG Format (.jpg)',
-                'Save images as JPEGs. (Images that need alpha are saved as PNGs though.)\n'
-                'Be aware of a possible loss in quality'),
-               ),
+        items=(
+            ('AUTO', 'Automatic',
+            'Where possible, consolidate related textures into a single file and save it as PNG,\n'
+            'otherwise save PNGs as PNGs and JPEGs as JPEGs.'),
+            ('ASIS', 'Keep as-is',
+            'Where possible, keep image format the same, otherwise save as PNGs.'),
+            ('JPEG', 'JPEG Format (.jpg)',
+            'Save images as JPEGs. (Images that need alpha are saved as PNGs though.)\n'
+            'Be aware of a possible loss in quality'),
+        ),
         description=(
             'Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for web '
             'applications due to the smaller file size'
