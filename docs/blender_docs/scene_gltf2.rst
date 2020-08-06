@@ -336,6 +336,7 @@ are supported directly by this add-on:
 - ``KHR_materials_unlit``
 - ``KHR_texture_transform``
 - ``KHR_materials_clearcoat``
+- ``KHR_mesh_quantization``
 
 
 .. rubric:: Export
