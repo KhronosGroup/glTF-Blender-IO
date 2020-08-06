@@ -74,6 +74,8 @@ def on_export_format_changed(self, context):
     # Update the file extension when the format (.glb/.gltf) changes
     sfile = context.space_data
     operator = sfile.active_operator
+    if operator.bl_idname != "EXPORT_SCENE_OT_gltf":
+        return
     if operator.check(context):
         # Weird hack to force the filepicker to notice filename changed
         from os.path import basename
