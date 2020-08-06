@@ -76,8 +76,11 @@ def on_export_format_changed(self, context):
     operator = sfile.active_operator
     if operator.check(context):
         # Weird hack to force the filepicker to notice filename changed
-        bpy.ops.file.filenum(increment=1)
+        from os.path import basename
+        filepath = operator.filepath
         bpy.ops.file.filenum(increment=-1)
+        if basename(operator.filepath) != basename(filepath):
+            bpy.ops.file.filenum(increment=1)
 
 
 class ExportGLTF2_Base:
