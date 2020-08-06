@@ -364,18 +364,25 @@ class ExportGLTF2_Base:
     def check(self, _context):
         # Ensure file extension matches format
         import os
-        filepath = self.filepath
-        desired_ext = '.glb' if self.export_format == 'GLB' else '.gltf'
-        root, ext = os.path.splitext(filepath)
-        ext_lower = ext.lower()
-        if ext_lower not in ['.glb', '.gltf']:
-            filepath = filepath + desired_ext
-        elif ext_lower != desired_ext:
-            filepath = root + desired_ext
+        filename = os.path.basename(self.filepath)
+        if filename:
+            filepath = self.filepath
+            desired_ext = '.glb' if self.export_format == 'GLB' else '.gltf'
 
-        if filepath != self.filepath:
-            self.filepath = filepath
-            return True
+            stem, ext = os.path.splitext(filename)
+            if stem.startswith('.') and not ext:
+                stem, ext = '', stem
+
+            ext_lower = ext.lower()
+            if ext_lower not in ['.glb', '.gltf']:
+                filepath = filepath + desired_ext
+            elif ext_lower != desired_ext:
+                filepath = filepath[:-len(ext)]  # strip off ext
+                filepath += desired_ext
+
+            if filepath != self.filepath:
+                self.filepath = filepath
+                return True
 
         return False
 
