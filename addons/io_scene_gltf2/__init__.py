@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 4, 1),
+    "version": (1, 4, 2),
     'blender': (2, 90, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -844,6 +844,7 @@ class ImportGLTF2(Operator, ImportHelper):
     """Load a glTF 2.0 file"""
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
+    bl_options = {'REGISTER', 'UNDO'}
 
     filter_glob: StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
