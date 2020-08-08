@@ -48,6 +48,7 @@ class glTFImporter():
             'KHR_materials_unlit',
             'KHR_texture_transform',
             'KHR_materials_clearcoat',
+            'KHR_mesh_quantization',
         ]
 
         # TODO : merge with io_constants
