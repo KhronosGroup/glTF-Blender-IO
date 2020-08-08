@@ -236,7 +236,7 @@ For materials where only the front faces will be visible, turn on *Backface Cull
 the *Settings* panel of an Eevee material. When using other engines (Cycles, Workbench)
 you can temporarily switch to Eevee to configure this setting, then switch back.
 
-Leave this box un-checked for double-sided materials.
+Leave this box unchecked for double-sided materials.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-backface-culling.png
 
