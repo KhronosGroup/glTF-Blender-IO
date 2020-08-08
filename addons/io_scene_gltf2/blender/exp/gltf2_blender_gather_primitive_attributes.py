@@ -161,12 +161,9 @@ def __gather_skins(blender_primitive, export_settings):
 
             # joints
             internal_joint = blender_primitive["attributes"][joint_id]
-            component_type = gltf2_io_constants.ComponentType.UnsignedShort
-            if max(internal_joint) < 256:
-                component_type = gltf2_io_constants.ComponentType.UnsignedByte
             joint = array_to_accessor(
                 internal_joint,
-                component_type,
+                component_type=gltf2_io_constants.ComponentType.UnsignedShort,
                 data_type=gltf2_io_constants.DataType.Vec4,
             )
             attributes[joint_id] = joint
