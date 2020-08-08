@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 4, 1),
+    "version": (1, 3, 45),
     'blender': (2, 90, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -114,10 +114,10 @@ class ExportGLTF2_Base:
     export_image_format: EnumProperty(
         name='Images',
         items=(('AUTO', 'Automatic',
-                'Save PNGs as PNGs and JPEGs as JPEGs.\n'
+                'Save PNGs as PNGs and JPEGs as JPEGs. '
                 'If neither one, use PNG'),
                 ('JPEG', 'JPEG Format (.jpg)',
-                'Save images as JPEGs. (Images that need alpha are saved as PNGs though.)\n'
+                'Save images as JPEGs. (Images that need alpha are saved as PNGs though.) '
                 'Be aware of a possible loss in quality'),
                ),
         description=(
@@ -276,8 +276,8 @@ class ExportGLTF2_Base:
     export_nla_strips: BoolProperty(
         name='Group by NLA Track',
         description=(
-            "When on, multiple actions become part of the same glTF animation if\n"
-            "they're pushed onto NLA tracks with the same name.\n"
+            "When on, multiple actions become part of the same glTF animation if "
+            "they're pushed onto NLA tracks with the same name. "
             "When off, all the currently assigned actions become one glTF animation"
         ),
         default=True
@@ -844,7 +844,7 @@ class ImportGLTF2(Operator, ImportHelper):
     """Load a glTF 2.0 file"""
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
-    bl_options = {'PRESET', 'UNDO'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     filter_glob: StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
@@ -868,8 +868,8 @@ class ImportGLTF2(Operator, ImportHelper):
         description=(
             'The glTF format requires discontinuous normals, UVs, and '
             'other vertex attributes to be stored as separate vertices, '
-            'as required for rendering on typical graphics hardware.\n'
-            'This option attempts to combine co-located vertices where possible.\n'
+            'as required for rendering on typical graphics hardware. '
+            'This option attempts to combine co-located vertices where possible. '
             'Currently cannot combine verts with different normals'
         ),
         default=False,
@@ -887,15 +887,15 @@ class ImportGLTF2(Operator, ImportHelper):
         name="Bone Dir",
         items=(
             ("BLENDER", "Blender (best for re-importing)",
-                "Good for re-importing glTFs exported from Blender.\n"
+                "Good for re-importing glTFs exported from Blender. "
                 "Bone tips are placed on their local +Y axis (in glTF space)"),
             ("TEMPERANCE", "Temperance (average)",
-                "Decent all-around strategy.\n"
-                "A bone with one child has its tip placed on the local axis\n"
+                "Decent all-around strategy. "
+                "A bone with one child has its tip placed on the local axis "
                 "closest to its child"),
             ("FORTUNE", "Fortune (may look better, less accurate)",
-                "Might look better than Temperance, but also might have errors.\n"
-                "A bone with one child has its tip placed at its child's root.\n"
+                "Might look better than Temperance, but also might have errors. "
+                "A bone with one child has its tip placed at its child's root. "
                 "Non-uniform scalings may get messed up though, so beware"),
         ),
         description="Heuristic for placing bones. Tries to make bones pretty",
@@ -906,7 +906,7 @@ class ImportGLTF2(Operator, ImportHelper):
         name='Guess Original Bind Pose',
         description=(
             'Try to guess the original bind pose for skinned meshes from '
-            'the inverse bind matrices.\n'
+            'the inverse bind matrices. '
             'When off, use default/rest pose as bind pose'
         ),
         default=True,
