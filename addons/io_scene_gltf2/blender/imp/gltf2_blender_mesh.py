@@ -200,7 +200,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                     uvs = BinaryData.decode_accessor(gltf, prim.attributes['TEXCOORD_%d' % uv_i], cache=True)
                     uvs = uvs[indices]
                 else:
-                    uvs = np.zeros((len(indices), 3), dtype=np.float32)
+                    uvs = np.zeros((len(indices), 2), dtype=np.float32)
                 loop_uvs[uv_i] = np.concatenate((loop_uvs[uv_i], uvs))
 
             for col_i in range(num_cols):
