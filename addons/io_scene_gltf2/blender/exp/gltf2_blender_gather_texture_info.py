@@ -29,7 +29,7 @@ def gather_texture_info(
         export_settings):
     is_specular_color = False
     for socket in blender_shader_sockets:
-        if socket.name == 'Specular' or socket.name == 'Specular Tint':
+        if socket and (socket.name == 'Specular' or socket.name == 'Specular Tint'):
             is_specular_color = True
 
     if not is_specular_color and not __filter_texture_info(blender_shader_sockets, export_settings):

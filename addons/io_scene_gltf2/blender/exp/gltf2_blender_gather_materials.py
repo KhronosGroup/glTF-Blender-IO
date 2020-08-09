@@ -337,9 +337,9 @@ def __gather_ior_and_specular_extensions(blender_material, export_settings):
             ior_extension['ior'] = 1.788789
 
     if no_texture:
-        normalized_base_color = [bc / luminance(base_color) if luminance(base_color) > 0 else 0 for bc in base_color]
         if specular != 0.5 or specular_tint != 0.0:
             specular_ext_enabled = True
+            normalized_base_color = [bc / luminance(base_color) if luminance(base_color) > 0 else 0 for bc in base_color]
             specular_color = [min(lerp(1, bc, specular_tint), 1) for bc in normalized_base_color]
 
             # The IOR dictates the maximal reflection strength, therefore we need to clamp
@@ -351,7 +351,7 @@ def __gather_ior_and_specular_extensions(blender_material, export_settings):
         sockets = (specular_socket, specular_tint_socket, base_color_socket, transmission_socket, ior_socket)
         info = gltf2_blender_gather_texture_info.gather_texture_info(sockets, export_settings)
         if info is None:
-            return None
+            return None, None
 
         specular_ext_enabled = True
         specular_extension['specularColorTexture'] = info
