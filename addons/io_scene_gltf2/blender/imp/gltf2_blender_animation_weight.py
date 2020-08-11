@@ -14,6 +14,7 @@
 
 import json
 import bpy
+import numpy as np
 
 from ...io.imp.gltf2_io_binary import BinaryData
 from .gltf2_blender_animation_utils import make_fcurve
@@ -54,26 +55,30 @@ class BlenderWeightAnim():
         action.id_root = "KEY"
         gltf.needs_stash.append((obj.data.shape_keys, action))
 
-        keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
-        values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
+        keys = BinaryData.decode_accessor(gltf, animation.samplers[channel.sampler].input)
+        values = BinaryData.decode_accessor(gltf, animation.samplers[channel.sampler].output)
+        keys = keys.reshape(len(keys))
+        values = values.reshape(len(values))
 
         # retrieve number of targets
         pymesh = gltf.data.meshes[gltf.data.nodes[node_idx].mesh]
         nb_targets = len(pymesh.shapekey_names)
 
         if animation.samplers[channel.sampler].interpolation == "CUBICSPLINE":
+            # one frame is packed as in,in,in,val,val,val,out,out,out
             offset = nb_targets
             stride = 3 * nb_targets
         else:
             offset = 0
             stride = nb_targets
 
-        coords = [0] * (2 * len(keys))
-        coords[::2] = (key[0] * fps for key in keys)
+        coords = np.empty((2 * len(keys)), dtype=np.float32)
+        coords[::2] = keys
+        coords[::2] *= fps
 
         for sk in range(nb_targets):
             if pymesh.shapekey_names[sk] is not None: # Do not animate shapekeys not created
-                coords[1::2] = (values[offset + stride * i + sk][0] for i in range(len(keys)))
+                coords[1::2] = values[sk + offset::stride]
                 kb_name = pymesh.shapekey_names[sk]
                 data_path = "key_blocks[" + json.dumps(kb_name) + "].value"
 
