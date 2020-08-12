@@ -45,18 +45,12 @@ def restore_animation_on_object(obj, anim_name):
 
     obj.animation_data.action = None
 
-def make_fcurve(action, co, data_path, index=0, group_name=None, interpolation=None):
+def make_fcurve(action, co, data_path, index=0, group_name='', interpolation=None):
     try:
-        fcurve = action.fcurves.new(data_path=data_path, index=index)
+        fcurve = action.fcurves.new(data_path=data_path, index=index, action_group=group_name)
     except:
         # Some non valid files can have multiple target path
         return None
-
-    if group_name:
-        if group_name not in action.groups:
-            action.groups.new(group_name)
-        group = action.groups[group_name]
-        fcurve.group = group
 
     fcurve.keyframe_points.add(len(co) // 2)
     fcurve.keyframe_points.foreach_set('co', co)
