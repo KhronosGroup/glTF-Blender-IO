@@ -385,7 +385,7 @@ Only active action of each objects will be taken into account, and merged into a
 .. note::
 
    In order to sample shape key animations controlled by drivers using bone transformations,
-   they must be on a mesh object which is a child of the bones' armature.
+   they must be on a mesh object which is a direct child of the bones' armature.
 
 
 Custom Properties
