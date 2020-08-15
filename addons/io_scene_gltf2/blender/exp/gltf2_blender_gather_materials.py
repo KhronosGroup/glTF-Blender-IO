@@ -296,7 +296,7 @@ def __gather_transmission_extension(blender_material, export_settings):
     transmission_extension = {}
     transmission_slots = ()
 
-    transmission_socket = gltf2_blender_get.get_socket_or_texture_slot(blender_material, 'Transmission')
+    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
 
     if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
         transmission_extension['transmissionFactor'] = transmission_socket.default_value
