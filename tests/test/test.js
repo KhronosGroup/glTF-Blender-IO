@@ -718,7 +718,6 @@ describe('Importer / Exporter (Roundtrip)', function() {
                     it(dir, function(done) {
                         let outDirName = 'out' + blenderVersion + variant[0];
                         let gltfSrcPath = `roundtrip/${dir}/${dir}.gltf`;
-                        let gltfSrcReport = JSON.parse(fs.readFileSync(`roundtrip/${dir}/${dir}_report.json`, 'utf8'));
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
                         let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                         let gltfDstPath = path.resolve(outDirPath, `${dir}${ext}`);
@@ -731,32 +730,37 @@ describe('Importer / Exporter (Roundtrip)', function() {
                             if (error)
                                 return done(error);
 
-                            validateGltf(gltfDstPath, (error, gltfDstReport) => {
+                            validateGltf(gltfSrcPath, (error, gltfSrcReport) => {
                                 if (error)
                                     return done(error);
 
-                                let reduceKeys = function(raw, allowed) {
-                                    return Object.keys(raw)
-                                        .filter(key => allowed.includes(key))
-                                        .reduce((obj, key) => {
-                                            obj[key] = raw[key];
-                                            return obj;
-                                        }, {});
-                                };
+                                validateGltf(gltfDstPath, (error, gltfDstReport) => {
+                                    if (error)
+                                        return done(error);
 
-                                let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
-                                let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
+                                    let reduceKeys = function(raw, allowed) {
+                                        return Object.keys(raw)
+                                            .filter(key => allowed.includes(key))
+                                            .reduce((obj, key) => {
+                                                obj[key] = raw[key];
+                                                return obj;
+                                            }, {});
+                                    };
 
-                                try {
-                                    assert.deepStrictEqual(dstInfo, srcInfo);
-                                } catch (ex) {
-                                    done(new Error("Validation summary mismatch.\nExpected summary:\n" +
-                                        JSON.stringify(srcInfo, null, '  ') +
-                                        "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
-                                    return;
-                                }
+                                    let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
+                                    let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
 
-                                done();
+                                    try {
+                                        assert.deepStrictEqual(dstInfo, srcInfo);
+                                    } catch (ex) {
+                                        done(new Error("Validation summary mismatch.\nExpected summary:\n" +
+                                            JSON.stringify(srcInfo, null, '  ') +
+                                            "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
+                                        return;
+                                    }
+
+                                    done();
+                                });
                             });
                         }, options);
                     });
