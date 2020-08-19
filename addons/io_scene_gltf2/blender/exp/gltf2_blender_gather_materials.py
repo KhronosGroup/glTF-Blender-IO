@@ -141,7 +141,11 @@ def __gather_extensions(blender_material, export_settings):
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
 
-    # TODO KHR_materials_pbrSpecularGlossiness
+    # KHR_materials_transmission
+
+    transmission_extension = __gather_transmission_extension(blender_material, export_settings)
+    if transmission_extension:
+        extensions["KHR_materials_transmission"] = transmission_extension
 
     return extensions if extensions else None
 
@@ -284,3 +288,34 @@ def __gather_clearcoat_extension(blender_material, export_settings):
         )
 
     return Extension('KHR_materials_clearcoat', clearcoat_extension, False)
+
+def __gather_transmission_extension(blender_material, export_settings):
+    transmission_enabled = False
+    has_transmission_texture = False
+
+    transmission_extension = {}
+    transmission_slots = ()
+
+    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
+
+    if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
+        transmission_extension['transmissionFactor'] = transmission_socket.default_value
+        transmission_enabled = transmission_extension['transmissionFactor'] > 0
+    elif __has_image_node_from_socket(transmission_socket):
+        transmission_extension['transmissionFactor'] = 1
+        has_transmission_texture = True
+        transmission_enabled = True
+
+    if not transmission_enabled:
+        return None
+
+    # Pack transmission channel (R).
+    if has_transmission_texture:
+        transmission_slots = (transmission_socket,)
+
+    if len(transmission_slots) > 0:
+        combined_texture = gltf2_blender_gather_texture_info.gather_texture_info(transmission_slots, export_settings)
+        if has_transmission_texture:
+            transmission_extension['transmissionTexture'] = combined_texture
+
+    return Extension('KHR_materials_transmission', transmission_extension, False)
