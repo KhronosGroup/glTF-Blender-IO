@@ -53,7 +53,7 @@ def from_union(fs, x):
         for tbi in tb_info:
             filename, line, func, text = tbi
             gltf2_io_debug.print_console('ERROR', 'An error occurred on line {} in statement {}'.format(line, text))
-    assert False
+    raise TypeError(x)
 
 
 def from_dict(f, x):
