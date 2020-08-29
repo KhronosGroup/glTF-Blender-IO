@@ -18,8 +18,6 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_export_keys
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_normal_texture_info_class
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_material_occlusion_texture_info_class
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
@@ -164,7 +162,7 @@ def __gather_normal_texture(blender_material, export_settings):
     normal = gltf2_blender_get.get_socket(blender_material, "Normal")
     if normal is None:
         normal = gltf2_blender_get.get_socket_old(blender_material, "Normal")
-    return gltf2_blender_gather_material_normal_texture_info_class.gather_material_normal_texture_info_class(
+    return gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
         (normal,),
         export_settings)
 
@@ -212,13 +210,13 @@ def __gather_orm_texture(blender_material, export_settings):
 
 def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
     if orm_texture is not None:
-        return gltf2_blender_gather_material_occlusion_texture_info_class.gather_material_occlusion_texture_info_class(
+        return gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
             orm_texture,
             export_settings)
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None:
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
-    return gltf2_blender_gather_material_occlusion_texture_info_class.gather_material_occlusion_texture_info_class(
+    return gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         (occlusion,),
         export_settings)
 
@@ -282,7 +280,7 @@ def __gather_clearcoat_extension(blender_material, export_settings):
             clearcoat_extension['clearcoatRoughnessTexture'] = combined_texture
 
     if __has_image_node_from_socket(clearcoat_normal_socket):
-        clearcoat_extension['clearcoatNormalTexture'] = gltf2_blender_gather_material_normal_texture_info_class.gather_material_normal_texture_info_class(
+        clearcoat_extension['clearcoatNormalTexture'] = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             (clearcoat_normal_socket,),
             export_settings
         )
