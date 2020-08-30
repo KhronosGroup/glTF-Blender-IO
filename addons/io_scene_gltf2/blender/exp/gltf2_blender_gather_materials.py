@@ -89,7 +89,7 @@ def __gather_alpha_cutoff(blender_material, export_settings):
 def __gather_alpha_mode(blender_material, export_settings):
     if blender_material.blend_method == 'CLIP':
         return 'MASK'
-    elif blender_material.blend_method == 'BLEND':
+    elif blender_material.blend_method in ['BLEND', 'HASHED']:
         return 'BLEND'
     return None
 
