@@ -51,24 +51,6 @@ class glTFImporter():
             'KHR_mesh_quantization',
         ]
 
-        # TODO : merge with io_constants
-        self.fmt_char_dict = {}
-        self.fmt_char_dict[5120] = 'b'  # Byte
-        self.fmt_char_dict[5121] = 'B'  # Unsigned Byte
-        self.fmt_char_dict[5122] = 'h'  # Short
-        self.fmt_char_dict[5123] = 'H'  # Unsigned Short
-        self.fmt_char_dict[5125] = 'I'  # Unsigned Int
-        self.fmt_char_dict[5126] = 'f'  # Float
-
-        self.component_nb_dict = {}
-        self.component_nb_dict['SCALAR'] = 1
-        self.component_nb_dict['VEC2'] = 2
-        self.component_nb_dict['VEC3'] = 3
-        self.component_nb_dict['VEC4'] = 4
-        self.component_nb_dict['MAT2'] = 4
-        self.component_nb_dict['MAT3'] = 9
-        self.component_nb_dict['MAT4'] = 16
-
     @staticmethod
     def bad_json_value(val):
         """Bad Json value."""
