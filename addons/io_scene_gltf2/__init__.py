@@ -69,6 +69,22 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 extension_panel_unregister_functors = []
 
+
+def on_export_format_changed(self, context):
+    # Update the file extension when the format (.glb/.gltf) changes
+    sfile = context.space_data
+    operator = sfile.active_operator
+    if operator.bl_idname != "EXPORT_SCENE_OT_gltf":
+        return
+    if operator.check(context):
+        # Weird hack to force the filepicker to notice filename changed
+        from os.path import basename
+        filepath = operator.filepath
+        bpy.ops.file.filenum(increment=-1)
+        if basename(operator.filepath) != basename(filepath):
+            bpy.ops.file.filenum(increment=1)
+
+
 class ExportGLTF2_Base:
     # TODO: refactor to avoid boilerplate
 
@@ -93,7 +109,8 @@ class ExportGLTF2_Base:
             'Output format and embedding options. Binary is most efficient, '
             'but JSON (embedded or separate) may be easier to edit later'
         ),
-        default='GLB'
+        default='GLB',
+        update=on_export_format_changed,
     )
 
     ui_tab: EnumProperty(
@@ -349,6 +366,31 @@ class ExportGLTF2_Base:
 
     #
 
+    def check(self, _context):
+        # Ensure file extension matches format
+        import os
+        filename = os.path.basename(self.filepath)
+        if filename:
+            filepath = self.filepath
+            desired_ext = '.glb' if self.export_format == 'GLB' else '.gltf'
+
+            stem, ext = os.path.splitext(filename)
+            if stem.startswith('.') and not ext:
+                stem, ext = '', stem
+
+            ext_lower = ext.lower()
+            if ext_lower not in ['.glb', '.gltf']:
+                filepath = filepath + desired_ext
+            elif ext_lower != desired_ext:
+                filepath = filepath[:-len(ext)]  # strip off ext
+                filepath += desired_ext
+
+            if filepath != self.filepath:
+                self.filepath = filepath
+                return True
+
+        return False
+
     def invoke(self, context, event):
         settings = context.scene.get(self.scene_key)
         self.will_save_settings = False
@@ -396,17 +438,14 @@ class ExportGLTF2_Base:
         if self.will_save_settings:
             self.save_settings(context)
 
-        if self.export_format == 'GLB':
-            self.filename_ext = '.glb'
-        else:
-            self.filename_ext = '.gltf'
+        self.check(context)  # ensure filepath has the right extension
 
         # All custom export settings are stored in this container.
         export_settings = {}
 
         export_settings['timestamp'] = datetime.datetime.now()
 
-        export_settings['gltf_filepath'] = bpy.path.ensure_ext(self.filepath, self.filename_ext)
+        export_settings['gltf_filepath'] = self.filepath
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
         export_settings['gltf_texturedirectory'] = os.path.join(
             export_settings['gltf_filedirectory'],
@@ -481,8 +520,9 @@ class ExportGLTF2_Base:
         export_settings['gltf_displacement'] = self.export_displacement
 
         export_settings['gltf_binary'] = bytearray()
-        export_settings['gltf_binaryfilename'] = os.path.splitext(os.path.basename(
-            bpy.path.ensure_ext(self.filepath,self.filename_ext)))[0] + '.bin'
+        export_settings['gltf_binaryfilename'] = (
+            os.path.splitext(os.path.basename(self.filepath))[0] + '.bin'
+        )
 
         user_extensions = []
         pre_export_callbacks = []
