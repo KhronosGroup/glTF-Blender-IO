@@ -16,6 +16,7 @@ import struct
 import numpy as np
 
 from ..com.gltf2_io import Accessor
+from ..com.gltf2_io_constants import ComponentType, DataType
 
 
 class BinaryData():
@@ -93,14 +94,8 @@ class BinaryData():
         # doesn't matter because nothing uses them.
         assert accessor.type not in ['MAT2', 'MAT3']
 
-        dtype = {
-            5120: np.int8,
-            5121: np.uint8,
-            5122: np.int16,
-            5123: np.uint16,
-            5125: np.uint32,
-            5126: np.float32,
-        }[accessor.component_type]
+        dtype = ComponentType.to_numpy_dtype(accessor.component_type)
+        component_nb = DataType.num_elements(accessor.type)
 
         if accessor.buffer_view is not None:
             bufferView = gltf.data.buffer_views[accessor.buffer_view]
@@ -109,9 +104,7 @@ class BinaryData():
             accessor_offset = accessor.byte_offset or 0
             buffer_data = buffer_data[accessor_offset:]
 
-            component_nb = gltf.component_nb_dict[accessor.type]
             bytes_per_elem = dtype(1).nbytes
-
             default_stride = bytes_per_elem * component_nb
             stride = bufferView.byte_stride or default_stride
 
@@ -146,7 +139,6 @@ class BinaryData():
 
         else:
             # No buffer view; initialize to zeros
-            component_nb = gltf.component_nb_dict[accessor.type]
             array = np.zeros((accessor.count, component_nb), dtype=dtype)
 
         if accessor.sparse:
