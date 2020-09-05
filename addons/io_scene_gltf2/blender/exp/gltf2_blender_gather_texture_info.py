@@ -23,19 +23,41 @@ from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
+def gather_texture_info(blender_shader_sockets, export_settings):
+    return __gather_texture_info_helper(blender_shader_sockets, 'DEFAULT', export_settings)
+
+def gather_material_normal_texture_info_class(blender_shader_sockets, export_settings):
+    return __gather_texture_info_helper(blender_shader_sockets, 'NORMAL', export_settings)
+
+def gather_material_occlusion_texture_info_class(blender_shader_sockets, export_settings):
+    return __gather_texture_info_helper(blender_shader_sockets, 'OCCLUSION', export_settings)
+
+
 @cached
-def gather_texture_info(
+def __gather_texture_info_helper(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
+        kind: str,
         export_settings):
     if not __filter_texture_info(blender_shader_sockets, export_settings):
         return None
 
-    texture_info = gltf2_io.TextureInfo(
-        extensions=__gather_extensions(blender_shader_sockets, export_settings),
-        extras=__gather_extras(blender_shader_sockets, export_settings),
-        index=__gather_index(blender_shader_sockets, export_settings),
-        tex_coord=__gather_tex_coord(blender_shader_sockets, export_settings)
-    )
+    fields = {
+        'extensions': __gather_extensions(blender_shader_sockets, export_settings),
+        'extras': __gather_extras(blender_shader_sockets, export_settings),
+        'index': __gather_index(blender_shader_sockets, export_settings),
+        'tex_coord': __gather_tex_coord(blender_shader_sockets, export_settings),
+    }
+
+    if kind == 'DEFAULT':
+        texture_info = gltf2_io.TextureInfo(**fields)
+
+    elif kind == 'NORMAL':
+        fields['scale'] = __gather_normal_scale(blender_shader_sockets, export_settings)
+        texture_info = gltf2_io.MaterialNormalTextureInfoClass(**fields)
+
+    elif kind == 'OCCLUSION':
+        fields['strength'] = __gather_occlusion_strength(blender_shader_sockets, export_settings)
+        texture_info = gltf2_io.MaterialOcclusionTextureInfoClass(**fields)
 
     if texture_info.index is None:
         return None
@@ -74,6 +96,24 @@ def __gather_extensions(blender_shader_sockets, export_settings):
 
 
 def __gather_extras(blender_shader_sockets, export_settings):
+    return None
+
+
+# MaterialNormalTextureInfo only
+def __gather_normal_scale(blender_shader_sockets, export_settings):
+    result = gltf2_blender_search_node_tree.from_socket(
+        blender_shader_sockets[0],
+        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeNormalMap))
+    if not result:
+        return None
+    strengthInput = result[0].shader_node.inputs['Strength']
+    if not strengthInput.is_linked and strengthInput.default_value != 1:
+        return strengthInput.default_value
+    return None
+
+
+# MaterialOcclusionTextureInfo only
+def __gather_occlusion_strength(blender_shader_sockets, export_settings):
     return None
 
 
