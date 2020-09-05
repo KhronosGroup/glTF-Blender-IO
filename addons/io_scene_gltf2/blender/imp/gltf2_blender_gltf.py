@@ -50,22 +50,33 @@ class BlenderGlTF():
 
     @staticmethod
     def set_convert_functions(gltf):
-        gltf.yup2zup = bpy.app.debug_value != 100
+        if bpy.app.debug_value != 100:
+            # Unit conversion factor in (Blender units) per meter
+            u = 1.0 / bpy.context.scene.unit_settings.scale_length
 
-        if gltf.yup2zup:
             # glTF Y-Up space --> Blender Z-up space
             # X,Y,Z --> X,-Z,Y
-            def convert_loc(x): return Vector([x[0], -x[2], x[1]])
+            def convert_loc(x): return u * Vector([x[0], -x[2], x[1]])
             def convert_quat(q): return Quaternion([q[3], q[0], -q[2], q[1]])
-            def convert_normal(n): return Vector([n[0], -n[2], n[1]])
             def convert_scale(s): return Vector([s[0], s[2], s[1]])
             def convert_matrix(m):
                 return Matrix([
-                    [ m[0], -m[ 8],  m[4],  m[12]],
-                    [-m[2],  m[10], -m[6], -m[14]],
-                    [ m[1], -m[ 9],  m[5],  m[13]],
-                    [ m[3], -m[11],  m[7],  m[15]],
+                    [   m[0],   -m[ 8],    m[4],  m[12]*u],
+                    [  -m[2],    m[10],   -m[6], -m[14]*u],
+                    [   m[1],   -m[ 9],    m[5],  m[13]*u],
+                    [ m[3]/u, -m[11]/u,  m[7]/u,    m[15]],
                 ])
+
+            # Batch versions operate in place on a numpy array
+            def convert_locs_batch(locs):
+                # x,y,z -> x,-z,y
+                locs[:, [1,2]] = locs[:, [2,1]]
+                locs[:, 1] *= -1
+                # Unit conversion
+                if u != 1: locs *= u
+            def convert_normals_batch(ns):
+                ns[:, [1,2]] = ns[:, [2,1]]
+                ns[:, 1] *= -1
 
             # Correction for cameras and lights.
             # glTF: right = +X, forward = -Z, up = +Y
@@ -77,17 +88,20 @@ class BlenderGlTF():
         else:
             def convert_loc(x): return Vector(x)
             def convert_quat(q): return Quaternion([q[3], q[0], q[1], q[2]])
-            def convert_normal(n): return Vector(n)
             def convert_scale(s): return Vector(s)
             def convert_matrix(m):
                 return Matrix([m[0::4], m[1::4], m[2::4], m[3::4]])
+
+            def convert_locs_batch(_locs): return
+            def convert_normals_batch(_ns): return
 
             # Same convention, no correction needed.
             gltf.camera_correction = None
 
         gltf.loc_gltf_to_blender = convert_loc
+        gltf.locs_batch_gltf_to_blender = convert_locs_batch
         gltf.quaternion_gltf_to_blender = convert_quat
-        gltf.normal_gltf_to_blender = convert_normal
+        gltf.normals_batch_gltf_to_blender = convert_normals_batch
         gltf.scale_gltf_to_blender = convert_scale
         gltf.matrix_gltf_to_blender = convert_matrix
 

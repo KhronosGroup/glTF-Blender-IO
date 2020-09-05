@@ -232,11 +232,10 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for sk_locs in sk_vert_locs:
         sk_locs += vert_locs
 
-    if gltf.yup2zup:
-        locs_yup_to_zup(vert_locs)
-        locs_yup_to_zup(vert_normals)
-        for sk_locs in sk_vert_locs:
-            locs_yup_to_zup(sk_locs)
+    gltf.locs_batch_gltf_to_blender(vert_locs)
+    gltf.normals_batch_gltf_to_blender(vert_normals)
+    for sk_locs in sk_vert_locs:
+        gltf.locs_batch_gltf_to_blender(sk_locs)
 
     if num_joint_sets:
         skin_into_bind_pose(
@@ -461,12 +460,6 @@ def colors_linear_to_srgb(color):
     small_result = np.where(color < 0.0, 0.0, color * 12.92)
     large_result = 1.055 * np.power(color, 1.0 / 2.4, where=not_small) - 0.055
     color[:] = np.where(not_small, large_result, small_result)
-
-
-def locs_yup_to_zup(vecs):
-    # x,y,z -> x,-z,y
-    vecs[:, [1,2]] = vecs[:, [2,1]]
-    vecs[:, 1] *= -1
 
 
 def uvs_gltf_to_blender(uvs):
