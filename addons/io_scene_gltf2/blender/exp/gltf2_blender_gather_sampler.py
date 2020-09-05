@@ -16,13 +16,11 @@ import bpy
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
 
 
 @cached
 def gather_sampler(blender_shader_node: bpy.types.Node, export_settings):
-    if not __filter_sampler(blender_shader_node, export_settings):
-        return None
-
     sampler = gltf2_io.Sampler(
         extensions=__gather_extensions(blender_shader_node, export_settings),
         extras=__gather_extras(blender_shader_node, export_settings),
@@ -35,13 +33,30 @@ def gather_sampler(blender_shader_node: bpy.types.Node, export_settings):
 
     export_user_extensions('gather_sampler_hook', export_settings, sampler, blender_shader_node)
 
+    if not sampler.extensions and not sampler.extras and not sampler.name:
+        return __sampler_by_value(
+            sampler.mag_filter,
+            sampler.min_filter,
+            sampler.wrap_s,
+            sampler.wrap_t,
+            export_settings,
+        )
+
     return sampler
 
 
-def __filter_sampler(blender_shader_node, export_settings):
-    if not blender_shader_node.interpolation == 'Closest' and not blender_shader_node.extension == 'EXTEND':
-        return False
-    return True
+@cached
+def __sampler_by_value(mag_filter, min_filter, wrap_s, wrap_t, export_settings):
+    # @cached function to dedupe samplers with the same settings.
+    return gltf2_io.Sampler(
+        extensions=None,
+        extras=None,
+        mag_filter=mag_filter,
+        min_filter=min_filter,
+        name=None,
+        wrap_s=wrap_s,
+        wrap_t=wrap_t,
+    )
 
 
 def __gather_extensions(blender_shader_node, export_settings):
@@ -54,14 +69,14 @@ def __gather_extras(blender_shader_node, export_settings):
 
 def __gather_mag_filter(blender_shader_node, export_settings):
     if blender_shader_node.interpolation == 'Closest':
-        return 9728  # NEAREST
-    return 9729  # LINEAR
+        return TextureFilter.Nearest
+    return TextureFilter.Linear
 
 
 def __gather_min_filter(blender_shader_node, export_settings):
     if blender_shader_node.interpolation == 'Closest':
-        return 9984  # NEAREST_MIPMAP_NEAREST
-    return 9986  # NEAREST_MIPMAP_LINEAR
+        return TextureFilter.NearestMipmapNearest
+    return TextureFilter.NearestMipmapLinear
 
 
 def __gather_name(blender_shader_node, export_settings):
@@ -70,11 +85,11 @@ def __gather_name(blender_shader_node, export_settings):
 
 def __gather_wrap_s(blender_shader_node, export_settings):
     if blender_shader_node.extension == 'EXTEND':
-        return 33071
+        return TextureWrap.ClampToEdge
     return None
 
 
 def __gather_wrap_t(blender_shader_node, export_settings):
     if blender_shader_node.extension == 'EXTEND':
-        return 33071
+        return TextureWrap.ClampToEdge
     return None
