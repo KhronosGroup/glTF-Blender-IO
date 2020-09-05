@@ -14,7 +14,7 @@
 
 import math
 import bpy
-from mathutils import Matrix, Quaternion
+from mathutils import Matrix, Quaternion, Vector
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.com import gltf2_blender_math
@@ -23,7 +23,6 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
-from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io
@@ -418,13 +417,13 @@ def __gather_trans_rot_scale(blender_object, export_settings):
     # make sure the rotation is normalized
     rot.normalize()
 
-    trans = gltf2_blender_extract.convert_swizzle_location(trans, None, None, export_settings)
-    rot = gltf2_blender_extract.convert_swizzle_rotation(rot, export_settings)
-    sca = gltf2_blender_extract.convert_swizzle_scale(sca, export_settings)
+    trans = __convert_swizzle_location(trans, export_settings)
+    rot = __convert_swizzle_rotation(rot, export_settings)
+    sca = __convert_swizzle_scale(sca, export_settings)
 
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-        trans -= gltf2_blender_extract.convert_swizzle_location(
-            blender_object.instance_collection.instance_offset, None, None, export_settings)
+        trans -= __convert_swizzle_location(
+            blender_object.instance_collection.instance_offset, export_settings)
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
                                    gltf2_blender_math.round_if_near(trans[2], 0.0)
@@ -476,7 +475,7 @@ def __gather_weights(blender_object, export_settings):
 
 
 def __get_correction_node(blender_object, export_settings):
-    correction_quaternion = gltf2_blender_extract.convert_swizzle_rotation(
+    correction_quaternion = __convert_swizzle_rotation(
         Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)), export_settings)
     correction_quaternion = [correction_quaternion[1], correction_quaternion[2],
                              correction_quaternion[3], correction_quaternion[0]]
@@ -494,3 +493,31 @@ def __get_correction_node(blender_object, export_settings):
         translation=None,
         weights=None
     )
+
+
+def __convert_swizzle_location(loc, export_settings):
+    """Convert a location from Blender coordinate system to glTF coordinate system."""
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Vector((loc[0], loc[2], -loc[1]))
+    else:
+        return Vector((loc[0], loc[1], loc[2]))
+
+
+def __convert_swizzle_rotation(rot, export_settings):
+    """
+    Convert a quaternion rotation from Blender coordinate system to glTF coordinate system.
+
+    'w' is still at first position.
+    """
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
+    else:
+        return Quaternion((rot[0], rot[1], rot[2], rot[3]))
+
+
+def __convert_swizzle_scale(scale, export_settings):
+    """Convert a scale from Blender coordinate system to glTF coordinate system."""
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Vector((scale[0], scale[2], scale[1]))
+    else:
+        return Vector((scale[0], scale[1], scale[2]))
