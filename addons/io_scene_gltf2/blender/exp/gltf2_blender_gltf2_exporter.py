@@ -23,6 +23,7 @@ from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 class GlTF2Exporter:
@@ -44,6 +45,8 @@ class GlTF2Exporter:
             generator='Khronos glTF Blender I/O v' + get_version_string(),
             min_version=None,
             version='2.0')
+        
+        export_user_extensions('gather_asset_hook', export_settings, asset)
 
         self.__gltf = gltf2_io.Gltf(
             accessors=[],
@@ -103,6 +106,8 @@ class GlTF2Exporter:
             gltf2_io.MaterialNormalTextureInfoClass,
             gltf2_io.MaterialOcclusionTextureInfoClass
         ]
+        
+        self.__traverse(asset)
 
     @property
     def glTF(self):
