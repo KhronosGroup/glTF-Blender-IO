@@ -385,6 +385,11 @@ option is selected (on by default). All glTF animations are imported as NLA Stri
 If option is disabled, Blender NLA strip actions will be ignored.
 Only active action of each objects will be taken into account, and merged into a single glTF animation.
 
+.. note::
+
+   In order to sample shape key animations controlled by drivers using bone transformations,
+   they must be on a mesh object which is a direct child of the bones' armature.
+
 
 Custom Properties
 -----------------
