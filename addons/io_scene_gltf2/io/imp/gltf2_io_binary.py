@@ -183,8 +183,8 @@ class BinaryData():
                 array = np.maximum(-1.0, array / 32767.0)
             elif accessor.component_type == 5123:  # uint16
                 array = array / 65535.0
-            else:
-                array = array.astype(np.float64)
+
+            array = array.astype(np.float32, copy=False)
 
         return array
 
