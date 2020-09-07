@@ -12,6 +12,7 @@ Documentation
 | 2.81    | https://docs.blender.org/manual/en/2.81/addons/import_export/io_scene_gltf2.html |
 | 2.82    | https://docs.blender.org/manual/en/2.82/addons/import_export/scene_gltf2.html  |
 | 2.83    | https://docs.blender.org/manual/en/2.83/addons/import_export/scene_gltf2.html  |
+| 2.90    | https://docs.blender.org/manual/en/2.90/addons/import_export/scene_gltf2.html  |
 | dev     | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
