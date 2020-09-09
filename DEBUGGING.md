@@ -24,7 +24,7 @@ These instructions are considered experimental.  They describe how to attach a P
 
 ## Usage
 
-1. In Blender, press <kbd>F3</kbd> (in Blender 2.80+) to bring up the tools search window.  Search for the word "Debug", and then click "Debug: Start Debug Server for VS Code."
+1. In Blender, press <kbd>F3</kbd> to bring up the tools search window.  Search for the word "Debug", and then click "Debug: Start Debug Server for VS Code."
 
 2. In VSCode, with the glTF-Blender-IO folder opened, press <kbd>F5</kbd> or choose "Start Debugging" from the Debug menu.
 
@@ -32,7 +32,7 @@ If both actions happen within 20 seconds or so, you may see a console message in
 
 ## Sample Breakpoint
 
-Look for a line in `__init__.py` around 319 that looks like this:
+Look for a line in `__init__.py` at the end of `def invoke` that looks like this:
 
 ```
         return ExportHelper.invoke(self, context, event)
