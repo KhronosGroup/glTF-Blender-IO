@@ -179,7 +179,7 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
     prim_indices = {}  # maps material index to TRIANGLES-style indices into dots
 
-    if not use_materials:
+    if use_materials == "NONE": # Only for None. For placeholder and export, keep primitives
         # Put all vertices into one primitive
         prim_indices[-1] = loop_indices
 
