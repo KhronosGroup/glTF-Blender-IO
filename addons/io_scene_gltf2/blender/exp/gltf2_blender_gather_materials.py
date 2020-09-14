@@ -21,6 +21,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_unlit
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -38,6 +39,10 @@ def gather_material(blender_material, mesh_double_sided, export_settings):
     """
     if not __filter_material(blender_material, export_settings):
         return None
+
+    mat_unlit = __gather_material_unlit(blender_material, mesh_double_sided, export_settings)
+    if mat_unlit is not None:
+        return mat_unlit
 
     orm_texture = __gather_orm_texture(blender_material, export_settings)
 
@@ -151,11 +156,6 @@ def __gather_emissive_texture(blender_material, export_settings):
 
 def __gather_extensions(blender_material, export_settings):
     extensions = {}
-
-    # KHR_materials_unlit
-
-    if gltf2_blender_get.get_socket(blender_material, "Background") is not None:
-        extensions["KHR_materials_unlit"] = Extension("KHR_materials_unlit", {}, False)
 
     # KHR_materials_clearcoat
 
@@ -351,3 +351,38 @@ def __gather_transmission_extension(blender_material, export_settings):
             transmission_extension['transmissionTexture'] = combined_texture
 
     return Extension('KHR_materials_transmission', transmission_extension, False)
+
+
+def __gather_material_unlit(blender_material, mesh_double_sided, export_settings):
+    gltf2_unlit = gltf2_blender_gather_materials_unlit
+
+    info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
+    if info is None:
+        return None
+
+    material = gltf2_io.Material(
+        alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
+        alpha_mode=__gather_alpha_mode(blender_material, export_settings),
+        double_sided=__gather_double_sided(blender_material, mesh_double_sided, export_settings),
+        extensions={"KHR_materials_unlit": Extension("KHR_materials_unlit", {}, required=False)},
+        extras=__gather_extras(blender_material, export_settings),
+        name=__gather_name(blender_material, export_settings),
+        emissive_factor=None,
+        emissive_texture=None,
+        normal_texture=None,
+        occlusion_texture=None,
+
+        pbr_metallic_roughness=gltf2_io.MaterialPBRMetallicRoughness(
+            base_color_factor=gltf2_unlit.gather_base_color_factor(info, export_settings),
+            base_color_texture=gltf2_unlit.gather_base_color_texture(info, export_settings),
+            metallic_factor=0.0,
+            roughness_factor=0.9,
+            metallic_roughness_texture=None,
+            extensions=None,
+            extras=None,
+        )
+    )
+
+    export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
+
+    return material
