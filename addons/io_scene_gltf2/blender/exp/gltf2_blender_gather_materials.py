@@ -29,7 +29,7 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
-def gather_material(blender_material, mesh_double_sided, export_settings):
+def gather_material(blender_material, export_settings):
     """
     Gather the material used by the blender primitive.
 
@@ -40,7 +40,7 @@ def gather_material(blender_material, mesh_double_sided, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None
 
-    mat_unlit = __gather_material_unlit(blender_material, mesh_double_sided, export_settings)
+    mat_unlit = __gather_material_unlit(blender_material, export_settings)
     if mat_unlit is not None:
         return mat_unlit
 
@@ -49,7 +49,7 @@ def gather_material(blender_material, mesh_double_sided, export_settings):
     material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
-        double_sided=__gather_double_sided(blender_material, mesh_double_sided, export_settings),
+        double_sided=__gather_double_sided(blender_material, export_settings),
         emissive_factor=__gather_emissive_factor(blender_material, export_settings),
         emissive_texture=__gather_emissive_texture(blender_material, export_settings),
         extensions=__gather_extensions(blender_material, export_settings),
@@ -97,8 +97,8 @@ def __gather_alpha_mode(blender_material, export_settings):
     return None
 
 
-def __gather_double_sided(blender_material, mesh_double_sided, export_settings):
-    if mesh_double_sided:
+def __gather_double_sided(blender_material, export_settings):
+    if not blender_material.use_backface_culling:
         return True
 
     old_double_sided_socket = gltf2_blender_get.get_socket_old(blender_material, "DoubleSided")
@@ -353,7 +353,7 @@ def __gather_transmission_extension(blender_material, export_settings):
     return Extension('KHR_materials_transmission', transmission_extension, False)
 
 
-def __gather_material_unlit(blender_material, mesh_double_sided, export_settings):
+def __gather_material_unlit(blender_material, export_settings):
     gltf2_unlit = gltf2_blender_gather_materials_unlit
 
     info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
@@ -363,7 +363,7 @@ def __gather_material_unlit(blender_material, mesh_double_sided, export_settings
     material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
-        double_sided=__gather_double_sided(blender_material, mesh_double_sided, export_settings),
+        double_sided=__gather_double_sided(blender_material, export_settings),
         extensions={"KHR_materials_unlit": Extension("KHR_materials_unlit", {}, required=False)},
         extras=__gather_extras(blender_material, export_settings),
         name=__gather_name(blender_material, export_settings),
