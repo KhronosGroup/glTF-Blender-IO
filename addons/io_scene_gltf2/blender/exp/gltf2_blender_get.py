@@ -231,7 +231,7 @@ def get_factor_from_socket(socket, kind):
     if fac is not None:
         return fac
 
-    node = __previous_node(socket)
+    node = previous_node(socket)
     if node is not None:
         x1, x2 = None, None
         if kind == 'RGB':
@@ -259,7 +259,7 @@ def get_const_from_socket(socket, kind):
             return socket.default_value
 
     # Handle connection to a constant RGB/Value node
-    prev_node = __previous_node(socket)
+    prev_node = previous_node(socket)
     if prev_node is not None:
         if kind == 'RGB' and prev_node.type == 'RGB':
             return list(prev_node.outputs[0].default_value)[:3]
@@ -269,16 +269,23 @@ def get_const_from_socket(socket, kind):
     return None
 
 
-def __previous_node(socket):
+def previous_socket(socket):
     while True:
         if not socket.is_linked:
             return None
 
-        node = socket.links[0].from_node
+        from_socket = socket.links[0].from_socket
 
         # Skip over reroute nodes
-        if node.type == 'REROUTE':
-            socket = node.inputs[0]
+        if from_socket.node.type == 'REROUTE':
+            socket = from_socket.node.inputs[0]
             continue
 
-        return node
+        return from_socket
+
+
+def previous_node(socket):
+    prev_socket = previous_socket(socket)
+    if prev_socket is not None:
+        return prev_socket.node
+    return None
