@@ -217,12 +217,11 @@ class ExportGLTF2_Base:
     export_materials: EnumProperty(
         name='Materials',
         items=(('EXPORT', 'Export',
-                'Export materials '),
-                ('PLACEHOLDER', 'Placeholder',
-                'Do not export materials, but keep placeholder primitives '),
-                ('NONE', 'No export',
-                'Do not export materials '),
-               ),
+        'Export all materials used by included objects'),
+        ('PLACEHOLDER', 'Placeholder',
+        'Do not export materials, but write multiple primitive groups per mesh, keeping material slot information'),
+        ('NONE', 'No export',
+        'Do not export materials, and combine mesh primitive groups, losing material slot information'),
         description=(
             'Export materials '
         ),
