@@ -59,7 +59,7 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             # because the newer one is always present in all Principled BSDF materials.
             type = bpy.types.ShaderNodeEmission
             name = "Color"
-            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
             inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
             if inputs:
                 return inputs[0]
@@ -71,7 +71,7 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             name = "Color"
         else:
             type = bpy.types.ShaderNodeBsdfPrincipled
-        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
         if inputs:
             return inputs[0]
@@ -227,7 +227,7 @@ def get_factor_from_socket(socket, kind):
     from a MULTIPLY node just before the socket.
     kind is either 'RGB' or 'VALUE'.
     """
-    fac = __get_const_from_socket(socket, kind)
+    fac = get_const_from_socket(socket, kind)
     if fac is not None:
         return fac
 
@@ -237,19 +237,19 @@ def get_factor_from_socket(socket, kind):
         if kind == 'RGB':
             if node.type == 'MIX_RGB' and node.blend_type == 'MULTIPLY':
                 # TODO: handle factor in inputs[0]?
-                x1 = __get_const_from_socket(node.inputs[1], kind)
-                x2 = __get_const_from_socket(node.inputs[2], kind)
+                x1 = get_const_from_socket(node.inputs[1], kind)
+                x2 = get_const_from_socket(node.inputs[2], kind)
         if kind == 'VALUE':
             if node.type == 'MATH' and node.operation == 'MULTIPLY':
-                x1 = __get_const_from_socket(node.inputs[0], kind)
-                x2 = __get_const_from_socket(node.inputs[1], kind)
+                x1 = get_const_from_socket(node.inputs[0], kind)
+                x2 = get_const_from_socket(node.inputs[1], kind)
         if x1 is not None and x2 is None: return x1
         if x2 is not None and x1 is None: return x2
 
     return None
 
 
-def __get_const_from_socket(socket, kind):
+def get_const_from_socket(socket, kind):
     if not socket.is_linked:
         if kind == 'RGB':
             if socket.type != 'RGBA': return None
