@@ -47,6 +47,9 @@ def __filter_pbr_material(blender_material, export_settings):
 
 
 def __gather_base_color_factor(blender_material, export_settings):
+    if not blender_material.use_nodes:
+        return [*blender_material.diffuse_color[:3], 1.0]
+
     rgb, alpha = None, None
 
     alpha_socket = gltf2_blender_get.get_socket(blender_material, "Alpha")
@@ -99,6 +102,9 @@ def __gather_extras(blender_material, export_settings):
 
 
 def __gather_metallic_factor(blender_material, export_settings):
+    if not blender_material.use_nodes:
+        return blender_material.metallic
+
     metallic_socket = gltf2_blender_get.get_socket(blender_material, "Metallic")
     if metallic_socket is None:
         metallic_socket = gltf2_blender_get.get_socket_old(blender_material, "MetallicFactor")
@@ -134,6 +140,9 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
 
 
 def __gather_roughness_factor(blender_material, export_settings):
+    if not blender_material.use_nodes:
+        return blender_material.roughness
+
     roughness_socket = gltf2_blender_get.get_socket(blender_material, "Roughness")
     if roughness_socket is None:
         roughness_socket = gltf2_blender_get.get_socket_old(blender_material, "RoughnessFactor")
