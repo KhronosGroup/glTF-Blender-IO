@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import numpy as np
 from mathutils import Vector, Quaternion, Matrix
 
@@ -20,9 +21,11 @@ from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 
-def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vertex_groups, modifiers, export_settings):
+def extract_primitives(blender_object, export_settings):
     """Extract primitives from a mesh."""
-    print_console('INFO', 'Extracting primitive: ' + blender_mesh.name)
+    print_console('INFO', 'Extracting primitive: ' + blender_object.data.name)
+
+    blender_mesh_owner, blender_mesh = __ob_to_mesh(blender_object, export_settings)
 
     use_normals = export_settings[gltf2_blender_export_keys.NORMALS]
     if use_normals:
@@ -48,12 +51,11 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
     armature = None
     skin = None
-    if blender_vertex_groups and export_settings[gltf2_blender_export_keys.SKINS]:
-        if modifiers is not None:
-            modifiers_dict = {m.type: m for m in modifiers}
-            if "ARMATURE" in modifiers_dict:
-                modifier = modifiers_dict["ARMATURE"]
-                armature = modifier.object
+    if blender_object.vertex_groups and export_settings[gltf2_blender_export_keys.SKINS]:
+        modifiers_dict = {m.type: m for m in blender_object.modifiers}
+        if "ARMATURE" in modifiers_dict:
+            modifier = modifiers_dict["ARMATURE"]
+            armature = modifier.object
 
         # Skin must be ignored if the object is parented to a bone of the armature
         # (This creates an infinite recursive error)
@@ -89,7 +91,7 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
     locs, morph_locs = __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings)
     if skin:
-        vert_bones, num_joint_sets = __get_bone_data(blender_mesh, skin, blender_vertex_groups)
+        vert_bones, num_joint_sets = __get_bone_data(blender_mesh, skin, blender_object.vertex_groups)
 
     # In Blender there is both per-vert data, like position, and also per-loop
     # (loop=corner-of-poly) data, like normals or UVs. glTF only has per-vert
@@ -285,7 +287,35 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
     print_console('INFO', 'Primitives created: %d' % len(primitives))
 
+    blender_mesh_owner.to_mesh_clear()
+
     return primitives
+
+
+def __ob_to_mesh(ob, export_settings):
+    if not export_settings[gltf2_blender_export_keys.APPLY]:
+        mesh_owner = ob
+        mesh = ob.data if ob.type == 'MESH' \
+            else ob.to_mesh(preserve_all_data_layers=True)
+    else:
+        armature_modifiers = {}
+        if export_settings[gltf2_blender_export_keys.SKINS]:
+            # temporarily disable Armature modifiers if exporting skins
+            for idx, modifier in enumerate(ob.modifiers):
+                if modifier.type == 'ARMATURE':
+                    armature_modifiers[idx] = modifier.show_viewport
+                    modifier.show_viewport = False
+
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        mesh_owner = ob.evaluated_get(depsgraph)
+        mesh = mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
+
+        if export_settings[gltf2_blender_export_keys.SKINS]:
+            # restore Armature modifiers
+            for idx, show_viewport in armature_modifiers.items():
+                ob.modifiers[idx].show_viewport = show_viewport
+
+    return mesh_owner, mesh
 
 
 def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings):

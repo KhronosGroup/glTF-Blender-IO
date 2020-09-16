@@ -30,14 +30,8 @@ from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
-@cached
 def gather_primitives(
-        blender_mesh: bpy.types.Mesh,
-        library: Optional[str],
-        blender_object: Optional[bpy.types.Object],
-        vertex_groups: Optional[bpy.types.VertexGroups],
-        modifiers: Optional[bpy.types.ObjectModifiers],
-        material_names: Tuple[str],
+        ob: bpy.types.Object,
         export_settings
         ) -> List[gltf2_io.MeshPrimitive]:
     """
@@ -47,8 +41,7 @@ def gather_primitives(
     """
     primitives = []
 
-    blender_primitives = __gather_cache_primitives(blender_mesh, library, blender_object,
-        vertex_groups, modifiers, export_settings)
+    blender_primitives = __gather_cache_primitives(ob, export_settings)
 
     for internal_primitive in blender_primitives:
         material_idx = internal_primitive['material']
@@ -56,13 +49,14 @@ def gather_primitives(
 
         if export_settings['gltf_materials'] == "EXPORT":
             try:
-                blender_material = bpy.data.materials[material_names[material_idx]]
-                material = gltf2_blender_gather_materials.gather_material(blender_material,
-                                                                      export_settings)
+                blender_material = ob.material_slots[material_idx].material
+                material = gltf2_blender_gather_materials.gather_material(
+                    blender_material,
+                    export_settings,
+                )
             except IndexError:
                 # no material at that index
                 pass
-
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
@@ -77,35 +71,47 @@ def gather_primitives(
 
     return primitives
 
-@cached
+
 def __gather_cache_primitives(
-        blender_mesh: bpy.types.Mesh,
-        library: Optional[str],
-        blender_object: Optional[bpy.types.Object],
-        vertex_groups: Optional[bpy.types.VertexGroups],
-        modifiers: Optional[bpy.types.ObjectModifiers],
+        ob: bpy.types.Object,
         export_settings
 ) -> List[dict]:
+    """Gather parts that are identical for instances.
+    This allows instances that differ only in their material slots to share
+    attribute/index data.
     """
-    Gather parts that are identical for instances, i.e. excluding materials
-    """
+    from .gltf2_blender_gather_mesh import get_mesh_cache_key
+    cache_key = get_mesh_cache_key(ob, export_settings)
+    cache_key = cache_key._replace(materials=None)
+
+    export_settings.setdefault('primitives_cache', {})
+    if cache_key in export_settings['primitives_cache']:
+        return export_settings['primitives_cache'][cache_key]
+
+    primitives = __gather_blender_primitives(ob, export_settings)
+
+    export_settings['primitives_cache'][cache_key] = primitives
+    return primitives
+
+
+def __gather_blender_primitives(ob: bpy.types.Object, export_settings):
     primitives = []
 
-    blender_primitives = gltf2_blender_extract.extract_primitives(
-        None, blender_mesh, library, blender_object, vertex_groups, modifiers, export_settings)
+    blender_primitives = gltf2_blender_extract.extract_primitives(ob, export_settings)
 
     for internal_primitive in blender_primitives:
         primitive = {
-            "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
-            "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+            "attributes": __gather_attributes(internal_primitive, export_settings),
+            "indices": __gather_indices(internal_primitive, export_settings),
             "material": internal_primitive['material'],
-            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
+            "targets": __gather_targets(internal_primitive, ob, export_settings)
         }
         primitives.append(primitive)
 
     return primitives
 
-def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings):
+
+def __gather_indices(blender_primitive, export_settings):
     indices = blender_primitive['indices']
 
     # NOTE: Values used by some graphics APIs as "primitive restart" values are disallowed.
@@ -138,12 +144,13 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
     )
 
 
-def __gather_attributes(blender_primitive, blender_mesh, modifiers, export_settings):
+def __gather_attributes(blender_primitive, export_settings):
     return gltf2_blender_gather_primitive_attributes.gather_primitive_attributes(blender_primitive, export_settings)
 
 
-def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings):
-    if export_settings[MORPH]:
+def __gather_targets(blender_primitive, ob, export_settings):
+    if export_settings[MORPH] and ob.type == 'MESH':
+        blender_mesh = ob.data
         targets = []
         if blender_mesh.shape_keys is not None:
             morph_index = 0
