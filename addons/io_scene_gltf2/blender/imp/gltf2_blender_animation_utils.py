@@ -56,20 +56,19 @@ def make_fcurve(action, co, data_path, index=0, group_name='', interpolation=Non
     fcurve.keyframe_points.foreach_set('co', co)
 
     # Setting interpolation
+    ipo = {
+        'CUBICSPLINE': 'BEZIER',
+        'LINEAR': 'LINEAR',
+        'STEP': 'CONSTANT',
+    }[interpolation or 'LINEAR']
+    ipo = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items[ipo].value
+    fcurve.keyframe_points.foreach_set('interpolation', [ipo] * len(fcurve.keyframe_points))
+
+    # For CUBICSPLINE, also set the handle types to AUTO
     if interpolation == 'CUBICSPLINE':
-        for kf in fcurve.keyframe_points:
-            kf.interpolation = 'BEZIER'
-            kf.handle_right_type = 'AUTO'
-            kf.handle_left_type = 'AUTO'
-    else:
-        if interpolation == 'LINEAR':
-            blender_interpolation = 'LINEAR'
-        elif interpolation == 'STEP':
-            blender_interpolation = 'CONSTANT'
-        else:
-            blender_interpolation = 'LINEAR'
-        for kf in fcurve.keyframe_points:
-            kf.interpolation = blender_interpolation
+        ty = bpy.types.Keyframe.bl_rna.properties['handle_left_type'].enum_items['AUTO'].value
+        fcurve.keyframe_points.foreach_set('handle_left_type', [ty] * len(fcurve.keyframe_points))
+        fcurve.keyframe_points.foreach_set('handle_right_type', [ty] * len(fcurve.keyframe_points))
 
     fcurve.update() # force updating tangents (this may change when tangent will be managed)
 
