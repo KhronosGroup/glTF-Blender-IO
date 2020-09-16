@@ -146,7 +146,7 @@ def __gather_emissive_texture(blender_material, export_settings):
     emissive = gltf2_blender_get.get_socket(blender_material, "Emissive")
     if emissive is None:
         emissive = gltf2_blender_get.get_socket_old(blender_material, "Emissive")
-    return gltf2_blender_gather_texture_info.gather_texture_info((emissive,), export_settings)
+    return gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -187,6 +187,7 @@ def __gather_normal_texture(blender_material, export_settings):
     if normal is None:
         normal = gltf2_blender_get.get_socket_old(blender_material, "Normal")
     return gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+        normal,
         (normal,),
         export_settings)
 
@@ -226,22 +227,19 @@ def __gather_orm_texture(blender_material, export_settings):
         return None
 
     # Double-check this will past the filter in texture_info
-    info = gltf2_blender_gather_texture_info.gather_texture_info(result, export_settings)
+    info = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, export_settings)
     if info is None:
         return None
 
     return result
 
 def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
-    if orm_texture is not None:
-        return gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
-            orm_texture,
-            export_settings)
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None:
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
     return gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
-        (occlusion,),
+        occlusion,
+        orm_texture or (occlusion,),
         export_settings)
 
 
@@ -297,14 +295,22 @@ def __gather_clearcoat_extension(blender_material, export_settings):
         clearcoat_roughness_slots = (clearcoat_roughness_socket,)
 
     if len(clearcoat_roughness_slots) > 0:
-        combined_texture = gltf2_blender_gather_texture_info.gather_texture_info(clearcoat_roughness_slots, export_settings)
         if has_clearcoat_texture:
-            clearcoat_extension['clearcoatTexture'] = combined_texture
+            clearcoat_extension['clearcoatTexture'] = gltf2_blender_gather_texture_info.gather_texture_info(
+                clearcoat_socket,
+                clearcoat_roughness_slots,
+                export_settings,
+            )
         if has_clearcoat_roughness_texture:
-            clearcoat_extension['clearcoatRoughnessTexture'] = combined_texture
+            clearcoat_extension['clearcoatRoughnessTexture'] = gltf2_blender_gather_texture_info.gather_texture_info(
+                clearcoat_roughness_socket,
+                clearcoat_roughness_slots,
+                export_settings,
+            )
 
     if __has_image_node_from_socket(clearcoat_normal_socket):
         clearcoat_extension['clearcoatNormalTexture'] = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+            clearcoat_normal_socket,
             (clearcoat_normal_socket,),
             export_settings
         )
@@ -336,7 +342,11 @@ def __gather_transmission_extension(blender_material, export_settings):
         transmission_slots = (transmission_socket,)
 
     if len(transmission_slots) > 0:
-        combined_texture = gltf2_blender_gather_texture_info.gather_texture_info(transmission_slots, export_settings)
+        combined_texture = gltf2_blender_gather_texture_info.gather_texture_info(
+            transmission_socket,
+            transmission_slots,
+            export_settings,
+        )
         if has_transmission_texture:
             transmission_extension['transmissionTexture'] = combined_texture
 
