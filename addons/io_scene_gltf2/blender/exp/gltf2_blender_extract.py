@@ -348,6 +348,12 @@ def __get_normals(blender_mesh, key_blocks, armature, blender_object, export_set
             ns[:] = __apply_mat_to_all(normal_transform, ns)
             __normalize_vecs(ns)
 
+    for ns in [normals, *morph_normals]:
+        # Replace zero normals with the unit UP vector.
+        # Seems to happen sometimes with degenerate tris?
+        is_zero = ~ns.any(axis=1)
+        ns[is_zero, 2] = 1
+
     # glTF stores deltas in morph targets
     for ns in morph_normals:
         ns -= normals
