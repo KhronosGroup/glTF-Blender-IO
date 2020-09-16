@@ -59,7 +59,7 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             # because the newer one is always present in all Principled BSDF materials.
             type = bpy.types.ShaderNodeEmission
             name = "Color"
-            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
             inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
             if inputs:
                 return inputs[0]
@@ -71,7 +71,7 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             name = "Color"
         else:
             type = bpy.types.ShaderNodeBsdfPrincipled
-        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
         if inputs:
             return inputs[0]
