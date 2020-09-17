@@ -221,10 +221,8 @@ class ExportGLTF2_Base:
         ('PLACEHOLDER', 'Placeholder',
         'Do not export materials, but write multiple primitive groups per mesh, keeping material slot information'),
         ('NONE', 'No export',
-        'Do not export materials, and combine mesh primitive groups, losing material slot information'),
-        description=(
-            'Export materials '
-        ),
+        'Do not export materials, and combine mesh primitive groups, losing material slot information')),
+        description='Export materials ',
         default='EXPORT'
     )
 
