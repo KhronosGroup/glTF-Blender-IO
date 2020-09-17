@@ -912,6 +912,21 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
             });
 
+            it('roundtrips two different UV maps for the same texture', function() {
+                let dir = '12_orm_two_uvmaps';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                // Same texture
+                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                // Different UVMaps
+                assert.strictEqual(asset.materials[0].occlusionTexture.texCoord, 1);
+                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.texCoord, 0);
+            });
+
             it('roundtrips baseColorFactor, etc. when used with textures', function() {
                 let dir = '11_factors_and_textures';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
