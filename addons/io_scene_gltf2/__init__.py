@@ -214,10 +214,16 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    export_materials: BoolProperty(
+    export_materials: EnumProperty(
         name='Materials',
-        description='Export materials',
-        default=True
+        items=(('EXPORT', 'Export',
+        'Export all materials used by included objects'),
+        ('PLACEHOLDER', 'Placeholder',
+        'Do not export materials, but write multiple primitive groups per mesh, keeping material slot information'),
+        ('NONE', 'No export',
+        'Do not export materials, and combine mesh primitive groups, losing material slot information')),
+        description='Export materials ',
+        default='EXPORT'
     )
 
     export_colors: BoolProperty(
@@ -672,7 +678,7 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         layout.prop(operator, 'export_colors')
         layout.prop(operator, 'export_materials')
         col = layout.column()
-        col.active = operator.export_materials
+        col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
 
 
