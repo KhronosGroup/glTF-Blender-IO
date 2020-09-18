@@ -52,15 +52,12 @@ def gather_primitives(
 
     for internal_primitive in blender_primitives:
         material_idx = internal_primitive['material']
-        double_sided = False
         material = None
 
         if export_settings['gltf_materials'] == "EXPORT":
             try:
                 blender_material = bpy.data.materials[material_names[material_idx]]
-                double_sided = not blender_material.use_backface_culling
                 material = gltf2_blender_gather_materials.gather_material(blender_material,
-                                                                      double_sided,
                                                                       export_settings)
             except IndexError:
                 # no material at that index
