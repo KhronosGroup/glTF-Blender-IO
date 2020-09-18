@@ -951,6 +951,29 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(pbr.roughnessFactor, 0.75);
             });
 
+            it('roundtrips unlit base colors', function() {
+                let dir = '01_unlit';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 2);
+
+                const orange = asset.materials.find(mat => mat.name === 'Orange');
+                assert.ok('KHR_materials_unlit' in orange.extensions);
+                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[0], 1);
+                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[1], 0.217637640824031);
+                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[2], 0);
+                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[3], 1);
+
+                const blue = asset.materials.find(mat => mat.name === 'Blue');
+                assert.ok('KHR_materials_unlit' in blue.extensions);
+                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[0], 0);
+                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[1], 0.217637640824031);
+                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[2], 1);
+                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[3], 0.5);
+            });
+
             it('roundtrips all texture transforms', function() {
                 let dir = '09_texture_transform';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
