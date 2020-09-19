@@ -17,27 +17,12 @@ from typing import Optional, Dict, List, Any, Tuple
 from collections import namedtuple
 
 from .gltf2_blender_export_keys import MORPH, APPLY, SKINS, MATERIALS
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-
-
-def gather_mesh(ob: bpy.types.Object,
-                export_settings
-                ) -> Optional[gltf2_io.Mesh]:
-    cache_key = get_mesh_cache_key(ob, export_settings)
-
-    export_settings.setdefault('mesh_cache', {})
-    if cache_key in export_settings['mesh_cache']:
-        return export_settings['mesh_cache'][cache_key]
-
-    mesh = __gather_mesh(ob, export_settings)
-
-    export_settings['mesh_cache'][cache_key] = mesh
-    return mesh
 
 
 # Reuse the same glTF mesh for instance with the same cache key.
@@ -87,7 +72,8 @@ def get_mesh_cache_key(ob: bpy.types.Object, export_settings):
     )
 
 
-def __gather_mesh(ob: bpy.types.Object,
+@cached_by_key(key=get_mesh_cache_key)
+def gather_mesh(ob: bpy.types.Object,
                   export_settings
                   ) -> Optional[gltf2_io.Mesh]:
     if not __filter_mesh(ob, export_settings):

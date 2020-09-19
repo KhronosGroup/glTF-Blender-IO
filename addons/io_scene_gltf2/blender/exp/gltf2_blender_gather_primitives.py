@@ -18,7 +18,7 @@ import numpy as np
 
 from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached_by_key
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
@@ -72,6 +72,13 @@ def gather_primitives(
     return primitives
 
 
+def __get_mesh_cache_key_no_materials(ob, export_settings):
+    from .gltf2_blender_gather_mesh import get_mesh_cache_key
+    cache_key = get_mesh_cache_key(ob, export_settings)
+    return cache_key._replace(materials=None)
+
+
+@cached_by_key(key=__get_mesh_cache_key_no_materials)
 def __gather_cache_primitives(
         ob: bpy.types.Object,
         export_settings
@@ -80,21 +87,6 @@ def __gather_cache_primitives(
     This allows instances that differ only in their material slots to share
     attribute/index data.
     """
-    from .gltf2_blender_gather_mesh import get_mesh_cache_key
-    cache_key = get_mesh_cache_key(ob, export_settings)
-    cache_key = cache_key._replace(materials=None)
-
-    export_settings.setdefault('primitives_cache', {})
-    if cache_key in export_settings['primitives_cache']:
-        return export_settings['primitives_cache'][cache_key]
-
-    primitives = __gather_blender_primitives(ob, export_settings)
-
-    export_settings['primitives_cache'][cache_key] = primitives
-    return primitives
-
-
-def __gather_blender_primitives(ob: bpy.types.Object, export_settings):
     primitives = []
 
     blender_primitives = gltf2_blender_extract.extract_primitives(ob, export_settings)
