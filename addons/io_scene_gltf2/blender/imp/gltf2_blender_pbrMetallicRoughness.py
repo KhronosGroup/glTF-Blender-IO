@@ -62,6 +62,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         mh,
         location=locs['emission'],
         color_socket=pbr_node.inputs['Emission'],
+        strength_socket=pbr_node.inputs['Emission Strength'],
     )
 
     base_color(
@@ -167,7 +168,7 @@ def calc_locations(mh):
 
 
 # [Texture] => [Emissive Factor] =>
-def emission(mh: MaterialHelper, location, color_socket):
+def emission(mh: MaterialHelper, location, color_socket, strength_socket=None):
     x, y = location
     emissive_factor = mh.pymat.emissive_factor or [0, 0, 0]
 
@@ -178,20 +179,26 @@ def emission(mh: MaterialHelper, location, color_socket):
         color_socket.default_value = emissive_factor + [1]
         return
 
-    # Mix emissive factor
-    if emissive_factor != [1, 1, 1]:
-        node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
-        node.label = 'Emissive Factor'
-        node.location = x - 140, y
-        node.blend_type = 'MULTIPLY'
-        # Outputs
-        mh.node_tree.links.new(color_socket, node.outputs[0])
-        # Inputs
-        node.inputs['Fac'].default_value = 1.0
-        color_socket = node.inputs['Color1']
-        node.inputs['Color2'].default_value = emissive_factor + [1]
+    # Put grayscale emissive factors into the Emission Strength
+    e0, e1, e2 = emissive_factor
+    if strength_socket and e0 == e1 == e2:
+        strength_socket.default_value = e0
 
-        x -= 200
+    # Otherwise, use a multiply node for it
+    else:
+        if emissive_factor != [1, 1, 1]:
+            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node.label = 'Emissive Factor'
+            node.location = x - 140, y
+            node.blend_type = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(color_socket, node.outputs[0])
+            # Inputs
+            node.inputs['Fac'].default_value = 1.0
+            color_socket = node.inputs['Color1']
+            node.inputs['Color2'].default_value = emissive_factor + [1]
+
+            x -= 200
 
     texture(
         mh,
