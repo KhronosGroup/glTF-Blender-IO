@@ -55,14 +55,17 @@ def gather_primitives(
         material = None
 
         if export_settings['gltf_materials'] == "EXPORT":
-            try:
-                blender_material = bpy.data.materials[material_names[material_idx]]
-                material = gltf2_blender_gather_materials.gather_material(blender_material,
-                                                                      export_settings)
-            except IndexError:
-                # no material at that index
-                pass
-
+            blender_material = None
+            if material_names:
+                i = material_idx if material_idx < len(material_names) else -1
+                material_name = material_names[i]
+                if material_name is not None:
+                    blender_material = bpy.data.materials[material_name]
+            if blender_material is not None:
+                material = gltf2_blender_gather_materials.gather_material(
+                    blender_material,
+                    export_settings,
+                )
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
