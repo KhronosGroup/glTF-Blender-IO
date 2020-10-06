@@ -286,9 +286,12 @@ def __gather_extensions(blender_object, export_settings):
 
 
 def __gather_extras(blender_object, export_settings):
+    extras = {}
     if export_settings['gltf_extras']:
-        return generate_extras(blender_object)
-    return None
+        extras = generate_extras(blender_object) or {}
+    if blender_object.face_maps:
+        extras['facemaps'] = [face_map.name for face_map in blender_object.face_maps]
+    return extras or None
 
 
 def __gather_matrix(blender_object, export_settings):
@@ -339,12 +342,12 @@ def __gather_mesh(blender_object, library, export_settings):
         skip_filter = False
         # If no skin are exported, no need to have vertex group, this will create a cache miss
         if not export_settings[gltf2_blender_export_keys.SKINS]:
-            vertex_groups = None
+            #vertex_groups = None
             modifiers = None
         else:
             # Check if there is an armature modidier
             if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
-                vertex_groups = None # Not needed if no armature, avoid a cache miss
+                #vertex_groups = None # Not needed if no armature, avoid a cache miss
                 modifiers = None
 
     materials = tuple(ms.material for ms in blender_object.material_slots)
