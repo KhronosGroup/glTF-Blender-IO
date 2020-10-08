@@ -696,6 +696,31 @@ describe('Exporter', function() {
                 };
                 assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
             });
+
+            it('exports custom normals with Apply Modifiers', function() {
+                let gltfPath = path.resolve(outDirPath, '10_custom_normals_with_modifier.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                assert.strictEqual(asset.meshes.length, 1);
+
+                let bufferCache = {};
+
+                // Make sure the Array modifier was applied
+                const positions = asset.meshes[0].primitives[0].attributes.POSITION;
+                const positionData = getAccessorData(gltfPath, asset, positions, bufferCache);
+                const positionHash = buildVectorHash(positionData);
+                const numVerts = Object.keys(positionHash).length;
+                assert.deepStrictEqual(numVerts, 6);
+
+                const customNormals = asset.meshes[0].primitives[0].attributes.NORMAL;
+                const customNormalData = getAccessorData(gltfPath, asset, customNormals, bufferCache);
+
+                // All custom normals are approximately (-Y Blender) = (+Z glTF).
+                for (let i = 0; i < customNormalData.length; i += 3) {
+                    const normal = customNormalData.slice(i, i + 3);
+                    const rounded = normal.map(Math.round);
+                    assert.deepStrictEqual(rounded, [0, 0, 1]);
+                }
+            });
         });
     });
 });
