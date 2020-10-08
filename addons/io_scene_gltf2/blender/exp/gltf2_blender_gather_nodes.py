@@ -294,7 +294,8 @@ def __gather_mesh(blender_object, library, export_settings):
                 vertex_groups = None # Not needed if no armature, avoid a cache miss
                 modifiers = None
 
-    material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
+    materials = tuple(ms.material for ms in blender_object.material_slots)
+    material_names = tuple(None if mat is None else mat.name for mat in materials)
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,

@@ -320,33 +320,36 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
     # ----
     # Assign materials to faces
+    has_materials = any(prim.material is not None for prim in pymesh.primitives)
+    if has_materials:
+        material_indices = np.empty(num_faces, dtype=np.uint32)
+        empty_material_slot_index = None
+        f = 0
 
-    # Initialize to no-material, ie. an index guaranteed to be OOB for the
-    # material slots. A mesh obviously can't have more materials than it has
-    # primitives...
-    oob_material_idx = len(pymesh.primitives)
-    material_indices = np.full(num_faces, oob_material_idx)
+        for prim in pymesh.primitives:
+            if prim.material is not None:
+                # Get the material
+                pymaterial = gltf.data.materials[prim.material]
+                vertex_color = 'COLOR_0' if 'COLOR_0' in prim.attributes else None
+                if vertex_color not in pymaterial.blender_material:
+                    BlenderMaterial.create(gltf, prim.material, vertex_color)
+                material_name = pymaterial.blender_material[vertex_color]
 
-    f = 0
-    for prim in pymesh.primitives:
-        if prim.material is not None:
-            # Get the material
-            pymaterial = gltf.data.materials[prim.material]
-            vertex_color = 'COLOR_0' if 'COLOR_0' in prim.attributes else None
-            if vertex_color not in pymaterial.blender_material:
-                BlenderMaterial.create(gltf, prim.material, vertex_color)
-            material_name = pymaterial.blender_material[vertex_color]
-
-            # Put material in slot (if not there)
-            if material_name not in mesh.materials:
-                mesh.materials.append(bpy.data.materials[material_name])
-            material_index = mesh.materials.find(material_name)
+                # Put material in slot (if not there)
+                if material_name not in mesh.materials:
+                    mesh.materials.append(bpy.data.materials[material_name])
+                material_index = mesh.materials.find(material_name)
+            else:
+                if empty_material_slot_index is None:
+                    mesh.materials.append(None)
+                    empty_material_slot_index = len(mesh.materials) - 1
+                material_index = empty_material_slot_index
 
             material_indices[f:f + prim.num_faces].fill(material_index)
 
-        f += prim.num_faces
+            f += prim.num_faces
 
-    mesh.polygons.foreach_set('material_index', material_indices)
+        mesh.polygons.foreach_set('material_index', material_indices)
 
     # ----
     # Normals
