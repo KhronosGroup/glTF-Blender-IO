@@ -79,9 +79,9 @@ class glTFImporter():
                     # Non blocking error #TODO log
                     pass
 
-    def load_glb(self):
+    def load_glb(self, content):
         """Load binary glb."""
-        header = struct.unpack_from('<4sII', self.content)
+        header = struct.unpack_from('<4sII', content)
         self.format = header[0]
         self.version = header[1]
         self.file_size = header[2]
@@ -92,13 +92,13 @@ class glTFImporter():
         if self.version != 2:
             raise ImportError("GLB version %d unsupported" % self.version)
 
-        if self.file_size != len(self.content):
+        if self.file_size != len(content):
             raise ImportError("Bad GLB: file size doesn't match")
 
         offset = 12  # header size = 12
 
         # JSON chunk is first
-        type_, len_, json_bytes, offset = self.load_chunk(offset)
+        type_, len_, json_bytes, offset = self.load_chunk(content, offset)
         if type_ != b"JSON":
             raise ImportError("Bad GLB: first chunk not JSON")
         if len_ != len(json_bytes):
@@ -111,47 +111,41 @@ class glTFImporter():
             raise ImportError(e.args[0])
 
         # BIN chunk is second (if it exists)
-        if offset < len(self.content):
-            type_, len_, data, offset = self.load_chunk(offset)
+        if offset < len(content):
+            type_, len_, data, offset = self.load_chunk(content, offset)
             if type_ == b"BIN\0":
                 if len_ != len(data):
                     raise ImportError("Bad GLB: length of BIN chunk doesn't match")
                 self.glb_buffer = data
 
-    def load_chunk(self, offset):
+    def load_chunk(self, content, offset):
         """Load chunk."""
-        chunk_header = struct.unpack_from('<I4s', self.content, offset)
+        chunk_header = struct.unpack_from('<I4s', content, offset)
         data_length = chunk_header[0]
         data_type = chunk_header[1]
-        data = self.content[offset + 8: offset + 8 + data_length]
+        data = content[offset + 8: offset + 8 + data_length]
 
         return data_type, data_length, data, offset + 8 + data_length
 
     def read(self):
         """Read file."""
-        # Check this is a file
         if not isfile(self.filename):
             raise ImportError("Please select a file")
 
-        # Check if file is gltf or glb
         with open(self.filename, 'rb') as f:
-            self.content = memoryview(f.read())
+            content = memoryview(f.read())
 
-        self.is_glb_format = self.content[:4] == b'glTF'
+        is_glb_format = content[:4] == b'glTF'
 
-        # glTF file
-        if not self.is_glb_format:
-            content = str(self.content, encoding='utf-8')
-            self.content = None
+        if not is_glb_format:
+            content = str(content, encoding='utf-8')
             try:
                 self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
             except ValueError as e:
                 raise ImportError(e.args[0])
 
-        # glb file
         else:
-            self.load_glb()
-            self.content = None
+            self.load_glb(content)
 
     def load_buffer(self, buffer_idx):
         """Load buffer."""
