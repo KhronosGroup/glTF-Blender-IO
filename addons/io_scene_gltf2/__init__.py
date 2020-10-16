@@ -997,21 +997,21 @@ class ImportGLTF2(Operator, ImportHelper):
         from .io.imp.gltf2_io_gltf import glTFImporter
         from .blender.imp.gltf2_blender_gltf import BlenderGlTF
 
-        self.gltf_importer = glTFImporter(filename, import_settings)
-        success, txt = self.gltf_importer.read()
+        gltf_importer = glTFImporter(filename, import_settings)
+        success, txt = gltf_importer.read()
         if not success:
             self.report({'ERROR'}, txt)
             return {'CANCELLED'}
-        success, txt = self.gltf_importer.checks()
+        success, txt = gltf_importer.checks()
         if not success:
             self.report({'ERROR'}, txt)
             return {'CANCELLED'}
         print("Data are loaded, start creating Blender stuff")
         start_time = time.time()
-        BlenderGlTF.create(self.gltf_importer)
+        BlenderGlTF.create(gltf_importer)
         elapsed_s = "{:.2f}s".format(time.time() - start_time)
         print("glTF import finished in " + elapsed_s)
-        self.gltf_importer.log.removeHandler(self.gltf_importer.log_handler)
+        gltf_importer.log.removeHandler(gltf_importer.log_handler)
 
         return {'FINISHED'}
 
