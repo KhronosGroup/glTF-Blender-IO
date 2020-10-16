@@ -152,7 +152,12 @@ class glTFImporter():
 
         glTFImporter.check_version(gltf)
 
-        self.data = gltf_from_dict(gltf)
+        try:
+            self.data = gltf_from_dict(gltf)
+        except AssertionError:
+            import traceback
+            traceback.print_exc()
+            raise ImportError("Couldn't parse glTF. Check that the file is valid")
 
     def load_buffer(self, buffer_idx):
         """Load buffer."""
