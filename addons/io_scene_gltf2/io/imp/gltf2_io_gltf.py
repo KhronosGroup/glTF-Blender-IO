@@ -101,7 +101,7 @@ class glTFImporter():
             raise ImportError("This file is not a glTF/glb file")
 
         if self.version != 2:
-            raise ImportError("GLB version %d unsupported" % self.version)
+            raise ImportError("GLB version must be 2; got %d" % self.version)
 
         if self.file_size != len(content):
             raise ImportError("Bad GLB: file size doesn't match")
