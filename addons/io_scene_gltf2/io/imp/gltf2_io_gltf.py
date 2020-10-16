@@ -65,11 +65,18 @@ class glTFImporter():
         except ValueError as e:
             raise ImportError('Bad glTF: json error: %s' % e.args[0])
 
+    @staticmethod
+    def check_version(gltf):
+        """Check version. This is done *before* gltf_from_dict."""
+        if not isinstance(gltf, dict) or 'asset' not in gltf:
+            raise ImportError("Bad glTF: no asset in json")
+        if 'version' not in gltf['asset']:
+            raise ImportError("Bad glTF: no version")
+        if gltf['asset']['version'] != "2.0":
+            raise ImportError("glTF version must be 2.0; got %s" % gltf['asset']['version'])
+
     def checks(self):
         """Some checks."""
-        if self.data.asset.version != "2.0":
-            raise ImportError("glTF version must be 2")
-
         if self.data.extensions_required is not None:
             for extension in self.data.extensions_required:
                 if extension not in self.data.extensions_used:
@@ -99,6 +106,7 @@ class glTFImporter():
         if self.file_size != len(content):
             raise ImportError("Bad GLB: file size doesn't match")
 
+        glb_buffer = None
         offset = 12  # header size = 12
 
         # JSON chunk is first
@@ -107,8 +115,7 @@ class glTFImporter():
             raise ImportError("Bad GLB: first chunk not JSON")
         if len_ != len(json_bytes):
             raise ImportError("Bad GLB: length of json chunk doesn't match")
-        json_ = glTFImporter.load_json(json_bytes)
-        self.data = gltf_from_dict(json_)
+        gltf = glTFImporter.load_json(json_bytes)
 
         # BIN chunk is second (if it exists)
         if offset < len(content):
@@ -116,7 +123,9 @@ class glTFImporter():
             if type_ == b"BIN\0":
                 if len_ != len(data):
                     raise ImportError("Bad GLB: length of BIN chunk doesn't match")
-                self.glb_buffer = data
+                glb_buffer = data
+
+        return gltf, glb_buffer
 
     def load_chunk(self, content, offset):
         """Load chunk."""
@@ -136,9 +145,14 @@ class glTFImporter():
             content = memoryview(f.read())
 
         if content[:4] == b'glTF':
-            self.load_glb(content)
+            gltf, self.glb_buffer = self.load_glb(content)
         else:
-            self.data = gltf_from_dict(glTFImporter.load_json(content))
+            gltf = glTFImporter.load_json(content)
+            self.glb_buffer = None
+
+        glTFImporter.check_version(gltf)
+
+        self.data = gltf_from_dict(gltf)
 
     def load_buffer(self, buffer_idx):
         """Load buffer."""
