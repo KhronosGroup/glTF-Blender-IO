@@ -26,11 +26,13 @@ This importer/exporter supports the following glTF 2.0 features:
 - Textures
 - Cameras
 - Punctual lights (point, spot, and directional)
+- Extensions (listed below)
+- Extras (custom properties)
 - Animation (keyframe, shape key, and skinning)
 
 
 Meshes
-------
+======
 
 glTF's internal structure mimics the memory buffers commonly used by graphics chips
 when rendering in real-time, such that assets can be delivered to desktop, web, or mobile clients
@@ -43,7 +45,7 @@ and must be converted to meshes prior to export.
 
 
 Materials
----------
+=========
 
 The core material system in glTF supports a metal/rough :abbr:`PBR (Physically Based Rendering)` workflow
 with the following channels of information:
@@ -52,10 +54,14 @@ with the following channels of information:
 - Metallic
 - Roughness
 - Baked Ambient Occlusion
-- Normal Map
+- Normal Map (Tangent-space, +Y up)
 - Emissive
-- Clearcoat (requires ``KHR_materials_clearcoat``)
-- Transmission (requires ``KHR_materials_transmission``)
+
+Some additional material properties or types of materials can be expressed using glTF extensions:
+
+- Clearcoat (uses ``KHR_materials_clearcoat``)
+- Transmission (uses ``KHR_materials_transmission``)
+- "Shadeless" materials (uses ``KHR_materials_unlit``)
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -90,10 +96,6 @@ The material export process handles the settings described below.
 
    When image textures are used by materials, glTF requires that images be in PNG or JPEG format.
    The add-on will automatically convert images from other formats, increasing export time.
-
-.. tip::
-
-   To create Shadeless (Unlit) materials, use the Background material type.
 
 
 Base Color
@@ -230,6 +232,52 @@ channels if they are not needed.
    the Principled BSDF node directly.
 
 
+Clearcoat
+^^^^^^^^^
+
+When the Clearcoat input on the Principled BSDF node has a non-zero default value or
+Image Texture node connected, the ``KHR_materials_clearcoat`` glTF extension will be
+included in the export. This extension will also include a value or Image Texture
+from the Clearcoat Roughness input if available.
+
+If Image Textures are used, glTF requires that the clearcoat values be written to
+the red (``R``) channel, and clearcoat roughness to the green (``G``) channel.
+If monochrome images are connected, the addon will remap them to these color channels
+during export.
+
+The Clearcoat Normal input accepts the same kinds of inputs as the base Normal input,
+specifically a tangent-space normal map with +Y up, and a used-defined strength.
+This input can re-use the same normal map that the base material is using, or can
+be assigned its own normal map, or can be left disconnected for a smooth coating.
+
+All clearcoat-related Image Texture node(s) should have their *Color Space* set to Non-Color.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-clearcoat.png
+
+   An example of a complex clearcoat application that will export correctly to glTF.
+   A much simpler, smooth coating could be applied from just the Principled BSDF node alone.
+
+
+Transmission
+^^^^^^^^^^^^
+
+When the Transmission input on the Principled BSDF node has a non-zero default value or
+Image Texture node connected, the ``KHR_materials_transmission`` glTF extension will be
+included in the export. When a texture is used, glTF stores the values in
+the red (``R``) channel. The *Color Space* should be set to Non-Color.
+
+Transmission is different from simple alpha blending, because transmission allows
+specular reflections, enabling materials such as glass. Typically the alpha blend mode
+should remain "Opaque," the default setting. glTF does not offer a separate
+"Transmission Roughness," but the material's base roughness can be used to blur the
+transmission.
+
+.. warning::
+
+   Transmission is complex for real-time rendering engines to implement, and support
+   for this extension is not yet widespread.
+
+
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -318,8 +366,19 @@ a typical node structure when several of the above options are applied at once:
    A Principled BSDF material with an emissive texture.
 
 
+Exporting a Shadeless (Unlit) Material
+--------------------------------------
+
+To export an unlit material, mix in a camera ray, and avoid using the Principled BSDF node.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-unlit.png
+
+   One of several similar node arrangements that will export
+   ``KHR_materials_unlit`` and render shadeless in Blender.
+
+
 Extensions
-----------
+==========
 
 The core glTF 2.0 format can be extended with extra information, using glTF extensions.
 This allows the file format to hold details that were not considered universal at the time of first publication.
@@ -350,8 +409,29 @@ are supported directly by this add-on:
 - ``KHR_texture_transform``
 
 
+Third-party glTF Extensions
+---------------------------
+
+It is possible for Python developers to add Blender support for additional glTF extensions
+by writing their own third-party add-on, without modifying this glTF add-on. For more information,
+`see the example on GitHub <https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons/example_gltf_extension>`__
+and if needed,
+`register an extension prefix <https://github.com/KhronosGroup/glTF/blob/master/extensions/Prefixes.md>`__.
+
+
+Custom Properties
+=================
+
+Custom properties are always imported, and will be exported from most objects if the
+:menuselection:`Include --> Custom Properties` option is selected before export. These
+are stored in the ``extras`` field on the corresponding object in the glTF file.
+
+Unlike glTF extensions, custom properties (extras) have no defined name-space, and may
+be used for any user-specific or application-specific purposes.
+
+
 Animation
----------
+=========
 
 glTF allows multiple animations per file, with animations targeted to
 particular objects at time of export. To ensure that an animation is included,
@@ -389,13 +469,6 @@ Only active action of each objects will be taken into account, and merged into a
 
    In order to sample shape key animations controlled by drivers using bone transformations,
    they must be on a mesh object which is a direct child of the bones' armature.
-
-
-Custom Properties
------------------
-
-Custom properties on most objects are preserved in glTF export/import, and
-may be used for user-specific purposes.
 
 
 File Format Variations
