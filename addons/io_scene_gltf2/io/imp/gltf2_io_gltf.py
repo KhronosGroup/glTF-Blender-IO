@@ -57,9 +57,13 @@ class glTFImporter():
         ]
 
     @staticmethod
-    def bad_json_value(val):
-        """Bad Json value."""
-        raise ValueError('Json contains some unauthorized values')
+    def load_json(content):
+        def bad_constant(val):
+            raise ImportError('Bad glTF: json contained %s' % val)
+        try:
+            return json.loads(bytes(content), encoding='utf-8', parse_constant=bad_constant)
+        except ValueError as e:
+            raise ImportError('Bad glTF: json error: %s' % e.args[0])
 
     def checks(self):
         """Some checks."""
@@ -103,12 +107,8 @@ class glTFImporter():
             raise ImportError("Bad GLB: first chunk not JSON")
         if len_ != len(json_bytes):
             raise ImportError("Bad GLB: length of json chunk doesn't match")
-        try:
-            json_str = str(json_bytes, encoding='utf-8')
-            json_ = json.loads(json_str, parse_constant=glTFImporter.bad_json_value)
-            self.data = gltf_from_dict(json_)
-        except ValueError as e:
-            raise ImportError(e.args[0])
+        json_ = glTFImporter.load_json(json_bytes)
+        self.data = gltf_from_dict(json_)
 
         # BIN chunk is second (if it exists)
         if offset < len(content):
@@ -135,17 +135,10 @@ class glTFImporter():
         with open(self.filename, 'rb') as f:
             content = memoryview(f.read())
 
-        is_glb_format = content[:4] == b'glTF'
-
-        if not is_glb_format:
-            content = str(content, encoding='utf-8')
-            try:
-                self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
-            except ValueError as e:
-                raise ImportError(e.args[0])
-
-        else:
+        if content[:4] == b'glTF':
             self.load_glb(content)
+        else:
+            self.data = gltf_from_dict(glTFImporter.load_json(content))
 
     def load_buffer(self, buffer_idx):
         """Load buffer."""
