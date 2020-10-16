@@ -994,26 +994,28 @@ class ImportGLTF2(Operator, ImportHelper):
 
     def unit_import(self, filename, import_settings):
         import time
-        from .io.imp.gltf2_io_gltf import glTFImporter
+        from .io.imp.gltf2_io_gltf import glTFImporter, ImportError
         from .blender.imp.gltf2_blender_gltf import BlenderGlTF
 
-        gltf_importer = glTFImporter(filename, import_settings)
-        success, txt = gltf_importer.read()
-        if not success:
-            self.report({'ERROR'}, txt)
-            return {'CANCELLED'}
-        success, txt = gltf_importer.checks()
-        if not success:
-            self.report({'ERROR'}, txt)
-            return {'CANCELLED'}
-        print("Data are loaded, start creating Blender stuff")
-        start_time = time.time()
-        BlenderGlTF.create(gltf_importer)
-        elapsed_s = "{:.2f}s".format(time.time() - start_time)
-        print("glTF import finished in " + elapsed_s)
-        gltf_importer.log.removeHandler(gltf_importer.log_handler)
+        try:
+            gltf_importer = glTFImporter(filename, import_settings)
+            gltf_importer.read()
+            gltf_importer.checks()
 
-        return {'FINISHED'}
+            print("Data are loaded, start creating Blender stuff")
+
+            start_time = time.time()
+            BlenderGlTF.create(gltf_importer)
+            elapsed_s = "{:.2f}s".format(time.time() - start_time)
+            print("glTF import finished in " + elapsed_s)
+
+            gltf_importer.log.removeHandler(gltf_importer.log_handler)
+
+            return {'FINISHED'}
+
+        except ImportError as e:
+            self.report({'ERROR'}, e.args[0])
+            return {'CANCELLED'}
 
     def set_debug_log(self):
         import logging

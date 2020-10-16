@@ -22,6 +22,11 @@ from os.path import dirname, join, isfile
 from urllib.parse import unquote
 
 
+# Raise this error to have the importer report an error message.
+class ImportError(RuntimeError):
+    pass
+
+
 class glTFImporter():
     """glTF Importer class."""
 
@@ -59,22 +64,20 @@ class glTFImporter():
     def checks(self):
         """Some checks."""
         if self.data.asset.version != "2.0":
-            return False, "glTF version must be 2"
+            raise ImportError("glTF version must be 2")
 
         if self.data.extensions_required is not None:
             for extension in self.data.extensions_required:
                 if extension not in self.data.extensions_used:
-                    return False, "Extension required must be in Extension Used too"
+                    raise ImportError("Extension required must be in Extension Used too")
                 if extension not in self.extensions_managed:
-                    return False, "Extension " + extension + " is not available on this addon version"
+                    raise ImportError("Extension %s is not available on this addon version" % extension)
 
         if self.data.extensions_used is not None:
             for extension in self.data.extensions_used:
                 if extension not in self.extensions_managed:
                     # Non blocking error #TODO log
                     pass
-
-        return True, None
 
     def load_glb(self):
         """Load binary glb."""
@@ -84,38 +87,36 @@ class glTFImporter():
         self.file_size = header[2]
 
         if self.format != b'glTF':
-            return False, "This file is not a glTF/glb file"
+            raise ImportError("This file is not a glTF/glb file")
 
         if self.version != 2:
-            return False, "GLB version %d unsupported" % self.version
+            raise ImportError("GLB version %d unsupported" % self.version)
 
         if self.file_size != len(self.content):
-            return False, "Bad GLB: file size doesn't match"
+            raise ImportError("Bad GLB: file size doesn't match")
 
         offset = 12  # header size = 12
 
         # JSON chunk is first
         type_, len_, json_bytes, offset = self.load_chunk(offset)
         if type_ != b"JSON":
-            return False, "Bad GLB: first chunk not JSON"
+            raise ImportError("Bad GLB: first chunk not JSON")
         if len_ != len(json_bytes):
-            return False, "Bad GLB: length of json chunk doesn't match"
+            raise ImportError("Bad GLB: length of json chunk doesn't match")
         try:
             json_str = str(json_bytes, encoding='utf-8')
             json_ = json.loads(json_str, parse_constant=glTFImporter.bad_json_value)
             self.data = gltf_from_dict(json_)
         except ValueError as e:
-            return False, e.args[0]
+            raise ImportError(e.args[0])
 
         # BIN chunk is second (if it exists)
         if offset < len(self.content):
             type_, len_, data, offset = self.load_chunk(offset)
             if type_ == b"BIN\0":
                 if len_ != len(data):
-                    return False, "Bad GLB: length of BIN chunk doesn't match"
+                    raise ImportError("Bad GLB: length of BIN chunk doesn't match")
                 self.glb_buffer = data
-
-        return True, None
 
     def load_chunk(self, offset):
         """Load chunk."""
@@ -130,7 +131,7 @@ class glTFImporter():
         """Read file."""
         # Check this is a file
         if not isfile(self.filename):
-            return False, "Please select a file"
+            raise ImportError("Please select a file")
 
         # Check if file is gltf or glb
         with open(self.filename, 'rb') as f:
@@ -144,16 +145,13 @@ class glTFImporter():
             self.content = None
             try:
                 self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
-                return True, None
             except ValueError as e:
-                return False, e.args[0]
+                raise ImportError(e.args[0])
 
         # glb file
         else:
-            # Parsing glb file
-            success, txt = self.load_glb()
+            self.load_glb()
             self.content = None
-            return success, txt
 
     def load_buffer(self, buffer_idx):
         """Load buffer."""
