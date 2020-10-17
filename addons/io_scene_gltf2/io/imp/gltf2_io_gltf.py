@@ -92,18 +92,14 @@ class glTFImporter():
 
     def load_glb(self, content):
         """Load binary glb."""
-        header = struct.unpack_from('<4sII', content)
-        self.format = header[0]
-        self.version = header[1]
-        self.file_size = header[2]
-
-        if self.format != b'glTF':
+        magic = content[:4]
+        if magic != b'glTF':
             raise ImportError("This file is not a glTF/glb file")
 
-        if self.version != 2:
-            raise ImportError("GLB version must be 2; got %d" % self.version)
-
-        if self.file_size != len(content):
+        version, file_size = struct.unpack_from('<II', content, offset=4)
+        if version != 2:
+            raise ImportError("GLB version must be 2; got %d" % version)
+        if file_size != len(content):
             raise ImportError("Bad GLB: file size doesn't match")
 
         glb_buffer = None
