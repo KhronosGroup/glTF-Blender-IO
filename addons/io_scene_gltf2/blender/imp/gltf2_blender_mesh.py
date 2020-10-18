@@ -48,6 +48,7 @@ def create_mesh(gltf, mesh_idx, skin_idx):
     try:
         tmp_ob = bpy.data.objects.new('##gltf-import:tmp-object##', mesh)
         do_primitives(gltf, mesh_idx, skin_idx, mesh, tmp_ob)
+        set_extras(mesh, gltf.data.meshes[mesh_idx].extras)
 
     finally:
         if tmp_ob:
