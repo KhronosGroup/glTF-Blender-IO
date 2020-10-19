@@ -267,7 +267,7 @@ included in the export. When a texture is used, glTF stores the values in
 the red (``R``) channel. The *Color Space* should be set to Non-Color.
 
 Transmission is different from alpha blending, because transmission allows full-strength
-specular reflections. In glTF, alpha blending is inteded to represent physical materials
+specular reflections. In glTF, alpha blending is intended to represent physical materials
 that are partially missing from the specified geometry, such as medical gauze wrap. Transmission
 is intended to represent physical materials that are solid but allow non-specularly-reflected
 light to transmit through the material, like glass.
@@ -278,7 +278,7 @@ can be used to blur the transmission, like frosted glass.
 .. tip::
 
    Typically the alpha blend mode of a transmissive material should remain "Opaque," the
-   default setting, unless the material only partially coveres the specified geometry.
+   default setting, unless the material only partially covers the specified geometry.
 
 .. note::
 
