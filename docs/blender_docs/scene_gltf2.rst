@@ -59,7 +59,7 @@ with the following channels of information:
 
 Some additional material properties or types of materials can be expressed using glTF extensions:
 
-- Clearcoat (uses ``KHR_materials_clearcoat``)
+- Clearcoat, Clearcoat Roughness, Clearcoat Normal (uses ``KHR_materials_clearcoat``)
 - Transmission (uses ``KHR_materials_transmission``)
 - "Shadeless" materials (uses ``KHR_materials_unlit``)
 
@@ -246,7 +246,7 @@ If monochrome images are connected, the addon will remap them to these color cha
 during export.
 
 The Clearcoat Normal input accepts the same kinds of inputs as the base Normal input,
-specifically a tangent-space normal map with +Y up, and a used-defined strength.
+specifically a tangent-space normal map with +Y up, and a user-defined strength.
 This input can re-use the same normal map that the base material is using, or can
 be assigned its own normal map, or can be left disconnected for a smooth coating.
 
@@ -266,16 +266,32 @@ Image Texture node connected, the ``KHR_materials_transmission`` glTF extension 
 included in the export. When a texture is used, glTF stores the values in
 the red (``R``) channel. The *Color Space* should be set to Non-Color.
 
-Transmission is different from simple alpha blending, because transmission allows
-specular reflections, enabling materials such as glass. Typically the alpha blend mode
-should remain "Opaque," the default setting. glTF does not offer a separate
-"Transmission Roughness," but the material's base roughness can be used to blur the
-transmission.
+Transmission is different from alpha blending, because transmission allows full-strength
+specular reflections. In glTF, alpha blending is inteded to represent physical materials
+that are partially missing from the specified geometry, such as medical gauze wrap. Transmission
+is intended to represent physical materials that are solid but allow non-specularly-reflected
+light to transmit through the material, like glass.
+
+glTF does not offer a separate "Transmission Roughness," but the material's base roughness
+can be used to blur the transmission, like frosted glass.
+
+.. tip::
+
+   Typically the alpha blend mode of a transmissive material should remain "Opaque," the
+   default setting, unless the material only partially coveres the specified geometry.
+
+.. note::
+
+   In real-time engines where transmission is supported, various technical limitations
+   in the engine may determine which parts of the scene are visible through the
+   transmissive surface. In particular, transmissive materials may not be visible behind
+   other transmissive materials. These limitations affect physically-based transmission,
+   but not alpha-blended non-transmissive materials.
 
 .. warning::
 
    Transmission is complex for real-time rendering engines to implement, and support
-   for this extension is not yet widespread.
+   for the ``KHR_materials_transmission`` glTF extension is not yet widespread.
 
 
 Double-Sided / Backface Culling
