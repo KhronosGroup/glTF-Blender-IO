@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import numpy as np
-from mathutils import Vector, Quaternion, Matrix
+from mathutils import Vector
 
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
