@@ -182,7 +182,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
             dst_chan = Channel.G
         elif socket.name == 'Occlusion':
             dst_chan = Channel.R
-        elif socket.name == 'Alpha' and len(sockets) > 1 and sockets[1] is not None:
+        elif socket.name == 'Alpha':
             dst_chan = Channel.A
         elif socket.name == 'Clearcoat':
             dst_chan = Channel.R
