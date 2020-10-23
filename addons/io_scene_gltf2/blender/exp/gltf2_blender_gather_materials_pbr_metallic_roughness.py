@@ -88,7 +88,7 @@ def __gather_base_color_texture(blender_material, export_settings):
             return None
         inputs = (base_color_socket,)
 
-    primary_socket = base_color_factor if base_color_factor.is_linked is True else alpha_socket
+    primary_socket = base_color_socket if base_color_socket.is_linked is True else alpha_socket
 
     return gltf2_blender_gather_texture_info.gather_texture_info(primary_socket, inputs, export_settings)
 
