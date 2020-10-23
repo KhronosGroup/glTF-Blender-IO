@@ -105,6 +105,10 @@ def check_if_is_linked_to_active_output(shader_socket):
         if isinstance(link.to_node, bpy.types.ShaderNodeOutputMaterial) and link.to_node.is_active_output is True:
             return True
 
+        ret = check_if_is_linked_to_active_output(link.to_node.outputs[0])
+        if ret is True:
+            return True
+
     return False
 
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
