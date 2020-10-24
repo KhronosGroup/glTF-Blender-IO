@@ -18,7 +18,7 @@ import numpy as np
 
 from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_id
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
@@ -29,11 +29,11 @@ from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
-
-@cached
+# TODOHIER what is really needed to be cached ? id only or id+others ?
+@cached_id
 def gather_primitives(
+        i,
         blender_mesh: bpy.types.Mesh,
-        library: Optional[str],
         blender_object: Optional[bpy.types.Object],
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
@@ -47,7 +47,7 @@ def gather_primitives(
     """
     primitives = []
 
-    blender_primitives = __gather_cache_primitives(blender_mesh, library, blender_object,
+    blender_primitives = __gather_cache_primitives(i, blender_mesh, blender_object,
         vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
@@ -80,10 +80,12 @@ def gather_primitives(
 
     return primitives
 
-@cached
+# TODOHIER what is really needed to be cached ? id only or id+others ?
+# TODOHIER : why cache this function that is only called into another cached function?
+@cached_id
 def __gather_cache_primitives(
+        i,
         blender_mesh: bpy.types.Mesh,
-        library: Optional[str],
         blender_object: Optional[bpy.types.Object],
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
@@ -95,7 +97,7 @@ def __gather_cache_primitives(
     primitives = []
 
     blender_primitives = gltf2_blender_extract.extract_primitives(
-        None, blender_mesh, library, blender_object, vertex_groups, modifiers, export_settings)
+        blender_mesh, blender_object, vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
         primitive = {

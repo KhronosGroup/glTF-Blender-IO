@@ -72,8 +72,8 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                   ) -> gltf2_io.Node:
 
     if driver_obj is not None:
-        return gltf2_blender_gather_nodes.gather_node(driver_obj,
-            driver_obj.library.name if driver_obj.library else None,
+        driver_obj_id = None #TODOHIER
+        return gltf2_blender_gather_nodes.gather_node(driver_obj_id,
             None, None, export_settings)
 
     if blender_object.type == "ARMATURE":
@@ -94,8 +94,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                     obj = blender_object.proxy if blender_object.proxy else blender_object
                     return gltf2_blender_gather_joints.gather_joint(obj, blender_bone, export_settings)
 
-    return gltf2_blender_gather_nodes.gather_node(blender_object,
-        blender_object.library.name if blender_object.library else None,
+    return gltf2_blender_gather_nodes.gather_node(i,
         None, None, export_settings)
 
 

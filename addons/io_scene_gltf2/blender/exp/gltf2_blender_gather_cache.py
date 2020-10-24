@@ -16,6 +16,30 @@ import functools
 import bpy
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 
+def cached_id(func):
+    @functools.wraps(func)
+    def wrapper_cached(*args, **kwargs):
+        assert len(args) >= 2 and 0 <= len(kwargs) <= 1, "Wrong signature for cached function"
+
+        if kwargs.get("export_settings"):
+            export_settings = kwargs["export_settings"]
+        else:
+            export_settings = args[-1]
+
+        cache_key = (args[0]) # Only cache with id, at first position of arguments
+
+        # invalidate cache if export settings have changed
+        if not hasattr(func, "__export_settings") or export_settings != func.__export_settings:
+            func.__cache = {}
+            func.__export_settings = export_settings
+        # use or fill cache
+        if cache_key in func.__cache:
+            return func.__cache[cache_key]
+        else:
+            result = func(*args)
+            func.__cache[cache_key] = result
+            return result
+    return wrapper_cached
 
 def cached(func):
     """
