@@ -130,9 +130,9 @@ class Keyframe:
         self.__out_tangent = self.__set_indexed(value)
 
 
-
+#TODOHIER
 @bonecache
-def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object],
+def get_bone_matrix(i_if_armature: typing.Optional[bpy.types.Object],
                      channels: typing.Tuple[bpy.types.FCurve],
                      bake_bone: typing.Union[str, None],
                      bake_channel: typing.Union[str, None],
@@ -142,6 +142,12 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
                      current_frame: int,
                      step: int
                      ):
+
+    #TODOHIER
+    if i_if_armature is not None:
+        blender_object_if_armature = export_settings['tree'].nodes[i_if_armature].object
+    else:
+        blender_object_if_armature = None
 
     data = {}
 
@@ -182,9 +188,10 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
 
     return data
 
+#TODOHIER
 # cache for performance reasons
 @cached
-def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
+def gather_keyframes(i_if_armature,
                      channels: typing.Tuple[bpy.types.FCurve],
                      non_keyed_values: typing.Tuple[typing.Optional[float]],
                      bake_bone: typing.Union[str, None],
@@ -196,6 +203,14 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
+
+    #TODOHIER
+    if i_if_armature is not None:
+        blender_object_if_armature = export_settings['tree'].nodes[i].object
+    else:
+        blender_object_if_armature = None
+
+
     if bake_bone is None and driver_obj is None:
         # Find the start and end of the whole action group
         # Note: channels has some None items only for SK if some SK are not animated

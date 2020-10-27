@@ -22,9 +22,10 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
+#TODOHIER what about this cache?
 @cached
 def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
-                                    blender_object: bpy.types.Object,
+                                    i,
                                     bake_bone: typing.Union[str, None],
                                     bake_channel: typing.Union[str, None],
                                     driver_obj,
@@ -32,12 +33,13 @@ def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
                                     ) -> gltf2_io.AnimationChannelTarget:
 
         animation_channel_target = gltf2_io.AnimationChannelTarget(
-            extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
-            extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
-            node=__gather_node(channels, blender_object, export_settings, bake_bone, driver_obj),
-            path=__gather_path(channels, blender_object, export_settings, bake_bone, bake_channel)
+            extensions=__gather_extensions(channels, i, export_settings, bake_bone),
+            extras=__gather_extras(channels, i, export_settings, bake_bone),
+            node=__gather_node(channels, i, export_settings, bake_bone, driver_obj),
+            path=__gather_path(channels, i, export_settings, bake_bone, bake_channel)
         )
 
+        blender_object = export_settings['tree'].nodes[i].object
         export_user_extensions('gather_animation_channel_target_hook',
                                export_settings,
                                animation_channel_target,
@@ -49,7 +51,7 @@ def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
         return animation_channel_target
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
-                        blender_object: bpy.types.Object,
+                        i,
                         export_settings,
                         bake_bone: typing.Union[str, None]
                         ) -> typing.Any:
@@ -65,11 +67,13 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
-                  blender_object: bpy.types.Object,
+                  i,
                   export_settings,
                   bake_bone: typing.Union[str, None],
                   driver_obj
                   ) -> gltf2_io.Node:
+
+    blender_object = export_settings['tree'].nodes[i].object
 
     if driver_obj is not None:
         driver_obj_id = None #TODOHIER
@@ -78,7 +82,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
 
     if blender_object.type == "ARMATURE":
         # TODO: get joint from fcurve data_path and gather_joint
-
+        #TODOHIER
         if bake_bone is not None:
             blender_bone = blender_object.pose.bones[bake_bone]
         else:
@@ -99,7 +103,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],
-                  blender_object: bpy.types.Object,
+                  i,
                   export_settings,
                   bake_bone: typing.Union[str, None],
                   bake_channel: typing.Union[str, None]

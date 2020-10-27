@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#TODOHIER : use id here instead of object?
 def export_user_extensions(hook_name, export_settings, *args):
     if args and hasattr(args[0], "extensions"):
         if args[0].extensions is None:

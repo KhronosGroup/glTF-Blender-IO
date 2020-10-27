@@ -22,7 +22,7 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
-def gather_animations(blender_object: bpy.types.Object,
+def gather_animations(i,
                         tracks: typing.Dict[str, typing.List[int]],
                         offset: int,
                         export_settings) -> typing.Tuple[typing.List[gltf2_io.Animation], typing.Dict[str, typing.List[int]]]:
@@ -34,6 +34,7 @@ def gather_animations(blender_object: bpy.types.Object,
     :return: A list of glTF2 animations and tracks
     """
     animations = []
+    blender_object = export_settings['tree'].nodes[i].object
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object, export_settings)
@@ -73,7 +74,7 @@ def gather_animations(blender_object: bpy.types.Object,
 
         # No need to set active shapekeys animations, this is needed for bone baking
 
-        animation = __gather_animation(blender_action, blender_object, export_settings)
+        animation = __gather_animation(blender_action, i, export_settings)
         if animation is not None:
             animations.append(animation)
 
@@ -102,16 +103,19 @@ def gather_animations(blender_object: bpy.types.Object,
 
 
 def __gather_animation(blender_action: bpy.types.Action,
-                       blender_object: bpy.types.Object,
+                       i,
                        export_settings
                        ) -> typing.Optional[gltf2_io.Animation]:
+
+    blender_object = export_settings['tree'].nodes[i].object
+
     if not __filter_animation(blender_action, blender_object, export_settings):
         return None
 
     name = __gather_name(blender_action, blender_object, export_settings)
     try:
         animation = gltf2_io.Animation(
-            channels=__gather_channels(blender_action, blender_object, export_settings),
+            channels=__gather_channels(blender_action, i, export_settings),
             extensions=__gather_extensions(blender_action, blender_object, export_settings),
             extras=__gather_extras(blender_action, blender_object, export_settings),
             name=name,
@@ -143,11 +147,11 @@ def __filter_animation(blender_action: bpy.types.Action,
 
 
 def __gather_channels(blender_action: bpy.types.Action,
-                      blender_object: bpy.types.Object,
+                      i,
                       export_settings
                       ) -> typing.List[gltf2_io.AnimationChannel]:
     return gltf2_blender_gather_animation_channels.gather_animation_channels(
-        blender_action, blender_object, export_settings)
+        blender_action, i, export_settings)
 
 
 def __gather_extensions(blender_action: bpy.types.Action,

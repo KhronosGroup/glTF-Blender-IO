@@ -32,7 +32,7 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 
 @cached
 def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
-                             blender_object: bpy.types.Object,
+                             i,
                              bake_bone: typing.Union[str, None],
                              bake_channel: typing.Union[str, None],
                              bake_range_start,
@@ -42,7 +42,10 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
 
+    blender_object = export_settings['tree'].nodes[i].object
+
     blender_object_if_armature = blender_object if blender_object.type == "ARMATURE" else None
+    i_if_armature = i if blender_object.type == "ARMATURE" else None
     if blender_object_if_armature is not None and driver_obj is None:
         if bake_bone is None:
             pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
@@ -65,7 +68,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, export_settings),
         interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
-                               blender_object_if_armature,
+                               i_if_armature,
                                non_keyed_values,
                                bake_bone,
                                bake_channel,
@@ -291,10 +294,11 @@ def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
     }[blender_keyframe.interpolation]
 
 
+#TODOHIER
 @cached
 def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     parent_inverse,
-                    blender_object_if_armature: typing.Optional[bpy.types.Object],
+                    i_if_armature,
                     non_keyed_values: typing.Tuple[typing.Optional[float]],
                     bake_bone: typing.Union[str, None],
                     bake_channel: typing.Union[str, None],
@@ -305,7 +309,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
-    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object_if_armature,
+    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(i_if_armature,
                                                                                   channels,
                                                                                   non_keyed_values,
                                                                                   bake_bone,
@@ -315,6 +319,12 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   action_name,
                                                                                   driver_obj,
                                                                                   export_settings)
+    #TODOHIER
+    if i_if_armature is not None:
+        blender_object_if_armature = export_settings['tree'].nodes[i].object
+    else:
+        blender_object_if_armature = None
+
     if bake_bone is not None:
         target_datapath = "pose.bones['" + bake_bone + "']." + bake_channel
     else:

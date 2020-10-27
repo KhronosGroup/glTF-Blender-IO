@@ -27,14 +27,15 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
-
+#TODOHIER what about this cache?
 @cached
 def gather_animation_channels(blender_action: bpy.types.Action,
-                              blender_object: bpy.types.Object,
+                              i,
                               export_settings
                               ) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
+    blender_object = export_settings['tree'].nodes[i].object
 
     # First calculate range of animation for baking
     # This is need if user set 'Force sampling' and in case we need to bake
@@ -73,7 +74,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             for p in ["location", "rotation_quaternion", "scale"]:
                 channel = __gather_animation_channel(
                     (),
-                    blender_object,
+                    i,
                     export_settings,
                     bone.name,
                     p,
@@ -91,7 +92,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             if len(channel_group) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
+            channel = __gather_animation_channel(channel_group, i, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
             if channel is not None:
                 channels.append(channel)
 
@@ -102,7 +103,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
         for obj, fcurves in drivers_to_manage:
             channel = __gather_animation_channel(
                 fcurves,
-                blender_object,
+                i,
                 export_settings,
                 None,
                 None,
@@ -118,7 +119,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             if len(channel_group_sorted) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(channel_group_sorted, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
+            channel = __gather_animation_channel(channel_group_sorted, i, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
             if channel is not None:
                 channels.append(channel)
 
@@ -182,7 +183,7 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
     return channels
 
 def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
-                               blender_object: bpy.types.Object,
+                               i,
                                export_settings,
                                bake_bone: typing.Union[str, None],
                                bake_channel: typing.Union[str, None],
@@ -191,18 +192,19 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                action_name: str,
                                driver_obj
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
-    if not __filter_animation_channel(channels, blender_object, export_settings):
+    if not __filter_animation_channel(channels, i, export_settings):
         return None
 
-    __target= __gather_target(channels, blender_object, export_settings, bake_bone, bake_channel, driver_obj)
+    __target= __gather_target(channels, i, export_settings, bake_bone, bake_channel, driver_obj)
     if __target.path is not None:
         animation_channel = gltf2_io.AnimationChannel(
-            extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
-            extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
-            sampler=__gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj),
+            extensions=__gather_extensions(channels, i, export_settings, bake_bone),
+            extras=__gather_extras(channels, i, export_settings, bake_bone),
+            sampler=__gather_sampler(channels, i, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj),
             target=__target
         )
 
+        blender_object = export_settings['tree'].nodes[i].object
         export_user_extensions('gather_animation_channel_hook',
                                export_settings,
                                animation_channel,
@@ -219,14 +221,14 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __filter_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
-                               blender_object: bpy.types.Object,
+                               i,
                                export_settings
                                ) -> bool:
     return True
 
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
-                        blender_object: bpy.types.Object,
+                        i,
                         export_settings,
                         bake_bone: typing.Union[str, None]
                         ) -> typing.Any:
@@ -234,7 +236,7 @@ def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
-                    blender_object: bpy.types.Object,
+                    i,
                     export_settings,
                     bake_bone: typing.Union[str, None]
                     ) -> typing.Any:
@@ -242,7 +244,7 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
-                     blender_object: bpy.types.Object,
+                     i,
                      export_settings,
                      bake_bone: typing.Union[str, None],
                      bake_channel: typing.Union[str, None],
@@ -253,7 +255,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
                      ) -> gltf2_io.AnimationSampler:
     return gltf2_blender_gather_animation_samplers.gather_animation_sampler(
         channels,
-        blender_object,
+        i,
         bake_bone,
         bake_channel,
         bake_range_start,
@@ -265,14 +267,14 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
-                    blender_object: bpy.types.Object,
+                    i,
                     export_settings,
                     bake_bone: typing.Union[str, None],
                     bake_channel: typing.Union[str, None],
                     driver_obj
                     ) -> gltf2_io.AnimationChannelTarget:
     return gltf2_blender_gather_animation_channel_target.gather_animation_channel_target(
-        channels, blender_object, bake_bone, bake_channel, driver_obj, export_settings)
+        channels, i, bake_bone, bake_channel, driver_obj, export_settings)
 
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):

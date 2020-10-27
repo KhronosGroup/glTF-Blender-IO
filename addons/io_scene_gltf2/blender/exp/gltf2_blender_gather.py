@@ -102,7 +102,7 @@ def __gather_animations(blender_scene, export_settings):
             blender_scene, None, export_settings)
         if obj_node is not None:
             # Check was done on armature, but use here the _proxy object, because this is where the animation is
-            animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(_blender_object, merged_tracks, len(animations), export_settings)
+            animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(i, merged_tracks, len(animations), export_settings)
             animations += animations_
 
     if export_settings['gltf_nla_strips'] is False:
