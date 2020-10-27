@@ -206,7 +206,7 @@ def gather_keyframes(i_if_armature,
 
     #TODOHIER
     if i_if_armature is not None:
-        blender_object_if_armature = export_settings['tree'].nodes[i].object
+        blender_object_if_armature = export_settings['tree'].nodes[i_if_armature].object
     else:
         blender_object_if_armature = None
 
