@@ -91,10 +91,9 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         num_cols = max(i, num_cols)
 
     num_shapekeys = 0
-    if len(pymesh.primitives) > 0: # Empty primitives are not allowed, but some not valid files...
-        for morph_i, _ in enumerate(pymesh.primitives[0].targets or []):
-            if pymesh.shapekey_names[morph_i] is not None:
-                num_shapekeys += 1
+    for morph_i, _ in enumerate(pymesh.primitives[0].targets or []):
+        if pymesh.shapekey_names[morph_i] is not None:
+            num_shapekeys += 1
 
     # -------------
     # We'll process all the primitives gathering arrays to feed into the
