@@ -38,7 +38,6 @@ def gather_node(i, blender_scene, dupli_object_parent, export_settings):
     # with blender_scene=None
 
     blender_object = export_settings['tree'].nodes[i].object
-    print(blender_object.name_full)
 
     # invalidate cache if export settings have changed
     if not hasattr(gather_node, "__export_settings") or export_settings != gather_node.__export_settings:
@@ -59,7 +58,6 @@ def gather_node(i, blender_scene, dupli_object_parent, export_settings):
 def __gather_node(i, blender_scene, dupli_object_parent, export_settings):
     blender_object = export_settings['tree'].nodes[i].object
     children = __gather_children(i, blender_scene, export_settings)
-    print(children)
 
     camera = None
     mesh = None
