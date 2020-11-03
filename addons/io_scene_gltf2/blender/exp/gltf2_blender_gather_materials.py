@@ -316,7 +316,6 @@ def __gather_ior_and_specular_extensions(blender_material, export_settings):
 
     specular = specular_socket.default_value if specular_not_linked else None
     specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
-    base_color = base_color_socket.default_value[0:3] if base_color_not_linked else None
     transmission = transmission_socket.default_value if transmission_not_linked else None
     ior = ior_socket.default_value if ior_not_linked else 1.0   # textures not supported
 
@@ -339,6 +338,7 @@ def __gather_ior_and_specular_extensions(blender_material, export_settings):
     if no_texture:
         if specular != 0.5 or specular_tint != 0.0:
             specular_ext_enabled = True
+            base_color = base_color_socket.default_value[0:3] if base_color_not_linked else [0, 0, 0]
             normalized_base_color = [bc / luminance(base_color) if luminance(base_color) > 0 else 0 for bc in base_color]
             specular_color = [min(lerp(1, bc, specular_tint), 1) for bc in normalized_base_color]
 
