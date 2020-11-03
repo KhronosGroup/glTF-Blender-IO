@@ -88,7 +88,8 @@ def __gather_index(blender_shader_sockets, export_settings):
 
 
 def __gather_tex_coord(blender_shader_sockets, export_settings):
-    blender_shader_node = __get_tex_from_socket(blender_shader_sockets[0]).shader_node
+    blender_shader_nodes = [__get_tex_from_socket(socket) for socket in blender_shader_sockets]
+    blender_shader_node = next(filter(lambda x: x is not None, blender_shader_nodes)).shader_node
     if len(blender_shader_node.inputs['Vector'].links) == 0:
         return 0
 
