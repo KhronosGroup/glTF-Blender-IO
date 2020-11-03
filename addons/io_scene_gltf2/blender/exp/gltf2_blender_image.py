@@ -285,6 +285,7 @@ class ExportImage:
         width, height = self.specular_color_fill.image_size()
 
         normalized_base_color_buf = base_color_buf / stack3(luminance(base_color_buf))
+        np.nan_to_num(normalized_base_color_buf, copy=False, nan=0.0)     # if luminance in a pixel was zero
 
         has_transmission = np.amax(transmission_buf) > 0
         if not has_transmission and np.amax(specular_buf) > 0.5:
