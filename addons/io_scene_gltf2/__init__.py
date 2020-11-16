@@ -248,6 +248,12 @@ class ExportGLTF2_Base:
         default=False,
     )
 
+    use_mesh_vertices: BoolProperty(
+        name='Loose Points',
+        description='Export loose points (not just triangles)',
+        default=False,
+    )
+
     export_cameras: BoolProperty(
         name='Cameras',
         description='Export cameras',
@@ -450,6 +456,7 @@ class ExportGLTF2_Base:
             # options that don't start with 'export_'
             'use_selection',
             'use_mesh_edges',
+            'use_mesh_vertices',
         ]
         all_props = self.properties
         export_props = {
@@ -488,6 +495,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_normals'] = self.export_normals
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
         export_settings['gltf_loose_edges'] = self.use_mesh_edges
+        export_settings['gltf_loose_points'] = self.use_mesh_vertices
 
         if self.is_draco_available:
             export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression_enable
@@ -704,6 +712,7 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
 
         col = layout.column(heading='Loose Geometry', align=True)
         col.prop(operator, 'use_mesh_edges')
+        col.prop(operator, 'use_mesh_vertices')
 
         layout.prop(operator, 'export_materials')
         col = layout.column()
