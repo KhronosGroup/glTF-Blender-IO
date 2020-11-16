@@ -445,10 +445,17 @@ class ExportGLTF2_Base:
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
-        # find all export_ props
+        # find all props to save
+        exceptional = [
+            # options that don't start with 'export_'
+            'use_selection',
+            'use_mesh_edges',
+        ]
         all_props = self.properties
-        export_props = {x: getattr(self, x) for x in dir(all_props)
-                        if (x.startswith("export_") or x == "use_selection") and all_props.get(x) is not None}
+        export_props = {
+            x: getattr(self, x) for x in dir(all_props)
+            if (x.startswith("export_") or x in exceptional) and all_props.get(x) is not None
+        }
 
         context.scene[self.scene_key] = export_props
 
