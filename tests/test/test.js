@@ -721,6 +721,21 @@ describe('Exporter', function() {
                     assert.deepStrictEqual(rounded, [0, 0, 1]);
                 }
             });
+
+            it('exports loose edges/points', function() {
+                let gltfPath = path.resolve(outDirPath, '11_loose_geometry.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                assert.strictEqual(asset.meshes.length, 1);
+
+                const prims = asset.meshes[0].primitives;
+                let tri_prims = prims.filter(prim => prim.mode === 4 || prim.mode === undefined);
+                let edge_prims = prims.filter(prim => prim.mode === 1);
+                let point_prims = prims.filter(prim => prim.mode === 0);
+
+                assert.strictEqual(tri_prims.length, 1);
+                assert.strictEqual(edge_prims.length, 1);
+                assert.strictEqual(point_prims.length, 1);
+            })
         });
     });
 });
