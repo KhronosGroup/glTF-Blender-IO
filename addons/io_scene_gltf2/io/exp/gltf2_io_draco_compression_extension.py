@@ -27,17 +27,18 @@ def dll_path() -> Path:
     Get the DLL path depending on the underlying platform.
     :return: DLL path.
     """
-    lib_name = 'extern_draco'
-    blender_root = Path(bpy.app.binary_path).parent
-    python_lib = Path("{v[0]}.{v[1]}/python/lib".format(v=bpy.app.version))
-    python_version = "python{v[0]}.{v[1]}".format(v=sys.version_info)
-    paths = {
-        'win32': blender_root/python_lib/'site-packages'/'{}.dll'.format(lib_name),
-        'linux': blender_root/python_lib/python_version/'site-packages'/'lib{}.so'.format(lib_name),
-        'darwin': blender_root.parent/'Resources'/python_lib/python_version/'site-packages'/'lib{}.dylib'.format(lib_name)
-    }
+    # lib_name = 'extern_draco'
+    # blender_root = Path(bpy.app.binary_path).parent
+    # python_lib = Path("{v[0]}.{v[1]}/python/lib".format(v=bpy.app.version))
+    # python_version = "python{v[0]}.{v[1]}".format(v=sys.version_info)
+    # paths = {
+    #     'win32': blender_root/python_lib/'site-packages'/'{}.dll'.format(lib_name),
+    #     'linux': blender_root/python_lib/python_version/'site-packages'/'lib{}.so'.format(lib_name),
+    #     'darwin': blender_root.parent/'Resources'/python_lib/python_version/'site-packages'/'lib{}.dylib'.format(lib_name)
+    # }
 
-    path = paths.get(sys.platform)
+    # path = paths.get(sys.platform)
+    path = Path('/Users/work/ux3d/draco_blender/build-xcode/bin/2.80/python/lib/python3.7/Debug/libglTFBlenderIO-Draco.dylib')
     return path if path is not None else ''
 
 
