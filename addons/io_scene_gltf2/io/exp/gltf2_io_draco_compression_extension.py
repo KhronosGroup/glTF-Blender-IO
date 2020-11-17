@@ -53,47 +53,38 @@ def dll_exists(quiet=False) -> bool:
     return exists
 
 
-def compress_scene_primitives(scenes, export_settings):
+def encode_scene_primitives(scenes, export_settings):
     """
     Handles draco compression.
     Invoked after data has been gathered, but before scenes get traversed.
-    Moves position, normal and texture coordinate attributes into a Draco compressed buffer.
+    Moves position, normal and texture coordinate attributes into a Draco encoded buffer.
     """
 
     # Load DLL and setup function signatures.
-    # Nearly all functions take the compressor as the first argument.
+    # Nearly all functions take the encoder as the first argument.
     dll = cdll.LoadLibrary(str(dll_path().resolve()))
 
     # Initialization:
 
-    dll.create_compressor.restype = c_void_p
-    dll.create_compressor.argtypes = []
+    dll.encoderCreate.restype = c_void_p
+    dll.encoderCreate.argtypes = []
 
-    dll.destroy_compressor.restype = None
-    dll.destroy_compressor.argtypes = [c_void_p]
+    dll.encoderRelease.restype = None
+    dll.encoderRelease.argtypes = [c_void_p]
 
     # Configuration:
 
-    dll.set_compression_level.restype = None
-    dll.set_compression_level.argtypes = [c_void_p, c_uint32]
+    dll.encoderSetCompressionLevel.restype = None
+    dll.encoderSetCompressionLevel.argtypes = [c_void_p, c_uint32]
 
-    dll.set_position_quantization.restype = None
-    dll.set_position_quantization.argtypes = [c_void_p, c_uint32]
-
-    dll.set_normal_quantization.restype = None
-    dll.set_normal_quantization.argtypes = [c_void_p, c_uint32]
-
-    dll.set_uv_quantization.restype = None
-    dll.set_uv_quantization.argtypes = [c_void_p, c_uint32]
-
-    dll.set_generic_quantization.restype = None
-    dll.set_generic_quantization.argtypes = [c_void_p, c_uint32]
+    dll.encoderSetQuantizationBits.restype = None
+    dll.encoderSetQuantizationBits.argtypes = [c_void_p, c_uint32, c_uint32, c_uint32, c_uint32]
 
     # Data transfer:
 
-    dll.set_faces.restype = None
-    dll.set_faces.argtypes = [
-        c_void_p, # Compressor
+    dll.encoderSetFaces.restype = None
+    dll.encoderSetFaces.argtypes = [
+        c_void_p, # Encoder
         c_uint32, # Index count
         c_uint32, # Index byte length
         c_char_p  # Indices
@@ -101,53 +92,44 @@ def compress_scene_primitives(scenes, export_settings):
 
     add_attribute_fn_restype = c_uint32 # Draco id
     add_attribute_fn_argtypes = [
-        c_void_p, # Compressor
+        c_void_p, # Encoder
         c_uint32, # Attribute count
         c_char_p  # Values
     ]
 
-    dll.add_positions_f32.restype = add_attribute_fn_restype
-    dll.add_positions_f32.argtypes = add_attribute_fn_argtypes
+    dll.encoderAddPositions.restype = add_attribute_fn_restype
+    dll.encoderAddPositions.argtypes = add_attribute_fn_argtypes
 
-    dll.add_normals_f32.restype = add_attribute_fn_restype
-    dll.add_normals_f32.argtypes = add_attribute_fn_argtypes
+    dll.encoderAddNormals.restype = add_attribute_fn_restype
+    dll.encoderAddNormals.argtypes = add_attribute_fn_argtypes
 
-    dll.add_uvs_f32.restype = add_attribute_fn_restype
-    dll.add_uvs_f32.argtypes = add_attribute_fn_argtypes
+    dll.encoderAddUVs.restype = add_attribute_fn_restype
+    dll.encoderAddUVs.argtypes = add_attribute_fn_argtypes
 
-    dll.add_weights_f32.restype = add_attribute_fn_restype
-    dll.add_weights_f32.argtypes = add_attribute_fn_argtypes
+    dll.encoderAddWeights.restype = add_attribute_fn_restype
+    dll.encoderAddWeights.argtypes = add_attribute_fn_argtypes
 
-    dll.add_joints_u16.restype = add_attribute_fn_restype
-    dll.add_joints_u16.argtypes = add_attribute_fn_argtypes
+    dll.encoderAddJoints.restype = add_attribute_fn_restype
+    dll.encoderAddJoints.argtypes = add_attribute_fn_argtypes
 
-    # Compression:
+    # Encoding:
 
-    dll.compress.restype = c_bool
-    dll.compress.argtypes = [
-        c_void_p # Compressor
-    ]
+    dll.encoderEncode.restype = c_bool
+    dll.encoderEncode.argtypes = [c_void_p]
 
-    dll.compress_morphed.restype = c_bool
-    dll.compress_morphed.argtypes = [
-        c_void_p # Compressor
-    ]
+    dll.encoderEncodeMorphed.restype = c_bool
+    dll.encoderEncodeMorphed.argtypes = [c_void_p]
 
-    dll.get_compressed_size.restype = c_uint64
-    dll.get_compressed_size.argtypes = [
-        c_void_p # Compressor
-    ]
+    dll.encoderGetByteLength.restype = c_uint64
+    dll.encoderGetByteLength.argtypes = [c_void_p]
 
-    dll.copy_to_bytes.restype = None
-    dll.copy_to_bytes.argtypes = [
-        c_void_p, # Compressor
-        c_char_p  # Destination pointer
-    ]
+    dll.encoderCopy.restype = None
+    dll.encoderCopy.argtypes = [c_void_p, c_char_p]
 
     # Traverse nodes.
     for scene in scenes:
         for node in scene.nodes:
-            __traverse_node(node, lambda node: __compress_node(node, dll, export_settings))
+            __traverse_node(node, lambda node: __encode_node(node, dll, export_settings))
 
     # Cleanup memory.
     # May be shared amongst nodes because of non-unique primitive parents, so memory
@@ -157,7 +139,7 @@ def compress_scene_primitives(scenes, export_settings):
             __traverse_node(node, __dispose_memory)
 
 def __dispose_memory(node):
-    """Remove buffers from attribute, since the data now resides inside the compressed Draco buffer."""
+    """Remove buffers from attribute, since the data now resides inside the encoded Draco buffer."""
     if not (node.mesh is None):
         for primitive in node.mesh.primitives:
 
@@ -171,22 +153,22 @@ def __dispose_memory(node):
             for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
                 attribute.buffer_view = None
 
-def __compress_node(node, dll, export_settings):
-    """Compress a single node."""
+def __encode_node(node, dll, export_settings):
+    """Encodes a single node."""
     if not (node.mesh is None):
-        print_console('INFO', 'Draco exporter: Compressing mesh "%s".' % node.name)
+        print_console('INFO', 'Draco encoder: Encoding mesh "%s".' % node.name)
         for primitive in node.mesh.primitives:
-            __compress_primitive(primitive, dll, export_settings)
+            __encode_primitive(primitive, dll, export_settings)
 
 def __traverse_node(node, f):
-    """Calls f for each node and all child nodes, recursively."""
+    """Calls `f` for each node and all child nodes, recursively."""
     f(node)
     if not (node.children is None):
         for child in node.children:
             __traverse_node(child, f)
 
 
-def __compress_primitive(primitive, dll, export_settings):
+def __encode_primitive(primitive, dll, export_settings):
 
     attributes = primitive.attributes
     indices = primitive.indices
@@ -202,7 +184,7 @@ def __compress_primitive(primitive, dll, export_settings):
 
     # Positions are the only attribute type required to be present.
     if 'POSITION' not in attributes:
-        print_console('WARNING', 'Draco exporter: Primitive without positions encountered. Skipping.')
+        print_console('WARNING', 'Draco encoder: Primitive without positions encountered. Skipping.')
         return
 
     positions = attributes['POSITION']
@@ -217,68 +199,68 @@ def __compress_primitive(primitive, dll, export_settings):
     weights = [attributes[attr] for attr in attributes if attr.startswith('WEIGHTS_')]
     joints = [attributes[attr] for attr in attributes if attr.startswith('JOINTS_')]
 
-    print_console('INFO', 'Draco exporter: %s normals, %d uvs, %d weights, %d joints' %
+    print_console('INFO', 'Draco encoder: %s normals, %d uvs, %d weights, %d joints' %
         ('without' if normals is None else 'with', len(uvs), len(weights), len(joints)))
 
     # Begin mesh.
-    compressor = dll.create_compressor()
+    encoder = dll.encoderCreate()
 
     # Each attribute must have the same count of elements.
     count = positions.count
 
-    # Add attributes to mesh compressor, remembering each attribute's Draco id.
+    # Add attributes to mesh encoder, remembering each attribute's Draco id.
 
-    position_id = dll.add_positions_f32(compressor, count, positions.buffer_view.data)
+    position_id = dll.encoderAddPositions(encoder, count, positions.buffer_view.data)
 
     normal_id = None
     if normals is not None:
         if normals.count != count:
-            print_console('INFO', 'Draco exporter: Mismatching normal count. Skipping.')
-            dll.disposeCompressor(compressor)
+            print_console('INFO', 'Draco encoder: Mismatching normal count. Skipping.')
+            dll.encoderRelease(encoder)
             return
-        normal_id = dll.add_normals_f32(compressor, normals.count, normals.buffer_view.data)
+        normal_id = dll.encoderAddNormals(encoder, normals.count, normals.buffer_view.data)
 
     uv_ids = []
     for uv in uvs:
         if uv.count != count:
-            print_console('INFO', 'Draco exporter: Mismatching uv count. Skipping.')
-            dll.disposeCompressor(compressor)
+            print_console('INFO', 'Draco encoder: Mismatching uv count. Skipping.')
+            dll.encoderRelease(encoder)
             return
-        uv_ids.append(dll.add_uvs_f32(compressor, uv.count, uv.buffer_view.data))
+        uv_ids.append(dll.encoderAddUVs(encoder, uv.count, uv.buffer_view.data))
 
     weight_ids = []
     for weight in weights:
         if weight.count != count:
-            print_console('INFO', 'Draco exporter: Mismatching weight count. Skipping.')
-            dll.disposeCompressor(compressor)
+            print_console('INFO', 'Draco encoder: Mismatching weight count. Skipping.')
+            dll.encoderRelease(encoder)
             return
-        weight_ids.append(dll.add_weights_f32(compressor, weight.count, weight.buffer_view.data))
+        weight_ids.append(dll.encoderAddWeights(encoder, weight.count, weight.buffer_view.data))
 
     joint_ids = []
     for joint in joints:
         if joint.count != count:
-            print_console('INFO', 'Draco exporter: Mismatching joint count. Skipping.')
-            dll.disposeCompressor(compressor)
+            print_console('INFO', 'Draco encoder: Mismatching joint count. Skipping.')
+            dll.encoderRelease(encoder)
             return
-        joint_ids.append(dll.add_joints_u16(compressor, joint.count, joint.buffer_view.data))
+        joint_ids.append(dll.encoderAddJoints(encoder, joint.count, joint.buffer_view.data))
 
-    # Add face indices to mesh compressor.
-    dll.set_faces(compressor, indices.count, component_type_byte_length[indices.component_type.name], indices.buffer_view.data)
+    # Add face indices to mesh encoder.
+    dll.encoderSetFaces(encoder, indices.count, component_type_byte_length[indices.component_type.name], indices.buffer_view.data)
 
     # Set compression parameters.
-    dll.set_compression_level(compressor, export_settings['gltf_draco_mesh_compression_level'])
-    dll.set_position_quantization(compressor, export_settings['gltf_draco_position_quantization'])
-    dll.set_normal_quantization(compressor, export_settings['gltf_draco_normal_quantization'])
-    dll.set_uv_quantization(compressor, export_settings['gltf_draco_texcoord_quantization'])
-    dll.set_generic_quantization(compressor, export_settings['gltf_draco_generic_quantization'])
+    dll.encoderSetCompressionLevel(encoder, export_settings['gltf_draco_mesh_compression_level'])
+    dll.encoderSetQuantizationBits(encoder,
+        export_settings['gltf_draco_position_quantization'],
+        export_settings['gltf_draco_normal_quantization'],
+        export_settings['gltf_draco_texcoord_quantization'],
+        export_settings['gltf_draco_generic_quantization'])
+    
+    encodeFunction = dll.encoderEncode if not primitive.targets else dll.encoderEncodeMorphed
 
-    compress_fn = dll.compress if not primitive.targets else dll.compress_morphed
+    # After all point and connectivity data has been written to the encoder, it can finally be encoded.
+    if encodeFunction(encoder):
 
-    # After all point and connectivity data has been written to the compressor,
-    # it can finally be compressed.
-    if dll.compress(compressor):
-
-        # Compression was successful.
+        # Encoding was successful.
         # Move compressed data into a bytes object,
         # which is referenced by a 'gltf2_io_binary_data.BinaryData':
         #
@@ -288,11 +270,11 @@ def __compress_primitive(primitive, dll, export_settings):
         # }
 
         # Query size necessary to hold all the compressed data.
-        compression_size = dll.get_compressed_size(compressor)
+        compression_size = dll.encoderGetByteLength(encoder)
 
         # Allocate byte buffer and write compressed data to it.
         compressed_data = bytes(compression_size)
-        dll.copy_to_bytes(compressor, compressed_data)
+        dll.encoderCopy(encoder, compressed_data)
 
         if primitive.extensions is None:
             primitive.extensions = {}
@@ -339,7 +321,7 @@ def __compress_primitive(primitive, dll, export_settings):
         # Set to triangle list mode.
         primitive.mode = 4
 
-    # Afterwards, the compressor can be released.
-    dll.destroy_compressor(compressor)
+    # Afterwards, the encoder can be released.
+    dll.encoderRelease(encoder)
 
     return

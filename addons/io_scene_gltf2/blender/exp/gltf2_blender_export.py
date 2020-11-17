@@ -76,7 +76,7 @@ def __gather_gltf(exporter, export_settings):
     active_scene_idx, scenes, animations = plan['active_scene_idx'], plan['scenes'], plan['animations']
 
     if export_settings['gltf_draco_mesh_compression']:
-        gltf2_io_draco_compression_extension.compress_scene_primitives(scenes, export_settings)
+        gltf2_io_draco_compression_extension.encode_scene_primitives(scenes, export_settings)
         exporter.add_draco_extension()
 
     for idx, scene in enumerate(scenes):
