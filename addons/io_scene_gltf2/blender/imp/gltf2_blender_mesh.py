@@ -19,6 +19,8 @@ import numpy as np
 from ...io.imp.gltf2_io_binary import BinaryData
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
+from ...io.com.gltf2_io_debug import print_console
+from .gltf2_io_draco_compression_extension import decode_primitive
 
 
 class BlenderMesh():
@@ -133,6 +135,10 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             continue
 
         vert_index_base = len(vert_locs)
+
+        if 'KHR_draco_mesh_compression' in prim.extensions:
+            print_console('INFO', 'Draco Decoder: Found compress primitive in ' + pymesh.name)
+            decode_primitive(gltf, prim)
 
         if prim.indices is not None:
             indices = BinaryData.decode_accessor(gltf, prim.indices)

@@ -38,7 +38,7 @@ def dll_path() -> Path:
     # }
 
     # path = paths.get(sys.platform)
-    path = Path('/Users/work/ux3d/draco_blender/build-xcode/bin/2.80/python/lib/python3.7/Debug/libglTFBlenderIO-Draco.dylib')
+    path = Path('/Users/work/ux3d/draco_blender/build/bin/2.80/python/lib/python3.7/Debug/libglTF-Blender-IO_DracoMeshCompression.dylib')
     return path if path is not None else ''
 
 
