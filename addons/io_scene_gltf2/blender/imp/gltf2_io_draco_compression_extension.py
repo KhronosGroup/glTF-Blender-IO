@@ -87,7 +87,7 @@ def decode_primitive(gltf, prim):
     
     indices_byte_length = dll.decoderGetIndicesByteLength(decoder)
     indices_data_pointer = dll.decoderGetIndicesData(decoder)
-    decoded_data = memoryview((c_char * indices_byte_length).from_address(indices_data_pointer))[0:indices_byte_length]
+    decoded_data = bytes((c_char * indices_byte_length).from_address(indices_data_pointer))
 
     # Generate a new buffer holding the decoded indices.
     gltf.buffers[base_buffer_idx] = decoded_data
@@ -115,7 +115,7 @@ def decode_primitive(gltf, prim):
         
         byte_length = dll.decoderGetAttributeByteLength(decoder, dracoId)
         data_pointer = dll.decoderGetAttributeData(decoder, dracoId)
-        decoded_data = memoryview((c_char * byte_length).from_address(data_pointer))[0:byte_length]
+        decoded_data = bytes((c_char * byte_length).from_address(data_pointer))
 
         # Generate a new buffer holding the decoded vertex data.
         buffer_idx = base_buffer_idx + 1 + attr_idx
