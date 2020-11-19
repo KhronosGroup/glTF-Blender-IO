@@ -123,7 +123,7 @@ def __dispose_memory(node):
 def __encode_node(node, dll, export_settings):
     """Encodes a single node."""
     if not (node.mesh is None):
-        print_console('INFO', 'Draco encoder: Encoding mesh "%s".' % node.name)
+        print_console('INFO', 'Draco encoder: Encoding mesh {}.'.format(node.name))
         for primitive in node.mesh.primitives:
             __encode_primitive(primitive, dll, export_settings)
 
@@ -166,8 +166,8 @@ def __encode_primitive(primitive, dll, export_settings):
     weights = [attributes[attr] for attr in attributes if attr.startswith('WEIGHTS_')]
     joints = [attributes[attr] for attr in attributes if attr.startswith('JOINTS_')]
 
-    print_console('INFO', 'Draco encoder: %s normals, %d uvs, %d weights, %d joints' %
-        ('without' if normals is None else 'with', len(uvs), len(weights), len(joints)))
+    print_console('INFO', 'Draco encoder: {} normals, {} uvs, {} weights, {} joints'
+        .format('without' if normals is None else 'with', len(uvs), len(weights), len(joints)))
 
     # Begin mesh.
     encoder = dll.encoderCreate()
@@ -182,7 +182,7 @@ def __encode_primitive(primitive, dll, export_settings):
     normal_id = None
     if normals is not None:
         if normals.count != count:
-            print_console('INFO', 'Draco encoder: Mismatching normal count. Skipping.')
+            print_console('INFO', 'Draco encoder: Mismatching normal count. Skipping primitive.')
             dll.encoderRelease(encoder)
             return
         normal_id = dll.encoderAddNormals(encoder, normals.count, normals.buffer_view.data)
@@ -190,7 +190,7 @@ def __encode_primitive(primitive, dll, export_settings):
     uv_ids = []
     for uv in uvs:
         if uv.count != count:
-            print_console('INFO', 'Draco encoder: Mismatching uv count. Skipping.')
+            print_console('INFO', 'Draco encoder: Mismatching uv count. Skipping primitive.')
             dll.encoderRelease(encoder)
             return
         uv_ids.append(dll.encoderAddUVs(encoder, uv.count, uv.buffer_view.data))
@@ -198,7 +198,7 @@ def __encode_primitive(primitive, dll, export_settings):
     weight_ids = []
     for weight in weights:
         if weight.count != count:
-            print_console('INFO', 'Draco encoder: Mismatching weight count. Skipping.')
+            print_console('INFO', 'Draco encoder: Mismatching weight count. Skipping primitive.')
             dll.encoderRelease(encoder)
             return
         weight_ids.append(dll.encoderAddWeights(encoder, weight.count, weight.buffer_view.data))
@@ -206,7 +206,7 @@ def __encode_primitive(primitive, dll, export_settings):
     joint_ids = []
     for joint in joints:
         if joint.count != count:
-            print_console('INFO', 'Draco encoder: Mismatching joint count. Skipping.')
+            print_console('INFO', 'Draco encoder: Mismatching joint count. Skipping primitive.')
             dll.encoderRelease(encoder)
             return
         joint_ids.append(dll.encoderAddJoints(encoder, joint.count, joint.buffer_view.data))
