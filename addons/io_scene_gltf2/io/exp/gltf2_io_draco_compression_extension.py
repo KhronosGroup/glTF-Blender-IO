@@ -14,7 +14,7 @@
 
 import bpy
 import sys
-from ctypes import c_void_p, c_uint32, c_uint64, c_bool, c_char_p, cdll
+from ctypes import c_void_p, c_uint8, c_uint32, c_uint64, c_bool, c_char_p, cdll
 from pathlib import Path
 import struct
 
@@ -85,10 +85,7 @@ def encode_scene_primitives(scenes, export_settings):
     # Encoding:
 
     dll.encoderEncode.restype = c_bool
-    dll.encoderEncode.argtypes = [c_void_p]
-
-    dll.encoderEncodeMorphed.restype = c_bool
-    dll.encoderEncodeMorphed.argtypes = [c_void_p]
+    dll.encoderEncode.argtypes = [c_void_p, c_uint8]
 
     dll.encoderGetByteLength.restype = c_uint64
     dll.encoderGetByteLength.argtypes = [c_void_p]
@@ -225,10 +222,8 @@ def __encode_primitive(primitive, dll, export_settings):
         export_settings['gltf_draco_texcoord_quantization'],
         export_settings['gltf_draco_generic_quantization'])
     
-    encodeFunction = dll.encoderEncode if not primitive.targets else dll.encoderEncodeMorphed
-
     # After all point and connectivity data has been written to the encoder, it can finally be encoded.
-    if encodeFunction(encoder):
+    if dll.encoderEncode(encoder, primitive.targets is not None):
 
         # Encoding was successful.
         # Move compressed data into a bytes object,
