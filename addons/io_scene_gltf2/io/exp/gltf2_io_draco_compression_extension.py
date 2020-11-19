@@ -182,47 +182,49 @@ def __encode_primitive(primitive, dll, export_settings):
         export_settings['gltf_draco_texcoord_quantization'],
         export_settings['gltf_draco_generic_quantization'])
     
-    if dll.encoderEncode(encoder, primitive.targets is not None and len(primitive.targets) > 0):
-        byte_length = dll.encoderGetByteLength(encoder)
-        encoded_data = bytes(byte_length)
-        dll.encoderCopy(encoder, encoded_data)
+    if not dll.encoderEncode(encoder, primitive.targets is not None and len(primitive.targets) > 0):
+        print_console('ERROR', 'Could not encode primitive. Skipping primitive.')
 
-        extension = {
-            'bufferView': BinaryData(encoded_data),
-            'attributes': {
-                'POSITION': position_id
-            }
+    byte_length = dll.encoderGetByteLength(encoder)
+    encoded_data = bytes(byte_length)
+    dll.encoderCopy(encoder, encoded_data)
+
+    extension = {
+        'bufferView': BinaryData(encoded_data),
+        'attributes': {
+            'POSITION': position_id
         }
+    }
 
-        if normals is not None:
-            extension['attributes']['NORMAL'] = normal_id
+    if normals is not None:
+        extension['attributes']['NORMAL'] = normal_id
 
-        for (k, id) in enumerate(uv_ids):
-            extension['attributes']['TEXCOORD_' + str(k)] = id
+    for (k, id) in enumerate(uv_ids):
+        extension['attributes']['TEXCOORD_' + str(k)] = id
 
-        for (k, id) in enumerate(weight_ids):
-            extension['attributes']['WEIGHTS_' + str(k)] = id
+    for (k, id) in enumerate(weight_ids):
+        extension['attributes']['WEIGHTS_' + str(k)] = id
 
-        for (k, id) in enumerate(joint_ids):
-            extension['attributes']['JOINTS_' + str(k)] = id
+    for (k, id) in enumerate(joint_ids):
+        extension['attributes']['JOINTS_' + str(k)] = id
 
-        if primitive.extensions is None:
-            primitive.extensions = {}
-        
-        primitive.extensions['KHR_draco_mesh_compression'] = extension
+    if primitive.extensions is None:
+        primitive.extensions = {}
+    
+    primitive.extensions['KHR_draco_mesh_compression'] = extension
 
-        # Remove buffer views from the accessors of the attributes which compressed.
-        positions.buffer_view = None
-        if normals is not None:
-            normals.buffer_view = None
-        for uv in uvs:
-            uv.buffer_view = None
-        for weight in weights:
-            weight.buffer_view = None
-        for joint in joints:
-            joint.buffer_view = None
+    # Remove buffer views from the accessors of the attributes which compressed.
+    positions.buffer_view = None
+    if normals is not None:
+        normals.buffer_view = None
+    for uv in uvs:
+        uv.buffer_view = None
+    for weight in weights:
+        weight.buffer_view = None
+    for joint in joints:
+        joint.buffer_view = None
 
-        # Set to triangle list mode.
-        primitive.mode = 4
+    # Set to triangle list mode.
+    primitive.mode = 4
 
     dll.encoderRelease(encoder)
