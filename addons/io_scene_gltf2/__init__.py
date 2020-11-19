@@ -200,6 +200,14 @@ class ExportGLTF2_Base:
         max=30
     )
 
+    export_draco_color_quantization: IntProperty(
+        name='Color quantization bits',
+        description='Quantization bits for color values (0 = no quantization)',
+        default=10,
+        min=0,
+        max=30
+    )
+
     export_draco_generic_quantization: IntProperty(
         name='Generic quantization bits',
         description='Quantization bits for generic coordinate values like weights or joints (0 = no quantization)',
@@ -471,6 +479,7 @@ class ExportGLTF2_Base:
             export_settings['gltf_draco_position_quantization'] = self.export_draco_position_quantization
             export_settings['gltf_draco_normal_quantization'] = self.export_draco_normal_quantization
             export_settings['gltf_draco_texcoord_quantization'] = self.export_draco_texcoord_quantization
+            export_settings['gltf_draco_color_quantization'] = self.export_draco_color_quantization
             export_settings['gltf_draco_generic_quantization'] = self.export_draco_generic_quantization
         else:
             export_settings['gltf_draco_mesh_compression'] = False
@@ -719,7 +728,8 @@ class GLTF_PT_export_geometry_compression(bpy.types.Panel):
         col = layout.column(align=True)
         col.prop(operator, 'export_draco_position_quantization', text="Quantize Position")
         col.prop(operator, 'export_draco_normal_quantization', text="Normal")
-        col.prop(operator, 'export_draco_texcoord_quantization', text="Tex Coords")
+        col.prop(operator, 'export_draco_texcoord_quantization', text="Tex Coord")
+        col.prop(operator, 'export_draco_color_quantization', text="Color")
         col.prop(operator, 'export_draco_generic_quantization', text="Generic")
 
 

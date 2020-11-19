@@ -39,7 +39,7 @@ def encode_scene_primitives(scenes, export_settings):
     dll.encoderSetCompressionLevel.argtypes = [c_void_p, c_uint32]
 
     dll.encoderSetQuantizationBits.restype = None
-    dll.encoderSetQuantizationBits.argtypes = [c_void_p, c_uint32, c_uint32, c_uint32, c_uint32]
+    dll.encoderSetQuantizationBits.argtypes = [c_void_p, c_uint32, c_uint32, c_uint32, c_uint32, c_uint32]
     
     dll.encoderSetIndices.restype = None
     dll.encoderSetIndices.argtypes = [c_void_p, c_size_t, c_uint32, c_void_p]
@@ -114,6 +114,7 @@ def __encode_primitive(primitive, dll, export_settings):
         export_settings['gltf_draco_position_quantization'],
         export_settings['gltf_draco_normal_quantization'],
         export_settings['gltf_draco_texcoord_quantization'],
+        export_settings['gltf_draco_color_quantization'],
         export_settings['gltf_draco_generic_quantization'])
     
     if not dll.encoderEncode(encoder, primitive.targets is not None and len(primitive.targets) > 0):
