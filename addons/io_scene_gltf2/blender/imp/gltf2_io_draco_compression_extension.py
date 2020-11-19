@@ -51,8 +51,8 @@ def decode_primitive(gltf, prim):
     dll.decoderGetAttributeByteLength.restype = c_size_t
     dll.decoderGetAttributeByteLength.argtypes = [c_void_p, c_uint32]
 
-    dll.decoderGetAttributeData.restype = c_void_p
-    dll.decoderGetAttributeData.argtypes = [c_void_p, c_uint32]
+    dll.decoderCopyAttribute.restype = None
+    dll.decoderCopyAttribute.argtypes = [c_void_p, c_uint32, c_void_p]
 
     dll.decoderReadIndices.restype = c_bool
     dll.decoderReadIndices.argtypes = [c_void_p, c_size_t]
@@ -60,8 +60,8 @@ def decode_primitive(gltf, prim):
     dll.decoderGetIndicesByteLength.restype = c_size_t
     dll.decoderGetIndicesByteLength.argtypes = [c_void_p]
 
-    dll.decoderGetIndicesData.restype = c_void_p
-    dll.decoderGetIndicesData.argtypes = [c_void_p]
+    dll.decoderCopyIndices.restype = None
+    dll.decoderCopyIndices.argtypes = [c_void_p, c_void_p]
     
     decoder = dll.decoderCreate()
     extension = prim.extensions['KHR_draco_mesh_compression']
@@ -86,8 +86,8 @@ def decode_primitive(gltf, prim):
         return
     
     indices_byte_length = dll.decoderGetIndicesByteLength(decoder)
-    indices_data_pointer = dll.decoderGetIndicesData(decoder)
-    decoded_data = bytes((c_char * indices_byte_length).from_address(indices_data_pointer))
+    decoded_data = bytes(indices_byte_length)
+    dll.decoderCopyIndices(decoder, decoded_data)
 
     # Generate a new buffer holding the decoded indices.
     gltf.buffers[base_buffer_idx] = decoded_data
@@ -114,8 +114,8 @@ def decode_primitive(gltf, prim):
             return
         
         byte_length = dll.decoderGetAttributeByteLength(decoder, dracoId)
-        data_pointer = dll.decoderGetAttributeData(decoder, dracoId)
-        decoded_data = bytes((c_char * byte_length).from_address(data_pointer))
+        decoded_data = bytes(byte_length)
+        dll.decoderCopyAttribute(decoder, dracoId, decoded_data)
 
         # Generate a new buffer holding the decoded vertex data.
         buffer_idx = base_buffer_idx + 1 + attr_idx
