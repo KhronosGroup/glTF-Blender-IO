@@ -23,7 +23,6 @@ from io_scene_gltf2.io.com.gltf2_io_draco_compression_extension import dll_path
 def encode_scene_primitives(scenes, export_settings):
     """
     Handles draco compression.
-    Invoked after data has been gathered, but before scenes get traversed.
     Moves position, normal and texture coordinate attributes into a Draco encoded buffer.
     """
 
@@ -41,9 +40,9 @@ def encode_scene_primitives(scenes, export_settings):
 
     dll.encoderSetQuantizationBits.restype = None
     dll.encoderSetQuantizationBits.argtypes = [c_void_p, c_uint32, c_uint32, c_uint32, c_uint32]
-
-    dll.encoderSetFaces.restype = None
-    dll.encoderSetFaces.argtypes = [c_void_p, c_uint32, c_uint32, c_void_p]
+    
+    dll.encoderSetIndices.restype = None
+    dll.encoderSetIndices.argtypes = [c_void_p, c_size_t, c_uint32, c_void_p]
 
     dll.encoderSetAttribute.restype = c_uint32
     dll.encoderSetAttribute.argtypes = [c_void_p, c_char_p, c_size_t, c_char_p, c_void_p]
@@ -61,11 +60,6 @@ def encode_scene_primitives(scenes, export_settings):
         for node in scene.nodes:
             __traverse_node(node, lambda node: __encode_node(node, dll, export_settings))
 
-def __encode_node(node, dll, export_settings):
-    if not (node.mesh is None):
-        print_console('INFO', 'Draco encoder: Encoding mesh {}.'.format(node.name))
-        for primitive in node.mesh.primitives:
-            __encode_primitive(primitive, dll, export_settings)
 
 def __traverse_node(node, f):
     f(node)
@@ -74,17 +68,16 @@ def __traverse_node(node, f):
             __traverse_node(child, f)
 
 
+def __encode_node(node, dll, export_settings):
+    if not (node.mesh is None):
+        print_console('INFO', 'Draco encoder: Encoding mesh {}.'.format(node.name))
+        for primitive in node.mesh.primitives:
+            __encode_primitive(primitive, dll, export_settings)
+
+
 def __encode_primitive(primitive, dll, export_settings):
     attributes = primitive.attributes
     indices = primitive.indices
-
-    component_type_byte_length = {
-        'Byte': 1,
-        'UnsignedByte': 1,
-        'Short': 2,
-        'UnsignedShort': 2,
-        'UnsignedInt': 4,
-    }
 
     if 'POSITION' not in attributes:
         print_console('WARNING', 'Draco encoder: Primitive without positions encountered. Skipping.')
@@ -113,7 +106,7 @@ def __encode_primitive(primitive, dll, export_settings):
         draco_ids[attr_name] = draco_id
         attr.buffer_view = None
 
-    dll.encoderSetFaces(encoder, indices.count, component_type_byte_length[indices.component_type.name], indices.buffer_view.data)
+    dll.encoderSetIndices(encoder, indices.component_type, indices.count, indices.buffer_view.data)
     indices.buffer_view = None
 
     dll.encoderSetCompressionLevel(encoder, export_settings['gltf_draco_mesh_compression_level'])
