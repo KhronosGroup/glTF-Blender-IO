@@ -220,7 +220,7 @@ def __encode_primitive(primitive, dll, export_settings):
         export_settings['gltf_draco_generic_quantization'])
     
     # After all point and connectivity data has been written to the encoder, it can finally be encoded.
-    if dll.encoderEncode(encoder, primitive.targets is not None):
+    if dll.encoderEncode(encoder, primitive.targets is not None and len(primitive.targets) > 0):
 
         # Encoding was successful.
         # Move compressed data into a bytes object,
