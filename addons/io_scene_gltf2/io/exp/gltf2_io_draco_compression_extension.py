@@ -61,31 +61,13 @@ def encode_scene_primitives(scenes, export_settings):
         for node in scene.nodes:
             __traverse_node(node, lambda node: __encode_node(node, dll, export_settings))
 
-    # Memory might be shared amongst nodes because of non-unique primitive parents, so release happens delayed.
-    for scene in scenes:
-        for node in scene.nodes:
-            __traverse_node(node, __dispose_memory)
-
-def __dispose_memory(node):
-    """Remove buffers from attribute, since the data now resides inside the encoded Draco buffer."""
-    if not (node.mesh is None):
-        for primitive in node.mesh.primitives:
-            primitive.indices.buffer_view = None
-            attributes = primitive.attributes
-            if 'NORMAL' in attributes:
-                attributes['NORMAL'].buffer_view = None
-            for attribute in [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]:
-                attribute.buffer_view = None
-
 def __encode_node(node, dll, export_settings):
-    """Encodes a single node."""
     if not (node.mesh is None):
         print_console('INFO', 'Draco encoder: Encoding mesh {}.'.format(node.name))
         for primitive in node.mesh.primitives:
             __encode_primitive(primitive, dll, export_settings)
 
 def __traverse_node(node, f):
-    """Calls `f` for each node and all child nodes, recursively."""
     f(node)
     if not (node.children is None):
         for child in node.children:
@@ -132,6 +114,7 @@ def __encode_primitive(primitive, dll, export_settings):
         attr.buffer_view = None
 
     dll.encoderSetFaces(encoder, indices.count, component_type_byte_length[indices.component_type.name], indices.buffer_view.data)
+    indices.buffer_view = None
 
     dll.encoderSetCompressionLevel(encoder, export_settings['gltf_draco_mesh_compression_level'])
     dll.encoderSetQuantizationBits(encoder,
