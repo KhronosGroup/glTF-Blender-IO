@@ -31,7 +31,7 @@ def encode_scene_primitives(scenes, export_settings):
     dll = cdll.LoadLibrary(str(dll_path().resolve()))
 
     dll.encoderCreate.restype = c_void_p
-    dll.encoderCreate.argtypes = []
+    dll.encoderCreate.argtypes = [c_uint32]
 
     dll.encoderRelease.restype = None
     dll.encoderRelease.argtypes = [c_void_p]
@@ -45,23 +45,8 @@ def encode_scene_primitives(scenes, export_settings):
     dll.encoderSetFaces.restype = None
     dll.encoderSetFaces.argtypes = [c_void_p, c_uint32, c_uint32, c_void_p]
 
-    add_attribute_fn_restype = c_uint32
-    add_attribute_fn_argtypes = [c_void_p, c_uint32, c_void_p]
-
-    dll.encoderAddPositions.restype = add_attribute_fn_restype
-    dll.encoderAddPositions.argtypes = add_attribute_fn_argtypes
-
-    dll.encoderAddNormals.restype = add_attribute_fn_restype
-    dll.encoderAddNormals.argtypes = add_attribute_fn_argtypes
-
-    dll.encoderAddUVs.restype = add_attribute_fn_restype
-    dll.encoderAddUVs.argtypes = add_attribute_fn_argtypes
-
-    dll.encoderAddWeights.restype = add_attribute_fn_restype
-    dll.encoderAddWeights.argtypes = add_attribute_fn_argtypes
-
-    dll.encoderAddJoints.restype = add_attribute_fn_restype
-    dll.encoderAddJoints.argtypes = add_attribute_fn_argtypes
+    dll.encoderSetAttribute.restype = c_uint32
+    dll.encoderSetAttribute.argtypes = [c_void_p, c_char_p, c_size_t, c_char_p, c_void_p]
 
     dll.encoderEncode.restype = c_bool
     dll.encoderEncode.argtypes = [c_void_p, c_uint8]
@@ -134,44 +119,17 @@ def __encode_primitive(primitive, dll, export_settings):
     weights = [attributes[attr] for attr in attributes if attr.startswith('WEIGHTS_')]
     joints = [attributes[attr] for attr in attributes if attr.startswith('JOINTS_')]
 
-    print_console('INFO', 'Draco encoder: {} normals, {} uvs, {} weights, {} joints'
-        .format('without' if normals is None else 'with', len(uvs), len(weights), len(joints)))
+    encoder = dll.encoderCreate(positions.count)
 
-    encoder = dll.encoderCreate()
-
-    position_id = dll.encoderAddPositions(encoder, positions.count, positions.buffer_view.data)
-
-    normal_id = None
-    if normals is not None:
-        if normals.count != positions.count:
-            print_console('INFO', 'Draco encoder: Mismatching normal count. Skipping primitive.')
-            dll.encoderRelease(encoder)
+    draco_ids = {}
+    for attr_name in attributes:
+        attr = attributes[attr_name]
+        draco_id = dll.encoderSetAttribute(encoder, attr_name.encode(), attr.component_type, attr.type.encode(), attr.buffer_view.data)
+        if draco_id == -1:
+            print_console('ERROR', 'Could not encode attribute {}. Skipping primitive.'.format(attr_name))
             return
-        normal_id = dll.encoderAddNormals(encoder, normals.count, normals.buffer_view.data)
-
-    uv_ids = []
-    for uv in uvs:
-        if uv.count != positions.count:
-            print_console('INFO', 'Draco encoder: Mismatching uv count. Skipping primitive.')
-            dll.encoderRelease(encoder)
-            return
-        uv_ids.append(dll.encoderAddUVs(encoder, uv.count, uv.buffer_view.data))
-
-    weight_ids = []
-    for weight in weights:
-        if weight.count != positions.count:
-            print_console('INFO', 'Draco encoder: Mismatching weight count. Skipping primitive.')
-            dll.encoderRelease(encoder)
-            return
-        weight_ids.append(dll.encoderAddWeights(encoder, weight.count, weight.buffer_view.data))
-
-    joint_ids = []
-    for joint in joints:
-        if joint.count != positions.count:
-            print_console('INFO', 'Draco encoder: Mismatching joint count. Skipping primitive.')
-            dll.encoderRelease(encoder)
-            return
-        joint_ids.append(dll.encoderAddJoints(encoder, joint.count, joint.buffer_view.data))
+        draco_ids[attr_name] = draco_id
+        attr.buffer_view = None
 
     dll.encoderSetFaces(encoder, indices.count, component_type_byte_length[indices.component_type.name], indices.buffer_view.data)
 
@@ -189,40 +147,13 @@ def __encode_primitive(primitive, dll, export_settings):
     encoded_data = bytes(byte_length)
     dll.encoderCopy(encoder, encoded_data)
 
-    extension = {
-        'bufferView': BinaryData(encoded_data),
-        'attributes': {
-            'POSITION': position_id
-        }
-    }
-
-    if normals is not None:
-        extension['attributes']['NORMAL'] = normal_id
-
-    for (k, id) in enumerate(uv_ids):
-        extension['attributes']['TEXCOORD_' + str(k)] = id
-
-    for (k, id) in enumerate(weight_ids):
-        extension['attributes']['WEIGHTS_' + str(k)] = id
-
-    for (k, id) in enumerate(joint_ids):
-        extension['attributes']['JOINTS_' + str(k)] = id
-
     if primitive.extensions is None:
         primitive.extensions = {}
     
-    primitive.extensions['KHR_draco_mesh_compression'] = extension
-
-    # Remove buffer views from the accessors of the attributes which compressed.
-    positions.buffer_view = None
-    if normals is not None:
-        normals.buffer_view = None
-    for uv in uvs:
-        uv.buffer_view = None
-    for weight in weights:
-        weight.buffer_view = None
-    for joint in joints:
-        joint.buffer_view = None
+    primitive.extensions['KHR_draco_mesh_compression'] = {
+        'bufferView': BinaryData(encoded_data),
+        'attributes': draco_ids
+    }
 
     # Set to triangle list mode.
     primitive.mode = 4
