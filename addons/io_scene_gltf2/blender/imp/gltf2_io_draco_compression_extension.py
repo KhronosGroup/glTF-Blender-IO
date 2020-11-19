@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
-import sys
 from ctypes import *
-from pathlib import Path
-import struct
 
 from io_scene_gltf2.io.com.gltf2_io import BufferView
 from io_scene_gltf2.io.imp.gltf2_io_binary import BinaryData
