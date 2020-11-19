@@ -18,6 +18,7 @@ from ctypes import *
 from pathlib import Path
 import struct
 
+from io_scene_gltf2.io.com.gltf2_io import BufferView
 from io_scene_gltf2.io.imp.gltf2_io_binary import BinaryData
 from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.com.gltf2_io_draco_compression_extension import dll_path
@@ -69,21 +70,64 @@ def decode_primitive(gltf, prim):
     draco_buffer = BinaryData.get_buffer_view(gltf, extension['bufferView'])
     if not dll.decoderDecode(decoder, draco_buffer.obj, draco_buffer.nbytes):
         print_console('ERROR', 'Draco Decoder: Could not decode primitive {}. Skipping primitive.'.format(prim.name))
+        return
+
+    # Choose a buffer index which does not yet exist, skipping over existing glTF buffers yet to be loaded
+    # and buffers which were generated and did not exist in the initial glTF file, like this decoder does.
+    base_buffer_idx = len(gltf.data.buffers)
+    for existing_buffer_idx in gltf.buffers:
+        if base_buffer_idx <= existing_buffer_idx:
+            base_buffer_idx = existing_buffer_idx + 1
+    
+    # Read indices.
+    index_accessor = gltf.data.accessors[prim.indices]
+    if not dll.decoderReadIndices(decoder, index_accessor.component_type):
+        print_console('ERROR', 'Draco Decoder: Could not decode indices of primitive {}. Skipping primitive.'.format(prim.name))
+        return
+    
+    indices_byte_length = dll.decoderGetIndicesByteLength(decoder)
+    indices_data_pointer = dll.decoderGetIndicesData(decoder)
+    decoded_data = memoryview((c_char * indices_byte_length).from_address(indices_data_pointer))[0:indices_byte_length]
+
+    # Generate a new buffer holding the decoded indices.
+    gltf.buffers[base_buffer_idx] = decoded_data
+
+    # Create a buffer view referencing the new buffer.
+    gltf.data.buffer_views.append(BufferView.from_dict({
+        'buffer': base_buffer_idx,
+        'byteLength': indices_byte_length
+    }))
+
+    # Update accessor to point to the new buffer view.
+    index_accessor.buffer_view = len(gltf.data.buffer_views) - 1
     
     # Read each attribute.
-    for attr in extension['attributes']:
+    for attr_idx, attr in enumerate(extension['attributes']):
         dracoId = extension['attributes'][attr]
         if attr not in prim.attributes:
-            print_console('ERROR', 'Draco Decoder: Draco attribute {} not in primitive attributes'.format(attr))
+            print_console('ERROR', 'Draco Decoder: Draco attribute {} not in primitive attributes. Skipping primitive.'.format(attr))
             return
         
         accessor = gltf.data.accessors[prim.attributes[attr]]
         if not dll.decoderReadAttribute(decoder, dracoId, accessor.component_type, accessor.type.encode()):
             print_console('ERROR', 'Draco Decoder: Could not decode attribute {} of primitive {}. Skipping primitive.'.format(attr, prim.name))
+            return
         
         byte_length = dll.decoderGetAttributeByteLength(decoder, dracoId)
-        data = dll.decoderGetAttributeData(decoder, dracoId)
+        data_pointer = dll.decoderGetAttributeData(decoder, dracoId)
+        decoded_data = memoryview((c_char * byte_length).from_address(data_pointer))[0:byte_length]
 
-        buffer_idx = 0
+        # Generate a new buffer holding the decoded vertex data.
+        buffer_idx = base_buffer_idx + 1 + attr_idx
+        gltf.buffers[buffer_idx] = decoded_data
+        
+        # Create a buffer view referencing the new buffer.
+        gltf.data.buffer_views.append(BufferView.from_dict({
+            'buffer': buffer_idx,
+            'byteLength': byte_length
+        }))
+
+        # Update accessor to point to the new buffer view.
+        accessor.buffer_view = len(gltf.data.buffer_views) - 1
 
     dll.decoderRelease(decoder)
