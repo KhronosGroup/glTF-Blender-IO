@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
+import os
 import sys
-from ctypes import c_void_p, c_uint32, c_uint64, c_bool, c_char_p, cdll
 from pathlib import Path
-import struct
+import bpy
 
-from io_scene_gltf2.io.exp.gltf2_io_binary_data import BinaryData
 from ...io.com.gltf2_io_debug import print_console
 
 
@@ -27,19 +25,31 @@ def dll_path() -> Path:
     Get the DLL path depending on the underlying platform.
     :return: DLL path.
     """
-    # lib_name = 'extern_draco'
-    # blender_root = Path(bpy.app.binary_path).parent
-    # python_lib = Path("{v[0]}.{v[1]}/python/lib".format(v=bpy.app.version))
-    # python_version = "python{v[0]}.{v[1]}".format(v=sys.version_info)
-    # paths = {
-    #     'win32': blender_root/python_lib/'site-packages'/'{}.dll'.format(lib_name),
-    #     'linux': blender_root/python_lib/python_version/'site-packages'/'lib{}.so'.format(lib_name),
-    #     'darwin': blender_root.parent/'Resources'/python_lib/python_version/'site-packages'/'lib{}.dylib'.format(lib_name)
-    # }
+    lib_name = 'extern_draco'
+    blender_root = Path(bpy.app.binary_path).parent
+    python_lib = Path('{v[0]}.{v[1]}/python/lib'.format(v=bpy.app.version))
+    python_version = 'python{v[0]}.{v[1]}'.format(v=sys.version_info)
 
-    # path = paths.get(sys.platform)
-    path = Path('/Users/work/ux3d/draco_blender/build/bin/2.80/python/lib/python3.7/Debug/libglTF-Blender-IO_DracoMeshCompression.dylib')
-    return path if path is not None else ''
+    path = os.environ.get('BLENDER_EXTERN_DRACO_LIBRARY_PATH')
+    if path is None:
+        path = {
+            'win32': blender_root / python_lib / 'site-packages',
+            'linux': blender_root / python_lib / python_version / 'site-packages',
+            'darwin': blender_root.parent / 'Resources' / python_lib / python_version / 'site-packages'
+        }.get(sys.platform)
+    else:
+        path = Path(path)
+    
+    library_name = {
+        'win32': '{}.dll'.format(lib_name),
+        'linux': 'lib{}.so'.format(lib_name),
+        'darwin': 'lib{}.dylib'.format(lib_name)
+    }.get(sys.platform)
+
+    if path is None or library_name is None:
+        print_console('WARNING', 'Unsupported platform {}, Draco mesh compression is unavailable'.format(sys.platform))
+
+    return path / library_name
 
 
 def dll_exists(quiet=False) -> bool:
