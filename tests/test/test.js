@@ -1155,6 +1155,28 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const animNames = asset.animations.map(anim => anim.name);
                 assert.deepStrictEqual(animNames.sort(), expectedAnimNames.sort());
             });
+
+            it('roundtrips texture wrap modes', function() {
+                let dir = '13_texture_wrapping';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const materials = asset.materials;
+                assert.deepStrictEqual(materials.length, 2);
+
+                const mat1 = materials.find(mat => mat.name == 'Mirror x Mirror');
+                const tex1 = asset.textures[mat1.pbrMetallicRoughness.baseColorTexture.index];
+                const samp1 = asset.samplers[tex1.sampler];
+                assert.deepStrictEqual(samp1.wrapS, 33648);  // MIRRORED_REPEAT
+                assert.deepStrictEqual(samp1.wrapT, 33648);  // MIRRORED_REPEAT
+
+                const mat2 = materials.find(mat => mat.name == 'Repeat x Clamp');
+                const tex2 = asset.textures[mat2.pbrMetallicRoughness.baseColorTexture.index];
+                const samp2 = asset.samplers[tex2.sampler];
+                assert.deepStrictEqual(samp2.wrapS || 10497, 10497);  // REPEAT
+                assert.deepStrictEqual(samp2.wrapT, 33071);  // CLAMP_TO_EDGE
+            })
         });
     });
 });
