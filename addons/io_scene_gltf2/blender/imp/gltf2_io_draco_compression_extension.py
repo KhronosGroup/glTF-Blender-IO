@@ -63,9 +63,9 @@ def decode_primitive(gltf, prim):
     extension = prim.extensions['KHR_draco_mesh_compression']
 
     # Create Draco decoder.
-    draco_buffer = BinaryData.get_buffer_view(gltf, extension['bufferView'])
-    if not dll.decoderDecode(decoder, draco_buffer.obj, draco_buffer.nbytes):
-        print_console('ERROR', 'Draco Decoder: Could not decode primitive {}. Skipping primitive.'.format(prim.name))
+    draco_buffer = bytes(BinaryData.get_buffer_view(gltf, extension['bufferView']))
+    if not dll.decoderDecode(decoder, draco_buffer, len(draco_buffer)):
+        print_console('ERROR', 'Draco Decoder: Could not decode primitive {}. Skipping primitive.'.format(prim))
         return
 
     # Choose a buffer index which does not yet exist, skipping over existing glTF buffers yet to be loaded
