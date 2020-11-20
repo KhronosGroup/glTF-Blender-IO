@@ -137,7 +137,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         vert_index_base = len(vert_locs)
 
         if prim.extensions is not None and 'KHR_draco_mesh_compression' in prim.extensions:
-            print_console('INFO', 'Draco Decoder: Found compressed primitive in ' + pymesh.name)
+            print_console('INFO', 'Draco Decoder: Decode primitive {}'.format(pymesh.name or '[unnamed]'))
             decode_primitive(gltf, prim)
 
         if prim.indices is not None:
