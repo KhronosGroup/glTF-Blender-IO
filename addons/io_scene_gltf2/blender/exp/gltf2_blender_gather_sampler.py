@@ -94,6 +94,9 @@ def __gather_wrap(blender_shader_node, export_settings):
     # First gather from the Texture node
     if blender_shader_node.extension == 'EXTEND':
         wrap_s = TextureWrap.ClampToEdge
+    elif blender_shader_node.extension == 'CLIP':
+        # Not possible in glTF, but ClampToEdge is closest
+        wrap_s = TextureWrap.ClampToEdge
     else:
         wrap_s = TextureWrap.Repeat
     wrap_t = wrap_s
