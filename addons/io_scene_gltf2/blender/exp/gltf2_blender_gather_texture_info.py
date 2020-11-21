@@ -19,6 +19,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.blender.exp.gltf2_blender_get import previous_node
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
@@ -133,31 +134,21 @@ def __gather_index(blender_shader_sockets, export_settings):
 
 def __gather_tex_coord(primary_socket, export_settings):
     blender_shader_node = __get_tex_from_socket(primary_socket).shader_node
-    if len(blender_shader_node.inputs['Vector'].links) == 0:
-        return 0
 
-    input_node = blender_shader_node.inputs['Vector'].links[0].from_node
+    node = previous_node(blender_shader_node.inputs['Vector'])
 
-    if isinstance(input_node, bpy.types.ShaderNodeMapping):
+    # Skip over Mapping (for texture transform)
+    if node and node.type == 'MAPPING':
+        node = previous_node(node.inputs['Vector'])
 
-        if len(input_node.inputs['Vector'].links) == 0:
-            return 0
+    if node and node.type == 'UVMAP' and node.uv_map:
+        # Try to gather map index.
+        for blender_mesh in bpy.data.meshes:
+            texcoord_idx = blender_mesh.uv_layers.find(node.uv_map)
+            if texcoord_idx >= 0:
+                return texcoord_idx or None
 
-        input_node = input_node.inputs['Vector'].links[0].from_node
-
-    if not isinstance(input_node, bpy.types.ShaderNodeUVMap):
-        return 0
-
-    if input_node.uv_map == '':
-        return 0
-
-    # Try to gather map index.
-    for blender_mesh in bpy.data.meshes:
-        texCoordIndex = blender_mesh.uv_layers.find(input_node.uv_map)
-        if texCoordIndex >= 0:
-            return texCoordIndex
-
-    return 0
+    return None
 
 
 def __get_tex_from_socket(socket):

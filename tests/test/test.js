@@ -944,12 +944,13 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
                 assert.strictEqual(asset.materials.length, 1);
+                const material = asset.materials[0];
                 // Same texture
-                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
-                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                assert.strictEqual(material.occlusionTexture.index, 0);
+                assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
                 // Different UVMaps
-                assert.strictEqual(asset.materials[0].occlusionTexture.texCoord, 1);
-                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.texCoord, 0);
+                assert.strictEqual(material.occlusionTexture.texCoord, 1);
+                assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord || 0, 0);
             });
 
             it('roundtrips baseColorFactor, etc. when used with textures', function() {
