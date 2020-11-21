@@ -94,10 +94,13 @@ def __gather_extensions(primary_socket, export_settings):
     if not hasattr(primary_socket, 'links'):
         return None
 
+    # Look for a Mapping node before the texture node
     texture_node = __get_tex_from_socket(primary_socket).shader_node
-    if texture_node is None:
+    node = previous_node(texture_node.inputs['Vector'])
+    if node is None or node.type != 'MAPPING':
         return None
-    texture_transform = gltf2_blender_get.get_texture_transform_from_texture_node(texture_node)
+
+    texture_transform = gltf2_blender_get.get_texture_transform_from_mapping_node(node)
     if texture_transform is None:
         return None
 
