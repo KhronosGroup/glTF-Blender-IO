@@ -275,11 +275,21 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for uv_i in range(num_uvs):
         name = 'UVMap' if uv_i == 0 else 'UVMap.%03d' % uv_i
         layer = mesh.uv_layers.new(name=name)
+
+        if layer is None:
+            print("WARNING: UV map is ignored because the maximum number of UV layers has been reached.")
+            break
+
         layer.data.foreach_set('uv', squish(loop_uvs[uv_i]))
 
     for col_i in range(num_cols):
         name = 'Col' if col_i == 0 else 'Col.%03d' % col_i
         layer = mesh.vertex_colors.new(name=name)
+
+        if layer is None:
+            print("WARNING: Vertex colors are ignored because the maximum number of vertex color layers has been "
+                  "reached.")
+            break
 
         layer.data.foreach_set('color', squish(loop_cols[col_i]))
 
