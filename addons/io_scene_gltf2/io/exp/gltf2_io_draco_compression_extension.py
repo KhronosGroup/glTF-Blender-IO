@@ -89,20 +89,12 @@ def __encode_primitive(primitive, dll, export_settings):
     if attributes['POSITION'].buffer_view is None:
         return
 
-    normals = attributes['NORMAL'] if 'NORMAL' in attributes else None
-    uvs = [attributes[attr] for attr in attributes if attr.startswith('TEXCOORD_')]
-    weights = [attributes[attr] for attr in attributes if attr.startswith('WEIGHTS_')]
-    joints = [attributes[attr] for attr in attributes if attr.startswith('JOINTS_')]
-
     encoder = dll.encoderCreate(positions.count)
 
     draco_ids = {}
     for attr_name in attributes:
         attr = attributes[attr_name]
         draco_id = dll.encoderSetAttribute(encoder, attr_name.encode(), attr.component_type, attr.type.encode(), attr.buffer_view.data)
-        if draco_id == -1:
-            print_console('ERROR', 'Could not encode attribute {}. Skipping primitive.'.format(attr_name))
-            return
         draco_ids[attr_name] = draco_id
         attr.buffer_view = None
 
