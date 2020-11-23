@@ -296,14 +296,12 @@ class ExportGLTF2_Base:
         default=True
     )
 
-    export_nla_strips: BoolProperty(
+    export_nla_strips: EnumProperty(
+        items=(('NLA', "Group by NLA", "multiple actions become part of the same glTF animation if they're pushed onto NLA tracks with the same name."),
+               ('OFF', "Merge actives actions", "all the currently assigned actions become one glTF animation"),
+               ('MONOCHAR', "All action of unique armature", "Works when only 1 armature")),
         name='Group by NLA Track',
-        description=(
-            "When on, multiple actions become part of the same glTF animation if "
-            "they're pushed onto NLA tracks with the same name. "
-            "When off, all the currently assigned actions become one glTF animation"
-        ),
-        default=True
+        default="NLA"
     )
 
     export_def_bones: BoolProperty(
