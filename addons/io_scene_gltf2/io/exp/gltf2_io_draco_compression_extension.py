@@ -50,6 +50,12 @@ def encode_scene_primitives(scenes, export_settings):
     dll.encoderEncode.restype = c_bool
     dll.encoderEncode.argtypes = [c_void_p, c_uint8]
 
+    dll.encoderGetEncodedVertexCount.restype = c_uint32
+    dll.encoderGetEncodedVertexCount.argtypes = [c_void_p]
+
+    dll.encoderGetEncodedIndexCount.restype = c_uint32
+    dll.encoderGetEncodedIndexCount.argtypes = [c_void_p]
+
     dll.encoderGetByteLength.restype = c_uint64
     dll.encoderGetByteLength.argtypes = [c_void_p]
 
@@ -126,5 +132,11 @@ def __encode_primitive(primitive, dll, export_settings):
 
     # Set to triangle list mode.
     primitive.mode = 4
+
+    # Update accessors to match encoded data.
+    indices.count = dll.encoderGetEncodedIndexCount(encoder)
+    encoded_vertices = dll.encoderGetEncodedVertexCount(encoder)
+    for attr_name in attributes:
+        attributes[attr_name].count = encoded_vertices
 
     dll.encoderRelease(encoder)
