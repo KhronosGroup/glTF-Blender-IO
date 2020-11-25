@@ -86,8 +86,8 @@ def decode_primitive(gltf, prim):
     # Read indices.
     index_accessor = gltf.data.accessors[prim.indices]
     if dll.decoderGetIndexCount(decoder) != index_accessor.count:
-        print_console('ERROR', 'Draco Decoder: Index count of accessor and decoded index count does not match. Skipping primitive {}.'.format(name))
-        return
+        print_console('WARNING', 'Draco Decoder: Index count of accessor and decoded index count does not match. Updating accessor.')
+        index_accessor.count = dll.decoderGetIndexCount(decoder)
     if not dll.decoderReadIndices(decoder, index_accessor.component_type):
         print_console('ERROR', 'Draco Decoder: Unable to decode indices. Skipping primitive {}.'.format(name))
         return
@@ -117,8 +117,8 @@ def decode_primitive(gltf, prim):
         
         accessor = gltf.data.accessors[prim.attributes[attr]]
         if dll.decoderGetVertexCount(decoder) != accessor.count:
-            print_console('ERROR', 'Draco Decoder: Vertex count of accessor and decoded vertex count does not match for attribute {}. Skipping primitive {}.'.format(attr, name))
-            return
+            print_console('WARNING', 'Draco Decoder: Vertex count of accessor and decoded vertex count does not match for attribute {}. Updating accessor.'.format(attr, name))
+            accessor.count = dll.decoderGetVertexCount(decoder)
         if not dll.decoderReadAttribute(decoder, dracoId, accessor.component_type, accessor.type.encode()):
             print_console('ERROR', 'Draco Decoder: Could not decode attribute {}. Skipping primitive {}.'.format(attr, name))
             return
