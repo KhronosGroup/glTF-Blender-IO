@@ -54,7 +54,6 @@ def gather_animations(blender_object: bpy.types.Object,
 
     # Export all collected actions.
     for blender_action, track_name, on_type in blender_actions:
-        print('--> action', blender_action.name)
         # Set action as active, to be able to bake if needed
         if on_type == "OBJECT": # Not for shapekeys!
             if blender_object.animation_data.action is None \
@@ -93,7 +92,6 @@ def gather_animations(blender_object: bpy.types.Object,
         blender_object.animation_data.action = None
 
     for blender_track, on_type in blender_tracks:
-        print('--> track', blender_track.name)
         track.is_solo = True
 
         frame_start = min([strip.frame_start for strip in track.strips if strip.action is not None and strip.mute is False])
@@ -277,7 +275,6 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                 if track.strips is None:
                     continue
                 if len(non_muted_strips) > 1:
-                    print("keep track", track.name)
                     blender_baked_tracks.append(track)
                     track_on_type[track.name] = "OBJECT"
                 elif len(non_muted_strips) == 1:
@@ -313,6 +310,5 @@ def __get_blender_actions(blender_object: bpy.types.Object,
     # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
     blender_actions.sort(key = lambda a: a.name.lower())
 
-    print("... return")
     return ([(blender_action, blender_tracks[blender_action.name], action_on_type[blender_action.name]) for blender_action in blender_actions],
         [(blender_track, track_on_type[blender_track.name]) for blender_track in blender_baked_tracks])
