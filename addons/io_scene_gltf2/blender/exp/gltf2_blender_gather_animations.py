@@ -36,7 +36,7 @@ def gather_animations(blender_object: bpy.types.Object,
     animations = []
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
-    blender_actions = __get_blender_actions(blender_object, export_settings)
+    blender_actions, blender_tracks = __get_blender_actions(blender_object, export_settings)
 
     # save the current active action of the object, if any
     # We will restore it after export
@@ -54,7 +54,7 @@ def gather_animations(blender_object: bpy.types.Object,
 
     # Export all collected actions.
     for blender_action, track_name, on_type in blender_actions:
-
+        print('--> action', blender_action.name)
         # Set action as active, to be able to bake if needed
         if on_type == "OBJECT": # Not for shapekeys!
             if blender_object.animation_data.action is None \
@@ -84,6 +84,50 @@ def gather_animations(blender_object: bpy.types.Object,
                     if track_name not in tracks.keys():
                         tracks[track_name] = []
                     tracks[track_name].append(offset + len(animations)-1) # Store index of animation in animations
+
+    # Then export all collected actions.
+    # We are going to bake entire track
+
+    # First remove active action if we set one in collecting actions
+    if blender_object.animation_data is not None and blender_object.animation_data.action is not None:
+        blender_object.animation_data.action = None
+
+    for blender_track, on_type in blender_tracks:
+        print('--> track', blender_track.name)
+        track.is_solo = True
+
+        frame_start = min([strip.frame_start for strip in track.strips if strip.action is not None and strip.mute is False])
+        frame_end = max([strip.frame_end for strip in track.strips if strip.action is not None and strip.mute is False])
+
+        type = {'POSE'} if blender_object.type == "ARMATURE" else {'OBJECT'}
+
+        bpy.ops.nla.bake(frame_start=frame_start,
+                         frame_end=frame_end,
+                         only_selected=False,
+                         visual_keying=True,
+                         clear_constraints=False,
+                         clear_parents=False,
+                         use_current_action=False,
+                         bake_types={'POSE'})
+        action = blender_object.animation_data.action
+
+        animation = __gather_animation(action, blender_object, export_settings)
+        if animation is not None:
+            animations.append(animation)
+
+            # TODO need to check how to merge track with other tracks
+            # Store data for merging animation later
+            # if track_name is not None: # Do not take into account animation not in NLA
+            #     # Do not take into account default NLA track names
+            #     if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
+            #         if track_name not in tracks.keys():
+            #             tracks[track_name] = []
+            #         tracks[track_name].append(offset + len(animations)-1) # Store index of animation in animations
+
+        bpy.data.actions.remove(action)
+
+        track.is_solo = False
+        # Baking using blender baking???
 
     # Restore action status
     # TODO: do this in a finally
@@ -210,10 +254,12 @@ def __link_samplers(animation: gltf2_io.Animation, export_settings):
 
 def __get_blender_actions(blender_object: bpy.types.Object,
                             export_settings
-                          ) -> typing.List[typing.Tuple[bpy.types.Action, str, str]]:
+                          ) -> typing.Tuple[typing.List[typing.Tuple[bpy.types.Action, str, str]], typing.List[typing.Tuple[bpy.types.NlaTrack, str]]]:
     blender_actions = []
+    blender_baked_tracks = []
     blender_tracks = {}
     action_on_type = {}
+    track_on_type = {}
 
     if blender_object.animation_data is not None:
         # Collect active action.
@@ -228,9 +274,14 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                 # Multi-strip tracks do not export correctly yet (they need to be baked),
                 # so skip them for now and only write single-strip tracks.
                 non_muted_strips = [strip for strip in track.strips if strip.action is not None and strip.mute is False]
-                if track.strips is None or len(non_muted_strips) != 1:
+                if track.strips is None:
                     continue
-                for strip in non_muted_strips:
+                if len(non_muted_strips) > 1:
+                    print("keep track", track.name)
+                    blender_baked_tracks.append(track)
+                    track_on_type[track.name] = "OBJECT"
+                elif len(non_muted_strips) == 1:
+                    strip = non_muted_strips[0]
                     blender_actions.append(strip.action)
                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                     action_on_type[strip.action.name] = "OBJECT"
@@ -262,4 +313,6 @@ def __get_blender_actions(blender_object: bpy.types.Object,
     # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
     blender_actions.sort(key = lambda a: a.name.lower())
 
-    return [(blender_action, blender_tracks[blender_action.name], action_on_type[blender_action.name]) for blender_action in blender_actions]
+    print("... return")
+    return ([(blender_action, blender_tracks[blender_action.name], action_on_type[blender_action.name]) for blender_action in blender_actions],
+        [(blender_track, track_on_type[blender_track.name]) for blender_track in blender_baked_tracks])
