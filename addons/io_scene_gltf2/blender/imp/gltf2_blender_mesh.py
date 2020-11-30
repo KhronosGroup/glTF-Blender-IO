@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import bpy
-from mathutils import Vector, Matrix
+from mathutils import Matrix
 import numpy as np
 
 from ...io.imp.gltf2_io_binary import BinaryData
