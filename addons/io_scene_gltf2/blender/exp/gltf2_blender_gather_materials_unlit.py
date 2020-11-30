@@ -38,7 +38,7 @@ def detect_shadeless_material(blender_material, export_settings):
     info = {}
 
     for node in blender_material.node_tree.nodes:
-        if node.type == 'OUTPUT_MATERIAL':
+        if node.type == 'OUTPUT_MATERIAL' and node.is_active_output:
             socket = node.inputs[0]
             break
     else:
