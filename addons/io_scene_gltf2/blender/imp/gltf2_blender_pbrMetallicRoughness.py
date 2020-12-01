@@ -433,12 +433,29 @@ def normal(mh: MaterialHelper, location, normal_socket):
     )
 
 
-# [Texture] => [Separate R] =>
+# [Texture] => [Separate R] => [Mix Strength] =>
 def occlusion(mh: MaterialHelper, location, occlusion_socket):
     x, y = location
 
     if mh.pymat.occlusion_texture is None:
         return
+
+    strength = mh.pymat.occlusion_texture.strength
+    if strength is None: strength = 1.0
+    if strength != 1.0:
+        # Mix with white
+        node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+        node.label = 'Occlusion Strength'
+        node.location = x - 140, y
+        node.blend_type = 'MIX'
+        # Outputs
+        mh.node_tree.links.new(occlusion_socket, node.outputs[0])
+        # Inputs
+        node.inputs['Fac'].default_value = strength
+        node.inputs['Color1'].default_value = [1, 1, 1, 1]
+        occlusion_socket = node.inputs['Color2']
+
+        x -= 200
 
     # Separate RGB
     node = mh.node_tree.nodes.new('ShaderNodeSeparateRGB')

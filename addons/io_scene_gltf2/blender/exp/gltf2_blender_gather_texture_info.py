@@ -123,6 +123,19 @@ def __gather_normal_scale(primary_socket, export_settings):
 
 # MaterialOcclusionTextureInfo only
 def __gather_occlusion_strength(primary_socket, export_settings):
+    # Look for a MixRGB node that mixes with pure white in front of
+    # primary_socket. The mix factor gives the occlusion strength.
+    node = gltf2_blender_get.previous_node(primary_socket)
+    if node and node.type == 'MIX_RGB' and node.blend_type == 'MIX':
+        fac = gltf2_blender_get.get_const_from_socket(node.inputs['Fac'], kind='VALUE')
+        col1 = gltf2_blender_get.get_const_from_socket(node.inputs['Color1'], kind='RGB')
+        col2 = gltf2_blender_get.get_const_from_socket(node.inputs['Color2'], kind='RGB')
+        if fac is not None:
+            if col1 == [1, 1, 1] and col2 is None:
+                return fac
+            if col1 is None and col2 == [1, 1, 1]:
+                return 1.0 - fac  # reversed for reversed inputs
+
     return None
 
 
