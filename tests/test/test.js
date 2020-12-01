@@ -937,6 +937,16 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
             });
 
+            it ('roundtrips occlusion strength', function() {
+                let dir = '13_occlusion_strength';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.equalEpsilon(asset.materials[0].occlusionTexture.strength, 0.25);
+            })
+
             it('roundtrips two different UV maps for the same texture', function() {
                 let dir = '12_orm_two_uvmaps';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
