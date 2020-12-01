@@ -75,7 +75,7 @@ Several companies, individuals, and glTF community members contribute to Blender
 
 These quality-assurance checks improve the reliability of Blender glTF I/O.  
 
-[![CircleCI](https://circleci.com/gh/KhronosGroup/glTF-Blender-IO.svg?style=svg)](https://circleci.com/gh/KhronosGroup/glTF-Blender-IO)
+[![CI](https://github.com/KhronosGroup/glTF-Blender-IO/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/KhronosGroup/glTF-Blender-IO/actions?query=workflow%3ACI)
 
 Running the Tests Locally
 -------------------------
