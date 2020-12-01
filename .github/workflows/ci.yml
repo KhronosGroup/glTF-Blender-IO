@@ -1,0 +1,83 @@
+name: CI
+
+on: [push, pull_request]
+
+env:
+  CI: true
+  BLENDER_MAJOR: 2
+  BLENDER_MINOR: 91
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      matrix:
+       include:
+         - filter: "blender_export"
+         - filter: "blender_roundtrip"
+
+    env:
+      FILTER: ${{ matrix.filter }}
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 14.x
+
+    # Finds latest Blender build, and outputs the hosted build's download URL.
+    - name: Find latest Blender build
+      id: blender_version
+      run: |
+        BLENDER_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
+          grep -oe '[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux64[^\"]*' | \
+          tail -n1)"
+        echo "Found current build for Blender $BLENDER_MAJOR.$BLENDER_MINOR: $BLENDER_URL"
+        echo "::set-output name=blender-url::$BLENDER_URL"
+
+    # Loads a cached build of Blender if available. If not available, this step
+    # enqueues the /opt/blender directory to be cached after tests pass.
+    - id: blender_cache
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-blender
+      with:
+        path: /opt/blender
+        key: ${{ steps.blender_version.outputs.blender-url }}
+
+    # Downloads a build from blender.org, if a cached version was not available.
+    - name: Download Blender
+      if: ${{ !steps.blender_cache.outputs.cache-hit }}
+      run: |
+        mkdir /opt/blender
+        echo "Downloading: ${{ steps.blender_version.outputs.blender-url }}"
+        curl -SL "${{ steps.blender_version.outputs.blender-url }}" | \
+          tar -Jx -C /opt/blender --strip-components=1
+
+    - name: Set up workspace
+      run: |
+        sudo ln -s /opt/blender/blender /usr/local/bin/blender
+        blender --version
+        ADDON_DIR=/opt/blender/$BLENDER_MAJOR.$BLENDER_MINOR/scripts/addons
+        rm -rf $ADDON_DIR/io_scene_gltf2
+        cp -r addons/io_scene_gltf2 $ADDON_DIR
+        cd tests
+        yarn install
+        mkdir -p out
+
+    - name: Run tests
+      run: |
+        cd tests
+        OUT_PREFIX=$GITHUB_WORKSPACE/tests/out yarn test-bail --reporter-options reportDir=out/mochawesome -g $FILTER
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-output-${{ matrix.filter }}
+        path: tests/out/mochawesome
+        if-no-files-found: error
