@@ -73,6 +73,8 @@ extension_panel_unregister_functors = []
 def on_export_format_changed(self, context):
     # Update the file extension when the format (.glb/.gltf) changes
     sfile = context.space_data
+    if sfile is None:
+        return # Avoid error when export from background
     operator = sfile.active_operator
     if operator.bl_idname != "EXPORT_SCENE_OT_gltf":
         return
