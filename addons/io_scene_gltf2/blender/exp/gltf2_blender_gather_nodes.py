@@ -423,7 +423,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
     sca = __convert_swizzle_scale(sca, export_settings)
 
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-        offset = -gltf2_blender_extract.convert_swizzle_location(
+        offset = -__convert_swizzle_location(
             blender_object.instance_collection.instance_offset, export_settings)
 
         s = Matrix.Diagonal(sca).to_4x4()
