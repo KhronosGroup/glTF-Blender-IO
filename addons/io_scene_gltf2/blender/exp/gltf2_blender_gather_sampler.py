@@ -76,7 +76,7 @@ def __gather_mag_filter(blender_shader_node, export_settings):
 def __gather_min_filter(blender_shader_node, export_settings):
     if blender_shader_node.interpolation == 'Closest':
         return TextureFilter.NearestMipmapNearest
-    return TextureFilter.NearestMipmapLinear
+    return TextureFilter.LinearMipmapLinear
 
 
 def __gather_name(blender_shader_node, export_settings):
