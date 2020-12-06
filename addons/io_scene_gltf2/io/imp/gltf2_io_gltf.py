@@ -161,8 +161,10 @@ class glTFImporter():
 
         if buffer.uri:
             data = self.load_uri(buffer.uri)
-            if data is not None:
-                self.buffers[buffer_idx] = data
+            if data is None:
+                raise ImportError("Missing resource, '" + buffer.uri + "'.")
+            self.buffers[buffer_idx] = data
+
 
         else:
             # GLB-stored buffer
