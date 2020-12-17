@@ -43,13 +43,11 @@ class BlenderImage():
         try:
             if img.uri is not None and not img.uri.startswith('data:'):
                 # Image stored in a file
-                img_from_file = True
                 path = join(dirname(gltf.filename), _uri_to_path(img.uri))
                 img_name = img_name or basename(path)
 
             else:
                 # Image stored as data => create a tempfile, pack, and delete file
-                img_from_file = False
                 img_data = BinaryData.get_image_data(gltf, img_idx)
                 if img_data is None:
                     return
@@ -64,7 +62,10 @@ class BlenderImage():
             num_images = len(bpy.data.images)
 
             try:
-                blender_image = bpy.data.images.load(os.path.abspath(path), check_existing=img_from_file)
+                blender_image = bpy.data.images.load(
+                    os.path.abspath(path),
+                    check_existing=tmp_dir is None,
+                )
             except RuntimeError:
                 gltf.log.error("Missing image file (index %d): %s" % (img_idx, path))
                 blender_image = _placeholder_image(img_name, os.path.abspath(path))
@@ -73,7 +74,10 @@ class BlenderImage():
             if len(bpy.data.images) != num_images:  # If created a new image
                 blender_image.name = img_name
 
-                needs_pack = gltf.import_settings['import_pack_images'] or not img_from_file
+                needs_pack = (
+                    gltf.import_settings['import_pack_images'] or
+                    tmp_dir is not None
+                )
                 if not is_placeholder and needs_pack:
                     blender_image.pack()
 
