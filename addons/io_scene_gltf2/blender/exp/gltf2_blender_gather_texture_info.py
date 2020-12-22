@@ -151,6 +151,12 @@ def __gather_tex_coord(primary_socket, export_settings):
 
     input_node = blender_shader_node.inputs['Vector'].links[0].from_node
 
+    while isinstance(input_node, bpy.types.NodeReroute):
+        # reroute node is not connected. not sure if this can happen
+        if len(input_node.inputs[0].links) == 0:
+            return 0
+        input_node = input_node.inputs[0].links[0].from_node
+
     if isinstance(input_node, bpy.types.ShaderNodeMapping):
 
         if len(input_node.inputs['Vector'].links) == 0:
