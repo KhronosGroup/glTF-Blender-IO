@@ -54,6 +54,7 @@ class glTFImporter():
             'KHR_texture_transform',
             'KHR_materials_clearcoat',
             'KHR_mesh_quantization',
+            'KHR_draco_mesh_compression'
         ]
 
     @staticmethod
