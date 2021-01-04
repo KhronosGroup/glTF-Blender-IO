@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 
@@ -38,7 +37,7 @@ def detect_shadeless_material(blender_material, export_settings):
     info = {}
 
     for node in blender_material.node_tree.nodes:
-        if node.type == 'OUTPUT_MATERIAL':
+        if node.type == 'OUTPUT_MATERIAL' and node.is_active_output:
             socket = node.inputs[0]
             break
     else:

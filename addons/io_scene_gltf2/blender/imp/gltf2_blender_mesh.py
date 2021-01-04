@@ -13,12 +13,14 @@
 # limitations under the License.
 
 import bpy
-from mathutils import Vector, Matrix
+from mathutils import Matrix
 import numpy as np
 
 from ...io.imp.gltf2_io_binary import BinaryData
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
+from ...io.com.gltf2_io_debug import print_console
+from .gltf2_io_draco_compression_extension import decode_primitive
 
 
 class BlenderMesh():
@@ -91,9 +93,10 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         num_cols = max(i, num_cols)
 
     num_shapekeys = 0
-    for morph_i, _ in enumerate(pymesh.primitives[0].targets or []):
-        if pymesh.shapekey_names[morph_i] is not None:
-            num_shapekeys += 1
+    if len(pymesh.primitives) > 0: # Empty primitive tab is not allowed, but some invalid files...
+        for morph_i, _ in enumerate(pymesh.primitives[0].targets or []):
+            if pymesh.shapekey_names[morph_i] is not None:
+                num_shapekeys += 1
 
     # -------------
     # We'll process all the primitives gathering arrays to feed into the
@@ -132,6 +135,10 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             continue
 
         vert_index_base = len(vert_locs)
+
+        if prim.extensions is not None and 'KHR_draco_mesh_compression' in prim.extensions:
+            print_console('INFO', 'Draco Decoder: Decode primitive {}'.format(pymesh.name or '[unnamed]'))
+            decode_primitive(gltf, prim)
 
         if prim.indices is not None:
             indices = BinaryData.decode_accessor(gltf, prim.indices)
@@ -274,11 +281,21 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for uv_i in range(num_uvs):
         name = 'UVMap' if uv_i == 0 else 'UVMap.%03d' % uv_i
         layer = mesh.uv_layers.new(name=name)
+
+        if layer is None:
+            print("WARNING: UV map is ignored because the maximum number of UV layers has been reached.")
+            break
+
         layer.data.foreach_set('uv', squish(loop_uvs[uv_i]))
 
     for col_i in range(num_cols):
         name = 'Col' if col_i == 0 else 'Col.%03d' % col_i
         layer = mesh.vertex_colors.new(name=name)
+
+        if layer is None:
+            print("WARNING: Vertex colors are ignored because the maximum number of vertex color layers has been "
+                  "reached.")
+            break
 
         layer.data.foreach_set('color', squish(loop_cols[col_i]))
 

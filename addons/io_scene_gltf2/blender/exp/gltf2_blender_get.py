@@ -60,6 +60,7 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             type = bpy.types.ShaderNodeEmission
             name = "Color"
             nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
+            nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
             inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
             if inputs:
                 return inputs[0]
@@ -72,6 +73,7 @@ def get_socket(blender_material: bpy.types.Material, name: str):
         else:
             type = bpy.types.ShaderNodeBsdfPrincipled
         nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
+        nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
         if inputs:
             return inputs[0]
@@ -98,6 +100,17 @@ def get_socket_old(blender_material: bpy.types.Material, name: str):
 
     return None
 
+def check_if_is_linked_to_active_output(shader_socket):
+    for link in shader_socket.links:
+        if isinstance(link.to_node, bpy.types.ShaderNodeOutputMaterial) and link.to_node.is_active_output is True:
+            return True
+
+        if len(link.to_node.outputs) > 0: # ignore non active output, not having output sockets
+            ret = check_if_is_linked_to_active_output(link.to_node.outputs[0]) # recursive until find an output material node
+            if ret is True:
+                return True
+
+    return False
 
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     """Find any ShaderNodeTexImage in the path from the socket."""
@@ -119,18 +132,7 @@ def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     return None
 
 
-def get_texture_transform_from_texture_node(texture_node):
-    if not isinstance(texture_node, bpy.types.ShaderNodeTexImage):
-        return None
-
-    mapping_socket = texture_node.inputs["Vector"]
-    if len(mapping_socket.links) == 0:
-        return None
-
-    mapping_node = mapping_socket.links[0].from_node
-    if not isinstance(mapping_node, bpy.types.ShaderNodeMapping):
-        return None
-
+def get_texture_transform_from_mapping_node(mapping_node):
     if mapping_node.vector_type not in ["TEXTURE", "POINT", "VECTOR"]:
         gltf2_io_debug.print_console("WARNING",
             "Skipping exporting texture transform because it had type " +

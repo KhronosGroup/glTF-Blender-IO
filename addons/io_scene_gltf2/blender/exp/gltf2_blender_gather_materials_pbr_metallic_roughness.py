@@ -18,7 +18,6 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_search_node_tree
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
@@ -81,12 +80,16 @@ def __gather_base_color_texture(blender_material, export_settings):
         base_color_socket = gltf2_blender_get.get_socket_old(blender_material, "BaseColor")
 
     alpha_socket = gltf2_blender_get.get_socket(blender_material, "Alpha")
-    if alpha_socket is not None and alpha_socket.is_linked:
-        inputs = (base_color_socket, alpha_socket, )
-    else:
-        inputs = (base_color_socket,)
 
-    return gltf2_blender_gather_texture_info.gather_texture_info(base_color_socket, inputs, export_settings)
+    # keep sockets that have some texture : color and/or alpha
+    inputs = tuple(
+        socket for socket in [base_color_socket, alpha_socket]
+        if socket is not None and __has_image_node_from_socket(socket)
+    )
+    if not inputs:
+        return None
+
+    return gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
 
 
 def __gather_extensions(blender_material, export_settings):
