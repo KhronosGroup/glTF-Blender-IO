@@ -64,7 +64,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
     sampler = gltf2_io.AnimationSampler(
         extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         extras=__gather_extras(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
-        input=__gather_input(channels, blender_object_if_armature, non_keyed_values,
+        input=__gather_input(channels, i_if_armature, non_keyed_values,
                              bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, export_settings),
         interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
@@ -220,7 +220,7 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 @cached
 def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
-                   blender_object_if_armature: typing.Optional[bpy.types.Object],
+                   i,
                    non_keyed_values: typing.Tuple[typing.Optional[float]],
                    bake_bone: typing.Union[str, None],
                    bake_channel: typing.Union[str, None],
@@ -231,7 +231,7 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes."""
-    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_object_if_armature,
+    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(i,
                                                                                   channels,
                                                                                   non_keyed_values,
                                                                                   bake_bone,
@@ -321,7 +321,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   export_settings)
     #TODOHIER
     if i_if_armature is not None:
-        blender_object_if_armature = export_settings['tree'].nodes[i].object
+        blender_object_if_armature = export_settings['tree'].nodes[i_if_armature].object
     else:
         blender_object_if_armature = None
 

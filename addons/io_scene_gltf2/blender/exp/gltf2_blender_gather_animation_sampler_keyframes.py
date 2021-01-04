@@ -140,7 +140,8 @@ def get_bone_matrix(i_if_armature: typing.Optional[bpy.types.Object],
                      bake_range_end,
                      action_name: str,
                      current_frame: int,
-                     step: int
+                     step: int,
+                     export_settings
                      ):
 
     #TODOHIER
@@ -244,7 +245,7 @@ def gather_keyframes(i_if_armature,
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
 
                 mat = get_bone_matrix(
-                    blender_object_if_armature,
+                    i_if_armature,
                     channels,
                     bake_bone,
                     bake_channel,
@@ -252,7 +253,8 @@ def gather_keyframes(i_if_armature,
                     bake_range_end,
                     action_name,
                     frame,
-                    step
+                    step,
+                    export_settings
                 )
                 trans, rot, scale = mat.decompose()
 

@@ -106,7 +106,8 @@ def bonecache(func):
             pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(args[0],
                                                                 args[1][0].data_path)
         else:
-            pose_bone_if_armature = args[0].pose.bones[args[2]]
+            armature_object = args[9]['tree'].nodes[args[0]].object
+            pose_bone_if_armature = armature_object.pose.bones[args[2]]
 
         if not hasattr(func, "__current_action_name"):
             func.reset_cache()
