@@ -92,7 +92,7 @@ def __gather_animations(blender_scene, export_settings):
     animations = []
     merged_tracks = {}
 
-    for i in export_settings['tree'].get_all_roots():
+    for i in export_settings['tree'].get_all_ids():
         _blender_object = export_settings['tree'].nodes[i].object
 
         blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object

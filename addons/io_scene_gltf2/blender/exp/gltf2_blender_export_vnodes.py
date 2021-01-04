@@ -35,6 +35,9 @@ class ExportVTree:
     def get_all_roots(self):
         return self.roots
 
+    def get_all_ids(self):
+        return [i.id for i in self.nodes.values()]
+
     def add(self, node):
         self.nodes[node.id] = node
 
