@@ -24,7 +24,8 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 
 
 #TODOHIER : what is really needed to be cached ? id only or id+others?
-@cached_id
+# answer : others are needed (list of material for example)
+@cached
 def gather_mesh(i,
                 blender_mesh: bpy.types.Mesh,
                 blender_object: Optional[bpy.types.Object],

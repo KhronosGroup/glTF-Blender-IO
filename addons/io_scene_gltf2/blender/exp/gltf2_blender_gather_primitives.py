@@ -30,7 +30,8 @@ from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 # TODOHIER what is really needed to be cached ? id only or id+others ?
-@cached_id
+# Answer : Others are needed (material_names for example)
+@cached
 def gather_primitives(
         i,
         blender_mesh: bpy.types.Mesh,
@@ -60,7 +61,7 @@ def gather_primitives(
                 i = material_idx if material_idx < len(material_names) else -1
                 material_name = material_names[i]
                 if material_name is not None:
-                    blender_material = bpy.data.materials[material_name]
+                    blender_material = bpy.data.materials[material_name] #TOHIER : with link, can multiple material with same name happen?
             if blender_material is not None:
                 material = gltf2_blender_gather_materials.gather_material(
                     blender_material,
@@ -82,7 +83,7 @@ def gather_primitives(
 
 # TODOHIER what is really needed to be cached ? id only or id+others ?
 # TODOHIER : why cache this function that is only called into another cached function?
-@cached_id
+@cached
 def __gather_cache_primitives(
         i,
         blender_mesh: bpy.types.Mesh,
