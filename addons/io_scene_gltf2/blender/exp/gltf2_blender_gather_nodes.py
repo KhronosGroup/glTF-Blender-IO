@@ -44,17 +44,18 @@ def gather_node(i, blender_scene, dupli_object_parent, export_settings):
         gather_node.__cache = {}
         gather_node.__export_settings = export_settings
 
-    if blender_scene is None and blender_object.name in gather_node.__cache:
-        return gather_node.__cache[blender_object.name]
+    if blender_scene is None and i in gather_node.__cache.keys():
+        return gather_node.__cache[i]
 
     node = __gather_node(i, blender_scene, dupli_object_parent, export_settings)
-    gather_node.__cache[blender_object.name] = node
+    gather_node.__cache[i] = node
     return node
 
-#TODOHIER remove caching for now
+#TODOHIER
 # Not sure cache on object is still needed. Still needed for animation,
 # but maybe we can store info in vtree
 # Check with multiple scene if is still needed
+@cached
 def __gather_node(i, blender_scene, dupli_object_parent, export_settings):
     blender_object = export_settings['tree'].nodes[i].object
     children = __gather_children(i, blender_scene, export_settings)

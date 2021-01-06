@@ -28,7 +28,7 @@ def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
                                     i,
                                     bake_bone: typing.Union[str, None],
                                     bake_channel: typing.Union[str, None],
-                                    driver_obj,
+                                    driver_obj, #TODOHIER
                                     export_settings
                                     ) -> gltf2_io.AnimationChannelTarget:
 
