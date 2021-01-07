@@ -27,6 +27,7 @@ class ExportVNode:
 class ExportVTree:
     def __init__(self):
         self.nodes = {}
+        self.materials = {}
         self.roots = []
 
     def add_root(self, bnode):

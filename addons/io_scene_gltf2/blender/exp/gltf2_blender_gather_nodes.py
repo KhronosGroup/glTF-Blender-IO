@@ -319,7 +319,7 @@ def __gather_mesh(blender_object, export_settings):
                 modifiers = None
 
     materials = tuple(ms.material for ms in blender_object.material_slots)
-    material_names = tuple(None if mat is None else mat.name for mat in materials)
+    material_ids = tuple(None if mat is None else id(mat) for mat in materials)
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
@@ -336,7 +336,7 @@ def __gather_mesh(blender_object, export_settings):
                                                    vertex_groups,
                                                    modifiers,
                                                    skip_filter,
-                                                   material_names,
+                                                   material_ids,
                                                    export_settings)
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
@@ -367,7 +367,7 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
         needs_to_mesh_clear = True
 
         skip_filter = True
-        material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
+        material_ids = tuple([id(ms.material) for ms in blender_object.material_slots if ms.material is not None]) #TODOHIER if slot empty ? Cf other declaration
         vertex_groups = None
         modifiers = None
         blender_object_for_skined_data = None

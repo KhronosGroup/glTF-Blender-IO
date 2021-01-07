@@ -63,6 +63,9 @@ def __gather_scene(blender_scene, export_settings):
     for obj in [obj for obj in depsgraph.objects if obj.original.parent is None]:
         tree.add_root(obj.original)
 
+    for mat in bpy.data.materials:
+        tree.materials[id(mat)] = mat
+
     export_settings['tree'] = tree
 
     for i in tree.get_all_roots():
