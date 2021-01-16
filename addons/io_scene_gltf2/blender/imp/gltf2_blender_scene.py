@@ -50,7 +50,9 @@ class BlenderScene():
     def create_animations(gltf):
         """Create animations."""
         if gltf.data.animations:
-            for anim_idx, _anim in enumerate(gltf.data.animations):
+            # NLA tracks are added bottom to top, so create animations in
+            # reverse so the first winds up on top
+            for anim_idx in reversed(range(len(gltf.data.animations))):
                 BlenderAnimation.anim(gltf, anim_idx)
 
             # Restore first animation
