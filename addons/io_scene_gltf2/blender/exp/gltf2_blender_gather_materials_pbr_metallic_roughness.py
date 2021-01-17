@@ -22,7 +22,10 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 
 
 @cached
-def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
+def gather_material_pbr_metallic_roughness(material_id, orm_texture, export_settings):
+
+    blender_material = export_settings['tree'].materials[material_id]
+
     if not __filter_pbr_material(blender_material, export_settings):
         return None
 

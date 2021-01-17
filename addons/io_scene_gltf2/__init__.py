@@ -450,6 +450,7 @@ class ExportGLTF2_Base:
         import os
         import datetime
         from .blender.exp import gltf2_blender_export
+        from .blender.exp.gltf2_blender_export_vnode import ExportVTree
 
         if self.will_save_settings:
             self.save_settings(context)
@@ -566,6 +567,8 @@ class ExportGLTF2_Base:
         export_settings['gltf_user_extensions'] = user_extensions
         export_settings['pre_export_callbacks'] = pre_export_callbacks
         export_settings['post_export_callbacks'] = post_export_callbacks
+
+        export_settings['tree'] = ExportVTree()
 
         return gltf2_blender_export.save(context, export_settings)
 

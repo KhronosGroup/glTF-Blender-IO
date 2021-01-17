@@ -37,7 +37,7 @@ def gather_primitives(
         blender_object: Optional[bpy.types.Object],
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
-        material_names: Tuple[str],
+        material_ids: Tuple[int],
         export_settings
         ) -> List[gltf2_io.MeshPrimitive]:
     """
@@ -56,16 +56,14 @@ def gather_primitives(
 
         if export_settings['gltf_materials'] == "EXPORT":
             blender_material = None
-            if material_names:
-                i = material_idx if material_idx < len(material_names) else -1
-                material_name = material_names[i]
-                if material_name is not None:
-                    blender_material = bpy.data.materials[material_name]
-            if blender_material is not None:
-                material = gltf2_blender_gather_materials.gather_material(
-                    blender_material,
-                    export_settings,
-                )
+            if material_ids:
+                i = material_idx if material_idx < len(material_ids) else -1
+                material_id = material_ids[i]
+                if material_id is not None:
+                    material = gltf2_blender_gather_materials.gather_material(
+                        material_id,
+                        export_settings,
+                    )
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],

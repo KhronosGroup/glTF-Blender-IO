@@ -30,7 +30,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
                 vertex_groups: Optional[bpy.types.VertexGroups],
                 modifiers: Optional[bpy.types.ObjectModifiers],
                 skip_filter: bool,
-                material_names: Tuple[str],
+                material_ids: Tuple[int],
                 export_settings
                 ) -> Optional[gltf2_io.Mesh]:
     if not skip_filter and not __filter_mesh(blender_mesh, library, vertex_groups, modifiers, export_settings):
@@ -41,7 +41,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
         extras=__gather_extras(blender_mesh, library, vertex_groups, modifiers, export_settings),
         name=__gather_name(blender_mesh, library, vertex_groups, modifiers, export_settings),
         weights=__gather_weights(blender_mesh, library, vertex_groups, modifiers, export_settings),
-        primitives=__gather_primitives(blender_mesh, library, blender_object, vertex_groups, modifiers, material_names, export_settings),
+        primitives=__gather_primitives(blender_mesh, library, blender_object, vertex_groups, modifiers, material_ids, export_settings),
     )
 
     if len(mesh.primitives) == 0:
@@ -56,7 +56,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
                            vertex_groups,
                            modifiers,
                            skip_filter,
-                           material_names)
+                           material_ids)
 
     return mesh
 
@@ -124,7 +124,7 @@ def __gather_primitives(blender_mesh: bpy.types.Mesh,
                         blender_object: Optional[bpy.types.Object],
                         vertex_groups: Optional[bpy.types.VertexGroups],
                         modifiers: Optional[bpy.types.ObjectModifiers],
-                        material_names: Tuple[str],
+                        material_ids: Tuple[int],
                         export_settings
                         ) -> List[gltf2_io.MeshPrimitive]:
     return gltf2_blender_gather_primitives.gather_primitives(blender_mesh,
@@ -132,7 +132,7 @@ def __gather_primitives(blender_mesh: bpy.types.Mesh,
                                                              blender_object,
                                                              vertex_groups,
                                                              modifiers,
-                                                             material_names,
+                                                             material_ids,
                                                              export_settings)
 
 

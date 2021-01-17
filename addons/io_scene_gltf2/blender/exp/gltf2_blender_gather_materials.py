@@ -29,7 +29,7 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
-def gather_material(blender_material, export_settings):
+def gather_material(material_id, export_settings):
     """
     Gather the material used by the blender primitive.
 
@@ -37,8 +37,10 @@ def gather_material(blender_material, export_settings):
     :param export_settings:
     :return: a glTF material
     """
-    if not __filter_material(blender_material, export_settings):
+    if not __filter_material(material_id, export_settings):
         return None
+
+    blender_material = export_settings['tree'].materials[material_id]
 
     mat_unlit = __gather_material_unlit(blender_material, export_settings)
     if mat_unlit is not None:
@@ -57,7 +59,7 @@ def gather_material(blender_material, export_settings):
         name=__gather_name(blender_material, export_settings),
         normal_texture=__gather_normal_texture(blender_material, export_settings),
         occlusion_texture=__gather_occlusion_texture(blender_material, orm_texture, export_settings),
-        pbr_metallic_roughness=__gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
+        pbr_metallic_roughness=__gather_pbr_metallic_roughness(material_id, orm_texture, export_settings)
     )
 
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
@@ -243,9 +245,9 @@ def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
         export_settings)
 
 
-def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
+def __gather_pbr_metallic_roughness(material_id, orm_texture, export_settings):
     return gltf2_blender_gather_materials_pbr_metallic_roughness.gather_material_pbr_metallic_roughness(
-        blender_material,
+        material_id,
         orm_texture,
         export_settings)
 
