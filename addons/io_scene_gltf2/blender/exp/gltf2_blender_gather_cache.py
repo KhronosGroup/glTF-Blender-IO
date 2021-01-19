@@ -39,18 +39,18 @@ def cached(func):
             export_settings = args[-1]
             cache_key_args = args[:-1]
 
-        __by_name = [bpy.types.Object, bpy.types.Scene, bpy.types.Material, bpy.types.Action, bpy.types.Mesh, bpy.types.PoseBone]
+        __by_id = [bpy.types.Object, bpy.types.Scene, bpy.types.Material, bpy.types.Action, bpy.types.Mesh, bpy.types.PoseBone]
 
         # we make a tuple from the function arguments so that they can be used as a key to the cache
         cache_key = ()
         for i in cache_key_args:
-            if type(i) in __by_name:
-                cache_key += (i.name,)
+            if type(i) in __by_id:
+                cache_key += (id(i),)
             else:
                 cache_key += (i,)
         for i in cache_key_kwargs.values():
-            if type(i) in __by_name:
-                cache_key += (i.name,)
+            if type(i) in __by_id:
+                cache_key += (id(i),)
             else:
                 cache_key += (i,)
 
@@ -91,9 +91,9 @@ def bonecache(func):
             func.__bonecache = result
             func.__current_action_name = args[6]
             func.__current_armature_name = args[0]
-            return result[args[7]][pose_bone_if_armature.name]
+            return result[args[7]][id(pose_bone_if_armature)]
         else:
-            return func.__bonecache[args[7]][pose_bone_if_armature.name]
+            return func.__bonecache[args[7]][id(pose_bone_if_armature)]
     return wrapper_bonecache
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
