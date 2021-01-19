@@ -91,9 +91,9 @@ def bonecache(func):
             func.__bonecache = result
             func.__current_action_name = args[6]
             func.__current_armature_name = args[0]
-            return result[args[7]][id(pose_bone_if_armature)]
+            return result[args[7]][pose_bone_if_armature.name]
         else:
-            return func.__bonecache[args[7]][id(pose_bone_if_armature)]
+            return func.__bonecache[args[7]][pose_bone_if_armature.name]
     return wrapper_bonecache
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
