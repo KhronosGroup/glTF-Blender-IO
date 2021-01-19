@@ -95,7 +95,7 @@ def bonecache(func):
             result = func(*args)
             func.__bonecache = result
             func.__current_action_name = args[6]
-            func.__current_armature_name = args[0]
+            func.__current_armature_name = args[0] #TODO use id?
             return result[args[7]][pose_bone_if_armature.name]
         else:
             return func.__bonecache[args[7]][pose_bone_if_armature.name]
