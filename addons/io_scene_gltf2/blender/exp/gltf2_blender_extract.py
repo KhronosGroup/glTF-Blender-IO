@@ -322,6 +322,7 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
                 'attributes': attributes,
                 'indices': indices,
                 'mode': 1,  # LINES
+                'material': 0,
             })
 
     if export_settings['gltf_loose_points']:
@@ -363,6 +364,7 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
             primitives.append({
                 'attributes': attributes,
                 'mode': 0,  # POINTS
+                'material': 0,
             })
 
     print_console('INFO', 'Primitives created: %d' % len(primitives))
