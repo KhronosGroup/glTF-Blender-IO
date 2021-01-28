@@ -40,7 +40,7 @@ def encode_scene_primitives(scenes, export_settings):
 
     dll.encoderSetQuantizationBits.restype = None
     dll.encoderSetQuantizationBits.argtypes = [c_void_p, c_uint32, c_uint32, c_uint32, c_uint32, c_uint32]
-    
+
     dll.encoderSetIndices.restype = None
     dll.encoderSetIndices.argtypes = [c_void_p, c_size_t, c_uint32, c_void_p]
 
@@ -85,6 +85,10 @@ def __encode_primitive(primitive, dll, export_settings):
     attributes = primitive.attributes
     indices = primitive.indices
 
+    # Only do TRIANGLES primitives
+    if primitive.mode not in [None, 4]:
+        return
+
     if 'POSITION' not in attributes:
         print_console('WARNING', 'Draco encoder: Primitive without positions encountered. Skipping.')
         return
@@ -114,7 +118,7 @@ def __encode_primitive(primitive, dll, export_settings):
         export_settings['gltf_draco_texcoord_quantization'],
         export_settings['gltf_draco_color_quantization'],
         export_settings['gltf_draco_generic_quantization'])
-    
+
     if not dll.encoderEncode(encoder, primitive.targets is not None and len(primitive.targets) > 0):
         print_console('ERROR', 'Could not encode primitive. Skipping primitive.')
 
@@ -124,7 +128,7 @@ def __encode_primitive(primitive, dll, export_settings):
 
     if primitive.extensions is None:
         primitive.extensions = {}
-    
+
     primitive.extensions['KHR_draco_mesh_compression'] = {
         'bufferView': BinaryData(encoded_data),
         'attributes': draco_ids
