@@ -716,7 +716,7 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         col.prop(operator, 'export_tangents')
         layout.prop(operator, 'export_colors')
 
-        col = layout.column(heading='Loose Geometry', align=True)
+        col = layout.column()
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
 
