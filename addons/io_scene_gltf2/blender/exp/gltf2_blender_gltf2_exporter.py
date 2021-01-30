@@ -45,7 +45,7 @@ class GlTF2Exporter:
             generator='Khronos glTF Blender I/O v' + get_version_string(),
             min_version=None,
             version='2.0')
-        
+
         export_user_extensions('gather_asset_hook', export_settings, asset)
 
         self.__gltf = gltf2_io.Gltf(
@@ -106,7 +106,7 @@ class GlTF2Exporter:
             gltf2_io.MaterialNormalTextureInfoClass,
             gltf2_io.MaterialOcclusionTextureInfoClass
         ]
-        
+
         self.__traverse(asset)
 
     @property

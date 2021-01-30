@@ -39,7 +39,7 @@ def dll_path() -> Path:
         }.get(sys.platform)
     else:
         path = Path(path)
-    
+
     library_name = {
         'win32': '{}.dll'.format(lib_name),
         'linux': 'lib{}.so'.format(lib_name),
