@@ -5,7 +5,7 @@ on: [push, pull_request]
 env:
   CI: true
   BLENDER_MAJOR: 2
-  BLENDER_MINOR: 91
+  BLENDER_MINOR: 93
 
 jobs:
   build:
