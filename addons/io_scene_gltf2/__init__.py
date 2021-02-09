@@ -70,21 +70,42 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 extension_panel_unregister_functors = []
 
 
+def ensure_filepath_matches_export_format(filepath, export_format):
+    import os
+    filename = os.path.basename(filepath)
+    if not filename:
+        return filepath
+
+    stem, ext = os.path.splitext(filename)
+    if stem.startswith('.') and not ext:
+        stem, ext = '', stem
+
+    desired_ext = '.glb' if export_format == 'GLB' else '.gltf'
+    ext_lower = ext.lower()
+    if ext_lower not in ['.glb', '.gltf']:
+        return filepath + desired_ext
+    elif ext_lower != desired_ext:
+        filepath = filepath[:-len(ext)]  # strip off ext
+        return filepath + desired_ext
+    else:
+        return filepath
+
+
 def on_export_format_changed(self, context):
-    # Update the file extension when the format (.glb/.gltf) changes
+    # Update the filename in the file browser when the format (.glb/.gltf)
+    # changes
     sfile = context.space_data
-    if sfile is None:
-        return # Avoid error when export from background
-    operator = sfile.active_operator
-    if operator.bl_idname != "EXPORT_SCENE_OT_gltf":
+    if not isinstance(sfile, bpy.types.SpaceFileBrowser):
         return
-    if operator.check(context):
-        # Weird hack to force the filepicker to notice filename changed
-        from os.path import basename
-        filepath = operator.filepath
-        bpy.ops.file.filenum(increment=-1)
-        if basename(operator.filepath) != basename(filepath):
-            bpy.ops.file.filenum(increment=1)
+    if not sfile.active_operator:
+        return
+    if sfile.active_operator.bl_idname != "EXPORT_SCENE_OT_gltf":
+        return
+
+    sfile.params.filename = ensure_filepath_matches_export_format(
+        sfile.params.filename,
+        self.export_format,
+    )
 
 
 class ExportGLTF2_Base:
@@ -384,28 +405,12 @@ class ExportGLTF2_Base:
 
     def check(self, _context):
         # Ensure file extension matches format
-        import os
-        filename = os.path.basename(self.filepath)
-        if filename:
-            filepath = self.filepath
-            desired_ext = '.glb' if self.export_format == 'GLB' else '.gltf'
-
-            stem, ext = os.path.splitext(filename)
-            if stem.startswith('.') and not ext:
-                stem, ext = '', stem
-
-            ext_lower = ext.lower()
-            if ext_lower not in ['.glb', '.gltf']:
-                filepath = filepath + desired_ext
-            elif ext_lower != desired_ext:
-                filepath = filepath[:-len(ext)]  # strip off ext
-                filepath += desired_ext
-
-            if filepath != self.filepath:
-                self.filepath = filepath
-                return True
-
-        return False
+        old_filepath = self.filepath
+        self.filepath = ensure_filepath_matches_export_format(
+            self.filepath,
+            self.export_format,
+        )
+        return self.filepath != old_filepath
 
     def invoke(self, context, event):
         settings = context.scene.get(self.scene_key)
