@@ -54,7 +54,7 @@ def gather_primitives(
         material_idx = internal_primitive['material']
         material = None
 
-        if export_settings['gltf_materials'] == "EXPORT":
+        if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
             blender_material = None
             if material_names:
                 i = material_idx if material_idx < len(material_names) else -1
@@ -73,7 +73,7 @@ def gather_primitives(
             extras=None,
             indices=internal_primitive['indices'],
             material=material,
-            mode=None,
+            mode=internal_primitive['mode'],
             targets=internal_primitive['targets']
         )
         primitives.append(primitive)
@@ -101,7 +101,8 @@ def __gather_cache_primitives(
         primitive = {
             "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
             "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
-            "material": internal_primitive['material'],
+            "mode": internal_primitive.get('mode'),
+            "material": internal_primitive.get('material'),
             "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
         }
         primitives.append(primitive)
@@ -109,7 +110,9 @@ def __gather_cache_primitives(
     return primitives
 
 def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings):
-    indices = blender_primitive['indices']
+    indices = blender_primitive.get('indices')
+    if indices is None:
+        return None
 
     # NOTE: Values used by some graphics APIs as "primitive restart" values are disallowed.
     # Specifically, the values 65535 (in UINT16) and 4294967295 (in UINT32) cannot be used as indices.

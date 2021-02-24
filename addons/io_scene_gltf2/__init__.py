@@ -263,6 +263,22 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    use_mesh_edges: BoolProperty(
+        name='Loose Edges',
+        description=(
+            'Export loose edges as lines, using the material from the first material slot'
+        ),
+        default=False,
+    )
+
+    use_mesh_vertices: BoolProperty(
+        name='Loose Points',
+        description=(
+            'Export loose points as glTF points, using the material from the first material slot'
+        ),
+        default=False,
+    )
+
     export_cameras: BoolProperty(
         name='Cameras',
         description='Export cameras',
@@ -444,10 +460,18 @@ class ExportGLTF2_Base:
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
-        # find all export_ props
+        # find all props to save
+        exceptional = [
+            # options that don't start with 'export_'
+            'use_selection',
+            'use_mesh_edges',
+            'use_mesh_vertices',
+        ]
         all_props = self.properties
-        export_props = {x: getattr(self, x) for x in dir(all_props)
-                        if (x.startswith("export_") or x == "use_selection") and all_props.get(x) is not None}
+        export_props = {
+            x: getattr(self, x) for x in dir(all_props)
+            if (x.startswith("export_") or x in exceptional) and all_props.get(x) is not None
+        }
 
         context.scene[self.scene_key] = export_props
 
@@ -479,6 +503,8 @@ class ExportGLTF2_Base:
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
+        export_settings['gltf_loose_edges'] = self.use_mesh_edges
+        export_settings['gltf_loose_points'] = self.use_mesh_vertices
 
         if self.is_draco_available:
             export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression_enable
@@ -692,6 +718,11 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         col.active = operator.export_normals
         col.prop(operator, 'export_tangents')
         layout.prop(operator, 'export_colors')
+
+        col = layout.column()
+        col.prop(operator, 'use_mesh_edges')
+        col.prop(operator, 'use_mesh_vertices')
+
         layout.prop(operator, 'export_materials')
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"

@@ -283,6 +283,90 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
             'material': material_idx,
         })
 
+    if export_settings['gltf_loose_edges']:
+        # Find loose edges
+        loose_edges = [e for e in blender_mesh.edges if e.is_loose]
+        blender_idxs = [vi for e in loose_edges for vi in e.vertices]
+
+        if blender_idxs:
+            # Export one glTF vert per unique Blender vert in a loose edge
+            blender_idxs = np.array(blender_idxs, dtype=np.uint32)
+            blender_idxs, indices = np.unique(blender_idxs, return_inverse=True)
+
+            attributes = {}
+
+            attributes['POSITION'] = locs[blender_idxs]
+
+            for morph_i, vs in enumerate(morph_locs):
+                attributes['MORPH_POSITION_%d' % morph_i] = vs[blender_idxs]
+
+            if skin:
+                joints = [[] for _ in range(num_joint_sets)]
+                weights = [[] for _ in range(num_joint_sets)]
+
+                for vi in blender_idxs:
+                    bones = vert_bones[vi]
+                    for j in range(0, 4 * num_joint_sets):
+                        if j < len(bones):
+                            joint, weight = bones[j]
+                        else:
+                            joint, weight = 0, 0.0
+                        joints[j//4].append(joint)
+                        weights[j//4].append(weight)
+
+                for i, (js, ws) in enumerate(zip(joints, weights)):
+                    attributes['JOINTS_%d' % i] = js
+                    attributes['WEIGHTS_%d' % i] = ws
+
+            primitives.append({
+                'attributes': attributes,
+                'indices': indices,
+                'mode': 1,  # LINES
+                'material': 0,
+            })
+
+    if export_settings['gltf_loose_points']:
+        # Find loose points
+        verts_in_edge = set(vi for e in blender_mesh.edges for vi in e.vertices)
+        blender_idxs = [
+            vi for vi, _ in enumerate(blender_mesh.vertices)
+            if vi not in verts_in_edge
+        ]
+
+        if blender_idxs:
+            blender_idxs = np.array(blender_idxs, dtype=np.uint32)
+
+            attributes = {}
+
+            attributes['POSITION'] = locs[blender_idxs]
+
+            for morph_i, vs in enumerate(morph_locs):
+                attributes['MORPH_POSITION_%d' % morph_i] = vs[blender_idxs]
+
+            if skin:
+                joints = [[] for _ in range(num_joint_sets)]
+                weights = [[] for _ in range(num_joint_sets)]
+
+                for vi in blender_idxs:
+                    bones = vert_bones[vi]
+                    for j in range(0, 4 * num_joint_sets):
+                        if j < len(bones):
+                            joint, weight = bones[j]
+                        else:
+                            joint, weight = 0, 0.0
+                        joints[j//4].append(joint)
+                        weights[j//4].append(weight)
+
+                for i, (js, ws) in enumerate(zip(joints, weights)):
+                    attributes['JOINTS_%d' % i] = js
+                    attributes['WEIGHTS_%d' % i] = ws
+
+            primitives.append({
+                'attributes': attributes,
+                'mode': 0,  # POINTS
+                'material': 0,
+            })
+
     print_console('INFO', 'Primitives created: %d' % len(primitives))
 
     return primitives

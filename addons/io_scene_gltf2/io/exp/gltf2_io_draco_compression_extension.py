@@ -85,6 +85,10 @@ def __encode_primitive(primitive, dll, export_settings):
     attributes = primitive.attributes
     indices = primitive.indices
 
+    # Only do TRIANGLES primitives
+    if primitive.mode not in [None, 4]:
+        return
+
     if 'POSITION' not in attributes:
         print_console('WARNING', 'Draco encoder: Primitive without positions encountered. Skipping.')
         return
