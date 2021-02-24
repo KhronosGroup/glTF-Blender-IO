@@ -245,8 +245,7 @@ class ExportGLTF2_Base:
     use_mesh_edges: BoolProperty(
         name='Loose Edges',
         description=(
-            'Export loose edges too. Loose geometry will use the material from the '
-            'first material slot'
+            'Export loose edges as lines, using the material from the first material slot'
         ),
         default=False,
     )
@@ -254,8 +253,7 @@ class ExportGLTF2_Base:
     use_mesh_vertices: BoolProperty(
         name='Loose Points',
         description=(
-            'Export loose points too. Loose geometry will use the material from the '
-            'first material slot'
+            'Export loose points as glTF points, using the material from the first material slot'
         ),
         default=False,
     )
