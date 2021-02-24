@@ -196,7 +196,7 @@ class ExportGLTF2_Base:
         description='Compression level (0 = most speed, 6 = most compression, higher values currently not supported)',
         default=6,
         min=0,
-        max=6
+        max=10
     )
 
     export_draco_position_quantization: IntProperty(
