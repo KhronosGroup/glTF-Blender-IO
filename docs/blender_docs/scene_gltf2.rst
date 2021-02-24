@@ -603,6 +603,10 @@ Tangents
    Export vertex tangents with meshes.
 Vertex Colors
    Export vertex colors with meshes.
+Loose Edges
+   Export loose edges as lines, using the material from the first material slot.
+Loose Points
+   Export loose points as glTF points, using the material from the first material slot.
 Materials
    Export materials.
 Images
