@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -427,13 +427,13 @@ def __gather_trans_rot_scale(blender_object, export_settings):
             blender_object.instance_collection.instance_offset, export_settings)
 
         s = Matrix.Diagonal(sca).to_4x4()
-        r = rot.to_matrix().to_4x4() 
+        r = rot.to_matrix().to_4x4()
         t = Matrix.Translation(trans).to_4x4()
         o = Matrix.Translation(offset).to_4x4()
         m = t @ r @ s @ o
 
         trans = m.translation
-        
+
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
                                    gltf2_blender_math.round_if_near(trans[2], 0.0)
