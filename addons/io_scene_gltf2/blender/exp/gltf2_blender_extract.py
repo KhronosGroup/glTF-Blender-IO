@@ -374,7 +374,8 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
 def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings):
     locs = np.empty(len(blender_mesh.vertices) * 3, dtype=np.float32)
-    blender_mesh.vertices.foreach_get('co', locs)
+    source = key_blocks[0].relative_key.data if key_blocks else blender_mesh.vertices
+    source.foreach_get('co', locs)
     locs = locs.reshape(len(blender_mesh.vertices), 3)
 
     morph_locs = []
