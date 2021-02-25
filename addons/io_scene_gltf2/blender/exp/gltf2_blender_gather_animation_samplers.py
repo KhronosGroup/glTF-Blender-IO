@@ -56,7 +56,10 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                                  bake_channel,
                                                  driver_obj,
                                                  export_settings)
-
+    if blender_object.parent is not None:
+        matrix_parent_inverse = blender_object.matrix_parent_inverse.copy().freeze()
+    else:
+        matrix_parent_inverse = mathutils.Matrix.Identity(4).freeze()
 
     sampler = gltf2_io.AnimationSampler(
         extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
@@ -64,7 +67,8 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
         input=__gather_input(channels, blender_object_if_armature, non_keyed_values,
                              bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, export_settings),
         interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
-        output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
+        output=__gather_output(channels,
+                               matrix_parent_inverse,
                                blender_object_if_armature,
                                non_keyed_values,
                                bake_bone,
