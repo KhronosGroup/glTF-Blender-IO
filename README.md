@@ -8,19 +8,14 @@ Documentation
 
 | Blender Version | Documentation |
 |---------|---------------------|
-| 2.80    | https://docs.blender.org/manual/en/2.80/addons/io_scene_gltf2.html |
-| 2.81    | https://docs.blender.org/manual/en/2.81/addons/import_export/io_scene_gltf2.html |
-| 2.82    | https://docs.blender.org/manual/en/2.82/addons/import_export/scene_gltf2.html  |
-| 2.83    | https://docs.blender.org/manual/en/2.83/addons/import_export/scene_gltf2.html  |
-| 2.90    | https://docs.blender.org/manual/en/2.90/addons/import_export/scene_gltf2.html  |
-| 2.91    | https://docs.blender.org/manual/en/2.91/addons/import_export/scene_gltf2.html  |
+| 2.92    | https://docs.blender.org/manual/en/2.92/addons/import_export/scene_gltf2.html  |
 | dev     | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
-* 2.80 - 2.90 are previous stable releases.
+* 2.80 - 2.91 are previous stable releases.
 * 2.83 is the first Blender LTS release. Check the `blender-v2.83-release` branch.
-* 2.91 is the current stable release. Check the `blender-v2.91-release` branch.
-* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become 2.92.
+* 2.92 is the current stable release. Check the `blender-v2.92-release` branch.
+* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become 2.93.
 
 ### Legacy 2.79 Support
 
