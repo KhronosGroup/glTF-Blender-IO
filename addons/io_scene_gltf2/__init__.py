@@ -456,7 +456,7 @@ class ExportGLTF2_Base:
             except Exception:
                 pass
 
-        self.has_active_extenions = len(extension_panel_unregister_functors) > 0
+        self.has_active_extensions = len(extension_panel_unregister_functors) > 0
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
@@ -912,7 +912,7 @@ class GLTF_PT_export_user_extensions(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and operator.has_active_extenions
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and operator.has_active_extensions
 
     def draw(self, context):
         layout = self.layout
