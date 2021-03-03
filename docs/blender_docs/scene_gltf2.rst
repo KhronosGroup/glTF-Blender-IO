@@ -60,6 +60,7 @@ with the following channels of information:
 Some additional material properties or types of materials can be expressed using glTF extensions:
 
 - Clearcoat, Clearcoat Roughness, Clearcoat Normal (uses ``KHR_materials_clearcoat``)
+- Sheen (uses ``KHR_materials_sheen``; textures not yet supported)
 - Transmission (uses ``KHR_materials_transmission``)
 - "Shadeless" materials (uses ``KHR_materials_unlit``)
 
@@ -420,6 +421,7 @@ are supported directly by this add-on:
 - ``KHR_draco_mesh_compression``
 - ``KHR_lights_punctual``
 - ``KHR_materials_clearcoat``
+- ``KHR_materials_sheen``
 - ``KHR_materials_transmission``
 - ``KHR_materials_unlit``
 - ``KHR_texture_transform``
