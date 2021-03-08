@@ -259,6 +259,10 @@ class GlTF2Exporter:
         d[key] = d_key
         return cls.__get_key_path(d[key], keypath, default)
 
+
+    def traverse_extensions(self):
+        self.__traverse(self.__gltf.extensions)
+
     def __traverse(self, node):
         """
         Recursively traverse a scene graph consisting of gltf compatible elements.

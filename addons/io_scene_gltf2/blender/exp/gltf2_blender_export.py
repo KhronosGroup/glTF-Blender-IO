@@ -66,7 +66,7 @@ def __export(export_settings):
     json = __fix_json(exporter.glTF.to_dict())
 
     export_user_extensions('gather_gltf_hook', export_settings, exporter.glTF)
-    exporter.__traverse(exporter.glTF.extensions)
+    exporter.traverse_extensions()
 
     return json, buffer
 
