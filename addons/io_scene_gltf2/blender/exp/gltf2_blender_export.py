@@ -65,6 +65,9 @@ def __export(export_settings):
     exporter.finalize_images()
     json = __fix_json(exporter.glTF.to_dict())
 
+    export_user_extensions('gather_gltf_hook', export_settings, exporter.glTF)
+    exporter.__traverse(exporter.glTF.extensions)
+
     return json, buffer
 
 
@@ -79,9 +82,6 @@ def __gather_gltf(exporter, export_settings):
         exporter.add_scene(scene, idx==active_scene_idx)
     for animation in animations:
         exporter.add_animation(animation)
-
-    export_user_extensions('gather_gltf_hook', export_settings, exporter.glTF)
-    exporter.__traverse(exporter.glTF.extensions)
 
 
 def __create_buffer(exporter, export_settings):
