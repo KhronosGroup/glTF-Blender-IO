@@ -80,8 +80,8 @@ def __gather_gltf(exporter, export_settings):
     for animation in animations:
         exporter.add_animation(animation)
 
-    export_user_extensions('gather_gltf_hook', export_settings, exporter.__gltf)
-    exporter.__traverse(exporter.__gltf.extensions)
+    export_user_extensions('gather_gltf_hook', export_settings, exporter.glTF)
+    exporter.__traverse(exporter.glTF.extensions)
 
 
 def __create_buffer(exporter, export_settings):
