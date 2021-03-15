@@ -62,9 +62,11 @@ def encode_scene_primitives(scenes, export_settings):
     dll.encoderCopy.restype = None
     dll.encoderCopy.argtypes = [c_void_p, c_void_p]
 
+    encoded_primitives_cache = {}
+
     for scene in scenes:
         for node in scene.nodes:
-            __traverse_node(node, lambda node: __encode_node(node, dll, export_settings))
+            __traverse_node(node, lambda node: __encode_node(node, dll, export_settings, encoded_primitives_cache))
 
 
 def __traverse_node(node, f):
@@ -74,16 +76,26 @@ def __traverse_node(node, f):
             __traverse_node(child, f)
 
 
-def __encode_node(node, dll, export_settings):
+def __encode_node(node, dll, export_settings, encoded_primitives_cache):
     if not (node.mesh is None):
         print_console('INFO', 'Draco encoder: Encoding mesh {}.'.format(node.name))
         for primitive in node.mesh.primitives:
-            __encode_primitive(primitive, dll, export_settings)
+            __encode_primitive(primitive, dll, export_settings, encoded_primitives_cache)
 
 
-def __encode_primitive(primitive, dll, export_settings):
+def __encode_primitive(primitive, dll, export_settings, encoded_primitives_cache):
     attributes = primitive.attributes
     indices = primitive.indices
+
+    # Check if this primitive has already been encoded.
+    # This usually happens when nodes are duplicated in Blender, thus their indices/attributes are shared data.
+    if primitive in encoded_primitives_cache:
+        print_console('INFO', 'Draco encoder: Omitting primitive.')
+        if primitive.extensions is None:
+            primitive.extensions = {}
+        primitive.extensions['KHR_draco_mesh_compression'] = encoded_primitives_cache[primitive]
+        return
+    print_console('INFO', 'Draco encoder: Encoding primitive.')
 
     # Only do TRIANGLES primitives
     if primitive.mode not in [None, 4]:
@@ -129,10 +141,12 @@ def __encode_primitive(primitive, dll, export_settings):
     if primitive.extensions is None:
         primitive.extensions = {}
 
-    primitive.extensions['KHR_draco_mesh_compression'] = {
+    extension_info = {
         'bufferView': BinaryData(encoded_data),
         'attributes': draco_ids
     }
+    primitive.extensions['KHR_draco_mesh_compression'] = extension_info
+    encoded_primitives_cache[primitive] = extension_info
 
     # Set to triangle list mode.
     primitive.mode = 4
