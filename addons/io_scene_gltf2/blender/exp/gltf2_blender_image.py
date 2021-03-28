@@ -286,19 +286,15 @@ class ExportImage:
 
         normalized_base_color_buf = base_color_buf / stack3(luminance(base_color_buf))
         np.nan_to_num(normalized_base_color_buf, copy=False, nan=0.0)     # if luminance in a pixel was zero
-
-        has_transmission = np.amax(transmission_buf) > 0
-        if not has_transmission and np.amax(specular_buf) > 0.5:
-            # material is not transmissive, extend specular range by using a high number for IOR
-            ior = 1.788789
         
-        sc = np.minimum(lerp(1, normalized_base_color_buf, stack3(specular_tint_buf)), 1)
-        plastic = np.minimum(1/((ior - 1) / (ior + 1))**2 * 0.08 * stack3(specular_buf) * sc, 1)
+        sc = lerp(1, normalized_base_color_buf, stack3(specular_tint_buf))
+        plastic = 1/((ior - 1) / (ior + 1))**2 * 0.08 * stack3(specular_buf) * sc
         glass = sc
         out_buf = lerp(plastic, glass, stack3(transmission_buf))
 
         out_buf = np.dstack((out_buf, np.ones((height, width))))
         out_buf = np.reshape(out_buf, (width * height * 4))
+        out_buf *= 0.5  # specularColorFactor is 2
         return self.__encode_from_numpy_array(out_buf.astype(np.float32), (width, height))
 
 def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str) -> bytes:

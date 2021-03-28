@@ -317,34 +317,25 @@ def __gather_ior_and_specular_extensions(blender_material, export_settings):
     specular = specular_socket.default_value if specular_not_linked else None
     specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
     transmission = transmission_socket.default_value if transmission_not_linked else None
-    ior = ior_socket.default_value if ior_not_linked else 1.0   # textures not supported
+    ior = ior_socket.default_value if ior_not_linked else 1.5   # textures not supported
 
     no_texture = (specular_not_linked and specular_tint_not_linked and
         (specular_tint == 0.0 or (specular_tint != 0.0 and base_color_not_linked)))
 
-    has_transmission = (transmission_not_linked and transmission > 0) or not transmission_not_linked
-    if has_transmission:
+    if ior != 1.5:
         ior_ext_enabled = True
         ior_extension['ior'] = ior
-    else:
-        # If there is no transmission/refraction, we are free to choose
-        # any value for glTF's IOR. Therefore, if specular is overshooting,
-        # we increase the IOR and adjust specular color accordingly in the
-        # next step.
-        if specular_not_linked and specular > 0.5:
-            ior_ext_enabled = True
-            ior_extension['ior'] = 1.788789
 
     if no_texture:
         if specular != 0.5 or specular_tint != 0.0:
             specular_ext_enabled = True
             base_color = base_color_socket.default_value[0:3] if base_color_not_linked else [0, 0, 0]
             normalized_base_color = [bc / luminance(base_color) if luminance(base_color) > 0 else 0 for bc in base_color]
-            specular_color = [min(lerp(1, bc, specular_tint), 1) for bc in normalized_base_color]
+            specular_color = [lerp(1, bc, specular_tint) for bc in normalized_base_color]
 
             # The IOR dictates the maximal reflection strength, therefore we need to clamp
             # reflection strenth of non-transmissive (aka plastic) fraction (if any)
-            plastic = [min(1/((ior - 1) / (ior + 1))**2 * 0.08 * specular * sc, 1) for sc in specular_color]
+            plastic = [1/((ior - 1) / (ior + 1))**2 * 0.08 * specular * sc for sc in specular_color]
             glass = specular_color
             specular_extension['specularColorFactor'] = [lerp(plastic[c], glass[c], transmission) for c in range(0,3)]
     else:
@@ -355,6 +346,10 @@ def __gather_ior_and_specular_extensions(blender_material, export_settings):
 
         specular_ext_enabled = True
         specular_extension['specularColorTexture'] = info
+
+        # If specular>0.5, specular color may be >1. As we cannot store values >1 in a byte texture,
+        # we use the specular color factor to rescale the value range.
+        specular_extension['specularColorFactor'] = [2, 2, 2]
 
     ior_extension = Extension('KHR_materials_ior', ior_extension, False) if ior_ext_enabled else None
     specular_extension = Extension('KHR_materials_specular', specular_extension, False) if specular_ext_enabled else None
