@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,7 +59,8 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             # because the newer one is always present in all Principled BSDF materials.
             type = bpy.types.ShaderNodeEmission
             name = "Color"
-            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
+            nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
             inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
             if inputs:
                 return inputs[0]
@@ -71,7 +72,8 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             name = "Color"
         else:
             type = bpy.types.ShaderNodeBsdfPrincipled
-        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type)]
+        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
+        nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
         if inputs:
             return inputs[0]
@@ -98,6 +100,17 @@ def get_socket_old(blender_material: bpy.types.Material, name: str):
 
     return None
 
+def check_if_is_linked_to_active_output(shader_socket):
+    for link in shader_socket.links:
+        if isinstance(link.to_node, bpy.types.ShaderNodeOutputMaterial) and link.to_node.is_active_output is True:
+            return True
+
+        if len(link.to_node.outputs) > 0: # ignore non active output, not having output sockets
+            ret = check_if_is_linked_to_active_output(link.to_node.outputs[0]) # recursive until find an output material node
+            if ret is True:
+                return True
+
+    return False
 
 def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     """Find any ShaderNodeTexImage in the path from the socket."""
@@ -119,18 +132,7 @@ def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     return None
 
 
-def get_texture_transform_from_texture_node(texture_node):
-    if not isinstance(texture_node, bpy.types.ShaderNodeTexImage):
-        return None
-
-    mapping_socket = texture_node.inputs["Vector"]
-    if len(mapping_socket.links) == 0:
-        return None
-
-    mapping_node = mapping_socket.links[0].from_node
-    if not isinstance(mapping_node, bpy.types.ShaderNodeMapping):
-        return None
-
+def get_texture_transform_from_mapping_node(mapping_node):
     if mapping_node.vector_type not in ["TEXTURE", "POINT", "VECTOR"]:
         gltf2_io_debug.print_console("WARNING",
             "Skipping exporting texture transform because it had type " +
@@ -218,3 +220,74 @@ def get_node(data_path):
         return None
 
     return node_name[:(index)]
+
+
+def get_factor_from_socket(socket, kind):
+    """
+    For baseColorFactor, metallicFactor, etc.
+    Get a constant value from a socket, or a constant value
+    from a MULTIPLY node just before the socket.
+    kind is either 'RGB' or 'VALUE'.
+    """
+    fac = get_const_from_socket(socket, kind)
+    if fac is not None:
+        return fac
+
+    node = previous_node(socket)
+    if node is not None:
+        x1, x2 = None, None
+        if kind == 'RGB':
+            if node.type == 'MIX_RGB' and node.blend_type == 'MULTIPLY':
+                # TODO: handle factor in inputs[0]?
+                x1 = get_const_from_socket(node.inputs[1], kind)
+                x2 = get_const_from_socket(node.inputs[2], kind)
+        if kind == 'VALUE':
+            if node.type == 'MATH' and node.operation == 'MULTIPLY':
+                x1 = get_const_from_socket(node.inputs[0], kind)
+                x2 = get_const_from_socket(node.inputs[1], kind)
+        if x1 is not None and x2 is None: return x1
+        if x2 is not None and x1 is None: return x2
+
+    return None
+
+
+def get_const_from_socket(socket, kind):
+    if not socket.is_linked:
+        if kind == 'RGB':
+            if socket.type != 'RGBA': return None
+            return list(socket.default_value)[:3]
+        if kind == 'VALUE':
+            if socket.type != 'VALUE': return None
+            return socket.default_value
+
+    # Handle connection to a constant RGB/Value node
+    prev_node = previous_node(socket)
+    if prev_node is not None:
+        if kind == 'RGB' and prev_node.type == 'RGB':
+            return list(prev_node.outputs[0].default_value)[:3]
+        if kind == 'VALUE' and prev_node.type == 'VALUE':
+            return prev_node.outputs[0].default_value
+
+    return None
+
+
+def previous_socket(socket):
+    while True:
+        if not socket.is_linked:
+            return None
+
+        from_socket = socket.links[0].from_socket
+
+        # Skip over reroute nodes
+        if from_socket.node.type == 'REROUTE':
+            socket = from_socket.node.inputs[0]
+            continue
+
+        return from_socket
+
+
+def previous_node(socket):
+    prev_socket = previous_socket(socket)
+    if prev_socket is not None:
+        return prev_socket.node
+    return None

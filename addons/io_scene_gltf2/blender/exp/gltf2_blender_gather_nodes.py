@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 import math
 import bpy
-from mathutils import Matrix, Quaternion
+from mathutils import Matrix, Quaternion, Vector
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.com import gltf2_blender_math
@@ -23,7 +23,6 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
-from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io
@@ -50,25 +49,45 @@ def gather_node(blender_object, library, blender_scene, dupli_object_parent, exp
 
 @cached
 def __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
+    children = __gather_children(blender_object, blender_scene, export_settings)
+
+    camera = None
+    mesh = None
+    skin = None
+    weights = None
+
     # If blender_scene is None, we are coming from animation export
     # Check to know if object is exported is already done, so we don't check
     # again if object is instanced in scene : this check was already done when exporting object itself
     if not __filter_node(blender_object, blender_scene, export_settings):
-        return None
+        if children:
+            # This node should be filtered out, but has un-filtered children present.
+            # So, export this node, excluding its camera, mesh, skin, and weights.
+            # The transformations and animations on this node will have visible effects on children.
+            pass
+        else:
+            # This node is filtered out, and has no un-filtered children or descendants.
+            return None
+    else:
+        # This node is being fully exported.
+        camera = __gather_camera(blender_object, export_settings)
+        mesh = __gather_mesh(blender_object, library, export_settings)
+        skin = __gather_skin(blender_object, export_settings)
+        weights = __gather_weights(blender_object, export_settings)
 
     node = gltf2_io.Node(
-        camera=__gather_camera(blender_object, export_settings),
-        children=__gather_children(blender_object, blender_scene, export_settings),
+        camera=camera,
+        children=children,
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
-        mesh=__gather_mesh(blender_object, library, export_settings),
+        mesh=mesh,
         name=__gather_name(blender_object, export_settings),
         rotation=None,
         scale=None,
-        skin=__gather_skin(blender_object, export_settings),
+        skin=skin,
         translation=None,
-        weights=__gather_weights(blender_object, export_settings)
+        weights=weights
     )
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
@@ -189,8 +208,8 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 rot_quat = Quaternion(rot)
                 axis_basis_change = Matrix(
                     ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, -1.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-                mat = gltf2_blender_math.multiply(child.matrix_parent_inverse, child.matrix_basis)
-                mat = gltf2_blender_math.multiply(mat, axis_basis_change)
+                mat = child.matrix_parent_inverse @ child.matrix_basis
+                mat = mat @ axis_basis_change
 
                 _, rot_quat, _ = mat.decompose()
                 child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
@@ -248,14 +267,11 @@ def __gather_matrix(blender_object, export_settings):
 
 
 def __gather_mesh(blender_object, library, export_settings):
+    if blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
+        return __gather_mesh_from_nonmesh(blender_object, library, export_settings)
+
     if blender_object.type != "MESH":
         return None
-
-    modifier_normal_types = [
-        "NORMAL_EDIT",
-        "WEIGHTED_NORMAL",
-        "BEVEL"
-    ]
 
     # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
     vertex_groups = blender_object.vertex_groups
@@ -266,16 +282,6 @@ def __gather_mesh(blender_object, library, export_settings):
         modifiers = None
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
-        auto_smooth = blender_object.data.use_auto_smooth
-        edge_split = None
-        some_normals_modifier = any([m in modifier_normal_types for m in [mod.type for mod in blender_object.modifiers]])
-        if auto_smooth and not some_normals_modifier:
-            edge_split = blender_object.modifiers.new('Temporary_Auto_Smooth', 'EDGE_SPLIT')
-            edge_split.split_angle = blender_object.data.auto_smooth_angle
-            edge_split.use_edge_angle = not blender_object.data.has_custom_normals
-            blender_object.data.use_auto_smooth = some_normals_modifier
-            bpy.context.view_layer.update()
-
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
             # temporarily disable Armature modifiers if exporting skins
@@ -295,10 +301,6 @@ def __gather_mesh(blender_object, library, export_settings):
             # restore Armature modifiers
             for idx, show_viewport in armature_modifiers.items():
                 blender_object.modifiers[idx].show_viewport = show_viewport
-
-        if auto_smooth and not some_normals_modifier:
-            blender_object.data.use_auto_smooth = True
-            blender_object.modifiers.remove(edge_split)
     else:
         blender_mesh = blender_object.data
         skip_filter = False
@@ -312,7 +314,8 @@ def __gather_mesh(blender_object, library, export_settings):
                 vertex_groups = None # Not needed if no armature, avoid a cache miss
                 modifiers = None
 
-    material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
+    materials = tuple(ms.material for ms in blender_object.material_slots)
+    material_names = tuple(None if mat is None else mat.name for mat in materials)
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
@@ -338,6 +341,49 @@ def __gather_mesh(blender_object, library, export_settings):
     return result
 
 
+def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
+    """Handles curves, surfaces, text, etc."""
+    needs_to_mesh_clear = False
+    try:
+        # Convert to a mesh
+        try:
+            if export_settings[gltf2_blender_export_keys.APPLY]:
+                depsgraph = bpy.context.evaluated_depsgraph_get()
+                blender_mesh_owner = blender_object.evaluated_get(depsgraph)
+                blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
+                # TODO: do we need preserve_all_data_layers?
+
+            else:
+                blender_mesh_owner = blender_object
+                blender_mesh = blender_mesh_owner.to_mesh()
+
+        except Exception:
+            return None
+
+        needs_to_mesh_clear = True
+
+        skip_filter = True
+        material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
+        vertex_groups = None
+        modifiers = None
+        blender_object_for_skined_data = None
+
+        result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
+                                                       library,
+                                                       blender_object_for_skined_data,
+                                                       vertex_groups,
+                                                       modifiers,
+                                                       skip_filter,
+                                                       material_names,
+                                                       export_settings)
+
+    finally:
+        if needs_to_mesh_clear:
+            blender_mesh_owner.to_mesh_clear()
+
+    return result
+
+
 def __gather_name(blender_object, export_settings):
     return blender_object.name
 
@@ -358,7 +404,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
 
 
         if blender_object.matrix_local[3][3] != 0.0:
-            trans, rot, sca = gltf2_blender_extract.decompose_transition(blender_object.matrix_local, export_settings)
+            trans, rot, sca = blender_object.matrix_local.decompose()
         else:
             # Some really weird cases, scale is null (if parent is null when evaluation is done)
             print_console('WARNING', 'Some nodes are 0 scaled during evaluation. Result can be wrong')
@@ -372,13 +418,22 @@ def __gather_trans_rot_scale(blender_object, export_settings):
     # make sure the rotation is normalized
     rot.normalize()
 
-    trans = gltf2_blender_extract.convert_swizzle_location(trans, None, None, export_settings)
-    rot = gltf2_blender_extract.convert_swizzle_rotation(rot, export_settings)
-    sca = gltf2_blender_extract.convert_swizzle_scale(sca, export_settings)
+    trans = __convert_swizzle_location(trans, export_settings)
+    rot = __convert_swizzle_rotation(rot, export_settings)
+    sca = __convert_swizzle_scale(sca, export_settings)
 
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-        trans -= gltf2_blender_extract.convert_swizzle_location(
-            blender_object.instance_collection.instance_offset, None, None, export_settings)
+        offset = -__convert_swizzle_location(
+            blender_object.instance_collection.instance_offset, export_settings)
+
+        s = Matrix.Diagonal(sca).to_4x4()
+        r = rot.to_matrix().to_4x4()
+        t = Matrix.Translation(trans).to_4x4()
+        o = Matrix.Translation(offset).to_4x4()
+        m = t @ r @ s @ o
+
+        trans = m.translation
+
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
                                    gltf2_blender_math.round_if_near(trans[2], 0.0)
@@ -430,7 +485,7 @@ def __gather_weights(blender_object, export_settings):
 
 
 def __get_correction_node(blender_object, export_settings):
-    correction_quaternion = gltf2_blender_extract.convert_swizzle_rotation(
+    correction_quaternion = __convert_swizzle_rotation(
         Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)), export_settings)
     correction_quaternion = [correction_quaternion[1], correction_quaternion[2],
                              correction_quaternion[3], correction_quaternion[0]]
@@ -448,3 +503,31 @@ def __get_correction_node(blender_object, export_settings):
         translation=None,
         weights=None
     )
+
+
+def __convert_swizzle_location(loc, export_settings):
+    """Convert a location from Blender coordinate system to glTF coordinate system."""
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Vector((loc[0], loc[2], -loc[1]))
+    else:
+        return Vector((loc[0], loc[1], loc[2]))
+
+
+def __convert_swizzle_rotation(rot, export_settings):
+    """
+    Convert a quaternion rotation from Blender coordinate system to glTF coordinate system.
+
+    'w' is still at first position.
+    """
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
+    else:
+        return Quaternion((rot[0], rot[1], rot[2], rot[3]))
+
+
+def __convert_swizzle_scale(scale, export_settings):
+    """Convert a scale from Blender coordinate system to glTF coordinate system."""
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Vector((scale[0], scale[2], scale[1]))
+    else:
+        return Vector((scale[0], scale[1], scale[2]))

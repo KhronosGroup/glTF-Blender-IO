@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@ from ...io.com.gltf2_io import TextureInfo, MaterialNormalTextureInfoClass
 from .gltf2_blender_texture import texture
 
 
-# [Texture] => [Clearcoat Factor] =>
+# [Texture] => [Separate R] => [Clearcoat Factor] =>
 def clearcoat(mh, location, clearcoat_socket):
     x, y = location
     try:
@@ -49,9 +49,15 @@ def clearcoat(mh, location, clearcoat_socket):
 
         x -= 200
 
-    # Clearcoat is in the R component; we don't need to separate it out
-    # since hooking a color socket up to a value socket automatically gets
-    # the R
+    # Separate RGB
+    node = mh.node_tree.nodes.new('ShaderNodeSeparateRGB')
+    node.location = x - 150, y - 75
+    # Outputs
+    mh.node_tree.links.new(clearcoat_socket, node.outputs['R'])
+    # Inputs
+    clearcoat_socket = node.inputs[0]
+
+    x -= 200
 
     texture(
         mh,

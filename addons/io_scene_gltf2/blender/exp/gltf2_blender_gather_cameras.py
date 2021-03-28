@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,18 +92,18 @@ def __gather_perspective(blender_camera, export_settings):
 
         width = bpy.context.scene.render.pixel_aspect_x * bpy.context.scene.render.resolution_x
         height = bpy.context.scene.render.pixel_aspect_y * bpy.context.scene.render.resolution_y
-        perspective.aspectRatio = width / height
+        perspective.aspect_ratio = width / height
 
         if width >= height:
             if blender_camera.sensor_fit != 'VERTICAL':
-                perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspectRatio)
+                perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspect_ratio)
             else:
                 perspective.yfov = blender_camera.angle
         else:
             if blender_camera.sensor_fit != 'HORIZONTAL':
                 perspective.yfov = blender_camera.angle
             else:
-                perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspectRatio)
+                perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspect_ratio)
 
         perspective.znear = blender_camera.clip_start
         perspective.zfar = blender_camera.clip_end

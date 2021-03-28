@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ from os.path import dirname, join, isfile
 from urllib.parse import unquote
 
 
+# Raise this error to have the importer report an error message.
+class ImportError(RuntimeError):
+    pass
+
+
 class glTFImporter():
     """glTF Importer class."""
 
@@ -32,6 +37,7 @@ class glTFImporter():
         self.glb_buffer = None
         self.buffers = {}
         self.accessor_cache = {}
+        self.decode_accessor_cache = {}
 
         if 'loglevel' not in self.import_settings.keys():
             self.import_settings['loglevel'] = logging.ERROR
@@ -47,42 +53,38 @@ class glTFImporter():
             'KHR_materials_unlit',
             'KHR_texture_transform',
             'KHR_materials_clearcoat',
+            'KHR_mesh_quantization',
+            'KHR_draco_mesh_compression'
         ]
 
-        # TODO : merge with io_constants
-        self.fmt_char_dict = {}
-        self.fmt_char_dict[5120] = 'b'  # Byte
-        self.fmt_char_dict[5121] = 'B'  # Unsigned Byte
-        self.fmt_char_dict[5122] = 'h'  # Short
-        self.fmt_char_dict[5123] = 'H'  # Unsigned Short
-        self.fmt_char_dict[5125] = 'I'  # Unsigned Int
-        self.fmt_char_dict[5126] = 'f'  # Float
-
-        self.component_nb_dict = {}
-        self.component_nb_dict['SCALAR'] = 1
-        self.component_nb_dict['VEC2'] = 2
-        self.component_nb_dict['VEC3'] = 3
-        self.component_nb_dict['VEC4'] = 4
-        self.component_nb_dict['MAT2'] = 4
-        self.component_nb_dict['MAT3'] = 9
-        self.component_nb_dict['MAT4'] = 16
+    @staticmethod
+    def load_json(content):
+        def bad_constant(val):
+            raise ImportError('Bad glTF: json contained %s' % val)
+        try:
+            text = str(content, encoding='utf-8')
+            return json.loads(text, parse_constant=bad_constant)
+        except ValueError as e:
+            raise ImportError('Bad glTF: json error: %s' % e.args[0])
 
     @staticmethod
-    def bad_json_value(val):
-        """Bad Json value."""
-        raise ValueError('Json contains some unauthorized values')
+    def check_version(gltf):
+        """Check version. This is done *before* gltf_from_dict."""
+        if not isinstance(gltf, dict) or 'asset' not in gltf:
+            raise ImportError("Bad glTF: no asset in json")
+        if 'version' not in gltf['asset']:
+            raise ImportError("Bad glTF: no version")
+        if gltf['asset']['version'] != "2.0":
+            raise ImportError("glTF version must be 2.0; got %s" % gltf['asset']['version'])
 
     def checks(self):
         """Some checks."""
-        if self.data.asset.version != "2.0":
-            return False, "glTF version must be 2"
-
         if self.data.extensions_required is not None:
             for extension in self.data.extensions_required:
                 if extension not in self.data.extensions_used:
-                    return False, "Extension required must be in Extension Used too"
+                    raise ImportError("Extension required must be in Extension Used too")
                 if extension not in self.extensions_managed:
-                    return False, "Extension " + extension + " is not available on this addon version"
+                    raise ImportError("Extension %s is not available on this addon version" % extension)
 
         if self.data.extensions_used is not None:
             for extension in self.data.extensions_used:
@@ -90,86 +92,70 @@ class glTFImporter():
                     # Non blocking error #TODO log
                     pass
 
-        return True, None
-
-    def load_glb(self):
+    def load_glb(self, content):
         """Load binary glb."""
-        header = struct.unpack_from('<4sII', self.content)
-        self.format = header[0]
-        self.version = header[1]
-        self.file_size = header[2]
+        magic = content[:4]
+        if magic != b'glTF':
+            raise ImportError("This file is not a glTF/glb file")
 
-        if self.format != b'glTF':
-            return False, "This file is not a glTF/glb file"
+        version, file_size = struct.unpack_from('<II', content, offset=4)
+        if version != 2:
+            raise ImportError("GLB version must be 2; got %d" % version)
+        if file_size != len(content):
+            raise ImportError("Bad GLB: file size doesn't match")
 
-        if self.version != 2:
-            return False, "GLB version %d unsupported" % self.version
-
-        if self.file_size != len(self.content):
-            return False, "Bad GLB: file size doesn't match"
-
+        glb_buffer = None
         offset = 12  # header size = 12
 
         # JSON chunk is first
-        type_, len_, json_bytes, offset = self.load_chunk(offset)
+        type_, len_, json_bytes, offset = self.load_chunk(content, offset)
         if type_ != b"JSON":
-            return False, "Bad GLB: first chunk not JSON"
+            raise ImportError("Bad GLB: first chunk not JSON")
         if len_ != len(json_bytes):
-            return False, "Bad GLB: length of json chunk doesn't match"
-        try:
-            json_str = str(json_bytes, encoding='utf-8')
-            json_ = json.loads(json_str, parse_constant=glTFImporter.bad_json_value)
-            self.data = gltf_from_dict(json_)
-        except ValueError as e:
-            return False, e.args[0]
+            raise ImportError("Bad GLB: length of json chunk doesn't match")
+        gltf = glTFImporter.load_json(json_bytes)
 
         # BIN chunk is second (if it exists)
-        if offset < len(self.content):
-            type_, len_, data, offset = self.load_chunk(offset)
+        if offset < len(content):
+            type_, len_, data, offset = self.load_chunk(content, offset)
             if type_ == b"BIN\0":
                 if len_ != len(data):
-                    return False, "Bad GLB: length of BIN chunk doesn't match"
-                self.glb_buffer = data
+                    raise ImportError("Bad GLB: length of BIN chunk doesn't match")
+                glb_buffer = data
 
-        return True, None
+        return gltf, glb_buffer
 
-    def load_chunk(self, offset):
+    def load_chunk(self, content, offset):
         """Load chunk."""
-        chunk_header = struct.unpack_from('<I4s', self.content, offset)
+        chunk_header = struct.unpack_from('<I4s', content, offset)
         data_length = chunk_header[0]
         data_type = chunk_header[1]
-        data = self.content[offset + 8: offset + 8 + data_length]
+        data = content[offset + 8: offset + 8 + data_length]
 
         return data_type, data_length, data, offset + 8 + data_length
 
     def read(self):
         """Read file."""
-        # Check this is a file
         if not isfile(self.filename):
-            return False, "Please select a file"
+            raise ImportError("Please select a file")
 
-        # Check if file is gltf or glb
         with open(self.filename, 'rb') as f:
-            self.content = memoryview(f.read())
+            content = memoryview(f.read())
 
-        self.is_glb_format = self.content[:4] == b'glTF'
-
-        # glTF file
-        if not self.is_glb_format:
-            content = str(self.content, encoding='utf-8')
-            self.content = None
-            try:
-                self.data = gltf_from_dict(json.loads(content, parse_constant=glTFImporter.bad_json_value))
-                return True, None
-            except ValueError as e:
-                return False, e.args[0]
-
-        # glb file
+        if content[:4] == b'glTF':
+            gltf, self.glb_buffer = self.load_glb(content)
         else:
-            # Parsing glb file
-            success, txt = self.load_glb()
-            self.content = None
-            return success, txt
+            gltf = glTFImporter.load_json(content)
+            self.glb_buffer = None
+
+        glTFImporter.check_version(gltf)
+
+        try:
+            self.data = gltf_from_dict(gltf)
+        except AssertionError:
+            import traceback
+            traceback.print_exc()
+            raise ImportError("Couldn't parse glTF. Check that the file is valid")
 
     def load_buffer(self, buffer_idx):
         """Load buffer."""
@@ -177,8 +163,10 @@ class glTFImporter():
 
         if buffer.uri:
             data = self.load_uri(buffer.uri)
-            if data is not None:
-                self.buffers[buffer_idx] = data
+            if data is None:
+                raise ImportError("Missing resource, '" + buffer.uri + "'.")
+            self.buffers[buffer_idx] = data
+
 
         else:
             # GLB-stored buffer

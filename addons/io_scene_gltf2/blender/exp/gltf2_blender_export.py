@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,15 @@ def save(context, export_settings):
 
     __notify_start(context)
     start_time = time.time()
+    pre_export_callbacks = export_settings["pre_export_callbacks"]
+    for callback in pre_export_callbacks:
+        callback(export_settings)
+
     json, buffer = __export(export_settings)
+
+    post_export_callbacks = export_settings["post_export_callbacks"]
+    for callback in post_export_callbacks:
+        callback(export_settings)
     __write_file(json, buffer, export_settings)
 
     end_time = time.time()
@@ -68,7 +76,7 @@ def __gather_gltf(exporter, export_settings):
     active_scene_idx, scenes, animations = plan['active_scene_idx'], plan['scenes'], plan['animations']
 
     if export_settings['gltf_draco_mesh_compression']:
-        gltf2_io_draco_compression_extension.compress_scene_primitives(scenes, export_settings)
+        gltf2_io_draco_compression_extension.encode_scene_primitives(scenes, export_settings)
         exporter.add_draco_extension()
 
     for idx, scene in enumerate(scenes):

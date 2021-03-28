@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,9 +34,6 @@ def unlit(mh):
     mh.node_tree.links.new(mix_node.inputs['Fac'], lightpath_node.outputs['Is Camera Ray'])
     mh.node_tree.links.new(mix_node.inputs[1], transparent_node.outputs[0])
     mh.node_tree.links.new(mix_node.inputs[2], emission_node.outputs[0])
-    # Using transparency requires alpha blending for Eevee
-    if mh.is_opaque():
-        mh.mat.blend_method = 'HASHED' # TODO check best result in eevee
 
     _emission_socket, alpha_socket = make_output_nodes(
         mh,

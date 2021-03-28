@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -184,7 +184,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
             dst_chan = Channel.G
         elif socket.name == 'Occlusion':
             dst_chan = Channel.R
-        elif socket.name == 'Alpha' and len(sockets) > 1 and sockets[1] is not None:
+        elif socket.name == 'Alpha':
             dst_chan = Channel.A
         elif socket.name == 'Clearcoat':
             dst_chan = Channel.R

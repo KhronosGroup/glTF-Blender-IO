@@ -20,11 +20,13 @@ These instructions are considered experimental.  They describe how to attach a P
 
 8. In Blender -> Edit -> Preferences -> Add-ons, search for the word "Debug", and enable the addon "Development: Debugger for VS Code".  It should automatically pick up the location of where ptvsd was installed on this panel.  Save the preferences.
 
-9. Quit and re-start Blender.  Make sure the glTF import/export options are available, indicating the addon is running from the new location.
+9. (For Blender 2.90 and higher) In Blender -> Edit -> Preferences -> Interface, in the top "Display" section, put a checkmark to enable "Developer Extras."
+
+10. Quit and re-start Blender.  Make sure the glTF import/export options are available, indicating the addon is running from the new location.
 
 ## Usage
 
-1. In Blender, press <kbd>F3</kbd> (in Blender 2.80+) to bring up the tools search window.  Search for the word "Debug", and then click "Debug: Start Debug Server for VS Code."
+1. In Blender, press <kbd>F3</kbd> to bring up the tools search window.  Search for the word "Debug", and then click "Debug: Start Debug Server for VS Code."
 
 2. In VSCode, with the glTF-Blender-IO folder opened, press <kbd>F5</kbd> or choose "Start Debugging" from the Debug menu.
 
@@ -32,7 +34,7 @@ If both actions happen within 20 seconds or so, you may see a console message in
 
 ## Sample Breakpoint
 
-Look for a line in `__init__.py` around 319 that looks like this:
+Look for a line in `__init__.py` at the end of `def invoke` that looks like this:
 
 ```
         return ExportHelper.invoke(self, context, event)

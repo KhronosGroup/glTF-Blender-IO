@@ -1,4 +1,4 @@
-// Copyright (c) 2018 The Khronos Group Inc.
+// Copyright 2018-2021 The Khronos Group Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -696,6 +696,46 @@ describe('Exporter', function() {
                 };
                 assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
             });
+
+            it('exports custom normals with Apply Modifiers', function() {
+                let gltfPath = path.resolve(outDirPath, '10_custom_normals_with_modifier.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                assert.strictEqual(asset.meshes.length, 1);
+
+                let bufferCache = {};
+
+                // Make sure the Array modifier was applied
+                const positions = asset.meshes[0].primitives[0].attributes.POSITION;
+                const positionData = getAccessorData(gltfPath, asset, positions, bufferCache);
+                const positionHash = buildVectorHash(positionData);
+                const numVerts = Object.keys(positionHash).length;
+                assert.deepStrictEqual(numVerts, 6);
+
+                const customNormals = asset.meshes[0].primitives[0].attributes.NORMAL;
+                const customNormalData = getAccessorData(gltfPath, asset, customNormals, bufferCache);
+
+                // All custom normals are approximately (-Y Blender) = (+Z glTF).
+                for (let i = 0; i < customNormalData.length; i += 3) {
+                    const normal = customNormalData.slice(i, i + 3);
+                    const rounded = normal.map(Math.round);
+                    assert.deepStrictEqual(rounded, [0, 0, 1]);
+                }
+            });
+
+            it('exports loose edges/points', function() {
+                let gltfPath = path.resolve(outDirPath, '11_loose_geometry.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                assert.strictEqual(asset.meshes.length, 1);
+
+                const prims = asset.meshes[0].primitives;
+                let tri_prims = prims.filter(prim => prim.mode === 4 || prim.mode === undefined);
+                let edge_prims = prims.filter(prim => prim.mode === 1);
+                let point_prims = prims.filter(prim => prim.mode === 0);
+
+                assert.strictEqual(tri_prims.length, 1);
+                assert.strictEqual(edge_prims.length, 1);
+                assert.strictEqual(point_prims.length, 1);
+            })
         });
     });
 });
@@ -718,7 +758,6 @@ describe('Importer / Exporter (Roundtrip)', function() {
                     it(dir, function(done) {
                         let outDirName = 'out' + blenderVersion + variant[0];
                         let gltfSrcPath = `roundtrip/${dir}/${dir}.gltf`;
-                        let gltfSrcReport = JSON.parse(fs.readFileSync(`roundtrip/${dir}/${dir}_report.json`, 'utf8'));
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
                         let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                         let gltfDstPath = path.resolve(outDirPath, `${dir}${ext}`);
@@ -731,32 +770,37 @@ describe('Importer / Exporter (Roundtrip)', function() {
                             if (error)
                                 return done(error);
 
-                            validateGltf(gltfDstPath, (error, gltfDstReport) => {
+                            validateGltf(gltfSrcPath, (error, gltfSrcReport) => {
                                 if (error)
                                     return done(error);
 
-                                let reduceKeys = function(raw, allowed) {
-                                    return Object.keys(raw)
-                                        .filter(key => allowed.includes(key))
-                                        .reduce((obj, key) => {
-                                            obj[key] = raw[key];
-                                            return obj;
-                                        }, {});
-                                };
+                                validateGltf(gltfDstPath, (error, gltfDstReport) => {
+                                    if (error)
+                                        return done(error);
 
-                                let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
-                                let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
+                                    let reduceKeys = function(raw, allowed) {
+                                        return Object.keys(raw)
+                                            .filter(key => allowed.includes(key))
+                                            .reduce((obj, key) => {
+                                                obj[key] = raw[key];
+                                                return obj;
+                                            }, {});
+                                    };
 
-                                try {
-                                    assert.deepStrictEqual(dstInfo, srcInfo);
-                                } catch (ex) {
-                                    done(new Error("Validation summary mismatch.\nExpected summary:\n" +
-                                        JSON.stringify(srcInfo, null, '  ') +
-                                        "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
-                                    return;
-                                }
+                                    let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
+                                    let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
 
-                                done();
+                                    try {
+                                        assert.deepStrictEqual(dstInfo, srcInfo);
+                                    } catch (ex) {
+                                        done(new Error("Validation summary mismatch.\nExpected summary:\n" +
+                                            JSON.stringify(srcInfo, null, '  ') +
+                                            "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
+                                        return;
+                                    }
+
+                                    done();
+                                });
                             });
                         }, options);
                     });
@@ -906,6 +950,79 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.textures[0].source, 0);
                 assert.strictEqual(asset.images.length, 1);
                 assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
+            });
+
+            it ('roundtrips occlusion strength', function() {
+                let dir = '13_occlusion_strength';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                assert.equalEpsilon(asset.materials[0].occlusionTexture.strength, 0.25);
+            })
+
+            it('roundtrips two different UV maps for the same texture', function() {
+                let dir = '12_orm_two_uvmaps';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const material = asset.materials[0];
+                // Same texture
+                assert.strictEqual(material.occlusionTexture.index, 0);
+                assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                // Different UVMaps
+                assert.strictEqual(material.occlusionTexture.texCoord, 1);
+                assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord || 0, 0);
+            });
+
+            it('roundtrips baseColorFactor, etc. when used with textures', function() {
+                let dir = '11_factors_and_textures';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+
+                const mat = asset.materials[0];
+                const pbr = mat.pbrMetallicRoughness;
+
+                assert.equalEpsilon(mat.emissiveFactor[0], 1);
+                assert.equalEpsilon(mat.emissiveFactor[1], 0);
+                assert.equalEpsilon(mat.emissiveFactor[2], 0);
+
+                assert.equalEpsilon(pbr.baseColorFactor[0], 0);
+                assert.equalEpsilon(pbr.baseColorFactor[1], 1);
+                assert.equalEpsilon(pbr.baseColorFactor[2], 0);
+                assert.equalEpsilon(pbr.baseColorFactor[3], 0.5);
+
+                assert.equalEpsilon(pbr.metallicFactor, 0.25);
+                assert.equalEpsilon(pbr.roughnessFactor, 0.75);
+            });
+
+            it('roundtrips unlit base colors', function() {
+                let dir = '01_unlit';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 2);
+
+                const orange = asset.materials.find(mat => mat.name === 'Orange');
+                assert.ok('KHR_materials_unlit' in orange.extensions);
+                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[0], 1);
+                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[1], 0.217637640824031);
+                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[2], 0);
+                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[3], 1);
+
+                const blue = asset.materials.find(mat => mat.name === 'Blue');
+                assert.ok('KHR_materials_unlit' in blue.extensions);
+                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[0], 0);
+                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[1], 0.217637640824031);
+                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[2], 1);
+                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[3], 0.5);
             });
 
             it('roundtrips all texture transforms', function() {
@@ -1064,6 +1181,28 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const animNames = asset.animations.map(anim => anim.name);
                 assert.deepStrictEqual(animNames.sort(), expectedAnimNames.sort());
             });
+
+            it('roundtrips texture wrap modes', function() {
+                let dir = '13_texture_wrapping';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const materials = asset.materials;
+                assert.deepStrictEqual(materials.length, 2);
+
+                const mat1 = materials.find(mat => mat.name == 'Mirror x Mirror');
+                const tex1 = asset.textures[mat1.pbrMetallicRoughness.baseColorTexture.index];
+                const samp1 = asset.samplers[tex1.sampler];
+                assert.deepStrictEqual(samp1.wrapS, 33648);  // MIRRORED_REPEAT
+                assert.deepStrictEqual(samp1.wrapT, 33648);  // MIRRORED_REPEAT
+
+                const mat2 = materials.find(mat => mat.name == 'Repeat x Clamp');
+                const tex2 = asset.textures[mat2.pbrMetallicRoughness.baseColorTexture.index];
+                const samp2 = asset.samplers[tex2.sampler];
+                assert.deepStrictEqual(samp2.wrapS || 10497, 10497);  // REPEAT
+                assert.deepStrictEqual(samp2.wrapT, 33071);  // CLAMP_TO_EDGE
+            })
         });
     });
 });

@@ -1,4 +1,4 @@
-# Copyright 2018 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,18 @@ class ComponentType(IntEnum):
             ComponentType.UnsignedShort: 'H',
             ComponentType.UnsignedInt: 'I',
             ComponentType.Float: 'f'
+        }[component_type]
+
+    @classmethod
+    def to_numpy_dtype(cls, component_type):
+        import numpy as np
+        return {
+            ComponentType.Byte: np.int8,
+            ComponentType.UnsignedByte: np.uint8,
+            ComponentType.Short: np.int16,
+            ComponentType.UnsignedShort: np.uint16,
+            ComponentType.UnsignedInt: np.uint32,
+            ComponentType.Float: np.float32,
         }[component_type]
 
     @classmethod

@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import bpy
 from mathutils import Vector
 
@@ -90,7 +89,10 @@ class BlenderNodeAnim():
         if vnode.type == VNode.Bone:
             # Need to animate the pose bone when the node is a bone.
             group_name = vnode.blender_bone_name
-            blender_path = "pose.bones[%s].%s" % (json.dumps(vnode.blender_bone_name), blender_path)
+            blender_path = 'pose.bones["%s"].%s' % (
+                bpy.utils.escape_identifier(vnode.blender_bone_name),
+                blender_path
+            )
 
             # We have the final TRS of the bone in values. We need to give
             # the TRS of the pose bone though, which is relative to the edit

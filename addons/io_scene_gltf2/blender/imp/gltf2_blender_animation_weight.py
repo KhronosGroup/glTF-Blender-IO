@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import bpy
 
 from ...io.imp.gltf2_io_binary import BinaryData
@@ -75,7 +74,7 @@ class BlenderWeightAnim():
             if pymesh.shapekey_names[sk] is not None: # Do not animate shapekeys not created
                 coords[1::2] = (values[offset + stride * i + sk][0] for i in range(len(keys)))
                 kb_name = pymesh.shapekey_names[sk]
-                data_path = "key_blocks[" + json.dumps(kb_name) + "].value"
+                data_path = 'key_blocks["%s"].value' % bpy.utils.escape_identifier(kb_name)
 
                 make_fcurve(
                     action,

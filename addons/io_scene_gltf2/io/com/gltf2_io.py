@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1117,7 +1117,7 @@ class Texture:
         extras = obj.get("extras")
         name = from_union([from_str, from_none], obj.get("name"))
         sampler = from_union([from_int, from_none], obj.get("sampler"))
-        source = from_int(obj.get("source"))
+        source = from_union([from_int, from_none], obj.get("source"))
         return Texture(extensions, extras, name, sampler, source)
 
     def to_dict(self):
@@ -1127,7 +1127,7 @@ class Texture:
         result["extras"] = from_extra(self.extras)
         result["name"] = from_union([from_str, from_none], self.name)
         result["sampler"] = from_union([from_int, from_none], self.sampler)
-        result["source"] = from_int(self.source)  # most viewers can't handle missing sources
+        result["source"] = from_union([from_int, from_none], self.source)
         return result
 
 

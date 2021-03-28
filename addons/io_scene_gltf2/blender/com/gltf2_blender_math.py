@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,11 +19,6 @@ from mathutils import Matrix, Vector, Quaternion, Euler
 from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name
 
 
-def multiply(a, b):
-    """Multiplication."""
-    return a @ b
-
-
 def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Union[Vector, Quaternion, Euler]:
     """Transform a list to blender py object."""
     target = get_target_property_name(data_path)
@@ -31,7 +26,7 @@ def list_to_mathutils(values: typing.List[float], data_path: str) -> typing.Unio
     if target == 'delta_location':
         return Vector(values)  # TODO Should be Vector(values) - Vector(something)?
     elif target == 'delta_rotation_euler':
-        return Euler(values).to_quaternion()  # TODO Should be multiply(Euler(values).to_quaternion(), something)?
+        return Euler(values).to_quaternion()  # TODO Should be Euler(values).to_quaternion() @ something?
     elif target == 'location':
         return Vector(values)
     elif target == 'rotation_axis_angle':
@@ -138,7 +133,7 @@ def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Ma
 def transform_location(location: Vector, transform: Matrix = Matrix.Identity(4)) -> Vector:
     """Transform location."""
     m = Matrix.Translation(location)
-    m = multiply(transform, m)
+    m = transform @ m
     return m.to_translation()
 
 
@@ -146,7 +141,7 @@ def transform_rotation(rotation: Quaternion, transform: Matrix = Matrix.Identity
     """Transform rotation."""
     rotation.normalize()
     m = rotation.to_matrix().to_4x4()
-    m = multiply(transform, m)
+    m = transform @ m
     return m.to_quaternion()
 
 
@@ -156,7 +151,7 @@ def transform_scale(scale: Vector, transform: Matrix = Matrix.Identity(4)) -> Ve
     m[0][0] = scale.x
     m[1][1] = scale.y
     m[2][2] = scale.z
-    m = multiply(transform, m)
+    m = transform @ m
 
     return m.to_scale()
 

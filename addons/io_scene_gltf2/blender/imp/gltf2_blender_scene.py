@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,18 +43,31 @@ class BlenderScene():
 
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
+        BlenderScene.select_imported_objects(gltf)
         BlenderScene.set_active_object(gltf)
 
     @staticmethod
     def create_animations(gltf):
         """Create animations."""
         if gltf.data.animations:
-            for anim_idx, _anim in enumerate(gltf.data.animations):
+            # NLA tracks are added bottom to top, so create animations in
+            # reverse so the first winds up on top
+            for anim_idx in reversed(range(len(gltf.data.animations))):
                 BlenderAnimation.anim(gltf, anim_idx)
 
             # Restore first animation
             anim_name = gltf.data.animations[0].track_name
             BlenderAnimation.restore_animation(gltf, anim_name)
+
+    @staticmethod
+    def select_imported_objects(gltf):
+        """Select all (and only) the imported objects."""
+        if bpy.ops.object.select_all.poll():
+           bpy.ops.object.select_all(action='DESELECT')
+
+        for vnode in gltf.vnodes.values():
+            if vnode.type == VNode.Object:
+                vnode.blender_object.select_set(state=True)
 
     @staticmethod
     def set_active_object(gltf):

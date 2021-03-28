@@ -1,4 +1,4 @@
-# Copyright 2018-2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,10 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                                  bake_channel,
                                                  driver_obj,
                                                  export_settings)
-
+    if blender_object.parent is not None:
+        matrix_parent_inverse = blender_object.matrix_parent_inverse.copy().freeze()
+    else:
+        matrix_parent_inverse = mathutils.Matrix.Identity(4).freeze()
 
     sampler = gltf2_io.AnimationSampler(
         extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
@@ -64,7 +67,8 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
         input=__gather_input(channels, blender_object_if_armature, non_keyed_values,
                              bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, export_settings),
         interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
-        output=__gather_output(channels, blender_object.matrix_parent_inverse.copy().freeze(),
+        output=__gather_output(channels,
+                               matrix_parent_inverse,
                                blender_object_if_armature,
                                non_keyed_values,
                                bake_bone,
@@ -343,10 +347,12 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                          (0.0, 0.0, 1.0, 0.0),
                          (0.0, -1.0, 0.0, 0.0),
                          (0.0, 0.0, 0.0, 1.0)))
-                correction_matrix_local = gltf2_blender_math.multiply(axis_basis_change, bone.bone.matrix_local)
+                correction_matrix_local = axis_basis_change @ bone.bone.matrix_local
             else:
-                correction_matrix_local = gltf2_blender_math.multiply(
-                    bone.parent.bone.matrix_local.inverted(), bone.bone.matrix_local)
+                correction_matrix_local = (
+                    bone.parent.bone.matrix_local.inverted() @
+                    bone.bone.matrix_local
+                )
 
             transform = correction_matrix_local
         else:

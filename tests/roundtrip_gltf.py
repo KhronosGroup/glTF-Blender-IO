@@ -1,4 +1,4 @@
-# Copyright (c) 2018 The Khronos Group Inc.
+# Copyright 2018-2021 The Khronos Group Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ try:
 
     filepath = argv[0]
 
-    bpy.ops.wm.read_factory_settings(use_empty=True)
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete(use_global=False)
+
     bpy.ops.import_scene.gltf(filepath=argv[0])
 
     extension = '.gltf'

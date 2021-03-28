@@ -1,4 +1,4 @@
-# Copyright 2019 The glTF-Blender-IO authors.
+# Copyright 2018-2021 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,37 +45,30 @@ def restore_animation_on_object(obj, anim_name):
 
     obj.animation_data.action = None
 
-def make_fcurve(action, co, data_path, index=0, group_name=None, interpolation=None):
+def make_fcurve(action, co, data_path, index=0, group_name='', interpolation=None):
     try:
-        fcurve = action.fcurves.new(data_path=data_path, index=index)
+        fcurve = action.fcurves.new(data_path=data_path, index=index, action_group=group_name)
     except:
         # Some non valid files can have multiple target path
         return None
-
-    if group_name:
-        if group_name not in action.groups:
-            action.groups.new(group_name)
-        group = action.groups[group_name]
-        fcurve.group = group
 
     fcurve.keyframe_points.add(len(co) // 2)
     fcurve.keyframe_points.foreach_set('co', co)
 
     # Setting interpolation
+    ipo = {
+        'CUBICSPLINE': 'BEZIER',
+        'LINEAR': 'LINEAR',
+        'STEP': 'CONSTANT',
+    }[interpolation or 'LINEAR']
+    ipo = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items[ipo].value
+    fcurve.keyframe_points.foreach_set('interpolation', [ipo] * len(fcurve.keyframe_points))
+
+    # For CUBICSPLINE, also set the handle types to AUTO
     if interpolation == 'CUBICSPLINE':
-        for kf in fcurve.keyframe_points:
-            kf.interpolation = 'BEZIER'
-            kf.handle_right_type = 'AUTO'
-            kf.handle_left_type = 'AUTO'
-    else:
-        if interpolation == 'LINEAR':
-            blender_interpolation = 'LINEAR'
-        elif interpolation == 'STEP':
-            blender_interpolation = 'CONSTANT'
-        else:
-            blender_interpolation = 'LINEAR'
-        for kf in fcurve.keyframe_points:
-            kf.interpolation = blender_interpolation
+        ty = bpy.types.Keyframe.bl_rna.properties['handle_left_type'].enum_items['AUTO'].value
+        fcurve.keyframe_points.foreach_set('handle_left_type', [ty] * len(fcurve.keyframe_points))
+        fcurve.keyframe_points.foreach_set('handle_right_type', [ty] * len(fcurve.keyframe_points))
 
     fcurve.update() # force updating tangents (this may change when tangent will be managed)
 
