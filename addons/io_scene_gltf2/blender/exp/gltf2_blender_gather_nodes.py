@@ -127,6 +127,19 @@ def __filter_node(blender_object, blender_scene, export_settings):
     if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
         return False
 
+    if export_settings[gltf2_blender_export_keys.VISIBLE] and blender_object.visible_get() is False:
+        return False
+
+    # render_get() doesn't exist, so unfortunately this won't take into account the Collection settings
+    if export_settings[gltf2_blender_export_keys.RENDERABLE] and blender_object.hide_render is True:
+        return False
+
+    if export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION]:
+        found = any(x == blender_object for x in bpy.context.collection.all_objects)
+
+        if not found:
+            return False
+
     return True
 
 
