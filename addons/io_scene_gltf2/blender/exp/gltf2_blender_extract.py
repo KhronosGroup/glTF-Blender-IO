@@ -416,7 +416,8 @@ def __get_normals(blender_mesh, key_blocks, armature, blender_object, export_set
     else:
         blender_mesh.calc_normals_split()
         blender_mesh.loops.foreach_get('normal', normals)
-        normals = normals.reshape(len(blender_mesh.loops), 3)
+
+    normals = normals.reshape(len(blender_mesh.loops), 3)
 
     morph_normals = []
     for key_block in key_blocks:
