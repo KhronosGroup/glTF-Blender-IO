@@ -71,7 +71,7 @@ def __gather_node(blender_object, library, blender_scene, dupli_object_parent, e
     else:
         # This node is being fully exported.
         camera = __gather_camera(blender_object, export_settings)
-        mesh = __gather_mesh(blender_object, library, export_settings)
+        mesh = __gather_mesh(blender_object, export_settings)
         skin = __gather_skin(blender_object, export_settings)
         weights = __gather_weights(blender_object, export_settings)
 
@@ -266,9 +266,9 @@ def __gather_matrix(blender_object, export_settings):
     return []
 
 
-def __gather_mesh(blender_object, library, export_settings):
+def __gather_mesh(blender_object, export_settings):
     if blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
-        return __gather_mesh_from_nonmesh(blender_object, library, export_settings)
+        return __gather_mesh_from_nonmesh(blender_object, export_settings)
 
     if blender_object.type != "MESH":
         return None
@@ -281,6 +281,8 @@ def __gather_mesh(blender_object, library, export_settings):
     if len(modifiers) == 0:
         modifiers = None
 
+    # TODO for objects without any modifiers, we can keep original mesh_data
+    # It will instance mesh in glTF
     if export_settings[gltf2_blender_export_keys.APPLY]:
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -315,7 +317,6 @@ def __gather_mesh(blender_object, library, export_settings):
                 modifiers = None
 
     materials = tuple(ms.material for ms in blender_object.material_slots)
-    material_names = tuple(None if mat is None else mat.name for mat in materials)
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
@@ -327,12 +328,11 @@ def __gather_mesh(blender_object, library, export_settings):
                 blender_object_for_skined_data = blender_object
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
-                                                   library,
                                                    blender_object_for_skined_data,
                                                    vertex_groups,
                                                    modifiers,
                                                    skip_filter,
-                                                   material_names,
+                                                   materials,
                                                    export_settings)
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
@@ -341,7 +341,7 @@ def __gather_mesh(blender_object, library, export_settings):
     return result
 
 
-def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
+def __gather_mesh_from_nonmesh(blender_object, export_settings):
     """Handles curves, surfaces, text, etc."""
     needs_to_mesh_clear = False
     try:
@@ -363,18 +363,17 @@ def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
         needs_to_mesh_clear = True
 
         skip_filter = True
-        material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
+        materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
         vertex_groups = None
         modifiers = None
         blender_object_for_skined_data = None
 
         result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
-                                                       library,
                                                        blender_object_for_skined_data,
                                                        vertex_groups,
                                                        modifiers,
                                                        skip_filter,
-                                                       material_names,
+                                                       materials,
                                                        export_settings)
 
     finally:

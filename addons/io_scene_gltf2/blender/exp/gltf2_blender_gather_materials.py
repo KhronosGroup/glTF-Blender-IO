@@ -14,7 +14,7 @@
 
 import bpy
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_export_keys
@@ -27,8 +27,14 @@ from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
-
 @cached
+def get_material_cache_key(blender_material, export_settings):
+    # Use id of material
+    # Do not use bpy.types that can be unhashable
+    # Do not use material name, that can be not unique (when linked)
+    return ((id(blender_material),))
+
+@cached_by_key(key=get_material_cache_key)
 def gather_material(blender_material, export_settings):
     """
     Gather the material used by the blender primitive.
