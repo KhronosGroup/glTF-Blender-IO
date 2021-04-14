@@ -73,6 +73,7 @@ def gather_animation_channels(inst_id: int,
         for bone in bones_to_be_animated:
             for p in ["location", "rotation_quaternion", "scale"]:
                 channel = __gather_animation_channel(
+                    inst_id,
                     (),
                     blender_object,
                     export_settings,
@@ -92,7 +93,7 @@ def gather_animation_channels(inst_id: int,
             if len(channel_group) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
+            channel = __gather_animation_channel(inst_id, channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
             if channel is not None:
                 channels.append(channel)
 
@@ -102,6 +103,7 @@ def gather_animation_channels(inst_id: int,
         drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(obj_driver)
         for obj, fcurves in drivers_to_manage:
             channel = __gather_animation_channel(
+                inst_id,
                 fcurves,
                 blender_object,
                 export_settings,
