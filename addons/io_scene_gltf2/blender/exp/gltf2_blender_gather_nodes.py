@@ -32,23 +32,6 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 def gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
-    # custom cache to avoid cache miss when called from animation
-    # with blender_scene=None
-
-    # invalidate cache if export settings have changed
-    if not hasattr(gather_node, "__export_settings") or export_settings != gather_node.__export_settings:
-        gather_node.__cache = {}
-        gather_node.__export_settings = export_settings
-
-    if blender_scene is None and (blender_object.name, library) in gather_node.__cache:
-        return gather_node.__cache[(blender_object.name, library)]
-
-    node = __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings)
-    gather_node.__cache[(blender_object.name, library)] = node
-    return node
-
-@cached
-def __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
     children = __gather_children(blender_object, blender_scene, export_settings)
 
     camera = None
@@ -108,6 +91,10 @@ def __gather_node(blender_object, library, blender_scene, dupli_object_parent, e
         node.camera = None
 
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
+
+    if id(blender_object) not in export_settings['inst_obj'].keys():
+        export_settings['inst_obj'][id(blender_object)] = []
+    export_settings['inst_obj'][id(blender_object)].append(node)
 
     return node
 

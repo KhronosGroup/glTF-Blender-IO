@@ -23,7 +23,8 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 @cached
-def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
+def gather_animation_channel_target(inst_id: int,
+                                    channels: typing.Tuple[bpy.types.FCurve],
                                     blender_object: bpy.types.Object,
                                     bake_bone: typing.Union[str, None],
                                     bake_channel: typing.Union[str, None],
@@ -72,6 +73,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                   ) -> gltf2_io.Node:
 
     if driver_obj is not None:
+        #TODO
         return gltf2_blender_gather_nodes.gather_node(driver_obj,
             driver_obj.library.name if driver_obj.library else None,
             None, None, export_settings)
@@ -94,9 +96,8 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                     obj = blender_object.proxy if blender_object.proxy else blender_object
                     return gltf2_blender_gather_joints.gather_joint(obj, blender_bone, export_settings)
 
-    return gltf2_blender_gather_nodes.gather_node(blender_object,
-        blender_object.library.name if blender_object.library else None,
-        None, None, export_settings)
+    print("return", export_settings['current_inst'])
+    return export_settings['current_inst']
 
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],
