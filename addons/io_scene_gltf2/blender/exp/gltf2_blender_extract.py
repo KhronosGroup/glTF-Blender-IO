@@ -409,11 +409,11 @@ def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_s
 
 def __get_normals(blender_mesh, key_blocks, armature, blender_object, export_settings):
     """Get normal for each loop."""
-    normals = np.empty(len(blender_mesh.loops) * 3, dtype=np.float32)
     if key_blocks:
         normals = key_blocks[0].relative_key.normals_split_get()
-        normals = np.array(normals)
+        normals = np.array(normals, dtype=np.float32)
     else:
+        normals = np.empty(len(blender_mesh.loops) * 3, dtype=np.float32)
         blender_mesh.calc_normals_split()
         blender_mesh.loops.foreach_get('normal', normals)
 
