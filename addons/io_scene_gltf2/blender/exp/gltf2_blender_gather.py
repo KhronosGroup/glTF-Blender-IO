@@ -92,6 +92,7 @@ def __gather_animations(blender_scene, export_settings):
             # Check was done on armature, but use here the _proxy object, because this is where the animation is
             animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(id(inst), _blender_object, merged_tracks, len(animations), export_settings)
             animations += animations_
+            # TODO : merge blender action/animation of collection instances into a single glTF animation?
 
     if export_settings['gltf_nla_strips'] is False:
         # Fake an animation with all animations of the scene
