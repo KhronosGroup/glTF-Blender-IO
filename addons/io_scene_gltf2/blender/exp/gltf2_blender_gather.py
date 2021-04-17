@@ -22,6 +22,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 
 def gather_gltf2(export_settings):
@@ -51,7 +52,13 @@ def __gather_scene(blender_scene, export_settings):
         nodes=[]
     )
 
-    export_settings['inst_obj'] = {}
+    export_settings['inst_obj'] = {} #TODO to be moved into VExportTree
+
+    vtree = gltf2_blender_gather_tree.VExportTree()
+    export_settings['vtree'] = vtree
+
+    vtree.construct()
+    vtree.display("simple")
 
     depsgraph = bpy.context.evaluated_depsgraph_get()
     for _blender_object in [obj.original for obj in depsgraph.objects if obj.proxy is None and obj.parent is None]:
