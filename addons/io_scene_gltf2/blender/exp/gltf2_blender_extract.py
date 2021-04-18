@@ -374,7 +374,8 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
 def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings):
     locs = np.empty(len(blender_mesh.vertices) * 3, dtype=np.float32)
-    blender_mesh.vertices.foreach_get('co', locs)
+    source = key_blocks[0].relative_key.data if key_blocks else blender_mesh.vertices
+    source.foreach_get('co', locs)
     locs = locs.reshape(len(blender_mesh.vertices), 3)
 
     morph_locs = []
@@ -408,10 +409,14 @@ def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_s
 
 def __get_normals(blender_mesh, key_blocks, armature, blender_object, export_settings):
     """Get normal for each loop."""
-    blender_mesh.calc_normals_split()
+    if key_blocks:
+        normals = key_blocks[0].relative_key.normals_split_get()
+        normals = np.array(normals, dtype=np.float32)
+    else:
+        normals = np.empty(len(blender_mesh.loops) * 3, dtype=np.float32)
+        blender_mesh.calc_normals_split()
+        blender_mesh.loops.foreach_get('normal', normals)
 
-    normals = np.empty(len(blender_mesh.loops) * 3, dtype=np.float32)
-    blender_mesh.loops.foreach_get('normal', normals)
     normals = normals.reshape(len(blender_mesh.loops), 3)
 
     morph_normals = []
