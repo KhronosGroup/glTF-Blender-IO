@@ -21,10 +21,11 @@ from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 
 @cached
-def gather_skin(blender_object, export_settings):
+def gather_skin(vnode, blender_object, export_settings):
     """
     Gather armatures, bones etc into a glTF2 skin object.
 
@@ -39,7 +40,7 @@ def gather_skin(blender_object, export_settings):
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         inverse_bind_matrices=__gather_inverse_bind_matrices(blender_object, export_settings),
-        joints=__gather_joints(blender_object, export_settings),
+        joints=__gather_joints(vnode, blender_object, export_settings),
         name=__gather_name(blender_object, export_settings),
         skeleton=__gather_skeleton(blender_object, export_settings)
     )
@@ -78,7 +79,7 @@ def __gather_inverse_bind_matrices(blender_object, export_settings):
             if not blender_bone.parent:
                 root_bones.append(blender_bone)
     else:
-        _, children_, root_bones = get_bone_tree(None, blender_object)
+        _, children_, root_bones = get_bone_tree(blender_object) #TODOTREE
 
     matrices = []
 
@@ -124,16 +125,20 @@ def __gather_inverse_bind_matrices(blender_object, export_settings):
     )
 
 
-def __gather_joints(blender_object, export_settings):
+def __gather_joints(vnode, blender_object, export_settings):
     root_joints = []
+    if export_settings['skin_from_armature'] and export_settings['skin_from_armature'] is True:
+        armature_uuid = vnode
+    else:
+        armature_uuid = vnode.armature
     if export_settings['gltf_def_bones'] is False:
         # build the hierarchy of nodes out of the bones
         for blender_bone in blender_object.pose.bones:
             if not blender_bone.parent:
-                root_joints.append(gltf2_blender_gather_joints.gather_joint(blender_object, blender_bone, export_settings))
+                root_joints.append(gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[armature_uuid].bones[blender_bone.name], export_settings))
     else:
-        _, children_, root_joints = get_bone_tree(None, blender_object)
-        root_joints = [gltf2_blender_gather_joints.gather_joint(blender_object, i, export_settings) for i in root_joints]
+        _, children_, root_joints = get_bone_tree(blender_object)
+        root_joints = [gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode].armature].bones[export_settings['vtree'].nodes[i].blender_bone.name], export_settings) for i in root_joints]
 
     # joints is a flat list containing all nodes belonging to the skin
     joints = []
@@ -146,7 +151,7 @@ def __gather_joints(blender_object, export_settings):
         else:
             if node.name in children_.keys():
                 for child in children_[node.name]:
-                    __collect_joints(gltf2_blender_gather_joints.gather_joint(blender_object, blender_object.pose.bones[child], export_settings))
+                    __collect_joints(gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].joint_to_vnode[id(blender_object.pose.bones[child])], export_settings))
 
     for joint in root_joints:
         __collect_joints(joint)
@@ -162,8 +167,43 @@ def __gather_skeleton(blender_object, export_settings):
     # In the future support the result of https://github.com/KhronosGroup/glTF/pull/1195
     return None  # gltf2_blender_gather_nodes.gather_node(blender_object, blender_scene, export_settings)
 
+
 @cached
-def get_bone_tree(blender_dummy, blender_object):
+def get_bone_tree_vnode(vnode, export_settings):
+    # Same as get_bone_tree, but with vnode
+
+    vtree = export_settings['vtree']
+
+    vnodes = []
+    children = {}
+    root_vnodes = []
+
+    def get_parent(vnode):
+        vnodes.append(vnode)
+        if vnode.parent_bone_uuid is not None:
+            if vnode.parent_bone_uuid not in children.keys():
+                children[vnode.parent_bone_uuid] = []
+            children[vnode.parent_bone_uuid].append(vnode.uuid)
+            get_parent(vtree.nodes[vnode.parent_bone_uuid])
+        else:
+            root_vnodes.append(vnode.uuid)
+
+    # Retrieve list of deformation bone vnode
+    bone_names = [(n.blender_bone.name, n.uuid) for n in vtree.nodes.values() if n.blender_type == gltf2_blender_gather_tree.VExportNode.BONE and n.blender_object == vnode.blender_object]
+
+    for b, uuid_ in [(b, uuid_) for (b, uuid_) in bone_names if vnode.blender_object.data.bones[b].use_deform is True]:
+        get_parent(vtree.nodes[uuid_])
+
+    # remove duplicates
+    for k, v in children.items():
+        children[k] = list(set(v))
+    list_ = list(set(vnodes))
+    root_ = list(set(root_vnodes))
+    return list_, children, root_
+
+
+@cached
+def get_bone_tree(blender_object): #TODO export settings at end of parameters ????
 
     bones = []
     children = {}

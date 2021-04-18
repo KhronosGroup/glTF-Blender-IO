@@ -20,7 +20,7 @@ from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 
-def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vertex_groups, modifiers, export_settings):
+def extract_primitives(armature_uuid, blender_mesh, library, blender_object, blender_vertex_groups, modifiers, export_settings):
     """Extract primitives from a mesh."""
     print_console('INFO', 'Extracting primitive: ' + blender_mesh.name)
 
@@ -68,7 +68,9 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
             armature = None
 
         if armature:
-            skin = gltf2_blender_gather_skins.gather_skin(armature, export_settings)
+            export_settings['skin_from_armature'] = True
+            skin = gltf2_blender_gather_skins.gather_skin(armature_uuid, armature, export_settings) #TODOTREE this break cache
+            export_settings['skin_from_armature'] = False
             if not skin:
                 armature = None
 

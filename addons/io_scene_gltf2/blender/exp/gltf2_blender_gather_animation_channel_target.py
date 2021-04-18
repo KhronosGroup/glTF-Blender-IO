@@ -73,10 +73,9 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                   ) -> gltf2_io.Node:
 
     if driver_obj is not None:
-        #TODO
+        #TODOTREE
         return gltf2_blender_gather_nodes.gather_node(driver_obj,
-            driver_obj.library.name if driver_obj.library else None,
-            None, None, export_settings)
+            None, export_settings)
 
     if blender_object.type == "ARMATURE":
         # TODO: get joint from fcurve data_path and gather_joint
@@ -89,15 +88,14 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
         if isinstance(blender_bone, bpy.types.PoseBone):
             if export_settings["gltf_def_bones"] is False:
                 obj = blender_object.proxy if blender_object.proxy else blender_object
-                return gltf2_blender_gather_joints.gather_joint(obj, blender_bone, export_settings)
+                return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[export_settings['current_inst_vnode']].bones[blender_bone.name], export_settings)
             else:
-                bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
+                bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(blender_object) #TODOTREE
                 if blender_bone.name in [b.name for b in bones]:
                     obj = blender_object.proxy if blender_object.proxy else blender_object
-                    return gltf2_blender_gather_joints.gather_joint(obj, blender_bone, export_settings)
+                    return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[export_settings['current_inst_vnode']].bones[blender_bone.name], export_settings)
 
-    print("return", export_settings['current_inst'])
-    return export_settings['current_inst']
+    return export_settings['current_inst_node']
 
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],

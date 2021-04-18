@@ -29,10 +29,11 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 
-def gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
-    children = __gather_children(blender_object, blender_scene, export_settings)
+def gather_node(vnode, blender_object, blender_scene, export_settings):
+    children = __gather_children(vnode, blender_object, blender_scene, export_settings)
 
     camera = None
     mesh = None
@@ -54,8 +55,8 @@ def gather_node(blender_object, library, blender_scene, dupli_object_parent, exp
     else:
         # This node is being fully exported.
         camera = __gather_camera(blender_object, export_settings)
-        mesh = __gather_mesh(blender_object, library, export_settings)
-        skin = __gather_skin(blender_object, export_settings)
+        mesh = __gather_mesh(vnode, blender_object, export_settings)
+        skin = __gather_skin(vnode, blender_object, export_settings)
         weights = __gather_weights(blender_object, export_settings)
 
     node = gltf2_io.Node(
@@ -92,6 +93,8 @@ def gather_node(blender_object, library, blender_scene, dupli_object_parent, exp
 
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
+    vnode.node = node
+
     if id(blender_object) not in export_settings['inst_obj'].keys():
         export_settings['inst_obj'][id(blender_object)] = []
     export_settings['inst_obj'][id(blender_object)].append(node)
@@ -124,51 +127,35 @@ def __gather_camera(blender_object, export_settings):
     return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
 
 
-def __gather_children(blender_object, blender_scene, export_settings):
+def __gather_children(vnode, blender_object, blender_scene, export_settings):
     children = []
-    # standard children
-    for _child_object in blender_object.children:
-        if _child_object.parent_bone:
-            # this is handled further down,
-            # as the object should be a child of the specific bone,
-            # not the Armature object
-            continue
 
-        child_object = _child_object.proxy if _child_object.proxy else _child_object
+    vtree = export_settings['vtree']
 
-        node = gather_node(child_object,
-            child_object.library.name if child_object.library else None,
-            blender_scene, None, export_settings)
+    # Standard Children / Collection
+    for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
+        node = gather_node(c, c.blender_object, blender_scene, export_settings)
         if node is not None:
             children.append(node)
-    # blender dupli objects
-    if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-        for dupli_object in blender_object.instance_collection.objects:
-            if dupli_object.parent is not None:
-                continue
-            if dupli_object.type == "ARMATURE":
-                continue # There is probably a proxy
-            node = gather_node(dupli_object,
-                dupli_object.library.name if dupli_object.library else None,
-                blender_scene, blender_object.name, export_settings)
-            if node is not None:
-                children.append(node)
 
-    # blender bones
+
+    # Armature --> Retrieve Blender bones
     if blender_object.type == "ARMATURE":
         root_joints = []
-        if export_settings["gltf_def_bones"] is False:
-            bones = blender_object.pose.bones
-        else:
-            bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
-            bones = [blender_object.pose.bones[b.name] for b in bones]
-        for blender_bone in bones:
-            if not blender_bone.parent:
-                joint = gltf2_blender_gather_joints.gather_joint(blender_object, blender_bone, export_settings)
-                children.append(joint)
-                root_joints.append(joint)
-        # handle objects directly parented to bones
-        direct_bone_children = [child for child in blender_object.children if child.parent_bone]
+
+        list_, _, bone_root_vnodes = gltf2_blender_gather_skins.get_bone_tree_vnode(vnode, export_settings)
+        for bnode in bone_root_vnodes:
+            joint = gltf2_blender_gather_joints.gather_joint_vnode(bnode, export_settings)
+            children.append(joint)
+            root_joints.append(joint)
+
+
+        # Object parented to bones
+        direct_bone_children = []
+        for n in list_:
+            direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE])
+
+
         def find_parent_joint(joints, name):
             for joint in joints:
                 if joint.name == name:
@@ -177,15 +164,17 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 if parent_joint:
                     return parent_joint
             return None
-        for child in direct_bone_children:
+
+        for child in direct_bone_children: # List of object that are parented to bones
             # find parent joint
-            parent_joint = find_parent_joint(root_joints, child.parent_bone)
+            parent_joint = find_parent_joint(root_joints, vtree.nodes[child].blender_object.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(child, None, None, None, export_settings)
+            child_node = gather_node(vtree.nodes[child], vtree.nodes[child].blender_object, blender_scene, export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
+
             # fix rotation
             if export_settings[gltf2_blender_export_keys.YUP]:
                 rot = child_node.rotation
@@ -195,14 +184,14 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 rot_quat = Quaternion(rot)
                 axis_basis_change = Matrix(
                     ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, -1.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-                mat = child.matrix_parent_inverse @ child.matrix_basis
+                mat = vtree.nodes[child].blender_object.matrix_parent_inverse @ vtree.nodes[child].blender_object.matrix_basis
                 mat = mat @ axis_basis_change
 
                 _, rot_quat, _ = mat.decompose()
                 child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
 
             # fix translation (in blender bone's tail is the origin for children)
-            trans, _, _ = child.matrix_local.decompose()
+            trans, _, _ = vtree.nodes[child].blender_object.matrix_local.decompose()
             if trans is None:
                 trans = [0, 0, 0]
             # bones go down their local y axis
@@ -253,9 +242,9 @@ def __gather_matrix(blender_object, export_settings):
     return []
 
 
-def __gather_mesh(blender_object, library, export_settings):
+def __gather_mesh(vnode, blender_object, export_settings):
     if blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
-        return __gather_mesh_from_nonmesh(blender_object, library, export_settings)
+        return __gather_mesh_from_nonmesh(blender_object, export_settings)
 
     if blender_object.type != "MESH":
         return None
@@ -314,7 +303,8 @@ def __gather_mesh(blender_object, library, export_settings):
                 blender_object_for_skined_data = blender_object
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
-                                                   library,
+                                                   None, #TODO: to be removed
+                                                   vnode.armature,
                                                    blender_object_for_skined_data,
                                                    vertex_groups,
                                                    modifiers,
@@ -328,7 +318,7 @@ def __gather_mesh(blender_object, library, export_settings):
     return result
 
 
-def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
+def __gather_mesh_from_nonmesh(blender_object, export_settings):
     """Handles curves, surfaces, text, etc."""
     needs_to_mesh_clear = False
     try:
@@ -356,7 +346,8 @@ def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
         blender_object_for_skined_data = None
 
         result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
-                                                       library,
+                                                       None, #TODO to be removed
+                                                       None, #TODOTREE ?
                                                        blender_object_for_skined_data,
                                                        vertex_groups,
                                                        modifiers,
@@ -437,7 +428,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
     return translation, rotation, scale
 
 
-def __gather_skin(blender_object, export_settings):
+def __gather_skin(vnode, blender_object, export_settings):
     modifiers = {m.type: m for m in blender_object.modifiers}
     if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:
         return None
@@ -464,7 +455,7 @@ def __gather_skin(blender_object, export_settings):
         return None
 
     # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
+    return gltf2_blender_gather_skins.gather_skin(vnode, modifiers["ARMATURE"].object, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):

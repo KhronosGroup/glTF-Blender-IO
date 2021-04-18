@@ -20,9 +20,10 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 @cached
-def gather_joint(blender_object, blender_bone, export_settings):
+def gather_joint_vnode(vnode, export_settings):
     """
     Generate a glTF2 node from a blender bone, as joints in glTF2 are simply nodes.
 
@@ -30,6 +31,10 @@ def gather_joint(blender_object, blender_bone, export_settings):
     :param export_settings: the settings for this export
     :return: a glTF2 node (acting as a joint)
     """
+    vtree = export_settings['vtree']
+    blender_object = vtree.nodes[vnode].blender_object
+    blender_bone = vtree.nodes[vnode].blender_bone
+
     axis_basis_change = mathutils.Matrix.Identity(4)
     if export_settings[gltf2_blender_export_keys.YUP]:
         axis_basis_change = mathutils.Matrix(
@@ -64,13 +69,13 @@ def gather_joint(blender_object, blender_bone, export_settings):
     children = []
 
     if export_settings["gltf_def_bones"] is False:
-        for bone in blender_bone.children:
-            children.append(gather_joint(blender_object, bone, export_settings))
+        for bone_uuid in [c for c in vtree.nodes[vnode].children if vtree.nodes[c].blender_type == gltf2_blender_gather_tree.VExportNode.BONE]:
+            children.append(gather_joint_vnode(bone_uuid, export_settings))
     else:
-        _, children_, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_bone.id_data)
-        if blender_bone.name in children_.keys():
-            for bone in children_[blender_bone.name]:
-                children.append(gather_joint(blender_object, blender_bone.id_data.pose.bones[bone], export_settings))
+        _, children_, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(blender_object, export_settings) #TODOTREE
+        if vtree.nodes[vnode].uuid in children_.keys():
+            for bone_uuid in children_[vtree.nodes[vnode].uuid]:
+                children.append(gather_joint_vnode(bone_uuid, export_settings))
 
     # finally add to the joints array containing all the joints in the hierarchy
     node = gltf2_io.Node(
@@ -89,6 +94,8 @@ def gather_joint(blender_object, blender_bone, export_settings):
     )
 
     export_user_extensions('gather_joint_hook', export_settings, node, blender_bone)
+
+    vtree.nodes[vnode].node = node
 
     return node
 

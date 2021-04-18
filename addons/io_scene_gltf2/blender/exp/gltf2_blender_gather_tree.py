@@ -42,6 +42,18 @@ class VExportNode:
         self.blender_object = None
         self.blender_bone = None
 
+        # Only for bone/bone
+        self.parent_bone_uuid = None
+
+        # Only for armature
+        self.bones = {}
+
+        # For deformed object
+        self.armature = None
+
+        # glTF
+        self.node = None
+
     def add_child(self, uuid):
         self.children.append(uuid)
 
@@ -76,7 +88,7 @@ class VExportTree:
             blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
             self.recursive_node_traverse(blender_object, None, None)
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid):
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, armature_uuid=None):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.set_blender_data(blender_object, blender_bone)
@@ -90,16 +102,30 @@ class VExportTree:
         # Set blender type
         if blender_bone is not None:
             node.blender_type = VExportNode.BONE
+            self.nodes[armature_uuid].bones[blender_bone.name] = node.uuid
         elif blender_object.type == "ARMATURE":
             node.blender_type = VExportNode.ARMATURE
         elif blender_object.type == "CAMERA":
             node.blender_type = VExportNode.CAMERA
         elif blender_object.type == "LIGHT":
             node.blender_type = VExportNode.LIGHT
+        else:
+            node.blender_type = VExportNode.OBJECT
 
+        # For meshes with armature modifier (parent is armature), keep armature uuid
+        if node.blender_type == VExportNode.OBJECT:
+            modifiers = {m.type: m for m in blender_object.modifiers}
+            if "ARMATURE" in modifiers and modifiers["ARMATURE"].object is not None:
+                node.armature = parent_uuid
+
+
+        # for bone/bone parenting, store parent, this will help armature tree management
+        if parent_uuid is not None and self.nodes[parent_uuid].blender_type == VExportNode.BONE and node.blender_type == VExportNode.BONE:
+            node.parent_bone_uuid = parent_uuid
 
         # Now we know parent and child type, we can set parent_type
         # TODO
+        # TODO manage parented to bone / parented to bone relative
 
         # Set blender id
         node.blender_id = id(blender_object)
@@ -142,17 +168,20 @@ class VExportTree:
         # Armature : children are bones with no parent
         if blender_object.type == "ARMATURE" and blender_bone is None:
             for b in [b for b in blender_object.pose.bones if b.parent is None]:
-                self.recursive_node_traverse(blender_object, b, node.uuid)
+                self.recursive_node_traverse(blender_object, b, node.uuid, node.uuid)
 
         # Bones
         if blender_object.type == "ARMATURE" and blender_bone is not None:
             for b in blender_bone.children:
-                self.recursive_node_traverse(blender_object, b, node.uuid)
+                self.recursive_node_traverse(blender_object, b, node.uuid, armature_uuid)
 
         # Object parented to bone
         if blender_bone is not None:
             for child_object in [c for c in blender_object.children if c.parent_bone is not None and c.parent_bone == blender_bone.name]:
                 self.recursive_node_traverse(child_object, None, node.uuid)
+
+    def get_all_objects(self):
+        return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
 
     def display(self, mode):
         if mode == "simple":

@@ -26,6 +26,7 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 @cached
 def gather_mesh(blender_mesh: bpy.types.Mesh,
                 library: Optional[str],
+                armature_uuid: str,
                 blender_object: Optional[bpy.types.Object],
                 vertex_groups: Optional[bpy.types.VertexGroups],
                 modifiers: Optional[bpy.types.ObjectModifiers],
@@ -41,7 +42,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
         extras=__gather_extras(blender_mesh, library, vertex_groups, modifiers, export_settings),
         name=__gather_name(blender_mesh, library, vertex_groups, modifiers, export_settings),
         weights=__gather_weights(blender_mesh, library, vertex_groups, modifiers, export_settings),
-        primitives=__gather_primitives(blender_mesh, library, blender_object, vertex_groups, modifiers, material_names, export_settings),
+        primitives=__gather_primitives(blender_mesh, library, armature_uuid, blender_object, vertex_groups, modifiers, material_names, export_settings),
     )
 
     if len(mesh.primitives) == 0:
@@ -121,6 +122,7 @@ def __gather_name(blender_mesh: bpy.types.Mesh,
 
 def __gather_primitives(blender_mesh: bpy.types.Mesh,
                         library: Optional[str],
+                        armature_uuid: str,
                         blender_object: Optional[bpy.types.Object],
                         vertex_groups: Optional[bpy.types.VertexGroups],
                         modifiers: Optional[bpy.types.ObjectModifiers],
@@ -129,6 +131,7 @@ def __gather_primitives(blender_mesh: bpy.types.Mesh,
                         ) -> List[gltf2_io.MeshPrimitive]:
     return gltf2_blender_gather_primitives.gather_primitives(blender_mesh,
                                                              library,
+                                                             armature_uuid,
                                                              blender_object,
                                                              vertex_groups,
                                                              modifiers,
