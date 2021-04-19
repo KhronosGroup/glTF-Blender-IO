@@ -225,7 +225,11 @@ class BlenderNode():
         weights = pynode.weights or pymesh.weights or []
         for i, weight in enumerate(weights):
             if pymesh.shapekey_names[i] is not None:
-                obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]].value = weight
+                kb = obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]]
+                # extend range if needed
+                if weight < kb.slider_min: kb.slider_min = weight
+                if weight > kb.slider_max: kb.slider_max = weight
+                kb.value = weight
 
     @staticmethod
     def setup_skinning(gltf, pynode, obj):
