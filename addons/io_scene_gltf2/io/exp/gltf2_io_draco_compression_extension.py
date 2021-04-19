@@ -62,28 +62,60 @@ def encode_scene_primitives(scenes, export_settings):
     dll.encoderCopy.restype = None
     dll.encoderCopy.argtypes = [c_void_p, c_void_p]
 
+    # Don't encode the same primitive multiple times.
+    encoded_primitives_cache = {}
+
+    # Compress meshes into Draco buffers.
     for scene in scenes:
         for node in scene.nodes:
-            __traverse_node(node, lambda node: __encode_node(node, dll, export_settings))
+            __traverse_node(node, lambda node: __encode_node(node, dll, export_settings, encoded_primitives_cache))
+    
+    # Release uncompressed index and attribute buffers.
+    # Since those buffers may be shared across nodes, this step must happen after all meshes have been compressed.
+    for scene in scenes:
+        for node in scene.nodes:
+            __traverse_node(node, lambda node: __cleanup_node(node))
+
+
+def __cleanup_node(node):
+    if node.mesh is None:
+        return
+    
+    for primitive in node.mesh.primitives:
+        if primitive.extensions is None or primitive.extensions['KHR_draco_mesh_compression'] is None:
+            continue
+
+        primitive.indices.buffer_view = None
+        for attr_name in primitive.attributes:
+            attr = primitive.attributes[attr_name]
+            attr.buffer_view = None
 
 
 def __traverse_node(node, f):
     f(node)
-    if not (node.children is None):
+    if node.children is not None:
         for child in node.children:
             __traverse_node(child, f)
 
 
-def __encode_node(node, dll, export_settings):
-    if not (node.mesh is None):
+def __encode_node(node, dll, export_settings, encoded_primitives_cache):
+    if node.mesh is not None:
         print_console('INFO', 'Draco encoder: Encoding mesh {}.'.format(node.name))
         for primitive in node.mesh.primitives:
-            __encode_primitive(primitive, dll, export_settings)
+            __encode_primitive(primitive, dll, export_settings, encoded_primitives_cache)
 
 
-def __encode_primitive(primitive, dll, export_settings):
+def __encode_primitive(primitive, dll, export_settings, encoded_primitives_cache):
     attributes = primitive.attributes
     indices = primitive.indices
+
+    # Check if this primitive has already been encoded.
+    # This usually happens when nodes are duplicated in Blender, thus their indices/attributes are shared data.
+    if primitive in encoded_primitives_cache:
+        if primitive.extensions is None:
+            primitive.extensions = {}
+        primitive.extensions['KHR_draco_mesh_compression'] = encoded_primitives_cache[primitive]
+        return
 
     # Only do TRIANGLES primitives
     if primitive.mode not in [None, 4]:
@@ -106,10 +138,8 @@ def __encode_primitive(primitive, dll, export_settings):
         attr = attributes[attr_name]
         draco_id = dll.encoderSetAttribute(encoder, attr_name.encode(), attr.component_type, attr.type.encode(), attr.buffer_view.data)
         draco_ids[attr_name] = draco_id
-        attr.buffer_view = None
 
     dll.encoderSetIndices(encoder, indices.component_type, indices.count, indices.buffer_view.data)
-    indices.buffer_view = None
 
     dll.encoderSetCompressionLevel(encoder, export_settings['gltf_draco_mesh_compression_level'])
     dll.encoderSetQuantizationBits(encoder,
@@ -119,7 +149,8 @@ def __encode_primitive(primitive, dll, export_settings):
         export_settings['gltf_draco_color_quantization'],
         export_settings['gltf_draco_generic_quantization'])
 
-    if not dll.encoderEncode(encoder, primitive.targets is not None and len(primitive.targets) > 0):
+    preserve_triangle_order = primitive.targets is not None and len(primitive.targets) > 0
+    if not dll.encoderEncode(encoder, preserve_triangle_order):
         print_console('ERROR', 'Could not encode primitive. Skipping primitive.')
 
     byte_length = dll.encoderGetByteLength(encoder)
@@ -129,10 +160,12 @@ def __encode_primitive(primitive, dll, export_settings):
     if primitive.extensions is None:
         primitive.extensions = {}
 
-    primitive.extensions['KHR_draco_mesh_compression'] = {
+    extension_info = {
         'bufferView': BinaryData(encoded_data),
         'attributes': draco_ids
     }
+    primitive.extensions['KHR_draco_mesh_compression'] = extension_info
+    encoded_primitives_cache[primitive] = extension_info
 
     # Set to triangle list mode.
     primitive.mode = 4
