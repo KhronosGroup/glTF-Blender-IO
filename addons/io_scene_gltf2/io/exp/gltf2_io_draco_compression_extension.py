@@ -69,7 +69,7 @@ def encode_scene_primitives(scenes, export_settings):
     for scene in scenes:
         for node in scene.nodes:
             __traverse_node(node, lambda node: __encode_node(node, dll, export_settings, encoded_primitives_cache))
-    
+
     # Release uncompressed index and attribute buffers.
     # Since those buffers may be shared across nodes, this step must happen after all meshes have been compressed.
     for scene in scenes:
@@ -80,7 +80,7 @@ def encode_scene_primitives(scenes, export_settings):
 def __cleanup_node(node):
     if node.mesh is None:
         return
-    
+
     for primitive in node.mesh.primitives:
         if primitive.extensions is None or primitive.extensions['KHR_draco_mesh_compression'] is None:
             continue
