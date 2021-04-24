@@ -352,15 +352,14 @@ def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
                 blender_mesh_owner = blender_object.evaluated_get(depsgraph)
                 blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
                 # TODO: do we need preserve_all_data_layers?
-                # In some cases (for example curve with single vertice), no blender_mesh is created (without crash)
-                if blender_mesh is None:
-                    return None
 
             else:
                 blender_mesh_owner = blender_object
                 blender_mesh = blender_mesh_owner.to_mesh()
-                if blender_mesh is None: #Just in case (see above some not created mesh without crash)
-                    return None
+                
+            # In some cases (for example curve with single vertice), no blender_mesh is created (without crash)
+            if blender_mesh is None:
+                return None
 
         except Exception:
             return None
