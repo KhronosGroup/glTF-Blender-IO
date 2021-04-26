@@ -54,7 +54,7 @@ def gather_primitives(
         material_idx = internal_primitive['material']
         material = None
 
-        if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
+        if (export_settings['gltf_materials'] == "EXPORT" or export_settings['gltf_materials'] == 'PLACEHOLDER') and material_idx is not None:
             blender_material = None
             if material_names:
                 i = material_idx if material_idx < len(material_names) else -1

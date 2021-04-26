@@ -40,6 +40,9 @@ def gather_material(blender_material, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None
 
+    if export_settings['gltf_materials'] == 'PLACEHOLDER':
+        return __gather_placeholder_material(blender_material, export_settings)
+
     mat_unlit = __gather_material_unlit(blender_material, export_settings)
     if mat_unlit is not None:
         return mat_unlit
@@ -77,6 +80,20 @@ def gather_material(blender_material, export_settings):
     #     else:
     #         print_console('WARNING', 'Material ' + internal_primitive[
     #             'material'] + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
+
+
+def __gather_placeholder_material(blender_material, export_settings):
+    return gltf2_io.Material.from_dict({
+        "name": __gather_name(blender_material, export_settings),
+        "pbrMetallicRoughness": {
+            "baseColorFactor": __gather_placeholder_color(blender_material, export_settings)
+        }
+    })
+
+
+def __gather_placeholder_color(blender_material, export_settings):
+    c = blender_material.diffuse_color if not blender_material.use_nodes else gltf2_blender_get.get_socket(blender_material, "Base Color").default_value
+    return [c[0], c[1], c[2], c[3]]
 
 
 def __filter_material(blender_material, export_settings):
