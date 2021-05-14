@@ -94,6 +94,9 @@ def gather_node(vnode, blender_object, blender_scene, export_settings):
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
     vnode.node = node
+    
+    if node.skin is not None:
+        vnode.skin = skin
 
     if id(blender_object) not in export_settings['inst_obj'].keys():
         export_settings['inst_obj'][id(blender_object)] = []

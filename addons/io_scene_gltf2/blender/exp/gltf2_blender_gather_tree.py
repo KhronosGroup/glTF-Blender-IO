@@ -50,6 +50,7 @@ class VExportNode:
 
         # For deformed object
         self.armature = None
+        self.skin = None
 
         # glTF
         self.node = None

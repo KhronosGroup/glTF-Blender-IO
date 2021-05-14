@@ -73,7 +73,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                   ) -> gltf2_io.Node:
 
     if driver_obj is not None:
-        #TODOTREE
+        #TODOTREE : currently drivers are not managed at all
         return gltf2_blender_gather_nodes.gather_node(driver_obj,
             None, export_settings)
 
