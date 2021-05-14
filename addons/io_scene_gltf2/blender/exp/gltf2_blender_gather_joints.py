@@ -72,7 +72,7 @@ def gather_joint_vnode(vnode, export_settings):
         for bone_uuid in [c for c in vtree.nodes[vnode].children if vtree.nodes[c].blender_type == gltf2_blender_gather_tree.VExportNode.BONE]:
             children.append(gather_joint_vnode(bone_uuid, export_settings))
     else:
-        _, children_, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(blender_object, export_settings) #TODOTREE
+        _, children_, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(blender_object, export_settings)
         if vtree.nodes[vnode].uuid in children_.keys():
             for bone_uuid in children_[vtree.nodes[vnode].uuid]:
                 children.append(gather_joint_vnode(bone_uuid, export_settings))
