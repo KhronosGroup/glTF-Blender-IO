@@ -349,7 +349,6 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
         result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                        None, #TODO to be removed
-                                                       None, #TODOTREE ?
                                                        blender_object_for_skined_data,
                                                        vertex_groups,
                                                        modifiers,
