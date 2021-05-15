@@ -90,7 +90,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                 obj = blender_object.proxy if blender_object.proxy else blender_object
                 return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[export_settings['current_inst_vnode']].bones[blender_bone.name], export_settings)
             else:
-                bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(blender_object) #TODOTREE
+                bones, _, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(export_settings['vtree'].nodes[export_settings['current_inst_vnode']], export_settings)
                 if blender_bone.name in [b.name for b in bones]:
                     obj = blender_object.proxy if blender_object.proxy else blender_object
                     return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[export_settings['current_inst_vnode']].bones[blender_bone.name], export_settings)

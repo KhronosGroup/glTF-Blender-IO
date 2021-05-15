@@ -49,7 +49,7 @@ class VExportNode:
         self.bones = {}
 
         # For deformed object
-        self.armature = None
+        self.armature = None # for deformed object and for bone
         self.skin = None
 
         # glTF
@@ -119,6 +119,10 @@ class VExportTree:
             if "ARMATURE" in modifiers and modifiers["ARMATURE"].object is not None:
                 node.armature = parent_uuid
 
+
+        # For bones, store uuid of armature
+        if blender_bone is not None:
+            node.armature = armature_uuid
 
         # for bone/bone parenting, store parent, this will help armature tree management
         if parent_uuid is not None and self.nodes[parent_uuid].blender_type == VExportNode.BONE and node.blender_type == VExportNode.BONE:

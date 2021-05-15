@@ -42,7 +42,7 @@ def gather_skin(armature_uuid, export_settings):
     skin = gltf2_io.Skin(
         extensions=__gather_extensions(blender_armature_object, export_settings),
         extras=__gather_extras(blender_armature_object, export_settings),
-        inverse_bind_matrices=__gather_inverse_bind_matrices(blender_armature_object, export_settings),
+        inverse_bind_matrices=__gather_inverse_bind_matrices(armature_uuid, export_settings),
         joints=__gather_joints(armature_uuid, export_settings),
         name=__gather_name(blender_armature_object, export_settings),
         skeleton=__gather_skeleton(blender_armature_object, export_settings)
@@ -69,7 +69,10 @@ def __gather_extensions(blender_armature_object, export_settings):
 def __gather_extras(blender_armature_object, export_settings):
     return None
 
-def __gather_inverse_bind_matrices(blender_armature_object, export_settings):
+def __gather_inverse_bind_matrices(armature_uuid, export_settings):
+
+    blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
+
     axis_basis_change = mathutils.Matrix.Identity(4)
     if export_settings[gltf2_blender_export_keys.YUP]:
         axis_basis_change = mathutils.Matrix(
@@ -82,7 +85,8 @@ def __gather_inverse_bind_matrices(blender_armature_object, export_settings):
             if not blender_bone.parent:
                 root_bones.append(blender_bone)
     else:
-        _, children_, root_bones = get_bone_tree(blender_armature_object) #TODOTREE
+        _, children_, root_bones = get_bone_tree_vnode(export_settings['vtree'].nodes[armature_uuid], export_settings)
+        root_bones = [export_settings['vtree'].nodes[r].blender_bone for r in root_bones]
 
     matrices = []
 
@@ -137,7 +141,7 @@ def __gather_joints(armature_uuid, export_settings):
             if not blender_bone.parent:
                 root_joints.append(gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[armature_uuid].bones[blender_bone.name], export_settings))
     else:
-        _, children_, root_joints = get_bone_tree(blender_armature_object) #TODOTREE
+        _, children_, root_joints = get_bone_tree_vnode(export_settings['vtree'].nodes[armature_uuid], export_settings)
         root_joints = [gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[armature_uuid].bones[export_settings['vtree'].nodes[i].blender_bone.name], export_settings) for i in root_joints]
 
     # joints is a flat list containing all nodes belonging to the skin
