@@ -70,7 +70,7 @@ def extract_primitives(blender_mesh, library, vnode, blender_vertex_groups, modi
             armature = None
 
         if armature:
-            skin = export_settings['vtree'].nodes[vnode].skin
+            skin = gltf2_blender_gather_skins.gather_skin(export_settings['vtree'].nodes[vnode].armature, export_settings)
             if not skin:
                 armature = None
 
