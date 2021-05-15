@@ -94,7 +94,7 @@ def gather_node(vnode, blender_object, blender_scene, export_settings):
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
     vnode.node = node
-    
+
     if node.skin is not None:
         vnode.skin = skin
 
@@ -307,8 +307,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                    None, #TODO: to be removed
-                                                   vnode.armature,
-                                                   blender_object_for_skined_data,
+                                                   vnode.uuid,
                                                    vertex_groups,
                                                    modifiers,
                                                    skip_filter,
