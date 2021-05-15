@@ -70,9 +70,7 @@ def extract_primitives(blender_mesh, library, vnode, blender_vertex_groups, modi
             armature = None
 
         if armature:
-            export_settings['skin_from_armature'] = True
             skin = export_settings['vtree'].nodes[vnode].skin
-            export_settings['skin_from_armature'] = False
             if not skin:
                 armature = None
 
