@@ -20,11 +20,13 @@ from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 
-def extract_primitives(blender_mesh, library, vnode, blender_vertex_groups, modifiers, export_settings):
+def extract_primitives(blender_mesh, library, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
     """Extract primitives from a mesh."""
     print_console('INFO', 'Extracting primitive: ' + blender_mesh.name)
 
-    blender_object = export_settings['vtree'].nodes[vnode].blender_object
+    blender_object = None
+    if uuid_for_skined_data:
+        blender_object = export_settings['vtree'].nodes[uuid_for_skined_data].blender_object
 
     use_normals = export_settings[gltf2_blender_export_keys.NORMALS]
     if use_normals:
@@ -70,7 +72,7 @@ def extract_primitives(blender_mesh, library, vnode, blender_vertex_groups, modi
             armature = None
 
         if armature:
-            skin = gltf2_blender_gather_skins.gather_skin(export_settings['vtree'].nodes[vnode].armature, export_settings)
+            skin = gltf2_blender_gather_skins.gather_skin(export_settings['vtree'].nodes[uuid_for_skined_data].armature, export_settings)
             if not skin:
                 armature = None
 

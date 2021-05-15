@@ -299,15 +299,15 @@ def __gather_mesh(vnode, blender_object, export_settings):
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
     # we can't instantiate multiple object at different location, skined by same armature
-    blender_object_for_skined_data = None
+    uuid_for_skined_data = None
     if export_settings[gltf2_blender_export_keys.SKINS]:
         for idx, modifier in enumerate(blender_object.modifiers):
             if modifier.type == 'ARMATURE':
-                blender_object_for_skined_data = blender_object
+                uuid_for_skined_data = vnode.uuid
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                    None, #TODO: to be removed
-                                                   vnode.uuid,
+                                                   uuid_for_skined_data,
                                                    vertex_groups,
                                                    modifiers,
                                                    skip_filter,
