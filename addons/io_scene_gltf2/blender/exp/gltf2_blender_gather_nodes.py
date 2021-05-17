@@ -282,6 +282,10 @@ def __gather_mesh(blender_object, library, export_settings):
         modifiers = None
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
+        # Modifiers are only applied if the object is in the active scene, so switch to it.
+        old_scene = bpy.context.window.scene
+        bpy.context.window.scene = blender_object.users_scene[0] # TODO: is this guarenteed to be set?
+
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
             # temporarily disable Armature modifiers if exporting skins
@@ -337,6 +341,7 @@ def __gather_mesh(blender_object, library, export_settings):
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
         blender_mesh_owner.to_mesh_clear()
+        bpy.context.window.scene = old_scene
 
     return result
 
