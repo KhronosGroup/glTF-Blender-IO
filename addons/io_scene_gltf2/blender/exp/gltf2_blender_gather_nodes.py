@@ -356,7 +356,7 @@ def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
             else:
                 blender_mesh_owner = blender_object
                 blender_mesh = blender_mesh_owner.to_mesh()
-                
+
             # In some cases (for example curve with single vertice), no blender_mesh is created (without crash)
             if blender_mesh is None:
                 return None
