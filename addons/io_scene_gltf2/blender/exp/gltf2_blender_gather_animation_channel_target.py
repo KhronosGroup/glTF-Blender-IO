@@ -23,19 +23,20 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 @cached
-def gather_animation_channel_target(inst_id: int,
+def gather_animation_channel_target(obj_uuid: int,
                                     channels: typing.Tuple[bpy.types.FCurve],
-                                    blender_object: bpy.types.Object,
                                     bake_bone: typing.Union[str, None],
                                     bake_channel: typing.Union[str, None],
                                     driver_obj,
                                     export_settings
                                     ) -> gltf2_io.AnimationChannelTarget:
 
+        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
         animation_channel_target = gltf2_io.AnimationChannelTarget(
             extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
             extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
-            node=__gather_node(channels, blender_object, export_settings, bake_bone, driver_obj),
+            node=__gather_node(channels, obj_uuid, export_settings, bake_bone, driver_obj),
             path=__gather_path(channels, blender_object, export_settings, bake_bone, bake_channel)
         )
 
@@ -66,11 +67,13 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
-                  blender_object: bpy.types.Object,
+                  obj_uuid: str,
                   export_settings,
                   bake_bone: typing.Union[str, None],
                   driver_obj
                   ) -> gltf2_io.Node:
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     if driver_obj is not None:
         #TODOTREE : currently drivers are not managed at all
@@ -87,15 +90,15 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
 
         if isinstance(blender_bone, bpy.types.PoseBone):
             if export_settings["gltf_def_bones"] is False:
-                obj = blender_object.proxy if blender_object.proxy else blender_object
-                return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[export_settings['current_inst_vnode']].bones[blender_bone.name], export_settings)
+                obj = blender_object.proxy if blender_object.proxy else blender_object #TODOPROXY
+                return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[obj_uuid].bones[blender_bone.name], export_settings)
             else:
-                bones, _, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(export_settings['vtree'].nodes[export_settings['current_inst_vnode']], export_settings)
+                bones, _, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(export_settings['vtree'].nodes[obj_uuid], export_settings)
                 if blender_bone.name in [b.name for b in bones]:
-                    obj = blender_object.proxy if blender_object.proxy else blender_object
-                    return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[export_settings['current_inst_vnode']].bones[blender_bone.name], export_settings)
+                    obj = blender_object.proxy if blender_object.proxy else blender_object #TODOPROXY
+                    return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[obj_uuid].bones[blender_bone.name], export_settings)
 
-    return export_settings['current_inst_node']
+    return export_settings['vtree'].nodes[obj_uuid].node
 
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],

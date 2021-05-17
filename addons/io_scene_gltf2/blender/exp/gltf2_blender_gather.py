@@ -81,17 +81,13 @@ def __gather_animations(blender_scene, export_settings):
     for obj_uuid in vtree.get_all_objects():
         _blender_object = vtree.nodes[obj_uuid].blender_object
 
-        blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
+        blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object #TODOPROXY
 
         # Do not manage not exported objects
         if vtree.nodes[obj_uuid].node is None:
             continue
 
-        export_settings['current_inst_node'] = vtree.nodes[obj_uuid].node
-        export_settings['current_inst_vnode'] = obj_uuid
-
-        # Check was done on armature, but use here the _proxy object, because this is where the animation is
-        animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(obj_uuid, _blender_object, merged_tracks, len(animations), export_settings)
+        animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
 
     if export_settings['gltf_nla_strips'] is False:

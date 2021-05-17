@@ -22,8 +22,7 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
-def gather_animations(  inst_id: int,
-                        blender_object: bpy.types.Object,
+def gather_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],
                         offset: int,
                         export_settings) -> typing.Tuple[typing.List[gltf2_io.Animation], typing.Dict[str, typing.List[int]]]:
@@ -35,6 +34,8 @@ def gather_animations(  inst_id: int,
     :return: A list of glTF2 animations and tracks
     """
     animations = []
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object, export_settings)
@@ -74,7 +75,7 @@ def gather_animations(  inst_id: int,
 
         # No need to set active shapekeys animations, this is needed for bone baking
 
-        animation = __gather_animation(inst_id, blender_action, blender_object, export_settings)
+        animation = __gather_animation(obj_uuid, blender_action, export_settings)
         if animation is not None:
             animations.append(animation)
 
@@ -102,22 +103,24 @@ def gather_animations(  inst_id: int,
     return animations, tracks
 
 
-def __gather_animation( inst_id: int,
+def __gather_animation( obj_uuid: int,
                         blender_action: bpy.types.Action,
-                        blender_object: bpy.types.Object,
                         export_settings
                        ) -> typing.Optional[gltf2_io.Animation]:
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
     if not __filter_animation(blender_action, blender_object, export_settings):
         return None
 
     name = __gather_name(blender_action, blender_object, export_settings)
     try:
         animation = gltf2_io.Animation(
-            channels=__gather_channels(inst_id, blender_action, blender_object, export_settings),
+            channels=__gather_channels(obj_uuid, blender_action, export_settings),
             extensions=__gather_extensions(blender_action, blender_object, export_settings),
             extras=__gather_extras(blender_action, blender_object, export_settings),
             name=name,
-            samplers=__gather_samplers(blender_action, blender_object, export_settings)
+            samplers=__gather_samplers(obj_uuid, blender_action, export_settings)
         )
     except RuntimeError as error:
         print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
@@ -144,13 +147,12 @@ def __filter_animation(blender_action: bpy.types.Action,
     return True
 
 
-def __gather_channels(inst_id: int,
+def __gather_channels(obj_uuid: int,
                       blender_action: bpy.types.Action,
-                      blender_object: bpy.types.Object,
                       export_settings
                       ) -> typing.List[gltf2_io.AnimationChannel]:
     return gltf2_blender_gather_animation_channels.gather_animation_channels(
-        inst_id, blender_action, blender_object, export_settings)
+        obj_uuid, blender_action, export_settings)
 
 
 def __gather_extensions(blender_action: bpy.types.Action,
@@ -177,8 +179,8 @@ def __gather_name(blender_action: bpy.types.Action,
     return blender_action.name
 
 
-def __gather_samplers(blender_action: bpy.types.Action,
-                      blender_object: bpy.types.Object,
+def __gather_samplers(obj_uuid: str,
+                      blender_action: bpy.types.Action,
                       export_settings
                       ) -> typing.List[gltf2_io.AnimationSampler]:
     # We need to gather the samplers after gathering all channels --> populate this list in __link_samplers
