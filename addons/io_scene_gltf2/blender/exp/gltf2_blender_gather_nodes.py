@@ -273,6 +273,8 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if len(modifiers) == 0:
         modifiers = None
 
+    # TODO for objects without any modifiers, we can keep original mesh_data
+    # It will instance mesh in glTF
     if export_settings[gltf2_blender_export_keys.APPLY]:
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -307,7 +309,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 modifiers = None
 
     materials = tuple(ms.material for ms in blender_object.material_slots)
-    material_names = tuple(None if mat is None else mat.name for mat in materials)
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
@@ -319,12 +320,11 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 uuid_for_skined_data = vnode.uuid
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
-                                                   None, #TODO: to be removed
                                                    uuid_for_skined_data,
                                                    vertex_groups,
                                                    modifiers,
                                                    skip_filter,
-                                                   material_names,
+                                                   materials,
                                                    export_settings)
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
@@ -359,18 +359,17 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
         needs_to_mesh_clear = True
 
         skip_filter = True
-        material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
+        materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
         vertex_groups = None
         modifiers = None
         blender_object_for_skined_data = None
 
         result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
-                                                       None, #TODO to be removed
                                                        blender_object_for_skined_data,
                                                        vertex_groups,
                                                        modifiers,
                                                        skip_filter,
-                                                       material_names,
+                                                       materials,
                                                        export_settings)
 
     finally:

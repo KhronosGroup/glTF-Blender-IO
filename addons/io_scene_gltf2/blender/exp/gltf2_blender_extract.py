@@ -20,7 +20,7 @@ from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 
 
-def extract_primitives(blender_mesh, library, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
+def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
     """Extract primitives from a mesh."""
     print_console('INFO', 'Extracting primitive: ' + blender_mesh.name)
 
