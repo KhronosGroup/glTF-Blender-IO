@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 7, 6),
+    "version": (1, 7, 7),
     'blender': (2, 91, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -298,6 +298,24 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    use_visible: BoolProperty(
+        name='Visible Objects',
+        description='Export visible objects only',
+        default=False
+    )
+
+    use_renderable: BoolProperty(
+        name='Renderable Objects',
+        description='Export renderable objects only',
+        default=False
+    )
+
+    use_active_collection: BoolProperty(
+        name='Active Collection',
+        description='Export objects in the active collection only',
+        default=False
+    )
+
     export_extras: BoolProperty(
         name='Custom Properties',
         description='Export custom properties as glTF extras',
@@ -464,6 +482,9 @@ class ExportGLTF2_Base:
         exceptional = [
             # options that don't start with 'export_'
             'use_selection',
+            'use_visible',
+            'use_renderable',
+            'use_active_collection',
             'use_mesh_edges',
             'use_mesh_vertices',
         ]
@@ -527,6 +548,10 @@ class ExportGLTF2_Base:
             export_settings['gltf_selected'] = self.export_selected
         else:
             export_settings['gltf_selected'] = self.use_selection
+
+        export_settings['gltf_visible'] = self.use_visible
+        export_settings['gltf_renderable'] = self.use_renderable
+        export_settings['gltf_active_collection'] = self.use_active_collection
 
         # export_settings['gltf_selected'] = self.use_selection This can be uncomment when removing compatibility of export_selected
         export_settings['gltf_layers'] = True  # self.export_layers
@@ -657,6 +682,9 @@ class GLTF_PT_export_include(bpy.types.Panel):
 
         col = layout.column(heading = "Limit to", align = True)
         col.prop(operator, 'use_selection')
+        col.prop(operator, 'use_visible')
+        col.prop(operator, 'use_renderable')
+        col.prop(operator, 'use_active_collection')
 
         col = layout.column(heading = "Data", align = True)
         col.prop(operator, 'export_extras')
