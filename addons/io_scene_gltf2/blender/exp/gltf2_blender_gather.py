@@ -79,9 +79,7 @@ def __gather_animations(blender_scene, export_settings):
 
     vtree = export_settings['vtree']
     for obj_uuid in vtree.get_all_objects():
-        _blender_object = vtree.nodes[obj_uuid].blender_object
-
-        blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object #TODOPROXY
+        blender_object = vtree.nodes[obj_uuid].blender_object
 
         # Do not manage not exported objects
         if vtree.nodes[obj_uuid].node is None:

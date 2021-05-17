@@ -84,9 +84,7 @@ class VExportTree:
 
     def construct(self):
         depsgraph = bpy.context.evaluated_depsgraph_get()
-        # TODO remove all proxy stuff, use overriden data instead
-        for _blender_object in [obj.original for obj in depsgraph.objects if obj.proxy is None and obj.parent is None]:
-            blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
+        for blender_object in [obj.original for obj in depsgraph.objects if obj.proxy is None and obj.parent is None]: #TODOPROXY remove check ?
             self.recursive_node_traverse(blender_object, None, None)
 
     def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, armature_uuid=None):
@@ -166,7 +164,7 @@ class VExportTree:
                 if dupli_object.parent is not None:
                     continue
                 if dupli_object.type == "ARMATURE":
-                    continue # There is probably a proxy
+                    continue # There is probably a proxy #TODOPROXY remove check ?
 
                 self.recursive_node_traverse(dupli_object, None, node.uuid)
 
