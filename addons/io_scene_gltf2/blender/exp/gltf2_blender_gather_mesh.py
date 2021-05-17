@@ -67,7 +67,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
         extras=__gather_extras(blender_mesh, vertex_groups, modifiers, export_settings),
         name=__gather_name(blender_mesh, vertex_groups, modifiers, export_settings),
         weights=__gather_weights(blender_mesh, vertex_groups, modifiers, export_settings),
-        primitives=__gather_primitives(blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, material_names, export_settings),
+        primitives=__gather_primitives(blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, materials, export_settings),
     )
 
     if len(mesh.primitives) == 0:
