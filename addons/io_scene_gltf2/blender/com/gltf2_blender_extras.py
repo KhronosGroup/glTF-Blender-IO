@@ -89,5 +89,9 @@ def set_extras(blender_element, extras, exclude=[]):
 
         try:
             blender_element[custom_property] = value
-        except TypeError:
-            print('Error setting property %s to value of type %s' % (custom_property, type(value)))
+        except Exception:
+            # Try to convert to string
+            try:
+                blender_element[custom_property] = str(value)
+            except Exception:
+                print('Error setting property %s to value of type %s' % (custom_property, type(value)))

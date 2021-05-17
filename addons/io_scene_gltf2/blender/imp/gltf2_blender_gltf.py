@@ -165,7 +165,7 @@ class BlenderGlTF():
         # Calculate names for each mesh's shapekeys
         for mesh in gltf.data.meshes or []:
             mesh.shapekey_names = []
-            used_names = set()
+            used_names = set(['Basis']) #Be sure to not use 'Basis' name at import, this is a reserved name
 
             # Some invalid glTF files has empty primitive tab
             if len(mesh.primitives) > 0:
