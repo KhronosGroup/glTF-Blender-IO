@@ -27,7 +27,7 @@ def gather_animation_channel_target(obj_uuid: int,
                                     channels: typing.Tuple[bpy.types.FCurve],
                                     bake_bone: typing.Union[str, None],
                                     bake_channel: typing.Union[str, None],
-                                    driver_obj,
+                                    driver_obj_uuid,
                                     export_settings
                                     ) -> gltf2_io.AnimationChannelTarget:
 
@@ -36,7 +36,7 @@ def gather_animation_channel_target(obj_uuid: int,
         animation_channel_target = gltf2_io.AnimationChannelTarget(
             extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
             extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
-            node=__gather_node(channels, obj_uuid, export_settings, bake_bone, driver_obj),
+            node=__gather_node(channels, obj_uuid, export_settings, bake_bone, driver_obj_uuid),
             path=__gather_path(channels, blender_object, export_settings, bake_bone, bake_channel)
         )
 
@@ -70,15 +70,13 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
                   obj_uuid: str,
                   export_settings,
                   bake_bone: typing.Union[str, None],
-                  driver_obj
+                  driver_obj_uuid
                   ) -> gltf2_io.Node:
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
-    if driver_obj is not None:
-        #TODOTREE : currently drivers are not managed at all
-        return gltf2_blender_gather_nodes.gather_node(driver_obj,
-            None, export_settings)
+    if driver_obj_uuid is not None:
+        return export_settings['vtree'].nodes[driver_obj_uuid].node
 
     if blender_object.type == "ARMATURE":
         # TODO: get joint from fcurve data_path and gather_joint

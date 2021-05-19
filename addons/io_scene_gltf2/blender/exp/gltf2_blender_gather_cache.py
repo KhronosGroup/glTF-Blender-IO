@@ -92,22 +92,28 @@ def bonecache(func):
 
     @functools.wraps(func)
     def wrapper_bonecache(*args, **kwargs):
-        if args[2] is None:
-            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(args[0],
-                                                                args[1][0].data_path)
+
+        armature = args[-1]['vtree'].nodes[args[0]].blender_object
+
+        cache_key_args = args
+        cache_key_args = args[:-1]
+
+        if cache_key_args[2] is None:
+            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(cache_key_args[0],
+                                                                cache_key_args[1][0].data_path)
         else:
-            pose_bone_if_armature = args[0].pose.bones[args[2]]
+            pose_bone_if_armature = armature.pose.bones[cache_key_args[2]]
 
         if not hasattr(func, "__current_action_name"):
             func.reset_cache()
-        if args[6] != func.__current_action_name or args[0] != func.__current_armature_name:
+        if cache_key_args[6] != func.__current_action_name or cache_key_args[0] != func.__current_armature_name:
             result = func(*args)
             func.__bonecache = result
-            func.__current_action_name = args[6]
-            func.__current_armature_name = args[0]
-            return result[args[7]][pose_bone_if_armature.name]
+            func.__current_action_name = cache_key_args[6]
+            func.__current_armature_name = cache_key_args[0]
+            return result[cache_key_args[7]][pose_bone_if_armature.name]
         else:
-            return func.__bonecache[args[7]][pose_bone_if_armature.name]
+            return func.__bonecache[cache_key_args[7]][pose_bone_if_armature.name]
     return wrapper_bonecache
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
@@ -124,16 +130,20 @@ def skdriverdiscovercache(func):
 
     @functools.wraps(func)
     def wrapper_skdriverdiscover(*args, **kwargs):
+
+        cache_key_args = args
+        cache_key_args = args[:-1]
+
         if not hasattr(func, "__current_armature_name") or func.__current_armature_name is None:
             func.reset_cache()
 
-        if args[0] != func.__current_armature_name:
+        if cache_key_args[0] != func.__current_armature_name:
             result = func(*args)
-            func.__skdriverdiscover[args[0]] = result
-            func.__current_armature_name = args[0]
+            func.__skdriverdiscover[cache_key_args[0]] = result
+            func.__current_armature_name = cache_key_args[0]
             return result
         else:
-            return func.__skdriverdiscover[args[0]]
+            return func.__skdriverdiscover[cache_key_args[0]]
     return wrapper_skdriverdiscover
 
 def skdrivervalues(func):
@@ -148,12 +158,17 @@ def skdrivervalues(func):
         if not hasattr(func, "__skdrivervalues") or func.__skdrivervalues is None:
             func.reset_cache()
 
-        if args[0].name not in func.__skdrivervalues.keys():
-            func.__skdrivervalues[args[0].name] = {}
-        if args[1] not in func.__skdrivervalues[args[0].name]:
+        armature = args[-1]['vtree'].nodes[args[0]].blender_object
+
+        cache_key_args = args
+        cache_key_args = args[:-1]
+
+        if armature.name not in func.__skdrivervalues.keys():
+            func.__skdrivervalues[armature.name] = {}
+        if cache_key_args[1] not in func.__skdrivervalues[armature.name]:
             vals = func(*args)
-            func.__skdrivervalues[args[0].name][args[1]] = vals
+            func.__skdrivervalues[armature.name][cache_key_args[1]] = vals
             return vals
         else:
-            return func.__skdrivervalues[args[0].name][args[1]]
+            return func.__skdrivervalues[armature.name][cache_key_args[1]]
     return wrapper_skdrivervalues

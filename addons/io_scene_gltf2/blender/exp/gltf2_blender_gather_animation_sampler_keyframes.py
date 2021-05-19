@@ -19,7 +19,7 @@ import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, bonecache
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_get
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers_vnode, get_sk_driver_values_vnode
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
 
@@ -132,7 +132,7 @@ class Keyframe:
 
 
 @bonecache
-def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object],
+def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
                      channels: typing.Tuple[bpy.types.FCurve],
                      bake_bone: typing.Union[str, None],
                      bake_channel: typing.Union[str, None],
@@ -140,9 +140,11 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
                      bake_range_end,
                      action_name: str,
                      current_frame: int,
-                     step: int
+                     step: int,
+                     export_settings
                      ):
 
+    blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid_if_armature].blender_object if blender_obj_uuid_if_armature is not None else None
     data = {}
 
     # Always using bake_range, because some bones may need to be baked,
@@ -173,9 +175,9 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
 
 
         # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
-        drivers_to_manage = get_sk_drivers(blender_object_if_armature)
-        for dr_obj, dr_fcurves in drivers_to_manage:
-            vals = get_sk_driver_values(dr_obj, frame, dr_fcurves)
+        drivers_to_manage = get_sk_drivers_vnode(blender_obj_uuid_if_armature, export_settings)
+        for dr_obj_uuid, dr_fcurves in drivers_to_manage:
+            vals = get_sk_driver_values_vnode(dr_obj_uuid, frame, dr_fcurves, export_settings)
 
         frame += step
 
@@ -183,7 +185,7 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
 
 # cache for performance reasons
 @cached
-def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
+def gather_keyframes(blender_obj_uuid_if_armature: typing.Optional[bpy.types.Object],
                      channels: typing.Tuple[bpy.types.FCurve],
                      non_keyed_values: typing.Tuple[typing.Optional[float]],
                      bake_bone: typing.Union[str, None],
@@ -191,11 +193,14 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      bake_range_start,
                      bake_range_end,
                      action_name: str,
-                     driver_obj,
+                     driver_obj_uuid,
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
-    if bake_bone is None and driver_obj is None:
+
+    blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid_if_armature].blender_object if blender_obj_uuid_if_armature is not None else None
+
+    if bake_bone is None and driver_obj_uuid is None:
         # Find the start and end of the whole action group
         # Note: channels has some None items only for SK if some SK are not animated
         ranges = [channel.range() for channel in channels if channel is not None]
@@ -211,7 +216,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
 
-        if blender_object_if_armature is not None and driver_obj is None:
+        if blender_object_if_armature is not None and driver_obj_uuid is None:
             if bake_bone is None:
                 pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
                                                                                channels[0].data_path)
@@ -228,7 +233,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
 
                 mat = get_bone_matrix(
-                    blender_object_if_armature,
+                    blender_obj_uuid_if_armature,
                     channels,
                     bake_bone,
                     bake_channel,
@@ -236,7 +241,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     bake_range_end,
                     action_name,
                     frame,
-                    step
+                    step,
+                    export_settings
                 )
                 trans, rot, scale = mat.decompose()
 
@@ -252,12 +258,12 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     "scale": scale
                 }[target_property]
             else:
-                if driver_obj is None:
+                if driver_obj_uuid is None:
                     # Note: channels has some None items only for SK if some SK are not animated
                     key.value = [c.evaluate(frame) for c in channels if c is not None]
                     complete_key(key, non_keyed_values)
                 else:
-                    key.value = get_sk_driver_values(driver_obj, frame, channels)
+                    key.value = get_sk_driver_values_vnode(driver_obj_uuid, frame, channels, export_settings)
                     complete_key(key, non_keyed_values)
             keyframes.append(key)
             frame += step

@@ -75,7 +75,6 @@ def gather_animation_channels(obj_uuid: int,
                 channel = __gather_animation_channel(
                     obj_uuid,
                     (),
-                    blender_object,
                     export_settings,
                     bone.name,
                     p,
@@ -93,25 +92,24 @@ def gather_animation_channels(obj_uuid: int,
             if len(channel_group) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(obj_uuid, channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
+            channel = __gather_animation_channel(obj_uuid, channel_group, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
             if channel is not None:
                 channels.append(channel)
 
 
         # Retrieve channels for drivers, if needed
-        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(blender_object)
-        for obj, fcurves in drivers_to_manage:
+        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers_vnode(obj_uuid, export_settings)
+        for obj_driver_uuid, fcurves in drivers_to_manage:
             channel = __gather_animation_channel(
                 obj_uuid,
                 fcurves,
-                blender_object,
                 export_settings,
                 None,
                 None,
                 bake_range_start,
                 bake_range_end,
                 blender_action.name,
-                obj)
+                obj_driver_uuid)
             channels.append(channel)
 
     else:
@@ -120,7 +118,7 @@ def gather_animation_channels(obj_uuid: int,
             if len(channel_group_sorted) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(obj_uuid, channel_group_sorted, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
+            channel = __gather_animation_channel(obj_uuid, channel_group_sorted, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None)
             if channel is not None:
                 channels.append(channel)
 
@@ -183,26 +181,29 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
     # if not shapekeys, stay in same order, because order doesn't matter
     return channels
 
-def __gather_animation_channel(obj_uuid: int,
+def __gather_animation_channel(obj_uuid: str,
                                channels: typing.Tuple[bpy.types.FCurve],
-                               blender_object: bpy.types.Object,
                                export_settings,
                                bake_bone: typing.Union[str, None],
                                bake_channel: typing.Union[str, None],
                                bake_range_start,
                                bake_range_end,
                                action_name: str,
-                               driver_obj
+                               driver_obj_uuid
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
     if not __filter_animation_channel(channels, blender_object, export_settings):
         return None
 
-    __target= __gather_target(obj_uuid, channels, blender_object, export_settings, bake_bone, bake_channel, driver_obj)
+    __target= __gather_target(obj_uuid, channels, export_settings, bake_bone, bake_channel, driver_obj_uuid)
     if __target.path is not None:
+
         animation_channel = gltf2_io.AnimationChannel(
             extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
             extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
-            sampler=__gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj),
+            sampler=__gather_sampler(channels, obj_uuid, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj_uuid),
             target=__target
         )
 
@@ -245,38 +246,37 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
-                     blender_object: bpy.types.Object,
+                     obj_uuid: str,
                      export_settings,
                      bake_bone: typing.Union[str, None],
                      bake_channel: typing.Union[str, None],
                      bake_range_start,
                      bake_range_end,
                      action_name,
-                     driver_obj
+                     driver_obj_uuid
                      ) -> gltf2_io.AnimationSampler:
     return gltf2_blender_gather_animation_samplers.gather_animation_sampler(
         channels,
-        blender_object,
+        obj_uuid,
         bake_bone,
         bake_channel,
         bake_range_start,
         bake_range_end,
         action_name,
-        driver_obj,
+        driver_obj_uuid,
         export_settings
     )
 
 
-def __gather_target(obj_uuid: int,
+def __gather_target(obj_uuid: str,
                     channels: typing.Tuple[bpy.types.FCurve],
-                    blender_object: bpy.types.Object,
                     export_settings,
                     bake_bone: typing.Union[str, None],
                     bake_channel: typing.Union[str, None],
-                    driver_obj
+                    driver_obj_uuid
                     ) -> gltf2_io.AnimationChannelTarget:
     return gltf2_blender_gather_animation_channel_target.gather_animation_channel_target(
-        obj_uuid, channels, bake_bone, bake_channel, driver_obj, export_settings)
+        obj_uuid, channels, bake_bone, bake_channel, driver_obj_uuid, export_settings)
 
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):
