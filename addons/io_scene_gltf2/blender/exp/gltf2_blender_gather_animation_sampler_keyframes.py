@@ -19,7 +19,7 @@ import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, bonecache
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_get
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values_vnode
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
 
@@ -177,7 +177,7 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
         # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
         drivers_to_manage = get_sk_drivers(blender_obj_uuid_if_armature, export_settings)
         for dr_obj_uuid, dr_fcurves in drivers_to_manage:
-            vals = get_sk_driver_values_vnode(dr_obj_uuid, frame, dr_fcurves, export_settings)
+            vals = get_sk_driver_values(dr_obj_uuid, frame, dr_fcurves, export_settings)
 
         frame += step
 
@@ -263,7 +263,7 @@ def gather_keyframes(blender_obj_uuid_if_armature: typing.Optional[bpy.types.Obj
                     key.value = [c.evaluate(frame) for c in channels if c is not None]
                     complete_key(key, non_keyed_values)
                 else:
-                    key.value = get_sk_driver_values_vnode(driver_obj_uuid, frame, channels, export_settings)
+                    key.value = get_sk_driver_values(driver_obj, frame, channels, export_settings)
                     complete_key(key, non_keyed_values)
             keyframes.append(key)
             frame += step

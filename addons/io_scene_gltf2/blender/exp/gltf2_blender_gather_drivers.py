@@ -73,17 +73,9 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
     return tuple(drivers)
 
 @skdrivervalues
-def get_sk_driver_values_vnode(blender_object_uuid, frame, fcurves, export_settings):
+def get_sk_driver_values(blender_object_uuid, frame, fcurves, export_settings):
     sk_values = []
     blender_object = export_settings['vtree'].nodes[blender_object_uuid].blender_object
-    for f in [f for f in fcurves if f is not None]:
-        sk_values.append(blender_object.data.shape_keys.path_resolve(get_target_object_path(f.data_path)).value)
-
-    return tuple(sk_values)
-
-@skdrivervalues
-def get_sk_driver_values(blender_object, frame, fcurves):
-    sk_values = []
     for f in [f for f in fcurves if f is not None]:
         sk_values.append(blender_object.data.shape_keys.path_resolve(get_target_object_path(f.data_path)).value)
 
