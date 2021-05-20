@@ -34,10 +34,15 @@ jobs:
     - name: Find latest Blender build
       id: blender_version
       run: |
+        echo "Looking for Blender $BLENDER_MAJOR.$BLENDER_MINOR"
         BLENDER_URL="$(curl -s https://builder.blender.org/download/daily/ | \
           grep -oe 'http[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux[^\"]*\.tar\.xz' | \
           tail -n1)"
-        echo "Found current build for Blender $BLENDER_MAJOR.$BLENDER_MINOR: $BLENDER_URL"
+        if [ -z "$BLENDER_URL" ]; then
+          echo "Not found! Download URL may have changed; CI may need update."
+          exit 1
+        fi
+        echo "Found: $BLENDER_URL"
         echo "::set-output name=blender-url::$BLENDER_URL"
 
     # Loads a cached build of Blender if available. If not available, this step
