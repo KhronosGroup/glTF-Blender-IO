@@ -34,8 +34,8 @@ jobs:
     - name: Find latest Blender build
       id: blender_version
       run: |
-        BLENDER_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
-          grep -oe '[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux64[^\"]*' | \
+        BLENDER_URL="$(curl -s https://builder.blender.org/download/daily/ | \
+          grep -oe 'http[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux[^\"]*\.tar\.xz' | \
           tail -n1)"
         echo "Found current build for Blender $BLENDER_MAJOR.$BLENDER_MINOR: $BLENDER_URL"
         echo "::set-output name=blender-url::$BLENDER_URL"
