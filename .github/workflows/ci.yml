@@ -64,6 +64,10 @@ jobs:
         curl -SL "${{ steps.blender_version.outputs.blender-url }}" | \
           tar -Jx -C /opt/blender --strip-components=1
 
+    # See https://developer.blender.org/T88387
+    - name: Install PulseAudio
+      run: sudo apt-get install pulseaudio
+
     - name: Set up workspace
       run: |
         sudo ln -s /opt/blender/blender /usr/local/bin/blender
