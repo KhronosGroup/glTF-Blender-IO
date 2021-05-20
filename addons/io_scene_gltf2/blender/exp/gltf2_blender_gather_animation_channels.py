@@ -98,7 +98,7 @@ def gather_animation_channels(obj_uuid: int,
 
 
         # Retrieve channels for drivers, if needed
-        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers_vnode(obj_uuid, export_settings)
+        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(obj_uuid, export_settings)
         for obj_driver_uuid, fcurves in drivers_to_manage:
             channel = __gather_animation_channel(
                 obj_uuid,

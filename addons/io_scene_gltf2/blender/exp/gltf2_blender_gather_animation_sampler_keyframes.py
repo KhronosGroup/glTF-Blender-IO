@@ -19,7 +19,7 @@ import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, bonecache
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_get
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers_vnode, get_sk_driver_values_vnode
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values_vnode
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
 
@@ -175,7 +175,7 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
 
 
         # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
-        drivers_to_manage = get_sk_drivers_vnode(blender_obj_uuid_if_armature, export_settings)
+        drivers_to_manage = get_sk_drivers(blender_obj_uuid_if_armature, export_settings)
         for dr_obj_uuid, dr_fcurves in drivers_to_manage:
             vals = get_sk_driver_values_vnode(dr_obj_uuid, frame, dr_fcurves, export_settings)
 
