@@ -34,10 +34,15 @@ jobs:
     - name: Find latest Blender build
       id: blender_version
       run: |
-        BLENDER_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
-          grep -oe '[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux64[^\"]*' | \
+        echo "Looking for Blender $BLENDER_MAJOR.$BLENDER_MINOR"
+        BLENDER_URL="$(curl -s https://builder.blender.org/download/daily/ | \
+          grep -oe 'http[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux[^\"]*\.tar\.xz' | \
           tail -n1)"
-        echo "Found current build for Blender $BLENDER_MAJOR.$BLENDER_MINOR: $BLENDER_URL"
+        if [ -z "$BLENDER_URL" ]; then
+          echo "Not found! Download URL may have changed; CI may need update."
+          exit 1
+        fi
+        echo "Found: $BLENDER_URL"
         echo "::set-output name=blender-url::$BLENDER_URL"
 
     # Loads a cached build of Blender if available. If not available, this step
@@ -58,6 +63,10 @@ jobs:
         echo "Downloading: ${{ steps.blender_version.outputs.blender-url }}"
         curl -SL "${{ steps.blender_version.outputs.blender-url }}" | \
           tar -Jx -C /opt/blender --strip-components=1
+
+    # See https://developer.blender.org/T88387
+    - name: Install PulseAudio
+      run: sudo apt-get install pulseaudio
 
     - name: Set up workspace
       run: |
