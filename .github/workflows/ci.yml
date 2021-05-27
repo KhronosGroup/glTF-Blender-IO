@@ -21,10 +21,6 @@ jobs:
 
     - uses: actions/checkout@v2
 
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 14.x
-
     # Finds latest Blender build, and outputs the hosted build's download URL.
     - name: Find latest Blender build
       id: blender_version
