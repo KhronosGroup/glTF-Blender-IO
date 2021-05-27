@@ -17,15 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    strategy:
-      matrix:
-       include:
-         - filter: "blender_export"
-         - filter: "blender_roundtrip"
-
-    env:
-      FILTER: ${{ matrix.filter }}
-
     steps:
 
     - uses: actions/checkout@v2
@@ -86,11 +77,11 @@ jobs:
     - name: Run tests
       run: |
         cd tests
-        OUT_PREFIX=$GITHUB_WORKSPACE/tests/out yarn test-bail --reporter-options reportDir=out/mochawesome -g $FILTER
+        OUT_PREFIX=$GITHUB_WORKSPACE/tests/out yarn test-bail --reporter-options reportDir=out/mochawesome
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: test-output-${{ matrix.filter }}
+        name: test-output
         path: tests/out/mochawesome
         if-no-files-found: error
