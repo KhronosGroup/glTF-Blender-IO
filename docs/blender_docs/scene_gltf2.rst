@@ -445,37 +445,75 @@ and may be used for any user-specific or application-specific purposes.
 Animation
 =========
 
-glTF allows multiple animations per file, with animations targeted to
-particular objects at time of export. To ensure that an animation is included,
-either (a) make it the active Action on the object, (b) create a single-strip NLA track,
-or (c) stash the action.
+A glTF animation changes the transforms of objects or pose bones, or the values of
+shape keys. One animation can affect multiple things, and there can be multiple
+animations in a glTF file.
 
+Import
+------
 
-.. rubric:: Supported
+Imported models are set up so that the first animation in the file is playing
+automatically. Just scrub the Timeline to see it play.
 
-Only certain types of animation are supported:
+When there are multiple animations, the rest will be organized using the
+:doc:`Nonlinear Animation Editor </editors/nla/tracks>`. Each animation becomes an
+action stashed to an NLA track. The track name is the name of the glTF animation.
+To play an animation, simply star its track.
 
-- Keyframe (translation, rotation, scale)
-- Shape keys
-- Armatures / skinning
+.. figure:: /images/addons_import-export_scene-gltf2-animation-star-track.png
 
-Animation of other properties, like lights or materials, will be ignored.
+   Click Solo (star icon) next to the track you want to play to make that track's
+   animation visible.  This is the `fox sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Fox>`__
+   showing its Run animation.
 
-An *NLA Strip animation* consists of multiple actions on multiple objects that
-should play together. To create an NLA strip animation with the name "My Animation",
-push the action that should play each object onto an NLA track for
-that object with the name "My Animation".
+If an animation affects multiple objects, it will be broken up into multiple parts.
+The part of the animation that affects one object becomes an action stashed on that
+object. Use the track names to tell which actions are part of the same animation.
+To play the whole animation, you'd need to star all its tracks.
 
-.. figure:: /images/addons_import-export_scene-gltf2_nla-strip-animation-example.png
+.. note::
 
-   Will be exported as an animation called "My Animation" with ConeAction
-   playing on the Cone and CubeAction playing on the Cube.
+   There is currently no way to see the un-animated pose of a model that had animations.
 
-NLA Strip animations will be exported if the :menuselection:`Animation --> Group by NLA Track`
-option is selected (on by default). All glTF animations are imported as NLA Strip animations.
+Export
+------
 
-If option is disabled, Blender NLA strip actions will be ignored.
-Only active action of each objects will be taken into account, and merged into a single glTF animation.
+You can export animations by creating actions. How glTF animations are made from
+actions is controlled by the :menuselection:`Animation --> Group by NLA Track` export
+option.
+
+.. rubric:: Group by NLA Track on (default)
+
+An action will be exported if it is the active action on an object, or it is stashed
+to an NLA track (eg. with the Stash or Push Down buttons in the
+:doc:`Action Editor </editors/dope_sheet/action>`).
+**Actions which are not associated with an object in one of these ways are not exported.
+If you have multiple actions you want to export, make sure they are stashed!**
+
+A glTF animation can have a name, which is the action name by default. You can override it
+by renaming its NLA track from "NLATrack"/"[Action Stash]" to the name you want to use.
+For example, the fox model shown above will export with three animations, "Survey", "Walk",
+and "Run".
+
+If you rename two tracks on two different objects to the same name, they will become part
+of the same glTF animation and will play together.
+
+The importer organizes actions so they will be exported correctly with this mode.
+
+.. rubric:: Group by NLA Track off
+
+In this mode, the NLA organization is not used, and only one animation is exported using
+the active actions on all objects.
+
+.. note::
+
+   For both modes, remember only certain types of animation are supported:
+
+   - Object transform (location, rotation, scale)
+   - Pose bones
+   - Shape key values
+
+   Animation of other properties, like physics, lights, or materials, will be ignored.
 
 .. note::
 
