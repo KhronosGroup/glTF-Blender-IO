@@ -54,7 +54,7 @@ with the following channels of information:
 - Metallic
 - Roughness
 - Baked Ambient Occlusion
-- Normal Map (Tangent-space, +Y up)
+- Normal Map (tangent space, +Y up)
 - Emissive
 
 Some additional material properties or types of materials can be expressed using glTF extensions:
@@ -235,27 +235,26 @@ channels if they are not needed.
 Clearcoat
 ^^^^^^^^^
 
-When the Clearcoat input on the Principled BSDF node has a non-zero default value or
+When the *Clearcoat* input on the Principled BSDF node has a non-zero default value or
 Image Texture node connected, the ``KHR_materials_clearcoat`` glTF extension will be
 included in the export. This extension will also include a value or Image Texture
-from the Clearcoat Roughness input if available.
+from the *Clearcoat Roughness* input if available.
 
 If Image Textures are used, glTF requires that the clearcoat values be written to
-the red (``R``) channel, and clearcoat roughness to the green (``G``) channel.
-If monochrome images are connected, the addon will remap them to these color channels
-during export.
+the red (``R``) channel, and *Clearcoat Roughness* to the green (``G``) channel.
+If monochrome images are connected, the exporter will remap them to these color channels.
 
-The Clearcoat Normal input accepts the same kinds of inputs as the base Normal input,
+The *Clearcoat Normal* input accepts the same kinds of inputs as the base Normal input,
 specifically a tangent-space normal map with +Y up, and a user-defined strength.
-This input can re-use the same normal map that the base material is using, or can
-be assigned its own normal map, or can be left disconnected for a smooth coating.
+This input can reuse the same normal map that the base material is using,
+or can be assigned its own normal map, or can be left disconnected for a smooth coating.
 
-All clearcoat-related Image Texture node(s) should have their *Color Space* set to Non-Color.
+All Image Texture nodes used for clearcoat shading should have their *Color Space* set to Non-Color.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-clearcoat.png
 
    An example of a complex clearcoat application that will export correctly to glTF.
-   A much simpler, smooth coating could be applied from just the Principled BSDF node alone.
+   A much simpler, smooth coating can be applied from just the Principled BSDF node alone.
 
 
 Transmission
@@ -263,35 +262,33 @@ Transmission
 
 When the Transmission input on the Principled BSDF node has a non-zero default value or
 Image Texture node connected, the ``KHR_materials_transmission`` glTF extension will be
-included in the export. When a texture is used, glTF stores the values in
-the red (``R``) channel. The *Color Space* should be set to Non-Color.
+included in the export. When a texture is used, glTF stores the values in the red (``R``) channel.
+The *Color Space* should be set to Non-Color.
 
-Transmission is different from alpha blending, because transmission allows full-strength
-specular reflections. In glTF, alpha blending is intended to represent physical materials
-that are partially missing from the specified geometry, such as medical gauze wrap. Transmission
-is intended to represent physical materials that are solid but allow non-specularly-reflected
-light to transmit through the material, like glass.
+Transmission is different from alpha blending, because transmission allows full-strength specular reflections.
+In glTF, alpha blending is intended to represent physical materials that are partially missing from
+the specified geometry, such as medical gauze wrap. Transmission is intended to represent physical materials
+that are solid but allow non-specularly-reflected light to transmit through the material, like glass.
 
-glTF does not offer a separate "Transmission Roughness," but the material's base roughness
+glTF does not offer a separate "Transmission Roughness", but the material's base roughness
 can be used to blur the transmission, like frosted glass.
 
 .. tip::
 
-   Typically the alpha blend mode of a transmissive material should remain "Opaque," the
-   default setting, unless the material only partially covers the specified geometry.
+   Typically the alpha blend mode of a transmissive material should remain "Opaque",
+   the default setting, unless the material only partially covers the specified geometry.
 
 .. note::
 
-   In real-time engines where transmission is supported, various technical limitations
-   in the engine may determine which parts of the scene are visible through the
-   transmissive surface. In particular, transmissive materials may not be visible behind
-   other transmissive materials. These limitations affect physically-based transmission,
-   but not alpha-blended non-transmissive materials.
+   In real-time engines where transmission is supported, various technical limitations in
+   the engine may determine which parts of the scene are visible through the transmissive surface.
+   In particular, transmissive materials may not be visible behind other transmissive materials.
+   These limitations affect physically-based transmission, but not alpha-blended non-transmissive materials.
 
 .. warning::
 
-   Transmission is complex for real-time rendering engines to implement, and support
-   for the ``KHR_materials_transmission`` glTF extension is not yet widespread.
+   Transmission is complex for real-time rendering engines to implement,
+   and support for the ``KHR_materials_transmission`` glTF extension is not yet widespread.
 
 
 Double-Sided / Backface Culling
@@ -428,22 +425,21 @@ are supported directly by this add-on:
 Third-party glTF Extensions
 ---------------------------
 
-It is possible for Python developers to add Blender support for additional glTF extensions
-by writing their own third-party add-on, without modifying this glTF add-on. For more information,
-`see the example on GitHub <https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons/example_gltf_extension>`__
-and if needed,
+It is possible for Python developers to add Blender support for additional glTF extensions by writing their
+own third-party add-on, without modifying this glTF add-on. For more information, `see the example on GitHub
+<https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons/example_gltf_extension>`__ and if needed,
 `register an extension prefix <https://github.com/KhronosGroup/glTF/blob/master/extensions/Prefixes.md>`__.
 
 
 Custom Properties
 =================
 
-Custom properties are always imported, and will be exported from most objects if the
-:menuselection:`Include --> Custom Properties` option is selected before export. These
-are stored in the ``extras`` field on the corresponding object in the glTF file.
+Custom properties are always imported, and will be exported from most objects
+if the :menuselection:`Include --> Custom Properties` option is selected before export.
+These are stored in the ``extras`` field on the corresponding object in the glTF file.
 
-Unlike glTF extensions, custom properties (extras) have no defined name-space, and may
-be used for any user-specific or application-specific purposes.
+Unlike glTF extensions, custom properties (extras) have no defined namespace,
+and may be used for any user-specific or application-specific purposes.
 
 
 Animation
@@ -484,7 +480,7 @@ Only active action of each objects will be taken into account, and merged into a
 .. note::
 
    In order to sample shape key animations controlled by drivers using bone transformations,
-   they must be on a mesh object which is a direct child of the bones' armature.
+   they must be on a mesh object that is a direct child of the bones' armature.
 
 
 File Format Variations
