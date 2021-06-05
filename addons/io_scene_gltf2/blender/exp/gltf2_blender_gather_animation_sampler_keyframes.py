@@ -203,6 +203,10 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
 
         start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
         end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
+
+        if export_settings[gltf2_blender_export_keys.FRAME_RANGE]:
+            start_frame = max(bake_range_start, start_frame)
+            end_frame = min(bake_range_end, end_frame)
     else:
         start_frame = bake_range_start
         end_frame = bake_range_end
@@ -225,7 +229,9 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         frame = start_frame
         step = export_settings['gltf_frame_step']
         while frame <= end_frame:
-            key = Keyframe(channels, frame, bake_channel)
+            # gltf2 expects time to start at 0 whereas Blender defaults to frame 1.
+            adjusted_frame = frame - start_frame
+            key = Keyframe(channels, adjusted_frame, bake_channel)
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
 
                 mat = get_bone_matrix(

@@ -42,6 +42,17 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
 
+    if blender_object.animation_data and blender_object.animation_data.nla_tracks and export_settings[gltf2_blender_export_keys.FRAME_RANGE]:
+      # Attempt to adjust the bake range to match the nla track strip that matches the action_name.
+      for track in blender_object.animation_data.nla_tracks:
+        if not track.strips:
+          continue
+        for strip in track.strips:
+          if strip.name == action_name:
+            bake_range_start = strip.frame_start
+            bake_range_end = strip.frame_end
+            break
+
     blender_object_if_armature = blender_object if blender_object.type == "ARMATURE" else None
     if blender_object_if_armature is not None and driver_obj is None:
         if bake_bone is None:
