@@ -42,7 +42,11 @@ def gather_image(
     mime_type = __gather_mime_type(blender_shader_sockets, image_data, export_settings)
     name = __gather_name(image_data, export_settings)
 
-    uri = __gather_uri(image_data, mime_type, name, export_settings)
+    if image_data.original is None:
+        uri = __gather_uri(image_data, mime_type, name, export_settings)
+    else:
+        uri = image_data.original.filepath #TODO make it relative to gltf file (currently is filepath of image in blender)
+
     buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
     image = __make_image(
@@ -99,7 +103,12 @@ def __gather_mime_type(sockets, export_image, export_settings):
             return "image/png"
 
     if export_settings["gltf_image_format"] == "AUTO":
-        image = export_image.blender_image()
+        if export_image.original is None: # We are going to create a new image
+            image = export_image.blender_image()
+        else:
+            # Using original image
+            image = export_image.original
+
         if image is not None and __is_blender_image_a_jpeg(image):
             return "image/jpeg"
         return "image/png"
@@ -109,30 +118,33 @@ def __gather_mime_type(sockets, export_image, export_settings):
 
 
 def __gather_name(export_image, export_settings):
-    # Find all Blender images used in the ExportImage
-    imgs = []
-    for fill in export_image.fills.values():
-        if isinstance(fill, FillImage):
-            img = fill.image
-            if img not in imgs:
-                imgs.append(img)
+    if export_image.original is None:
+        # Find all Blender images used in the ExportImage
+        imgs = []
+        for fill in export_image.fills.values():
+            if isinstance(fill, FillImage):
+                img = fill.image
+                if img not in imgs:
+                    imgs.append(img)
 
-    # If all the images have the same path, use the common filename
-    filepaths = set(img.filepath for img in imgs)
-    if len(filepaths) == 1:
-        filename = os.path.basename(list(filepaths)[0])
-        name, extension = os.path.splitext(filename)
-        if extension.lower() in ['.png', '.jpg', '.jpeg']:
-            if name:
-                return name
+        # If all the images have the same path, use the common filename
+        filepaths = set(img.filepath for img in imgs)
+        if len(filepaths) == 1:
+            filename = os.path.basename(list(filepaths)[0])
+            name, extension = os.path.splitext(filename)
+            if extension.lower() in ['.png', '.jpg', '.jpeg']:
+                if name:
+                    return name
 
-    # Combine the image names: img1-img2-img3
-    names = []
-    for img in imgs:
-        name, extension = os.path.splitext(img.name)
-        names.append(name)
-    name = '-'.join(names)
-    return name or 'Image'
+        # Combine the image names: img1-img2-img3
+        names = []
+        for img in imgs:
+            name, extension = os.path.splitext(img.name)
+            names.append(name)
+        name = '-'.join(names)
+        return name or 'Image'
+    else:
+        return export_image.original.name
 
 
 @cached
@@ -200,7 +212,11 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
                 composed_image.fill_white(Channel.B)
         else:
             # copy full image...eventually following sockets might overwrite things
-            composed_image = ExportImage.from_blender_image(result.shader_node.image)
+            if export_settings['gltf_keep_original_textures']:
+                composed_image = ExportImage.from_original(result.shader_node.image)
+            else:
+                composed_image = ExportImage.from_blender_image(result.shader_node.image)
+
 
     return composed_image
 
