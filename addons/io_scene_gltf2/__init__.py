@@ -660,8 +660,10 @@ class GLTF_PT_export_main(bpy.types.Panel):
 
         layout.prop(operator, 'export_format')
         if operator.export_format == 'GLTF_SEPARATE':
-            layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
             layout.prop(operator, 'export_keep_originals')
+            if operator.export_keep_originals is False:
+                layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
+
         layout.prop(operator, 'export_copyright')
         layout.prop(operator, 'will_save_settings')
 
