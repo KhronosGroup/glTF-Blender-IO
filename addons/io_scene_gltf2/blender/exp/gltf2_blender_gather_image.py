@@ -27,14 +27,16 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
-@cached
+# @cached
 def gather_image(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
-        export_settings):
+        export_settings,
+        export_image_class = ExportImage
+):
     if not __filter_image(blender_shader_sockets, export_settings):
         return None
 
-    image_data = __get_image_data(blender_shader_sockets, export_settings)
+    image_data = __get_image_data(blender_shader_sockets, export_image_class, export_settings)
     if image_data.empty():
         # The export image has no data
         return None
@@ -93,20 +95,14 @@ def __gather_extras(sockets, export_settings):
 
 
 def __gather_mime_type(sockets, export_image, export_settings):
-    # force png if Alpha contained so we can export alpha
-    for socket in sockets:
-        if socket.name == "Alpha":
-            return "image/png"
-
     if export_settings["gltf_image_format"] == "AUTO":
-        image = export_image.blender_image()
-        if image is not None and __is_blender_image_a_jpeg(image):
-            return "image/jpeg"
-        return "image/png"
+        preferred = export_image.preferred_mime_type()
+        if preferred: return preferred
 
     elif export_settings["gltf_image_format"] == "JPEG":
         return "image/jpeg"
 
+    return "image/png"
 
 def __gather_name(export_image, export_settings):
     # Find all Blender images used in the ExportImage
@@ -122,9 +118,7 @@ def __gather_name(export_image, export_settings):
     if len(filepaths) == 1:
         filename = os.path.basename(list(filepaths)[0])
         name, extension = os.path.splitext(filename)
-        if extension.lower() in ['.png', '.jpg', '.jpeg']:
-            if name:
-                return name
+        return name
 
     # Combine the image names: img1-img2-img3
     names = []
@@ -148,12 +142,12 @@ def __gather_uri(image_data, mime_type, name, export_settings):
     return None
 
 
-def __get_image_data(sockets, export_settings) -> ExportImage:
+def __get_image_data(sockets, export_image_class, export_settings) -> ExportImage:
     # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
     results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
-    composed_image = ExportImage()
+    composed_image = export_image_class()
     for result, socket in zip(results, sockets):
         if result.shader_node.image.channels == 0:
             gltf2_io_debug.print_console("WARNING",
@@ -200,7 +194,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
                 composed_image.fill_white(Channel.B)
         else:
             # copy full image...eventually following sockets might overwrite things
-            composed_image = ExportImage.from_blender_image(result.shader_node.image)
+            composed_image = export_image_class.from_blender_image(result.shader_node.image)
 
     return composed_image
 
@@ -213,10 +207,3 @@ def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket, export_se
     if not result:
         return None
     return result[0]
-
-
-def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
-    if image.source != 'FILE':
-        return False
-    path = image.filepath_raw.lower()
-    return path.endswith('.jpg') or path.endswith('.jpeg') or path.endswith('.jpe')

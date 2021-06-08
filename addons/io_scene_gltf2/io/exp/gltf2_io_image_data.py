@@ -19,6 +19,13 @@ class ImageData:
     # FUTURE_WORK: as a method to allow the node graph to be better supported, we could model some of
     # the node graph elements with numpy functions
 
+    extension_for_mime = {
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/x-exr": ".exr",
+        "image/vnd.radiance": ".hdr"
+    }
+
     def __init__(self, data: bytes, mime_type: str, name: str):
         self._data = data
         self._mime_type = mime_type
@@ -46,9 +53,7 @@ class ImageData:
 
     @property
     def file_extension(self):
-        if self._mime_type == "image/jpeg":
-            return ".jpg"
-        return ".png"
+        return ImageData.extension_for_mime.get(self.mime_type)
 
     @property
     def byte_length(self):

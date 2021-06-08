@@ -67,9 +67,9 @@ class ExportImage:
     def __init__(self):
         self.fills = {}
 
-    @staticmethod
-    def from_blender_image(image: bpy.types.Image):
-        export_image = ExportImage()
+    @classmethod
+    def from_blender_image(cls, image: bpy.types.Image):
+        export_image = cls()
         for chan in range(image.channels):
             export_image.fill_image(image, dst_chan=chan, src_chan=chan)
         return export_image
@@ -104,11 +104,23 @@ class ExportImage:
             len(set(fill.image.name for fill in self.fills.values())) == 1
         )
 
-    def encode(self, mime_type: Optional[str]) -> bytes:
-        self.file_format = {
+    def preferred_mime_type(self) -> str:
+        image = self.blender_image()
+        if image:
+            return {
+                "JPEG": "image/jpeg",
+                "PNG": "image/png"
+            }.get(image.file_format, None)
+        return None
+
+    def __blender_format_for_mime(self, mime_type: Optional[str]) -> str:
+        return {
             "image/jpeg": "JPEG",
             "image/png": "PNG"
         }.get(mime_type, "PNG")
+
+    def encode(self, mime_type: Optional[str]) -> bytes:
+        self.file_format = self.__blender_format_for_mime(mime_type)
 
         # Happy path = we can just use an existing Blender image
         if self.__on_happy_path():
@@ -176,6 +188,13 @@ class ExportImage:
 
             return _encode_temp_image(tmp_image, self.file_format)
 
+    def __check_magic(self, data: bytes) -> bool:
+        if self.file_format == 'PNG':
+            return data.startswith(b'\x89PNG')
+        elif self.file_format == 'JPEG':
+            return data.startswith(b'\xff\xd8\xff')
+        return False
+
     def __encode_from_image(self, image: bpy.types.Image) -> bytes:
         # See if there is an existing file we can use.
         data = None
@@ -189,13 +208,8 @@ class ExportImage:
                     with open(src_path, 'rb') as f:
                         data = f.read()
         # Check magic number is right
-        if data:
-            if self.file_format == 'PNG':
-                if data.startswith(b'\x89PNG'):
-                    return data
-            elif self.file_format == 'JPEG':
-                if data.startswith(b'\xff\xd8\xff'):
-                    return data
+        if data and self.check_magic(data):
+            return data
 
         # Copy to a temp image and save.
         with TmpImageGuard() as guard:
