@@ -53,7 +53,7 @@ class ImageData:
 
     @property
     def file_extension(self):
-        return ImageData.extension_for_mime.get(self.mime_type)
+        return ImageData.extension_for_mime.get(self._mime_type)
 
     @property
     def byte_length(self):

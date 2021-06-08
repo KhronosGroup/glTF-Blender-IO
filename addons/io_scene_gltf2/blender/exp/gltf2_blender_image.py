@@ -208,7 +208,7 @@ class ExportImage:
                     with open(src_path, 'rb') as f:
                         data = f.read()
         # Check magic number is right
-        if data and self.check_magic(data):
+        if data and self.__check_magic(data):
             return data
 
         # Copy to a temp image and save.
