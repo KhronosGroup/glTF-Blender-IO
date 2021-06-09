@@ -45,7 +45,8 @@ def gather_image(
     if image_data.original is None:
         uri = __gather_uri(image_data, mime_type, name, export_settings)
     else:
-        uri = image_data.original.filepath #TODO make it relative to gltf file (currently is filepath of image in blender)
+        # Retrieve URI relative to exported glTF files
+            uri = __gather_original_uri(image_data.original.filepath, export_settings)
 
     buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -62,6 +63,27 @@ def gather_image(
     export_user_extensions('gather_image_hook', export_settings, image, blender_shader_sockets)
 
     return image
+
+def __gather_original_uri(original_uri, export_settings):
+    
+    def _path_to_uri(path):
+        import urllib
+        path = os.path.normpath(path)
+        path = path.replace(os.sep, '/')
+        return urllib.parse.quote(path)
+
+    path_to_image = bpy.path.abspath(original_uri)
+    if not os.path.exists(path_to_image): return None
+    try:
+        rel_path = os.path.relpath(
+            path_to_image,
+            start=export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
+        )
+    except ValueError:
+        # eg. because no relative path between C:\ and D:\ on Windows
+        return None
+    return _path_to_uri(rel_path)
+
 
 @cached
 def __make_image(buffer_view, extensions, extras, mime_type, name, uri, export_settings):
@@ -173,50 +195,52 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
                                              result.shader_node.image))
             continue
 
-        # rudimentarily try follow the node tree to find the correct image data.
-        src_chan = Channel.R
-        for elem in result.path:
-            if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
-                src_chan = {
-                    'R': Channel.R,
-                    'G': Channel.G,
-                    'B': Channel.B,
-                }[elem.from_socket.name]
-            if elem.from_socket.name == 'Alpha':
-                src_chan = Channel.A
+        # Assume that user know what he does, and that channels/images are already combined correctly for pbr
+        if export_settings['gltf_keep_original_textures']:
+            composed_image = ExportImage.from_original(result.shader_node.image)
+            print("-->", result.shader_node.image.name)
 
-        dst_chan = None
-
-        # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
-        if socket.name == 'Metallic':
-            dst_chan = Channel.B
-        elif socket.name == 'Roughness':
-            dst_chan = Channel.G
-        elif socket.name == 'Occlusion':
-            dst_chan = Channel.R
-        elif socket.name == 'Alpha':
-            dst_chan = Channel.A
-        elif socket.name == 'Clearcoat':
-            dst_chan = Channel.R
-        elif socket.name == 'Clearcoat Roughness':
-            dst_chan = Channel.G
-
-        if dst_chan is not None:
-            composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
-
-            # Since metal/roughness are always used together, make sure
-            # the other channel is filled.
-            if socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
-                composed_image.fill_white(Channel.G)
-            elif socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
-                composed_image.fill_white(Channel.B)
         else:
-            # copy full image...eventually following sockets might overwrite things
-            if export_settings['gltf_keep_original_textures']:
-                composed_image = ExportImage.from_original(result.shader_node.image)
-            else:
-                composed_image = ExportImage.from_blender_image(result.shader_node.image)
+            # rudimentarily try follow the node tree to find the correct image data.
+            src_chan = Channel.R
+            for elem in result.path:
+                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
+                    src_chan = {
+                        'R': Channel.R,
+                        'G': Channel.G,
+                        'B': Channel.B,
+                    }[elem.from_socket.name]
+                if elem.from_socket.name == 'Alpha':
+                    src_chan = Channel.A
 
+            dst_chan = None
+
+            # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
+            if socket.name == 'Metallic':
+                dst_chan = Channel.B
+            elif socket.name == 'Roughness':
+                dst_chan = Channel.G
+            elif socket.name == 'Occlusion':
+                dst_chan = Channel.R
+            elif socket.name == 'Alpha':
+                dst_chan = Channel.A
+            elif socket.name == 'Clearcoat':
+                dst_chan = Channel.R
+            elif socket.name == 'Clearcoat Roughness':
+                dst_chan = Channel.G
+
+            if dst_chan is not None:
+                composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
+
+                # Since metal/roughness are always used together, make sure
+                # the other channel is filled.
+                if socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
+                    composed_image.fill_white(Channel.G)
+                elif socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
+                    composed_image.fill_white(Channel.B)
+            else:
+                # copy full image...eventually following sockets might overwrite things
+                composed_image = ExportImage.from_blender_image(result.shader_node.image)
 
     return composed_image
 
