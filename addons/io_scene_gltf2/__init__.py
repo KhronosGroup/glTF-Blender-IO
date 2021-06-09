@@ -175,9 +175,9 @@ class ExportGLTF2_Base:
 
     export_keep_originals: BoolProperty(
         name='Keep original',
-        description=('Keep original textures files if possible. ',
+        description=('Keep original textures files if possible. '
                      'WARNING: if you use more than one texture, '
-                     'where pbr standard requires only one, only one texture will be used.',
+                     'where pbr standard requires only one, only one texture will be used.'
                      'This can lead to unexpected results'
         ),
         default=False,
