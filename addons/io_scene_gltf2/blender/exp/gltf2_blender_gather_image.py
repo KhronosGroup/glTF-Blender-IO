@@ -198,7 +198,6 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
         # Assume that user know what he does, and that channels/images are already combined correctly for pbr
         if export_settings['gltf_keep_original_textures']:
             composed_image = ExportImage.from_original(result.shader_node.image)
-            print("-->", result.shader_node.image.name)
 
         else:
             # rudimentarily try follow the node tree to find the correct image data.
