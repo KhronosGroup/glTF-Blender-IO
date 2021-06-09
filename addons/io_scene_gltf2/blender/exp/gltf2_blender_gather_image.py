@@ -196,6 +196,10 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
             continue
 
         # Assume that user know what he does, and that channels/images are already combined correctly for pbr
+        # If not, we are going to keep only the first texture found
+        # Example : If user set up 2 or 3 different textures for Metallic / Roughness / Occlusion
+        # Only 1 will be used at export
+        # This Warning is displayed in UI of this option
         if export_settings['gltf_keep_original_textures']:
             composed_image = ExportImage.from_original(result.shader_node.image)
 
