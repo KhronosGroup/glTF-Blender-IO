@@ -46,7 +46,7 @@ def gather_image(
         uri = __gather_uri(image_data, mime_type, name, export_settings)
     else:
         # Retrieve URI relative to exported glTF files
-            uri = __gather_original_uri(image_data.original.filepath, export_settings)
+        uri = __gather_original_uri(image_data.original.filepath, export_settings)
 
     buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -65,7 +65,7 @@ def gather_image(
     return image
 
 def __gather_original_uri(original_uri, export_settings):
-    
+
     def _path_to_uri(path):
         import urllib
         path = os.path.normpath(path)
