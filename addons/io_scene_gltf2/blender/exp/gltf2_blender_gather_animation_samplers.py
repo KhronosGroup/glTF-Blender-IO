@@ -332,10 +332,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     else:
         object_path = None
 
-    if driver_obj is not None:
-        is_armature_animation = False
-    else:
-        is_armature_animation = bake_bone is not None or (blender_object_if_armature is not None and object_path != "")
+    is_armature_animation = bake_bone is not None or (blender_object_if_armature is not None and object_path != "")
 
     if is_armature_animation:
         if bake_bone is None:
