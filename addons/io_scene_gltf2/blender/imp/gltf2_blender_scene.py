@@ -17,6 +17,7 @@ import bpy
 from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_animation import BlenderAnimation
 from .gltf2_blender_vnode import VNode, compute_vnodes
+from ..com.gltf2_blender_extras import set_extras
 
 
 class BlenderScene():
@@ -33,6 +34,10 @@ class BlenderScene():
             gltf.blender_active_collection = bpy.context.collection.name
         if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
             scene.render.engine = "BLENDER_EEVEE"
+
+        if gltf.data.scene is not None:
+            pyscene = gltf.data.scenes[gltf.data.scene]
+            set_extras(scene, pyscene.extras)
 
         compute_vnodes(gltf)
 
