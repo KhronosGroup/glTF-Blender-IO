@@ -133,7 +133,7 @@ class ExportImage:
 
         if not images:
             # No ImageFills; use a 1x1 white pixel
-            pixels = np.array([1.0, 1.0, 1.0, 1.0])
+            pixels = np.array([1.0, 1.0, 1.0, 1.0], np.float32)
             return self.__encode_from_numpy_array(pixels, (1, 1))
 
         width = max(image.size[0] for image in images)
