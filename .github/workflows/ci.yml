@@ -55,6 +55,7 @@ jobs:
         curl -SL "${{ steps.blender_version.outputs.blender-url }}" | \
           tar -Jx -C /opt/blender --strip-components=1
 
+
     - name: Set up workspace
       run: |
         sudo ln -s /opt/blender/blender /usr/local/bin/blender
