@@ -104,6 +104,9 @@ def __fix_json(obj):
     if isinstance(obj, dict):
         fixed = {}
         for key, value in obj.items():
+            if key == 'extras' and value is not None:
+                fixed[key] = value
+                continue
             if not __should_include_json_value(key, value):
                 continue
             fixed[key] = __fix_json(value)
