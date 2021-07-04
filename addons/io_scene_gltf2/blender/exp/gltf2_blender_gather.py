@@ -66,7 +66,6 @@ def __gather_scene(blender_scene, export_settings):
     for r in [vtree.nodes[r] for r in vtree.roots]:
         node = gltf2_blender_gather_nodes.gather_node(
             r,
-            r.blender_object,
             blender_scene, export_settings)
         if node is not None:
             scene.nodes.append(node)

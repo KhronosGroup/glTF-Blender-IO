@@ -32,7 +32,8 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 
-def gather_node(vnode, blender_object, blender_scene, export_settings):
+def gather_node(vnode, blender_scene, export_settings):
+    blender_object = vnode.blender_object
     children = __gather_children(vnode, blender_object, blender_scene, export_settings)
 
     camera = None
@@ -139,7 +140,7 @@ def __gather_children(vnode, blender_object, blender_scene, export_settings):
 
     # Standard Children / Collection
     for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
-        node = gather_node(c, c.blender_object, blender_scene, export_settings)
+        node = gather_node(c, blender_scene, export_settings)
         if node is not None:
             children.append(node)
 
@@ -175,7 +176,7 @@ def __gather_children(vnode, blender_object, blender_scene, export_settings):
             parent_joint = find_parent_joint(root_joints, vtree.nodes[child].blender_object.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(vtree.nodes[child], vtree.nodes[child].blender_object, blender_scene, export_settings)
+            child_node = gather_node(vtree.nodes[child], blender_scene, export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
