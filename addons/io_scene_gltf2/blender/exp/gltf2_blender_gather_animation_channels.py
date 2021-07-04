@@ -67,8 +67,8 @@ def gather_animation_channels(obj_uuid: int,
         if export_settings["gltf_def_bones"] is False:
             bones_to_be_animated = blender_object.data.bones
         else:
-            bones_to_be_animated, _, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(obj_uuid, export_settings)
-            bones_to_be_animated = [blender_object.pose.bones[b.name] for b in bones_to_be_animated]
+            bones_to_be_animated, _, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(export_settings['vtree'].nodes[obj_uuid], export_settings)
+            bones_to_be_animated = [blender_object.pose.bones[b.blender_bone.name] for b in bones_to_be_animated]
 
         for bone in bones_to_be_animated:
             for p in ["location", "rotation_quaternion", "scale"]:
