@@ -18,7 +18,7 @@ from .gltf2_blender_json import is_json_convertible
 
 
 # Custom properties, which are in most cases present and should not be imported/exported.
-BLACK_LIST = ['cycles', 'cycles_visibility', 'cycles_curves', '_RNA_UI']
+BLACK_LIST = ['cycles', 'cycles_visibility', 'cycles_curves', '_RNA_UI', 'glTF2ExportSettings']
 
 
 def generate_extras(blender_element):
