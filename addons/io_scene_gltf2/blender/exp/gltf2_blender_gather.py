@@ -59,7 +59,6 @@ def __gather_scene(blender_scene, export_settings):
 
     vtree.construct()
 
-    depsgraph = bpy.context.evaluated_depsgraph_get()
     for r in [vtree.nodes[r] for r in vtree.roots]:
         node = gltf2_blender_gather_nodes.gather_node(
             r,
