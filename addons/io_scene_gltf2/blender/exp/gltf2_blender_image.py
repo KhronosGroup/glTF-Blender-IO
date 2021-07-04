@@ -64,8 +64,11 @@ class ExportImage:
     intelligent decisions about how to encode the image.
     """
 
-    def __init__(self):
+    def __init__(self, original=None):
         self.fills = {}
+
+        # In case of keeping original texture images
+        self.original = original
 
     @staticmethod
     def from_blender_image(image: bpy.types.Image):
@@ -73,6 +76,10 @@ class ExportImage:
         for chan in range(image.channels):
             export_image.fill_image(image, dst_chan=chan, src_chan=chan)
         return export_image
+
+    @staticmethod
+    def from_original(image: bpy.types.Image):
+        return ExportImage(image)
 
     def fill_image(self, image: bpy.types.Image, dst_chan: Channel, src_chan: Channel):
         self.fills[dst_chan] = FillImage(image, src_chan)
@@ -84,7 +91,10 @@ class ExportImage:
         return chan in self.fills
 
     def empty(self) -> bool:
-        return not self.fills
+        if self.original is None:
+            return not self.fills
+        else:
+            return False
 
     def blender_image(self) -> Optional[bpy.types.Image]:
         """If there's an existing Blender image we can use,
@@ -133,7 +143,7 @@ class ExportImage:
 
         if not images:
             # No ImageFills; use a 1x1 white pixel
-            pixels = np.array([1.0, 1.0, 1.0, 1.0])
+            pixels = np.array([1.0, 1.0, 1.0, 1.0], np.float32)
             return self.__encode_from_numpy_array(pixels, (1, 1))
 
         width = max(image.size[0] for image in images)

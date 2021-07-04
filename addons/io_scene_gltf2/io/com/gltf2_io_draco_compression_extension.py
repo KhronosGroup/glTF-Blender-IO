@@ -60,5 +60,9 @@ def dll_exists(quiet=False) -> bool:
     exists = dll_path().exists()
     if quiet is False:
         print("'{}' ".format(dll_path().absolute()) + ("exists, draco mesh compression is available" if exists else
-                                                       "does not exist, draco mesh compression not available"))
+                                                       "{} {} {}".format(
+                                                           "does not exist, draco mesh compression not available,",
+                                                           "please add it or create environment variable BLENDER_EXTERN_DRACO_LIBRARY_PATH",
+                                                           "pointing to the folder"
+                                                      )))
     return exists

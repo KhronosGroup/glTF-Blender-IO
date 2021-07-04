@@ -337,7 +337,12 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
         object_path = get_target_object_path(target_datapath)
     else:
         object_path = None
-    is_armature_animation = bake_bone is not None or (blender_object_if_armature is not None and object_path != "")
+
+    # If driver_obj is set, this is a shapekey animation
+    if driver_obj is not None:
+        is_armature_animation = False
+    else:
+        is_armature_animation = bake_bone is not None or (blender_object_if_armature is not None and object_path != "")
 
     if is_armature_animation:
         if bake_bone is None:
