@@ -157,7 +157,7 @@ def __gather_children(vnode, blender_object, export_settings):
 
         # Object parented to bones
         direct_bone_children = []
-        for n in list_:
+        for n in list_: #TODOVTREE : n is not used???
             direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE])
 
 
