@@ -106,17 +106,6 @@ def gather_node(vnode, blender_object, blender_scene, export_settings):
 
 
 def __filter_node(blender_object, blender_scene, export_settings):
-    if blender_object.users == 0:
-        return False
-    if blender_scene is not None:
-        instanced =  any([blender_object.name in layer.objects for layer in blender_scene.view_layers])
-        if instanced is False:
-            # Check if object is from a linked collection
-            if any([blender_object.name in coll.objects for coll in bpy.data.collections if coll.library is not None]):
-                pass
-            else:
-                # Not instanced, not linked -> We don't keep this object
-                return False
     if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
         return False
 
