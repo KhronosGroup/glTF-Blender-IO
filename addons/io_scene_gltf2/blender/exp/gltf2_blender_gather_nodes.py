@@ -32,19 +32,18 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 
-def gather_node(vnode, blender_scene, export_settings):
+def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
-    children = __gather_children(vnode, blender_object, blender_scene, export_settings)
+    children = __gather_children(vnode, blender_object, export_settings)
 
     camera = None
     mesh = None
     skin = None
     weights = None
 
-    # If blender_scene is None, we are coming from animation export
     # Check to know if object is exported is already done, so we don't check
     # again if object is instanced in scene : this check was already done when exporting object itself
-    if not __filter_node(blender_object, blender_scene, export_settings):
+    if not __filter_node(blender_object, export_settings):
         if children:
             # This node should be filtered out, but has un-filtered children present.
             # So, export this node, excluding its camera, mesh, skin, and weights.
@@ -106,7 +105,7 @@ def gather_node(vnode, blender_scene, export_settings):
     return node
 
 
-def __filter_node(blender_object, blender_scene, export_settings):
+def __filter_node(blender_object, export_settings):
     if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
         return False
 
@@ -133,14 +132,14 @@ def __gather_camera(blender_object, export_settings):
     return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
 
 
-def __gather_children(vnode, blender_object, blender_scene, export_settings):
+def __gather_children(vnode, blender_object, export_settings):
     children = []
 
     vtree = export_settings['vtree']
 
     # Standard Children / Collection
     for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
-        node = gather_node(c, blender_scene, export_settings)
+        node = gather_node(c, export_settings)
         if node is not None:
             children.append(node)
 
@@ -176,7 +175,7 @@ def __gather_children(vnode, blender_object, blender_scene, export_settings):
             parent_joint = find_parent_joint(root_joints, vtree.nodes[child].blender_object.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(vtree.nodes[child], blender_scene, export_settings)
+            child_node = gather_node(vtree.nodes[child], export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
