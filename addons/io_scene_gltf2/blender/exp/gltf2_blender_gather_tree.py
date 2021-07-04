@@ -82,7 +82,8 @@ class VExportTree:
     def add_children(self, uuid_parent, uuid_child):
         self.nodes[uuid_parent].add_child(uuid_child)
 
-    def construct(self):
+    def construct(self, blender_scene):
+        bpy.context.window.scene = blender_scene
         depsgraph = bpy.context.evaluated_depsgraph_get()
         for blender_object in [obj.original for obj in depsgraph.objects if obj.proxy is None and obj.parent is None]: #TODOPROXY remove check ?
             self.recursive_node_traverse(blender_object, None, None)

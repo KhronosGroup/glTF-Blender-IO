@@ -34,12 +34,16 @@ def gather_gltf2(export_settings):
     scenes = []
     animations = []  # unfortunately animations in gltf2 are just as 'root' as scenes.
     active_scene = None
+    store_user_scene = bpy.context.scene
     for blender_scene in bpy.data.scenes:
         scenes.append(__gather_scene(blender_scene, export_settings))
         if export_settings[gltf2_blender_export_keys.ANIMATIONS]:
             animations += __gather_animations(blender_scene, export_settings)
         if bpy.context.scene.name == blender_scene.name:
             active_scene = len(scenes) -1
+
+    # restore user scene
+    bpy.context.window.scene = store_user_scene
     return active_scene, scenes, animations
 
 
@@ -57,7 +61,7 @@ def __gather_scene(blender_scene, export_settings):
     vtree = gltf2_blender_gather_tree.VExportTree()
     export_settings['vtree'] = vtree
 
-    vtree.construct()
+    vtree.construct(blender_scene)
 
     for r in [vtree.nodes[r] for r in vtree.roots]:
         node = gltf2_blender_gather_nodes.gather_node(
