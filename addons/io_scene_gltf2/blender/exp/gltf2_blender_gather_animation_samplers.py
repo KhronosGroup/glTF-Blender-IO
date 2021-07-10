@@ -39,6 +39,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              bake_range_end,
                              action_name: str,
                              driver_obj,
+                             bone_channel_is_animated: bool,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
 
@@ -61,11 +62,17 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
     else:
         matrix_parent_inverse = mathutils.Matrix.Identity(4).freeze()
 
+    input = __gather_input(channels, blender_object_if_armature, non_keyed_values,
+                         bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, bone_channel_is_animated, export_settings)
+
+    if input is None:
+        # After check, no need to animate this node for this channel
+        return None
+
     sampler = gltf2_io.AnimationSampler(
         extensions=__gather_extensions(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         extras=__gather_extras(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
-        input=__gather_input(channels, blender_object_if_armature, non_keyed_values,
-                             bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, export_settings),
+        input=input,
         interpolation=__gather_interpolation(channels, blender_object_if_armature, export_settings, bake_bone, bake_channel),
         output=__gather_output(channels,
                                matrix_parent_inverse,
@@ -77,6 +84,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                bake_range_end,
                                action_name,
                                driver_obj,
+                               bone_channel_is_animated,
                                export_settings)
     )
 
@@ -229,6 +237,7 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    bake_range_end,
                    action_name,
                    driver_obj,
+                   bone_channel_is_animated: bool,
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes."""
@@ -241,7 +250,11 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   bake_range_end,
                                                                                   action_name,
                                                                                   driver_obj,
+                                                                                  bone_channel_is_animated,
                                                                                   export_settings)
+    if keyframes is None:
+        # After check, no need to animation this node
+        return None
     times = [k.seconds for k in keyframes]
 
     return gltf2_blender_gather_accessors.gather_accessor(
@@ -306,6 +319,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     bake_range_end,
                     action_name,
                     driver_obj,
+                    bone_channel_is_animated: bool,
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
@@ -318,6 +332,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   bake_range_end,
                                                                                   action_name,
                                                                                   driver_obj,
+                                                                                  bone_channel_is_animated,
                                                                                   export_settings)
     if bake_bone is not None:
         target_datapath = "pose.bones['" + bake_bone + "']." + bake_channel
