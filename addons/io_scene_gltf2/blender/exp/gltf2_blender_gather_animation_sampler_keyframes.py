@@ -194,7 +194,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      bake_range_end,
                      action_name: str,
                      driver_obj,
-                     bone_channel_is_animated: bool,
+                     node_channel_is_animated: bool,
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
@@ -315,10 +315,11 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     # Check if all values are the same
     # In that case, if there is no real keyframe on this channel for this given bone,
     # We can ignore this keyframes
+    # if there are some fcurve, we can keep only 2 keyframes, first and last
     if blender_object_if_armature is not None:
         std = np.std(np.std([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0))
 
-        if bone_channel_is_animated is True: # fcurve on this bone for this property
+        if node_channel_is_animated is True: # fcurve on this bone for this property
              # Keep animation, but keep only 2 keyframes if data are not changing
              return [keyframes[0], keyframes[-1]] if std < 0.0001 and len(keyframes) >= 2 else keyframes
         else: # bone is not animated (no fcurve)

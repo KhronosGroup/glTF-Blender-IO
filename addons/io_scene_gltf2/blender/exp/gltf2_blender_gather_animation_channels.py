@@ -126,7 +126,17 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             if len(channel_group_sorted) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(channel_group_sorted, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None, False)
+            channel = __gather_animation_channel(
+                        channel_group_sorted,
+                        blender_object,
+                        export_settings,
+                        None,
+                        None,
+                        bake_range_start,
+                        bake_range_end,
+                        blender_action.name,
+                        None,
+                        False)
             if channel is not None:
                 channels.append(channel)
 
@@ -198,14 +208,14 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                bake_range_end,
                                action_name: str,
                                driver_obj,
-                               bone_channel_is_animated: bool
+                               node_channel_is_animated: bool
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
     if not __filter_animation_channel(channels, blender_object, export_settings):
         return None
 
     __target= __gather_target(channels, blender_object, export_settings, bake_bone, bake_channel, driver_obj)
     if __target.path is not None:
-        sampler = __gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, bone_channel_is_animated)
+        sampler = __gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, node_channel_is_animated)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
@@ -266,7 +276,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
                      bake_range_end,
                      action_name,
                      driver_obj,
-                     bone_channel_is_animated: bool
+                     node_channel_is_animated: bool
                      ) -> gltf2_io.AnimationSampler:
     return gltf2_blender_gather_animation_samplers.gather_animation_sampler(
         channels,
@@ -277,7 +287,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
         bake_range_end,
         action_name,
         driver_obj,
-        bone_channel_is_animated,
+        node_channel_is_animated,
         export_settings
     )
 
