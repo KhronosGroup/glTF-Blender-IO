@@ -317,7 +317,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     # We can ignore this keyframes
     # if there are some fcurve, we can keep only 2 keyframes, first and last
     if blender_object_if_armature is not None:
-        std = np.std(np.std([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0))
+        std = np.ptp(np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0))
 
         if node_channel_is_animated is True: # fcurve on this bone for this property
              # Keep animation, but keep only 2 keyframes if data are not changing
