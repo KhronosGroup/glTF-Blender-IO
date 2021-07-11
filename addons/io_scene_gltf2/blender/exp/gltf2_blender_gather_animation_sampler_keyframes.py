@@ -316,14 +316,14 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     # In that case, if there is no real keyframe on this channel for this given bone,
     # We can ignore this keyframes
     if blender_object_if_armature is not None:
-        # First check that this particular bone is not animated directly
-        if bone_channel_is_animated is True:
-             # Keep animation, even if no data are changing
-             return keyframes
-
         std = np.std(np.std([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0))
-        if std < 0.0001:
-            return None
+
+        if bone_channel_is_animated is True: # fcurve on this bone for this property
+             # Keep animation, but keep only 2 keyframes if data are not changing
+             return [keyframes[0], keyframes[-1]] if std < 0.0001 and len(keyframes) >= 2 else keyframes
+        else: # bone is not animated (no fcurve)
+            # Not keeping if not changing property
+            return None if std < 0.0001 else keyframes
 
     return keyframes
 
