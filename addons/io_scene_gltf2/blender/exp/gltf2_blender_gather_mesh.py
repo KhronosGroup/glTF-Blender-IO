@@ -30,8 +30,9 @@ def get_mesh_cache_key(blender_mesh,
                 modifiers,
                 skip_filter,
                 materials,
+                original_mesh,
                 export_settings):
-    # Use id of mesh
+    # Use id of original mesh
     # Do not use bpy.types that can be unhashable
     # Do not use mesh name, that can be not unique (when linked)
 
@@ -43,8 +44,9 @@ def get_mesh_cache_key(blender_mesh,
 
     # TODO check what is really needed for modifiers
 
+    mesh_to_id_cache = blender_mesh if original_mesh is None else original_mesh
     return (
-        (id(blender_mesh),),
+        (id(mesh_to_id_cache),),
         (modifiers,),
         (skip_filter,),             #TODO to check if still needed
         mats
@@ -57,6 +59,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
                 modifiers: Optional[bpy.types.ObjectModifiers],
                 skip_filter: bool,
                 materials: Tuple[bpy.types.Material],
+                original_mesh: bpy.types.Mesh,
                 export_settings
                 ) -> Optional[gltf2_io.Mesh]:
     if not skip_filter and not __filter_mesh(blender_mesh, vertex_groups, modifiers, export_settings):

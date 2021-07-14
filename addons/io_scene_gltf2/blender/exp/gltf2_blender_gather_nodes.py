@@ -314,6 +314,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                                                    modifiers,
                                                    skip_filter,
                                                    materials,
+                                                   None,
                                                    export_settings)
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
@@ -359,6 +360,7 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
                                                        modifiers,
                                                        skip_filter,
                                                        materials,
+                                                       blender_object.data,
                                                        export_settings)
 
     finally:
