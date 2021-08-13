@@ -122,12 +122,12 @@ class ExportGLTF2_Base:
         items=(('GLB', 'glTF Binary (.glb)',
                 'Exports a single file, with all data packed in binary form. '
                 'Most efficient and portable, but more difficult to edit later'),
-               ('GLTF_EMBEDDED', 'glTF Embedded (.gltf)',
-                'Exports a single file, with all data packed in JSON. '
-                'Less efficient than binary, but easier to edit later'),
                ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
                 'Exports multiple files, with separate JSON, binary and texture data. '
-                'Easiest to edit later')),
+                'Easiest to edit later'),
+                ('GLTF_EMBEDDED', 'glTF Embedded (.gltf)',
+                 'Exports a single file, with all data packed in JSON. '
+                 'Less efficient than binary, but easier to edit later')),
         description=(
             'Output format and embedding options. Binary is most efficient, '
             'but JSON (embedded or separate) may be easier to edit later'
