@@ -118,7 +118,8 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                 blender_action.name,
                 obj,
                 False)
-            channels.append(channel)
+            if channel is not None:
+                channels.append(channel)
 
     else:
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
