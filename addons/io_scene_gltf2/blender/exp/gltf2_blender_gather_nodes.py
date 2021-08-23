@@ -122,6 +122,12 @@ def __filter_node(blender_object, export_settings):
         if not found:
             return False
 
+    if blender_object.type == 'LIGHT':
+        return export_settings[gltf2_blender_export_keys.LIGHTS]
+
+    if blender_object.type == 'CAMERA':
+        return export_settings[gltf2_blender_export_keys.CAMERAS]
+
     return True
 
 

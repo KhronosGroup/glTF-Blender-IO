@@ -122,6 +122,10 @@ def __gather_animations(blender_scene, export_settings):
 
             to_delete_idx.append(anim_idx)
 
+            # Merging extensions
+            # Provide a hook to handle extension merging since there is no way to know author intent
+            export_user_extensions('merge_animation_extensions_hook', export_settings, animations[anim_idx], animations[base_animation_idx])
+
             # Merging extras
             # Warning, some values can be overwritten if present in multiple merged animations
             if animations[anim_idx].extras is not None:

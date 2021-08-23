@@ -22,6 +22,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
+import numpy as np
 
 
 class Keyframe:
@@ -194,6 +195,7 @@ def gather_keyframes(blender_obj_uuid_if_armature: typing.Optional[bpy.types.Obj
                      bake_range_end,
                      action_name: str,
                      driver_obj_uuid,
+                     node_channel_is_animated: bool,
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
@@ -313,6 +315,21 @@ def gather_keyframes(blender_obj_uuid_if_armature: typing.Optional[bpy.types.Obj
                 complete_key_tangents(key, non_keyed_values)
 
             keyframes.append(key)
+
+    # For armature only
+    # Check if all values are the same
+    # In that case, if there is no real keyframe on this channel for this given bone,
+    # We can ignore this keyframes
+    # if there are some fcurve, we can keep only 2 keyframes, first and last
+    if blender_object_if_armature is not None:
+        std = np.ptp(np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0))
+
+        if node_channel_is_animated is True: # fcurve on this bone for this property
+             # Keep animation, but keep only 2 keyframes if data are not changing
+             return [keyframes[0], keyframes[-1]] if std < 0.0001 and len(keyframes) >= 2 else keyframes
+        else: # bone is not animated (no fcurve)
+            # Not keeping if not changing property
+            return None if std < 0.0001 else keyframes
 
     return keyframes
 
