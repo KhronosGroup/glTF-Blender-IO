@@ -117,6 +117,9 @@ class VExportTree:
             modifiers = {m.type: m for m in blender_object.modifiers}
             if "ARMATURE" in modifiers and modifiers["ARMATURE"].object is not None:
                 node.armature = parent_uuid
+        # TODO: manage when direct parent is not the armature
+        # correct workflow is to parent skinned mesh to armature, but ...
+        # all users don't use correct workflow
 
 
         # For bones, store uuid of armature
