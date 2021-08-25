@@ -292,6 +292,9 @@ def __gather_mesh(blender_object, library, export_settings):
     if blender_object.type != "MESH":
         return None
 
+    # Be sure that object is valid (no NaN for example)
+    blender_object.data.validate()
+
     # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
     vertex_groups = blender_object.vertex_groups
     modifiers = blender_object.modifiers
