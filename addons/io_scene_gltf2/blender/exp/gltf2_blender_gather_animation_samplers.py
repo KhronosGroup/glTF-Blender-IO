@@ -370,7 +370,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                 correction_matrix_local = axis_basis_change @ bone.bone.matrix_local
             else:
                 correction_matrix_local = (
-                    bone.parent.bone.matrix_local.inverted() @
+                    bone.parent.bone.matrix_local.inverted_safe() @
                     bone.bone.matrix_local
                 )
 
