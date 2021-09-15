@@ -327,9 +327,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
             return None if std < 0.0001 else keyframes
     else:
         # For objects, if all values are the same, we keep only first and last
-        # TODO We need to differenciate morph anim / TRS anim
-        std = np.ptp(np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0))
-        return [keyframes[0], keyframes[-1]] if std < 0.0001 and len(keyframes) >= 2 else keyframes
+        cst = all([j < 0.0001 for j in np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])
+        return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
 
 
     return keyframes
