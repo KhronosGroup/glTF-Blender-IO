@@ -118,7 +118,8 @@ def gather_animation_channels(obj_uuid: int,
                 blender_action.name,
                 obj_driver_uuid,
                 False)
-            channels.append(channel)
+            if channel is not None:
+                channels.append(channel)
 
     else:
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):

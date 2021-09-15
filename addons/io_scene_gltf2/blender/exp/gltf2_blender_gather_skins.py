@@ -98,7 +98,7 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
                 blender_armature_object.matrix_world @
                 bone.bone.matrix_local
             )
-        ).inverted()
+        ).inverted_safe()
         matrices.append(inverse_bind_matrix)
 
         if export_settings['gltf_def_bones'] is False:

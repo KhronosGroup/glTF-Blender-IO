@@ -34,7 +34,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
-    children = __gather_children(vnode, blender_object, export_settings)
+    children, only_bone_children = __gather_children(vnode, blender_object, export_settings)
 
     camera = None
     mesh = None
@@ -48,6 +48,12 @@ def gather_node(vnode, export_settings):
             # This node should be filtered out, but has un-filtered children present.
             # So, export this node, excluding its camera, mesh, skin, and weights.
             # The transformations and animations on this node will have visible effects on children.
+
+            # Armature always have children node(s) (that are bone(s))
+            # We have to check if children are only bones or not for armatures
+            if blender_object.type == "ARMATURE" and only_bone_children is True:
+                return None
+
             pass
         else:
             # This node is filtered out, and has no un-filtered children or descendants.
@@ -140,6 +146,7 @@ def __gather_camera(blender_object, export_settings):
 
 def __gather_children(vnode, blender_object, export_settings):
     children = []
+    only_bone_children = True # True by default, will be set to False if needed
 
     vtree = export_settings['vtree']
 
@@ -147,6 +154,7 @@ def __gather_children(vnode, blender_object, export_settings):
     for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
         node = gather_node(c, export_settings)
         if node is not None:
+            only_bone_children = False
             children.append(node)
 
 
@@ -163,7 +171,8 @@ def __gather_children(vnode, blender_object, export_settings):
 
         # Object parented to bones
         direct_bone_children = []
-        for n in list_: #TODOVTREE : n is not used???
+        for n in list_:
+            only_bone_children = False
             direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE])
 
 
@@ -214,7 +223,7 @@ def __gather_children(vnode, blender_object, export_settings):
 
             parent_joint.children.append(child_node)
 
-    return children
+    return children, only_bone_children
 
 
 def __gather_extensions(blender_object, export_settings):
@@ -259,6 +268,9 @@ def __gather_mesh(vnode, blender_object, export_settings):
 
     if blender_object.type != "MESH":
         return None
+
+    # Be sure that object is valid (no NaN for example)
+    blender_object.data.validate()
 
     # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
     vertex_groups = blender_object.vertex_groups

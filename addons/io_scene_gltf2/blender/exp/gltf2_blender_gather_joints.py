@@ -45,7 +45,7 @@ def gather_joint_vnode(vnode, export_settings):
         correction_matrix_local = axis_basis_change @ blender_bone.bone.matrix_local
     else:
         correction_matrix_local = (
-            blender_bone.parent.bone.matrix_local.inverted() @
+            blender_bone.parent.bone.matrix_local.inverted_safe() @
             blender_bone.bone.matrix_local
         )
 

@@ -126,11 +126,11 @@ def __gather_animation( obj_uuid: int,
         print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
         return None
 
-    # To allow reuse of samplers in one animation,
-    __link_samplers(animation, export_settings)
-
     if not animation.channels:
         return None
+
+    # To allow reuse of samplers in one animation,
+    __link_samplers(animation, export_settings)
 
     export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object)
 
