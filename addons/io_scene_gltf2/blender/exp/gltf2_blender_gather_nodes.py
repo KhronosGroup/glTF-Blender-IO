@@ -49,7 +49,7 @@ def gather_node(blender_object, library, blender_scene, dupli_object_parent, exp
 
 @cached
 def __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
-    children = __gather_children(blender_object, blender_scene, export_settings)
+    children, only_bone_children = __gather_children(blender_object, blender_scene, export_settings)
 
     camera = None
     mesh = None
@@ -64,6 +64,12 @@ def __gather_node(blender_object, library, blender_scene, dupli_object_parent, e
             # This node should be filtered out, but has un-filtered children present.
             # So, export this node, excluding its camera, mesh, skin, and weights.
             # The transformations and animations on this node will have visible effects on children.
+
+            # Armature always have children node(s) (that are bone(s))
+            # We have to check if children are only bones or not for armatures
+            if blender_object.type == "ARMATURE" and only_bone_children is True:
+                return None
+
             pass
         else:
             # This node is filtered out, and has no un-filtered children or descendants.
@@ -158,6 +164,7 @@ def __gather_camera(blender_object, export_settings):
 
 def __gather_children(blender_object, blender_scene, export_settings):
     children = []
+    only_bone_children = True # True by default, will be set to False if needed
     # standard children
     for _child_object in blender_object.children:
         if _child_object.parent_bone:
@@ -173,6 +180,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             blender_scene, None, export_settings)
         if node is not None:
             children.append(node)
+            only_bone_children = False
     # blender dupli objects
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
         for dupli_object in blender_object.instance_collection.objects:
@@ -185,6 +193,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 blender_scene, blender_object.name, export_settings)
             if node is not None:
                 children.append(node)
+                only_bone_children = False
 
     # blender bones
     if blender_object.type == "ARMATURE":
@@ -201,6 +210,8 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 root_joints.append(joint)
         # handle objects directly parented to bones
         direct_bone_children = [child for child in blender_object.children if child.parent_bone]
+        if len(direct_bone_children) != 0:
+            only_bone_children = False
         def find_parent_joint(joints, name):
             for joint in joints:
                 if joint.name == name:
@@ -246,7 +257,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
 
             parent_joint.children.append(child_node)
 
-    return children
+    return children, only_bone_children
 
 
 def __gather_extensions(blender_object, export_settings):
