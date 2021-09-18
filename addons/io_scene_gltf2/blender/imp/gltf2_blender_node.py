@@ -19,6 +19,7 @@ from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
 from .gltf2_blender_light import BlenderLight
 from .gltf2_blender_vnode import VNode
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 class BlenderNode():
     """Blender Node."""
@@ -35,7 +36,9 @@ class BlenderNode():
             gltf.log.critical("Node %d of %d (id %s)", gltf.display_current_node, len(gltf.vnodes), vnode_id)
 
         if vnode.type == VNode.Object:
-            BlenderNode.create_object(gltf, vnode_id)
+            import_user_extensions('gather_import_node_before_hook', gltf, vnode, gltf.data.nodes[vnode_id])
+            obj = BlenderNode.create_object(gltf, vnode_id)
+            import_user_extensions('gather_import_node_after_hook', gltf, vnode, gltf.data.nodes[vnode_id], obj)
             if vnode.is_arma:
                 BlenderNode.create_bones(gltf, vnode_id)
 
