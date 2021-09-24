@@ -140,10 +140,10 @@ class VExportTree:
 
 
         # World Matrix
-        # TODO
-        # TODO question: when animated, we get current frame world matrix...
-        # How to manage that?
-        # Is there some not animated world matrix? Based on matrix_parent_inverse?
+        # Store World Matrix for objects
+        if node.blender_type != VExportNode.BONE:
+            node.matrix_world = blender_object.matrix_world
+        # TODO matrix for bones
 
         # Storing this node
         self.add_node(node)
