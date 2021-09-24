@@ -91,6 +91,7 @@ class VExportTree:
     def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, armature_uuid=None):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
+        node.parent_uuid = parent_uuid
         node.set_blender_data(blender_object, blender_bone)
 
         # add to parent if needed
