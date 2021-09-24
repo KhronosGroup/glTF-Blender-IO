@@ -317,7 +317,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
     # We can ignore this keyframes
     # if there are some fcurve, we can keep only 2 keyframes, first and last
     if blender_object_if_armature is not None:
-        cst = all([j < 0.0001 for j in np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])
+        cst = fcurve_is_constant(keyframes)
 
         if node_channel_is_animated is True: # fcurve on this bone for this property
              # Keep animation, but keep only 2 keyframes if data are not changing
@@ -325,9 +325,17 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         else: # bone is not animated (no fcurve)
             # Not keeping if not changing property
             return None if cst is True else keyframes
+    else:
+        # For objects, if all values are the same, we keep only first and last
+        cst = fcurve_is_constant(keyframes)
+        return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
+
 
     return keyframes
 
+
+def fcurve_is_constant(keyframes):
+    return all([j < 0.0001 for j in np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])
 
 def complete_key(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[float]]):
     """
