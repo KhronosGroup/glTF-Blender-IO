@@ -24,6 +24,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
@@ -84,18 +85,6 @@ def gather_node(vnode, export_settings):
     if node.skin is None:
         node.translation, node.rotation, node.scale = __gather_trans_rot_scale_vtree(vnode, export_settings)
 
-    if export_settings[gltf2_blender_export_keys.YUP]:
-        # Checking node.extensions is making sure that the type of lamp is managed, and will be exported
-        if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS] and node.extensions:
-            correction_node = __get_correction_node(blender_object, export_settings)
-            correction_node.extensions = {"KHR_lights_punctual": node.extensions["KHR_lights_punctual"]}
-            del node.extensions["KHR_lights_punctual"]
-            node.children.append(correction_node)
-        if blender_object.type == 'CAMERA' and export_settings[gltf2_blender_export_keys.CAMERAS]:
-            correction_node = __get_correction_node(blender_object, export_settings)
-            correction_node.camera = node.camera
-            node.children.append(correction_node)
-        node.camera = None
 
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
@@ -400,7 +389,6 @@ def __gather_trans_rot_scale_vtree(vnode, export_settings):
         trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted() @ vnode.matrix_world).decompose()
 
 
-    #TODOVTREE manage local transform for Camera & lights
 
     # make sure the rotation is normalized
     rot.normalize()

@@ -40,6 +40,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                              action_name: str,
                              driver_obj_uuid,
                              node_channel_is_animated: bool,
+                             need_rotation_correction,
                              export_settings
                              ) -> gltf2_io.AnimationSampler:
 
@@ -87,6 +88,7 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                action_name,
                                driver_obj_uuid,
                                node_channel_is_animated,
+                               need_rotation_correction,
                                export_settings)
     )
 
@@ -323,6 +325,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     action_name,
                     driver_obj,
                     node_channel_is_animated: bool,
+                    need_rotation_correction: bool,
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
@@ -389,14 +392,14 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     values = []
     for keyframe in keyframes:
         # Transform the data and build gltf control points
-        value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform)
+        value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform, need_rotation_correction)
         if is_yup and not is_armature_animation:
             value = gltf2_blender_math.swizzle_yup(value, target_datapath)
         keyframe_value = gltf2_blender_math.mathutils_to_gltf(value)
 
         if keyframe.in_tangent is not None:
             # we can directly transform the tangent as it currently is represented by a control point
-            in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform)
+            in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform, need_rotation_correction)
             if is_yup and blender_object_if_armature is None:
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
             # the tangent in glTF is relative to the keyframe value
@@ -408,7 +411,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
 
         if keyframe.out_tangent is not None:
             # we can directly transform the tangent as it currently is represented by a control point
-            out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform)
+            out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform, need_rotation_correction)
             if is_yup and blender_object_if_armature is None:
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
             # the tangent in glTF is relative to the keyframe value

@@ -15,6 +15,9 @@
 import bpy
 import uuid
 
+from . import gltf2_blender_export_keys
+from mathutils import Quaternion
+
 class VExportNode:
 
     OBJECT = 1
@@ -72,9 +75,10 @@ class VExportNode:
                 tree.nodes[c].recursive_display(tree, mode)
 
 class VExportTree:
-    def __init__(self):
+    def __init__(self, export_settings):
         self.nodes = {}
         self.roots = []
+        self.export_settings = export_settings
 
     def add_node(self, node):
         self.nodes[node.uuid] = node
@@ -142,9 +146,16 @@ class VExportTree:
 
         # World Matrix
         # Store World Matrix for objects
-        if node.blender_type != VExportNode.BONE:
-            node.matrix_world = blender_object.matrix_world
-        # TODO matrix for bones
+        if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE]:
+            node.matrix_world = blender_object.matrix_world.copy()
+        elif node.blender_type == VExportNode.CAMERA:
+            node.matrix_world = blender_object.matrix_world.copy()
+            if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
+                correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+                node.matrix_world @= correction.to_matrix().to_4x4()
+        else:
+            pass
+        # TODO matrix for bones, LAMP
 
         # Storing this node
         self.add_node(node)

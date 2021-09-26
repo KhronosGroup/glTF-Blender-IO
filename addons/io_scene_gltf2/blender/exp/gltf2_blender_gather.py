@@ -58,7 +58,7 @@ def __gather_scene(blender_scene, export_settings):
 
     export_settings['inst_obj'] = {} #TODO to be moved into VExportTree
 
-    vtree = gltf2_blender_gather_tree.VExportTree()
+    vtree = gltf2_blender_gather_tree.VExportTree(export_settings)
     export_settings['vtree'] = vtree
 
     vtree.construct(blender_scene)

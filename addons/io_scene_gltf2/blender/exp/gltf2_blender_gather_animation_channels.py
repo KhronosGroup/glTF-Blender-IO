@@ -26,6 +26,8 @@ from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
+from . import gltf2_blender_export_keys
 
 
 @cached
@@ -293,6 +295,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
         action_name,
         driver_obj_uuid,
         node_channel_is_animated,
+        export_settings[gltf2_blender_export_keys.CAMERAS] and export_settings['vtree'].nodes[obj_uuid].blender_type in [VExportNode.CAMERA],
         export_settings
     )
 
