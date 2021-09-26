@@ -285,6 +285,10 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
                      driver_obj_uuid,
                      node_channel_is_animated: bool
                      ) -> gltf2_io.AnimationSampler:
+
+    need_rotation_correction = (export_settings[gltf2_blender_export_keys.CAMERAS] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.CAMERA) or \
+        (export_settings[gltf2_blender_export_keys.LIGHTS] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.LIGHT)
+
     return gltf2_blender_gather_animation_samplers.gather_animation_sampler(
         channels,
         obj_uuid,
@@ -295,7 +299,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
         action_name,
         driver_obj_uuid,
         node_channel_is_animated,
-        export_settings[gltf2_blender_export_keys.CAMERAS] and export_settings['vtree'].nodes[obj_uuid].blender_type in [VExportNode.CAMERA],
+        need_rotation_correction,
         export_settings
     )
 

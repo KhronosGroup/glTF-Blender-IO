@@ -146,16 +146,17 @@ class VExportTree:
 
         # World Matrix
         # Store World Matrix for objects
-        if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE]:
-            node.matrix_world = blender_object.matrix_world.copy()
-        elif node.blender_type == VExportNode.CAMERA:
+        if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
             node.matrix_world = blender_object.matrix_world.copy()
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 node.matrix_world @= correction.to_matrix().to_4x4()
+            elif node.blender_type == VExportNode.LIGHT and self.export_settings[gltf2_blender_export_keys.LIGHTS]:
+                correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+                node.matrix_world @= correction.to_matrix().to_4x4()
         else:
             pass
-        # TODO matrix for bones, LAMP
+        # TODO matrix for bones
 
         # Storing this node
         self.add_node(node)
