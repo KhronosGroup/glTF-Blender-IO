@@ -93,10 +93,6 @@ def gather_node(vnode, export_settings):
     if node.skin is not None:
         vnode.skin = skin
 
-    if id(blender_object) not in export_settings['inst_obj'].keys():
-        export_settings['inst_obj'][id(blender_object)] = []
-    export_settings['inst_obj'][id(blender_object)].append(node)
-
     return node
 
 
