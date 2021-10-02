@@ -208,3 +208,47 @@ class VExportTree:
             for n in self.roots:
                 print("Root", self.nodes[n].blender_object.name, "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
                 self.nodes[n].recursive_display(self, mode)
+
+    def filter(self):
+        roots = self.roots.copy()
+        for r in roots:
+            self.recursive_filter(r, None) # Root, so no parent
+
+    def recursive_filter(self, uuid, parent_kept_uuid):
+
+        children = self.nodes[uuid].children.copy()
+
+        # TODO manage depend on node type
+        new_parent_kept_uuid = None
+        if self.node_filter_is_kept(uuid) is False:
+            new_parent_kept_uuid = parent_kept_uuid
+            # Need to modify tree
+            if self.nodes[uuid].parent_uuid is not None:
+                self.nodes[self.nodes[uuid].parent_uuid].children.remove(uuid)
+            else:
+                # Remove from root
+                self.roots.remove(uuid)
+        else:
+            new_parent_kept_uuid = uuid
+
+            # If parent_uuid is not parent_kept_uuid, we need to modify children list of parent_kept_uuid
+            if parent_kept_uuid != self.nodes[uuid].parent_uuid and parent_kept_uuid is not None:
+                self.nodes[parent_kept_uuid].children.append(uuid)
+
+            # If parent_kept_uuid is None, and parent_uuid was not, add to root list
+            if self.nodes[uuid].parent_uuid is not None and parent_kept_uuid is None:
+                self.roots.append(uuid)
+
+            # Modify parent uuid
+            self.nodes[uuid].parent_uuid = parent_kept_uuid
+
+        # TODO check type
+        for child in children:
+            self.recursive_filter(child, new_parent_kept_uuid)
+
+    def node_filter_is_kept(self, uuid):
+        # TODO properly, checking all cases, checking node type
+        if self.export_settings[gltf2_blender_export_keys.SELECTED] and self.nodes[uuid].blender_object.select_get() is False:
+            return False
+
+        return True
