@@ -25,6 +25,7 @@ class VExportNode:
     BONE = 3
     LIGHT = 4
     CAMERA = 5
+    COLLECTION = 6
 
     # Parent type, to be set on child regarding its parent
     NO_PARENT = 54
@@ -89,7 +90,7 @@ class VExportTree:
     def construct(self, blender_scene):
         bpy.context.window.scene = blender_scene
         depsgraph = bpy.context.evaluated_depsgraph_get()
-        for blender_object in [obj.original for obj in depsgraph.objects if obj.proxy is None and obj.parent is None]: #TODOPROXY remove check ?
+        for blender_object in [obj for obj in depsgraph.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None)
 
     def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, armature_uuid=None):
@@ -114,6 +115,8 @@ class VExportTree:
             node.blender_type = VExportNode.CAMERA
         elif blender_object.type == "LIGHT":
             node.blender_type = VExportNode.LIGHT
+        elif blender_object.instance_type == "COLLECTION":
+            node.blender_type = VExportNode.COLLECTION
         else:
             node.blender_type = VExportNode.OBJECT
 
@@ -146,7 +149,7 @@ class VExportTree:
 
         # World Matrix
         # Store World Matrix for objects
-        if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
+        if node.blender_type in [VExportNode.OBJECT, VExportNode.COLLECTION, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
             node.matrix_world = blender_object.matrix_world.copy()
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
@@ -209,18 +212,41 @@ class VExportTree:
                 print("Root", self.nodes[n].blender_object.name, "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
                 self.nodes[n].recursive_display(self, mode)
 
-    def filter(self):
+
+    def filter_tag(self):
+        roots = self.roots.copy()
+        for r in roots:
+            self.recursive_filter_tag(r, False)
+
+    def filter_perform(self):
         roots = self.roots.copy()
         for r in roots:
             self.recursive_filter(r, None) # Root, so no parent
 
-    def recursive_filter(self, uuid, parent_kept_uuid):
+    def filter(self):
+        self.filter_tag()
+        self.filter_perform()
 
+
+    def recursive_filter_tag(self, uuid, parent_keep_tag):
+        if parent_keep_tag is True:
+            # TODO this can be break (for example lamp, camera, bones???)
+            self.nodes[uuid].keep_tag = True
+        else:
+            self.nodes[uuid].keep_tag = self.node_filter_is_kept(uuid)
+
+        for child in self.nodes[uuid].children:
+            if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
+                self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
+            else:
+                self.recursive_filter_tag(child, parent_keep_tag)
+
+    def recursive_filter(self, uuid, parent_kept_uuid):
         children = self.nodes[uuid].children.copy()
 
         # TODO manage depend on node type
         new_parent_kept_uuid = None
-        if self.node_filter_is_kept(uuid) is False:
+        if self.nodes[uuid].keep_tag is False:
             new_parent_kept_uuid = parent_kept_uuid
             # Need to modify tree
             if self.nodes[uuid].parent_uuid is not None:

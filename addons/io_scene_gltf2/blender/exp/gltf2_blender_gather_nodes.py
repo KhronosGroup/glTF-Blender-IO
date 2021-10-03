@@ -37,48 +37,19 @@ def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
     children, only_bone_children = __gather_children(vnode, blender_object, export_settings)
 
-    camera = None
-    mesh = None
-    skin = None
-    weights = None
-
-    # Check to know if object is exported is already done, so we don't check
-    # again if object is instanced in scene : this check was already done when exporting object itself
-    if not __filter_node(blender_object, export_settings):
-        if children:
-            # This node should be filtered out, but has un-filtered children present.
-            # So, export this node, excluding its camera, mesh, skin, and weights.
-            # The transformations and animations on this node will have visible effects on children.
-
-            # Armature always have children node(s) (that are bone(s))
-            # We have to check if children are only bones or not for armatures
-            if blender_object.type == "ARMATURE" and only_bone_children is True:
-                return None
-
-            pass
-        else:
-            # This node is filtered out, and has no un-filtered children or descendants.
-            return None
-    else:
-        # This node is being fully exported.
-        camera = __gather_camera(blender_object, export_settings)
-        mesh = __gather_mesh(vnode, blender_object, export_settings)
-        skin = __gather_skin(vnode, blender_object, export_settings)
-        weights = __gather_weights(blender_object, export_settings)
-
     node = gltf2_io.Node(
-        camera=camera,
+        camera=__gather_camera(blender_object, export_settings),
         children=children,
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
-        mesh=mesh,
+        mesh=__gather_mesh(vnode, blender_object, export_settings),
         name=__gather_name(blender_object, export_settings),
         rotation=None,
         scale=None,
-        skin=skin,
+        skin=__gather_skin(vnode, blender_object, export_settings),
         translation=None,
-        weights=weights
+        weights=__gather_weights(blender_object, export_settings)
     )
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
@@ -96,30 +67,32 @@ def gather_node(vnode, export_settings):
     return node
 
 
-def __filter_node(blender_object, export_settings):
-    if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
-        return False
-
-    if export_settings[gltf2_blender_export_keys.VISIBLE] and blender_object.visible_get() is False:
-        return False
-
-    # render_get() doesn't exist, so unfortunately this won't take into account the Collection settings
-    if export_settings[gltf2_blender_export_keys.RENDERABLE] and blender_object.hide_render is True:
-        return False
-
-    if export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION]:
-        found = any(x == blender_object for x in bpy.context.collection.all_objects)
-
-        if not found:
-            return False
-
-    if blender_object.type == 'LIGHT':
-        return export_settings[gltf2_blender_export_keys.LIGHTS]
-
-    if blender_object.type == 'CAMERA':
-        return export_settings[gltf2_blender_export_keys.CAMERAS]
-
-    return True
+# TODOVTREE to be reimplemented in tree filter
+# TODOVTREE Bone selection check to be done in tree filtering
+# def __filter_node(blender_object, export_settings):
+#     if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
+#         return False
+#
+#     if export_settings[gltf2_blender_export_keys.VISIBLE] and blender_object.visible_get() is False:
+#         return False
+#
+#     # render_get() doesn't exist, so unfortunately this won't take into account the Collection settings
+#     if export_settings[gltf2_blender_export_keys.RENDERABLE] and blender_object.hide_render is True:
+#         return False
+#
+#     if export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION]:
+#         found = any(x == blender_object for x in bpy.context.collection.all_objects)
+#
+#         if not found:
+#             return False
+#
+#     if blender_object.type == 'LIGHT':
+#         return export_settings[gltf2_blender_export_keys.LIGHTS]
+#
+#     if blender_object.type == 'CAMERA':
+#         return export_settings[gltf2_blender_export_keys.CAMERAS]
+#
+#     return True
 
 
 def __gather_camera(blender_object, export_settings):
@@ -144,7 +117,7 @@ def __gather_children(vnode, blender_object, export_settings):
 
 
     # Armature --> Retrieve Blender bones
-    if blender_object.type == "ARMATURE":
+    if vnode.blender_type == gltf2_blender_gather_tree.VExportNode.ARMATURE:
         root_joints = []
 
         list_, _, bone_root_vnodes = gltf2_blender_gather_skins.get_bone_tree_vnode(vnode, export_settings)
