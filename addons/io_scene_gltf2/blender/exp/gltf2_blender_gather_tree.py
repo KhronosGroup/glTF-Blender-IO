@@ -16,7 +16,7 @@ import bpy
 import uuid
 
 from . import gltf2_blender_export_keys
-from mathutils import Quaternion
+from mathutils import Quaternion, Matrix
 
 class VExportNode:
 
@@ -40,7 +40,6 @@ class VExportNode:
         self.children = []
         self.blender_type = None
         self.world_matrix = None
-        self.blender_id = None
         self.parent_type = None
 
         self.blender_object = None
@@ -79,6 +78,7 @@ class VExportTree:
     def __init__(self, export_settings):
         self.nodes = {}
         self.roots = []
+
         self.export_settings = export_settings
 
     def add_node(self, node):
@@ -90,10 +90,18 @@ class VExportTree:
     def construct(self, blender_scene):
         bpy.context.window.scene = blender_scene
         depsgraph = bpy.context.evaluated_depsgraph_get()
+<<<<<<< HEAD
         for blender_object in [obj for obj in depsgraph.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None)
+=======
+>>>>>>> export_vtree
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, armature_uuid=None):
+        # First retrieve local objects only
+        # Because this is only local objects or collection instances, we can use name as key
+        for blender_object in [obj.original for obj in depsgraph.objects if obj.parent is None]:
+            self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4))
+
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, armature_uuid=None):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
@@ -142,15 +150,19 @@ class VExportTree:
         # TODO
         # TODO manage parented to bone / parented to bone relative
 
-        # Set blender id
-        node.blender_id = id(blender_object)
-
 
 
         # World Matrix
         # Store World Matrix for objects
+<<<<<<< HEAD
         if node.blender_type in [VExportNode.OBJECT, VExportNode.COLLECTION, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
             node.matrix_world = blender_object.matrix_world.copy()
+=======
+        if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
+            # Matrix World of object is expressed based on collection instance objects are
+            # So real world matrix is collection world_matrix @ "world_matrix" of object
+            node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
+>>>>>>> export_vtree
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 node.matrix_world @= correction.to_matrix().to_4x4()
@@ -175,8 +187,7 @@ class VExportTree:
                     continue
                 else:
                     # Classic parenting
-                    self.recursive_node_traverse(child_object, None, node.uuid)
-
+                    self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world)
 
         # Collections
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
@@ -185,23 +196,22 @@ class VExportTree:
                     continue
                 if dupli_object.type == "ARMATURE":
                     continue # There is probably a proxy #TODOPROXY remove check ?
-
-                self.recursive_node_traverse(dupli_object, None, node.uuid)
+                self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world)
 
         # Armature : children are bones with no parent
         if blender_object.type == "ARMATURE" and blender_bone is None:
             for b in [b for b in blender_object.pose.bones if b.parent is None]:
-                self.recursive_node_traverse(blender_object, b, node.uuid, node.uuid)
+                self.recursive_node_traverse(blender_object, b, node.uuid, node.uuid, parent_coll_matrix_world)
 
         # Bones
         if blender_object.type == "ARMATURE" and blender_bone is not None:
             for b in blender_bone.children:
-                self.recursive_node_traverse(blender_object, b, node.uuid, armature_uuid)
+                self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, armature_uuid)
 
         # Object parented to bone
         if blender_bone is not None:
             for child_object in [c for c in blender_object.children if c.parent_bone is not None and c.parent_bone == blender_bone.name]:
-                self.recursive_node_traverse(child_object, None, node.uuid)
+                self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world)
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
