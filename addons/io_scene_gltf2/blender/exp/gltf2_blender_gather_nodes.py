@@ -37,6 +37,7 @@ def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
     children, only_bone_children = __gather_children(vnode, blender_object, export_settings)
 
+    skin = __gather_skin(vnode, blender_object, export_settings)
     node = gltf2_io.Node(
         camera=__gather_camera(blender_object, export_settings),
         children=children,
@@ -47,7 +48,7 @@ def gather_node(vnode, export_settings):
         name=__gather_name(blender_object, export_settings),
         rotation=None,
         scale=None,
-        skin=__gather_skin(vnode, blender_object, export_settings),
+        skin=skin,
         translation=None,
         weights=__gather_weights(blender_object, export_settings)
     )
