@@ -151,6 +151,8 @@ class VExportTree:
         # World Matrix
         # Store World Matrix for objects
         if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
+            # Matrix World of object is expressed based on collection instance objects are
+            # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
