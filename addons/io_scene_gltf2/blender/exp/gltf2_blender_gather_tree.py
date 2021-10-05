@@ -39,7 +39,6 @@ class VExportNode:
         self.children = []
         self.blender_type = None
         self.world_matrix = None
-        self.blender_id = None
         self.parent_type = None
 
         self.blender_object = None
@@ -162,9 +161,6 @@ class VExportTree:
         # Now we know parent and child type, we can set parent_type
         # TODO
         # TODO manage parented to bone / parented to bone relative
-
-        # Set blender id
-        node.blender_id = id(blender_object)
 
 
 
