@@ -189,7 +189,7 @@ class VExportTree:
         # Armature : children are bones with no parent
         if blender_object.type == "ARMATURE" and blender_bone is None:
             for b in [b for b in blender_object.pose.bones if b.parent is None]:
-                self.recursive_node_traverse(blender_object, b, node.uuid, node.uuid, parent_coll_matrix_world)
+                self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, node.uuid)
 
         # Bones
         if blender_object.type == "ARMATURE" and blender_bone is not None:
