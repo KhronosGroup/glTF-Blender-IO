@@ -78,6 +78,9 @@ class VExportTree:
     def __init__(self, export_settings):
         self.nodes = {}
         self.roots = []
+
+        self.local_collections = {} # Because this is only local "objects", we can use name as key
+
         self.export_settings = export_settings
 
     def add_node(self, node):
@@ -89,10 +92,31 @@ class VExportTree:
     def construct(self, blender_scene):
         bpy.context.window.scene = blender_scene
         depsgraph = bpy.context.evaluated_depsgraph_get()
-        for blender_object in [obj.original for obj in depsgraph.objects if obj.proxy is None and obj.parent is None]: #TODOPROXY remove check ?
-            self.recursive_node_traverse(blender_object, None, None)
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, armature_uuid=None):
+        # First retrieve local objects only
+        # Because this is only local objects or collection instances, we can use name as key
+        for inst in depsgraph.object_instances:
+            if inst.is_instance is True:
+                continue
+            if inst.object.parent is not None:
+                continue
+            self.recursive_node_traverse(inst.object.original, None, None, inst.object.matrix_world)
+
+        # Now we can attached all instances to corresponding collections
+        for inst in depsgraph.object_instances:
+            if inst.is_instance is False:
+                continue
+            if inst.object.original.instance_type == 'COLLECTION' and inst.object.original.instance_collection:
+                continue
+            node = VExportNode()
+            node.uuid = str(uuid.uuid4())
+            node.parent_uuid = self.local_collections[inst.parent.name]
+            node.set_blender_data(inst.object.original, None)
+            node.matrix_world = inst.matrix_world.copy()
+            self.add_children(self.local_collections[inst.parent.name], node.uuid)
+            self.add_node(node)
+
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, obj_matrix_world, armature_uuid=None):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
@@ -147,7 +171,7 @@ class VExportTree:
         # World Matrix
         # Store World Matrix for objects
         if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
-            node.matrix_world = blender_object.matrix_world.copy()
+            node.matrix_world = obj_matrix_world.copy()
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 node.matrix_world @= correction.to_matrix().to_4x4()
@@ -172,18 +196,11 @@ class VExportTree:
                     continue
                 else:
                     # Classic parenting
-                    self.recursive_node_traverse(child_object, None, node.uuid)
+                    self.recursive_node_traverse(child_object, None, node.uuid, child_object.matrix_world)
 
-
-        # Collections
-        if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            for dupli_object in blender_object.instance_collection.objects:
-                if dupli_object.parent is not None:
-                    continue
-                if dupli_object.type == "ARMATURE":
-                    continue # There is probably a proxy #TODOPROXY remove check ?
-
-                self.recursive_node_traverse(dupli_object, None, node.uuid)
+        # Store data for use later with instances
+        # Because this is only local object, we can use name as key
+        self.local_collections[blender_object.name] = node.uuid
 
         # Armature : children are bones with no parent
         if blender_object.type == "ARMATURE" and blender_bone is None:
