@@ -92,12 +92,8 @@ class VExportTree:
 
         # First retrieve local objects only
         # Because this is only local objects or collection instances, we can use name as key
-        for inst in depsgraph.object_instances:
-            if inst.is_instance is True:
-                continue
-            if inst.object.parent is not None:
-                continue
-            self.recursive_node_traverse(inst.object.original, None, None, Matrix.Identity(4))
+        for blender_object in [obj.original for obj in depsgraph.objects if obj.parent is None]:
+            self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4))
 
     def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, armature_uuid=None):
         node = VExportNode()
