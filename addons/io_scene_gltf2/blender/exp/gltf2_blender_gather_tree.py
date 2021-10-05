@@ -90,14 +90,7 @@ class VExportTree:
     def construct(self, blender_scene):
         bpy.context.window.scene = blender_scene
         depsgraph = bpy.context.evaluated_depsgraph_get()
-<<<<<<< HEAD
-        for blender_object in [obj for obj in depsgraph.objects if obj.parent is None]:
-            self.recursive_node_traverse(blender_object, None, None)
-=======
->>>>>>> export_vtree
 
-        # First retrieve local objects only
-        # Because this is only local objects or collection instances, we can use name as key
         for blender_object in [obj.original for obj in depsgraph.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4))
 
@@ -154,15 +147,10 @@ class VExportTree:
 
         # World Matrix
         # Store World Matrix for objects
-<<<<<<< HEAD
         if node.blender_type in [VExportNode.OBJECT, VExportNode.COLLECTION, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
-            node.matrix_world = blender_object.matrix_world.copy()
-=======
-        if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
             # Matrix World of object is expressed based on collection instance objects are
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
->>>>>>> export_vtree
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 node.matrix_world @= correction.to_matrix().to_4x4()
