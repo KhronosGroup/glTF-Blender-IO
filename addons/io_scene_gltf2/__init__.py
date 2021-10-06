@@ -973,7 +973,6 @@ class GLTF_PT_import_user_extensions(bpy.types.Panel):
     def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
-        print(operator.bl_idname == "IMPORT_SCENE_OT_gltf" and operator.has_active_importer_extensions)
         return operator.bl_idname == "IMPORT_SCENE_OT_gltf" and operator.has_active_importer_extensions
 
     def draw(self, context):
