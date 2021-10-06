@@ -298,6 +298,15 @@ class VExportTree:
             if all([c.hide_viewport for c in self.nodes[uuid].blender_object.users_collection]):
                 return False
 
+        # The camera in outliner (object)
+        if self.export_settings[gltf2_blender_export_keys.RENDERABLE]:
+            if self.nodes[uuid].blender_object.hide_render is True:
+                return False
+
+            # The camera in outliner (collections)
+            if all([c.hide_render for c in self.nodes[uuid].blender_object.users_collection]):
+                return False
+
         if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION]:
             found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
             if not found:
