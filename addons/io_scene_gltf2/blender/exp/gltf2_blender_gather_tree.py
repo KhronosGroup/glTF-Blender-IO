@@ -271,6 +271,17 @@ class VExportTree:
             self.recursive_filter(child, new_parent_kept_uuid)
 
     def node_filter_is_kept(self, uuid):
+
+        # Export Camera or not
+        if self.nodes[uuid].blender_type == VExportNode.CAMERA:
+            if self.export_settings[gltf2_blender_export_keys.CAMERAS] is False:
+                return False
+
+        # Export Lamp or not
+        if self.nodes[uuid].blender_type == VExportNode.LIGHT:
+            if self.export_settings[gltf2_blender_export_keys.LIGHTS] is False:
+                return False
+
         # TODO properly, checking all cases, checking node type
         if self.export_settings[gltf2_blender_export_keys.SELECTED] and self.nodes[uuid].blender_object.select_get() is False:
             return False
