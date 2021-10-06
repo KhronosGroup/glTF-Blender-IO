@@ -484,14 +484,7 @@ class ExportGLTF2_Base:
             except Exception:
                 pass
 
-            try:
-                if hasattr(sys.modules[addon_name], 'glTF2ImportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ImportUserExtensions'):
-                    importer_extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
-            except Exception:
-                pass
-
         self.has_active_exporter_extensions = len(exporter_extension_panel_unregister_functors) > 0
-        self.has_active_importer_extensions = len(importer_extension_panel_unregister_functors) > 0
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
@@ -980,8 +973,8 @@ class GLTF_PT_import_user_extensions(bpy.types.Panel):
     def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and operator.has_active_importer_extensions
+        print(operator.bl_idname == "IMPORT_SCENE_OT_gltf" and operator.has_active_importer_extensions)
+        return operator.bl_idname == "IMPORT_SCENE_OT_gltf" and operator.has_active_importer_extensions
 
     def draw(self, context):
         layout = self.layout
@@ -1086,6 +1079,19 @@ class ImportGLTF2(Operator, ImportHelper):
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
 
+    def invoke(self, context, event):
+        import sys
+        preferences = bpy.context.preferences
+        for addon_name in preferences.addons.keys():
+            try:
+                if hasattr(sys.modules[addon_name], 'glTF2ImportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ImportUserExtensions'):
+                    importer_extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
+            except Exception:
+                pass
+
+        self.has_active_importer_extensions = len(importer_extension_panel_unregister_functors) > 0
+        return ImportHelper.invoke(self, context, event)
+
     def execute(self, context):
         return self.import_gltf2(context)
 
@@ -1177,7 +1183,8 @@ classes = (
     GLTF_PT_export_animation_shapekeys,
     GLTF_PT_export_animation_skinning,
     GLTF_PT_export_user_extensions,
-    ImportGLTF2
+    ImportGLTF2,
+    GLTF_PT_import_user_extensions
 )
 
 
