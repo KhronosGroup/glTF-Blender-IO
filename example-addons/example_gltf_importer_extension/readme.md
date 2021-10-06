@@ -13,4 +13,7 @@ Next, define functions that contain the data of the extension you would like to 
 ```
 gather_import_node_before_hook(self, vnode, gltf_node)
 gather_import_node_after_hook(self, vnode, gltf_node, blender_object)
+gather_import_scene_before_hook(self, gltf_scene, blender_scene)
+gather_import_scene_after_nodes_hook(self, gltf_scene, blender_scene)
+gather_import_scene_after_animation_hook(self, gltf_scene, blender_scene)
 ```

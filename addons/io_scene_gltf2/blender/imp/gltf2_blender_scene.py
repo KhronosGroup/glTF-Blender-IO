@@ -18,6 +18,7 @@ from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_animation import BlenderAnimation
 from .gltf2_blender_vnode import VNode, compute_vnodes
 from ..com.gltf2_blender_extras import set_extras
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderScene():
@@ -36,6 +37,7 @@ class BlenderScene():
             scene.render.engine = "BLENDER_EEVEE"
 
         if gltf.data.scene is not None:
+            import_user_extensions('gather_import_scene_before_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
             pyscene = gltf.data.scenes[gltf.data.scene]
             set_extras(scene, pyscene.extras)
 
@@ -44,7 +46,11 @@ class BlenderScene():
         gltf.display_current_node = 0  # for debugging
         BlenderNode.create_vnode(gltf, 'root')
 
+        import_user_extensions('gather_import_scene_after_nodes_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
+
         BlenderScene.create_animations(gltf)
+
+        import_user_extensions('gather_import_scene_after_animation_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
 
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')
