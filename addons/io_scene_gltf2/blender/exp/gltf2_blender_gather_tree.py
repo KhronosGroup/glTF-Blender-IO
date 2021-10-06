@@ -282,8 +282,20 @@ class VExportTree:
             if self.export_settings[gltf2_blender_export_keys.LIGHTS] is False:
                 return False
 
-        # TODO properly, checking all cases, checking node type
         if self.export_settings[gltf2_blender_export_keys.SELECTED] and self.nodes[uuid].blender_object.select_get() is False:
             return False
+
+        if self.export_settings[gltf2_blender_export_keys.VISIBLE]:
+            # The eye in outliner (object)
+            if self.nodes[uuid].blender_object.visible_get() is False:
+                return False
+
+            # The screen in outliner (object)
+            if self.nodes[uuid].blender_object.hide_viewport is True:
+                return False
+
+            # The screen in outliner (collections)
+            if all([c.hide_viewport for c in self.nodes[uuid].blender_object.users_collection]):
+                return False
 
         return True
