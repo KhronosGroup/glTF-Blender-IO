@@ -227,11 +227,16 @@ class VExportTree:
 
 
     def recursive_filter_tag(self, uuid, parent_keep_tag):
+        # parent_keep_tag is for collection instance
+        # some properties (selection, visibility, renderability)
+        # are defined at collection level, and we need to use these values
+        # for all objects of the collection instance.
+        # But some properties (camera, lamp ...) are not defined at collection level
         if parent_keep_tag is True:
             # TODO this can be break (for example lamp, camera, bones???)
-            self.nodes[uuid].keep_tag = True
+            self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(uuid)
         else:
-            self.nodes[uuid].keep_tag = self.node_filter_is_kept(uuid)
+            self.nodes[uuid].keep_tag = self.node_filter_inheritable_is_kept(uuid) and self.node_filter_not_inheritable_is_kept(uuid)
 
         for child in self.nodes[uuid].children:
             if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
@@ -270,8 +275,8 @@ class VExportTree:
         for child in children:
             self.recursive_filter(child, new_parent_kept_uuid)
 
-    def node_filter_is_kept(self, uuid):
 
+    def node_filter_not_inheritable_is_kept(self, uuid):
         # Export Camera or not
         if self.nodes[uuid].blender_type == VExportNode.CAMERA:
             if self.export_settings[gltf2_blender_export_keys.CAMERAS] is False:
@@ -281,6 +286,10 @@ class VExportTree:
         if self.nodes[uuid].blender_type == VExportNode.LIGHT:
             if self.export_settings[gltf2_blender_export_keys.LIGHTS] is False:
                 return False
+
+        return True
+
+    def node_filter_inheritable_is_kept(self, uuid):
 
         if self.export_settings[gltf2_blender_export_keys.SELECTED] and self.nodes[uuid].blender_object.select_get() is False:
             return False
