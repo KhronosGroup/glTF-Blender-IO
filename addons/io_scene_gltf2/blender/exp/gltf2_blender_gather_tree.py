@@ -233,7 +233,6 @@ class VExportTree:
         # for all objects of the collection instance.
         # But some properties (camera, lamp ...) are not defined at collection level
         if parent_keep_tag is True:
-            # TODO this can be break (for example lamp, camera, bones???)
             self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(uuid)
         else:
             self.nodes[uuid].keep_tag = self.node_filter_inheritable_is_kept(uuid) and self.node_filter_not_inheritable_is_kept(uuid)
