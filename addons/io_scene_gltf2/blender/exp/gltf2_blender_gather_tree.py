@@ -138,9 +138,15 @@ class VExportTree:
         if parent_uuid is not None and self.nodes[parent_uuid].blender_type == VExportNode.BONE and node.blender_type == VExportNode.BONE:
             node.parent_bone_uuid = parent_uuid
 
+
+        # Objects parented to bone
+        if parent_uuid is not None and self.nodes[parent_uuid].blender_type == VExportNode.BONE and node.blender_type != VExportNode.BONE:
+            node.parent_bone_uuid = parent_uuid
+
         # Now we know parent and child type, we can set parent_type
         # TODO
-        # TODO manage parented to bone / parented to bone relative
+
+
 
 
 
@@ -156,9 +162,11 @@ class VExportTree:
             elif node.blender_type == VExportNode.LIGHT and self.export_settings[gltf2_blender_export_keys.LIGHTS]:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 node.matrix_world @= correction.to_matrix().to_4x4()
-        else:
-            pass
-        # TODO matrix for bones
+        elif node.blender_type == VExportNode.BONE:
+            node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
+            axis_basis_change = Matrix(
+                ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+            node.matrix_world = node.matrix_world @ axis_basis_change
 
         # Storing this node
         self.add_node(node)
