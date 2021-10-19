@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import mathutils
+from mathutils import Matrix, Quaternion, Vector
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -21,6 +21,36 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
+
+
+
+# TODO these 3 functions move to shared file
+def __convert_swizzle_location(loc, export_settings):
+    """Convert a location from Blender coordinate system to glTF coordinate system."""
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Vector((loc[0], loc[2], -loc[1]))
+    else:
+        return Vector((loc[0], loc[1], loc[2]))
+
+
+def __convert_swizzle_rotation(rot, export_settings):
+    """
+    Convert a quaternion rotation from Blender coordinate system to glTF coordinate system.
+
+    'w' is still at first position.
+    """
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
+    else:
+        return Quaternion((rot[0], rot[1], rot[2], rot[3]))
+
+
+def __convert_swizzle_scale(scale, export_settings):
+    """Convert a scale from Blender coordinate system to glTF coordinate system."""
+    if export_settings[gltf2_blender_export_keys.YUP]:
+        return Vector((scale[0], scale[2], scale[1]))
+    else:
+        return Vector((scale[0], scale[1], scale[2]))
 
 @cached
 def gather_joint_vnode(vnode, export_settings):
@@ -35,28 +65,15 @@ def gather_joint_vnode(vnode, export_settings):
     blender_object = vtree.nodes[vnode].blender_object
     blender_bone = vtree.nodes[vnode].blender_bone
 
-    axis_basis_change = mathutils.Matrix.Identity(4)
-    if export_settings[gltf2_blender_export_keys.YUP]:
-        axis_basis_change = mathutils.Matrix(
-            ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
-    # extract bone transform
-    if blender_bone.parent is None:
-        correction_matrix_local = axis_basis_change @ blender_bone.bone.matrix_local
-    else:
-        correction_matrix_local = (
-            blender_bone.parent.bone.matrix_local.inverted_safe() @
-            blender_bone.bone.matrix_local
-        )
+    mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
 
-    if (blender_bone.bone.use_inherit_rotation == False or blender_bone.bone.inherit_scale != "FULL") and blender_bone.parent != None:
-        rest_mat = (blender_bone.parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local)
-        matrix_basis = (rest_mat.inverted_safe() @ blender_bone.parent.matrix.inverted_safe() @ blender_bone.matrix)
-    else:
-        matrix_basis = blender_bone.matrix
-        matrix_basis = blender_object.convert_space(pose_bone=blender_bone, matrix=matrix_basis, from_space='POSE', to_space='LOCAL')
+    trans, rot, sca = mat.decompose()
 
-    trans, rot, sca = (correction_matrix_local @ matrix_basis).decompose()
+    trans = __convert_swizzle_location(trans, export_settings)
+    rot = __convert_swizzle_rotation(rot, export_settings)
+    sca = __convert_swizzle_scale(sca, export_settings)
+
     translation, rotation, scale = (None, None, None)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
         translation = [trans[0], trans[1], trans[2]]

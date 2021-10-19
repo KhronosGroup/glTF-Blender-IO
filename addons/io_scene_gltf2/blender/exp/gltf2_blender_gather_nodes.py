@@ -154,31 +154,36 @@ def __gather_children(vnode, blender_object, export_settings):
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
 
-            # fix rotation
-            if export_settings[gltf2_blender_export_keys.YUP]:
-                rot = child_node.rotation
-                if rot is None:
-                    rot = [0, 0, 0, 1]
+            mat = vtree.nodes[vtree.nodes[child].parent_bone_uuid].matrix_world.inverted_safe() @ vtree.nodes[child].matrix_world
+            loc, rot_quat, scale = mat.decompose()
 
-                rot_quat = Quaternion(rot)
-                axis_basis_change = Matrix(
-                    ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, -1.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-                mat = vtree.nodes[child].blender_object.matrix_parent_inverse @ vtree.nodes[child].blender_object.matrix_basis
-                mat = mat @ axis_basis_change
+            trans = __convert_swizzle_location(loc, export_settings)
+            rot = __convert_swizzle_rotation(rot_quat, export_settings)
+            sca = __convert_swizzle_scale(scale, export_settings)
 
-                _, rot_quat, _ = mat.decompose()
-                child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
 
-            # fix translation (in blender bone's tail is the origin for children)
-            trans, _, _ = vtree.nodes[child].blender_object.matrix_local.decompose()
-            if trans is None:
-                trans = [0, 0, 0]
-            # bones go down their local y axis
-            if blender_bone.matrix.to_scale()[1] >= 1e-6:
-                bone_tail = [0, blender_bone.length / blender_bone.matrix.to_scale()[1], 0]
-            else:
-                bone_tail = [0,0,0] # If scale is 0, tail == head
-            child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
+            translation, rotation, scale = (None, None, None)
+            if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
+                translation = [trans[0], trans[1], trans[2]]
+            if rot[0] != 1.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 0.0:
+                rotation = [rot[1], rot[2], rot[3], rot[0]]
+            if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
+                scale = [sca[0], sca[1], sca[2]]
+
+            child_node.translation = translation
+            child_node.rotation = rotation
+            child_node.scale = scale
+
+            # # fix translation (in blender bone's tail is the origin for children)
+            # trans, _, _ = vtree.nodes[child].blender_object.matrix_local.decompose()
+            # if trans is None:
+            #     trans = [0, 0, 0]
+            # # bones go down their local y axis
+            # if blender_bone.matrix.to_scale()[1] >= 1e-6:
+            #     bone_tail = [0, blender_bone.length / blender_bone.matrix.to_scale()[1], 0]
+            # else:
+            #     bone_tail = [0,0,0] # If scale is 0, tail == head
+            # child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
 
             parent_joint.children.append(child_node)
 
