@@ -45,8 +45,11 @@ class VExportNode:
         self.blender_object = None
         self.blender_bone = None
 
-        # Only for bone/bone
+        # Only for bone/bone and object parented to bone
         self.parent_bone_uuid = None
+
+        # Only for bones
+        self.use_deform = None
 
         # Only for armature
         self.bones = {}
@@ -110,6 +113,7 @@ class VExportTree:
         if blender_bone is not None:
             node.blender_type = VExportNode.BONE
             self.nodes[armature_uuid].bones[blender_bone.name] = node.uuid
+            node.use_deform = blender_bone.id_data.data.bones[blender_bone.name].use_deform
         elif blender_object.type == "ARMATURE":
             node.blender_type = VExportNode.ARMATURE
         elif blender_object.type == "CAMERA":
