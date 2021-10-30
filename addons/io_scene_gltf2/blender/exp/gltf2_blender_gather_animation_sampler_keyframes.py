@@ -22,6 +22,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
+import numpy as np
 
 
 class Keyframe:
@@ -193,6 +194,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      bake_range_end,
                      action_name: str,
                      driver_obj,
+                     node_channel_is_animated: bool,
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
@@ -309,8 +311,31 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
 
             keyframes.append(key)
 
+    # For armature only
+    # Check if all values are the same
+    # In that case, if there is no real keyframe on this channel for this given bone,
+    # We can ignore this keyframes
+    # if there are some fcurve, we can keep only 2 keyframes, first and last
+    if blender_object_if_armature is not None:
+        cst = fcurve_is_constant(keyframes)
+
+        if node_channel_is_animated is True: # fcurve on this bone for this property
+             # Keep animation, but keep only 2 keyframes if data are not changing
+             return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
+        else: # bone is not animated (no fcurve)
+            # Not keeping if not changing property
+            return None if cst is True else keyframes
+    else:
+        # For objects, if all values are the same, we keep only first and last
+        cst = fcurve_is_constant(keyframes)
+        return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
+
+
     return keyframes
 
+
+def fcurve_is_constant(keyframes):
+    return all([j < 0.0001 for j in np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])
 
 def complete_key(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[float]]):
     """

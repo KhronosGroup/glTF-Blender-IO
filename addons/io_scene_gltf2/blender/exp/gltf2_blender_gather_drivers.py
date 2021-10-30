@@ -51,7 +51,14 @@ def get_sk_drivers(blender_armature):
         idx_channel_mapping = []
         all_sorted_channels = []
         for sk_c in child.data.shape_keys.animation_data.drivers:
-            sk_name = child.data.shape_keys.path_resolve(get_target_object_path(sk_c.data_path)).name
+            # Check if driver is valid. If not, ignore this driver channel
+            try:
+                sk_name = child.data.shape_keys.path_resolve(get_target_object_path(sk_c.data_path)).name
+            except:
+                continue
+            # Do not take into account this driver if corresponding SK is disabled
+            if child.data.shape_keys.key_blocks[sk_name].mute is True:
+                continue
             idx = shapekeys_idx[sk_name]
             idx_channel_mapping.append((shapekeys_idx[sk_name], sk_c))
         existing_idx = dict(idx_channel_mapping)
@@ -61,7 +68,8 @@ def get_sk_drivers(blender_armature):
             else:
                 all_sorted_channels.append(existing_idx[i])
 
-        drivers.append((child, tuple(all_sorted_channels)))
+        if len(all_sorted_channels) > 0:
+            drivers.append((child, tuple(all_sorted_channels)))
 
     return tuple(drivers)
 

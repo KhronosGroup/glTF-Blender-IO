@@ -54,7 +54,7 @@ with the following channels of information:
 - Metallic
 - Roughness
 - Baked Ambient Occlusion
-- Normal Map (Tangent-space, +Y up)
+- Normal Map (tangent space, +Y up)
 - Emissive
 
 Some additional material properties or types of materials can be expressed using glTF extensions:
@@ -235,27 +235,26 @@ channels if they are not needed.
 Clearcoat
 ^^^^^^^^^
 
-When the Clearcoat input on the Principled BSDF node has a non-zero default value or
+When the *Clearcoat* input on the Principled BSDF node has a non-zero default value or
 Image Texture node connected, the ``KHR_materials_clearcoat`` glTF extension will be
 included in the export. This extension will also include a value or Image Texture
-from the Clearcoat Roughness input if available.
+from the *Clearcoat Roughness* input if available.
 
 If Image Textures are used, glTF requires that the clearcoat values be written to
-the red (``R``) channel, and clearcoat roughness to the green (``G``) channel.
-If monochrome images are connected, the addon will remap them to these color channels
-during export.
+the red (``R``) channel, and *Clearcoat Roughness* to the green (``G``) channel.
+If monochrome images are connected, the exporter will remap them to these color channels.
 
-The Clearcoat Normal input accepts the same kinds of inputs as the base Normal input,
+The *Clearcoat Normal* input accepts the same kinds of inputs as the base Normal input,
 specifically a tangent-space normal map with +Y up, and a user-defined strength.
-This input can re-use the same normal map that the base material is using, or can
-be assigned its own normal map, or can be left disconnected for a smooth coating.
+This input can reuse the same normal map that the base material is using,
+or can be assigned its own normal map, or can be left disconnected for a smooth coating.
 
-All clearcoat-related Image Texture node(s) should have their *Color Space* set to Non-Color.
+All Image Texture nodes used for clearcoat shading should have their *Color Space* set to Non-Color.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-clearcoat.png
 
    An example of a complex clearcoat application that will export correctly to glTF.
-   A much simpler, smooth coating could be applied from just the Principled BSDF node alone.
+   A much simpler, smooth coating can be applied from just the Principled BSDF node alone.
 
 
 Transmission
@@ -263,35 +262,33 @@ Transmission
 
 When the Transmission input on the Principled BSDF node has a non-zero default value or
 Image Texture node connected, the ``KHR_materials_transmission`` glTF extension will be
-included in the export. When a texture is used, glTF stores the values in
-the red (``R``) channel. The *Color Space* should be set to Non-Color.
+included in the export. When a texture is used, glTF stores the values in the red (``R``) channel.
+The *Color Space* should be set to Non-Color.
 
-Transmission is different from alpha blending, because transmission allows full-strength
-specular reflections. In glTF, alpha blending is intended to represent physical materials
-that are partially missing from the specified geometry, such as medical gauze wrap. Transmission
-is intended to represent physical materials that are solid but allow non-specularly-reflected
-light to transmit through the material, like glass.
+Transmission is different from alpha blending, because transmission allows full-strength specular reflections.
+In glTF, alpha blending is intended to represent physical materials that are partially missing from
+the specified geometry, such as medical gauze wrap. Transmission is intended to represent physical materials
+that are solid but allow non-specularly-reflected light to transmit through the material, like glass.
 
-glTF does not offer a separate "Transmission Roughness," but the material's base roughness
+glTF does not offer a separate "Transmission Roughness", but the material's base roughness
 can be used to blur the transmission, like frosted glass.
 
 .. tip::
 
-   Typically the alpha blend mode of a transmissive material should remain "Opaque," the
-   default setting, unless the material only partially covers the specified geometry.
+   Typically the alpha blend mode of a transmissive material should remain "Opaque",
+   the default setting, unless the material only partially covers the specified geometry.
 
 .. note::
 
-   In real-time engines where transmission is supported, various technical limitations
-   in the engine may determine which parts of the scene are visible through the
-   transmissive surface. In particular, transmissive materials may not be visible behind
-   other transmissive materials. These limitations affect physically-based transmission,
-   but not alpha-blended non-transmissive materials.
+   In real-time engines where transmission is supported, various technical limitations in
+   the engine may determine which parts of the scene are visible through the transmissive surface.
+   In particular, transmissive materials may not be visible behind other transmissive materials.
+   These limitations affect physically-based transmission, but not alpha-blended non-transmissive materials.
 
 .. warning::
 
-   Transmission is complex for real-time rendering engines to implement, and support
-   for the ``KHR_materials_transmission`` glTF extension is not yet widespread.
+   Transmission is complex for real-time rendering engines to implement,
+   and support for the ``KHR_materials_transmission`` glTF extension is not yet widespread.
 
 
 Double-Sided / Backface Culling
@@ -428,63 +425,100 @@ are supported directly by this add-on:
 Third-party glTF Extensions
 ---------------------------
 
-It is possible for Python developers to add Blender support for additional glTF extensions
-by writing their own third-party add-on, without modifying this glTF add-on. For more information,
-`see the example on GitHub <https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons/example_gltf_extension>`__
-and if needed,
+It is possible for Python developers to add Blender support for additional glTF extensions by writing their
+own third-party add-on, without modifying this glTF add-on. For more information, `see the example on GitHub
+<https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons/example_gltf_extension>`__ and if needed,
 `register an extension prefix <https://github.com/KhronosGroup/glTF/blob/master/extensions/Prefixes.md>`__.
 
 
 Custom Properties
 =================
 
-Custom properties are always imported, and will be exported from most objects if the
-:menuselection:`Include --> Custom Properties` option is selected before export. These
-are stored in the ``extras`` field on the corresponding object in the glTF file.
+Custom properties are always imported, and will be exported from most objects
+if the :menuselection:`Include --> Custom Properties` option is selected before export.
+These are stored in the ``extras`` field on the corresponding object in the glTF file.
 
-Unlike glTF extensions, custom properties (extras) have no defined name-space, and may
-be used for any user-specific or application-specific purposes.
+Unlike glTF extensions, custom properties (extras) have no defined namespace,
+and may be used for any user-specific or application-specific purposes.
 
 
 Animation
 =========
 
-glTF allows multiple animations per file, with animations targeted to
-particular objects at time of export. To ensure that an animation is included,
-either (a) make it the active Action on the object, (b) create a single-strip NLA track,
-or (c) stash the action.
+A glTF animation changes the transforms of objects or pose bones, or the values of
+shape keys. One animation can affect multiple things, and there can be multiple
+animations in a glTF file.
 
+Import
+------
 
-.. rubric:: Supported
+Imported models are set up so that the first animation in the file is playing
+automatically. Just scrub the Timeline to see it play.
 
-Only certain types of animation are supported:
+When there are multiple animations, the rest will be organized using the
+:doc:`Nonlinear Animation Editor </editors/nla/tracks>`. Each animation becomes an
+action stashed to an NLA track. The track name is the name of the glTF animation.
+To play an animation, simply star its track.
 
-- Keyframe (translation, rotation, scale)
-- Shape keys
-- Armatures / skinning
+.. figure:: /images/addons_import-export_scene-gltf2-animation-star-track.png
 
-Animation of other properties, like lights or materials, will be ignored.
+   Click Solo (star icon) next to the track you want to play to make that track's
+   animation visible.  This is the `fox sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Fox>`__
+   showing its Run animation.
 
-An *NLA Strip animation* consists of multiple actions on multiple objects that
-should play together. To create an NLA strip animation with the name "My Animation",
-push the action that should play each object onto an NLA track for
-that object with the name "My Animation".
+If an animation affects multiple objects, it will be broken up into multiple parts.
+The part of the animation that affects one object becomes an action stashed on that
+object. Use the track names to tell which actions are part of the same animation.
+To play the whole animation, you'd need to star all its tracks.
 
-.. figure:: /images/addons_import-export_scene-gltf2_nla-strip-animation-example.png
+.. note::
 
-   Will be exported as an animation called "My Animation" with ConeAction
-   playing on the Cone and CubeAction playing on the Cube.
+   There is currently no way to see the un-animated pose of a model that had animations.
 
-NLA Strip animations will be exported if the :menuselection:`Animation --> Group by NLA Track`
-option is selected (on by default). All glTF animations are imported as NLA Strip animations.
+Export
+------
 
-If option is disabled, Blender NLA strip actions will be ignored.
-Only active action of each objects will be taken into account, and merged into a single glTF animation.
+You can export animations by creating actions. How glTF animations are made from
+actions is controlled by the :menuselection:`Animation --> Group by NLA Track` export
+option.
+
+.. rubric:: Group by NLA Track on (default)
+
+An action will be exported if it is the active action on an object, or it is stashed
+to an NLA track (eg. with the Stash or Push Down buttons in the
+:doc:`Action Editor </editors/dope_sheet/action>`).
+**Actions which are not associated with an object in one of these ways are not exported.
+If you have multiple actions you want to export, make sure they are stashed!**
+
+A glTF animation can have a name, which is the action name by default. You can override it
+by renaming its NLA track from "NLATrack"/"[Action Stash]" to the name you want to use.
+For example, the fox model shown above will export with three animations, "Survey", "Walk",
+and "Run".
+
+If you rename two tracks on two different objects to the same name, they will become part
+of the same glTF animation and will play together.
+
+The importer organizes actions so they will be exported correctly with this mode.
+
+.. rubric:: Group by NLA Track off
+
+In this mode, the NLA organization is not used, and only one animation is exported using
+the active actions on all objects.
+
+.. note::
+
+   For both modes, remember only certain types of animation are supported:
+
+   - Object transform (location, rotation, scale)
+   - Pose bones
+   - Shape key values
+
+   Animation of other properties, like physics, lights, or materials, will be ignored.
 
 .. note::
 
    In order to sample shape key animations controlled by drivers using bone transformations,
-   they must be on a mesh object which is a direct child of the bones' armature.
+   they must be on a mesh object that is a direct child of the bones' armature.
 
 
 File Format Variations

@@ -49,7 +49,7 @@ def gather_node(blender_object, library, blender_scene, dupli_object_parent, exp
 
 @cached
 def __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
-    children = __gather_children(blender_object, blender_scene, export_settings)
+    children, only_bone_children = __gather_children(blender_object, blender_scene, export_settings)
 
     camera = None
     mesh = None
@@ -64,6 +64,12 @@ def __gather_node(blender_object, library, blender_scene, dupli_object_parent, e
             # This node should be filtered out, but has un-filtered children present.
             # So, export this node, excluding its camera, mesh, skin, and weights.
             # The transformations and animations on this node will have visible effects on children.
+
+            # Armature always have children node(s) (that are bone(s))
+            # We have to check if children are only bones or not for armatures
+            if blender_object.type == "ARMATURE" and only_bone_children is True:
+                return None
+
             pass
         else:
             # This node is filtered out, and has no un-filtered children or descendants.
@@ -127,6 +133,25 @@ def __filter_node(blender_object, blender_scene, export_settings):
     if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
         return False
 
+    if export_settings[gltf2_blender_export_keys.VISIBLE] and blender_object.visible_get() is False:
+        return False
+
+    # render_get() doesn't exist, so unfortunately this won't take into account the Collection settings
+    if export_settings[gltf2_blender_export_keys.RENDERABLE] and blender_object.hide_render is True:
+        return False
+
+    if export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION]:
+        found = any(x == blender_object for x in bpy.context.collection.all_objects)
+
+        if not found:
+            return False
+
+    if blender_object.type == 'LIGHT':
+        return export_settings[gltf2_blender_export_keys.LIGHTS]
+
+    if blender_object.type == 'CAMERA':
+        return export_settings[gltf2_blender_export_keys.CAMERAS]
+
     return True
 
 
@@ -139,6 +164,7 @@ def __gather_camera(blender_object, export_settings):
 
 def __gather_children(blender_object, blender_scene, export_settings):
     children = []
+    only_bone_children = True # True by default, will be set to False if needed
     # standard children
     for _child_object in blender_object.children:
         if _child_object.parent_bone:
@@ -154,6 +180,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             blender_scene, None, export_settings)
         if node is not None:
             children.append(node)
+            only_bone_children = False
     # blender dupli objects
     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
         for dupli_object in blender_object.instance_collection.objects:
@@ -166,6 +193,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 blender_scene, blender_object.name, export_settings)
             if node is not None:
                 children.append(node)
+                only_bone_children = False
 
     # blender bones
     if blender_object.type == "ARMATURE":
@@ -182,6 +210,8 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 root_joints.append(joint)
         # handle objects directly parented to bones
         direct_bone_children = [child for child in blender_object.children if child.parent_bone]
+        if len(direct_bone_children) != 0:
+            only_bone_children = False
         def find_parent_joint(joints, name):
             for joint in joints:
                 if joint.name == name:
@@ -195,7 +225,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             parent_joint = find_parent_joint(root_joints, child.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(child, None, None, None, export_settings)
+            child_node = gather_node(child, None, blender_scene, None, export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
@@ -227,7 +257,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
 
             parent_joint.children.append(child_node)
 
-    return children
+    return children, only_bone_children
 
 
 def __gather_extensions(blender_object, export_settings):
@@ -272,6 +302,9 @@ def __gather_mesh(blender_object, library, export_settings):
 
     if blender_object.type != "MESH":
         return None
+
+    # Be sure that object is valid (no NaN for example)
+    blender_object.data.validate()
 
     # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
     vertex_groups = blender_object.vertex_groups
@@ -356,6 +389,10 @@ def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
             else:
                 blender_mesh_owner = blender_object
                 blender_mesh = blender_mesh_owner.to_mesh()
+
+            # In some cases (for example curve with single vertice), no blender_mesh is created (without crash)
+            if blender_mesh is None:
+                return None
 
         except Exception:
             return None

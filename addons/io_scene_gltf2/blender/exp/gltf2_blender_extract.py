@@ -374,7 +374,8 @@ def extract_primitives(glTF, blender_mesh, library, blender_object, blender_vert
 
 def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings):
     locs = np.empty(len(blender_mesh.vertices) * 3, dtype=np.float32)
-    blender_mesh.vertices.foreach_get('co', locs)
+    source = key_blocks[0].relative_key.data if key_blocks else blender_mesh.vertices
+    source.foreach_get('co', locs)
     locs = locs.reshape(len(blender_mesh.vertices), 3)
 
     morph_locs = []
@@ -386,7 +387,7 @@ def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_s
 
     # Transform for skinning
     if armature and blender_object:
-        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+        apply_matrix = armature.matrix_world.inverted_safe() @ blender_object.matrix_world
         loc_transform = armature.matrix_world @ apply_matrix
 
         loc_transform = blender_object.matrix_world
@@ -408,10 +409,14 @@ def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_s
 
 def __get_normals(blender_mesh, key_blocks, armature, blender_object, export_settings):
     """Get normal for each loop."""
-    blender_mesh.calc_normals_split()
+    if key_blocks:
+        normals = key_blocks[0].relative_key.normals_split_get()
+        normals = np.array(normals, dtype=np.float32)
+    else:
+        normals = np.empty(len(blender_mesh.loops) * 3, dtype=np.float32)
+        blender_mesh.calc_normals_split()
+        blender_mesh.loops.foreach_get('normal', normals)
 
-    normals = np.empty(len(blender_mesh.loops) * 3, dtype=np.float32)
-    blender_mesh.loops.foreach_get('normal', normals)
     normals = normals.reshape(len(blender_mesh.loops), 3)
 
     morph_normals = []
@@ -422,8 +427,8 @@ def __get_normals(blender_mesh, key_blocks, armature, blender_object, export_set
 
     # Transform for skinning
     if armature and blender_object:
-        apply_matrix = (armature.matrix_world.inverted() @ blender_object.matrix_world)
-        apply_matrix = apply_matrix.to_3x3().inverted().transposed()
+        apply_matrix = (armature.matrix_world.inverted_safe() @ blender_object.matrix_world)
+        apply_matrix = apply_matrix.to_3x3().inverted_safe().transposed()
         normal_transform = armature.matrix_world.to_3x3() @ apply_matrix
 
         normals[:] = __apply_mat_to_all(normal_transform, normals)
@@ -458,7 +463,7 @@ def __get_tangents(blender_mesh, armature, blender_object, export_settings):
 
     # Transform for skinning
     if armature and blender_object:
-        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+        apply_matrix = armature.matrix_world.inverted_safe() @ blender_object.matrix_world
         tangent_transform = apply_matrix.to_quaternion().to_matrix()
         tangents = __apply_mat_to_all(tangent_transform, tangents)
         __normalize_vecs(tangents)
@@ -477,7 +482,7 @@ def __get_bitangent_signs(blender_mesh, armature, blender_object, export_setting
     if armature and blender_object:
         # Bitangent signs should flip when handedness changes
         # TODO: confirm
-        apply_matrix = armature.matrix_world.inverted() @ blender_object.matrix_world
+        apply_matrix = armature.matrix_world.inverted_safe() @ blender_object.matrix_world
         tangent_transform = apply_matrix.to_quaternion().to_matrix()
         flipped = tangent_transform.determinant() < 0
         if flipped:

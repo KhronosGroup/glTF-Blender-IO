@@ -83,3 +83,10 @@ class BlenderWeightAnim():
                     group_name="ShapeKeys",
                     interpolation=animation.samplers[channel.sampler].interpolation,
                 )
+
+                # Expand weight range if needed
+                kb = obj.data.shape_keys.key_blocks[kb_name]
+                min_weight = min(coords[1:2])
+                max_weight = max(coords[1:2])
+                if min_weight < kb.slider_min: kb.slider_min = min_weight
+                if max_weight > kb.slider_max: kb.slider_max = max_weight

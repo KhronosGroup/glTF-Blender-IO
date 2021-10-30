@@ -1,11 +1,15 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 env:
   CI: true
-  BLENDER_MAJOR: 2
-  BLENDER_MINOR: 93
+  BLENDER_MAJOR: 3
+  BLENDER_MINOR: 0
 
 jobs:
   build:
@@ -13,31 +17,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    strategy:
-      matrix:
-       include:
-         - filter: "blender_export"
-         - filter: "blender_roundtrip"
-
-    env:
-      FILTER: ${{ matrix.filter }}
-
     steps:
 
     - uses: actions/checkout@v2
-
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 14.x
 
     # Finds latest Blender build, and outputs the hosted build's download URL.
     - name: Find latest Blender build
       id: blender_version
       run: |
-        BLENDER_URL="https://builder.blender.org$(curl -s https://builder.blender.org/download/ | \
-          grep -oe '[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux64[^\"]*' | \
+        echo "Looking for Blender $BLENDER_MAJOR.$BLENDER_MINOR"
+        BLENDER_URL="$(curl -s https://builder.blender.org/download/daily/ | \
+          grep -oe 'http[^\"]*blender-'$BLENDER_MAJOR'\.'$BLENDER_MINOR'[^\"]*linux[^\"]*\.tar\.xz' | \
           tail -n1)"
-        echo "Found current build for Blender $BLENDER_MAJOR.$BLENDER_MINOR: $BLENDER_URL"
+        if [ -z "$BLENDER_URL" ]; then
+          echo "Not found! Download URL may have changed; CI may need update."
+          exit 1
+        fi
+        echo "Found: $BLENDER_URL"
         echo "::set-output name=blender-url::$BLENDER_URL"
 
     # Loads a cached build of Blender if available. If not available, this step
@@ -73,11 +69,11 @@ jobs:
     - name: Run tests
       run: |
         cd tests
-        OUT_PREFIX=$GITHUB_WORKSPACE/tests/out yarn test-bail --reporter-options reportDir=out/mochawesome -g $FILTER
+        OUT_PREFIX=$GITHUB_WORKSPACE/tests/out yarn test-bail --reporter-options reportDir=out/mochawesome
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: test-output-${{ matrix.filter }}
+        name: test-output
         path: tests/out/mochawesome
         if-no-files-found: error

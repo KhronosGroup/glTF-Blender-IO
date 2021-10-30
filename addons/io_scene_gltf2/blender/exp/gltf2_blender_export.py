@@ -63,6 +63,11 @@ def __export(export_settings):
     __gather_gltf(exporter, export_settings)
     buffer = __create_buffer(exporter, export_settings)
     exporter.finalize_images()
+
+    export_user_extensions('gather_gltf_hook', export_settings, exporter.glTF)
+    exporter.traverse_extensions()
+
+    # now that addons possibly add some fields in json, we can fix in needed
     json = __fix_json(exporter.glTF.to_dict())
 
     return json, buffer
@@ -70,10 +75,6 @@ def __export(export_settings):
 
 def __gather_gltf(exporter, export_settings):
     active_scene_idx, scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
-
-    plan = {'active_scene_idx': active_scene_idx, 'scenes': scenes, 'animations': animations}
-    export_user_extensions('gather_gltf_hook', export_settings, plan)
-    active_scene_idx, scenes, animations = plan['active_scene_idx'], plan['scenes'], plan['animations']
 
     if export_settings['gltf_draco_mesh_compression']:
         gltf2_io_draco_compression_extension.encode_scene_primitives(scenes, export_settings)
@@ -105,6 +106,9 @@ def __fix_json(obj):
     if isinstance(obj, dict):
         fixed = {}
         for key, value in obj.items():
+            if key == 'extras' and value is not None:
+                fixed[key] = value
+                continue
             if not __should_include_json_value(key, value):
                 continue
             fixed[key] = __fix_json(value)

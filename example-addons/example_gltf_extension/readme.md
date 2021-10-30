@@ -32,4 +32,5 @@ gather_scene_hook(self, gltf2_scene, blender_scene, export_settings)
 gather_skin_hook(self, gltf2_skin, blender_object, export_settings)
 gather_texture_hook(self, gltf2_texture, blender_shader_sockets, export_settings)
 gather_texture_info_hook(self, gltf2_texture_info, blender_shader_sockets, export_settings)
+merge_animation_extensions_hook(self, gltf2_animation_source, gltf2_animation_destination, export_settings)
 ```

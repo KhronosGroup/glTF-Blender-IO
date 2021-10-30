@@ -145,8 +145,8 @@ class BlenderNode():
             arma_mat = vnode.editbone_arma_mat
             editbone.head = arma_mat @ Vector((0, 0, 0))
             editbone.tail = arma_mat @ Vector((0, 1, 0))
-            editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
             editbone.length = vnode.bone_length
+            editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
 
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]
@@ -184,6 +184,10 @@ class BlenderNode():
     @staticmethod
     def create_mesh_object(gltf, vnode):
         pynode = gltf.data.nodes[vnode.mesh_node_idx]
+        if not (0 <= pynode.mesh < len(gltf.data.meshes)):
+            # Avoid traceback for invalid gltf file: invalid reference to meshes array
+            # So return an empty blender object)
+            return bpy.data.objects.new(vnode.name or mesh.name, None)
         pymesh = gltf.data.meshes[pynode.mesh]
 
         # Key to cache the Blender mesh by.
@@ -225,7 +229,11 @@ class BlenderNode():
         weights = pynode.weights or pymesh.weights or []
         for i, weight in enumerate(weights):
             if pymesh.shapekey_names[i] is not None:
-                obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]].value = weight
+                kb = obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]]
+                # extend range if needed
+                if weight < kb.slider_min: kb.slider_min = weight
+                if weight > kb.slider_max: kb.slider_max = weight
+                kb.value = weight
 
     @staticmethod
     def setup_skinning(gltf, pynode, obj):
