@@ -91,8 +91,14 @@ class FillSpecularColor:
             else:
                 out_buf = out_buf[:,:,0]
         else:
-            channels = 3 if src_type == SpecularColorSource.BaseColor else 1
-            out_buf = np.full((height, width, channels), self.src_default_values[src_type])
+            if src_type == SpecularColorSource.BaseColor:
+                rgb = [self.src_default_values[src_type][0],
+                       self.src_default_values[src_type][1],
+                       self.src_default_values[src_type][2]]
+                out_buf = np.full((height, width, 3), rgb)
+            else:
+                f = self.src_default_values[src_type]
+                out_buf = np.full((height, width, 1), f)
         return out_buf
 
 class ExportImage:

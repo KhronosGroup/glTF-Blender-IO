@@ -446,10 +446,10 @@ def __gather_ior_and_specular_extensions(blender_material, export_settings):
         primary_socket = specular_socket
         if specular_not_linked:
             primary_socket = specular_tint_socket
-        if specular_tint_not_linked:
-            primary_socket = base_color_socket
-        if base_color_not_linked:
-            primary_socket = transmission_socket
+            if specular_tint_not_linked:
+                primary_socket = base_color_socket
+                if base_color_not_linked:
+                    primary_socket = transmission_socket           
         info = gltf2_blender_gather_texture_info.gather_texture_info(primary_socket, sockets, export_settings)
         if info is None:
             return None, None
