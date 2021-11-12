@@ -54,7 +54,7 @@ def save(context, export_settings):
     __notify_end(context, end_time - start_time)
 
     if not export_settings['gltf_current_frame']:
-        bpy.context.scene.frame_set(original_frame)
+        bpy.context.scene.frame_set(int(original_frame))
     return {'FINISHED'}
 
 

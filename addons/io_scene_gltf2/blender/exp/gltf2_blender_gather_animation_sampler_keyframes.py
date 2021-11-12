@@ -157,7 +157,7 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
     while frame <= end_frame:
         data[frame] = {}
         # we need to bake in the constraints
-        bpy.context.scene.frame_set(frame)
+        bpy.context.scene.frame_set(int(frame))
         for pbone in blender_object_if_armature.pose.bones:
             if bake_bone is None:
                 matrix = pbone.matrix_basis.copy()
