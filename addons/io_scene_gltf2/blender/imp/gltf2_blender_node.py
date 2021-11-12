@@ -241,11 +241,6 @@ class BlenderNode():
 
         # Armature/bones should have already been created.
 
-        # Create vertex groups for each joint
-        for node_idx in pyskin.joints:
-            bone = gltf.vnodes[node_idx]
-            obj.vertex_groups.new(name=bone.blender_bone_name)
-
         # Create an Armature modifier
         first_bone = gltf.vnodes[pyskin.joints[0]]
         arma = gltf.vnodes[first_bone.bone_arma]

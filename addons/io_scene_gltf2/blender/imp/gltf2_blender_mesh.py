@@ -303,9 +303,9 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     # TODO: this is slow :/
     if num_joint_sets:
         pyskin = gltf.data.skins[skin_idx]
-        for i, _ in enumerate(pyskin.joints):
-            # ob is a temp object, so don't worry about the name.
-            ob.vertex_groups.new(name='X%d' % i)
+        for i, node_idx in enumerate(pyskin.joints):
+            bone = gltf.vnodes[node_idx]
+            ob.vertex_groups.new(name=bone.blender_bone_name)
 
         vgs = list(ob.vertex_groups)
 
