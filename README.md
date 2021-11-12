@@ -8,14 +8,14 @@ Documentation
 
 | Blender Version | Documentation |
 |---------|---------------------|
-| 2.92    | https://docs.blender.org/manual/en/2.92/addons/import_export/scene_gltf2.html  |
+| 2.93    | https://docs.blender.org/manual/en/2.93/addons/import_export/scene_gltf2.html  |
 | dev     | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
-* 2.80 - 2.91 are previous stable releases.
-* 2.83 is the first Blender LTS release. Check the `blender-v2.83-release` branch.
-* 2.92 is the current stable release. Check the `blender-v2.92-release` branch.
-* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become 2.93.
+* 2.80 - 2.92 are previous stable releases.
+* 2.93 is the current Blender LTS release. Check the `blender-v2.93-release` branch.
+* 2.93 is the current stable release. Check the `blender-v2.93-release` branch.
+* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become 3.0.
 
 ### Legacy 2.79 Support
 
@@ -57,7 +57,7 @@ The Khronos glTF 2.0 importer and exporter is enabled by default in [Blender 2.8
 Debugging
 ---------
 
-- [Debug with PyCharm](https://code.blender.org/2015/10/debugging-python-code-with-pycharm) **NOTE:** If you are using Blender 2.80, you need the [updated debugger script](https://github.com/ux3d/random-blender-addons/blob/master/remote_debugger.py)
+- [Debug with PyCharm](https://code.blender.org/2015/10/debugging-python-code-with-pycharm) **NOTE:** If you are using Blender 2.80+, you need the [updated debugger script](https://github.com/ux3d/random-blender-addons/blob/master/remote_debugger.py)
 - [Debug with VSCode](DEBUGGING.md)
 
 Continuous Integration Tests
