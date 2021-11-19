@@ -185,8 +185,10 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
     return data
 
 # cache for performance reasons
+# This function is called 2 times, for input (timing) and output (key values)
 @cached
-def gather_keyframes(blender_obj_uuid_if_armature: typing.Optional[bpy.types.Object],
+def gather_keyframes(blender_obj_uuid: str,
+                     is_armature: bool,
                      channels: typing.Tuple[bpy.types.FCurve],
                      non_keyed_values: typing.Tuple[typing.Optional[float]],
                      bake_bone: typing.Union[str, None],
@@ -200,7 +202,7 @@ def gather_keyframes(blender_obj_uuid_if_armature: typing.Optional[bpy.types.Obj
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
 
-    blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid_if_armature].blender_object if blender_obj_uuid_if_armature is not None else None
+    blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid].blender_object if is_armature is True is not None else None
 
     if bake_bone is None and driver_obj_uuid is None:
         # Find the start and end of the whole action group
@@ -261,10 +263,35 @@ def gather_keyframes(blender_obj_uuid_if_armature: typing.Optional[bpy.types.Obj
                 }[target_property]
             else:
                 if driver_obj_uuid is None:
-                    # Note: channels has some None items only for SK if some SK are not animated
-                    key.value = [c.evaluate(frame) for c in channels if c is not None]
-                    complete_key(key, non_keyed_values)
+                    #TODOTREE : objects selected,not animated but with non selected animated parent are not detected as animated
+                    #TODOTREE need to cache to avoid setting frame for each T/R/S (+ each object?)
+                    bpy.context.scene.frame_set(int(frame))
+                    # If channel is TRS, we bake from world matrix, else this is SK
+                    target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
+                    if target == "value": #SK
+                        # Note: channels has some None items only for SK if some SK are not animated
+                        key.value = [c.evaluate(frame) for c in channels if c is not None]
+                        complete_key(key, non_keyed_values)
+                    else:
+                        #TRS
+                        # calculate local matrix
+                        if export_settings['vtree'].nodes[blender_obj_uuid].parent_uuid is None:
+                            parent_mat = mathutils.Matrix.Identity(4).freeze()
+                        else:
+                            parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[blender_obj_uuid].parent_uuid].blender_object.matrix_world
+                            print("parent mat:", parent_mat.to_translation())
+
+                        trans, rot, sca = (parent_mat.inverted_safe() @ export_settings['vtree'].nodes[blender_obj_uuid].blender_object.matrix_world).decompose()
+                        key.value = {
+                            "location": trans,
+                            "rotation_axis_angle": rot.to_axis_angle(),
+                            "rotation_euler": rot.to_euler(),
+                            "rotation_quaternion": rot,
+                            "scale": sca
+                        }[target]
+                        complete_key(key, non_keyed_values)
                 else:
+                    #TODOTREE
                     key.value = get_sk_driver_values(driver_obj, frame, channels, export_settings)
                     complete_key(key, non_keyed_values)
             keyframes.append(key)
