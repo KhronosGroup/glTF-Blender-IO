@@ -225,7 +225,7 @@ def __gather_children(blender_object, blender_scene, export_settings):
             parent_joint = find_parent_joint(root_joints, child.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(child, None, None, None, export_settings)
+            child_node = gather_node(child, None, blender_scene, None, export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
