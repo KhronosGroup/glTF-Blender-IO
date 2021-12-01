@@ -46,8 +46,10 @@ class BlenderScene():
         gltf.display_current_node = 0  # for debugging
         BlenderNode.create_vnode(gltf, 'root')
 
+        # User extensions before scene creation
         import_user_extensions('gather_import_scene_after_nodes_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
 
+        # User extensions after scene creation
         BlenderScene.create_animations(gltf)
 
         import_user_extensions('gather_import_scene_after_animation_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
