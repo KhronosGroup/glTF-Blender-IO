@@ -286,7 +286,7 @@ def gather_keyframes(blender_obj_uuid: str,
                         trans, rot, sca = (parent_mat.inverted_safe() @ export_settings['vtree'].nodes[blender_obj_uuid].blender_object.matrix_world).decompose()
                         key.value = {
                             "location": trans,
-                            "rotation_axis_angle": rot.to_axis_angle(),
+                            "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
                             "rotation_euler": rot.to_euler(),
                             "rotation_quaternion": rot,
                             "scale": sca
@@ -299,6 +299,7 @@ def gather_keyframes(blender_obj_uuid: str,
             keyframes.append(key)
             frame += step
     else:
+        #TODOTREE need to check if this work
         # Just use the keyframes as they are specified in blender
         # Note: channels has some None items only for SK if some SK are not animated
         frames = [keyframe.co[0] for keyframe in [c for c in channels if c is not None][0].keyframe_points]
@@ -312,7 +313,7 @@ def gather_keyframes(blender_obj_uuid: str,
             if len([c for c in channels if c is not None]) != key.get_target_len():
                 complete_key(key, non_keyed_values)
 
-            # compute tangents for cubic spline interpolation
+            # compute tangents for cubic spline interpolation #TODOTREE need to check if this work
             if [c for c in channels if c is not None][0].keyframe_points[0].interpolation == "BEZIER":
                 # Construct the in tangent
                 if frame == frames[0]:
@@ -327,7 +328,7 @@ def gather_keyframes(blender_obj_uuid: str,
                                                        ) / (frame - frames[i - 1]))
                         for c in channels if c is not None
                     ]
-                # Construct the out tangent
+                # Construct the out tangent #TODOTREE need to check if this work
                 if frame == frames[-1]:
                     # end out-tangent should become all zero
                     key.set_last_tangent()
