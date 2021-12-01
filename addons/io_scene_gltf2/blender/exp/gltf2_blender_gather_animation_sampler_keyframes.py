@@ -205,6 +205,7 @@ def gather_keyframes(blender_obj_uuid: str,
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
 
     blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid].blender_object if is_armature is True is not None else None
+    blender_obj_uuid_if_armature = blender_obj_uuid if is_armature is True else None
 
     if bake_bone is None and driver_obj_uuid is None:
         # Find the start and end of the whole action group
