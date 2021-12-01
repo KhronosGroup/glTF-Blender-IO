@@ -68,34 +68,6 @@ def gather_node(vnode, export_settings):
     return node
 
 
-# TODOVTREE to be reimplemented in tree filter
-# TODOVTREE Bone selection check to be done in tree filtering
-# def __filter_node(blender_object, export_settings):
-#     if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
-#         return False
-#
-#     if export_settings[gltf2_blender_export_keys.VISIBLE] and blender_object.visible_get() is False:
-#         return False
-#
-#     # render_get() doesn't exist, so unfortunately this won't take into account the Collection settings
-#     if export_settings[gltf2_blender_export_keys.RENDERABLE] and blender_object.hide_render is True:
-#         return False
-#
-#     if export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION]:
-#         found = any(x == blender_object for x in bpy.context.collection.all_objects)
-#
-#         if not found:
-#             return False
-#
-#     if blender_object.type == 'LIGHT':
-#         return export_settings[gltf2_blender_export_keys.LIGHTS]
-#
-#     if blender_object.type == 'CAMERA':
-#         return export_settings[gltf2_blender_export_keys.CAMERAS]
-#
-#     return True
-
-
 def __gather_camera(blender_object, export_settings):
     if blender_object.type != 'CAMERA':
         return None
@@ -121,16 +93,17 @@ def __gather_children(vnode, blender_object, export_settings):
     if vnode.blender_type == gltf2_blender_gather_tree.VExportNode.ARMATURE:
         root_joints = []
 
-        list_, _, bone_root_vnodes = gltf2_blender_gather_skins.get_bone_tree_vnode(vnode, export_settings)
-        for bnode in bone_root_vnodes:
-            joint = gltf2_blender_gather_joints.gather_joint_vnode(bnode, export_settings)
+        #TODOTREE for object parented to bone when bone is not deform, and only def bone is checked
+        all_armature_children = vnode.children
+        root_bones_uuid = [c for c in all_armature_children if export_settings['vtree'].nodes[c].blender_type == VExportNode.BONE]
+        for bone_uuid in root_bones_uuid:
+            joint = gltf2_blender_gather_joints.gather_joint_vnode(bone_uuid, export_settings)
             children.append(joint)
             root_joints.append(joint)
 
-
         # Object parented to bones
         direct_bone_children = []
-        for n in list_:
+        for n in [vtree.nodes[i] for i in vtree.get_all_bones(vnode.uuid)]:
             only_bone_children = False
             direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE])
 
