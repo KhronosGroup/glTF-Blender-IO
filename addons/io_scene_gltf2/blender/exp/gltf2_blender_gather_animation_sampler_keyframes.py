@@ -160,6 +160,8 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
         data[frame] = {}
         # we need to bake in the constraints
         bpy.context.scene.frame_set(int(frame))
+        #TODOTREE : do not use all bones, but only bones that are exported
+        #TODOTREE : use world matrix, then convert to local (regarding exported parent)
         for pbone in blender_object_if_armature.pose.bones:
             if bake_bone is None:
                 matrix = pbone.matrix_basis.copy()
