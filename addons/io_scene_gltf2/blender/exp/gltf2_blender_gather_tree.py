@@ -216,6 +216,24 @@ class VExportTree:
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
 
+    def get_all_bones(self, uuid): #For armatue Only
+        if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
+            def recursive_get_all_bones(uuid):
+                total = []
+                if self.nodes[uuid].blender_type == VExportNode.BONE:
+                    total.append(uuid)
+                    for child_uuid in self.nodes[uuid].children:
+                        total.extend(recursive_get_all_bones(child_uuid))
+
+                return total
+
+            tot = []
+            for c_uuid in self.nodes[uuid].children:
+                tot.extend(recursive_get_all_bones(c_uuid))
+            return tot
+        else:
+            return []
+
     def display(self, mode):
         if mode == "simple":
             for n in self.roots:
@@ -296,6 +314,11 @@ class VExportTree:
         # Export Lamp or not
         if self.nodes[uuid].blender_type == VExportNode.LIGHT:
             if self.export_settings[gltf2_blender_export_keys.LIGHTS] is False:
+                return False
+
+        # Export deform bones only
+        if self.nodes[uuid].blender_type == VExportNode.BONE:
+            if self.export_settings['gltf_def_bones'] is True and self.nodes[uuid].use_deform is False:
                 return False
 
         return True

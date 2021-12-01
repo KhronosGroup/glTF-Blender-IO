@@ -87,12 +87,7 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
             blender_bone = blender_object.path_resolve(channels[0].data_path.rsplit('.', 1)[0])
 
         if isinstance(blender_bone, bpy.types.PoseBone):
-            if export_settings["gltf_def_bones"] is False:
-                return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[obj_uuid].bones[blender_bone.name], export_settings)
-            else:
-                bones, _, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(export_settings['vtree'].nodes[obj_uuid], export_settings)
-                if blender_bone.name in [b.blender_bone.name for b in bones]:
-                    return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[obj_uuid].bones[blender_bone.name], export_settings)
+            return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[obj_uuid].bones[blender_bone.name], export_settings)
 
     return export_settings['vtree'].nodes[obj_uuid].node
 

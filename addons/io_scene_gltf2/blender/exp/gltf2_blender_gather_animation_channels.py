@@ -66,11 +66,8 @@ def gather_animation_channels(obj_uuid: int,
 
         # Then bake all bones
         bones_to_be_animated = []
-        if export_settings["gltf_def_bones"] is False:
-            bones_to_be_animated = blender_object.data.bones
-        else:
-            bones_to_be_animated, _, _ = gltf2_blender_gather_skins.get_bone_tree_vnode(export_settings['vtree'].nodes[obj_uuid], export_settings)
-            bones_to_be_animated = [blender_object.pose.bones[b.blender_bone.name] for b in bones_to_be_animated]
+        bones_uuid = export_settings["vtree"].get_all_bones(obj_uuid)
+        bones_to_be_animated = [blender_object.pose.bones[export_settings["vtree"].nodes[b].blender_bone.name] for b in bones_uuid]
 
         list_of_animated_bone_channels = []
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
