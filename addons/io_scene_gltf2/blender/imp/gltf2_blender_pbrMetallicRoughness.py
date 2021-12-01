@@ -18,6 +18,7 @@ from ..com.gltf2_blender_material_helpers import get_gltf_node_name
 from .gltf2_blender_texture import texture
 from .gltf2_blender_KHR_materials_clearcoat import \
     clearcoat, clearcoat_roughness, clearcoat_normal
+from .gltf2_blender_KHR_materials_transmission import transmission
 
 
 class MaterialHelper:
@@ -113,6 +114,12 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         normal_socket=pbr_node.inputs['Clearcoat Normal'],
     )
 
+    transmission(
+        mh,
+        location=locs['transmission'],
+        transmission_socket=pbr_node.inputs['Transmission']
+    )
+
 
 def calc_locations(mh):
     """Calculate locations to place each bit of the node graph at."""
@@ -126,6 +133,11 @@ def calc_locations(mh):
         clearcoat_ext = mh.pymat.extensions['KHR_materials_clearcoat']
     except Exception:
         clearcoat_ext = {}
+
+    try:
+        transmission_ext = mh.pymat.extensions['KHR_materials_transmission']
+    except Exception:
+        transmission_ext = {}
 
     locs['base_color'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
@@ -150,6 +162,9 @@ def calc_locations(mh):
         y -= height
     locs['occlusion'] = (x, y)
     if mh.pymat.occlusion_texture is not None:
+        y -= height
+    locs['transmission'] = (x, y)
+    if 'transmissionTexture' in transmission_ext:
         y -= height
 
     # Center things
