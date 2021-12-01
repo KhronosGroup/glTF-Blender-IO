@@ -22,6 +22,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbrSpecularGlossiness
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_unlit
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
@@ -248,21 +249,26 @@ def __gather_emissive_texture(blender_material, export_settings):
 
 def __gather_extensions(blender_material, export_settings):
     extensions = {}
-
-    # KHR_materials_clearcoat
     actives_uvmaps = []
 
+    # KHR_materials_pbrSpecularGlossiness
+    specular_glossiness_extension, use_actives_uvmap_specular_glossiness = __gather_pbr_specular_glossiness_extension(blender_material, export_settings)
+    if specular_glossiness_extension:
+        extensions["KHR_materials_pbrSpecularGlossiness"] = specular_glossiness_extension
+        actives_uvmaps.extend(use_actives_uvmap_specular_glossiness)
+
+    # KHR_materials_clearcoat
     clearcoat_extension, use_actives_uvmap_clearcoat = __gather_clearcoat_extension(blender_material, export_settings)
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
         actives_uvmaps.extend(use_actives_uvmap_clearcoat)
 
     # KHR_materials_transmission
-
-    transmission_extension, use_actives_uvmap_transmission = __gather_transmission_extension(blender_material, export_settings)
-    if transmission_extension:
-        extensions["KHR_materials_transmission"] = transmission_extension
-        actives_uvmaps.extend(use_actives_uvmap_transmission)
+    if not specular_glossiness_extension:
+        transmission_extension, use_actives_uvmap_transmission = __gather_transmission_extension(blender_material, export_settings)
+        if transmission_extension:
+            extensions["KHR_materials_transmission"] = transmission_extension
+            actives_uvmaps.extend(use_actives_uvmap_transmission)
 
     return extensions, actives_uvmaps if extensions else None
 
@@ -353,6 +359,12 @@ def __has_image_node_from_socket(socket):
     if not result:
         return False
     return True
+
+def __gather_pbr_specular_glossiness_extension(blender_material, export_settings):
+    specular_glossiness, uvmaps_actives = gltf2_blender_gather_materials_pbrSpecularGlossiness.gather_material_pbrSpecularGlossiness(blender_material, export_settings)
+    if specular_glossiness:
+        return Extension('KHR_materials_pbrSpecularGlossiness', specular_glossiness, False), uvmaps_actives
+    return None, None
 
 def __gather_clearcoat_extension(blender_material, export_settings):
     clearcoat_enabled = False

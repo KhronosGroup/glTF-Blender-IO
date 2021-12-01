@@ -42,6 +42,23 @@ def get_object_from_datapath(blender_object, data_path: str):
 
     return prop
 
+def get_socket_from_node(blender_material: bpy.types.Material, node_name: str, socket_name: str):
+    """
+    For a given material node name and input name, retrieve the corresponding node tree socket.
+
+    :param blender_material: a blender material for which to get the socket
+    :param node_name: the node name
+    :param socket_name: the name of the socket
+    :return: a blender NodeSocket
+    """
+    if blender_material.node_tree and blender_material.use_nodes:
+        nodes = [n for n in blender_material.node_tree.nodes if not n.mute and n.name == node_name]
+        if len(nodes) == 1:            
+            inputs = [input for input in nodes[0].inputs if input.name == socket_name]
+            if inputs:
+                return inputs[0]
+
+    return None
 
 def get_node_socket(blender_material, type, name):
     """
