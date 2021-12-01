@@ -282,7 +282,6 @@ def gather_keyframes(blender_obj_uuid: str,
                             parent_mat = mathutils.Matrix.Identity(4).freeze()
                         else:
                             parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[blender_obj_uuid].parent_uuid].blender_object.matrix_world
-                            print("parent mat:", parent_mat.to_translation())
 
                         trans, rot, sca = (parent_mat.inverted_safe() @ export_settings['vtree'].nodes[blender_obj_uuid].blender_object.matrix_world).decompose()
                         key.value = {
