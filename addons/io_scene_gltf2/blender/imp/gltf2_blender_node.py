@@ -36,9 +36,10 @@ class BlenderNode():
             gltf.log.critical("Node %d of %d (id %s)", gltf.display_current_node, len(gltf.vnodes), vnode_id)
 
         if vnode.type == VNode.Object:
-            import_user_extensions('gather_import_node_before_hook', gltf, vnode, gltf.data.nodes[vnode_id])
+            gltf_node = gltf.data.nodes[vnode_id] if isinstance(vnode_id, int) else None
+            import_user_extensions('gather_import_node_before_hook', gltf, vnode, gltf_node)
             obj = BlenderNode.create_object(gltf, vnode_id)
-            import_user_extensions('gather_import_node_after_hook', gltf, vnode, gltf.data.nodes[vnode_id], obj)
+            import_user_extensions('gather_import_node_after_hook', gltf, vnode, gltf_node, obj)
             if vnode.is_arma:
                 BlenderNode.create_bones(gltf, vnode_id)
 
