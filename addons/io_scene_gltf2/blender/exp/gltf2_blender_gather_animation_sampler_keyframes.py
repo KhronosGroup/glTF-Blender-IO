@@ -22,6 +22,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 import numpy as np
 
 
@@ -158,23 +159,21 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
     frame = start_frame
     while frame <= end_frame:
         data[frame] = {}
-        # we need to bake in the constraints
         bpy.context.scene.frame_set(int(frame))
-        #TODOTREE : do not use all bones, but only bones that are exported
-        #TODOTREE : use world matrix, then convert to local (regarding exported parent)
-        for pbone in blender_object_if_armature.pose.bones:
-            if bake_bone is None:
-                matrix = pbone.matrix_basis.copy()
+        bones = export_settings['vtree'].get_all_bones(blender_obj_uuid_if_armature)
+
+        for bone_uuid in bones:
+            #TODOTREE : Check what happen for non-baked
+            blender_bone = export_settings['vtree'].nodes[bone_uuid].blender_bone
+
+            if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
+                blender_bone_parent = export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_bone
+                rest_mat = blender_bone_parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local
+                matrix = rest_mat.inverted_safe() @ blender_bone_parent.matrix.inverted_safe() @ blender_bone.matrix
             else:
-                if (pbone.bone.use_inherit_rotation == False or pbone.bone.inherit_scale != "FULL") and pbone.parent != None:
-                    rest_mat = (pbone.parent.bone.matrix_local.inverted_safe() @ pbone.bone.matrix_local)
-                    matrix = (rest_mat.inverted_safe() @ pbone.parent.matrix.inverted_safe() @ pbone.matrix)
-                else:
-                    matrix = pbone.matrix
-                    matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
+                matrix = blender_bone.bone.matrix_local.inverted_safe() @ blender_bone.matrix
 
-
-            data[frame][pbone.name] = matrix
+            data[frame][blender_bone.name] = matrix
 
 
         # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
