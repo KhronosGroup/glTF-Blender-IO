@@ -334,7 +334,7 @@ def __gather_trans_rot_scale_vtree(vnode, export_settings):
         trans, rot, sca = vnode.matrix_world.decompose()
     else:
         # calculate local matrix
-        trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted() @ vnode.matrix_world).decompose()
+        trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
 
 
 
