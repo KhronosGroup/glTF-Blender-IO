@@ -502,7 +502,8 @@ class ExportGLTF2_Base:
             x: getattr(self, x) for x in dir(all_props)
             if (x.startswith("export_") or x in exceptional) and all_props.get(x) is not None
         }
-        del export_props['export_selected'] # Do not save this property, only here for backward compatibility
+        if 'export_selected' in export_props.keys():
+            del export_props['export_selected'] # Do not save this property, only here for backward compatibility
         context.scene[self.scene_key] = export_props
 
     def execute(self, context):
