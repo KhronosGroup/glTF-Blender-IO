@@ -325,6 +325,10 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
         else:
             try:
                 target = gltf2_blender_get.get_object_from_datapath(blender_object, object_path)
+                if type(target).__name__ == "Pose":
+                    # Invalid bone name is animated. In 3.0, no more ValueError raised...
+                    gltf2_io_debug.print_console("WARNING", "Animation bone target {} not found".format(object_path))
+                    continue
                 if blender_object.type == "MESH" and object_path.startswith("key_blocks"):
                     shape_key = blender_object.data.shape_keys.path_resolve(object_path)
                     if shape_key.mute is True:
