@@ -331,6 +331,9 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                     continue
                 if blender_object.type == "MESH" and object_path.startswith("key_blocks"):
                     shape_key = blender_object.data.shape_keys.path_resolve(object_path)
+                    if type(shape_key).__name__) != "ShapeKey":
+                        gltf2_io_debug.print_console("WARNING", "Animation target {} not found".format(object_path))
+                        continue
                     if shape_key.mute is True:
                         continue
                     target = blender_object.data.shape_keys
@@ -340,6 +343,9 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
                 if blender_object.type == "MESH":
                     try:
                         shape_key = blender_object.data.shape_keys.path_resolve(object_path)
+                        if type(shape_key).__name__) != "ShapeKey":
+                            gltf2_io_debug.print_console("WARNING", "Animation target {} not found".format(object_path))
+                            continue
                         if shape_key.mute is True:
                             continue
                         target = blender_object.data.shape_keys
