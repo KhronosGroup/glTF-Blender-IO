@@ -312,6 +312,9 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
             continue
+        if fcurve.is_valid is False: # This is not detected if user didn't display DopeSheet first, see T93982
+            gltf2_io_debug.print_console("WARNING", "Invalid animation fcurve name on action {}".format(blender_action.name))
+            continue
         try:
             target_property = get_target_property_name(fcurve.data_path)
         except:
