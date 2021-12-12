@@ -458,28 +458,6 @@ def __gather_skin(vnode, blender_object, export_settings):
 def __gather_weights(blender_object, export_settings):
     return None
 
-
-def __get_correction_node(blender_object, export_settings):
-    correction_quaternion = __convert_swizzle_rotation(
-        Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)), export_settings)
-    correction_quaternion = [correction_quaternion[1], correction_quaternion[2],
-                             correction_quaternion[3], correction_quaternion[0]]
-    return gltf2_io.Node(
-        camera=None,
-        children=[],
-        extensions=None,
-        extras=None,
-        matrix=None,
-        mesh=None,
-        name=blender_object.name + '_Orientation',
-        rotation=correction_quaternion,
-        scale=None,
-        skin=None,
-        translation=None,
-        weights=None
-    )
-
-
 def __convert_swizzle_location(loc, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""
     if export_settings[gltf2_blender_export_keys.YUP]:
