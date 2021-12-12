@@ -83,7 +83,7 @@ def gather_node(vnode, export_settings):
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
     if node.skin is None:
-        node.translation, node.rotation, node.scale = __gather_trans_rot_scale_vtree(vnode, export_settings)
+        node.translation, node.rotation, node.scale = __gather_trans_rot_scale(vnode, export_settings)
 
 
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
@@ -381,7 +381,7 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 def __gather_name(blender_object, export_settings):
     return blender_object.name
 
-def __gather_trans_rot_scale_vtree(vnode, export_settings):
+def __gather_trans_rot_scale(vnode, export_settings):
     if vnode.parent_uuid is None:
         # No parent, so matrix is world matrix
         trans, rot, sca = vnode.matrix_world.decompose()
