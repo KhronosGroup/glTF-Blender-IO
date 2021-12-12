@@ -53,7 +53,8 @@ def gather_animations(blender_object: bpy.types.Object,
                 break
 
     # Remove any tweak mode. Restore after export
-    restore_tweak_mode = blender_object.animation_data.use_tweak_mode
+    if blender_object.animation_data:
+        restore_tweak_mode = blender_object.animation_data.use_tweak_mode
 
     # Export all collected actions.
     for blender_action, track_name, on_type in blender_actions:
@@ -95,10 +96,9 @@ def gather_animations(blender_object: bpy.types.Object,
             elif blender_object.animation_data.action.name != current_action.name:
                 # Restore action that was active at start of exporting
                 blender_object.animation_data.action = current_action
-            blender_object.animation_data.use_tweak_mode = restore_tweak_mode
         if solo_track is not None:
             solo_track.is_solo = True
-
+        blender_object.animation_data.use_tweak_mode = restore_tweak_mode
     return animations, tracks
 
 
