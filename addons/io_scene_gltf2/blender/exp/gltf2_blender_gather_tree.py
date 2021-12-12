@@ -319,6 +319,9 @@ class VExportTree:
         # Export deform bones only
         if self.nodes[uuid].blender_type == VExportNode.BONE:
             if self.export_settings['gltf_def_bones'] is True and self.nodes[uuid].use_deform is False:
+                # Check if bone has some objected parented to bone. We need to keep it in that case, even if this is not a def bone
+                if len([c for c in self.nodes[uuid].children if self.nodes[c].blender_type != VExportNode.BONE]) != 0:
+                    return True
                 return False
 
         return True
