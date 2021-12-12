@@ -38,54 +38,54 @@ class BlenderImage():
             # Image is already used somewhere
             return
 
-        tmp_dir = None
+        is_binary = False
         is_placeholder = False
+
+        num_images = len(bpy.data.images)
+
         try:
+
             if img.uri is not None and not img.uri.startswith('data:'):
                 # Image stored in a file
                 path = join(dirname(gltf.filename), _uri_to_path(img.uri))
                 img_name = img_name or basename(path)
 
+                try:
+                    blender_image = bpy.data.images.load(
+                        os.path.abspath(path),
+                        check_existing=True,
+                    )
+                    img.blender_image_name = blender_image.name
+                except RuntimeError:
+                    gltf.log.error("Missing image file (index %d): %s" % (img_idx, path))
+                    blender_image = _placeholder_image(img_name, os.path.abspath(path))
+                    is_placeholder = True
+
             else:
                 # Image stored as data => create a tempfile, pack, and delete file
+                is_binary = True
                 img_data = BinaryData.get_image_data(gltf, img_idx)
                 if img_data is None:
                     return
-                img_name = img_name or 'Image_%d' % img_idx
-                tmp_dir = tempfile.TemporaryDirectory(prefix='gltfimg-')
-                filename = _filenamify(img_name) or 'Image_%d' % img_idx
-                filename += _img_extension(img)
-                path = join(tmp_dir.name, filename)
-                with open(path, 'wb') as f:
-                    f.write(img_data)
+                img_name = 'Image_%d' % img_idx
 
-            num_images = len(bpy.data.images)
+                # Create image, width and height are dummy values
+                img_pack = bpy.data.images.new(img_name, 8, 8)
+                # Set packed file data
+                img_pack.pack(data=img_data.tobytes(), data_len=len(img_data))
+                img_pack.source = 'FILE'
+                img.blender_image_name = img_pack.name
 
-            try:
-                blender_image = bpy.data.images.load(
-                    os.path.abspath(path),
-                    check_existing=tmp_dir is None,
-                )
-            except RuntimeError:
-                gltf.log.error("Missing image file (index %d): %s" % (img_idx, path))
-                blender_image = _placeholder_image(img_name, os.path.abspath(path))
-                is_placeholder = True
+            if is_binary is False:
+                if len(bpy.data.images) != num_images:  # If created a new image
+                    blender_image.name = img_name
 
-            if len(bpy.data.images) != num_images:  # If created a new image
-                blender_image.name = img_name
+                    needs_pack = gltf.import_settings['import_pack_images']
+                    if not is_placeholder and needs_pack:
+                        blender_image.pack()
+        except:
+            print("Unknown error loading texture")
 
-                needs_pack = (
-                    gltf.import_settings['import_pack_images'] or
-                    tmp_dir is not None
-                )
-                if not is_placeholder and needs_pack:
-                    blender_image.pack()
-
-            img.blender_image_name = blender_image.name
-
-        finally:
-            if tmp_dir is not None:
-                tmp_dir.cleanup()
 
 def _placeholder_image(name, path):
     image = bpy.data.images.new(name, 128, 128)
@@ -97,14 +97,3 @@ def _placeholder_image(name, path):
 def _uri_to_path(uri):
     uri = urllib.parse.unquote(uri)
     return normpath(uri)
-
-def _img_extension(img):
-    if img.mime_type == 'image/png':
-        return '.png'
-    if img.mime_type == 'image/jpeg':
-        return '.jpg'
-    return ''
-
-def _filenamify(s):
-    s = s.strip().replace(' ', '_')
-    return re.sub(r'(?u)[^-\w.]', '', s)
