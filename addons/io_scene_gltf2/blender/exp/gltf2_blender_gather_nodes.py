@@ -55,7 +55,7 @@ def gather_node(vnode, export_settings):
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
     if node.skin is None:
-        node.translation, node.rotation, node.scale = __gather_trans_rot_scale_vtree(vnode, export_settings)
+        node.translation, node.rotation, node.scale = __gather_trans_rot_scale(vnode, export_settings)
 
 
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
@@ -146,17 +146,6 @@ def __gather_children(vnode, blender_object, export_settings):
             child_node.translation = translation
             child_node.rotation = rotation
             child_node.scale = scale
-
-            # # fix translation (in blender bone's tail is the origin for children)
-            # trans, _, _ = vtree.nodes[child].blender_object.matrix_local.decompose()
-            # if trans is None:
-            #     trans = [0, 0, 0]
-            # # bones go down their local y axis
-            # if blender_bone.matrix.to_scale()[1] >= 1e-6:
-            #     bone_tail = [0, blender_bone.length / blender_bone.matrix.to_scale()[1], 0]
-            # else:
-            #     bone_tail = [0,0,0] # If scale is 0, tail == head
-            # child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
 
             parent_joint.children.append(child_node)
 
@@ -328,7 +317,7 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 def __gather_name(blender_object, export_settings):
     return blender_object.name
 
-def __gather_trans_rot_scale_vtree(vnode, export_settings):
+def __gather_trans_rot_scale(vnode, export_settings):
     if vnode.parent_uuid is None:
         # No parent, so matrix is world matrix
         trans, rot, sca = vnode.matrix_world.decompose()
@@ -345,7 +334,17 @@ def __gather_trans_rot_scale_vtree(vnode, export_settings):
     rot = __convert_swizzle_rotation(rot, export_settings)
     sca = __convert_swizzle_scale(sca, export_settings)
 
-    #TODOVTREE check if collection offset is still needed
+    if vnode.blender_object.instance_type == 'COLLECTION' and vnode.blender_object.instance_collection:
+        offset = -__convert_swizzle_location(
+            vnode.blender_object.instance_collection.instance_offset, export_settings)
+
+        s = Matrix.Diagonal(sca).to_4x4()
+        r = rot.to_matrix().to_4x4()
+        t = Matrix.Translation(trans).to_4x4()
+        o = Matrix.Translation(offset).to_4x4()
+        m = t @ r @ s @ o
+
+        trans = m.translation
 
     translation, rotation, scale = (None, None, None)
     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
@@ -361,68 +360,6 @@ def __gather_trans_rot_scale_vtree(vnode, export_settings):
     if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
         scale = [sca[0], sca[1], sca[2]]
     return translation, rotation, scale
-
-# def __gather_trans_rot_scale(blender_object, export_settings):
-#     if blender_object.matrix_parent_inverse == Matrix.Identity(4):
-#         trans = blender_object.location
-#
-#         if blender_object.rotation_mode in ['QUATERNION', 'AXIS_ANGLE']:
-#             rot = blender_object.rotation_quaternion
-#         else:
-#             rot = blender_object.rotation_euler.to_quaternion()
-#
-#         sca = blender_object.scale
-#     else:
-#         # matrix_local = matrix_parent_inverse*location*rotation*scale
-#         # Decomposing matrix_local gives less accuracy, but is needed if matrix_parent_inverse is not the identity.
-#
-#
-#         if blender_object.matrix_local[3][3] != 0.0:
-#             trans, rot, sca = blender_object.matrix_local.decompose()
-#         else:
-#             # Some really weird cases, scale is null (if parent is null when evaluation is done)
-#             print_console('WARNING', 'Some nodes are 0 scaled during evaluation. Result can be wrong')
-#             trans = blender_object.location
-#             if blender_object.rotation_mode in ['QUATERNION', 'AXIS_ANGLE']:
-#                 rot = blender_object.rotation_quaternion
-#             else:
-#                 rot = blender_object.rotation_euler.to_quaternion()
-#             sca = blender_object.scale
-#
-#     # make sure the rotation is normalized
-#     rot.normalize()
-#
-#     trans = __convert_swizzle_location(trans, export_settings)
-#     rot = __convert_swizzle_rotation(rot, export_settings)
-#     sca = __convert_swizzle_scale(sca, export_settings)
-#
-#     if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-#         offset = -__convert_swizzle_location(
-#             blender_object.instance_collection.instance_offset, export_settings)
-#
-#         s = Matrix.Diagonal(sca).to_4x4()
-#         r = rot.to_matrix().to_4x4()
-#         t = Matrix.Translation(trans).to_4x4()
-#         o = Matrix.Translation(offset).to_4x4()
-#         m = t @ r @ s @ o
-#
-#         trans = m.translation
-#
-#     translation, rotation, scale = (None, None, None)
-#     trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
-#                                    gltf2_blender_math.round_if_near(trans[2], 0.0)
-#     rot[0], rot[1], rot[2], rot[3] = gltf2_blender_math.round_if_near(rot[0], 1.0), gltf2_blender_math.round_if_near(rot[1], 0.0), \
-#                                      gltf2_blender_math.round_if_near(rot[2], 0.0), gltf2_blender_math.round_if_near(rot[3], 0.0)
-#     sca[0], sca[1], sca[2] = gltf2_blender_math.round_if_near(sca[0], 1.0), gltf2_blender_math.round_if_near(sca[1], 1.0), \
-#                              gltf2_blender_math.round_if_near(sca[2], 1.0)
-#     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
-#         translation = [trans[0], trans[1], trans[2]]
-#     if rot[0] != 1.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 0.0:
-#         rotation = [rot[1], rot[2], rot[3], rot[0]]
-#     if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
-#         scale = [sca[0], sca[1], sca[2]]
-#     return translation, rotation, scale
-
 
 def __gather_skin(vnode, blender_object, export_settings):
     modifiers = {m.type: m for m in blender_object.modifiers}
@@ -456,28 +393,6 @@ def __gather_skin(vnode, blender_object, export_settings):
 
 def __gather_weights(blender_object, export_settings):
     return None
-
-
-def __get_correction_node(blender_object, export_settings):
-    correction_quaternion = __convert_swizzle_rotation(
-        Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)), export_settings)
-    correction_quaternion = [correction_quaternion[1], correction_quaternion[2],
-                             correction_quaternion[3], correction_quaternion[0]]
-    return gltf2_io.Node(
-        camera=None,
-        children=[],
-        extensions=None,
-        extras=None,
-        matrix=None,
-        mesh=None,
-        name=blender_object.name + '_Orientation',
-        rotation=correction_quaternion,
-        scale=None,
-        skin=None,
-        translation=None,
-        weights=None
-    )
-
 
 def __convert_swizzle_location(loc, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""
