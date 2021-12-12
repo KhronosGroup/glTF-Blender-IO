@@ -55,7 +55,6 @@ class BlenderImage():
                         os.path.abspath(path),
                         check_existing=True,
                     )
-                    img.blender_image_name = blender_image.name
                 except RuntimeError:
                     gltf.log.error("Missing image file (index %d): %s" % (img_idx, path))
                     blender_image = _placeholder_image(img_name, os.path.abspath(path))
@@ -79,6 +78,7 @@ class BlenderImage():
             if is_binary is False:
                 if len(bpy.data.images) != num_images:  # If created a new image
                     blender_image.name = img_name
+                    img.blender_image_name = img_name
 
                     needs_pack = gltf.import_settings['import_pack_images']
                     if not is_placeholder and needs_pack:
