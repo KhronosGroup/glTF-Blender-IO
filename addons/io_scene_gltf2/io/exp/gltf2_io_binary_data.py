@@ -20,10 +20,17 @@ from io_scene_gltf2.io.com import gltf2_io_constants
 class BinaryData:
     """Store for gltf binary data that can later be stored in a buffer."""
 
-    def __init__(self, data: bytes):
+    def __init__(self, data: bytes, byte_stride=None):
         if not isinstance(data, bytes):
             raise TypeError("Data is not a bytes array")
         self.data = data
+
+        # Byte stride to set when the data is converted to a BufferView
+        self.byte_stride = byte_stride
+
+        # Set to the generated buffer view if the data is shared between multiple source
+        # Ex: When accessor data is interleaved
+        self.buffer_view = None
 
     def __eq__(self, other):
         return self.data == other.data
