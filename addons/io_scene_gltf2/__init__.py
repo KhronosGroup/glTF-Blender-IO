@@ -461,14 +461,13 @@ class ExportGLTF2_Base:
         self.will_save_settings = False
         if settings:
             try:
+                if 'export_selected' in settings.keys(): # Back compatibility for export_selected --> use_selection
+                    setattr(self, "use_selection", settings['export_selected'])
+                    settings["use_selection"] = settings['export_selected']
+                    del settings['export_selected']
+                    print("export_selected is now renamed use_selection, and will be deleted in a few release")
                 for (k, v) in settings.items():
-                    if k == "export_selected": # Back compatibility for export_selected --> use_selection
-                        setattr(self, "use_selection", v)
-                        del settings[k]
-                        settings["use_selection"] = v
-                        print("export_selected is now renamed use_selection, and will be deleted in a few release")
-                    else:
-                        setattr(self, k, v)
+                    setattr(self, k, v)
                 self.will_save_settings = True
 
             except (AttributeError, TypeError):
@@ -503,7 +502,8 @@ class ExportGLTF2_Base:
             x: getattr(self, x) for x in dir(all_props)
             if (x.startswith("export_") or x in exceptional) and all_props.get(x) is not None
         }
-
+        if 'export_selected' in export_props.keys():
+            del export_props['export_selected'] # Do not save this property, only here for backward compatibility
         context.scene[self.scene_key] = export_props
 
     def execute(self, context):
