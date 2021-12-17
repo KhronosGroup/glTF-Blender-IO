@@ -35,13 +35,11 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
-    #TODOTREE remove this only_bone_children checks
-    children, only_bone_children = __gather_children(vnode, blender_object, export_settings)
 
     skin = __gather_skin(vnode, blender_object, export_settings)
     node = gltf2_io.Node(
         camera=__gather_camera(blender_object, export_settings),
-        children=children,
+        children=__gather_children(vnode, blender_object, export_settings),
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
@@ -78,7 +76,6 @@ def __gather_camera(blender_object, export_settings):
 
 def __gather_children(vnode, blender_object, export_settings):
     children = []
-    only_bone_children = True # True by default, will be set to False if needed
 
     vtree = export_settings['vtree']
 
@@ -86,7 +83,6 @@ def __gather_children(vnode, blender_object, export_settings):
     for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
         node = gather_node(c, export_settings)
         if node is not None:
-            only_bone_children = False
             children.append(node)
 
 
@@ -105,7 +101,6 @@ def __gather_children(vnode, blender_object, export_settings):
         # Object parented to bones
         direct_bone_children = []
         for n in [vtree.nodes[i] for i in vtree.get_all_bones(vnode.uuid)]:
-            only_bone_children = False
             direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE])
 
 
@@ -150,7 +145,7 @@ def __gather_children(vnode, blender_object, export_settings):
 
             parent_joint.children.append(child_node)
 
-    return children, only_bone_children
+    return children
 
 
 def __gather_extensions(blender_object, export_settings):
