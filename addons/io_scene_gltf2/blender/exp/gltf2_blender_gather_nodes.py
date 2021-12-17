@@ -35,6 +35,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
+    #TODOTREE remove this only_bone_children checks
     children, only_bone_children = __gather_children(vnode, blender_object, export_settings)
 
     camera = None
