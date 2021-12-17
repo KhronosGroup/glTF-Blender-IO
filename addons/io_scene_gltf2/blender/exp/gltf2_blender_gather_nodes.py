@@ -67,6 +67,8 @@ def gather_node(vnode, export_settings):
         skin = __gather_skin(vnode, blender_object, export_settings)
         weights = __gather_weights(blender_object, export_settings)
 
+    #TODOTREE manage dupli show instancer
+
     node = gltf2_io.Node(
         camera=camera,
         children=children,

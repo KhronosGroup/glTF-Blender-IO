@@ -98,7 +98,7 @@ class VExportTree:
         for blender_object in [obj.original for obj in depsgraph.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4))
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, armature_uuid=None):
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, armature_uuid=None, dupli_world_matrix=None):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
@@ -156,7 +156,9 @@ class VExportTree:
 
         # World Matrix
         # Store World Matrix for objects
-        if node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
+        if dupli_world_matrix is not None:
+            node.matrix_world = dupli_world_matrix
+        elif node.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
             # Matrix World of object is expressed based on collection instance objects are
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
@@ -178,7 +180,7 @@ class VExportTree:
         ###### Manage children ######
 
         # standard children
-        if blender_bone is None:
+        if blender_bone is None and blender_object.is_instancer is False:
             for child_object in blender_object.children:
                 if child_object.parent_bone:
                     # Object parented to bones
@@ -211,6 +213,13 @@ class VExportTree:
         if blender_bone is not None:
             for child_object in [c for c in blender_object.children if c.parent_bone is not None and c.parent_bone == blender_bone.name]:
                 self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world)
+
+        # Duplis
+        if blender_object.is_instancer is True:
+            #TODOTREE Manage show instancer
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            for (dupl, mat) in [(dup.object.original, dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(dup.parent.original) == id(blender_object)]:
+                self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, dupli_world_matrix=mat)
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
