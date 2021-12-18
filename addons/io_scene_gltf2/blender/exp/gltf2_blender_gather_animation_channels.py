@@ -98,7 +98,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             if len(channel_group) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None, False)
+            channel = __gather_animation_channel(channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None, True)
             if channel is not None:
                 channels.append(channel)
 
