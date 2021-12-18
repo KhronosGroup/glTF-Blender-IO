@@ -54,6 +54,10 @@ def gather_animations(  obj_uuid: int,
                 track.is_solo = False
                 break
 
+    # Remove any tweak mode. Restore after export
+    if blender_object.animation_data:
+        restore_tweak_mode = blender_object.animation_data.use_tweak_mode
+
     # Export all collected actions.
     for blender_action, track_name, on_type in blender_actions:
 
@@ -62,10 +66,7 @@ def gather_animations(  obj_uuid: int,
             if blender_object.animation_data.action is None \
                     or (blender_object.animation_data.action.name != blender_action.name):
                 if blender_object.animation_data.is_property_readonly('action'):
-                    # NLA stuff: some track are on readonly mode, we can't change action
-                    error = "Action is readonly. Please check NLA editor"
-                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
-                    continue
+                    blender_object.animation_data.use_tweak_mode = False
                 try:
                     blender_object.animation_data.action = blender_action
                 except:
@@ -99,7 +100,7 @@ def gather_animations(  obj_uuid: int,
                 blender_object.animation_data.action = current_action
         if solo_track is not None:
             solo_track.is_solo = True
-
+        blender_object.animation_data.use_tweak_mode = restore_tweak_mode
     return animations, tracks
 
 
