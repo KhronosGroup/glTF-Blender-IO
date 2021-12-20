@@ -262,7 +262,7 @@ def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
     if image.source != 'FILE':
         return False
     if image.filepath_raw == '':
-        return image.file_format == 'JPEG' or image.packed_file.data[:3] == b'\xff\xd8\xff'
+        return image.packed_file.data[:3] == b'\xff\xd8\xff'
     else:
         path = image.filepath_raw.lower()
         return path.endswith('.jpg') or path.endswith('.jpeg') or path.endswith('.jpe')
