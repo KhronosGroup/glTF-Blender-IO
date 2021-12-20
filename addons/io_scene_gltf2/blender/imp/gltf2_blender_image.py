@@ -48,11 +48,15 @@ class BlenderImage():
             if img.uri is not None and not img.uri.startswith('data:'):
                 # Image stored in a file
                 path = join(dirname(gltf.filename), _uri_to_path(img.uri))
+                path = os.path.abspath(path)
+                if bpy.data.is_saved and bpy.context.preferences.filepaths.use_relative_paths:
+                    path = bpy.path.relpath(path)
+
                 img_name = img_name or basename(path)
 
                 try:
                     blender_image = bpy.data.images.load(
-                        os.path.abspath(path),
+                        path,
                         check_existing=True,
                     )
                 except RuntimeError:
@@ -61,7 +65,7 @@ class BlenderImage():
                     is_placeholder = True
 
             else:
-                # Image stored as data => create a tempfile, pack, and delete file
+                # Image stored as data => pack
                 is_binary = True
                 img_data = BinaryData.get_image_data(gltf, img_idx)
                 if img_data is None:
