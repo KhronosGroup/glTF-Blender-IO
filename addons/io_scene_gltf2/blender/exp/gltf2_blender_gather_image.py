@@ -261,7 +261,7 @@ def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket, export_se
 def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
     if image.source != 'FILE':
         return False
-    if image.filepath_raw == '':
+    if image.filepath_raw == '' and image.packed_file:
         return image.packed_file.data[:3] == b'\xff\xd8\xff'
     else:
         path = image.filepath_raw.lower()
