@@ -48,7 +48,11 @@ class BlenderImage():
             if img.uri is not None and not img.uri.startswith('data:'):
                 # Image stored in a file
                 path = join(dirname(gltf.filename), _uri_to_path(img.uri))
-                path = os.path.abspath(path)
+                try:
+                    path = bpy.path.relpath(path)
+                except ValueError:
+                    # May happen on Windows if on different drives, eg. C:\ and D:\
+                    pass
                 if bpy.data.is_saved and bpy.context.preferences.filepaths.use_relative_paths:
                     path = bpy.path.relpath(path)
 
