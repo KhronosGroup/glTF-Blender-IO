@@ -189,8 +189,7 @@ class ExportImage:
     def __encode_from_image(self, image: bpy.types.Image) -> bytes:
         # See if there is an existing file we can use.
         data = None
-        if image.source == 'FILE' and image.file_format == self.file_format and \
-                not image.is_dirty:
+        if image.source == 'FILE' and not image.is_dirty:
             if image.packed_file is not None:
                 data = image.packed_file.data
             else:
