@@ -159,10 +159,12 @@ class ExportGLTF2_Base:
                 ('JPEG', 'JPEG Format (.jpg)',
                 'Save images as JPEGs. (Images that need alpha are saved as PNGs though.) '
                 'Be aware of a possible loss in quality'),
+                ('NONE', 'None',
+                 'Don\'t export images.'),
                ),
         description=(
             'Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for web '
-            'applications due to the smaller file size'
+            'applications due to the smaller file size. Alternatively they can be omitted if they are not needed'
         ),
         default='AUTO'
     )
