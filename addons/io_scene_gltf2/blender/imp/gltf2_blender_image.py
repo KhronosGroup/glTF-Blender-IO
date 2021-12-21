@@ -43,8 +43,6 @@ class BlenderImage():
 
         num_images = len(bpy.data.images)
 
-        try:
-
             if img.uri is not None and not img.uri.startswith('data:'):
                 # Image stored in a file
                 path = join(dirname(gltf.filename), _uri_to_path(img.uri))
@@ -91,9 +89,6 @@ class BlenderImage():
                     needs_pack = gltf.import_settings['import_pack_images']
                     if not is_placeholder and needs_pack:
                         blender_image.pack()
-        except:
-            print("Unknown error loading texture")
-
 
 def _placeholder_image(name, path):
     image = bpy.data.images.new(name, 128, 128)
