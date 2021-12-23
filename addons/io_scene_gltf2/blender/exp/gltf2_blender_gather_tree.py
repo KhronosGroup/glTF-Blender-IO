@@ -307,6 +307,7 @@ class VExportTree:
 
             # If parent_kept_uuid is None, and parent_uuid was not, add to root list
             if self.nodes[uuid].parent_uuid is not None and parent_kept_uuid is None:
+                self.tree_troncated = True
                 self.roots.append(uuid)
 
             # Modify parent uuid
