@@ -107,6 +107,10 @@ class Keyframe:
     def value(self, value: typing.List[float]):
         self.__value = self.__set_indexed(value)
 
+    @value.setter
+    def value_total(self, value: typing.List[float]):
+        self.__value = value
+
     @property
     def in_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
         if self.__in_tangent is None:
@@ -283,14 +287,13 @@ def gather_keyframes(blender_obj_uuid: str,
                             parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[blender_obj_uuid].parent_uuid].blender_object.matrix_world
 
                         trans, rot, sca = (parent_mat.inverted_safe() @ export_settings['vtree'].nodes[blender_obj_uuid].blender_object.matrix_world).decompose()
-                        key.value = {
+                        key.value_total = {
                             "location": trans,
                             "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
                             "rotation_euler": rot.to_euler(),
                             "rotation_quaternion": rot,
                             "scale": sca
                         }[target]
-                        complete_key(key, non_keyed_values)
                 else:
                     #TODOTREE
                     key.value = get_sk_driver_values(driver_obj, frame, channels, export_settings)
