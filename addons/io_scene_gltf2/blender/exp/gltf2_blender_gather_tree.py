@@ -150,13 +150,6 @@ class VExportTree:
         if parent_uuid is not None and self.nodes[parent_uuid].blender_type == VExportNode.BONE and node.blender_type != VExportNode.BONE:
             node.parent_bone_uuid = parent_uuid
 
-        # Now we know parent and child type, we can set parent_type
-        # TODO
-
-
-
-
-
         # World Matrix
         # Store World Matrix for objects
         if dupli_world_matrix is not None:
@@ -287,7 +280,6 @@ class VExportTree:
     def recursive_filter(self, uuid, parent_kept_uuid):
         children = self.nodes[uuid].children.copy()
 
-        # TODO manage depend on node type
         new_parent_kept_uuid = None
         if self.nodes[uuid].keep_tag is False:
             new_parent_kept_uuid = parent_kept_uuid
@@ -313,7 +305,6 @@ class VExportTree:
             # Modify parent uuid
             self.nodes[uuid].parent_uuid = parent_kept_uuid
 
-        # TODO check type
         for child in children:
             self.recursive_filter(child, new_parent_kept_uuid)
 
