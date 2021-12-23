@@ -60,12 +60,10 @@ def gather_animation_sampler(channels: typing.Tuple[bpy.types.FCurve],
                                                  bake_channel,
                                                  driver_obj_uuid,
                                                  export_settings)
-    #TODOTREE
-    # if blender_object.parent is not None:
-    #     matrix_parent_inverse = blender_object.matrix_parent_inverse.copy().freeze()
-    # else:
-    #     matrix_parent_inverse = mathutils.Matrix.Identity(4).freeze()
-    matrix_parent_inverse = mathutils.Matrix.Identity(4).freeze()
+    if blender_object.parent is not None:
+        matrix_parent_inverse = blender_object.matrix_parent_inverse.copy().freeze()
+    else:
+        matrix_parent_inverse = mathutils.Matrix.Identity(4).freeze()
 
     input = __gather_input(channels, obj_uuid, is_armature, non_keyed_values,
                          bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj_uuid, node_channel_is_animated, export_settings)
@@ -250,7 +248,7 @@ def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    export_settings
                    ) -> gltf2_io.Accessor:
     """Gather the key time codes."""
-    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_obj_uuid,
+    keyframes, is_baked = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_obj_uuid,
                                                                                   is_armature,
                                                                                   channels,
                                                                                   non_keyed_values,
@@ -335,7 +333,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                     export_settings
                     ) -> gltf2_io.Accessor:
     """Gather the data of the keyframes."""
-    keyframes = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_obj_uuid,
+    keyframes, is_baked = gltf2_blender_gather_animation_sampler_keyframes.gather_keyframes(blender_obj_uuid,
                                                                                   is_armature,
                                                                                   channels,
                                                                                   non_keyed_values,
@@ -347,6 +345,9 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                                                                                   driver_obj,
                                                                                   node_channel_is_animated,
                                                                                   export_settings)
+
+    if is_baked is True:
+        parent_inverse = mathutils.Matrix.Identity(4).freeze()
 
     blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid].blender_object if is_armature is True else None
 

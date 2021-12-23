@@ -204,7 +204,7 @@ def gather_keyframes(blender_obj_uuid: str,
                      driver_obj_uuid,
                      node_channel_is_animated: bool,
                      export_settings
-                     ) -> typing.List[Keyframe]:
+                     ) -> typing.Tuple[typing.List[Keyframe], bool]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
 
     blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid].blender_object if is_armature is True is not None else None
@@ -222,7 +222,8 @@ def gather_keyframes(blender_obj_uuid: str,
         end_frame = bake_range_end
 
     keyframes = []
-    if needs_baking(blender_object_if_armature, channels, export_settings):
+    baking_is_needed = needs_baking(blender_object_if_armature, channels, export_settings)
+    if baking_is_needed:
         # Bake the animation, by evaluating the animation for all frames
         # TODO: maybe baking can also be done with FCurve.convert_to_samples
 
@@ -358,17 +359,16 @@ def gather_keyframes(blender_obj_uuid: str,
 
         if node_channel_is_animated is True: # fcurve on this bone for this property
              # Keep animation, but keep only 2 keyframes if data are not changing
-             return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
+             return ([keyframes[0], keyframes[-1]], needs_baking) if cst is True and len(keyframes) >= 2 else (keyframes, needs_baking)
         else: # bone is not animated (no fcurve)
             # Not keeping if not changing property
-            return None if cst is True else keyframes
+            return (None, needs_baking) if cst is True else (keyframes, needs_baking)
     else:
         # For objects, if all values are the same, we keep only first and last
         cst = fcurve_is_constant(keyframes)
-        return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
+        return ([keyframes[0], keyframes[-1]], needs_baking) if cst is True and len(keyframes) >= 2 else (keyframes, needs_baking)
 
-
-    return keyframes
+    return (keyframes, needs_baking)
 
 
 def fcurve_is_constant(keyframes):
