@@ -191,8 +191,6 @@ class VExportTree:
             for dupli_object in blender_object.instance_collection.objects:
                 if dupli_object.parent is not None:
                     continue
-                if dupli_object.type == "ARMATURE":
-                    continue # There is probably a proxy #TODOPROXY remove check ?
                 self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world)
 
         # Armature : children are bones with no parent
