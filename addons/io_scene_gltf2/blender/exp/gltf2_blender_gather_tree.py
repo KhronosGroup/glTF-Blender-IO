@@ -84,6 +84,8 @@ class VExportTree:
 
         self.export_settings = export_settings
 
+        self.tree_troncated = False
+
     def add_node(self, node):
         self.nodes[node.uuid] = node
 
@@ -288,6 +290,7 @@ class VExportTree:
         # TODO manage depend on node type
         new_parent_kept_uuid = None
         if self.nodes[uuid].keep_tag is False:
+            self.tree_troncated = True
             new_parent_kept_uuid = parent_kept_uuid
             # Need to modify tree
             if self.nodes[uuid].parent_uuid is not None:
