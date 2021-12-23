@@ -290,7 +290,6 @@ class VExportTree:
         # TODO manage depend on node type
         new_parent_kept_uuid = None
         if self.nodes[uuid].keep_tag is False:
-            self.tree_troncated = True
             new_parent_kept_uuid = parent_kept_uuid
             # Need to modify tree
             if self.nodes[uuid].parent_uuid is not None:
@@ -303,6 +302,7 @@ class VExportTree:
 
             # If parent_uuid is not parent_kept_uuid, we need to modify children list of parent_kept_uuid
             if parent_kept_uuid != self.nodes[uuid].parent_uuid and parent_kept_uuid is not None:
+                self.tree_troncated = True
                 self.nodes[parent_kept_uuid].children.append(uuid)
 
             # If parent_kept_uuid is None, and parent_uuid was not, add to root list
