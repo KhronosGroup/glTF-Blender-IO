@@ -90,7 +90,6 @@ def __gather_children(vnode, blender_object, export_settings):
     if vnode.blender_type == gltf2_blender_gather_tree.VExportNode.ARMATURE:
         root_joints = []
 
-        #TODOTREE for object parented to bone when bone is not deform, and only def bone is checked
         all_armature_children = vnode.children
         root_bones_uuid = [c for c in all_armature_children if export_settings['vtree'].nodes[c].blender_type == VExportNode.BONE]
         for bone_uuid in root_bones_uuid:
