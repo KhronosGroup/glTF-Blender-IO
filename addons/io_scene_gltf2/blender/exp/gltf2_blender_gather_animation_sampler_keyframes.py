@@ -225,7 +225,6 @@ def gather_keyframes(blender_obj_uuid: str,
     baking_is_needed = needs_baking(blender_object_if_armature, channels, export_settings)
     if baking_is_needed:
         # Bake the animation, by evaluating the animation for all frames
-        # TODO: maybe baking can also be done with FCurve.convert_to_samples
 
         if blender_object_if_armature is not None and driver_obj_uuid is None:
             if bake_bone is None:
