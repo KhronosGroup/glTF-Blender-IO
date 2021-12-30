@@ -41,6 +41,3 @@ def register():
 def unregister():
     bpy.utils.unregister_class(ExampleImporterExtensionProperties)
     del bpy.types.Scene.ExampleImporterExtensionProperties
-
-
-# TODO: SET EXTENSIONS REQUIRED

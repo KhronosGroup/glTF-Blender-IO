@@ -16,6 +16,7 @@ import bpy
 from math import pi
 
 from ..com.gltf2_blender_extras import set_extras
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderLight():
@@ -27,6 +28,9 @@ class BlenderLight():
     def create(gltf, light_id):
         """Light creation."""
         pylight = gltf.data.extensions['KHR_lights_punctual']['lights'][light_id]
+
+        import_user_extensions('gather_import_light_before_hook', gltf, pylight, light_id)
+
         if pylight['type'] == "directional":
             light = BlenderLight.create_directional(gltf, light_id)
         elif pylight['type'] == "point":
@@ -43,6 +47,8 @@ class BlenderLight():
         # TODO range
 
         set_extras(light, pylight.get('extras'))
+
+        import_user_extensions('gather_import_light_after_hook', gltf, pylight, light_id, light)
 
         return light
 
