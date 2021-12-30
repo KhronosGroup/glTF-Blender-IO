@@ -16,6 +16,7 @@ import bpy
 
 from ...io.imp.gltf2_io_binary import BinaryData
 from .gltf2_blender_animation_utils import make_fcurve
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderWeightAnim():
@@ -29,6 +30,9 @@ class BlenderWeightAnim():
         vnode = gltf.vnodes[vnode_id]
 
         node_idx = vnode.mesh_node_idx
+
+        import_user_extensions('gather_import_animation_weight_before_hook', gltf, vnode, anim_idx, vnode_id, node_idx, gltf.data.animations[anim_idx])
+
         if node_idx is None:
             return
 
@@ -90,3 +94,5 @@ class BlenderWeightAnim():
                 max_weight = max(coords[1:2])
                 if min_weight < kb.slider_min: kb.slider_min = min_weight
                 if max_weight > kb.slider_max: kb.slider_max = max_weight
+
+        import_user_extensions('gather_import_animation_weight_after_hook', gltf, vnode, anim_idx, vnode_id, node_idx, animation)

@@ -28,4 +28,8 @@ gather_import_image_before_hook(self, gltf, img, img_idx)
 gather_import_image_after_hook(self, gltf, img, img_idx, blender_image)
 gather_import_texture_before_hook(self, gltf, pytexture, mh, tex_info, location, label, color_socket, alpha_socket, is_data)
 gather_import_texture_after_hook(self, gltf, pytexture, node_tree, mh, tex_info, location, label, color_socket, alpha_socket, is_data)
+gather_import_animation_channel_before_hook(self, gltf, animation, vnode, path, anim_idx, node_idx, channel)
+gather_import_animation_channel_before_hook(self, gltf, animation, vnode, path, anim_idx, node_idx, channel, blender_action)
+gather_import_animation_weight_before_hook(self, gltf, vnode, anim_idx, vnode_id, node_idx, blender_animation)
+gather_import_animation_weight_after_hook(self, gltf, vnode, anim_idx, vnode_id, node_idx, blender_animation)
 ```
