@@ -21,6 +21,7 @@ from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
 from ...io.com.gltf2_io_debug import print_console
 from .gltf2_io_draco_compression_extension import decode_primitive
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderMesh():
@@ -41,6 +42,9 @@ COLOR_MAX = 8
 
 def create_mesh(gltf, mesh_idx, skin_idx):
     pymesh = gltf.data.meshes[mesh_idx]
+
+    import_user_extensions('gather_import_mesh_before_hook', gltf, pymesh, mesh_idx, skin_idx)
+
     name = pymesh.name or 'Mesh_%d' % mesh_idx
     mesh = bpy.data.meshes.new(name)
 
@@ -55,6 +59,8 @@ def create_mesh(gltf, mesh_idx, skin_idx):
     finally:
         if tmp_ob:
             bpy.data.objects.remove(tmp_ob)
+
+    import_user_extensions('gather_import_mesh_before_hook', gltf, pymesh, mesh_idx, skin_idx, mesh)
 
     return mesh
 
