@@ -413,6 +413,11 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
 
     # If tree is troncated, sampling is forced
     if export_settings['vtree'].tree_troncated is True:
+        print("troncated")
+        return True
+
+    if export_settings[gltf2_blender_export_keys.SKINS] is True and export_settings[gltf2_blender_export_keys.DEF_BONES_ONLY] is True:
+        print("deform")
         return True
 
     # Sampling due to unsupported interpolation
