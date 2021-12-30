@@ -381,6 +381,10 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
     if export_settings[gltf2_blender_export_keys.FORCE_SAMPLING]:
         return True
 
+    # Use want to export only deformation bones
+    if export_settings[gltf2_blender_export_keys.SKINS] is True and export_settings[gltf2_blender_export_keys.DEF_BONES_ONLY] is True:
+        return True
+
     # Sampling due to unsupported interpolation
     interpolation = [c for c in channels if c is not None][0].keyframe_points[0].interpolation
     if interpolation not in ["BEZIER", "LINEAR", "CONSTANT"]:
