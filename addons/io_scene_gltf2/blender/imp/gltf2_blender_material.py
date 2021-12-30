@@ -18,6 +18,7 @@ from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_pbrMetallicRoughness import MaterialHelper, pbr_metallic_roughness
 from .gltf2_blender_KHR_materials_pbrSpecularGlossiness import pbr_specular_glossiness
 from .gltf2_blender_KHR_materials_unlit import unlit
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderMaterial():
@@ -29,6 +30,8 @@ class BlenderMaterial():
     def create(gltf, material_idx, vertex_color):
         """Material creation."""
         pymaterial = gltf.data.materials[material_idx]
+
+        import_user_extensions('gather_import_material_before_hook', gltf, pymaterial, material_idx, vertex_color)
 
         name = pymaterial.name
         if name is None:
@@ -55,6 +58,8 @@ class BlenderMaterial():
             pbr_specular_glossiness(mh)
         else:
             pbr_metallic_roughness(mh)
+
+        import_user_extensions('gather_import_material_after_hook', gltf, pymaterial, material_idx, vertex_color, mat)
 
     @staticmethod
     def set_double_sided(pymaterial, mat):

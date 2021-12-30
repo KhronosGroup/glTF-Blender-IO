@@ -427,7 +427,7 @@ Third-party glTF Extensions
 
 It is possible for Python developers to add Blender support for additional glTF extensions by writing their
 own third-party add-on, without modifying this glTF add-on. For more information, `see the example on GitHub
-<https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons/example_gltf_exporter_extension>`__ and if needed,
+<https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons>`__ and if needed,
 `register an extension prefix <https://github.com/KhronosGroup/glTF/blob/master/extensions/Prefixes.md>`__.
 
 
