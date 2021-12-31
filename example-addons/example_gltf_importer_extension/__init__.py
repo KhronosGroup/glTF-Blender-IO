@@ -98,8 +98,8 @@ def register_panel():
     except Exception:
         pass
 
-    # If the glTF exporter is disabled, we need to unregister the extension panel
-    # Just return a function to the exporter so it can unregister the panel
+    # If the glTF importer is disabled, we need to unregister the extension panel
+    # Just return a function to the importer so it can unregister the panel
     return unregister_panel
 
 
