@@ -1,4 +1,5 @@
 import bpy
+from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 
 bl_info = {
     "name": "Example glTF Importer Extension",
@@ -25,6 +26,7 @@ class glTF2ImportUserExtension:
 
     def __init__(self):
         self.properties = bpy.context.scene.ExampleImporterExtensionProperties
+        self.extensions = [Extension(name="TEST_extension1", extension={}, required=True), Extension(name="TEST_extension2", extension={}, required=False)]
 
     def gather_import_node_before_hook(self, vnode, gltf_node):
         if self.properties.enabled:

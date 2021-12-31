@@ -8,6 +8,13 @@ class glTF2ImportUserExtension:
         pass
 ```
 
+If your importer extension supports custom glTF extensions, add them in the `__init__` by doing the following:
+
+```python
+    def __init__(self):
+        self.extensions = [Extension(name="TEST_extension1", extension={}, required=True), Extension(name="TEST_extension2", extension={}, required=False)]
+```
+
 Next, define functions that contain the data of the extension you would like to include. Write those functions for each type you want to include extensions for. Currently implemented are:
 
 ```

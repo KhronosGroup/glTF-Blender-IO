@@ -58,6 +58,13 @@ class glTFImporter():
             'KHR_draco_mesh_compression'
         ]
 
+        # Add extensions required supported by custom import extensions
+        for import_extension in self.import_user_extensions:
+            if hasattr(import_extension, "extensions"):
+                for custom_extension in import_extension.extensions:
+                    if custom_extension.required:
+                        self.extensions_managed.append(custom_extension.name)
+
     @staticmethod
     def load_json(content):
         def bad_constant(val):
