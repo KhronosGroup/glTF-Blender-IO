@@ -506,7 +506,6 @@ class ExportGLTF2_Base:
             del export_props['export_selected'] # Do not save this property, only here for backward compatibility
         context.scene[self.scene_key] = export_props
 
-
     def get_export_settings(self, context):
         import os
         import datetime
