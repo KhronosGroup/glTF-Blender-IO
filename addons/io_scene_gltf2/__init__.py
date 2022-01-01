@@ -506,10 +506,10 @@ class ExportGLTF2_Base:
             del export_props['export_selected'] # Do not save this property, only here for backward compatibility
         context.scene[self.scene_key] = export_props
 
-    def execute(self, context):
+
+    def get_export_settings(self, context):
         import os
         import datetime
-        from .blender.exp import gltf2_blender_export
 
         if self.will_save_settings:
             self.save_settings(context)
@@ -633,6 +633,13 @@ class ExportGLTF2_Base:
         export_settings['gltf_user_extensions'] = user_extensions
         export_settings['pre_export_callbacks'] = pre_export_callbacks
         export_settings['post_export_callbacks'] = post_export_callbacks
+
+        return export_settings
+
+    def execute(self, context):
+        from .blender.exp import gltf2_blender_export
+
+        export_settings = self.get_export_settings(context)
 
         return gltf2_blender_export.save(context, export_settings)
 
