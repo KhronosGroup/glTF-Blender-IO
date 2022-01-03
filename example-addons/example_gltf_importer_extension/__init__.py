@@ -61,7 +61,6 @@ class GLTF_PT_UserExtensionPanel(bpy.types.Panel):
         box = layout.box()
         box.label(text=glTF_extension_name)
 
-        props = bpy.context.scene.ExampleExtensionProperties
         layout.prop(props, 'float_property', text="Some float value")
 
 
