@@ -167,7 +167,6 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
         bones = export_settings['vtree'].get_all_bones(blender_obj_uuid_if_armature)
 
         for bone_uuid in bones:
-            #TODOTREE : Check what happen for non-baked
             blender_bone = export_settings['vtree'].nodes[bone_uuid].blender_bone
 
             if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
@@ -295,8 +294,7 @@ def gather_keyframes(blender_obj_uuid: str,
                             "scale": sca
                         }[target]
                 else:
-                    #TODOTREE
-                    key.value = get_sk_driver_values(driver_obj, frame, channels, export_settings)
+                    key.value = get_sk_driver_values(driver_obj_uuid, frame, channels, export_settings)
                     complete_key(key, non_keyed_values)
             keyframes.append(key)
             frame += step
