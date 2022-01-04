@@ -875,6 +875,8 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         row = layout.row()
         row.active = operator.export_force_sampling
         row.prop(operator, 'export_def_bones')
+        if operator.export_force_sampling is False:
+            layout.label(text="Export only deformation bones is not possible when not sampling animation")
 
 
 class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
