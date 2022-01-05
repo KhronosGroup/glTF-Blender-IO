@@ -81,6 +81,37 @@ def default_key(*args, **kwargs):
 def cached(func):
     return cached_by_key(key=default_key)(func)
 
+def objectcache(func):
+
+    def reset_cache_objectcache():
+        func.__objectcache = {}
+
+    func.reset_cache = reset_cache_objectcache
+
+    @functools.wraps(func)
+    def wrapper_objectcache(*args, **kwargs):
+        cache_key_args = args
+        cache_key_args = args[:-1]
+
+        if not hasattr(func, "__objectcache"):
+            func.reset_cache()
+
+        # object is not cached yet
+        if cache_key_args[0] not in func.__objectcache.keys():
+            result = func(*args)
+            func.__objectcache = result
+            return result[cache_key_args[0]][cache_key_args[1]][cache_key_args[4]]
+        # object is in cache, but not this action
+        # We need to keep other actions
+        elif cache_key_args[1] not in func.__objectcache[cache_key_args[0]].keys():
+            result = func(*args)
+            func.__objectcache[cache_key_args[0]][cache_key_args[1]] = result[cache_key_args[0]][cache_key_args[1]]
+            return result[cache_key_args[0]][cache_key_args[1]][cache_key_args[4]]
+        # all is already cached
+        else:
+            return func.__objectcache[cache_key_args[0]][cache_key_args[1]][cache_key_args[4]]
+    return wrapper_objectcache
+
 def bonecache(func):
 
     def reset_cache_bonecache():

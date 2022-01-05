@@ -16,7 +16,7 @@ import bpy
 import mathutils
 import typing
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, bonecache
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, bonecache, objectcache
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
@@ -136,6 +136,47 @@ class Keyframe:
         self.__out_tangent = self.__set_indexed(value)
 
 
+@objectcache
+def get_object_matrix(blender_obj_uuid: str,
+                      action_name: str,
+                      bake_range_start: int,
+                      bake_range_end: int,
+                      current_frame: int,
+                      step: int,
+                      export_settings
+                    ):
+
+    data = {}
+
+    frame = bake_range_start
+    while frame <= bake_range_end:
+        bpy.context.scene.frame_set(int(frame))
+
+        for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type != [VExportNode.BONE]]:
+
+            blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+            # if this object is not animated, skip
+            if not (blender_obj.animation_data is not None and blender_obj.animation_data.action is not None):
+                continue
+
+            # calculate local matrix
+            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
+                parent_mat = mathutils.Matrix.Identity(4).freeze()
+            else:
+                parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+
+            mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
+
+            if obj_uuid not in data.keys():
+                data[obj_uuid] = {}
+            if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
+                data[obj_uuid][blender_obj.animation_data.action.name] = {}
+            data[obj_uuid][blender_obj.animation_data.action.name][frame] = mat
+
+        frame += step
+
+    return data
 
 @bonecache
 def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
@@ -266,11 +307,10 @@ def gather_keyframes(blender_obj_uuid: str,
                     "rotation_quaternion": rot,
                     "scale": scale
                 }[target_property]
+                keyframes.append(key)
+                frame += step
             else:
                 if driver_obj_uuid is None:
-                    #TODOTREE : objects selected,not animated but with non selected animated parent are not detected as animated
-                    #TODOTREE need to cache to avoid setting frame for each T/R/S (+ each object?)
-                    bpy.context.scene.frame_set(int(frame))
                     # If channel is TRS, we bake from world matrix, else this is SK
                     target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
                     if target == "value": #SK
@@ -278,14 +318,18 @@ def gather_keyframes(blender_obj_uuid: str,
                         key.value = [c.evaluate(frame) for c in channels if c is not None]
                         complete_key(key, non_keyed_values)
                     else:
-                        #TRS
-                        # calculate local matrix
-                        if export_settings['vtree'].nodes[blender_obj_uuid].parent_uuid is None:
-                            parent_mat = mathutils.Matrix.Identity(4).freeze()
-                        else:
-                            parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[blender_obj_uuid].parent_uuid].blender_object.matrix_world
+                        #TODOTREE : objects selected,not animated but with non selected animated parent are not detected as animated
 
-                        trans, rot, sca = (parent_mat.inverted_safe() @ export_settings['vtree'].nodes[blender_obj_uuid].blender_object.matrix_world).decompose()
+
+                        mat = get_object_matrix(blender_obj_uuid,
+                                action_name,
+                                bake_range_start,
+                                bake_range_end,
+                                frame,
+                                step,
+                                export_settings)
+
+                        trans, rot, sca = mat.decompose()
                         key.value_total = {
                             "location": trans,
                             "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
