@@ -307,8 +307,6 @@ def gather_keyframes(blender_obj_uuid: str,
                     "rotation_quaternion": rot,
                     "scale": scale
                 }[target_property]
-                keyframes.append(key)
-                frame += step
             else:
                 if driver_obj_uuid is None:
                     # If channel is TRS, we bake from world matrix, else this is SK
