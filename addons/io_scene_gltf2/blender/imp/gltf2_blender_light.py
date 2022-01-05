@@ -29,7 +29,7 @@ class BlenderLight():
         """Light creation."""
         pylight = gltf.data.extensions['KHR_lights_punctual']['lights'][light_id]
 
-        import_user_extensions('gather_import_light_before_hook', gltf, pylight, light_id)
+        import_user_extensions('gather_import_light_before_hook', gltf, pylight)
 
         if pylight['type'] == "directional":
             light = BlenderLight.create_directional(gltf, light_id)
@@ -48,7 +48,7 @@ class BlenderLight():
 
         set_extras(light, pylight.get('extras'))
 
-        import_user_extensions('gather_import_light_after_hook', gltf, pylight, light_id, light)
+        import_user_extensions('gather_import_light_after_hook', gltf, pylight, light)
 
         return light
 

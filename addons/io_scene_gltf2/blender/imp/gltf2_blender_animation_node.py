@@ -47,7 +47,7 @@ class BlenderNodeAnim():
         vnode = gltf.vnodes[node_idx]
         path = channel.target.path
 
-        import_user_extensions('gather_import_animation_channel_before_hook', gltf, animation, vnode, path, anim_idx, node_idx, channel)
+        import_user_extensions('gather_import_animation_channel_before_hook', gltf, animation, vnode, path, channel)
 
         action = BlenderNodeAnim.get_or_create_action(gltf, node_idx, animation.track_name)
 
@@ -155,7 +155,7 @@ class BlenderNodeAnim():
                 interpolation=animation.samplers[channel.sampler].interpolation,
             )
 
-        import_user_extensions('gather_import_animation_channel_after_hook', gltf, animation, vnode, path, anim_idx, node_idx, channel, action)
+        import_user_extensions('gather_import_animation_channel_after_hook', gltf, animation, vnode, path, channel, action)
 
     @staticmethod
     def get_or_create_action(gltf, node_idx, anim_name):

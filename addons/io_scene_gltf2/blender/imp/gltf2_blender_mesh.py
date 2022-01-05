@@ -43,7 +43,7 @@ COLOR_MAX = 8
 def create_mesh(gltf, mesh_idx, skin_idx):
     pymesh = gltf.data.meshes[mesh_idx]
 
-    import_user_extensions('gather_import_mesh_before_hook', gltf, pymesh, mesh_idx, skin_idx)
+    import_user_extensions('gather_import_mesh_before_hook', gltf, pymesh)
 
     name = pymesh.name or 'Mesh_%d' % mesh_idx
     mesh = bpy.data.meshes.new(name)
@@ -60,7 +60,7 @@ def create_mesh(gltf, mesh_idx, skin_idx):
         if tmp_ob:
             bpy.data.objects.remove(tmp_ob)
 
-    import_user_extensions('gather_import_mesh_before_hook', gltf, pymesh, mesh_idx, skin_idx, mesh)
+    import_user_extensions('gather_import_mesh_after_hook', gltf, pymesh, mesh)
 
     return mesh
 

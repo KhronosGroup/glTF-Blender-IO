@@ -31,7 +31,7 @@ class BlenderWeightAnim():
 
         node_idx = vnode.mesh_node_idx
 
-        import_user_extensions('gather_import_animation_weight_before_hook', gltf, vnode, anim_idx, vnode_id, node_idx, gltf.data.animations[anim_idx])
+        import_user_extensions('gather_import_animation_weight_before_hook', gltf, vnode, gltf.data.animations[anim_idx])
 
         if node_idx is None:
             return
@@ -95,4 +95,4 @@ class BlenderWeightAnim():
                 if min_weight < kb.slider_min: kb.slider_min = min_weight
                 if max_weight > kb.slider_max: kb.slider_max = max_weight
 
-        import_user_extensions('gather_import_animation_weight_after_hook', gltf, vnode, anim_idx, vnode_id, node_idx, animation)
+        import_user_extensions('gather_import_animation_weight_after_hook', gltf, vnode, animation)

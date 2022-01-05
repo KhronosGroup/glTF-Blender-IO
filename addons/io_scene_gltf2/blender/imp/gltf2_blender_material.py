@@ -31,7 +31,7 @@ class BlenderMaterial():
         """Material creation."""
         pymaterial = gltf.data.materials[material_idx]
 
-        import_user_extensions('gather_import_material_before_hook', gltf, pymaterial, material_idx, vertex_color)
+        import_user_extensions('gather_import_material_before_hook', gltf, pymaterial, vertex_color)
 
         name = pymaterial.name
         if name is None:
@@ -59,7 +59,7 @@ class BlenderMaterial():
         else:
             pbr_metallic_roughness(mh)
 
-        import_user_extensions('gather_import_material_after_hook', gltf, pymaterial, material_idx, vertex_color, mat)
+        import_user_extensions('gather_import_material_after_hook', gltf, pymaterial, vertex_color, mat)
 
     @staticmethod
     def set_double_sided(pymaterial, mat):

@@ -34,7 +34,7 @@ class BlenderImage():
         """Image creation."""
         img = gltf.data.images[img_idx]
 
-        import_user_extensions('gather_import_image_before_hook', gltf, img, img_idx)
+        import_user_extensions('gather_import_image_before_hook', gltf, img)
 
         img_name = img.name
 
@@ -88,7 +88,7 @@ class BlenderImage():
                     if not is_placeholder and needs_pack:
                         blender_image.pack()
 
-            import_user_extensions('gather_import_image_after_hook', gltf, img, img_idx, blender_image)
+            import_user_extensions('gather_import_image_after_hook', gltf, img, blender_image)
 
         except:
             print("Unknown error loading texture")
