@@ -48,8 +48,6 @@ class BlenderLight():
 
         set_extras(light, pylight.get('extras'))
 
-        import_user_extensions('gather_import_light_after_hook', gltf, vnode, pylight, light)
-
         return light
 
     @staticmethod

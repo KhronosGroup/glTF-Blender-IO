@@ -67,11 +67,17 @@ class BlenderNode():
             name = vnode.name or cam.name
             obj = bpy.data.objects.new(name, cam)
 
+            # Since we create the actual Blender object after the create call, we call the hook here
+            import_user_extensions('gather_import_camera_after_hook', gltf, vnode, obj, cam)
+
         elif vnode.light_node_idx is not None:
             pynode = gltf.data.nodes[vnode.light_node_idx]
             light = BlenderLight.create(gltf, vnode, pynode.extensions['KHR_lights_punctual']['light'])
             name = vnode.name or light.name
             obj = bpy.data.objects.new(name, light)
+
+            # Since we create the actual Blender object after the create call, we call the hook here
+            import_user_extensions('gather_import_light_after_hook', gltf, vnode, obj, light)
 
         elif vnode.is_arma:
             armature = bpy.data.armatures.new(vnode.arma_name)

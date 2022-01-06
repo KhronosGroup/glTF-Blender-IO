@@ -58,6 +58,4 @@ class BlenderCamera():
                 # Infinite projection
                 cam.clip_end = 1e12  # some big number
 
-        import_user_extensions('gather_import_camera_after_hook', gltf, vnode, pycamera, cam)
-
         return cam
