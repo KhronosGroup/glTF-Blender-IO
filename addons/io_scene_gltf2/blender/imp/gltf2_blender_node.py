@@ -63,13 +63,13 @@ class BlenderNode():
 
         elif vnode.camera_node_idx is not None:
             pynode = gltf.data.nodes[vnode.camera_node_idx]
-            cam = BlenderCamera.create(gltf, pynode.camera)
+            cam = BlenderCamera.create(gltf, vnode, pynode.camera)
             name = vnode.name or cam.name
             obj = bpy.data.objects.new(name, cam)
 
         elif vnode.light_node_idx is not None:
             pynode = gltf.data.nodes[vnode.light_node_idx]
-            light = BlenderLight.create(gltf, pynode.extensions['KHR_lights_punctual']['light'])
+            light = BlenderLight.create(gltf, vnode, pynode.extensions['KHR_lights_punctual']['light'])
             name = vnode.name or light.name
             obj = bpy.data.objects.new(name, light)
 

@@ -23,11 +23,11 @@ class BlenderCamera():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, camera_id):
+    def create(gltf, vnode, camera_id):
         """Camera creation."""
         pycamera = gltf.data.cameras[camera_id]
 
-        import_user_extensions('gather_import_camera_before_hook', gltf, pycamera)
+        import_user_extensions('gather_import_camera_before_hook', gltf, vnode, pycamera)
 
         if not pycamera.name:
             pycamera.name = "Camera"
@@ -58,6 +58,6 @@ class BlenderCamera():
                 # Infinite projection
                 cam.clip_end = 1e12  # some big number
 
-        import_user_extensions('gather_import_camera_after_hook', gltf, pycamera, cam)
+        import_user_extensions('gather_import_camera_after_hook', gltf, vnode, pycamera, cam)
 
         return cam
