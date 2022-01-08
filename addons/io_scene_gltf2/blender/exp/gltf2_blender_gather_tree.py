@@ -45,6 +45,8 @@ class VExportNode:
         self.blender_object = None
         self.blender_bone = None
 
+        self.force_as_empty = False # Used for instancer display
+
         # Only for bone/bone and object parented to bone
         self.parent_bone_uuid = None
 
@@ -170,6 +172,11 @@ class VExportTree:
                 ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
             node.matrix_world = node.matrix_world @ axis_basis_change
 
+        # Force empty ?
+        # For duplis, if instancer is not display, we should create an empty
+        if blender_object.is_instancer is True and blender_object.show_instancer_for_render is False:
+            node.force_as_empty = True
+
         # Storing this node
         self.add_node(node)
 
@@ -210,7 +217,6 @@ class VExportTree:
 
         # Duplis
         if blender_object.is_instancer is True:
-            #TODOTREE Manage show instancer
             depsgraph = bpy.context.evaluated_depsgraph_get()
             for (dupl, mat) in [(dup.object.original, dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(dup.parent.original) == id(blender_object)]:
                 self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, dupli_world_matrix=mat)

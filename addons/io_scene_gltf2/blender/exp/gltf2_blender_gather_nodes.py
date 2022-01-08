@@ -190,6 +190,10 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if blender_object.type != "MESH":
         return None
 
+    # For duplis instancer, when show is off -> export as empty
+    if vnode.force_as_empty is True:
+        return None
+
     # Be sure that object is valid (no NaN for example)
     blender_object.data.validate()
 
