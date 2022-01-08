@@ -232,7 +232,6 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
                     ) -> typing.Any:
     return None
 
-#TODOTREE custom cache?
 @cached
 def __gather_input(channels: typing.Tuple[bpy.types.FCurve],
                    blender_obj_uuid: str,
