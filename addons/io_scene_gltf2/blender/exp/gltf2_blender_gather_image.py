@@ -77,7 +77,7 @@ def __gather_original_uri(original_uri, export_settings):
     try:
         rel_path = os.path.relpath(
             path_to_image,
-            start=export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
+            start=export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN][gltf2_blender_export_keys.FILE_DIRECTORY],
         )
     except ValueError:
         # eg. because no relative path between C:\ and D:\ on Windows

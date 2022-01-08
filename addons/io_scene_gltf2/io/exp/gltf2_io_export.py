@@ -65,19 +65,19 @@ def save_gltf(gltf, export_settings, encoder, glb_buffer):
     #
 
     if export_settings['gltf_format'] != 'GLB':
-        file = open(export_settings['gltf_filepath'], "w", encoding="utf8", newline="\n")
+        file = open(export_settings['current_export_plan']['gltf_filepath'], "w", encoding="utf8", newline="\n")
         file.write(gltf_encoded)
         file.write("\n")
         file.close()
 
         binary = export_settings['gltf_binary']
         if len(binary) > 0 and not export_settings['gltf_embed_buffers']:
-            file = open(export_settings['gltf_filedirectory'] + export_settings['gltf_binaryfilename'], "wb")
+            file = open(export_settings['current_export_plan']['gltf_filedirectory'] + export_settings['gltf_binaryfilename'], "wb")
             file.write(binary)
             file.close()
 
     else:
-        file = open(export_settings['gltf_filepath'], "wb")
+        file = open(export_settings['current_export_plan']['gltf_filepath'], "wb")
 
         gltf_data = gltf_encoded.encode()
         binary = glb_buffer

@@ -33,22 +33,25 @@ def save(context, export_settings):
         if bpy.context.active_object.mode != "OBJECT": # For linked object, you can't force OBJECT mode
             bpy.ops.object.mode_set(mode='OBJECT')
 
-    original_frame = bpy.context.scene.frame_current
-    if not export_settings['gltf_current_frame']:
-        bpy.context.scene.frame_set(0)
-
     __notify_start(context)
     start_time = time.time()
     pre_export_callbacks = export_settings["pre_export_callbacks"]
     for callback in pre_export_callbacks:
         callback(export_settings)
 
-    json, buffer = __export(export_settings)
+    for plan in export_settings['gltf_plan']:
+        original_frame = bpy.context.scene.frame_current
+        if not export_settings['gltf_current_frame']:
+            bpy.context.scene.frame_set(0)
 
-    post_export_callbacks = export_settings["post_export_callbacks"]
-    for callback in post_export_callbacks:
-        callback(export_settings)
-    __write_file(json, buffer, export_settings)
+        export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN] = plan
+
+        json, buffer = __export(export_settings)
+
+        post_export_callbacks = export_settings["post_export_callbacks"]
+        for callback in post_export_callbacks:
+            callback(export_settings)
+        __write_file(json, buffer, export_settings)
 
     end_time = time.time()
     __notify_end(context, end_time - start_time)
@@ -89,13 +92,13 @@ def __gather_gltf(exporter, export_settings):
 def __create_buffer(exporter, export_settings):
     buffer = bytes()
     if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLB':
-        buffer = exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY], is_glb=True)
+        buffer = exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN][gltf2_blender_export_keys.FILE_DIRECTORY], is_glb=True)
     else:
         if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_EMBEDDED':
-            exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
+            exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN][gltf2_blender_export_keys.FILE_DIRECTORY])
         else:
-            exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
-                                     export_settings[gltf2_blender_export_keys.BINARY_FILENAME])
+            exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN][gltf2_blender_export_keys.FILE_DIRECTORY],
+                                     export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN][gltf2_blender_export_keys.BINARY_FILENAME])
 
     return buffer
 

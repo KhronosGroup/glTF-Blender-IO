@@ -52,14 +52,15 @@ def __gather_scene(blender_scene, export_settings):
     )
 
     for _blender_object in [obj for obj in blender_scene.objects if obj.proxy is None]:
-        if _blender_object.parent is None:
-            blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
-            node = gltf2_blender_gather_nodes.gather_node(
-                blender_object,
-                blender_object.library.name if blender_object.library else None,
-                blender_scene, None, export_settings)
-            if node is not None:
-                scene.nodes.append(node)
+        if _blender_object in export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN]['objects']:
+            if _blender_object.parent is None:
+                blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
+                node = gltf2_blender_gather_nodes.gather_node(
+                    blender_object,
+                    blender_object.library.name if blender_object.library else None,
+                    blender_scene, None, export_settings)
+                if node is not None:
+                    scene.nodes.append(node)
 
     export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)
 
@@ -73,15 +74,15 @@ def __gather_animations(blender_scene, export_settings):
     for _blender_object in blender_scene.objects:
 
         blender_object = _blender_object.proxy if _blender_object.proxy else _blender_object
-
-        # First check if this object is exported or not. Do not export animation of not exported object
-        obj_node = gltf2_blender_gather_nodes.gather_node(blender_object,
-            blender_object.library.name if blender_object.library else None,
-            blender_scene, None, export_settings)
-        if obj_node is not None:
-            # Check was done on armature, but use here the _proxy object, because this is where the animation is
-            animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(_blender_object, merged_tracks, len(animations), export_settings)
-            animations += animations_
+        if _blender_object in export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN]['objects']:
+            # First check if this object is exported or not. Do not export animation of not exported object
+            obj_node = gltf2_blender_gather_nodes.gather_node(blender_object,
+                blender_object.library.name if blender_object.library else None,
+                blender_scene, None, export_settings)
+            if obj_node is not None:
+                # Check was done on armature, but use here the _proxy object, because this is where the animation is
+                animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(_blender_object, merged_tracks, len(animations), export_settings)
+                animations += animations_
 
     if export_settings['gltf_nla_strips'] is False:
         # Fake an animation with all animations of the scene

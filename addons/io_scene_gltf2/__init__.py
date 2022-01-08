@@ -521,12 +521,20 @@ class ExportGLTF2_Base:
 
         export_settings['timestamp'] = datetime.datetime.now()
 
-        export_settings['gltf_filepath'] = self.filepath
-        export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
-        export_settings['gltf_texturedirectory'] = os.path.join(
-            export_settings['gltf_filedirectory'],
+        # This is temporary until an actual batch exporter interface is added
+        export_plan = {}
+        export_plan['gltf_filepath'] = self.filepath
+        export_plan['gltf_filedirectory'] = os.path.dirname(export_plan['gltf_filepath']) + '/'
+        export_plan['gltf_texturedirectory'] = os.path.join(
+            export_plan['gltf_filedirectory'],
             self.export_texture_dir,
         )
+
+        # Enable all objects for now
+        export_plan['objects'] = list(bpy.data.objects)
+
+        export_settings['gltf_plan'] = [export_plan]
+
         export_settings['gltf_keep_original_textures'] = self.export_keep_originals
 
         export_settings['gltf_format'] = self.export_format

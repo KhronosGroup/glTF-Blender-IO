@@ -57,6 +57,7 @@ EMBED_IMAGES = 'gltf_embed_images'
 BINARY = 'gltf_binary'
 EMBED_BUFFERS = 'gltf_embed_buffers'
 USE_NO_COLOR = 'gltf_use_no_color'
+CURRENT_EXPORT_PLAN = 'current_export_plan'
 
 METALLIC_ROUGHNESS_IMAGE = "metallic_roughness_image"
 GROUP_INDEX = 'group_index'

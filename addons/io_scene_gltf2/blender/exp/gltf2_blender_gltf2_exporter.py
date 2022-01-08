@@ -157,7 +157,7 @@ class GlTF2Exporter:
         """
         Write all images.
         """
-        output_path = self.export_settings[gltf2_blender_export_keys.TEXTURE_DIRECTORY]
+        output_path = self.export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN][gltf2_blender_export_keys.TEXTURE_DIRECTORY]
 
         if self.__images:
             os.makedirs(output_path, exist_ok=True)
@@ -237,11 +237,11 @@ class GlTF2Exporter:
 
         self.__images[name] = image
 
-        texture_dir = self.export_settings[gltf2_blender_export_keys.TEXTURE_DIRECTORY]
+        texture_dir = self.export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN][gltf2_blender_export_keys.TEXTURE_DIRECTORY]
         abs_path = os.path.join(texture_dir, name + image.file_extension)
         rel_path = os.path.relpath(
             abs_path,
-            start=self.export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
+            start=self.export_settings[gltf2_blender_export_keys.CURRENT_EXPORT_PLAN][gltf2_blender_export_keys.FILE_DIRECTORY],
         )
         return _path_to_uri(rel_path)
 
