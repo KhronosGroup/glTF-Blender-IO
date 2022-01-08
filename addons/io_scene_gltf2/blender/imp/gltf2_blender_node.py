@@ -187,7 +187,7 @@ class BlenderNode():
         if not (0 <= pynode.mesh < len(gltf.data.meshes)):
             # Avoid traceback for invalid gltf file: invalid reference to meshes array
             # So return an empty blender object)
-            return bpy.data.objects.new(vnode.name or mesh.name, None)
+            return bpy.data.objects.new(vnode.name or "Invalid Mesh Index", None)
         pymesh = gltf.data.meshes[pynode.mesh]
 
         # Key to cache the Blender mesh by.
