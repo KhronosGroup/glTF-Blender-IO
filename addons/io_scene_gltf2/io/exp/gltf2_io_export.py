@@ -70,9 +70,9 @@ def save_gltf(gltf, export_settings, encoder, glb_buffer):
         file.write("\n")
         file.close()
 
-        binary = export_settings['gltf_binary']
+        binary = export_settings['current_export_plan']['gltf_binary']
         if len(binary) > 0 and not export_settings['gltf_embed_buffers']:
-            file = open(export_settings['current_export_plan']['gltf_filedirectory'] + export_settings['gltf_binaryfilename'], "wb")
+            file = open(export_settings['current_export_plan']['gltf_filedirectory'] + export_settings['current_export_plan']['gltf_binaryfilename'], "wb")
             file.write(binary)
             file.close()
 

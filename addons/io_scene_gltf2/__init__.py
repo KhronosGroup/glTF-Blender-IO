@@ -529,6 +529,10 @@ class ExportGLTF2_Base:
             export_plan['gltf_filedirectory'],
             self.export_texture_dir,
         )
+        export_plan['gltf_binary'] = bytearray()
+        export_plan['gltf_binaryfilename'] = (
+            os.path.splitext(os.path.basename(self.filepath))[0] + '.bin'
+        )
 
         # Enable all objects for now
         export_plan['objects'] = list(bpy.data.objects)
@@ -610,11 +614,6 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_lights'] = self.export_lights
         export_settings['gltf_displacement'] = self.export_displacement
-
-        export_settings['gltf_binary'] = bytearray()
-        export_settings['gltf_binaryfilename'] = (
-            os.path.splitext(os.path.basename(self.filepath))[0] + '.bin'
-        )
 
         user_extensions = []
         pre_export_callbacks = []
