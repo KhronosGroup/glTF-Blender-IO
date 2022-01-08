@@ -75,8 +75,10 @@ class BlenderNode():
             obj = bpy.data.objects.new(name, armature)
 
         else:
+            # Empty
             name = vnode.name or vnode.default_name
             obj = bpy.data.objects.new(name, None)
+            obj.empty_display_size = BlenderNode.calc_empty_display_size(gltf, vnode_id)
 
         vnode.blender_object = obj
 
@@ -110,6 +112,17 @@ class BlenderNode():
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
         return obj
+
+    @staticmethod
+    def calc_empty_display_size(gltf, vnode_id):
+        # Use min distance to parent/children to guess size
+        sizes = []
+        vids = [vnode_id] + gltf.vnodes[vnode_id].children
+        for vid in vids:
+            vnode = gltf.vnodes[vid]
+            dist = vnode.trs()[0].length
+            sizes.append(dist * 0.4)
+        return max(min(sizes, default=1), 0.001)    
 
     @staticmethod
     def create_bones(gltf, arma_id):
