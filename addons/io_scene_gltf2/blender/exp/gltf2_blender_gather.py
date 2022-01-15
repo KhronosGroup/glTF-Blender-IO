@@ -62,8 +62,13 @@ def __gather_scene(blender_scene, export_settings):
 
     vtree = gltf2_blender_gather_tree.VExportTree(export_settings)
     vtree.construct(blender_scene)
+
+    export_user_extensions('vtree_before_filter_hook', export_settings, vtree)
+
     # Now, we can filter tree if needed
     vtree.filter()
+
+    export_user_extensions('vtree_after_filter_hook', export_settings, vtree)
 
     export_settings['vtree'] = vtree
 
