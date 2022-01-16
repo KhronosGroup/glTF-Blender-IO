@@ -93,7 +93,7 @@ def get_socket_old(blender_material: bpy.types.Material, name: str):
     """
     gltf_node_group_name = get_gltf_node_name().lower()
     if blender_material.node_tree and blender_material.use_nodes:
-        nodes = [n for n in get_blender_material_nodes(blender_material.node_tree) if \
+        nodes = [n for n in blender_material.node_tree.nodes if \
             isinstance(n, bpy.types.ShaderNodeGroup) and \
             (n.node_tree.name.startswith('glTF Metallic Roughness') or n.node_tree.name.lower() == gltf_node_group_name)]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
