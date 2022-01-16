@@ -78,6 +78,13 @@ def get_socket(blender_material: bpy.types.Material, name: str):
         nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0], blender_material)]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
         if inputs:
+            # Check node group inputs
+            for node in blender_material.node_tree.nodes:
+                if hasattr(node, "node_tree"):
+                    if inputs[0].node in list(node.node_tree.nodes):
+                        if inputs[0].name in dict(node.inputs):
+                            return node.inputs[inputs[0].name]
+
             return inputs[0]
 
     return None
