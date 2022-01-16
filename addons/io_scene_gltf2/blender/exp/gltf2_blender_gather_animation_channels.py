@@ -92,7 +92,6 @@ def gather_animation_channels(obj_uuid: int,
 
 
         # Retrieve animation on armature object itself, if any
-        #TODOTREE to check, when baked / tree troncated
         fcurves_armature = __gather_armature_object_channel_groups(blender_action, blender_object, export_settings)
         for channel_group in fcurves_armature:
             # No need to sort on armature, that can't have SK
