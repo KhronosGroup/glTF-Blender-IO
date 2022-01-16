@@ -133,11 +133,16 @@ class VExportTree:
         if node.blender_type == VExportNode.OBJECT:
             modifiers = {m.type: m for m in blender_object.modifiers}
             if "ARMATURE" in modifiers and modifiers["ARMATURE"].object is not None:
-                node.armature = parent_uuid
-        # TODOTREE: manage when direct parent is not the armature
-        # correct workflow is to parent skinned mesh to armature, but ...
-        # all users don't use correct workflow
-
+                if parent_uuid is None or not self.nodes[parent_uuid].blender_type == VExportNode.ARMATURE:
+                    # correct workflow is to parent skinned mesh to armature, but ...
+                    # all users don't use correct workflow
+                    print("WARNING: Armature must be the parent of skinned mesh")
+                    print("Armature is selected by its name, but may be false in case of instances")
+                    # Search an armature by name, and use the first found
+                    # This will be done after all objects are setup
+                    node.armature_needed = modifiers["ARMATURE"].object.name
+                else:
+                    node.armature = parent_uuid
 
         # For bones, store uuid of armature
         if blender_bone is not None:
@@ -367,3 +372,11 @@ class VExportTree:
                 return False
 
         return True
+    
+    def search_missing_armature(self):
+        for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
+            candidates = [i for i in self.nodes.values() if i.blender_type == VExportNode.ARMATURE and i.blender_object.name == n.armature_needed]
+            if len(candidates) > 0:
+                n.armature = candidates[0].uuid
+            del n.armature_needed
+            

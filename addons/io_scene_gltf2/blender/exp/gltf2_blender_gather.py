@@ -62,6 +62,7 @@ def __gather_scene(blender_scene, export_settings):
 
     vtree = gltf2_blender_gather_tree.VExportTree(export_settings)
     vtree.construct(blender_scene)
+    vtree.search_missing_armature() # In case armature are no parented correctly
 
     export_user_extensions('vtree_before_filter_hook', export_settings, vtree)
 
