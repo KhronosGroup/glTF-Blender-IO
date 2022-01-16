@@ -130,14 +130,14 @@ def bonecache(func):
         cache_key_args = args[:-1]
 
         if cache_key_args[2] is None:
-            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(cache_key_args[0],
+            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(armature,
                                                                 cache_key_args[1][0].data_path)
         else:
             pose_bone_if_armature = armature.pose.bones[cache_key_args[2]]
 
         if not hasattr(func, "__current_action_name"):
             func.reset_cache()
-        if cache_key_args[6] != func.__current_action_name or cache_key_args[0] != func.__current_armature_name:
+        if cache_key_args[6] != func.__current_action_name or armature.name != func.__current_armature_name:
             result = func(*args)
             func.__bonecache = result
             func.__current_action_name = cache_key_args[6]
