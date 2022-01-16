@@ -397,16 +397,16 @@ def gather_keyframes(blender_obj_uuid: str,
 
         if node_channel_is_animated is True: # fcurve on this bone for this property
              # Keep animation, but keep only 2 keyframes if data are not changing
-             return ([keyframes[0], keyframes[-1]], needs_baking) if cst is True and len(keyframes) >= 2 else (keyframes, needs_baking)
+             return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
         else: # bone is not animated (no fcurve)
             # Not keeping if not changing property
-            return (None, needs_baking) if cst is True else (keyframes, needs_baking)
+            return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
     else:
         # For objects, if all values are the same, we keep only first and last
         cst = fcurve_is_constant(keyframes)
-        return ([keyframes[0], keyframes[-1]], needs_baking) if cst is True and len(keyframes) >= 2 else (keyframes, needs_baking)
+        return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
 
-    return (keyframes, needs_baking)
+    return (keyframes, baking_is_needed)
 
 
 def fcurve_is_constant(keyframes):
