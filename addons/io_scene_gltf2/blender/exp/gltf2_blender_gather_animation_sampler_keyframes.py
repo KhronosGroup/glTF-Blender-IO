@@ -453,7 +453,6 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
 
     # If tree is troncated, sampling is forced
     if export_settings['vtree'].tree_troncated is True:
-        print("troncated")
         return True
 
     # Sampling due to unsupported interpolation
