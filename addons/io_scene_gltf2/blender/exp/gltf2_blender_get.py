@@ -54,13 +54,15 @@ def get_socket(blender_material: bpy.types.Material, name: str):
     if blender_material.node_tree and blender_material.use_nodes:
         #i = [input for input in blender_material.node_tree.inputs]
         #o = [output for output in blender_material.node_tree.outputs]
+
+        blender_material_nodes = get_blender_material_nodes(blender_material.node_tree)
         if name == "Emissive":
             # Check for a dedicated Emission node first, it must supersede the newer built-in one
             # because the newer one is always present in all Principled BSDF materials.
             type = bpy.types.ShaderNodeEmission
             name = "Color"
-            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
-            nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
+            nodes = [n for n in blender_material_nodes if isinstance(n, type) and not n.mute]
+            nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0], blender_material)]
             inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
             if inputs:
                 return inputs[0]
@@ -72,8 +74,8 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             name = "Color"
         else:
             type = bpy.types.ShaderNodeBsdfPrincipled
-        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
-        nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
+        nodes = [n for n in blender_material_nodes if isinstance(n, type) and not n.mute]
+        nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0], blender_material)]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
         if inputs:
             return inputs[0]
@@ -91,7 +93,7 @@ def get_socket_old(blender_material: bpy.types.Material, name: str):
     """
     gltf_node_group_name = get_gltf_node_name().lower()
     if blender_material.node_tree and blender_material.use_nodes:
-        nodes = [n for n in blender_material.node_tree.nodes if \
+        nodes = [n for n in get_blender_material_nodes(blender_material.node_tree) if \
             isinstance(n, bpy.types.ShaderNodeGroup) and \
             (n.node_tree.name.startswith('glTF Metallic Roughness') or n.node_tree.name.lower() == gltf_node_group_name)]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
@@ -100,13 +102,36 @@ def get_socket_old(blender_material: bpy.types.Material, name: str):
 
     return None
 
-def check_if_is_linked_to_active_output(shader_socket):
+def get_blender_material_nodes(node_tree: bpy.types.NodeTree):
+    """
+    For a given node tree, recursively return all nodes including custom node groups.
+
+    :param node_tree: a blender node tree for which to get the nodes
+    :return: a list of blender Node
+    """
+    nodes = []
+    for node in node_tree.nodes:
+        if hasattr(node, "node_tree"):
+            nodes.extend(get_blender_material_nodes(node.node_tree))
+        else:
+            nodes.append(node)
+    return nodes
+
+def check_if_is_linked_to_active_output(shader_socket, blender_material):
     for link in shader_socket.links:
-        if isinstance(link.to_node, bpy.types.ShaderNodeOutputMaterial) and link.to_node.is_active_output is True:
+        if isinstance(link.to_node, bpy.types.ShaderNodeOutputMaterial) and link.to_node.is_active_output:
             return True
 
+        # Custom node group
+        if isinstance(link.to_node, bpy.types.NodeGroupOutput) and link.to_node.is_active_output:
+            for node in blender_material.node_tree.nodes:
+                if hasattr(node, "node_tree"):
+                    # Find group output's node group (there isn't a better way of doing this)
+                    if link.to_node in list(node.node_tree.nodes):
+                        return check_if_is_linked_to_active_output(node.outputs[0], blender_material)
+
         if len(link.to_node.outputs) > 0: # ignore non active output, not having output sockets
-            ret = check_if_is_linked_to_active_output(link.to_node.outputs[0]) # recursive until find an output material node
+            ret = check_if_is_linked_to_active_output(link.to_node.outputs[0], blender_material) # recursive until find an output material node
             if ret is True:
                 return True
 
