@@ -141,7 +141,7 @@ def bonecache(func):
             result = func(*args)
             func.__bonecache = result
             func.__current_action_name = cache_key_args[6]
-            func.__current_armature_name = cache_key_args[0]
+            func.__current_armature_name = armature.name
             return result[cache_key_args[7]][pose_bone_if_armature.name]
         else:
             return func.__bonecache[cache_key_args[7]][pose_bone_if_armature.name]
