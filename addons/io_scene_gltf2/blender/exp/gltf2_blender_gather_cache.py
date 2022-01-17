@@ -116,7 +116,7 @@ def bonecache(func):
 
     def reset_cache_bonecache():
         func.__current_action_name = None
-        func.__current_armature_name = None
+        func.__current_armature_uuid = None
         func.__bonecache = {}
 
     func.reset_cache = reset_cache_bonecache
@@ -137,11 +137,11 @@ def bonecache(func):
 
         if not hasattr(func, "__current_action_name"):
             func.reset_cache()
-        if cache_key_args[6] != func.__current_action_name or armature.name != func.__current_armature_name:
+        if cache_key_args[6] != func.__current_action_name or cache_key_args[0] != func.__current_armature_uuid:
             result = func(*args)
             func.__bonecache = result
             func.__current_action_name = cache_key_args[6]
-            func.__current_armature_name = armature.name
+            func.__current_armature_uuid = cache_key_args[0]
             return result[cache_key_args[7]][pose_bone_if_armature.name]
         else:
             return func.__bonecache[cache_key_args[7]][pose_bone_if_armature.name]
@@ -154,7 +154,7 @@ unique = cached
 def skdriverdiscovercache(func):
 
     def reset_cache_skdriverdiscovercache():
-        func.__current_armature_name = None
+        func.__current_armature_uuid = None
         func.__skdriverdiscover = {}
 
     func.reset_cache = reset_cache_skdriverdiscovercache
@@ -165,13 +165,13 @@ def skdriverdiscovercache(func):
         cache_key_args = args
         cache_key_args = args[:-1]
 
-        if not hasattr(func, "__current_armature_name") or func.__current_armature_name is None:
+        if not hasattr(func, "__current_armature_uuid") or func.__current_armature_uuid is None:
             func.reset_cache()
 
-        if cache_key_args[0] != func.__current_armature_name:
+        if cache_key_args[0] != func.__current_armature_uuid:
             result = func(*args)
             func.__skdriverdiscover[cache_key_args[0]] = result
-            func.__current_armature_name = cache_key_args[0]
+            func.__current_armature_uuid = cache_key_args[0]
             return result
         else:
             return func.__skdriverdiscover[cache_key_args[0]]
