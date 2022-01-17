@@ -82,8 +82,9 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             for node in blender_material.node_tree.nodes:
                 if hasattr(node, "node_tree"):
                     if inputs[0].node in list(node.node_tree.nodes):
-                        if inputs[0].name in dict(node.inputs):
-                            return node.inputs[inputs[0].name]
+                        if inputs[0].links:
+                            if inputs[0].links[0].from_socket.name in dict(node.inputs):
+                                return node.inputs[inputs[0].links[0].from_socket.name]
 
             return inputs[0]
 
