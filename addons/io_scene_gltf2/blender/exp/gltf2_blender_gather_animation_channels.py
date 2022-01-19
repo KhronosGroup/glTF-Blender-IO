@@ -141,7 +141,45 @@ def gather_animation_channels(obj_uuid: int,
             if channel is not None:
                 channels.append(channel)
 
-        #TODOTREE When object is selected, and when there is a channel animated, but not others
+            # Store already done channel path
+            target = [c for c in channel_group_sorted if c is not None][0].data_path.split('.')[-1]
+            path = {
+                "delta_location": "translation",
+                "delta_rotation_euler": "rotation_quaternion",
+                "location": "translation",
+                "rotation_axis_angle": "rotation_quaternion",
+                "rotation_euler": "rotation_quaternion",
+                "rotation_quaternion": "rotation_quaternion",
+                "scale": "scale",
+                "value": "weights"
+            }.get(target)
+            if path is not None:
+                done_paths.append(path)
+        done_paths = list(set(done_paths))
+
+        if export_settings['gltf_selected'] is True and export_settings['vtree'].tree_troncated is True:
+            start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+            end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+            to_be_done = ['location', 'rotation_quaternion', 'scale']
+            to_be_done = [c for c in to_be_done if c not in done_paths]
+
+            for p in to_be_done:
+                channel = gather_animation_channel(
+                    obj_uuid,
+                    (),
+                    export_settings,
+                    None,
+                    p,
+                    start_frame,
+                    end_frame,
+                    blender_action.name,
+                    None,
+                    False #If Object is not animated, don't keep animation for this channel
+                    ) 
+
+                if channel is not None:
+                    channels.append(channel)
+
 
 
     # resetting driver caches
