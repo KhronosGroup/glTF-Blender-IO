@@ -148,8 +148,19 @@ def get_object_matrix(blender_obj_uuid: str,
 
     data = {}
 
-    frame = bake_range_start
-    while frame <= bake_range_end:
+
+    # If we bake (because export selection), we don't know exactly the frame range, 
+    # So using min / max of all actions
+
+    if export_settings['gltf_selected'] is True and export_settings['vtree'].tree_troncated is True:
+        start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+        end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+    else:
+        start_frame  = bake_range_start
+        end_frame = bake_range_end
+
+    frame = start_frame
+    while frame <= end_frame:
         bpy.context.scene.frame_set(int(frame))
 
         for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type != [VExportNode.BONE]]:
@@ -182,7 +193,6 @@ def get_object_matrix(blender_obj_uuid: str,
                 data[obj_uuid][obj_uuid][frame] = mat
 
         frame += step
-
     return data
 
 @bonecache
