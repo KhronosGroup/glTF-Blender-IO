@@ -25,8 +25,8 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 def __gather_channels_baked(obj_uuid, export_settings):
     channels = []
 
-    start_frame = bpy.context.scene.frame_start
-    end_frame = bpy.context.scene.frame_end
+    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gltf2_blender_gather_animation_channels.gather_animation_channel(
@@ -42,7 +42,6 @@ def __gather_channels_baked(obj_uuid, export_settings):
             False #If Object is not animated, don't keep animation for this channel
             ) 
         if channel is not None:
-            print(channel)
             channels.append(channel)
 
     return channels if len(channels) > 0 else None  
