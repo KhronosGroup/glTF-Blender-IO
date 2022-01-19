@@ -141,6 +141,8 @@ def gather_animation_channels(obj_uuid: int,
             if channel is not None:
                 channels.append(channel)
 
+        #TODOTREE When object is selected, and when there is a channel animated, but not others
+
 
     # resetting driver caches
     gltf2_blender_gather_drivers.get_sk_driver_values.reset_cache()

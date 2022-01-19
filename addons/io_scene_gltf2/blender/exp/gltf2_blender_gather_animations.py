@@ -81,8 +81,6 @@ def gather_animations(  obj_uuid: int,
             if animation is not None:
                 animations.append(animation)
 
-    #TODOTREE when there is a channel animated, but not others
-
     current_action = None
     if blender_object.animation_data and blender_object.animation_data.action:
         current_action = blender_object.animation_data.action
