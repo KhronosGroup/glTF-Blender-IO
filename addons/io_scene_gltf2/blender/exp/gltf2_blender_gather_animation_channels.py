@@ -76,7 +76,7 @@ def gather_animation_channels(obj_uuid: int,
 
         for bone in bones_to_be_animated:
             for p in ["location", "rotation_quaternion", "scale"]:
-                channel = __gather_animation_channel(
+                channel = gather_animation_channel(
                     obj_uuid,
                     (),
                     export_settings,
@@ -98,7 +98,7 @@ def gather_animation_channels(obj_uuid: int,
             if len(channel_group) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(obj_uuid, channel_group, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None, True)
+            channel = gather_animation_channel(obj_uuid, channel_group, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None, True)
             if channel is not None:
                 channels.append(channel)
 
@@ -106,7 +106,7 @@ def gather_animation_channels(obj_uuid: int,
         # Retrieve channels for drivers, if needed
         drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(obj_uuid, export_settings)
         for obj_driver_uuid, fcurves in drivers_to_manage:
-            channel = __gather_animation_channel(
+            channel = gather_animation_channel(
                 obj_uuid,
                 fcurves,
                 export_settings,
@@ -116,7 +116,7 @@ def gather_animation_channels(obj_uuid: int,
                 bake_range_end,
                 blender_action.name,
                 obj_driver_uuid,
-                False)
+                True)
             if channel is not None:
                 channels.append(channel)
 
@@ -126,7 +126,7 @@ def gather_animation_channels(obj_uuid: int,
             if len(channel_group_sorted) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(
+            channel = gather_animation_channel(
                 obj_uuid,
                 channel_group_sorted,
                 export_settings,
@@ -136,7 +136,7 @@ def gather_animation_channels(obj_uuid: int,
                 bake_range_end,
                 blender_action.name,
                 None,
-                False
+                True
                 )
             if channel is not None:
                 channels.append(channel)
@@ -200,7 +200,8 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
     # if not shapekeys, stay in same order, because order doesn't matter
     return channels
 
-def __gather_animation_channel(obj_uuid: str,
+# This function can be called directly from gather_animation in case of bake animation (non animated selected object)
+def gather_animation_channel(obj_uuid: str,
                                channels: typing.Tuple[bpy.types.FCurve],
                                export_settings,
                                bake_bone: typing.Union[str, None],
@@ -213,6 +214,7 @@ def __gather_animation_channel(obj_uuid: str,
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    print(blender_object.name)
 
     if not __filter_animation_channel(channels, blender_object, export_settings):
         return None

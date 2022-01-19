@@ -291,14 +291,15 @@ def __gather_interpolation(channels: typing.Tuple[bpy.types.FCurve],
             # TODO: check if the bone was animated with CONSTANT
             return 'LINEAR'
         else:
-            max_keyframes = max([len(ch.keyframe_points) for ch in channels if ch is not None])
-            # If only single keyframe revert to STEP
-            if max_keyframes < 2:
-                return 'STEP'
+            if len(channels) != 0: # channels can be empty when baking object (non animated selected object)
+                max_keyframes = max([len(ch.keyframe_points) for ch in channels if ch is not None])
+                # If only single keyframe revert to STEP
+                if max_keyframes < 2:
+                    return 'STEP'
 
-            # If all keyframes are CONSTANT, we can use STEP.
-            if all(all(k.interpolation == 'CONSTANT' for k in c.keyframe_points) for c in channels if c is not None):
-                return 'STEP'
+                # If all keyframes are CONSTANT, we can use STEP.
+                if all(all(k.interpolation == 'CONSTANT' for k in c.keyframe_points) for c in channels if c is not None):
+                    return 'STEP'
 
             # Otherwise, sampled keyframes use LINEAR interpolation.
             return 'LINEAR'
@@ -353,7 +354,10 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
     if bake_bone is not None:
         target_datapath = "pose.bones['" + bake_bone + "']." + bake_channel
     else:
-        target_datapath = [c for c in channels if c is not None][0].data_path
+        if len(channels) != 0: # channels can be empty when baking object (non animated selected object)
+            target_datapath = [c for c in channels if c is not None][0].data_path
+        else:
+            target_datapath = bake_channel
 
     is_yup = export_settings[gltf2_blender_export_keys.YUP]
 

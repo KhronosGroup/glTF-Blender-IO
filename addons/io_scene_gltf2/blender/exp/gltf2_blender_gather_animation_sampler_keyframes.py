@@ -156,9 +156,8 @@ def get_object_matrix(blender_obj_uuid: str,
 
             blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
 
-            # if this object is not animated, skip
-            if not (blender_obj.animation_data is not None and blender_obj.animation_data.action is not None):
-                continue
+            # if this object is not animated, do not skip :
+            # We need this object too in case of bake
 
             # calculate local matrix
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
@@ -170,9 +169,17 @@ def get_object_matrix(blender_obj_uuid: str,
 
             if obj_uuid not in data.keys():
                 data[obj_uuid] = {}
-            if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
-                data[obj_uuid][blender_obj.animation_data.action.name] = {}
-            data[obj_uuid][blender_obj.animation_data.action.name][frame] = mat
+            
+            if blender_obj.animation_data and blender_obj.animation_data.action:
+                if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
+                    data[obj_uuid][blender_obj.animation_data.action.name] = {}
+                data[obj_uuid][blender_obj.animation_data.action.name][frame] = mat
+            else:
+                # case of baking selected object.
+                # There is no animation, so use uuid of object as key
+                if obj_uuid not in data[obj_uuid].keys():
+                    data[obj_uuid][obj_uuid] = {}
+                data[obj_uuid][obj_uuid][frame] = mat
 
         frame += step
 
@@ -255,8 +262,12 @@ def gather_keyframes(blender_obj_uuid: str,
         # Note: channels has some None items only for SK if some SK are not animated
         ranges = [channel.range() for channel in channels if channel is not None]
 
-        start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
-        end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
+        if len(channels) != 0:
+            start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
+            end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
+        else:
+            start_frame = bake_range_start
+            end_frame = bake_range_end
     else:
         start_frame = bake_range_start
         end_frame = bake_range_end
@@ -310,14 +321,15 @@ def gather_keyframes(blender_obj_uuid: str,
             else:
                 if driver_obj_uuid is None:
                     # If channel is TRS, we bake from world matrix, else this is SK
-                    target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
+                    if len(channels) != 0:
+                        target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
+                    else:
+                        target = bake_channel
                     if target == "value": #SK
                         # Note: channels has some None items only for SK if some SK are not animated
                         key.value = [c.evaluate(frame) for c in channels if c is not None]
                         complete_key(key, non_keyed_values)
                     else:
-                        #TODOTREE : objects selected,not animated but with non selected animated parent are not detected as animated
-
 
                         mat = get_object_matrix(blender_obj_uuid,
                                 action_name,
@@ -404,7 +416,13 @@ def gather_keyframes(blender_obj_uuid: str,
     else:
         # For objects, if all values are the same, we keep only first and last
         cst = fcurve_is_constant(keyframes)
-        return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
+        if node_channel_is_animated is True:
+            print("is_animated, cst =", cst)
+            return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
+        else:
+            # baked object (selected but not animated)
+            print("is not animated, cst =", cst)
+            return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
 
     return (keyframes, baking_is_needed)
 

@@ -22,6 +22,31 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
+def __gather_channels_baked(obj_uuid, export_settings):
+    channels = []
+
+    start_frame = bpy.context.scene.frame_start
+    end_frame = bpy.context.scene.frame_end
+
+    for p in ["location", "rotation_quaternion", "scale"]:
+        channel = gltf2_blender_gather_animation_channels.gather_animation_channel(
+            obj_uuid,
+            (),
+            export_settings,
+            None,
+            p,
+            start_frame,
+            end_frame,
+            obj_uuid, # Use obj uuid as action name for caching
+            None,
+            False #If Object is not animated, don't keep animation for this channel
+            ) 
+        if channel is not None:
+            print(channel)
+            channels.append(channel)
+
+    return channels if len(channels) > 0 else None  
+
 def gather_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],
                         offset: int,
@@ -40,8 +65,24 @@ def gather_animations(  obj_uuid: int,
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object, export_settings)
 
-    # save the current active action of the object, if any
-    # We will restore it after export
+    if export_settings['gltf_selected'] is True and export_settings['vtree'].tree_troncated is True \
+        and not (blender_object.animation_data is not None and blender_object.animation_data.action is not None): #there is no animation
+        channels = __gather_channels_baked(obj_uuid, export_settings)
+        if channels is not None:
+            animation = gltf2_io.Animation(
+                    channels=channels,
+                    extensions=None, # as other animations
+                    extras=None, # Because there is no animation to get extras from
+                    name=blender_object.name, # Use object name as animation name
+                    samplers=[]
+                )
+
+            __link_samplers(animation, export_settings)
+            if animation is not None:
+                animations.append(animation)
+
+    #TODOTREE when there is a channel animated, but not others
+
     current_action = None
     if blender_object.animation_data and blender_object.animation_data.action:
         current_action = blender_object.animation_data.action
