@@ -121,6 +121,7 @@ def gather_animation_channels(obj_uuid: int,
                 channels.append(channel)
 
     else:
+        done_paths = []
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
             channel_group_sorted = __get_channel_group_sorted(channel_group, blender_object)
             if len(channel_group_sorted) == 0:
