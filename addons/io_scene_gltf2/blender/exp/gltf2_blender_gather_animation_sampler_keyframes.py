@@ -417,11 +417,9 @@ def gather_keyframes(blender_obj_uuid: str,
         # For objects, if all values are the same, we keep only first and last
         cst = fcurve_is_constant(keyframes)
         if node_channel_is_animated is True:
-            print("is_animated, cst =", cst)
             return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
         else:
             # baked object (selected but not animated)
-            print("is not animated, cst =", cst)
             return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
 
     return (keyframes, baking_is_needed)

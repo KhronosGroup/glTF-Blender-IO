@@ -214,7 +214,6 @@ def gather_animation_channel(obj_uuid: str,
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
-    print(blender_object.name)
 
     if not __filter_animation_channel(channels, blender_object, export_settings):
         return None
