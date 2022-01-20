@@ -192,22 +192,27 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      bake_channel: typing.Union[str, None],
                      bake_range_start,
                      bake_range_end,
+                     force_range: bool,
                      action_name: str,
                      driver_obj,
                      node_channel_is_animated: bool,
                      export_settings
                      ) -> typing.List[Keyframe]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
-    if bake_bone is None and driver_obj is None:
-        # Find the start and end of the whole action group
-        # Note: channels has some None items only for SK if some SK are not animated
-        ranges = [channel.range() for channel in channels if channel is not None]
-
-        start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
-        end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
-    else:
+    if force_range is True:
         start_frame = bake_range_start
         end_frame = bake_range_end
+    else:
+        if bake_bone is None and driver_obj is None:
+            # Find the start and end of the whole action group
+            # Note: channels has some None items only for SK if some SK are not animated
+            ranges = [channel.range() for channel in channels if channel is not None]
+
+            start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
+            end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
+        else:
+            start_frame = bake_range_start
+            end_frame = bake_range_end
 
     keyframes = []
     if needs_baking(blender_object_if_armature, channels, export_settings):
@@ -270,6 +275,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
         frames = [keyframe.co[0] for keyframe in [c for c in channels if c is not None][0].keyframe_points]
         # some weird files have duplicate frame at same time, removed them
         frames = sorted(set(frames))
+        if force_range is True:
+            frames = [f for f in frames if f >= bake_range_start and f <= bake_range_end]
         for i, frame in enumerate(frames):
             key = Keyframe(channels, frame, bake_channel)
             # key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]
