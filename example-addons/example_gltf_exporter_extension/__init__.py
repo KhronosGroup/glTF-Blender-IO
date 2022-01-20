@@ -118,4 +118,3 @@ class glTF2ExportUserExtension:
                 extension={"float": self.properties.float_property},
                 required=extension_is_required
             )
-

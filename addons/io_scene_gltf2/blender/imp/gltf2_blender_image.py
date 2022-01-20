@@ -20,6 +20,7 @@ import urllib.parse
 import re
 
 from ...io.imp.gltf2_io_binary import BinaryData
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 # Note that Image is not a glTF2.0 object
@@ -32,6 +33,9 @@ class BlenderImage():
     def create(gltf, img_idx):
         """Image creation."""
         img = gltf.data.images[img_idx]
+
+        import_user_extensions('gather_import_image_before_hook', gltf, img)
+
         img_name = img.name
 
         if img.blender_image_name is not None:
@@ -89,6 +93,8 @@ class BlenderImage():
                 needs_pack = gltf.import_settings['import_pack_images']
                 if not is_placeholder and needs_pack:
                     blender_image.pack()
+
+        import_user_extensions('gather_import_image_after_hook', gltf, img, blender_image)
 
 def _placeholder_image(name, path):
     image = bpy.data.images.new(name, 128, 128)

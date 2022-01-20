@@ -18,6 +18,7 @@ from mathutils import Vector
 from ...io.imp.gltf2_io_binary import BinaryData
 from .gltf2_blender_animation_utils import make_fcurve
 from .gltf2_blender_vnode import VNode
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderNodeAnim():
@@ -45,6 +46,8 @@ class BlenderNodeAnim():
         animation = gltf.data.animations[anim_idx]
         vnode = gltf.vnodes[node_idx]
         path = channel.target.path
+
+        import_user_extensions('gather_import_animation_channel_before_hook', gltf, animation, vnode, path, channel)
 
         action = BlenderNodeAnim.get_or_create_action(gltf, node_idx, animation.track_name)
 
@@ -151,6 +154,8 @@ class BlenderNodeAnim():
                 group_name=group_name,
                 interpolation=animation.samplers[channel.sampler].interpolation,
             )
+
+        import_user_extensions('gather_import_animation_channel_after_hook', gltf, animation, vnode, path, channel, action)
 
     @staticmethod
     def get_or_create_action(gltf, node_idx, anim_name):

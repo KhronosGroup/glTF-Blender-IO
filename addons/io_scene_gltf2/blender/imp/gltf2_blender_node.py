@@ -19,6 +19,7 @@ from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
 from .gltf2_blender_light import BlenderLight
 from .gltf2_blender_vnode import VNode
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 class BlenderNode():
     """Blender Node."""
@@ -35,7 +36,10 @@ class BlenderNode():
             gltf.log.critical("Node %d of %d (id %s)", gltf.display_current_node, len(gltf.vnodes), vnode_id)
 
         if vnode.type == VNode.Object:
-            BlenderNode.create_object(gltf, vnode_id)
+            gltf_node = gltf.data.nodes[vnode_id] if isinstance(vnode_id, int) else None
+            import_user_extensions('gather_import_node_before_hook', gltf, vnode, gltf_node)
+            obj = BlenderNode.create_object(gltf, vnode_id)
+            import_user_extensions('gather_import_node_after_hook', gltf, vnode, gltf_node, obj)
             if vnode.is_arma:
                 BlenderNode.create_bones(gltf, vnode_id)
 
@@ -59,15 +63,21 @@ class BlenderNode():
 
         elif vnode.camera_node_idx is not None:
             pynode = gltf.data.nodes[vnode.camera_node_idx]
-            cam = BlenderCamera.create(gltf, pynode.camera)
+            cam = BlenderCamera.create(gltf, vnode, pynode.camera)
             name = vnode.name or cam.name
             obj = bpy.data.objects.new(name, cam)
 
+            # Since we create the actual Blender object after the create call, we call the hook here
+            import_user_extensions('gather_import_camera_after_hook', gltf, vnode, obj, cam)
+
         elif vnode.light_node_idx is not None:
             pynode = gltf.data.nodes[vnode.light_node_idx]
-            light = BlenderLight.create(gltf, pynode.extensions['KHR_lights_punctual']['light'])
+            light = BlenderLight.create(gltf, vnode, pynode.extensions['KHR_lights_punctual']['light'])
             name = vnode.name or light.name
             obj = bpy.data.objects.new(name, light)
+
+            # Since we create the actual Blender object after the create call, we call the hook here
+            import_user_extensions('gather_import_light_after_hook', gltf, vnode, obj, light)
 
         elif vnode.is_arma:
             armature = bpy.data.armatures.new(vnode.arma_name)
