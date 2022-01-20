@@ -69,7 +69,7 @@ def clearcoat(mh, location, clearcoat_socket):
     )
 
 
-# [Texture] => [Seperate G] => [Roughness Factor] =>
+# [Texture] => [Separate G] => [Roughness Factor] =>
 def clearcoat_roughness(mh, location, roughness_socket):
     x, y = location
     try:

@@ -62,7 +62,7 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
             try:
                 # Check if driver is valid.
                 # Try/Except is no more a suffisant check, starting with version Blender 3.0,
-                # Blender crashs when trying to resolve path on invalid driver
+                # Blender crashes when trying to resolve path on invalid driver
                 if not sk_c.is_valid:
                     continue
                 sk_name = child.data.shape_keys.path_resolve(get_target_object_path(sk_c.data_path)).name

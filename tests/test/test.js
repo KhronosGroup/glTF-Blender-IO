@@ -735,7 +735,45 @@ describe('Exporter', function() {
                 assert.strictEqual(tri_prims.length, 1);
                 assert.strictEqual(edge_prims.length, 1);
                 assert.strictEqual(point_prims.length, 1);
-            })
+            });
+
+            it('exports custom range sampled', function() {
+                let gltfPath = path.resolve(outDirPath, '12_anim_range_sampled.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const ranged = asset.animations.filter(a => a.name === 'Ranged')[0];
+                const no_ranged = asset.animations.filter(a => a.name === 'NoRange')[0];
+
+                assert.strictEqual(asset.accessors[ranged.samplers[ranged.channels[0].sampler].input].count, 13);
+                assert.strictEqual(asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].input].count, 15);
+
+                assert.strictEqual(asset.accessors[ranged.samplers[ranged.channels[0].sampler].input].count, asset.accessors[ranged.samplers[ranged.channels[0].sampler].output].count);
+                assert.strictEqual(asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].input].count, asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].output].count);
+            });
+
+            it('exports custom range not sampled', function() {
+                let gltfPath = path.resolve(outDirPath, '12_anim_range_not_sampled.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const ranged = asset.animations.filter(a => a.name === 'Ranged')[0];
+                const no_ranged = asset.animations.filter(a => a.name === 'NoRange')[0];
+
+                assert.strictEqual(asset.accessors[ranged.samplers[ranged.channels[0].sampler].input].count, 2);
+                assert.strictEqual(asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].input].count, 4);
+
+                assert.strictEqual(asset.accessors[ranged.samplers[ranged.channels[0].sampler].input].count * 3, asset.accessors[ranged.samplers[ranged.channels[0].sampler].output].count);
+                assert.strictEqual(asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].input].count * 3, asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].output].count);
+            });
+
+            it('exports custom range with driver', function() {
+                let gltfPath = path.resolve(outDirPath, '12_anim_range_driver.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const anim = asset.animations.filter(a => a.name === 'ArmatureAction')[0];
+
+                assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].input].count, 7);
+                assert.strictEqual(asset.accessors[anim.samplers[anim.channels[1].sampler].input].count, asset.accessors[anim.samplers[anim.channels[0].sampler].input].count);
+                assert.strictEqual(anim.samplers[anim.channels[0].sampler].input, anim.samplers[anim.channels[1].sampler].input);
+                assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].input].count, asset.accessors[anim.samplers[anim.channels[0].sampler].output].count);
+                assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].output].count, asset.accessors[anim.samplers[anim.channels[1].sampler].output].count);
+              })
         });
     });
 });

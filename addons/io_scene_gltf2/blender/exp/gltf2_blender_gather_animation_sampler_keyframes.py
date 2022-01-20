@@ -257,6 +257,7 @@ def gather_keyframes(blender_obj_uuid: str,
                      bake_channel: typing.Union[str, None],
                      bake_range_start,
                      bake_range_end,
+                     force_range: bool,
                      action_name: str,
                      driver_obj_uuid,
                      node_channel_is_animated: bool,
@@ -267,20 +268,24 @@ def gather_keyframes(blender_obj_uuid: str,
     blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid].blender_object if is_armature is True is not None else None
     blender_obj_uuid_if_armature = blender_obj_uuid if is_armature is True else None
 
-    if bake_bone is None and driver_obj_uuid is None:
-        # Find the start and end of the whole action group
-        # Note: channels has some None items only for SK if some SK are not animated
-        ranges = [channel.range() for channel in channels if channel is not None]
+    if force_range is True:
+        start_frame = bake_range_start
+        end_frame = bake_range_end
+    else:
+        if bake_bone is None and driver_obj_uuid is None:
+            # Find the start and end of the whole action group
+            # Note: channels has some None items only for SK if some SK are not animated
+            ranges = [channel.range() for channel in channels if channel is not None]
 
-        if len(channels) != 0:
-            start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
-            end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
+            if len(channels) != 0:
+                start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
+                end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
+            else:
+                start_frame = bake_range_start
+                end_frame = bake_range_end
         else:
             start_frame = bake_range_start
             end_frame = bake_range_end
-    else:
-        start_frame = bake_range_start
-        end_frame = bake_range_end
 
     keyframes = []
     baking_is_needed = needs_baking(blender_object_if_armature, channels, export_settings)
@@ -368,6 +373,8 @@ def gather_keyframes(blender_obj_uuid: str,
         frames = [keyframe.co[0] for keyframe in [c for c in channels if c is not None][0].keyframe_points]
         # some weird files have duplicate frame at same time, removed them
         frames = sorted(set(frames))
+        if force_range is True:
+            frames = [f for f in frames if f >= bake_range_start and f <= bake_range_end]
         for i, frame in enumerate(frames):
             key = Keyframe(channels, frame, bake_channel)
             # key.value = [c.keyframe_points[i].co[0] for c in action_group.channels]

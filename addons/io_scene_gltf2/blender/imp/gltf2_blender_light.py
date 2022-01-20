@@ -16,6 +16,7 @@ import bpy
 from math import pi
 
 from ..com.gltf2_blender_extras import set_extras
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderLight():
@@ -24,9 +25,12 @@ class BlenderLight():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf, light_id):
+    def create(gltf, vnode, light_id):
         """Light creation."""
         pylight = gltf.data.extensions['KHR_lights_punctual']['lights'][light_id]
+
+        import_user_extensions('gather_import_light_before_hook', gltf, vnode, pylight)
+
         if pylight['type'] == "directional":
             light = BlenderLight.create_directional(gltf, light_id)
         elif pylight['type'] == "point":
