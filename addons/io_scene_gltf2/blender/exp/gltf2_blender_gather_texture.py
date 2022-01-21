@@ -35,8 +35,6 @@ def gather_texture(
     :param export_settings: configuration of the export
     :return: a glTF 2.0 texture with sampler and source embedded (will be converted to references by the exporter)
     """
-    if export_settings['gltf_image_format'] == "NONE":
-        return None
 
     if not __filter_texture(blender_shader_sockets, export_settings):
         return None
@@ -59,6 +57,9 @@ def gather_texture(
 
 
 def __filter_texture(blender_shader_sockets, export_settings):
+    # Use doesn't want to export textures
+    if export_settings['gltf_image_format'] == "NONE":
+        return None
     return True
 
 
