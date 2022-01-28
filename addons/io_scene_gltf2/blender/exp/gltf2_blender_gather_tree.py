@@ -221,7 +221,7 @@ class VExportTree:
                 self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world)
 
         # Duplis
-        if blender_object.is_instancer is True:
+        if blender_object.is_instancer is True and blender_object.instance_type != 'COLLECTION':
             depsgraph = bpy.context.evaluated_depsgraph_get()
             for (dupl, mat) in [(dup.object.original, dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(dup.parent.original) == id(blender_object)]:
                 self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, dupli_world_matrix=mat)
