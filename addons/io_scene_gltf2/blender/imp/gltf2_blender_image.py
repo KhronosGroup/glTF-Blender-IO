@@ -79,11 +79,11 @@ class BlenderImage():
             img_name = 'Image_%d' % img_idx
 
             # Create image, width and height are dummy values
-            img_pack = bpy.data.images.new(img_name, 8, 8)
+            blender_image = bpy.data.images.new(img_name, 8, 8)
             # Set packed file data
-            img_pack.pack(data=img_data.tobytes(), data_len=len(img_data))
-            img_pack.source = 'FILE'
-            img.blender_image_name = img_pack.name
+            blender_image.pack(data=img_data.tobytes(), data_len=len(img_data))
+            blender_image.source = 'FILE'
+            img.blender_image_name = blender_image.name
 
         if is_binary is False:
             if len(bpy.data.images) != num_images:  # If created a new image
