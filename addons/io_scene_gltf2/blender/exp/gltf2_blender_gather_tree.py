@@ -257,7 +257,7 @@ class VExportTree:
     def filter_tag(self):
         roots = self.roots.copy()
         for r in roots:
-            self.recursive_filter_tag(r, False)
+            self.recursive_filter_tag(r, None)
 
     def filter_perform(self):
         roots = self.roots.copy()
@@ -275,10 +275,14 @@ class VExportTree:
         # are defined at collection level, and we need to use these values
         # for all objects of the collection instance.
         # But some properties (camera, lamp ...) are not defined at collection level
-        if parent_keep_tag is True:
+        if parent_keep_tag is None:
+            self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(uuid) and self.node_filter_inheritable_is_kept(uuid)
+        elif parent_keep_tag is True:
             self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(uuid)
+        elif parent_keep_tag is False:
+            self.nodes[uuid].keep_tag = False
         else:
-            self.nodes[uuid].keep_tag = self.node_filter_inheritable_is_kept(uuid) and self.node_filter_not_inheritable_is_kept(uuid)
+            print("This should not happen!")
 
         for child in self.nodes[uuid].children:
             if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
