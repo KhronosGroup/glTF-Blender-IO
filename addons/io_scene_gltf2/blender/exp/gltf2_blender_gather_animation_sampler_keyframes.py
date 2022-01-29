@@ -196,8 +196,6 @@ def get_object_matrix(blender_obj_uuid: str,
                 data[obj_uuid][obj_uuid][frame] = mat
 
         frame += step
-    print("---------------")
-    print(data)
     return data
 
 @bonecache
@@ -269,8 +267,6 @@ def gather_keyframes(blender_obj_uuid: str,
                      export_settings
                      ) -> typing.Tuple[typing.List[Keyframe], bool]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
-
-    print(blender_obj_uuid)
 
     blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid].blender_object if is_armature is True is not None else None
     blender_obj_uuid_if_armature = blender_obj_uuid if is_armature is True else None
@@ -362,7 +358,6 @@ def gather_keyframes(blender_obj_uuid: str,
                                 export_settings)
 
                         trans, rot, sca = mat.decompose()
-                        print(trans)
                         key.value_total = {
                             "location": trans,
                             "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
