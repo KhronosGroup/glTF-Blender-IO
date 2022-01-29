@@ -155,9 +155,9 @@ def gather_animation_channels(obj_uuid: int,
             # Store already done channel path
             target = [c for c in channel_group_sorted if c is not None][0].data_path.split('.')[-1]
             path = {
-                "delta_location": "translation",
+                "delta_location": "location",
                 "delta_rotation_euler": "rotation_quaternion",
-                "location": "translation",
+                "location": "location",
                 "rotation_axis_angle": "rotation_quaternion",
                 "rotation_euler": "rotation_quaternion",
                 "rotation_quaternion": "rotation_quaternion",
