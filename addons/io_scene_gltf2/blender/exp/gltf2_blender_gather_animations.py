@@ -37,6 +37,7 @@ def __gather_channels_baked(obj_uuid, export_settings):
             p,
             start_frame,
             end_frame,
+            False,
             obj_uuid, # Use obj uuid as action name for caching
             None,
             False #If Object is not animated, don't keep animation for this channel
