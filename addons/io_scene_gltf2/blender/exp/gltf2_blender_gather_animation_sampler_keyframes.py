@@ -164,7 +164,6 @@ def get_object_matrix(blender_obj_uuid: str,
         bpy.context.scene.frame_set(int(frame))
 
         for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type != [VExportNode.BONE]]:
-
             blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
 
             # if this object is not animated, do not skip :
@@ -175,6 +174,10 @@ def get_object_matrix(blender_obj_uuid: str,
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
             else:
                 parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+
+            #For object inside collection (at root), matrix world is already expressed regarding collection parent
+            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.COLLECTION:
+                parent_mat = mathutils.Matrix.Identity(4).freeze()
 
             mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
 
@@ -193,6 +196,8 @@ def get_object_matrix(blender_obj_uuid: str,
                 data[obj_uuid][obj_uuid][frame] = mat
 
         frame += step
+    print("---------------")
+    print(data)
     return data
 
 @bonecache
@@ -264,6 +269,8 @@ def gather_keyframes(blender_obj_uuid: str,
                      export_settings
                      ) -> typing.Tuple[typing.List[Keyframe], bool]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
+
+    print(blender_obj_uuid)
 
     blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid].blender_object if is_armature is True is not None else None
     blender_obj_uuid_if_armature = blender_obj_uuid if is_armature is True else None
@@ -355,6 +362,7 @@ def gather_keyframes(blender_obj_uuid: str,
                                 export_settings)
 
                         trans, rot, sca = mat.decompose()
+                        print(trans)
                         key.value_total = {
                             "location": trans,
                             "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
