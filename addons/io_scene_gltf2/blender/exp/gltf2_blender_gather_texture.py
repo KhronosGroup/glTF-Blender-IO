@@ -57,7 +57,7 @@ def gather_texture(
 
 
 def __filter_texture(blender_shader_sockets, export_settings):
-    # Use doesn't want to export textures
+    # User doesn't want to export textures
     if export_settings['gltf_image_format'] == "NONE":
         return None
     return True
