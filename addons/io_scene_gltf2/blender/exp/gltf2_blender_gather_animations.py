@@ -122,13 +122,14 @@ def __gather_animation(blender_action: bpy.types.Action,
         print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
         return None
 
-    if not animation.channels:
-        return None
-
-    # To allow reuse of samplers in one animation,
-    __link_samplers(animation, export_settings)
+    if animation.channels:
+        # To allow reuse of samplers in one animation,
+        __link_samplers(animation, export_settings)
 
     export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object)
+
+    if not animation.channels:
+        return None
 
     return animation
 
@@ -257,6 +258,33 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                         blender_actions.append(strip.action)
                         blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                         action_on_type[strip.action.name] = "SHAPEKEY"
+
+    # Material animation - not actually used by the base exporter, but useful for addons that take advantage of it.
+    if blender_object.type == "MESH" \
+            and blender_object.data is not None \
+            and len(blender_object.material_slots) > 0:
+
+            for material_slot in blender_object.material_slots:
+                material = material_slot.material
+
+                if material.node_tree.animation_data is not None:
+                    if material.node_tree.animation_data.action is not None:
+                        blender_actions.append(material.node_tree.animation_data.action)
+                        blender_tracks[material.node_tree.animation_data.action.name] = None
+                        action_on_type[material.node_tree.animation_data.action.name] = "MATERIAL"
+
+                    # Collect associated strips from NLA tracks.
+                    if export_settings['gltf_nla_strips'] is True:
+                        for track in material.node_tree.animation_data.nla_tracks:
+                            # Multi-strip tracks do not export correctly yet (they need to be baked),
+                            # so skip them for now and only write single-strip tracks.
+                            non_muted_strips = [strip for strip in track.strips if strip.action is not None and strip.mute is False]
+                            if track.strips is None or len(non_muted_strips) != 1:
+                                continue
+                            for strip in non_muted_strips:
+                                blender_actions.append(strip.action)
+                                blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
+                                action_on_type[strip.action.name] = "MATERIAL"
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))
