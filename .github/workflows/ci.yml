@@ -9,7 +9,7 @@ on:
 env:
   CI: true
   BLENDER_MAJOR: 3
-  BLENDER_MINOR: 0
+  BLENDER_MINOR: 2
 
 jobs:
   build:
