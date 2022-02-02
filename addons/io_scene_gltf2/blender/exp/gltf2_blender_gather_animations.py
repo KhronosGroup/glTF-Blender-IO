@@ -126,7 +126,7 @@ def __gather_animation(blender_action: bpy.types.Action,
 
     if not animation.channels:
         return None
-    
+
     # To allow reuse of samplers in one animation,
     __link_samplers(animation, export_settings)
 
