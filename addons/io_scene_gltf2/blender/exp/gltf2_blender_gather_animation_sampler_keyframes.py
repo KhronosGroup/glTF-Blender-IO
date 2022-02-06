@@ -244,7 +244,11 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
                 rest_mat = blender_bone_parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local
                 matrix = rest_mat.inverted_safe() @ blender_bone_parent.matrix.inverted_safe() @ blender_bone.matrix
             else:
-                matrix = blender_bone.bone.matrix_local.inverted_safe() @ blender_bone.matrix
+                if blender_bone.parent is None:
+                    matrix = blender_bone.bone.matrix_local.inverted_safe() @ blender_bone.matrix
+                else:
+                    # Bone has a parent, but in export, after filter, is at root of armature
+                    matrix = blender_bone.matrix.copy()
 
             data[frame][blender_bone.name] = matrix
 

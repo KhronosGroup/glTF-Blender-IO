@@ -14,6 +14,7 @@
 
 
 import typing
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 
 import bpy
 import mathutils
@@ -386,6 +387,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
             bone = blender_object_if_armature.pose.bones[bake_bone]
         if isinstance(bone, bpy.types.PoseBone):
             if bone.parent is None:
+                # bone at root of armature
                 axis_basis_change = mathutils.Matrix.Identity(4)
                 if export_settings[gltf2_blender_export_keys.YUP]:
                     axis_basis_change = mathutils.Matrix(
@@ -395,10 +397,25 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                          (0.0, 0.0, 0.0, 1.0)))
                 correction_matrix_local = axis_basis_change @ bone.bone.matrix_local
             else:
-                correction_matrix_local = (
-                    bone.parent.bone.matrix_local.inverted_safe() @
-                    bone.bone.matrix_local
-                )
+                # Bone is not at root of armature
+                # There are 2 cases :
+                parent_uuid = export_settings['vtree'].nodes[export_settings['vtree'].nodes[blender_obj_uuid].bones[bone.name]].parent_uuid
+                if parent_uuid is not None and export_settings['vtree'].nodes[parent_uuid].blender_type == VExportNode.BONE:
+                    # export bone is not at root of armature neither
+                    correction_matrix_local = (
+                        bone.parent.bone.matrix_local.inverted_safe() @
+                        bone.bone.matrix_local
+                    )
+                else:
+                    # exported bone (after filter) is at root of armature
+                    axis_basis_change = mathutils.Matrix.Identity(4)
+                    if export_settings[gltf2_blender_export_keys.YUP]:
+                        axis_basis_change = mathutils.Matrix(
+                            ((1.0, 0.0, 0.0, 0.0),
+                            (0.0, 0.0, 1.0, 0.0),
+                            (0.0, -1.0, 0.0, 0.0),
+                            (0.0, 0.0, 0.0, 1.0)))
+                    correction_matrix_local = axis_basis_change
 
             transform = correction_matrix_local
         else:
