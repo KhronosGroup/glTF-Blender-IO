@@ -247,6 +247,9 @@ class VExportTree:
         else:
             return []
 
+    def get_all_node_of_type(self, node_type):
+        return [n.uuid for n in self.nodes.values() if n.blender_type == node_type]
+
     def display(self, mode):
         if mode == "simple":
             for n in self.roots:
