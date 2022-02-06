@@ -258,6 +258,17 @@ def __has_image_node_from_socket(socket):
     return True
 
 def __gather_clearcoat_extension(blender_material, export_settings):
+
+    def __gather_factor(primary_socket, export_settings):
+        # Look for a Mix node that mixes with pure white in front of
+        # primary_socket. The mix factor gives the factor.
+        node = gltf2_blender_get.previous_node(primary_socket)
+        if node and node.type == 'MATH' and node.operation == "MULTIPLY":
+            fac = gltf2_blender_get.get_const_from_socket(node.inputs[1], kind='VALUE')
+            return fac
+            
+        return 1.0
+
     clearcoat_enabled = False
     has_clearcoat_texture = False
     has_clearcoat_roughness_texture = False
@@ -273,7 +284,7 @@ def __gather_clearcoat_extension(blender_material, export_settings):
         clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
         clearcoat_enabled = clearcoat_extension['clearcoatFactor'] > 0
     elif __has_image_node_from_socket(clearcoat_socket):
-        clearcoat_extension['clearcoatFactor'] = 1
+        clearcoat_extension['clearcoatFactor'] = __gather_factor(clearcoat_socket, export_settings)
         has_clearcoat_texture = True
         clearcoat_enabled = True
 
@@ -283,7 +294,7 @@ def __gather_clearcoat_extension(blender_material, export_settings):
     if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
         clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
     elif __has_image_node_from_socket(clearcoat_roughness_socket):
-        clearcoat_extension['clearcoatRoughnessFactor'] = 1
+        clearcoat_extension['clearcoatRoughnessFactor'] = __gather_factor(clearcoat_roughness_socket, export_settings)
         has_clearcoat_roughness_texture = True
 
     # Pack clearcoat (R) and clearcoatRoughness (G) channels.
