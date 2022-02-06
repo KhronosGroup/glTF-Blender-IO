@@ -163,7 +163,7 @@ def get_object_matrix(blender_obj_uuid: str,
     while frame <= end_frame:
         bpy.context.scene.frame_set(int(frame))
 
-        for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type != [VExportNode.BONE]]:
+        for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]:
             blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
 
             # if this object is not animated, do not skip :
