@@ -173,8 +173,17 @@ def get_object_matrix(blender_obj_uuid: str,
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
             else:
-                parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type not in [VExportNode.BONE]:
+                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                else:
+                    # Object animated is parented to a bone
+                    blender_bone = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].blender_bone
+                    armature_object = export_settings['vtree'].nodes[export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].armature].blender_object
+                    axis_basis_change = mathutils.Matrix(
+                        ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
+                    parent_mat = armature_object.matrix_world @ blender_bone.matrix @ axis_basis_change
+              
             #For object inside collection (at root), matrix world is already expressed regarding collection parent
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.COLLECTION:
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
