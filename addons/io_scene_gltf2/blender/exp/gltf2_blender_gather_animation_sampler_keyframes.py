@@ -317,6 +317,9 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
 
             keyframes.append(key)
 
+    if export_settings[gltf2_blender_export_keys.ALL_TRACKS]:
+        return keyframes
+
     # For armature only
     # Check if all values are the same
     # In that case, if there is no real keyframe on this channel for this given bone,

@@ -388,6 +388,15 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    export_all_tracks: BoolProperty(
+        name='Export all tracks',
+        description=(
+            "Export all animation tracks without optimization for filesize."
+            "Can help with one frame long and static animations"
+        ),
+        default=False
+    )
+
     export_current_frame: BoolProperty(
         name='Use Current Frame',
         description='Export the scene in the current animation frame',
@@ -580,11 +589,13 @@ class ExportGLTF2_Base:
             else:
                 export_settings['gltf_def_bones'] = False
             export_settings['gltf_nla_strips'] = self.export_nla_strips
+            export_settings['gltf_all_tracks'] = self.export_all_tracks
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
             export_settings['gltf_def_bones'] = False
+            export_settings['gltf_all_tracks'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -872,6 +883,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
         layout.prop(operator, 'export_nla_strips')
+        layout.prop(operator, 'export_all_tracks')
 
         row = layout.row()
         row.active = operator.export_force_sampling
