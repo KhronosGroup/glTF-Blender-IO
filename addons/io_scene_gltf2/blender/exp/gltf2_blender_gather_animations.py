@@ -25,6 +25,10 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 def __gather_channels_baked(obj_uuid, export_settings):
     channels = []
 
+    # If no animation in file, no need to bake
+    if len(bpy.data.actions) == 0:
+        return None
+
     start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
     end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
 
