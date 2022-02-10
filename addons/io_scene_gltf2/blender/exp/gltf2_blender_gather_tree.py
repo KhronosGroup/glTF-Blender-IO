@@ -98,7 +98,7 @@ class VExportTree:
         bpy.context.window.scene = blender_scene
         depsgraph = bpy.context.evaluated_depsgraph_get()
 
-        for blender_object in [obj.original for obj in depsgraph.objects if obj.parent is None]:
+        for blender_object in [obj.original for obj in depsgraph.scene_eval.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4))
 
     def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, armature_uuid=None, dupli_world_matrix=None):
