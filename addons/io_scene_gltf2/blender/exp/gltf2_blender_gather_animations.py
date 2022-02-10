@@ -69,7 +69,7 @@ def gather_animations(  obj_uuid: int,
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object, export_settings)
 
-    if export_settings['gltf_selected'] is True  \
+    if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE" \
         and not (blender_object.animation_data is not None and blender_object.animation_data.action is not None): #there is no animation
         channels = __gather_channels_baked(obj_uuid, export_settings)
         if channels is not None:
