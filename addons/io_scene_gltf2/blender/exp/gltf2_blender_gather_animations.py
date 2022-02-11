@@ -69,21 +69,23 @@ def gather_animations(  obj_uuid: int,
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object, export_settings)
 
-    if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE" \
-        and not (blender_object.animation_data is not None and blender_object.animation_data.action is not None): #there is no animation
-        channels = __gather_channels_baked(obj_uuid, export_settings)
-        if channels is not None:
-            animation = gltf2_io.Animation(
-                    channels=channels,
-                    extensions=None, # as other animations
-                    extras=None, # Because there is no animation to get extras from
-                    name=blender_object.name, # Use object name as animation name
-                    samplers=[]
-                )
+    if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0:
+        # No TRS animation are found for this object.
+        # But we need to bake, in case we export selection
+        if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE": 
+            channels = __gather_channels_baked(obj_uuid, export_settings)
+            if channels is not None:
+                animation = gltf2_io.Animation(
+                        channels=channels,
+                        extensions=None, # as other animations
+                        extras=None, # Because there is no animation to get extras from
+                        name=blender_object.name, # Use object name as animation name
+                        samplers=[]
+                    )
 
-            __link_samplers(animation, export_settings)
-            if animation is not None:
-                animations.append(animation)
+                __link_samplers(animation, export_settings)
+                if animation is not None:
+                    animations.append(animation)
 
     current_action = None
     if blender_object.animation_data and blender_object.animation_data.action:
