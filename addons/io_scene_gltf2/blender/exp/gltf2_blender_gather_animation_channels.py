@@ -174,23 +174,26 @@ def gather_animation_channels(obj_uuid: int,
             to_be_done = ['location', 'rotation_quaternion', 'scale']
             to_be_done = [c for c in to_be_done if c not in done_paths]
 
-            for p in to_be_done:
-                channel = gather_animation_channel(
-                    obj_uuid,
-                    (),
-                    export_settings,
-                    None,
-                    p,
-                    start_frame,
-                    end_frame,
-                    force_range,
-                    blender_action.name,
-                    None,
-                    False #If Object is not animated, don't keep animation for this channel
-                    ) 
+            # In case of weight action, do nothing.
+            # If there is only weight --> TRS is already managed at first
+            if not (len(done_paths) == 1 and 'weights' in done_paths):
+                for p in to_be_done:
+                    channel = gather_animation_channel(
+                        obj_uuid,
+                        (),
+                        export_settings,
+                        None,
+                        p,
+                        start_frame,
+                        end_frame,
+                        force_range,
+                        blender_action.name,
+                        None,
+                        False #If Object is not animated, don't keep animation for this channel
+                        ) 
 
-                if channel is not None:
-                    channels.append(channel)
+                    if channel is not None:
+                        channels.append(channel)
 
 
 
