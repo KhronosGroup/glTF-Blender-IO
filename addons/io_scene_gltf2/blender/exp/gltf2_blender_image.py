@@ -244,6 +244,7 @@ def _make_temp_image_copy(guard: TmpImageGuard, src_image: bpy.types.Image):
     guard.image = src_image.copy()
     tmp_image = guard.image
 
+    tmp_image.update()
     # See #1564 and T95616
     tmp_image.scale(*src_image.size)
 
