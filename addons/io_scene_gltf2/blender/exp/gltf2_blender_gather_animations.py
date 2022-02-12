@@ -109,23 +109,26 @@ def __gather_animation(blender_action: bpy.types.Action,
     if not __filter_animation(blender_action, blender_object, export_settings):
         return None
 
-    name = __gather_name(blender_action, blender_object, export_settings)
-    try:
-        animation = gltf2_io.Animation(
-            channels=__gather_channels(blender_action, blender_object, export_settings),
-            extensions=__gather_extensions(blender_action, blender_object, export_settings),
-            extras=__gather_extras(blender_action, blender_object, export_settings),
-            name=name,
-            samplers=__gather_samplers(blender_action, blender_object, export_settings)
-        )
-    except RuntimeError as error:
-        print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
-        return None
+    animation = None
 
     export_user_extensions('pre_gather_animation_hook', export_settings, animation, blender_action, blender_object)
 
-    if not animation.channels:
-        return None
+    if animation is None:
+        name = __gather_name(blender_action, blender_object, export_settings)
+        try:
+            animation = gltf2_io.Animation(
+                channels=__gather_channels(blender_action, blender_object, export_settings),
+                extensions=__gather_extensions(blender_action, blender_object, export_settings),
+                extras=__gather_extras(blender_action, blender_object, export_settings),
+                name=name,
+                samplers=__gather_samplers(blender_action, blender_object, export_settings)
+            )
+        except RuntimeError as error:
+            print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
+            return None
+
+        if not animation.channels:
+            return None
 
     # To allow reuse of samplers in one animation,
     __link_samplers(animation, export_settings)
