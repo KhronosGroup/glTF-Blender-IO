@@ -245,9 +245,10 @@ def _make_temp_image_copy(guard: TmpImageGuard, src_image: bpy.types.Image):
     tmp_image = guard.image
 
     tmp_image.update()
+    # See #1564 and T95616
     tmp_image.scale(*src_image.size)
 
-    if src_image.is_dirty:
+    if src_image.is_dirty: # Warning, img size change doesn't make it dirty, see T95616
         # Unsaved changes aren't copied by .copy(), so do them ourselves
         tmp_buf = np.empty(src_image.size[0] * src_image.size[1] * 4, np.float32)
         src_image.pixels.foreach_get(tmp_buf)
