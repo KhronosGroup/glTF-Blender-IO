@@ -260,7 +260,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                         blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                         action_on_type[strip.action.name] = "SHAPEKEY"
 
-    export_user_extensions('gather_actions', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
+    export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))

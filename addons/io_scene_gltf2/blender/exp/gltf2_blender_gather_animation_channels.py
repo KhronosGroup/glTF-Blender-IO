@@ -259,7 +259,11 @@ def __filter_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                blender_object: bpy.types.Object,
                                export_settings
                                ) -> bool:
-    return True
+    filter_channel = True
+
+    export_user_extensions('filter_animation_channel_hook', export_settings, filter_channel, channels, blender_object)
+
+    return filter_channel
 
 
 def __gather_extensions(channels: typing.Tuple[bpy.types.FCurve],
