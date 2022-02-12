@@ -112,7 +112,8 @@ def gather_animation_channels(blender_action: bpy.types.Action,
 
 
         # Retrieve channels for drivers, if needed
-        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(blender_object)
+        obj_driver = blender_object.proxy if blender_object.proxy else blender_object
+        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(obj_driver)
         for obj, fcurves in drivers_to_manage:
             channel = __gather_animation_channel(
                 fcurves,
