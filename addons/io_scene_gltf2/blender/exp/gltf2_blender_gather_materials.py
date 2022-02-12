@@ -258,8 +258,6 @@ def __has_image_node_from_socket(socket):
     return True
 
 def __gather_clearcoat_extension(blender_material, export_settings):
-
-
     clearcoat_enabled = False
     has_clearcoat_texture = False
     has_clearcoat_roughness_texture = False
