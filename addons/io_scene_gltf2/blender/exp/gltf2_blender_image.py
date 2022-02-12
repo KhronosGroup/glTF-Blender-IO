@@ -245,6 +245,7 @@ def _make_temp_image_copy(guard: TmpImageGuard, src_image: bpy.types.Image):
     tmp_image = guard.image
 
     tmp_image.update()
+    tmp_image.scale(*src_image.size)
 
     if src_image.is_dirty:
         # Unsaved changes aren't copied by .copy(), so do them ourselves
