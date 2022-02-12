@@ -15,6 +15,7 @@
 import bpy
 from typing import List, Optional, Tuple
 import numpy as np
+from copy import deepcopy
 
 from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
@@ -54,6 +55,7 @@ def gather_primitives(
         material_idx = internal_primitive['material']
         material = None
 
+        active_uvmaps = []
         if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
             blender_material = None
             if material_names:
@@ -62,17 +64,55 @@ def gather_primitives(
                 if material_name is not None:
                     blender_material = bpy.data.materials[material_name]
             if blender_material is not None:
-                material = gltf2_blender_gather_materials.gather_material(
+                material, active_uvmaps = gltf2_blender_gather_materials.gather_material(
                     blender_material,
                     export_settings,
                 )
+
+        # now we have to check if some active UVMaps are used.
+        # In that case, we need to deepcopy the "default" material to store correct UVMap index
+        if len(active_uvmaps) > 0:
+            real_material = deepcopy(material)
+
+            # retrieve active render UVMap
+            idx = 0
+            for i in range(len(blender_mesh.uv_layers)):
+                if blender_mesh.uv_layers[i].active_render is True:
+                    idx = i
+                    break
+
+            for tex in active_uvmaps:
+                if tex == "emissiveTexture":
+                    real_material.emissive_texture.tex_coord = idx
+                elif tex == "normalTexture":
+                    real_material.normal_texture.tex_coord = idx
+                elif tex == "occlusionTexture":
+                    real_material.occlusion_texture.tex_coord = idx
+                elif tex == "baseColorTexture":
+                    real_material.pbr_metallic_roughness.base_color_texture.tex_coord = idx
+                elif tex == "metallicRoughnessTexture":
+                    real_material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = idx
+                elif tex == "unlitTexture": #TODO not tested yet
+                    real_material.pbr_metallic_roughness.base_color_texture.tex_coord = idx
+                elif tex == "clearcoatTexture":
+                    real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = idx
+                elif tex == "clearcoatRoughnessTexture":
+                    real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = idx
+                elif tex == "clearcoatNormalTexture": #TODO not tested yet
+                    real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = idx
+                elif tex == "transmissionTexture": #TODO not tested yet
+                    real_material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = idx
+                
+
+        else:
+            real_material = material
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
             extensions=None,
             extras=None,
             indices=internal_primitive['indices'],
-            material=material,
+            material=real_material,
             mode=internal_primitive['mode'],
             targets=internal_primitive['targets']
         )

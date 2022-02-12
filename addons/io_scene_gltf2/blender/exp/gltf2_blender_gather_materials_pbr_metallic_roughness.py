@@ -24,21 +24,31 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 @cached
 def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
     if not __filter_pbr_material(blender_material, export_settings):
-        return None
+        return None, None
+
+    base_color_texture, use_active_uvmap_base_color_texture = __gather_base_color_texture(blender_material, export_settings)
+    metallic_roughness_texture, use_active_uvmap_metallic_roughness_texture = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
 
     material = gltf2_io.MaterialPBRMetallicRoughness(
         base_color_factor=__gather_base_color_factor(blender_material, export_settings),
-        base_color_texture=__gather_base_color_texture(blender_material, export_settings),
+        base_color_texture=base_color_texture,
         extensions=__gather_extensions(blender_material, export_settings),
         extras=__gather_extras(blender_material, export_settings),
         metallic_factor=__gather_metallic_factor(blender_material, export_settings),
-        metallic_roughness_texture=__gather_metallic_roughness_texture(blender_material, orm_texture, export_settings),
+        metallic_roughness_texture=metallic_roughness_texture,
         roughness_factor=__gather_roughness_factor(blender_material, export_settings)
     )
 
+    # merge all use_active_uvmap infos
+    uvmap_actives = []
+    if use_active_uvmap_base_color_texture is True:
+        uvmap_actives.append("baseColorTexture")
+    if use_active_uvmap_metallic_roughness_texture is True:
+        uvmap_actives.append("metallicRoughnessTexture")
+
     export_user_extensions('gather_material_pbr_metallic_roughness_hook', export_settings, material, blender_material, orm_texture)
 
-    return material
+    return material, uvmap_actives
 
 
 def __filter_pbr_material(blender_material, export_settings):
@@ -93,7 +103,7 @@ def __gather_base_color_texture(blender_material, export_settings):
         if socket is not None and __has_image_node_from_socket(socket)
     )
     if not inputs:
-        return None
+        return None, None
 
     return gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
 
@@ -129,7 +139,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not __has_image_node_from_socket(metallic_roughness):
-            return None
+            return None, None
         texture_input = (metallic_roughness,)
     elif not hasMetal:
         texture_input = (roughness_socket,)
