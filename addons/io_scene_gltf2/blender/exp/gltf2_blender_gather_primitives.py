@@ -72,7 +72,6 @@ def gather_primitives(
         # now we have to check if some active UVMaps are used.
         # In that case, we need to deepcopy the "default" material to store correct UVMap index
         if len(active_uvmaps) > 0:
-            real_material = deepcopy(material)
 
             # retrieve active render UVMap
             idx = 0
@@ -81,27 +80,31 @@ def gather_primitives(
                     idx = i
                     break
 
-            for tex in active_uvmaps:
-                if tex == "emissiveTexture":
-                    real_material.emissive_texture.tex_coord = idx
-                elif tex == "normalTexture":
-                    real_material.normal_texture.tex_coord = idx
-                elif tex == "occlusionTexture":
-                    real_material.occlusion_texture.tex_coord = idx
-                elif tex == "baseColorTexture":
-                    real_material.pbr_metallic_roughness.base_color_texture.tex_coord = idx
-                elif tex == "metallicRoughnessTexture":
-                    real_material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = idx
-                elif tex == "unlitTexture": #TODO not tested yet
-                    real_material.pbr_metallic_roughness.base_color_texture.tex_coord = idx
-                elif tex == "clearcoatTexture":
-                    real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = idx
-                elif tex == "clearcoatRoughnessTexture":
-                    real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = idx
-                elif tex == "clearcoatNormalTexture": #TODO not tested yet
-                    real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = idx
-                elif tex == "transmissionTexture": #TODO not tested yet
-                    real_material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = idx
+            if idx != 0:
+                real_material = deepcopy(material)
+                for tex in active_uvmaps:
+                    if tex == "emissiveTexture":
+                        real_material.emissive_texture.tex_coord = idx
+                    elif tex == "normalTexture":
+                        real_material.normal_texture.tex_coord = idx
+                    elif tex == "occlusionTexture":
+                        real_material.occlusion_texture.tex_coord = idx
+                    elif tex == "baseColorTexture":
+                        real_material.pbr_metallic_roughness.base_color_texture.tex_coord = idx
+                    elif tex == "metallicRoughnessTexture":
+                        real_material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = idx
+                    elif tex == "unlitTexture": #TODO not tested yet
+                        real_material.pbr_metallic_roughness.base_color_texture.tex_coord = idx
+                    elif tex == "clearcoatTexture":
+                        real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = idx
+                    elif tex == "clearcoatRoughnessTexture":
+                        real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = idx
+                    elif tex == "clearcoatNormalTexture": #TODO not tested yet
+                        real_material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = idx
+                    elif tex == "transmissionTexture": #TODO not tested yet
+                        real_material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = idx
+            else:
+                real_material = material
                 
 
         else:
