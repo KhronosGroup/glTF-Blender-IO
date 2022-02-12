@@ -250,6 +250,15 @@ def get_factor_from_socket(socket, kind):
 
     return None
 
+def get_const_from_default_value_socket(socket, kind):
+    if kind == 'RGB':
+        if socket.type != 'RGBA': return None
+        return list(socket.default_value)[:3]
+    if kind == 'VALUE':
+        if socket.type != 'VALUE': return None
+        return socket.default_value
+    return None
+
 
 def get_const_from_socket(socket, kind):
     if not socket.is_linked:

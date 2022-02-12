@@ -120,7 +120,10 @@ def __gather_emissive_factor(blender_material, export_settings):
     if emissive_socket is None:
         emissive_socket = gltf2_blender_get.get_socket_old(blender_material, "EmissiveFactor")
     if isinstance(emissive_socket, bpy.types.NodeSocket):
-        factor = gltf2_blender_get.get_factor_from_socket(emissive_socket, kind='RGB')
+        if export_settings['gltf_image_format'] != "NONE":
+            factor = gltf2_blender_get.get_factor_from_socket(emissive_socket, kind='RGB')
+        else:
+            factor = gltf2_blender_get.get_const_from_default_value_socket(emissive_socket, kind='RGB')
 
         if factor is None and emissive_socket.is_linked:
             # In glTF, the default emissiveFactor is all zeros, so if an emission texture is connected,
