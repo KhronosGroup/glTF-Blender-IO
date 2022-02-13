@@ -71,7 +71,7 @@ def gather_primitives(
                 if material_name is not None:
                     blender_material = bpy.data.materials[material_name]
             if blender_material is not None:
-                material, is_using_active_uvmap = gltf2_blender_gather_materials.gather_material(
+                material = gltf2_blender_gather_materials.gather_material(
                     blender_material,
                     active_uvmap_idx,
                     export_settings,

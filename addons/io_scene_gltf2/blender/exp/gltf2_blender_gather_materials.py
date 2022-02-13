@@ -108,11 +108,11 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     # If material is not using active UVMap, we need to return the same material,
     # Even if multiples meshes are using different active UVMap
     if len(uvmap_actives) == 0 and active_uvmap_index != -1:
-        material, is_using_active_uvmap = gather_material(blender_material, -1, export_settings)
+        material = gather_material(blender_material, -1, export_settings)
     
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
-    return material, len(uvmap_actives) > 0
+    return material
     # material = blender_primitive['material']
     #
     #     if get_material_requires_texcoords(glTF, material) and not export_settings['gltf_texcoords']:
