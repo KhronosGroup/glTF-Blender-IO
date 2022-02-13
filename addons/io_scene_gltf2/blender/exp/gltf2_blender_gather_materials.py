@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 import bpy
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -29,7 +30,7 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
-def gather_material(blender_material, export_settings):
+def gather_material(blender_material, active_uvmap_index, export_settings):
     """
     Gather the material used by the blender primitive.
 
@@ -37,6 +38,7 @@ def gather_material(blender_material, export_settings):
     :param export_settings:
     :return: a glTF material
     """
+    print("call with", active_uvmap_index)
     if not __filter_material(blender_material, export_settings):
         return None
 
@@ -79,9 +81,39 @@ def gather_material(blender_material, export_settings):
     if uvmap_actives_pbr_metallic_roughness:
         uvmap_actives.extend(uvmap_actives_pbr_metallic_roughness)
 
+    # Because some part of material are shared (eg pbr_metallic_roughness), we can't modify without deepcopy
+    material = deepcopy(material)
+    active_uvmap_index = active_uvmap_index if active_uvmap_index != 0 else None
+    for tex in uvmap_actives:
+        if tex == "emissiveTexture":
+            material.emissive_texture.tex_coord = active_uvmap_index
+        elif tex == "normalTexture":
+            material.normal_texture.tex_coord = active_uvmap_index
+        elif tex == "occlusionTexture":
+            material.occlusion_texture.tex_coord = active_uvmap_index
+        elif tex == "baseColorTexture":
+            material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
+        elif tex == "metallicRoughnessTexture":
+            material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = active_uvmap_index
+        elif tex == "unlitTexture": #TODO not tested yet
+            material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
+        elif tex == "clearcoatTexture":
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = active_uvmap_index
+        elif tex == "clearcoatRoughnessTexture":
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = active_uvmap_index
+        elif tex == "clearcoatNormalTexture": #TODO not tested yet
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = active_uvmap_index
+        elif tex == "transmissionTexture": #TODO not tested yet
+            material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = active_uvmap_index
+
+    # If material is not using active UVMap, we need to return the same material,
+    # Even if multiples meshes are using different active UVMap
+    if len(uvmap_actives) == 0 and active_uvmap_index != -1:
+        material, is_using_active_uvmap = gather_material(blender_material, -1, export_settings)
+    
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
-    return material, uvmap_actives
+    return material, len(uvmap_actives) > 0
     # material = blender_primitive['material']
     #
     #     if get_material_requires_texcoords(glTF, material) and not export_settings['gltf_texcoords']:
