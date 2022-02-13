@@ -41,7 +41,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None
 
-    mat_unlit = __gather_material_unlit(blender_material, export_settings)
+    mat_unlit = __gather_material_unlit(blender_material, active_uvmap_index, export_settings)
     if mat_unlit is not None:
         return mat_unlit
 
@@ -94,8 +94,6 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
             material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
         elif tex == "metallicRoughnessTexture":
             material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = active_uvmap_index
-        elif tex == "unlitTexture": #TODO not tested yet
-            material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
         elif tex == "clearcoatTexture":
             material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = active_uvmap_index
         elif tex == "clearcoatRoughnessTexture":
@@ -425,7 +423,7 @@ def __gather_transmission_extension(blender_material, export_settings):
     return Extension('KHR_materials_transmission', transmission_extension, False), ["transmissionTexture"] if use_active_uvmap else []
 
 
-def __gather_material_unlit(blender_material, export_settings):
+def __gather_material_unlit(blender_material, active_uvmap_index, export_settings):
     gltf2_unlit = gltf2_blender_gather_materials_unlit
 
     info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
@@ -457,6 +455,14 @@ def __gather_material_unlit(blender_material, export_settings):
         )
     )
 
+    if use_active_uvmap is not None:
+        material = deepcopy(material)
+        material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
+    elif use_active_uvmap is None and active_uvmap_index != -1:
+        # If material is not using active UVMap, we need to return the same material,
+        # Even if multiples meshes are using different active UVMap
+        material = gather_material(blender_material, -1, export_settings)
+
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
 
-    return material, ("unlitTexture") if use_active_uvmap is True else []
+    return material
