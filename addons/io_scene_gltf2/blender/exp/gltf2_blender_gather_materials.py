@@ -38,7 +38,6 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     :param export_settings:
     :return: a glTF material
     """
-    print("call with", active_uvmap_index)
     if not __filter_material(blender_material, export_settings):
         return None
 
