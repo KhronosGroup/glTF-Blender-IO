@@ -15,7 +15,6 @@
 import bpy
 from typing import List, Optional, Tuple
 import numpy as np
-from copy import deepcopy
 
 from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
@@ -62,7 +61,6 @@ def gather_primitives(
         material_idx = internal_primitive['material']
         material = None
 
-        active_uvmaps = []
         if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
             blender_material = None
             if material_names:
