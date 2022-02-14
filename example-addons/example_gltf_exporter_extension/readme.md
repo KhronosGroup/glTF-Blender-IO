@@ -35,4 +35,5 @@ gather_texture_info_hook(self, gltf2_texture_info, blender_shader_sockets, expor
 merge_animation_extensions_hook(self, gltf2_animation_source, gltf2_animation_destination, export_settings)
 pre_gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings)
 gather_actions_hook(self, blender_object, blender_actions, blender_tracks, action_on_type, export_settings)
+pre_gather_actions_hook(self, blender_object, export_settings)
 ```

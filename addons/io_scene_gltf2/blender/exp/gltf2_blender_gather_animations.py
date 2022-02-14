@@ -218,6 +218,8 @@ def __get_blender_actions(blender_object: bpy.types.Object,
     blender_tracks = {}
     action_on_type = {}
 
+    export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
+
     if blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
