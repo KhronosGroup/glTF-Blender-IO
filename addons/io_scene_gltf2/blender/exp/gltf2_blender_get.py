@@ -43,6 +43,22 @@ def get_object_from_datapath(blender_object, data_path: str):
     return prop
 
 
+def get_emissive_node_socket(blender_material: bpy.types.Material):
+    """
+    For a given material input name, retrieve the corresponding node tree socket for emissive node.
+
+    :param blender_material: a blender material for which to get the socket
+    :return: a blender EmissiveNode NodeSocket
+    """
+    type = bpy.types.ShaderNodeEmission
+    name = "Color"
+    nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
+    nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
+    inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
+    if inputs:
+        return inputs[0]
+    return None
+
 def get_socket(blender_material: bpy.types.Material, name: str):
     """
     For a given material input name, retrieve the corresponding node tree socket.
@@ -57,13 +73,9 @@ def get_socket(blender_material: bpy.types.Material, name: str):
         if name == "Emissive":
             # Check for a dedicated Emission node first, it must supersede the newer built-in one
             # because the newer one is always present in all Principled BSDF materials.
-            type = bpy.types.ShaderNodeEmission
-            name = "Color"
-            nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
-            nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
-            inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
-            if inputs:
-                return inputs[0]
+            emissive_socket = get_emissive_node_socket(blender_material)
+            if emissive_socket:
+                return emissive_socket
             # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission socket.
             name = "Emission"
             type = bpy.types.ShaderNodeBsdfPrincipled
