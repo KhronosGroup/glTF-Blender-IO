@@ -43,21 +43,20 @@ def get_object_from_datapath(blender_object, data_path: str):
     return prop
 
 
-def get_emissive_node_socket(blender_material: bpy.types.Material):
+def get_node_socket(blender_material, type, name):
     """
-    For a given material input name, retrieve the corresponding node tree socket for emissive node.
+    For a given material input name, retrieve the corresponding node tree socket for a given node type.
 
     :param blender_material: a blender material for which to get the socket
-    :return: a blender EmissiveNode NodeSocket
+    :return: a blender NodeSocket for a given type
     """
-    type = bpy.types.ShaderNodeEmission
-    name = "Color"
     nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
     nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
     inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
     if inputs:
         return inputs[0]
     return None
+
 
 def get_socket(blender_material: bpy.types.Material, name: str):
     """
@@ -73,7 +72,7 @@ def get_socket(blender_material: bpy.types.Material, name: str):
         if name == "Emissive":
             # Check for a dedicated Emission node first, it must supersede the newer built-in one
             # because the newer one is always present in all Principled BSDF materials.
-            emissive_socket = get_emissive_node_socket(blender_material)
+            emissive_socket = get_node_socket(blender_material, bpy.types.ShaderNodeEmission, "Color")
             if emissive_socket:
                 return emissive_socket
             # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission socket.
@@ -84,11 +83,8 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             name = "Color"
         else:
             type = bpy.types.ShaderNodeBsdfPrincipled
-        nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
-        nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
-        inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
-        if inputs:
-            return inputs[0]
+        
+        return get_node_socket(blender_material, type, name)
 
     return None
 
