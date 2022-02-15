@@ -86,6 +86,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     __get_new_material_texture_shared(base_material, material)
 
     active_uvmap_index = active_uvmap_index if active_uvmap_index != 0 else None
+
     for tex in uvmap_actives:
         if tex == "emissiveTexture":
             material.emissive_texture.tex_coord = active_uvmap_index
@@ -132,6 +133,10 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
 
 def __get_new_material_texture_shared(base, node):
         if node is None:
+            return
+        if callable(node) is True:
+            return
+        if node.__str__().startswith('__'):
             return
         if type(node) == gltf2_io.TextureInfo:
             node.index = base.index
@@ -478,6 +483,8 @@ def __gather_material_unlit(blender_material, active_uvmap_index, export_setting
         # If material is not using active UVMap, we need to return the same material,
         # Even if multiples meshes are using different active UVMap
         material = gather_material(blender_material, -1, export_settings)
+    else:
+        material = base_material
 
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
 
