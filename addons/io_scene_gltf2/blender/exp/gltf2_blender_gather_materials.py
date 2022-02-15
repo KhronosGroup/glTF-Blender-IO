@@ -53,7 +53,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     occlusion_texture, uvmap_actives_occlusion_texture = __gather_occlusion_texture(blender_material, orm_texture, export_settings)
     pbr_metallic_roughness, uvmap_actives_pbr_metallic_roughness = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
 
-    material = gltf2_io.Material(
+    base_material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
         double_sided=__gather_double_sided(blender_material, export_settings),
@@ -80,8 +80,11 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     if uvmap_actives_pbr_metallic_roughness:
         uvmap_actives.extend(uvmap_actives_pbr_metallic_roughness)
 
-    # Because some part of material are shared (eg pbr_metallic_roughness), we can't modify without deepcopy
-    material = deepcopy(material)
+    # Because some part of material are shared (eg pbr_metallic_roughness), we must copy the material
+    # Texture must be shared, but not TextureInfo
+    material = deepcopy(base_material)
+    __get_new_material_texture_shared(base_material, material)
+
     active_uvmap_index = active_uvmap_index if active_uvmap_index != 0 else None
     for tex in uvmap_actives:
         if tex == "emissiveTexture":
@@ -107,7 +110,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     # Even if multiples meshes are using different active UVMap
     if len(uvmap_actives) == 0 and active_uvmap_index != -1:
         material = gather_material(blender_material, -1, export_settings)
-    
+        
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
     return material
@@ -126,6 +129,16 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     #         print_console('WARNING', 'Material ' + internal_primitive[
     #             'material'] + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
 
+
+def __get_new_material_texture_shared(base, node):
+        if node is None:
+            return
+        if type(node) == gltf2_io.TextureInfo:
+            node.index = base.index
+        else:
+            if hasattr(node, '__dict__'):
+                for attr, value in node.__dict__.items():
+                    __get_new_material_texture_shared(getattr(base, attr), value)
 
 def __filter_material(blender_material, export_settings):
     return export_settings[gltf2_blender_export_keys.MATERIALS]
@@ -432,7 +445,7 @@ def __gather_material_unlit(blender_material, active_uvmap_index, export_setting
 
     base_color_texture, use_active_uvmap = gltf2_unlit.gather_base_color_texture(info, export_settings)
 
-    material = gltf2_io.Material(
+    base_material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
         double_sided=__gather_double_sided(blender_material, export_settings),
@@ -456,7 +469,10 @@ def __gather_material_unlit(blender_material, active_uvmap_index, export_setting
     )
 
     if use_active_uvmap is not None:
-        material = deepcopy(material)
+        # Because some part of material are shared (eg pbr_metallic_roughness), we must copy the material
+        # Texture must be shared, but not TextureInfo
+        material = deepcopy(base_material)
+        __get_new_material_texture_shared(base_material, material)
         material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
     elif use_active_uvmap is None and active_uvmap_index != -1:
         # If material is not using active UVMap, we need to return the same material,
