@@ -138,12 +138,18 @@ def __get_new_material_texture_shared(base, node):
             return
         if node.__str__().startswith('__'):
             return
-        if type(node) == gltf2_io.TextureInfo:
+        if type(node) in [gltf2_io.TextureInfo, gltf2_io.MaterialOcclusionTextureInfoClass, gltf2_io.MaterialNormalTextureInfoClass]:
             node.index = base.index
         else:
             if hasattr(node, '__dict__'):
                 for attr, value in node.__dict__.items():
+                    print(attr, type(value))
                     __get_new_material_texture_shared(getattr(base, attr), value)
+            else:
+                # For extensions (on a dict)
+                if type(node).__name__ == 'dict':
+                    for i in node.keys():
+                        __get_new_material_texture_shared(base[i], node[i])
 
 def __filter_material(blender_material, export_settings):
     return export_settings[gltf2_blender_export_keys.MATERIALS]
