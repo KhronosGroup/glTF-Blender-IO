@@ -19,7 +19,7 @@ gather_animation_channel_target_hook(self, gltf2_animation_channel_target, chann
 gather_animation_sampler_hook(self, gltf2_sampler, channels, blender_object, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, export_settings)
 gather_asset_hook(self, gltf2_asset, export_settings)
 gather_camera_hook(self, gltf2_camera, blender_camera, export_settings)
-gather_gltf_hook(self, gltf2_plan, export_settings)
+gather_gltf_extensions_hook(self, gltf2_plan, export_settings)
 gather_image_hook(self, gltf2_image, blender_shader_sockets, export_settings)
 gather_joint_hook(self, gltf2_node, blender_bone, export_settings)
 gather_material_hook(self, gltf2_material, blender_material, export_settings)
@@ -35,4 +35,8 @@ gather_texture_info_hook(self, gltf2_texture_info, blender_shader_sockets, expor
 merge_animation_extensions_hook(self, gltf2_animation_source, gltf2_animation_destination, export_settings)
 vtree_before_filter_hook(self, vtree, export_settings)
 vtree_after_filter_hook(self, vtree, export_settings)
+pre_gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings)
+gather_actions_hook(self, blender_object, blender_actions, blender_tracks, action_on_type, export_settings)
+pre_gather_actions_hook(self, blender_object, export_settings)
+gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 ```
