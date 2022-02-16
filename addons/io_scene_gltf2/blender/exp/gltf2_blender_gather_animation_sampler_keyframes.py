@@ -174,8 +174,7 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
 
 
         # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
-        obj_driver = blender_object_if_armature.proxy if blender_object_if_armature.proxy else blender_object_if_armature
-        drivers_to_manage = get_sk_drivers(obj_driver)
+        drivers_to_manage = get_sk_drivers(blender_object_if_armature)
         for dr_obj, dr_fcurves in drivers_to_manage:
             vals = get_sk_driver_values(dr_obj, frame, dr_fcurves)
 
