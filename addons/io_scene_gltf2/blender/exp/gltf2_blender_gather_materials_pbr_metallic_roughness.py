@@ -53,7 +53,7 @@ def __gather_base_color_factor(blender_material, export_settings):
 
     alpha_socket = gltf2_blender_get.get_socket(blender_material, "Alpha")
     if isinstance(alpha_socket, bpy.types.NodeSocket):
-        if export_settings['gltf_image_format'] != "NONE": 
+        if export_settings['gltf_image_format'] != "NONE":
             alpha = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
         else:
             alpha = gltf2_blender_get.get_const_from_default_value_socket(alpha_socket, kind='VALUE')
