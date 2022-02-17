@@ -1168,6 +1168,24 @@ class ImportGLTF2(Operator, ImportHelper):
             self.loglevel = logging.NOTSET
 
 
+def update_gltf_settings_node_ui(self, context):
+    import io_scene_gltf2.blender.com.gltf2_blender_ui as blender_ui
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.settings_node_ui is True:
+        bpy.utils.register_class(blender_ui.NODE_PT_GLTF_PANEL)
+    else:
+        blender_ui.unregister()
+
+class GLTF_AddonPreferences(bpy.types.AddonPreferences):
+    bl_idname = __package__
+
+    settings_node_ui : bpy.props.BoolProperty(default= False, update=update_gltf_settings_node_ui)
+
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+        row.prop(self, "settings_node_ui", text="Settings node interface")
+
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
@@ -1185,14 +1203,18 @@ classes = (
     GLTF_PT_export_animation_skinning,
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
-    GLTF_PT_import_user_extensions
+    GLTF_PT_import_user_extensions,
+    GLTF_AddonPreferences
 )
 
 
 def register():
+    import io_scene_gltf2.blender.com.gltf2_blender_ui as blender_ui
     for c in classes:
         bpy.utils.register_class(c)
     # bpy.utils.register_module(__name__)
+
+    blender_ui.register()
 
     # add to the export / import menu
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -1200,6 +1222,7 @@ def register():
 
 
 def unregister():
+    import io_scene_gltf2.blender.com.gltf2_blender_ui as blender_ui
     for c in classes:
         bpy.utils.unregister_class(c)
     for f in exporter_extension_panel_unregister_functors:
@@ -1209,6 +1232,8 @@ def unregister():
     for f in importer_extension_panel_unregister_functors:
         f()
     importer_extension_panel_unregister_functors.clear()
+
+    blender_ui.unregister()
 
     # bpy.utils.unregister_module(__name__)
 
