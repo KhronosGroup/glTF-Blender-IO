@@ -36,7 +36,7 @@ class NODE_PT_GLTF_PANEL(bpy.types.Panel):
 
 class NODE_OT_GLTF_AO(bpy.types.Operator):
     bl_idname = "node.gltf_settings_node_operator"
-    bl_label  = "Add glTF 2.0 AO node"
+    bl_label  = "Add Settings glTF node"
 
 
     @classmethod
