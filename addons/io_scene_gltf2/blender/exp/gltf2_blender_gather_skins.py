@@ -25,7 +25,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 
 
-#@cached
+@cached
 def gather_skin(armature_uuid, export_settings):
     """
     Gather armatures, bones etc into a glTF2 skin object.
