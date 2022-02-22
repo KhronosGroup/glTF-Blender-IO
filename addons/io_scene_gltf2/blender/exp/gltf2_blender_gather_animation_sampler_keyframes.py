@@ -428,6 +428,9 @@ def gather_keyframes(blender_obj_uuid: str,
 
             keyframes.append(key)
 
+    if not export_settings[gltf2_blender_export_keys.OPTIMIZE_ANIMS]:
+        return keyframes
+
     # For armature only
     # Check if all values are the same
     # In that case, if there is no real keyframe on this channel for this given bone,
