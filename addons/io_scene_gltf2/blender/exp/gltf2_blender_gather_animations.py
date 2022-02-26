@@ -52,6 +52,10 @@ def gather_animations(blender_object: bpy.types.Object,
                 track.is_solo = False
                 break
 
+    # Remove any tweak mode. Restore after export
+    if blender_object.animation_data:
+        restore_tweak_mode = blender_object.animation_data.use_tweak_mode
+
     # Export all collected actions.
     for blender_action, track_name, on_type in blender_actions:
 
@@ -60,10 +64,7 @@ def gather_animations(blender_object: bpy.types.Object,
             if blender_object.animation_data.action is None \
                     or (blender_object.animation_data.action.name != blender_action.name):
                 if blender_object.animation_data.is_property_readonly('action'):
-                    # NLA stuff: some track are on readonly mode, we can't change action
-                    error = "Action is readonly. Please check NLA editor"
-                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
-                    continue
+                    blender_object.animation_data.use_tweak_mode = False
                 try:
                     blender_object.animation_data.action = blender_action
                 except:
@@ -97,7 +98,7 @@ def gather_animations(blender_object: bpy.types.Object,
                 blender_object.animation_data.action = current_action
         if solo_track is not None:
             solo_track.is_solo = True
-
+        blender_object.animation_data.use_tweak_mode = restore_tweak_mode
     return animations, tracks
 
 
@@ -120,6 +121,8 @@ def __gather_animation(blender_action: bpy.types.Action,
     except RuntimeError as error:
         print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
         return None
+
+    export_user_extensions('pre_gather_animation_hook', export_settings, animation, blender_action, blender_object)
 
     if not animation.channels:
         return None
@@ -215,6 +218,8 @@ def __get_blender_actions(blender_object: bpy.types.Object,
     blender_tracks = {}
     action_on_type = {}
 
+    export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
+
     if blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
@@ -256,6 +261,8 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                         blender_actions.append(strip.action)
                         blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                         action_on_type[strip.action.name] = "SHAPEKEY"
+
+    export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))

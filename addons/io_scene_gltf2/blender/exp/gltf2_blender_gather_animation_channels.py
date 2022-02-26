@@ -40,18 +40,25 @@ def gather_animation_channels(blender_action: bpy.types.Action,
     # This is need if user set 'Force sampling' and in case we need to bake
     bake_range_start = None
     bake_range_end = None
-    groups = __get_channel_groups(blender_action, blender_object, export_settings)
-    # Note: channels has some None items only for SK if some SK are not animated
-    for chans in groups:
-        ranges = [channel.range() for channel in chans  if channel is not None]
-        if bake_range_start is None:
-            bake_range_start = min([channel.range()[0] for channel in chans  if channel is not None])
-        else:
-            bake_range_start = min(bake_range_start, min([channel.range()[0] for channel in chans  if channel is not None]))
-        if bake_range_end is None:
-            bake_range_end = max([channel.range()[1] for channel in chans  if channel is not None])
-        else:
-            bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans  if channel is not None]))
+    force_range = False
+    # If range is manually set, use it. Else, calculate it
+    if blender_action.use_frame_range is True:
+        bake_range_start = blender_action.frame_start
+        bake_range_end = blender_action.frame_end
+        force_range = True # keyframe_points is read-only, we cant restrict here
+    else:
+        groups = __get_channel_groups(blender_action, blender_object, export_settings)
+        # Note: channels has some None items only for SK if some SK are not animated
+        for chans in groups:
+            ranges = [channel.range() for channel in chans  if channel is not None]
+            if bake_range_start is None:
+                bake_range_start = min([channel.range()[0] for channel in chans  if channel is not None])
+            else:
+                bake_range_start = min(bake_range_start, min([channel.range()[0] for channel in chans  if channel is not None]))
+            if bake_range_end is None:
+                bake_range_end = max([channel.range()[1] for channel in chans  if channel is not None])
+            else:
+                bake_range_end = max(bake_range_end, max([channel.range()[1] for channel in chans  if channel is not None]))
 
 
     if blender_object.type == "ARMATURE" and export_settings['gltf_force_sampling'] is True:
@@ -84,6 +91,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                     p,
                     bake_range_start,
                     bake_range_end,
+                    force_range,
                     blender_action.name,
                     None,
                     (bone.name, p) in list_of_animated_bone_channels)
@@ -98,14 +106,13 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             if len(channel_group) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, blender_action.name, None, False)
+            channel = __gather_animation_channel(channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, force_range, blender_action.name, None, True)
             if channel is not None:
                 channels.append(channel)
 
 
         # Retrieve channels for drivers, if needed
-        obj_driver = blender_object.proxy if blender_object.proxy else blender_object
-        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(obj_driver)
+        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(blender_object)
         for obj, fcurves in drivers_to_manage:
             channel = __gather_animation_channel(
                 fcurves,
@@ -115,6 +122,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                 None,
                 bake_range_start,
                 bake_range_end,
+                force_range,
                 blender_action.name,
                 obj,
                 False)
@@ -135,6 +143,7 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                         None,
                         bake_range_start,
                         bake_range_end,
+                        force_range,
                         blender_action.name,
                         None,
                         False)
@@ -207,6 +216,7 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                bake_channel: typing.Union[str, None],
                                bake_range_start,
                                bake_range_end,
+                               force_range: bool,
                                action_name: str,
                                driver_obj,
                                node_channel_is_animated: bool
@@ -216,7 +226,7 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
 
     __target= __gather_target(channels, blender_object, export_settings, bake_bone, bake_channel, driver_obj)
     if __target.path is not None:
-        sampler = __gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, driver_obj, node_channel_is_animated)
+        sampler = __gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, force_range, action_name, driver_obj, node_channel_is_animated)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
@@ -275,6 +285,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
                      bake_channel: typing.Union[str, None],
                      bake_range_start,
                      bake_range_end,
+                     force_range: bool,
                      action_name,
                      driver_obj,
                      node_channel_is_animated: bool
@@ -286,6 +297,7 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
         bake_channel,
         bake_range_start,
         bake_range_end,
+        force_range,
         action_name,
         driver_obj,
         node_channel_is_animated,

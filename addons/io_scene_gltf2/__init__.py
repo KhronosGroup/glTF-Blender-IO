@@ -15,8 +15,8 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (1, 8, 2),
-    'blender': (3, 0, 0),
+    "version": (3, 2, 7),
+    'blender': (3, 1, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
@@ -67,7 +67,8 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 #  Functions / Classes.
 #
 
-extension_panel_unregister_functors = []
+exporter_extension_panel_unregister_functors = []
+importer_extension_panel_unregister_functors = []
 
 
 def ensure_filepath_matches_export_format(filepath, export_format):
@@ -159,10 +160,12 @@ class ExportGLTF2_Base:
                 ('JPEG', 'JPEG Format (.jpg)',
                 'Save images as JPEGs. (Images that need alpha are saved as PNGs though.) '
                 'Be aware of a possible loss in quality'),
+                ('NONE', 'None',
+                 'Don\'t export images'),
                ),
         description=(
             'Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for web '
-            'applications due to the smaller file size'
+            'applications due to the smaller file size. Alternatively they can be omitted if they are not needed'
         ),
         default='AUTO'
     )
@@ -397,6 +400,15 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    optimize_animation_size: BoolProperty(
+        name='Optimize Animation Size',
+        description=(
+            "Reduces exported filesize by removing duplicate keyframes"
+            "Can cause problems with stepped animation"
+        ),
+        default=True
+    )
+
     export_current_frame: BoolProperty(
         name='Use Current Frame',
         description='Export the scene in the current animation frame',
@@ -471,14 +483,13 @@ class ExportGLTF2_Base:
         self.will_save_settings = False
         if settings:
             try:
+                if 'export_selected' in settings.keys(): # Back compatibility for export_selected --> use_selection
+                    setattr(self, "use_selection", settings['export_selected'])
+                    settings["use_selection"] = settings['export_selected']
+                    del settings['export_selected']
+                    print("export_selected is now renamed use_selection, and will be deleted in a few release")
                 for (k, v) in settings.items():
-                    if k == "export_selected": # Back compatibility for export_selected --> use_selection
-                        setattr(self, "use_selection", v)
-                        del settings[k]
-                        settings["use_selection"] = v
-                        print("export_selected is now renamed use_selection, and will be deleted in a few release")
-                    else:
-                        setattr(self, k, v)
+                    setattr(self, k, v)
                 self.will_save_settings = True
 
             except (AttributeError, TypeError):
@@ -490,11 +501,11 @@ class ExportGLTF2_Base:
         for addon_name in preferences.addons.keys():
             try:
                 if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
-                    extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
+                    exporter_extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
             except Exception:
                 pass
 
-        self.has_active_extensions = len(extension_panel_unregister_functors) > 0
+        self.has_active_exporter_extensions = len(exporter_extension_panel_unregister_functors) > 0
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
@@ -513,7 +524,8 @@ class ExportGLTF2_Base:
             x: getattr(self, x) for x in dir(all_props)
             if (x.startswith("export_") or x in exceptional) and all_props.get(x) is not None
         }
-
+        if 'export_selected' in export_props.keys():
+            del export_props['export_selected'] # Do not save this property, only here for backward compatibility
         context.scene[self.scene_key] = export_props
 
     def execute(self, context):
@@ -591,11 +603,13 @@ class ExportGLTF2_Base:
             else:
                 export_settings['gltf_def_bones'] = False
             export_settings['gltf_nla_strips'] = self.export_nla_strips
+            export_settings['gltf_optimize_animation'] = self.optimize_animation_size
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
             export_settings['gltf_def_bones'] = False
+            export_settings['gltf_optimize_animation'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -885,6 +899,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
         layout.prop(operator, 'export_nla_strips')
+        layout.prop(operator, 'optimize_animation_size')
 
         row = layout.row()
         row.active = operator.export_force_sampling
@@ -959,7 +974,7 @@ class GLTF_PT_export_animation_skinning(bpy.types.Panel):
 class GLTF_PT_export_user_extensions(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Extensions"
+    bl_label = "Exporter Extensions"
     bl_parent_id = "FILE_PT_operator"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -968,13 +983,30 @@ class GLTF_PT_export_user_extensions(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and operator.has_active_extensions
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and operator.has_active_exporter_extensions
 
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
+class GLTF_PT_import_user_extensions(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Importer Extensions"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "IMPORT_SCENE_OT_gltf" and operator.has_active_importer_extensions
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
@@ -1074,6 +1106,19 @@ class ImportGLTF2(Operator, ImportHelper):
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
 
+    def invoke(self, context, event):
+        import sys
+        preferences = bpy.context.preferences
+        for addon_name in preferences.addons.keys():
+            try:
+                if hasattr(sys.modules[addon_name], 'glTF2ImportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ImportUserExtensions'):
+                    importer_extension_panel_unregister_functors.append(sys.modules[addon_name].register_panel())
+            except Exception:
+                pass
+
+        self.has_active_importer_extensions = len(importer_extension_panel_unregister_functors) > 0
+        return ImportHelper.invoke(self, context, event)
+
     def execute(self, context):
         return self.import_gltf2(context)
 
@@ -1082,6 +1127,20 @@ class ImportGLTF2(Operator, ImportHelper):
 
         self.set_debug_log()
         import_settings = self.as_keywords()
+
+        user_extensions = []
+
+        import sys
+        preferences = bpy.context.preferences
+        for addon_name in preferences.addons.keys():
+            try:
+                module = sys.modules[addon_name]
+            except Exception:
+                continue
+            if hasattr(module, 'glTF2ImportUserExtension'):
+                extension_ctor = module.glTF2ImportUserExtension
+                user_extensions.append(extension_ctor())
+        import_settings['import_user_extensions'] = user_extensions
 
         if self.files:
             # Multiple file import
@@ -1151,7 +1210,8 @@ classes = (
     GLTF_PT_export_animation_shapekeys,
     GLTF_PT_export_animation_skinning,
     GLTF_PT_export_user_extensions,
-    ImportGLTF2
+    ImportGLTF2,
+    GLTF_PT_import_user_extensions
 )
 
 
@@ -1168,9 +1228,13 @@ def register():
 def unregister():
     for c in classes:
         bpy.utils.unregister_class(c)
-    for f in extension_panel_unregister_functors:
+    for f in exporter_extension_panel_unregister_functors:
         f()
-    extension_panel_unregister_functors.clear()
+    exporter_extension_panel_unregister_functors.clear()
+
+    for f in importer_extension_panel_unregister_functors:
+        f()
+    importer_extension_panel_unregister_functors.clear()
 
     # bpy.utils.unregister_module(__name__)
 
