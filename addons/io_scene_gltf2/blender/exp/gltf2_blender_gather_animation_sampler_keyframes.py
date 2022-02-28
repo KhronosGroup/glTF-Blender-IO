@@ -429,7 +429,7 @@ def gather_keyframes(blender_obj_uuid: str,
             keyframes.append(key)
 
     if not export_settings[gltf2_blender_export_keys.OPTIMIZE_ANIMS]:
-        return keyframes
+        return (keyframes, baking_is_needed)
 
     # For armature only
     # Check if all values are the same
