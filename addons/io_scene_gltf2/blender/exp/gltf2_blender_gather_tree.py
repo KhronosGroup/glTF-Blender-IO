@@ -383,4 +383,12 @@ class VExportTree:
             if len(candidates) > 0:
                 n.armature = candidates[0].uuid
             del n.armature_needed
-            
+
+    def get_unused_skins(self):
+        from .gltf2_blender_gather_skins import gather_skin
+        skins = []
+        for n in [n for n in self.nodes.values() if n.blender_type == VExportNode.ARMATURE]:
+            if len([m for m in self.nodes.values() if m.keep_tag is True and m.blender_type == VExportNode.OBJECT and m.armature == n.uuid]) == 0:
+                skin = gather_skin(n.uuid, self.export_settings)
+                skins.append(skin)
+        return skins
