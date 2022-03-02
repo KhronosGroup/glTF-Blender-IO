@@ -18,7 +18,7 @@ import numpy as np
 
 from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
@@ -31,13 +31,34 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
+def get_primitive_cache_key(
+        blender_mesh,
+        blender_object,
+        vertex_groups,
+        modifiers,
+        materials,
+        export_settings):
+
+    # Use id of mesh
+    # Do not use bpy.types that can be unhashable
+    # Do not use mesh name, that can be not unique (when linked)
+
+    # TODO check what is really needed for modifiers
+
+    return (
+        (id(blender_mesh),),
+        (modifiers,),
+        tuple(id(m) if m is not None else None for m in materials)
+    )
+
+
+@cached_by_key(key=get_primitive_cache_key)
 def gather_primitives(
         blender_mesh: bpy.types.Mesh,
-        library: Optional[str],
-        blender_object: Optional[bpy.types.Object],
+        uuid_for_skined_data,
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
-        material_names: Tuple[str],
+        materials: Tuple[bpy.types.Material],
         export_settings
         ) -> List[gltf2_io.MeshPrimitive]:
     """
@@ -47,7 +68,7 @@ def gather_primitives(
     """
     primitives = []
 
-    blender_primitives = __gather_cache_primitives(blender_mesh, library, blender_object,
+    blender_primitives = __gather_cache_primitives(blender_mesh, uuid_for_skined_data,
         vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
@@ -56,14 +77,13 @@ def gather_primitives(
 
         if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
             blender_material = None
-            if material_names:
-                i = material_idx if material_idx < len(material_names) else -1
-                material_name = material_names[i]
-                if material_name is not None:
-                    blender_material = bpy.data.materials[material_name]
-            if blender_material is not None:
+            mat = None
+            if materials:
+                i = material_idx if material_idx < len(materials) else -1
+                mat = materials[i]
+            if mat is not None:
                 material = gltf2_blender_gather_materials.gather_material(
-                    blender_material,
+                    mat,
                     export_settings,
                 )
 
@@ -83,8 +103,7 @@ def gather_primitives(
 @cached
 def __gather_cache_primitives(
         blender_mesh: bpy.types.Mesh,
-        library: Optional[str],
-        blender_object: Optional[bpy.types.Object],
+        uuid_for_skined_data,
         vertex_groups: Optional[bpy.types.VertexGroups],
         modifiers: Optional[bpy.types.ObjectModifiers],
         export_settings
@@ -95,7 +114,7 @@ def __gather_cache_primitives(
     primitives = []
 
     blender_primitives = gltf2_blender_extract.extract_primitives(
-        None, blender_mesh, library, blender_object, vertex_groups, modifiers, export_settings)
+        blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
         primitive = {

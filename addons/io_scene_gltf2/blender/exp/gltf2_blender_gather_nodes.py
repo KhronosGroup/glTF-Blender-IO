@@ -24,135 +24,47 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 
-def gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
-    # custom cache to avoid cache miss when called from animation
-    # with blender_scene=None
+def gather_node(vnode, export_settings):
+    blender_object = vnode.blender_object
 
-    # invalidate cache if export settings have changed
-    if not hasattr(gather_node, "__export_settings") or export_settings != gather_node.__export_settings:
-        gather_node.__cache = {}
-        gather_node.__export_settings = export_settings
-
-    if blender_scene is None and (blender_object.name, library) in gather_node.__cache:
-        return gather_node.__cache[(blender_object.name, library)]
-
-    node = __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings)
-    gather_node.__cache[(blender_object.name, library)] = node
-    return node
-
-@cached
-def __gather_node(blender_object, library, blender_scene, dupli_object_parent, export_settings):
-    children, only_bone_children = __gather_children(blender_object, blender_scene, export_settings)
-
-    camera = None
-    mesh = None
-    skin = None
-    weights = None
-
-    # If blender_scene is None, we are coming from animation export
-    # Check to know if object is exported is already done, so we don't check
-    # again if object is instanced in scene : this check was already done when exporting object itself
-    if not __filter_node(blender_object, blender_scene, export_settings):
-        if children:
-            # This node should be filtered out, but has un-filtered children present.
-            # So, export this node, excluding its camera, mesh, skin, and weights.
-            # The transformations and animations on this node will have visible effects on children.
-
-            # Armature always have children node(s) (that are bone(s))
-            # We have to check if children are only bones or not for armatures
-            if blender_object.type == "ARMATURE" and only_bone_children is True:
-                return None
-
-            pass
-        else:
-            # This node is filtered out, and has no un-filtered children or descendants.
-            return None
-    else:
-        # This node is being fully exported.
-        camera = __gather_camera(blender_object, export_settings)
-        mesh = __gather_mesh(blender_object, library, export_settings)
-        skin = __gather_skin(blender_object, export_settings)
-        weights = __gather_weights(blender_object, export_settings)
-
+    skin = __gather_skin(vnode, blender_object, export_settings)
     node = gltf2_io.Node(
-        camera=camera,
-        children=children,
+        camera=__gather_camera(blender_object, export_settings),
+        children=__gather_children(vnode, blender_object, export_settings),
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
-        mesh=mesh,
+        mesh=__gather_mesh(vnode, blender_object, export_settings),
         name=__gather_name(blender_object, export_settings),
         rotation=None,
         scale=None,
         skin=skin,
         translation=None,
-        weights=weights
+        weights=__gather_weights(blender_object, export_settings)
     )
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
     if node.skin is None:
-        node.translation, node.rotation, node.scale = __gather_trans_rot_scale(blender_object, export_settings)
+        node.translation, node.rotation, node.scale = __gather_trans_rot_scale(vnode, export_settings)
 
-    if export_settings[gltf2_blender_export_keys.YUP]:
-        # Checking node.extensions is making sure that the type of lamp is managed, and will be exported
-        if blender_object.type == 'LIGHT' and export_settings[gltf2_blender_export_keys.LIGHTS] and node.extensions:
-            correction_node = __get_correction_node(blender_object, export_settings)
-            correction_node.extensions = {"KHR_lights_punctual": node.extensions["KHR_lights_punctual"]}
-            del node.extensions["KHR_lights_punctual"]
-            node.children.append(correction_node)
-        if blender_object.type == 'CAMERA' and export_settings[gltf2_blender_export_keys.CAMERAS]:
-            correction_node = __get_correction_node(blender_object, export_settings)
-            correction_node.camera = node.camera
-            node.children.append(correction_node)
-        node.camera = None
 
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
+    vnode.node = node
+
+    if node.skin is not None:
+        vnode.skin = skin
+
     return node
-
-
-def __filter_node(blender_object, blender_scene, export_settings):
-    if blender_object.users == 0:
-        return False
-    if blender_scene is not None:
-        instanced =  any([blender_object.name in layer.objects for layer in blender_scene.view_layers])
-        if instanced is False:
-            # Check if object is from a linked collection
-            if any([blender_object.name in coll.objects for coll in bpy.data.collections if coll.library is not None]):
-                pass
-            else:
-                # Not instanced, not linked -> We don't keep this object
-                return False
-    if export_settings[gltf2_blender_export_keys.SELECTED] and blender_object.select_get() is False:
-        return False
-
-    if export_settings[gltf2_blender_export_keys.VISIBLE] and blender_object.visible_get() is False:
-        return False
-
-    # render_get() doesn't exist, so unfortunately this won't take into account the Collection settings
-    if export_settings[gltf2_blender_export_keys.RENDERABLE] and blender_object.hide_render is True:
-        return False
-
-    if export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION]:
-        found = any(x == blender_object for x in bpy.context.collection.all_objects)
-
-        if not found:
-            return False
-
-    if blender_object.type == 'LIGHT':
-        return export_settings[gltf2_blender_export_keys.LIGHTS]
-
-    if blender_object.type == 'CAMERA':
-        return export_settings[gltf2_blender_export_keys.CAMERAS]
-
-    return True
 
 
 def __gather_camera(blender_object, export_settings):
@@ -162,54 +74,35 @@ def __gather_camera(blender_object, export_settings):
     return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
 
 
-def __gather_children(blender_object, blender_scene, export_settings):
+def __gather_children(vnode, blender_object, export_settings):
     children = []
-    only_bone_children = True # True by default, will be set to False if needed
-    # standard children
-    for child_object in blender_object.children:
-        if child_object.parent_bone:
-            # this is handled further down,
-            # as the object should be a child of the specific bone,
-            # not the Armature object
-            continue
 
-        node = gather_node(child_object,
-            child_object.library.name if child_object.library else None,
-            blender_scene, None, export_settings)
+    vtree = export_settings['vtree']
+
+    # Standard Children / Collection
+    for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
+        node = gather_node(c, export_settings)
         if node is not None:
             children.append(node)
-            only_bone_children = False
-    # blender dupli objects
-    if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-        for dupli_object in blender_object.instance_collection.objects:
-            if dupli_object.parent is not None:
-                continue
-            if dupli_object.type == "ARMATURE":
-                continue # There is probably a proxy (no more existing)
-            node = gather_node(dupli_object,
-                dupli_object.library.name if dupli_object.library else None,
-                blender_scene, blender_object.name, export_settings)
-            if node is not None:
-                children.append(node)
-                only_bone_children = False
 
-    # blender bones
-    if blender_object.type == "ARMATURE":
+
+    # Armature --> Retrieve Blender bones
+    if vnode.blender_type == gltf2_blender_gather_tree.VExportNode.ARMATURE:
         root_joints = []
-        if export_settings["gltf_def_bones"] is False:
-            bones = blender_object.pose.bones
-        else:
-            bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
-            bones = [blender_object.pose.bones[b.name] for b in bones]
-        for blender_bone in bones:
-            if not blender_bone.parent:
-                joint = gltf2_blender_gather_joints.gather_joint(blender_object, blender_bone, export_settings)
-                children.append(joint)
-                root_joints.append(joint)
-        # handle objects directly parented to bones
-        direct_bone_children = [child for child in blender_object.children if child.parent_bone]
-        if len(direct_bone_children) != 0:
-            only_bone_children = False
+
+        all_armature_children = vnode.children
+        root_bones_uuid = [c for c in all_armature_children if export_settings['vtree'].nodes[c].blender_type == VExportNode.BONE]
+        for bone_uuid in root_bones_uuid:
+            joint = gltf2_blender_gather_joints.gather_joint_vnode(bone_uuid, export_settings)
+            children.append(joint)
+            root_joints.append(joint)
+
+        # Object parented to bones
+        direct_bone_children = []
+        for n in [vtree.nodes[i] for i in vtree.get_all_bones(vnode.uuid)]:
+            direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE])
+
+
         def find_parent_joint(joints, name):
             for joint in joints:
                 if joint.name == name:
@@ -218,44 +111,40 @@ def __gather_children(blender_object, blender_scene, export_settings):
                 if parent_joint:
                     return parent_joint
             return None
-        for child in direct_bone_children:
+
+        for child in direct_bone_children: # List of object that are parented to bones
             # find parent joint
-            parent_joint = find_parent_joint(root_joints, child.parent_bone)
+            parent_joint = find_parent_joint(root_joints, vtree.nodes[child].blender_object.parent_bone)
             if not parent_joint:
                 continue
-            child_node = gather_node(child, None, blender_scene, None, export_settings)
+            child_node = gather_node(vtree.nodes[child], export_settings)
             if child_node is None:
                 continue
             blender_bone = blender_object.pose.bones[parent_joint.name]
-            # fix rotation
-            if export_settings[gltf2_blender_export_keys.YUP]:
-                rot = child_node.rotation
-                if rot is None:
-                    rot = [0, 0, 0, 1]
 
-                rot_quat = Quaternion(rot)
-                axis_basis_change = Matrix(
-                    ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, -1.0, 0.0), (0.0, 1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-                mat = child.matrix_parent_inverse @ child.matrix_basis
-                mat = mat @ axis_basis_change
+            mat = vtree.nodes[vtree.nodes[child].parent_bone_uuid].matrix_world.inverted_safe() @ vtree.nodes[child].matrix_world
+            loc, rot_quat, scale = mat.decompose()
 
-                _, rot_quat, _ = mat.decompose()
-                child_node.rotation = [rot_quat[1], rot_quat[2], rot_quat[3], rot_quat[0]]
+            trans = __convert_swizzle_location(loc, export_settings)
+            rot = __convert_swizzle_rotation(rot_quat, export_settings)
+            sca = __convert_swizzle_scale(scale, export_settings)
 
-            # fix translation (in blender bone's tail is the origin for children)
-            trans, _, _ = child.matrix_local.decompose()
-            if trans is None:
-                trans = [0, 0, 0]
-            # bones go down their local y axis
-            if blender_bone.matrix.to_scale()[1] >= 1e-6:
-                bone_tail = [0, blender_bone.length / blender_bone.matrix.to_scale()[1], 0]
-            else:
-                bone_tail = [0,0,0] # If scale is 0, tail == head
-            child_node.translation = [trans[idx] + bone_tail[idx] for idx in range(3)]
+
+            translation, rotation, scale = (None, None, None)
+            if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
+                translation = [trans[0], trans[1], trans[2]]
+            if rot[0] != 1.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 0.0:
+                rotation = [rot[1], rot[2], rot[3], rot[0]]
+            if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
+                scale = [sca[0], sca[1], sca[2]]
+
+            child_node.translation = translation
+            child_node.rotation = rotation
+            child_node.scale = scale
 
             parent_joint.children.append(child_node)
 
-    return children, only_bone_children
+    return children
 
 
 def __gather_extensions(blender_object, export_settings):
@@ -294,11 +183,15 @@ def __gather_matrix(blender_object, export_settings):
     return []
 
 
-def __gather_mesh(blender_object, library, export_settings):
+def __gather_mesh(vnode, blender_object, export_settings):
     if blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
-        return __gather_mesh_from_nonmesh(blender_object, library, export_settings)
+        return __gather_mesh_from_nonmesh(blender_object, export_settings)
 
     if blender_object.type != "MESH":
+        return None
+
+    # For duplis instancer, when show is off -> export as empty
+    if vnode.force_as_empty is True:
         return None
 
     # Be sure that object is valid (no NaN for example)
@@ -312,6 +205,8 @@ def __gather_mesh(blender_object, library, export_settings):
     if len(modifiers) == 0:
         modifiers = None
 
+    # TODO for objects without any modifiers, we can keep original mesh_data
+    # It will instance mesh in glTF
     if export_settings[gltf2_blender_export_keys.APPLY]:
         armature_modifiers = {}
         if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -346,24 +241,23 @@ def __gather_mesh(blender_object, library, export_settings):
                 modifiers = None
 
     materials = tuple(ms.material for ms in blender_object.material_slots)
-    material_names = tuple(None if mat is None else mat.name for mat in materials)
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
     # we can't instantiate multiple object at different location, skined by same armature
-    blender_object_for_skined_data = None
+    uuid_for_skined_data = None
     if export_settings[gltf2_blender_export_keys.SKINS]:
         for idx, modifier in enumerate(blender_object.modifiers):
             if modifier.type == 'ARMATURE':
-                blender_object_for_skined_data = blender_object
+                uuid_for_skined_data = vnode.uuid
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
-                                                   library,
-                                                   blender_object_for_skined_data,
+                                                   uuid_for_skined_data,
                                                    vertex_groups,
                                                    modifiers,
                                                    skip_filter,
-                                                   material_names,
+                                                   materials,
+                                                   None,
                                                    export_settings)
 
     if export_settings[gltf2_blender_export_keys.APPLY]:
@@ -372,7 +266,7 @@ def __gather_mesh(blender_object, library, export_settings):
     return result
 
 
-def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
+def __gather_mesh_from_nonmesh(blender_object, export_settings):
     """Handles curves, surfaces, text, etc."""
     needs_to_mesh_clear = False
     try:
@@ -398,18 +292,18 @@ def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
         needs_to_mesh_clear = True
 
         skip_filter = True
-        material_names = tuple([ms.material.name for ms in blender_object.material_slots if ms.material is not None])
+        materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
         vertex_groups = None
         modifiers = None
         blender_object_for_skined_data = None
 
         result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
-                                                       library,
                                                        blender_object_for_skined_data,
                                                        vertex_groups,
                                                        modifiers,
                                                        skip_filter,
-                                                       material_names,
+                                                       materials,
+                                                       blender_object.data,
                                                        export_settings)
 
     finally:
@@ -422,33 +316,15 @@ def __gather_mesh_from_nonmesh(blender_object, library, export_settings):
 def __gather_name(blender_object, export_settings):
     return blender_object.name
 
-
-def __gather_trans_rot_scale(blender_object, export_settings):
-    if blender_object.matrix_parent_inverse == Matrix.Identity(4):
-        trans = blender_object.location
-
-        if blender_object.rotation_mode in ['QUATERNION', 'AXIS_ANGLE']:
-            rot = blender_object.rotation_quaternion
-        else:
-            rot = blender_object.rotation_euler.to_quaternion()
-
-        sca = blender_object.scale
+def __gather_trans_rot_scale(vnode, export_settings):
+    if vnode.parent_uuid is None:
+        # No parent, so matrix is world matrix
+        trans, rot, sca = vnode.matrix_world.decompose()
     else:
-        # matrix_local = matrix_parent_inverse*location*rotation*scale
-        # Decomposing matrix_local gives less accuracy, but is needed if matrix_parent_inverse is not the identity.
+        # calculate local matrix
+        trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
 
 
-        if blender_object.matrix_local[3][3] != 0.0:
-            trans, rot, sca = blender_object.matrix_local.decompose()
-        else:
-            # Some really weird cases, scale is null (if parent is null when evaluation is done)
-            print_console('WARNING', 'Some nodes are 0 scaled during evaluation. Result can be wrong')
-            trans = blender_object.location
-            if blender_object.rotation_mode in ['QUATERNION', 'AXIS_ANGLE']:
-                rot = blender_object.rotation_quaternion
-            else:
-                rot = blender_object.rotation_euler.to_quaternion()
-            sca = blender_object.scale
 
     # make sure the rotation is normalized
     rot.normalize()
@@ -457,9 +333,9 @@ def __gather_trans_rot_scale(blender_object, export_settings):
     rot = __convert_swizzle_rotation(rot, export_settings)
     sca = __convert_swizzle_scale(sca, export_settings)
 
-    if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
+    if vnode.blender_object.instance_type == 'COLLECTION' and vnode.blender_object.instance_collection:
         offset = -__convert_swizzle_location(
-            blender_object.instance_collection.instance_offset, export_settings)
+            vnode.blender_object.instance_collection.instance_offset, export_settings)
 
         s = Matrix.Diagonal(sca).to_4x4()
         r = rot.to_matrix().to_4x4()
@@ -484,8 +360,7 @@ def __gather_trans_rot_scale(blender_object, export_settings):
         scale = [sca[0], sca[1], sca[2]]
     return translation, rotation, scale
 
-
-def __gather_skin(blender_object, export_settings):
+def __gather_skin(vnode, blender_object, export_settings):
     modifiers = {m.type: m for m in blender_object.modifiers}
     if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:
         return None
@@ -512,33 +387,11 @@ def __gather_skin(blender_object, export_settings):
         return None
 
     # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-    return gltf2_blender_gather_skins.gather_skin(modifiers["ARMATURE"].object, export_settings)
+    return gltf2_blender_gather_skins.gather_skin(vnode.armature, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):
     return None
-
-
-def __get_correction_node(blender_object, export_settings):
-    correction_quaternion = __convert_swizzle_rotation(
-        Quaternion((1.0, 0.0, 0.0), math.radians(-90.0)), export_settings)
-    correction_quaternion = [correction_quaternion[1], correction_quaternion[2],
-                             correction_quaternion[3], correction_quaternion[0]]
-    return gltf2_io.Node(
-        camera=None,
-        children=[],
-        extensions=None,
-        extras=None,
-        matrix=None,
-        mesh=None,
-        name=blender_object.name + '_Orientation',
-        rotation=correction_quaternion,
-        scale=None,
-        skin=None,
-        translation=None,
-        weights=None
-    )
-
 
 def __convert_swizzle_location(loc, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""

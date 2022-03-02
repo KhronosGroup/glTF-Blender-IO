@@ -18,10 +18,12 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animations
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_sampler_keyframes
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 
 
 def gather_gltf2(export_settings):
@@ -33,12 +35,18 @@ def gather_gltf2(export_settings):
     scenes = []
     animations = []  # unfortunately animations in gltf2 are just as 'root' as scenes.
     active_scene = None
+    store_user_scene = bpy.context.scene
     for blender_scene in bpy.data.scenes:
         scenes.append(__gather_scene(blender_scene, export_settings))
         if export_settings[gltf2_blender_export_keys.ANIMATIONS]:
+            # resetting object cache
+            gltf2_blender_gather_animation_sampler_keyframes.get_object_matrix.reset_cache()
             animations += __gather_animations(blender_scene, export_settings)
         if bpy.context.scene.name == blender_scene.name:
             active_scene = len(scenes) -1
+
+    # restore user scene
+    bpy.context.window.scene = store_user_scene
     return active_scene, scenes, animations
 
 
@@ -51,14 +59,25 @@ def __gather_scene(blender_scene, export_settings):
         nodes=[]
     )
 
-    for blender_object in blender_scene.objects:
-        if blender_object.parent is None:
-            node = gltf2_blender_gather_nodes.gather_node(
-                blender_object,
-                blender_object.library.name if blender_object.library else None,
-                blender_scene, None, export_settings)
-            if node is not None:
-                scene.nodes.append(node)
+
+    vtree = gltf2_blender_gather_tree.VExportTree(export_settings)
+    vtree.construct(blender_scene)
+    vtree.search_missing_armature() # In case armature are no parented correctly
+
+    export_user_extensions('vtree_before_filter_hook', export_settings, vtree)
+
+    # Now, we can filter tree if needed
+    vtree.filter()
+
+    export_user_extensions('vtree_after_filter_hook', export_settings, vtree)
+
+    export_settings['vtree'] = vtree
+
+    for r in [vtree.nodes[r] for r in vtree.roots]:
+        node = gltf2_blender_gather_nodes.gather_node(
+            r, export_settings)
+        if node is not None:
+            scene.nodes.append(node)
 
     export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)
 
@@ -69,15 +88,16 @@ def __gather_animations(blender_scene, export_settings):
     animations = []
     merged_tracks = {}
 
-    for blender_object in blender_scene.objects:
+    vtree = export_settings['vtree']
+    for obj_uuid in vtree.get_all_objects():
+        blender_object = vtree.nodes[obj_uuid].blender_object
 
-        # First check if this object is exported or not. Do not export animation of not exported object
-        obj_node = gltf2_blender_gather_nodes.gather_node(blender_object,
-            blender_object.library.name if blender_object.library else None,
-            blender_scene, None, export_settings)
-        if obj_node is not None:
-            animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(blender_object, merged_tracks, len(animations), export_settings)
-            animations += animations_
+        # Do not manage not exported objects
+        if vtree.nodes[obj_uuid].node is None:
+            continue
+
+        animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(obj_uuid, merged_tracks, len(animations), export_settings)
+        animations += animations_
 
     if export_settings['gltf_nla_strips'] is False:
         # Fake an animation with all animations of the scene
