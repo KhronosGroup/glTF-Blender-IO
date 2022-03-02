@@ -23,18 +23,20 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 @cached
-def gather_animation_channel_target(channels: typing.Tuple[bpy.types.FCurve],
-                                    blender_object: bpy.types.Object,
+def gather_animation_channel_target(obj_uuid: int,
+                                    channels: typing.Tuple[bpy.types.FCurve],
                                     bake_bone: typing.Union[str, None],
                                     bake_channel: typing.Union[str, None],
-                                    driver_obj,
+                                    driver_obj_uuid,
                                     export_settings
                                     ) -> gltf2_io.AnimationChannelTarget:
+
+        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
         animation_channel_target = gltf2_io.AnimationChannelTarget(
             extensions=__gather_extensions(channels, blender_object, export_settings, bake_bone),
             extras=__gather_extras(channels, blender_object, export_settings, bake_bone),
-            node=__gather_node(channels, blender_object, export_settings, bake_bone, driver_obj),
+            node=__gather_node(channels, obj_uuid, export_settings, bake_bone, driver_obj_uuid),
             path=__gather_path(channels, blender_object, export_settings, bake_bone, bake_channel)
         )
 
@@ -65,16 +67,16 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
-                  blender_object: bpy.types.Object,
+                  obj_uuid: str,
                   export_settings,
                   bake_bone: typing.Union[str, None],
-                  driver_obj
+                  driver_obj_uuid
                   ) -> gltf2_io.Node:
 
-    if driver_obj is not None:
-        return gltf2_blender_gather_nodes.gather_node(driver_obj,
-            driver_obj.library.name if driver_obj.library else None,
-            None, None, export_settings)
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+    if driver_obj_uuid is not None:
+        return export_settings['vtree'].nodes[driver_obj_uuid].node
 
     if blender_object.type == "ARMATURE":
         # TODO: get joint from fcurve data_path and gather_joint
@@ -85,16 +87,9 @@ def __gather_node(channels: typing.Tuple[bpy.types.FCurve],
             blender_bone = blender_object.path_resolve(channels[0].data_path.rsplit('.', 1)[0])
 
         if isinstance(blender_bone, bpy.types.PoseBone):
-            if export_settings["gltf_def_bones"] is False:
-                return gltf2_blender_gather_joints.gather_joint(blender_object, blender_bone, export_settings)
-            else:
-                bones, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
-                if blender_bone.name in [b.name for b in bones]:
-                    return gltf2_blender_gather_joints.gather_joint(blender_object, blender_bone, export_settings)
+            return gltf2_blender_gather_joints.gather_joint_vnode(export_settings['vtree'].nodes[obj_uuid].bones[blender_bone.name], export_settings)
 
-    return gltf2_blender_gather_nodes.gather_node(blender_object,
-        blender_object.library.name if blender_object.library else None,
-        None, None, export_settings)
+    return export_settings['vtree'].nodes[obj_uuid].node
 
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],

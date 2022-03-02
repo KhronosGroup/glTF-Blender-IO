@@ -8,19 +8,21 @@ These instructions are considered experimental.  They describe how to attach a P
 
 2. If not already installed, download and install [Python](https://www.python.org/downloads/) 3.x.  It includes a package manager named "pip" that should also be installed.
 
-3. Open a new command shell and type `pip install ptvsd`.  Ptvsd is "Python Tools for Visual Studio debug server".  ([source code on GitHub](https://github.com/Microsoft/ptvsd))
+3. Open a new command shell and type `pip install debugpy`.  Debugpy is a Python debug server for VSCode, replacing an older tool called "ptvsd".  ([source code on GitHub](https://github.com/microsoft/debugpy))
 
 4. Launch VSCode, go to the "Extensions" tab, and install the `ms-python.python` extension from the "recommended" list.  (For more info see the [market page](https://marketplace.visualstudio.com/items?itemName=ms-python.python)).
 
-5. If you're using Blender 2.80 that bundles a copy of the glTF addon, remove that folder from the install, as this will use the git source tree instead.
+5. Remove the existing `scripts/addons/io_scene_gltf2` folder from the Blender install folder, as this method will use the git source tree instead.
 
-6. In Blender -> Edit -> Preferences -> Files, there is a blank entry for "Scripts" about 4th from the top.  Paste in the full path to the glTF-Blender-IO local git repository on your drive.  Save the preferences.
+6. In Blender -> Edit -> Preferences -> Interface -> Display, there is a checkbox for "Developer Extras."  Turn that on.
 
-7. Download the [blender-debugger-for-vscode](https://github.com/AlansCodeLog/blender-debugger-for-vscode) addon. Place it in the addons/ folder of the glTF-Blender-IO git repository. By installing the debugging addon there, instead of in the default Blender addons directory, you'll be able to keep it installed when upgrading Blender later.
+7. In Blender -> Edit -> Preferences -> File Paths, there is a blank entry for "Scripts" about 3rd from the top.  Paste in the full path to the glTF-Blender-IO local git repository on your drive.  Save the preferences.
 
-8. In Blender -> Edit -> Preferences -> Add-ons, search for the word "Debug", and enable the addon "Development: Debugger for VS Code".  It should automatically pick up the location of where ptvsd was installed on this panel.  Save the preferences.
+![Debug settings screenshot](misc/Debug_settings.png)
 
-9. (For Blender 2.90 and higher) In Blender -> Edit -> Preferences -> Interface, in the top "Display" section, put a checkmark to enable "Developer Extras."
+8. Download the [blender-debugger-for-vscode](https://github.com/AlansCodeLog/blender-debugger-for-vscode) addon. Place it in the addons/ folder of the glTF-Blender-IO git repository. By installing the debugging addon there, instead of in the default Blender addons directory, you'll be able to keep it installed when upgrading Blender later.
+
+9. In Blender -> Edit -> Preferences -> Add-ons, search for the word "Debug", and enable the addon "Development: Debugger for VS Code".  It should automatically pick up the location of where debugpy was installed on this panel.  Save the preferences.
 
 10. Quit and re-start Blender.  Make sure the glTF import/export options are available, indicating the addon is running from the new location.
 
@@ -48,4 +50,4 @@ See the documentation and video included with [blender-debugger-for-vscode](http
 
 ## Stop Debugging
 
-In VSCode, the far-right icon on the debug toolbar is a red square with a disconnected plug, with a "Disconnect" tool-tip.  Clicking this will detach the debugger and let Blender continue.  The ptvsd server is likely still running for the remainder of the Blender session, so you can re-attach by asking VSCode to launch the debugger again.
+In VSCode, the far-right icon on the debug toolbar is a red square with a disconnected plug, with a "Disconnect" tool-tip.  Clicking this will detach the debugger and let Blender continue.  The debugpy server is likely still running for the remainder of the Blender session, so you can re-attach by asking VSCode to launch the debugger again.

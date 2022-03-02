@@ -26,15 +26,18 @@ from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
+from . import gltf2_blender_export_keys
 
 
 @cached
-def gather_animation_channels(blender_action: bpy.types.Action,
-                              blender_object: bpy.types.Object,
+def gather_animation_channels(obj_uuid: int,
+                              blender_action: bpy.types.Action,
                               export_settings
                               ) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     # First calculate range of animation for baking
     # This is need if user set 'Force sampling' and in case we need to bake
@@ -70,11 +73,8 @@ def gather_animation_channels(blender_action: bpy.types.Action,
 
         # Then bake all bones
         bones_to_be_animated = []
-        if export_settings["gltf_def_bones"] is False:
-            bones_to_be_animated = blender_object.data.bones
-        else:
-            bones_to_be_animated, _, _ = gltf2_blender_gather_skins.get_bone_tree(None, blender_object)
-            bones_to_be_animated = [blender_object.pose.bones[b.name] for b in bones_to_be_animated]
+        bones_uuid = export_settings["vtree"].get_all_bones(obj_uuid)
+        bones_to_be_animated = [blender_object.pose.bones[export_settings["vtree"].nodes[b].blender_bone.name] for b in bones_uuid]
 
         list_of_animated_bone_channels = []
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
@@ -83,9 +83,9 @@ def gather_animation_channels(blender_action: bpy.types.Action,
 
         for bone in bones_to_be_animated:
             for p in ["location", "rotation_quaternion", "scale"]:
-                channel = __gather_animation_channel(
+                channel = gather_animation_channel(
+                    obj_uuid,
                     (),
-                    blender_object,
                     export_settings,
                     bone.name,
                     p,
@@ -106,17 +106,17 @@ def gather_animation_channels(blender_action: bpy.types.Action,
             if len(channel_group) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(channel_group, blender_object, export_settings, None, None, bake_range_start, bake_range_end, force_range, blender_action.name, None, True)
+            channel = gather_animation_channel(obj_uuid, channel_group, export_settings, None, None, bake_range_start, bake_range_end, force_range, blender_action.name, None, True)
             if channel is not None:
                 channels.append(channel)
 
 
         # Retrieve channels for drivers, if needed
-        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(blender_object)
-        for obj, fcurves in drivers_to_manage:
-            channel = __gather_animation_channel(
+        drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(obj_uuid, export_settings)
+        for obj_driver_uuid, fcurves in drivers_to_manage:
+            channel = gather_animation_channel(
+                obj_uuid,
                 fcurves,
-                blender_object,
                 export_settings,
                 None,
                 None,
@@ -124,31 +124,77 @@ def gather_animation_channels(blender_action: bpy.types.Action,
                 bake_range_end,
                 force_range,
                 blender_action.name,
-                obj,
-                False)
+                obj_driver_uuid,
+                True)
             if channel is not None:
                 channels.append(channel)
 
     else:
+        done_paths = []
         for channel_group in __get_channel_groups(blender_action, blender_object, export_settings):
             channel_group_sorted = __get_channel_group_sorted(channel_group, blender_object)
             if len(channel_group_sorted) == 0:
                 # Only errors on channels, ignoring
                 continue
-            channel = __gather_animation_channel(
-                        channel_group_sorted,
-                        blender_object,
+            channel = gather_animation_channel(
+                obj_uuid,
+                channel_group_sorted,
+                export_settings,
+                None,
+                None,
+                bake_range_start,
+                bake_range_end,
+                force_range,
+                blender_action.name,
+                None,
+                True
+                )
+            if channel is not None:
+                channels.append(channel)
+
+            # Store already done channel path
+            target = [c for c in channel_group_sorted if c is not None][0].data_path.split('.')[-1]
+            path = {
+                "delta_location": "location",
+                "delta_rotation_euler": "rotation_quaternion",
+                "location": "location",
+                "rotation_axis_angle": "rotation_quaternion",
+                "rotation_euler": "rotation_quaternion",
+                "rotation_quaternion": "rotation_quaternion",
+                "scale": "scale",
+                "value": "weights"
+            }.get(target)
+            if path is not None:
+                done_paths.append(path)
+        done_paths = list(set(done_paths))
+
+        if export_settings['gltf_selected'] is True and export_settings['vtree'].tree_troncated is True:
+            start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+            end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+            to_be_done = ['location', 'rotation_quaternion', 'scale']
+            to_be_done = [c for c in to_be_done if c not in done_paths]
+
+            # In case of weight action, do nothing.
+            # If there is only weight --> TRS is already managed at first
+            if not (len(done_paths) == 1 and 'weights' in done_paths):
+                for p in to_be_done:
+                    channel = gather_animation_channel(
+                        obj_uuid,
+                        (),
                         export_settings,
                         None,
-                        None,
-                        bake_range_start,
-                        bake_range_end,
+                        p,
+                        start_frame,
+                        end_frame,
                         force_range,
                         blender_action.name,
                         None,
-                        False)
-            if channel is not None:
-                channels.append(channel)
+                        False #If Object is not animated, don't keep animation for this channel
+                        ) 
+
+                    if channel is not None:
+                        channels.append(channel)
+
 
 
     # resetting driver caches
@@ -209,8 +255,9 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
     # if not shapekeys, stay in same order, because order doesn't matter
     return channels
 
-def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
-                               blender_object: bpy.types.Object,
+# This function can be called directly from gather_animation in case of bake animation (non animated selected object)
+def gather_animation_channel(obj_uuid: str,
+                               channels: typing.Tuple[bpy.types.FCurve],
                                export_settings,
                                bake_bone: typing.Union[str, None],
                                bake_channel: typing.Union[str, None],
@@ -218,15 +265,18 @@ def __gather_animation_channel(channels: typing.Tuple[bpy.types.FCurve],
                                bake_range_end,
                                force_range: bool,
                                action_name: str,
-                               driver_obj,
+                               driver_obj_uuid,
                                node_channel_is_animated: bool
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
     if not __filter_animation_channel(channels, blender_object, export_settings):
         return None
 
-    __target= __gather_target(channels, blender_object, export_settings, bake_bone, bake_channel, driver_obj)
+    __target= __gather_target(obj_uuid, channels, export_settings, bake_bone, bake_channel, driver_obj_uuid)
     if __target.path is not None:
-        sampler = __gather_sampler(channels, blender_object, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, force_range, action_name, driver_obj, node_channel_is_animated)
+        sampler = __gather_sampler(channels, obj_uuid, export_settings, bake_bone, bake_channel, bake_range_start, bake_range_end, force_range, action_name, driver_obj_uuid, node_channel_is_animated)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
@@ -279,7 +329,7 @@ def __gather_extras(channels: typing.Tuple[bpy.types.FCurve],
 
 
 def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
-                     blender_object: bpy.types.Object,
+                     obj_uuid: str,
                      export_settings,
                      bake_bone: typing.Union[str, None],
                      bake_channel: typing.Union[str, None],
@@ -287,33 +337,38 @@ def __gather_sampler(channels: typing.Tuple[bpy.types.FCurve],
                      bake_range_end,
                      force_range: bool,
                      action_name,
-                     driver_obj,
+                     driver_obj_uuid,
                      node_channel_is_animated: bool
                      ) -> gltf2_io.AnimationSampler:
+
+    need_rotation_correction = (export_settings[gltf2_blender_export_keys.CAMERAS] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.CAMERA) or \
+        (export_settings[gltf2_blender_export_keys.LIGHTS] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.LIGHT)
+
     return gltf2_blender_gather_animation_samplers.gather_animation_sampler(
         channels,
-        blender_object,
+        obj_uuid,
         bake_bone,
         bake_channel,
         bake_range_start,
         bake_range_end,
         force_range,
         action_name,
-        driver_obj,
+        driver_obj_uuid,
         node_channel_is_animated,
+        need_rotation_correction,
         export_settings
     )
 
 
-def __gather_target(channels: typing.Tuple[bpy.types.FCurve],
-                    blender_object: bpy.types.Object,
+def __gather_target(obj_uuid: str,
+                    channels: typing.Tuple[bpy.types.FCurve],
                     export_settings,
                     bake_bone: typing.Union[str, None],
                     bake_channel: typing.Union[str, None],
-                    driver_obj
+                    driver_obj_uuid
                     ) -> gltf2_io.AnimationChannelTarget:
     return gltf2_blender_gather_animation_channel_target.gather_animation_channel_target(
-        channels, blender_object, bake_bone, bake_channel, driver_obj, export_settings)
+        obj_uuid, channels, bake_bone, bake_channel, driver_obj_uuid, export_settings)
 
 
 def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.types.Object, export_settings):

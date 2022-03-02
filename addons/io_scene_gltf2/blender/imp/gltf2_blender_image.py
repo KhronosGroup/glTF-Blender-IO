@@ -87,7 +87,7 @@ def create_from_file(gltf, img_idx):
         blender_image.name = img_name
 
     return blender_image
-        
+
 
 def create_from_data(gltf, img_idx):
     # Image stored as data => pack

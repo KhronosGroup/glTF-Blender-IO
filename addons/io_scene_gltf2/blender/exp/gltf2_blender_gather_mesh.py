@@ -15,7 +15,7 @@
 import bpy
 from typing import Optional, Dict, List, Any, Tuple
 from .gltf2_blender_export_keys import MORPH
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
 from ..com.gltf2_blender_extras import generate_extras
@@ -24,29 +24,63 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 
 
 @cached
+def get_mesh_cache_key(blender_mesh,
+                blender_object,
+                vertex_groups,
+                modifiers,
+                skip_filter,
+                materials,
+                original_mesh,
+                export_settings):
+    # Use id of original mesh
+    # Do not use bpy.types that can be unhashable
+    # Do not use mesh name, that can be not unique (when linked)
+
+    # If materials are not exported, no need to cache by material
+    if export_settings['gltf_materials'] is None:
+        mats = None
+    else:
+        mats = tuple(id(m) if m is not None else None for m in materials)
+
+    # TODO check what is really needed for modifiers
+
+    mesh_to_id_cache = blender_mesh if original_mesh is None else original_mesh
+    return (
+        (id(mesh_to_id_cache),),
+        (modifiers,),
+        (skip_filter,),             #TODO to check if still needed
+        mats
+    )
+
+@cached_by_key(key=get_mesh_cache_key)
 def gather_mesh(blender_mesh: bpy.types.Mesh,
-                library: Optional[str],
-                blender_object: Optional[bpy.types.Object],
+                uuid_for_skined_data,
                 vertex_groups: Optional[bpy.types.VertexGroups],
                 modifiers: Optional[bpy.types.ObjectModifiers],
                 skip_filter: bool,
-                material_names: Tuple[str],
+                materials: Tuple[bpy.types.Material],
+                original_mesh: bpy.types.Mesh,
                 export_settings
                 ) -> Optional[gltf2_io.Mesh]:
-    if not skip_filter and not __filter_mesh(blender_mesh, library, vertex_groups, modifiers, export_settings):
+    if not skip_filter and not __filter_mesh(blender_mesh, vertex_groups, modifiers, export_settings):
         return None
 
     mesh = gltf2_io.Mesh(
-        extensions=__gather_extensions(blender_mesh, library, vertex_groups, modifiers, export_settings),
-        extras=__gather_extras(blender_mesh, library, vertex_groups, modifiers, export_settings),
-        name=__gather_name(blender_mesh, library, vertex_groups, modifiers, export_settings),
-        weights=__gather_weights(blender_mesh, library, vertex_groups, modifiers, export_settings),
-        primitives=__gather_primitives(blender_mesh, library, blender_object, vertex_groups, modifiers, material_names, export_settings),
+        extensions=__gather_extensions(blender_mesh, vertex_groups, modifiers, export_settings),
+        extras=__gather_extras(blender_mesh, vertex_groups, modifiers, export_settings),
+        name=__gather_name(blender_mesh, vertex_groups, modifiers, export_settings),
+        weights=__gather_weights(blender_mesh, vertex_groups, modifiers, export_settings),
+        primitives=__gather_primitives(blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, materials, export_settings),
     )
 
     if len(mesh.primitives) == 0:
         print_console("WARNING", "Mesh '{}' has no primitives and will be omitted.".format(mesh.name))
         return None
+
+    blender_object = None
+    if uuid_for_skined_data:
+        blender_object = export_settings['vtree'].nodes[uuid_for_skined_data].blender_object
+
 
     export_user_extensions('gather_mesh_hook',
                            export_settings,
@@ -56,13 +90,12 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
                            vertex_groups,
                            modifiers,
                            skip_filter,
-                           material_names)
+                           materials)
 
     return mesh
 
 
 def __filter_mesh(blender_mesh: bpy.types.Mesh,
-                  library: Optional[str],
                   vertex_groups: Optional[bpy.types.VertexGroups],
                   modifiers: Optional[bpy.types.ObjectModifiers],
                   export_settings
@@ -74,7 +107,6 @@ def __filter_mesh(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_extensions(blender_mesh: bpy.types.Mesh,
-                        library: Optional[str],
                         vertex_groups: Optional[bpy.types.VertexGroups],
                         modifiers: Optional[bpy.types.ObjectModifiers],
                         export_settings
@@ -83,7 +115,6 @@ def __gather_extensions(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_extras(blender_mesh: bpy.types.Mesh,
-                    library: Optional[str],
                     vertex_groups: Optional[bpy.types.VertexGroups],
                     modifiers: Optional[bpy.types.ObjectModifiers],
                     export_settings
@@ -111,7 +142,6 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_name(blender_mesh: bpy.types.Mesh,
-                  library: Optional[str],
                   vertex_groups: Optional[bpy.types.VertexGroups],
                   modifiers: Optional[bpy.types.ObjectModifiers],
                   export_settings
@@ -120,24 +150,21 @@ def __gather_name(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_primitives(blender_mesh: bpy.types.Mesh,
-                        library: Optional[str],
-                        blender_object: Optional[bpy.types.Object],
+                        uuid_for_skined_data,
                         vertex_groups: Optional[bpy.types.VertexGroups],
                         modifiers: Optional[bpy.types.ObjectModifiers],
-                        material_names: Tuple[str],
+                        materials: Tuple[bpy.types.Material],
                         export_settings
                         ) -> List[gltf2_io.MeshPrimitive]:
     return gltf2_blender_gather_primitives.gather_primitives(blender_mesh,
-                                                             library,
-                                                             blender_object,
+                                                             uuid_for_skined_data,
                                                              vertex_groups,
                                                              modifiers,
-                                                             material_names,
+                                                             materials,
                                                              export_settings)
 
 
 def __gather_weights(blender_mesh: bpy.types.Mesh,
-                     library: Optional[str],
                      vertex_groups: Optional[bpy.types.VertexGroups],
                      modifiers: Optional[bpy.types.ObjectModifiers],
                      export_settings

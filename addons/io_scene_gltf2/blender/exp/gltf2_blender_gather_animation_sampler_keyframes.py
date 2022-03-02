@@ -16,12 +16,13 @@ import bpy
 import mathutils
 import typing
 
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, bonecache
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, bonecache, objectcache
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io_debug
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 import numpy as np
 
 
@@ -106,6 +107,10 @@ class Keyframe:
     def value(self, value: typing.List[float]):
         self.__value = self.__set_indexed(value)
 
+    @value.setter
+    def value_total(self, value: typing.List[float]):
+        self.__value = value
+
     @property
     def in_tangent(self) -> typing.Union[mathutils.Vector, mathutils.Euler, mathutils.Quaternion, typing.List[float]]:
         if self.__in_tangent is None:
@@ -131,9 +136,75 @@ class Keyframe:
         self.__out_tangent = self.__set_indexed(value)
 
 
+@objectcache
+def get_object_matrix(blender_obj_uuid: str,
+                      action_name: str,
+                      bake_range_start: int,
+                      bake_range_end: int,
+                      current_frame: int,
+                      step: int,
+                      export_settings
+                    ):
+
+    data = {}
+
+    # TODO : bake_range_start & bake_range_end are no more needed here
+    # Because we bake, we don't know exactly the frame range, 
+    # So using min / max of all actions
+
+    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+
+    frame = start_frame
+    while frame <= end_frame:
+        bpy.context.scene.frame_set(int(frame))
+
+        for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]:
+            blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+            # if this object is not animated, do not skip :
+            # We need this object too in case of bake
+
+            # calculate local matrix
+            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
+                parent_mat = mathutils.Matrix.Identity(4).freeze()
+            else:
+                if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type not in [VExportNode.BONE]:
+                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                else:
+                    # Object animated is parented to a bone
+                    blender_bone = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].blender_bone
+                    armature_object = export_settings['vtree'].nodes[export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].armature].blender_object
+                    axis_basis_change = mathutils.Matrix(
+                        ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+
+                    parent_mat = armature_object.matrix_world @ blender_bone.matrix @ axis_basis_change
+              
+            #For object inside collection (at root), matrix world is already expressed regarding collection parent
+            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.COLLECTION:
+                parent_mat = mathutils.Matrix.Identity(4).freeze()
+
+            mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
+
+            if obj_uuid not in data.keys():
+                data[obj_uuid] = {}
+            
+            if blender_obj.animation_data and blender_obj.animation_data.action:
+                if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
+                    data[obj_uuid][blender_obj.animation_data.action.name] = {}
+                data[obj_uuid][blender_obj.animation_data.action.name][frame] = mat
+            else:
+                # case of baking selected object.
+                # There is no animation, so use uuid of object as key
+                if obj_uuid not in data[obj_uuid].keys():
+                    data[obj_uuid][obj_uuid] = {}
+                data[obj_uuid][obj_uuid][frame] = mat
+
+        frame += step
+    return data
 
 @bonecache
-def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object],
+def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
                      channels: typing.Tuple[bpy.types.FCurve],
                      bake_bone: typing.Union[str, None],
                      bake_channel: typing.Union[str, None],
@@ -141,9 +212,11 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
                      bake_range_end,
                      action_name: str,
                      current_frame: int,
-                     step: int
+                     step: int,
+                     export_settings
                      ):
 
+    blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid_if_armature].blender_object if blender_obj_uuid_if_armature is not None else None
     data = {}
 
     # Always using bake_range, because some bones may need to be baked,
@@ -156,35 +229,40 @@ def get_bone_matrix(blender_object_if_armature: typing.Optional[bpy.types.Object
     frame = start_frame
     while frame <= end_frame:
         data[frame] = {}
-        # we need to bake in the constraints
         bpy.context.scene.frame_set(int(frame))
-        for pbone in blender_object_if_armature.pose.bones:
-            if bake_bone is None:
-                matrix = pbone.matrix_basis.copy()
+        bones = export_settings['vtree'].get_all_bones(blender_obj_uuid_if_armature)
+
+        for bone_uuid in bones:
+            blender_bone = export_settings['vtree'].nodes[bone_uuid].blender_bone
+
+            if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
+                blender_bone_parent = export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_bone
+                rest_mat = blender_bone_parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local
+                matrix = rest_mat.inverted_safe() @ blender_bone_parent.matrix.inverted_safe() @ blender_bone.matrix
             else:
-                if (pbone.bone.use_inherit_rotation == False or pbone.bone.inherit_scale != "FULL") and pbone.parent != None:
-                    rest_mat = (pbone.parent.bone.matrix_local.inverted_safe() @ pbone.bone.matrix_local)
-                    matrix = (rest_mat.inverted_safe() @ pbone.parent.matrix.inverted_safe() @ pbone.matrix)
+                if blender_bone.parent is None:
+                    matrix = blender_bone.bone.matrix_local.inverted_safe() @ blender_bone.matrix
                 else:
-                    matrix = pbone.matrix
-                    matrix = blender_object_if_armature.convert_space(pose_bone=pbone, matrix=matrix, from_space='POSE', to_space='LOCAL')
+                    # Bone has a parent, but in export, after filter, is at root of armature
+                    matrix = blender_bone.matrix.copy()
 
-
-            data[frame][pbone.name] = matrix
+            data[frame][blender_bone.name] = matrix
 
 
         # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
-        drivers_to_manage = get_sk_drivers(blender_object_if_armature)
-        for dr_obj, dr_fcurves in drivers_to_manage:
-            vals = get_sk_driver_values(dr_obj, frame, dr_fcurves)
+        drivers_to_manage = get_sk_drivers(blender_obj_uuid_if_armature, export_settings)
+        for dr_obj_uuid, dr_fcurves in drivers_to_manage:
+            vals = get_sk_driver_values(dr_obj_uuid, frame, dr_fcurves, export_settings)
 
         frame += step
 
     return data
 
 # cache for performance reasons
+# This function is called 2 times, for input (timing) and output (key values)
 @cached
-def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Object],
+def gather_keyframes(blender_obj_uuid: str,
+                     is_armature: bool,
                      channels: typing.Tuple[bpy.types.FCurve],
                      non_keyed_values: typing.Tuple[typing.Optional[float]],
                      bake_bone: typing.Union[str, None],
@@ -193,32 +271,40 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                      bake_range_end,
                      force_range: bool,
                      action_name: str,
-                     driver_obj,
+                     driver_obj_uuid,
                      node_channel_is_animated: bool,
                      export_settings
-                     ) -> typing.List[Keyframe]:
+                     ) -> typing.Tuple[typing.List[Keyframe], bool]:
     """Convert the blender action groups' fcurves to keyframes for use in glTF."""
+
+    blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid].blender_object if is_armature is True is not None else None
+    blender_obj_uuid_if_armature = blender_obj_uuid if is_armature is True else None
+
     if force_range is True:
         start_frame = bake_range_start
         end_frame = bake_range_end
     else:
-        if bake_bone is None and driver_obj is None:
+        if bake_bone is None and driver_obj_uuid is None:
             # Find the start and end of the whole action group
             # Note: channels has some None items only for SK if some SK are not animated
             ranges = [channel.range() for channel in channels if channel is not None]
 
-            start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
-            end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
+            if len(channels) != 0:
+                start_frame = min([channel.range()[0] for channel in channels  if channel is not None])
+                end_frame = max([channel.range()[1] for channel in channels  if channel is not None])
+            else:
+                start_frame = bake_range_start
+                end_frame = bake_range_end
         else:
             start_frame = bake_range_start
             end_frame = bake_range_end
 
     keyframes = []
-    if needs_baking(blender_object_if_armature, channels, export_settings):
+    baking_is_needed = needs_baking(blender_object_if_armature, channels, export_settings)
+    if baking_is_needed:
         # Bake the animation, by evaluating the animation for all frames
-        # TODO: maybe baking can also be done with FCurve.convert_to_samples
 
-        if blender_object_if_armature is not None and driver_obj is None:
+        if blender_object_if_armature is not None and driver_obj_uuid is None:
             if bake_bone is None:
                 pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(blender_object_if_armature,
                                                                                channels[0].data_path)
@@ -235,7 +321,7 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
             if isinstance(pose_bone_if_armature, bpy.types.PoseBone):
 
                 mat = get_bone_matrix(
-                    blender_object_if_armature,
+                    blender_obj_uuid_if_armature,
                     channels,
                     bake_bone,
                     bake_channel,
@@ -243,7 +329,8 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     bake_range_end,
                     action_name,
                     frame,
-                    step
+                    step,
+                    export_settings
                 )
                 trans, rot, scale = mat.decompose()
 
@@ -259,12 +346,36 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
                     "scale": scale
                 }[target_property]
             else:
-                if driver_obj is None:
-                    # Note: channels has some None items only for SK if some SK are not animated
-                    key.value = [c.evaluate(frame) for c in channels if c is not None]
-                    complete_key(key, non_keyed_values)
+                if driver_obj_uuid is None:
+                    # If channel is TRS, we bake from world matrix, else this is SK
+                    if len(channels) != 0:
+                        target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
+                    else:
+                        target = bake_channel
+                    if target == "value": #SK
+                        # Note: channels has some None items only for SK if some SK are not animated
+                        key.value = [c.evaluate(frame) for c in channels if c is not None]
+                        complete_key(key, non_keyed_values)
+                    else:
+
+                        mat = get_object_matrix(blender_obj_uuid,
+                                action_name,
+                                bake_range_start,
+                                bake_range_end,
+                                frame,
+                                step,
+                                export_settings)
+
+                        trans, rot, sca = mat.decompose()
+                        key.value_total = {
+                            "location": trans,
+                            "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
+                            "rotation_euler": rot.to_euler(),
+                            "rotation_quaternion": rot,
+                            "scale": sca
+                        }[target]
                 else:
-                    key.value = get_sk_driver_values(driver_obj, frame, channels)
+                    key.value = get_sk_driver_values(driver_obj_uuid, frame, channels, export_settings)
                     complete_key(key, non_keyed_values)
             keyframes.append(key)
             frame += step
@@ -317,6 +428,9 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
 
             keyframes.append(key)
 
+    if not export_settings[gltf2_blender_export_keys.OPTIMIZE_ANIMS]:
+        return (keyframes, baking_is_needed)
+
     # For armature only
     # Check if all values are the same
     # In that case, if there is no real keyframe on this channel for this given bone,
@@ -327,17 +441,20 @@ def gather_keyframes(blender_object_if_armature: typing.Optional[bpy.types.Objec
 
         if node_channel_is_animated is True: # fcurve on this bone for this property
              # Keep animation, but keep only 2 keyframes if data are not changing
-             return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
+             return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
         else: # bone is not animated (no fcurve)
             # Not keeping if not changing property
-            return None if cst is True else keyframes
+            return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
     else:
         # For objects, if all values are the same, we keep only first and last
         cst = fcurve_is_constant(keyframes)
-        return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
+        if node_channel_is_animated is True:
+            return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
+        else:
+            # baked object (selected but not animated)
+            return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
 
-
-    return keyframes
+    return (keyframes, baking_is_needed)
 
 
 def fcurve_is_constant(keyframes):
@@ -380,6 +497,10 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
 
     # Sampling is forced
     if export_settings[gltf2_blender_export_keys.FORCE_SAMPLING]:
+        return True
+
+    # If tree is troncated, sampling is forced
+    if export_settings['vtree'].tree_troncated is True:
         return True
 
     # Sampling due to unsupported interpolation

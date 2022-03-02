@@ -132,7 +132,7 @@ class BlenderNode():
             vnode = gltf.vnodes[vid]
             dist = vnode.trs()[0].length
             sizes.append(dist * 0.4)
-        return max(min(sizes, default=1), 0.001)    
+        return max(min(sizes, default=1), 0.001)
 
     @staticmethod
     def create_bones(gltf, arma_id):
