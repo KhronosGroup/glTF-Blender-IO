@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 2, 2),
+    "version": (3, 2, 8),
     'blender': (3, 1, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -160,10 +160,12 @@ class ExportGLTF2_Base:
                 ('JPEG', 'JPEG Format (.jpg)',
                 'Save images as JPEGs. (Images that need alpha are saved as PNGs though.) '
                 'Be aware of a possible loss in quality'),
+                ('NONE', 'None',
+                 'Don\'t export images'),
                ),
         description=(
             'Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for web '
-            'applications due to the smaller file size'
+            'applications due to the smaller file size. Alternatively they can be omitted if they are not needed'
         ),
         default='AUTO'
     )
@@ -388,6 +390,15 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    optimize_animation_size: BoolProperty(
+        name='Optimize Animation Size',
+        description=(
+            "Reduces exported filesize by removing duplicate keyframes"
+            "Can cause problems with stepped animation"
+        ),
+        default=True
+    )
+
     export_current_frame: BoolProperty(
         name='Use Current Frame',
         description='Export the scene in the current animation frame',
@@ -580,11 +591,13 @@ class ExportGLTF2_Base:
             else:
                 export_settings['gltf_def_bones'] = False
             export_settings['gltf_nla_strips'] = self.export_nla_strips
+            export_settings['gltf_optimize_animation'] = self.optimize_animation_size
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
             export_settings['gltf_def_bones'] = False
+            export_settings['gltf_optimize_animation'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -872,6 +885,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
         layout.prop(operator, 'export_nla_strips')
+        layout.prop(operator, 'optimize_animation_size')
 
         row = layout.row()
         row.active = operator.export_force_sampling

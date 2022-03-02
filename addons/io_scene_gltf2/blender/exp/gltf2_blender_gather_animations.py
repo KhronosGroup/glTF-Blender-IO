@@ -26,6 +26,10 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 def __gather_channels_baked(obj_uuid, export_settings):
     channels = []
 
+    # If no animation in file, no need to bake
+    if len(bpy.data.actions) == 0:
+        return None
+
     start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
     end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
 
@@ -66,21 +70,23 @@ def gather_animations(  obj_uuid: int,
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object, export_settings)
 
-    if export_settings['gltf_selected'] is True and export_settings['vtree'].tree_troncated is True \
-        and not (blender_object.animation_data is not None and blender_object.animation_data.action is not None): #there is no animation
-        channels = __gather_channels_baked(obj_uuid, export_settings)
-        if channels is not None:
-            animation = gltf2_io.Animation(
-                    channels=channels,
-                    extensions=None, # as other animations
-                    extras=None, # Because there is no animation to get extras from
-                    name=blender_object.name, # Use object name as animation name
-                    samplers=[]
-                )
+    if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0:
+        # No TRS animation are found for this object.
+        # But we need to bake, in case we export selection
+        if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE": 
+            channels = __gather_channels_baked(obj_uuid, export_settings)
+            if channels is not None:
+                animation = gltf2_io.Animation(
+                        channels=channels,
+                        extensions=None, # as other animations
+                        extras=None, # Because there is no animation to get extras from
+                        name=blender_object.name, # Use object name as animation name
+                        samplers=[]
+                    )
 
-            __link_samplers(animation, export_settings)
-            if animation is not None:
-                animations.append(animation)
+                __link_samplers(animation, export_settings)
+                if animation is not None:
+                    animations.append(animation)
 
     current_action = None
     if blender_object.animation_data and blender_object.animation_data.action:
@@ -166,6 +172,8 @@ def __gather_animation( obj_uuid: int,
     except RuntimeError as error:
         print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
         return None
+
+    export_user_extensions('pre_gather_animation_hook', export_settings, animation, blender_action, blender_object)
 
     if not animation.channels:
         return None
@@ -261,6 +269,8 @@ def __get_blender_actions(blender_object: bpy.types.Object,
     blender_tracks = {}
     action_on_type = {}
 
+    export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
+
     if blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
@@ -311,7 +321,8 @@ def __get_blender_actions(blender_object: bpy.types.Object,
             for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
                 blender_actions.append(act)
                 blender_tracks[act.name] = None
-                action_on_type[act.name] = "OBJECT"
+
+    export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))

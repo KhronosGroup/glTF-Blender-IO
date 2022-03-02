@@ -53,7 +53,10 @@ def __gather_base_color_factor(blender_material, export_settings):
 
     alpha_socket = gltf2_blender_get.get_socket(blender_material, "Alpha")
     if isinstance(alpha_socket, bpy.types.NodeSocket):
-        alpha = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
+        if export_settings['gltf_image_format'] != "NONE":
+            alpha = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
+        else:
+            alpha = gltf2_blender_get.get_const_from_default_value_socket(alpha_socket, kind='VALUE')
 
     base_color_socket = gltf2_blender_get.get_socket(blender_material, "Base Color")
     if base_color_socket is None:
@@ -61,7 +64,10 @@ def __gather_base_color_factor(blender_material, export_settings):
     if base_color_socket is None:
         base_color_socket = gltf2_blender_get.get_socket_old(blender_material, "BaseColorFactor")
     if isinstance(base_color_socket, bpy.types.NodeSocket):
-        rgb = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB')
+        if export_settings['gltf_image_format'] != "NONE":
+            rgb = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB')
+        else:
+            rgb = gltf2_blender_get.get_const_from_default_value_socket(base_color_socket, kind='RGB')
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0

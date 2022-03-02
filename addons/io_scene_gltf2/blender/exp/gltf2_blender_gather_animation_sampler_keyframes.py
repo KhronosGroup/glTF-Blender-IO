@@ -148,16 +148,12 @@ def get_object_matrix(blender_obj_uuid: str,
 
     data = {}
 
-
-    # If we bake (because export selection), we don't know exactly the frame range, 
+    # TODO : bake_range_start & bake_range_end are no more needed here
+    # Because we bake, we don't know exactly the frame range, 
     # So using min / max of all actions
 
-    if export_settings['gltf_selected'] is True and export_settings['vtree'].tree_troncated is True:
-        start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
-        end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
-    else:
-        start_frame  = bake_range_start
-        end_frame = bake_range_end
+    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
 
     frame = start_frame
     while frame <= end_frame:
@@ -431,6 +427,9 @@ def gather_keyframes(blender_obj_uuid: str,
                 complete_key_tangents(key, non_keyed_values)
 
             keyframes.append(key)
+
+    if not export_settings[gltf2_blender_export_keys.OPTIMIZE_ANIMS]:
+        return (keyframes, baking_is_needed)
 
     # For armature only
     # Check if all values are the same
