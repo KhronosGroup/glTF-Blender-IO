@@ -91,8 +91,8 @@ def gather_primitives(
             if mat is not None:
                 material = gltf2_blender_gather_materials.gather_material(
                     mat,
-                    active_uvmap_idx
-                    export_settings,
+                    active_uvmap_idx,
+                    export_settings
                 )
 
         primitive = gltf2_io.MeshPrimitive(
