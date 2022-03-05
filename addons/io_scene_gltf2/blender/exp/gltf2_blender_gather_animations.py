@@ -86,6 +86,12 @@ def gather_animations(  obj_uuid: int,
                 __link_samplers(animation, export_settings)
                 if animation is not None:
                     animations.append(animation)
+        elif export_settings['gltf_selected'] is True and blender_object.type == "ARMATURE":
+            # We need to bake all bones. Because some bone can have some constraints linking to 
+            # some other armature bones, for example
+            #TODO
+            pass
+
 
     current_action = None
     if blender_object.animation_data and blender_object.animation_data.action:
