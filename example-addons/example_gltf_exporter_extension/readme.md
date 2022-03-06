@@ -39,4 +39,5 @@ pre_gather_animation_hook(self, gltf2_animation, blender_action, blender_object,
 gather_actions_hook(self, blender_object, blender_actions, blender_tracks, action_on_type, export_settings)
 pre_gather_actions_hook(self, blender_object, export_settings)
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
+gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
 ```
