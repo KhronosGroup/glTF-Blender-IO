@@ -323,7 +323,7 @@ def __gather_clearcoat_extension(blender_material, export_settings):
 
     return Extension('KHR_materials_clearcoat', clearcoat_extension, False)
 
-# See: https://github.com/sobotka/blender/blob/4dd1068a5789097b50eab159adc995906fa5ea84/source/blender/gpu/shaders/material/gpu_shader_material_principled.glsl#L2-L6
+# See: https://developer.blender.org/diffusion/B/browse/master/source/blender/gpu/shaders/material/gpu_shader_material_principled.glsl;7f578998235d94d193ebe4699af308f932b6af6c$2-6
 def __tint_from_color(color):
     # Luminance approximation.
     luminance = color[0] * 0.3 + color[1] * 0.6 + color[2] * 0.1
@@ -342,27 +342,33 @@ def __gather_sheen_extension(blender_material, export_settings):
     sheen_extension = {}
 
     sheen_socket = gltf2_blender_get.get_socket(blender_material, 'Sheen')
-    sheen_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Sheen Tint')
-    base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
-    if (isinstance(sheen_socket, bpy.types.NodeSocket)
-            and isinstance(sheen_tint_socket, bpy.types.NodeSocket)
-            and isinstance(base_color_socket, bpy.types.NodeSocket)):
-        sheen = gltf2_blender_get.get_factor_from_socket(sheen_socket, kind='VALUE') or 0
-        tint = gltf2_blender_get.get_factor_from_socket(sheen_tint_socket, kind='VALUE') or 0
-        base_color = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB') or [1, 1, 1]
-        base_color_tint = __tint_from_color(base_color)
-        sheen_extension['sheenColorFactor'] = [
-            max(0, min(1, sheen * ((1 - tint) + (tint * base_color_tint[0])))),
-            max(0, min(1, sheen * ((1 - tint) + (tint * base_color_tint[1])))),
-            max(0, min(1, sheen * ((1 - tint) + (tint * base_color_tint[2])))),
-        ]
 
-    if not any(sheen_extension['sheenColorFactor']):
+    sheen = 0
+    if isinstance(sheen_socket, bpy.types.NodeSocket):
+        sheen = gltf2_blender_get.get_factor_from_socket(sheen_socket, kind='VALUE') or 0
+
+    if sheen == 0:
         return None
 
-    roughness_socket = gltf2_blender_get.get_socket(blender_material, 'Roughness')
-    if isinstance(roughness_socket, bpy.types.NodeSocket) and not roughness_socket.is_linked:
-        sheen_extension['sheenRoughnessFactor'] = gltf2_blender_get.get_factor_from_socket(roughness_socket, kind='VALUE')
+    sheen_tint = 0
+    sheen_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Sheen Tint')
+    if isinstance(sheen_tint_socket, bpy.types.NodeSocket):
+        sheen_tint = gltf2_blender_get.get_factor_from_socket(sheen_tint_socket, kind='VALUE') or 0
+
+    base_color = [1, 1, 1]
+    base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
+    if isinstance(base_color_socket, bpy.types.NodeSocket):
+        base_color = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB') or [1, 1, 1]
+
+    base_color_tint = __tint_from_color(base_color)
+    sheen_extension['sheenColorFactor'] = [
+        max(0, min(1, sheen * ((1 - sheen_tint) + (sheen_tint * base_color_tint[0])))),
+        max(0, min(1, sheen * ((1 - sheen_tint) + (sheen_tint * base_color_tint[1])))),
+        max(0, min(1, sheen * ((1 - sheen_tint) + (sheen_tint * base_color_tint[2])))),
+    ]
+
+    # TODO: Determine correct sheen roughness value.
+    sheen_extension['sheenRoughnessFactor'] = 0.25
 
     return Extension('KHR_materials_sheen', sheen_extension, False)
 
