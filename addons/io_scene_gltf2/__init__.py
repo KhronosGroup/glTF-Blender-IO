@@ -1168,23 +1168,19 @@ class ImportGLTF2(Operator, ImportHelper):
             self.loglevel = logging.NOTSET
 
 
-def update_gltf_settings_node_ui(self, context):
-    import io_scene_gltf2.blender.com.gltf2_blender_ui as blender_ui
-    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.settings_node_ui is True:
-        bpy.utils.register_class(blender_ui.NODE_PT_GLTF_PANEL)
-    else:
-        blender_ui.unregister()
-
 class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
-    settings_node_ui : bpy.props.BoolProperty(default= False, update=update_gltf_settings_node_ui)
+    settings_node_ui : bpy.props.BoolProperty(
+            default= False, 
+            description="Displays glTF 2.0 node in Shader Editor (Menu Add > Ouput)"
+            )
 
 
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        row.prop(self, "settings_node_ui", text="Settings node interface")
+        row.prop(self, "settings_node_ui", text="Shader Editor")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')

@@ -22,21 +22,9 @@ def create_gltf_ao_group(operator, group_name):
     
     return gltf_ao_group
 
-class NODE_PT_GLTF_PANEL(bpy.types.Panel):
-    bl_label = "glTF 2.0"
-    bl_idname = "NODE_PT_GLTF_PANEL"
-    bl_space_type = "NODE_EDITOR"
-    bl_region_type = "UI"
-    bl_category = "glTF 2.0"
-
-    def draw(self, context):
-        layout = self.layout
-        row = layout.row()
-        row.operator("node.gltf_settings_node_operator")
-
-class NODE_OT_GLTF_AO(bpy.types.Operator):
+class NODE_OT_GLTF_SETTINGS(bpy.types.Operator):
     bl_idname = "node.gltf_settings_node_operator"
-    bl_label  = "Add Settings glTF node"
+    bl_label  = "glTF Settings"
 
 
     @classmethod
@@ -44,7 +32,8 @@ class NODE_OT_GLTF_AO(bpy.types.Operator):
         space = context.space_data
         return space.type == "NODE_EDITOR" \
             and context.object and context.object.active_material \
-            and context.object.active_material.use_nodes is True
+            and context.object.active_material.use_nodes is True \
+            and bpy.context.preferences.addons['io_scene_gltf2'].preferences.settings_node_ui is True
 
     def execute(self, context):
         gltf_settings_node_name = get_gltf_node_name()
@@ -57,10 +46,15 @@ class NODE_OT_GLTF_AO(bpy.types.Operator):
         new_node.node_tree = bpy.data.node_groups[my_group.name]
         return {"FINISHED"}
 
-def register():
-    bpy.utils.register_class(NODE_OT_GLTF_AO)
+
+def add_gltf_settings_to_menu(self, context) :
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.settings_node_ui is True:
-        bpy.utils.register_class(NODE_PT_GLTF_PANEL)
+        self.layout.operator("node.gltf_settings_node_operator")
+
+
+def register():
+    bpy.utils.register_class(NODE_OT_GLTF_SETTINGS)
+    bpy.types.NODE_MT_category_SH_NEW_OUTPUT.append(add_gltf_settings_to_menu)
 
 def unregister():
-    bpy.utils.unregister_class(NODE_PT_GLTF_PANEL)
+    bpy.utils.unregister_class(NODE_OT_GLTF_SETTINGS)
