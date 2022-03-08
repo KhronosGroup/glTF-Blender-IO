@@ -1173,14 +1173,14 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
 
     settings_node_ui : bpy.props.BoolProperty(
             default= False, 
-            description="Displays glTF 2.0 node in Shader Editor (Menu Add > Ouput)"
+            description="Displays glTF Settings node in Shader Editor (Menu Add > Ouput)"
             )
 
 
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        row.prop(self, "settings_node_ui", text="Shader Editor")
+        row.prop(self, "settings_node_ui", text="Shader Editor Add-ons")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
