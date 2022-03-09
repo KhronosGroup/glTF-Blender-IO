@@ -152,7 +152,6 @@ def __get_new_material_texture_shared(base, node):
         else:
             if hasattr(node, '__dict__'):
                 for attr, value in node.__dict__.items():
-                    print(attr, type(value))
                     __get_new_material_texture_shared(getattr(base, attr), value)
             else:
                 # For extensions (on a dict)
