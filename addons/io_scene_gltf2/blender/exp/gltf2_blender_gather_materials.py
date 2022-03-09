@@ -76,6 +76,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
         pbr_metallic_roughness=pbr_metallic_roughness
     )
 
+
     # merge all uvmap_actives
     uvmap_actives = []
     if uvmap_actives_emissive_texture:
@@ -121,6 +122,13 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     if len(uvmap_actives) == 0 and active_uvmap_index != -1:
         material = gather_material(blender_material, -1, export_settings)
         
+
+    # If emissive is set, from an emissive node (not PBR)
+    # We need to set manually default values for 
+    # pbr_metallic_roughness.baseColor
+    if material.emissive_factor is not None and gltf2_blender_get.get_node_socket(blender_material, bpy.types.ShaderNodeBsdfPrincipled, "Base Color") is None:
+        material.pbr_metallic_roughness = gltf2_blender_gather_materials_pbr_metallic_roughness.get_default_pbr_for_emissive_node()
+
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
     return material

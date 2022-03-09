@@ -174,3 +174,14 @@ def __has_image_node_from_socket(socket):
     if not result:
         return False
     return True
+
+def get_default_pbr_for_emissive_node():
+    return gltf2_io.MaterialPBRMetallicRoughness(
+        base_color_factor=[0.0,0.0,0.0,1.0],
+        base_color_texture=None,
+        extensions=None,
+        extras=None,
+        metallic_factor=None,
+        metallic_roughness_texture=None,
+        roughness_factor=None
+    )
