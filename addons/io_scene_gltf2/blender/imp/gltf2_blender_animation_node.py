@@ -31,6 +31,9 @@ class BlenderNodeAnim():
         """Manage animation targeting a node's TRS."""
         animation = gltf.data.animations[anim_idx]
         node = gltf.data.nodes[node_idx]
+
+        import_user_extensions('gather_import_animation_before_hook', gltf, anim_idx, animation, node_idx, node)
+
         if anim_idx not in node.animations.keys():
             return
 
@@ -40,6 +43,8 @@ class BlenderNodeAnim():
                 continue
 
             BlenderNodeAnim.do_channel(gltf, anim_idx, node_idx, channel)
+
+        import_user_extensions('gather_import_animation_after_hook', gltf, anim_idx, animation, node_idx, node)
 
     @staticmethod
     def do_channel(gltf, anim_idx, node_idx, channel):
