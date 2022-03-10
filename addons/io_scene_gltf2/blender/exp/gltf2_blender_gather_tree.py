@@ -376,11 +376,10 @@ class VExportTree:
                 return False
 
         return True
-    
+
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
             candidates = [i for i in self.nodes.values() if i.blender_type == VExportNode.ARMATURE and i.blender_object.name == n.armature_needed]
             if len(candidates) > 0:
                 n.armature = candidates[0].uuid
             del n.armature_needed
-            

@@ -190,7 +190,7 @@ def gather_animation_channels(obj_uuid: int,
                         blender_action.name,
                         None,
                         False #If Object is not animated, don't keep animation for this channel
-                        ) 
+                        )
 
                     if channel is not None:
                         channels.append(channel)
