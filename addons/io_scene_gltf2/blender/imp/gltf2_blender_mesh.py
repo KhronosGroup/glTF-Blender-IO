@@ -146,6 +146,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             print_console('INFO', 'Draco Decoder: Decode primitive {}'.format(pymesh.name or '[unnamed]'))
             decode_primitive(gltf, prim)
 
+        import_user_extensions('gather_import_decode_primitive', gltf, pymesh, prim)
+
         if prim.indices is not None:
             indices = BinaryData.decode_accessor(gltf, prim.indices)
             indices = indices.reshape(len(indices))
