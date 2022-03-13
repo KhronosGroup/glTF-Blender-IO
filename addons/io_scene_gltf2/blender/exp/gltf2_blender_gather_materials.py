@@ -121,7 +121,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     # Even if multiples meshes are using different active UVMap
     if len(uvmap_actives) == 0 and active_uvmap_index != -1:
         material = gather_material(blender_material, -1, export_settings)
-        
+
 
     # If emissive is set, from an emissive node (not PBR)
     # We need to set manually default values for
