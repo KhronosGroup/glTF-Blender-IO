@@ -376,7 +376,7 @@ class VExportTree:
                 return False
 
         return True
-    
+
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
             candidates = [i for i in self.nodes.values() if i.blender_type == VExportNode.ARMATURE and i.blender_object.name == n.armature_needed]
@@ -392,3 +392,4 @@ class VExportTree:
                 skin = gather_skin(n.uuid, self.export_settings)
                 skins.append(skin)
         return skins
+     

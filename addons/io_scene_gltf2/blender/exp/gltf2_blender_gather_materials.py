@@ -66,6 +66,12 @@ def gather_material(blender_material, export_settings):
         pbr_metallic_roughness=__gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
     )
 
+    # If emissive is set, from an emissive node (not PBR)
+    # We need to set manually default values for
+    # pbr_metallic_roughness.baseColor
+    if material.emissive_factor is not None and gltf2_blender_get.get_node_socket(blender_material, bpy.types.ShaderNodeBsdfPrincipled, "Base Color") is None:
+        material.pbr_metallic_roughness = gltf2_blender_gather_materials_pbr_metallic_roughness.get_default_pbr_for_emissive_node()
+
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
     return material

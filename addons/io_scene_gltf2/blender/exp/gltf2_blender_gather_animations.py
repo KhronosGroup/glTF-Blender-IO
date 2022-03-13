@@ -45,11 +45,11 @@ def __gather_channels_baked(obj_uuid, export_settings):
             obj_uuid, # Use obj uuid as action name for caching
             None,
             False #If Object is not animated, don't keep animation for this channel
-            ) 
+            )
         if channel is not None:
             channels.append(channel)
 
-    return channels if len(channels) > 0 else None  
+    return channels if len(channels) > 0 else None
 
 def gather_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],
@@ -72,7 +72,7 @@ def gather_animations(  obj_uuid: int,
     if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0:
         # No TRS animation are found for this object.
         # But we need to bake, in case we export selection
-        if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE": 
+        if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE":
             channels = __gather_channels_baked(obj_uuid, export_settings)
             if channels is not None:
                 animation = gltf2_io.Animation(
@@ -86,6 +86,12 @@ def gather_animations(  obj_uuid: int,
                 __link_samplers(animation, export_settings)
                 if animation is not None:
                     animations.append(animation)
+        elif export_settings['gltf_selected'] is True and blender_object.type == "ARMATURE":
+            # We need to bake all bones. Because some bone can have some constraints linking to
+            # some other armature bones, for example
+            #TODO
+            pass
+
 
     current_action = None
     if blender_object.animation_data and blender_object.animation_data.action:
