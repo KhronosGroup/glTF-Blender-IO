@@ -16,6 +16,7 @@ import bpy
 import uuid
 
 from . import gltf2_blender_export_keys
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from mathutils import Quaternion, Matrix
 
 class VExportNode:
@@ -266,6 +267,7 @@ class VExportTree:
 
     def filter(self):
         self.filter_tag()
+        export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
 
 
