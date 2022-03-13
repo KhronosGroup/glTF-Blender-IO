@@ -392,4 +392,3 @@ class VExportTree:
                 skin = gather_skin(n.uuid, self.export_settings)
                 skins.append(skin)
         return skins
-     
