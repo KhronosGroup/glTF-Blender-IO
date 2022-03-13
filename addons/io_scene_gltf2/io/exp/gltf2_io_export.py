@@ -18,6 +18,7 @@
 
 import json
 import struct
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 #
 # Globals
@@ -30,13 +31,18 @@ from collections import OrderedDict
 
 
 def save_gltf(gltf, export_settings, encoder, glb_buffer):
-    indent = None
-    separators = (',', ':')
+    # Use a class here, to be able to pass data by reference to hook (to be able to change them inside hook)
+    class GlTF_format:
+        def __init__(self, indent, separators):
+            self.indent = indent
+            self.separators = separators
+
+    gltf_format = GlTF_format(None, (',', ':'))
 
     if export_settings['gltf_format'] != 'GLB':
-        indent = 4
+        gltf_format.indent = 4
         # The comma is typically followed by a newline, so no trailing whitespace is needed on it.
-        separators = (',', ' : ')
+        gltf_format.separators = (',', ' : ')
 
     sort_order = [
         "asset",
@@ -59,8 +65,11 @@ def save_gltf(gltf, export_settings, encoder, glb_buffer):
         "samplers",
         "buffers"
     ]
+
+    export_user_extensions('gather_gltf_encoded_hook', export_settings, gltf_format, sort_order)
+
     gltf_ordered = OrderedDict(sorted(gltf.items(), key=lambda item: sort_order.index(item[0])))
-    gltf_encoded = json.dumps(gltf_ordered, indent=indent, separators=separators, cls=encoder, allow_nan=False)
+    gltf_encoded = json.dumps(gltf_ordered, indent=gltf_format.indent, separators=gltf_format.separators, cls=encoder, allow_nan=False)
 
     #
 
