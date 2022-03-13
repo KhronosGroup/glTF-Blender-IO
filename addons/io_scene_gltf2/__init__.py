@@ -298,13 +298,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    # keep it for compatibility (for now)
-    export_selected: BoolProperty(
-        name='Selected Objects',
-        description='Export selected objects only',
-        default=False
-    )
-
     use_selection: BoolProperty(
         name='Selected Objects',
         description='Export selected objects only',
@@ -473,11 +466,6 @@ class ExportGLTF2_Base:
         self.will_save_settings = False
         if settings:
             try:
-                if 'export_selected' in settings.keys(): # Back compatibility for export_selected --> use_selection
-                    setattr(self, "use_selection", settings['export_selected'])
-                    settings["use_selection"] = settings['export_selected']
-                    del settings['export_selected']
-                    print("export_selected is now renamed use_selection, and will be deleted in a few release")
                 for (k, v) in settings.items():
                     setattr(self, k, v)
                 self.will_save_settings = True
@@ -514,8 +502,6 @@ class ExportGLTF2_Base:
             x: getattr(self, x) for x in dir(all_props)
             if (x.startswith("export_") or x in exceptional) and all_props.get(x) is not None
         }
-        if 'export_selected' in export_props.keys():
-            del export_props['export_selected'] # Do not save this property, only here for backward compatibility
         context.scene[self.scene_key] = export_props
 
     def execute(self, context):
@@ -565,18 +551,12 @@ class ExportGLTF2_Base:
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
 
-        # compatibility after renaming export_selected to use_selection
-        if self.export_selected is True:
-            self.report({"WARNING"}, "export_selected is now renamed use_selection, and will be deleted in a few release")
-            export_settings['gltf_selected'] = self.export_selected
-        else:
-            export_settings['gltf_selected'] = self.use_selection
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
         export_settings['gltf_active_collection'] = self.use_active_collection
 
-        # export_settings['gltf_selected'] = self.use_selection This can be uncomment when removing compatibility of export_selected
+        export_settings['gltf_selected'] = self.use_selection
         export_settings['gltf_layers'] = True  # self.export_layers
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
