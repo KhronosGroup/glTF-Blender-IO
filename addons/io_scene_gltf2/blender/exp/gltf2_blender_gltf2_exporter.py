@@ -185,6 +185,10 @@ class GlTF2Exporter:
         if active:
             self.__gltf.scene = scene_num
 
+    def traverse_unused_skins(self, skins):
+        for s in skins:
+            self.__traverse(s)
+
     def add_animation(self, animation: gltf2_io.Animation):
         """
         Add an animation to the glTF.
