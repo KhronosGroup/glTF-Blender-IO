@@ -40,4 +40,5 @@ gather_actions_hook(self, blender_object, blender_actions, blender_tracks, actio
 pre_gather_actions_hook(self, blender_object, export_settings)
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
+gather_tree_filter_tag_hook(self, tree, export_settings)
 ```

@@ -149,7 +149,7 @@ def get_object_matrix(blender_obj_uuid: str,
     data = {}
 
     # TODO : bake_range_start & bake_range_end are no more needed here
-    # Because we bake, we don't know exactly the frame range, 
+    # Because we bake, we don't know exactly the frame range,
     # So using min / max of all actions
 
     start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
@@ -179,7 +179,7 @@ def get_object_matrix(blender_obj_uuid: str,
                         ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
                     parent_mat = armature_object.matrix_world @ blender_bone.matrix @ axis_basis_change
-              
+
             #For object inside collection (at root), matrix world is already expressed regarding collection parent
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.COLLECTION:
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
@@ -188,7 +188,7 @@ def get_object_matrix(blender_obj_uuid: str,
 
             if obj_uuid not in data.keys():
                 data[obj_uuid] = {}
-            
+
             if blender_obj.animation_data and blender_obj.animation_data.action:
                 if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
                     data[obj_uuid][blender_obj.animation_data.action.name] = {}

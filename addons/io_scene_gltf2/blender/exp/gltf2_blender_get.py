@@ -83,7 +83,7 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             name = "Color"
         else:
             type = bpy.types.ShaderNodeBsdfPrincipled
-        
+
         return get_node_socket(blender_material, type, name)
 
     return None

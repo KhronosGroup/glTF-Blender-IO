@@ -16,6 +16,7 @@ import bpy
 import uuid
 
 from . import gltf2_blender_export_keys
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from mathutils import Quaternion, Matrix
 
 class VExportNode:
@@ -266,6 +267,7 @@ class VExportTree:
 
     def filter(self):
         self.filter_tag()
+        export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
 
 
@@ -376,11 +378,19 @@ class VExportTree:
                 return False
 
         return True
-    
+
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
             candidates = [i for i in self.nodes.values() if i.blender_type == VExportNode.ARMATURE and i.blender_object.name == n.armature_needed]
             if len(candidates) > 0:
                 n.armature = candidates[0].uuid
             del n.armature_needed
-            
+
+    def get_unused_skins(self):
+        from .gltf2_blender_gather_skins import gather_skin
+        skins = []
+        for n in [n for n in self.nodes.values() if n.blender_type == VExportNode.ARMATURE]:
+            if len([m for m in self.nodes.values() if m.keep_tag is True and m.blender_type == VExportNode.OBJECT and m.armature == n.uuid]) == 0:
+                skin = gather_skin(n.uuid, self.export_settings)
+                skins.append(skin)
+        return skins
