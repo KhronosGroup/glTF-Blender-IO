@@ -1186,7 +1186,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
     settings_node_ui : bpy.props.BoolProperty(
-            default= False, 
+            default= False,
             description="Displays glTF Settings node in Shader Editor (Menu Add > Ouput)"
             )
 

@@ -570,5 +570,4 @@ def get_settings_group():
     else:
         # Create a new node group
         gltf_node_group = create_settings_group(gltf_node_group_name)
-        
     return gltf_node_group
