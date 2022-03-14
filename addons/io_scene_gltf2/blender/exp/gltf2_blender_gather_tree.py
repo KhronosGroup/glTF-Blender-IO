@@ -17,6 +17,7 @@ import uuid
 import numpy as np
 
 from . import gltf2_blender_export_keys
+from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from mathutils import Quaternion, Matrix
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.imp.gltf2_io_binary import BinaryData
@@ -105,7 +106,7 @@ class VExportTree:
         bpy.context.window.scene = blender_scene
         depsgraph = bpy.context.evaluated_depsgraph_get()
 
-        for blender_object in [obj.original for obj in depsgraph.objects if obj.parent is None]:
+        for blender_object in [obj.original for obj in depsgraph.scene_eval.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4))
 
     def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, armature_uuid=None, dupli_world_matrix=None):
@@ -273,6 +274,7 @@ class VExportTree:
 
     def filter(self):
         self.filter_tag()
+        export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
 
 
@@ -383,7 +385,7 @@ class VExportTree:
                 return False
 
         return True
-    
+
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
             candidates = [i for i in self.nodes.values() if i.blender_type == VExportNode.ARMATURE and i.blender_object.name == n.armature_needed]
@@ -454,3 +456,11 @@ class VExportTree:
                 gltf2_io_constants.DataType.Mat4,
                 self.export_settings
             )
+    def get_unused_skins(self):
+        from .gltf2_blender_gather_skins import gather_skin
+        skins = []
+        for n in [n for n in self.nodes.values() if n.blender_type == VExportNode.ARMATURE]:
+            if len([m for m in self.nodes.values() if m.keep_tag is True and m.blender_type == VExportNode.OBJECT and m.armature == n.uuid]) == 0:
+                skin = gather_skin(n.uuid, self.export_settings)
+                skins.append(skin)
+        return skins

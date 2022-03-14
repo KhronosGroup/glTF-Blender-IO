@@ -42,7 +42,7 @@ class GlTF2Exporter:
             copyright=copyright,
             extensions=None,
             extras=None,
-            generator='Khronos glTF Blender I/O VTree v' + get_version_string(),
+            generator='Khronos glTF Blender I/O v' + get_version_string(),
             min_version=None,
             version='2.0')
 
@@ -184,6 +184,10 @@ class GlTF2Exporter:
         scene_num = self.__traverse(scene)
         if active:
             self.__gltf.scene = scene_num
+
+    def traverse_unused_skins(self, skins):
+        for s in skins:
+            self.__traverse(s)
 
     def add_animation(self, animation: gltf2_io.Animation):
         """

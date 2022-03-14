@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from copy import deepcopy
 import bpy
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
@@ -28,14 +29,17 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 @cached
-def get_material_cache_key(blender_material, export_settings):
+def get_material_cache_key(blender_material, active_uvmap_index, export_settings):
     # Use id of material
     # Do not use bpy.types that can be unhashable
     # Do not use material name, that can be not unique (when linked)
-    return ((id(blender_material),))
+    return (
+      (id(blender_material),),
+      (active_uvmap_index,)
+    )
 
 @cached_by_key(key=get_material_cache_key)
-def gather_material(blender_material, export_settings):
+def gather_material(blender_material, active_uvmap_index, export_settings):
     """
     Gather the material used by the blender primitive.
 
@@ -46,25 +50,84 @@ def gather_material(blender_material, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None
 
-    mat_unlit = __gather_material_unlit(blender_material, export_settings)
+    mat_unlit = __gather_material_unlit(blender_material, active_uvmap_index, export_settings)
     if mat_unlit is not None:
         return mat_unlit
 
     orm_texture = __gather_orm_texture(blender_material, export_settings)
 
-    material = gltf2_io.Material(
+    emissive_texture, uvmap_actives_emissive_texture = __gather_emissive_texture(blender_material, export_settings)
+    extensions, uvmap_actives_extensions = __gather_extensions(blender_material, export_settings)
+    normal_texture, uvmap_actives_normal_texture = __gather_normal_texture(blender_material, export_settings)
+    occlusion_texture, uvmap_actives_occlusion_texture = __gather_occlusion_texture(blender_material, orm_texture, export_settings)
+    pbr_metallic_roughness, uvmap_actives_pbr_metallic_roughness = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
+
+    base_material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
         double_sided=__gather_double_sided(blender_material, export_settings),
         emissive_factor=__gather_emissive_factor(blender_material, export_settings),
-        emissive_texture=__gather_emissive_texture(blender_material, export_settings),
-        extensions=__gather_extensions(blender_material, export_settings),
+        emissive_texture=emissive_texture,
+        extensions=extensions,
         extras=__gather_extras(blender_material, export_settings),
         name=__gather_name(blender_material, export_settings),
-        normal_texture=__gather_normal_texture(blender_material, export_settings),
-        occlusion_texture=__gather_occlusion_texture(blender_material, orm_texture, export_settings),
-        pbr_metallic_roughness=__gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
+        normal_texture=normal_texture,
+        occlusion_texture=occlusion_texture,
+        pbr_metallic_roughness=pbr_metallic_roughness
     )
+
+
+    # merge all uvmap_actives
+    uvmap_actives = []
+    if uvmap_actives_emissive_texture:
+        uvmap_actives.extend(uvmap_actives_emissive_texture)
+    if uvmap_actives_extensions:
+        uvmap_actives.extend(uvmap_actives_extensions)
+    if uvmap_actives_normal_texture:
+        uvmap_actives.extend(uvmap_actives_normal_texture)
+    if uvmap_actives_occlusion_texture:
+        uvmap_actives.extend(uvmap_actives_occlusion_texture)
+    if uvmap_actives_pbr_metallic_roughness:
+        uvmap_actives.extend(uvmap_actives_pbr_metallic_roughness)
+
+    # Because some part of material are shared (eg pbr_metallic_roughness), we must copy the material
+    # Texture must be shared, but not TextureInfo
+    material = deepcopy(base_material)
+    __get_new_material_texture_shared(base_material, material)
+
+    active_uvmap_index = active_uvmap_index if active_uvmap_index != 0 else None
+
+    for tex in uvmap_actives:
+        if tex == "emissiveTexture":
+            material.emissive_texture.tex_coord = active_uvmap_index
+        elif tex == "normalTexture":
+            material.normal_texture.tex_coord = active_uvmap_index
+        elif tex == "occlusionTexture":
+            material.occlusion_texture.tex_coord = active_uvmap_index
+        elif tex == "baseColorTexture":
+            material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
+        elif tex == "metallicRoughnessTexture":
+            material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = active_uvmap_index
+        elif tex == "clearcoatTexture":
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = active_uvmap_index
+        elif tex == "clearcoatRoughnessTexture":
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = active_uvmap_index
+        elif tex == "clearcoatNormalTexture": #TODO not tested yet
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = active_uvmap_index
+        elif tex == "transmissionTexture": #TODO not tested yet
+            material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = active_uvmap_index
+
+    # If material is not using active UVMap, we need to return the same material,
+    # Even if multiples meshes are using different active UVMap
+    if len(uvmap_actives) == 0 and active_uvmap_index != -1:
+        material = gather_material(blender_material, -1, export_settings)
+
+
+    # If emissive is set, from an emissive node (not PBR)
+    # We need to set manually default values for
+    # pbr_metallic_roughness.baseColor
+    if material.emissive_factor is not None and gltf2_blender_get.get_node_socket(blender_material, bpy.types.ShaderNodeBsdfPrincipled, "Base Color") is None:
+        material.pbr_metallic_roughness = gltf2_blender_gather_materials_pbr_metallic_roughness.get_default_pbr_for_emissive_node()
 
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
@@ -84,6 +147,25 @@ def gather_material(blender_material, export_settings):
     #         print_console('WARNING', 'Material ' + internal_primitive[
     #             'material'] + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
 
+
+def __get_new_material_texture_shared(base, node):
+        if node is None:
+            return
+        if callable(node) is True:
+            return
+        if node.__str__().startswith('__'):
+            return
+        if type(node) in [gltf2_io.TextureInfo, gltf2_io.MaterialOcclusionTextureInfoClass, gltf2_io.MaterialNormalTextureInfoClass]:
+            node.index = base.index
+        else:
+            if hasattr(node, '__dict__'):
+                for attr, value in node.__dict__.items():
+                    __get_new_material_texture_shared(getattr(base, attr), value)
+            else:
+                # For extensions (on a dict)
+                if type(node).__name__ == 'dict':
+                    for i in node.keys():
+                        __get_new_material_texture_shared(base[i], node[i])
 
 def __filter_material(blender_material, export_settings):
     return export_settings[gltf2_blender_export_keys.MATERIALS]
@@ -120,7 +202,10 @@ def __gather_emissive_factor(blender_material, export_settings):
     if emissive_socket is None:
         emissive_socket = gltf2_blender_get.get_socket_old(blender_material, "EmissiveFactor")
     if isinstance(emissive_socket, bpy.types.NodeSocket):
-        factor = gltf2_blender_get.get_factor_from_socket(emissive_socket, kind='RGB')
+        if export_settings['gltf_image_format'] != "NONE":
+            factor = gltf2_blender_get.get_factor_from_socket(emissive_socket, kind='RGB')
+        else:
+            factor = gltf2_blender_get.get_const_from_default_value_socket(emissive_socket, kind='RGB')
 
         if factor is None and emissive_socket.is_linked:
             # In glTF, the default emissiveFactor is all zeros, so if an emission texture is connected,
@@ -157,17 +242,20 @@ def __gather_emissive_texture(blender_material, export_settings):
     emissive = gltf2_blender_get.get_socket(blender_material, "Emissive")
     if emissive is None:
         emissive = gltf2_blender_get.get_socket_old(blender_material, "Emissive")
-    return gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
+    emissive_texture, use_actives_uvmap_emissive = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
+    return emissive_texture, ["emissiveTexture"] if use_actives_uvmap_emissive else None
 
 
 def __gather_extensions(blender_material, export_settings):
     extensions = {}
 
     # KHR_materials_clearcoat
+    actives_uvmaps = []
 
-    clearcoat_extension = __gather_clearcoat_extension(blender_material, export_settings)
+    clearcoat_extension, use_actives_uvmap_clearcoat = __gather_clearcoat_extension(blender_material, export_settings)
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
+        actives_uvmaps.extend(use_actives_uvmap_clearcoat)
 
     # KHR_materials_transmission
 
@@ -175,7 +263,7 @@ def __gather_extensions(blender_material, export_settings):
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
 
-    return extensions if extensions else None
+    return extensions, actives_uvmaps if extensions else None
 
 
 def __gather_extras(blender_material, export_settings):
@@ -192,10 +280,11 @@ def __gather_normal_texture(blender_material, export_settings):
     normal = gltf2_blender_get.get_socket(blender_material, "Normal")
     if normal is None:
         normal = gltf2_blender_get.get_socket_old(blender_material, "Normal")
-    return gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+    normal_texture, use_active_uvmap_normal = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
         normal,
         (normal,),
         export_settings)
+    return normal_texture, ["normalTexture"] if use_active_uvmap_normal else None
 
 
 def __gather_orm_texture(blender_material, export_settings):
@@ -233,7 +322,7 @@ def __gather_orm_texture(blender_material, export_settings):
         return None
 
     # Double-check this will past the filter in texture_info
-    info = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, export_settings)
+    info, info_use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, export_settings)
     if info is None:
         return None
 
@@ -243,10 +332,11 @@ def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None:
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
-    return gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
+    occlusion_texture, use_active_uvmap_occlusion = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),
         export_settings)
+    return occlusion_texture, ["occlusionTexture"] if use_active_uvmap_occlusion else None
 
 
 def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
@@ -279,17 +369,21 @@ def __gather_clearcoat_extension(blender_material, export_settings):
         clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
         clearcoat_enabled = clearcoat_extension['clearcoatFactor'] > 0
     elif __has_image_node_from_socket(clearcoat_socket):
-        clearcoat_extension['clearcoatFactor'] = 1
+        fac = gltf2_blender_get.get_factor_from_socket(clearcoat_socket, kind='VALUE')
+        # default value in glTF is 0.0, but if there is a texture without factor, use 1
+        clearcoat_extension['clearcoatFactor'] = fac if fac != None else 1.0
         has_clearcoat_texture = True
         clearcoat_enabled = True
 
     if not clearcoat_enabled:
-        return None
+        return None, None
 
     if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
         clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
     elif __has_image_node_from_socket(clearcoat_roughness_socket):
-        clearcoat_extension['clearcoatRoughnessFactor'] = 1
+        fac = gltf2_blender_get.get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
+        # default value in glTF is 0.0, but if there is a texture without factor, use 1
+        clearcoat_extension['clearcoatRoughnessFactor'] = fac if fac != None else 1.0
         has_clearcoat_roughness_texture = True
 
     # Pack clearcoat (R) and clearcoatRoughness (G) channels.
@@ -300,28 +394,38 @@ def __gather_clearcoat_extension(blender_material, export_settings):
     elif has_clearcoat_roughness_texture:
         clearcoat_roughness_slots = (clearcoat_roughness_socket,)
 
+    use_actives_uvmaps = []
+
     if len(clearcoat_roughness_slots) > 0:
         if has_clearcoat_texture:
-            clearcoat_extension['clearcoatTexture'] = gltf2_blender_gather_texture_info.gather_texture_info(
+            clearcoat_texture, clearcoat_texture_use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_socket,
                 clearcoat_roughness_slots,
                 export_settings,
             )
+            clearcoat_extension['clearcoatTexture'] = clearcoat_texture
+            if clearcoat_texture_use_active_uvmap:
+                use_actives_uvmaps.append("clearcoatTexture")
         if has_clearcoat_roughness_texture:
-            clearcoat_extension['clearcoatRoughnessTexture'] = gltf2_blender_gather_texture_info.gather_texture_info(
+            clearcoat_roughness_texture, clearcoat_roughness_texture_use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_roughness_socket,
                 clearcoat_roughness_slots,
                 export_settings,
             )
-
+            clearcoat_extension['clearcoatRoughnessTexture'] = clearcoat_roughness_texture
+            if clearcoat_roughness_texture_use_active_uvmap:
+                use_actives_uvmaps.append("clearcoatRoughnessTexture")
     if __has_image_node_from_socket(clearcoat_normal_socket):
-        clearcoat_extension['clearcoatNormalTexture'] = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+        clearcoat_normal_texture, clearcoat_normal_texture_use_active_uvmap = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             clearcoat_normal_socket,
             (clearcoat_normal_socket,),
             export_settings
         )
+        clearcoat_extension['clearcoatNormalTexture'] = clearcoat_normal_texture
+        if clearcoat_normal_texture_use_active_uvmap:
+            use_actives_uvmaps.append("clearcoatNormalTexture")
 
-    return Extension('KHR_materials_clearcoat', clearcoat_extension, False)
+    return Extension('KHR_materials_clearcoat', clearcoat_extension, False), use_actives_uvmaps
 
 def __gather_transmission_extension(blender_material, export_settings):
     transmission_enabled = False
@@ -348,7 +452,7 @@ def __gather_transmission_extension(blender_material, export_settings):
         transmission_slots = (transmission_socket,)
 
     if len(transmission_slots) > 0:
-        combined_texture = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
             transmission_socket,
             transmission_slots,
             export_settings,
@@ -356,17 +460,19 @@ def __gather_transmission_extension(blender_material, export_settings):
         if has_transmission_texture:
             transmission_extension['transmissionTexture'] = combined_texture
 
-    return Extension('KHR_materials_transmission', transmission_extension, False)
+    return Extension('KHR_materials_transmission', transmission_extension, False), ["transmissionTexture"] if use_active_uvmap else []
 
 
-def __gather_material_unlit(blender_material, export_settings):
+def __gather_material_unlit(blender_material, active_uvmap_index, export_settings):
     gltf2_unlit = gltf2_blender_gather_materials_unlit
 
     info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
     if info is None:
         return None
 
-    material = gltf2_io.Material(
+    base_color_texture, use_active_uvmap = gltf2_unlit.gather_base_color_texture(info, export_settings)
+
+    base_material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
         double_sided=__gather_double_sided(blender_material, export_settings),
@@ -380,7 +486,7 @@ def __gather_material_unlit(blender_material, export_settings):
 
         pbr_metallic_roughness=gltf2_io.MaterialPBRMetallicRoughness(
             base_color_factor=gltf2_unlit.gather_base_color_factor(info, export_settings),
-            base_color_texture=gltf2_unlit.gather_base_color_texture(info, export_settings),
+            base_color_texture=base_color_texture,
             metallic_factor=0.0,
             roughness_factor=0.9,
             metallic_roughness_texture=None,
@@ -388,6 +494,19 @@ def __gather_material_unlit(blender_material, export_settings):
             extras=None,
         )
     )
+
+    if use_active_uvmap is not None:
+        # Because some part of material are shared (eg pbr_metallic_roughness), we must copy the material
+        # Texture must be shared, but not TextureInfo
+        material = deepcopy(base_material)
+        __get_new_material_texture_shared(base_material, material)
+        material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
+    elif use_active_uvmap is None and active_uvmap_index != -1:
+        # If material is not using active UVMap, we need to return the same material,
+        # Even if multiples meshes are using different active UVMap
+        material = gather_material(blender_material, -1, export_settings)
+    else:
+        material = base_material
 
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
 

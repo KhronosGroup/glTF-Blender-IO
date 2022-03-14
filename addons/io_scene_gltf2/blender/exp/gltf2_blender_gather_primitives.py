@@ -68,6 +68,13 @@ def gather_primitives(
     """
     primitives = []
 
+    # retrieve active render UVMap
+    active_uvmap_idx = 0
+    for i in range(len(blender_mesh.uv_layers)):
+        if blender_mesh.uv_layers[i].active_render is True:
+            active_uvmap_idx = i
+            break
+
     blender_primitives = __gather_cache_primitives(blender_mesh, uuid_for_skined_data,
         vertex_groups, modifiers, export_settings)
 
@@ -84,7 +91,8 @@ def gather_primitives(
             if mat is not None:
                 material = gltf2_blender_gather_materials.gather_material(
                     mat,
-                    export_settings,
+                    active_uvmap_idx,
+                    export_settings
                 )
 
         primitive = gltf2_io.MeshPrimitive(

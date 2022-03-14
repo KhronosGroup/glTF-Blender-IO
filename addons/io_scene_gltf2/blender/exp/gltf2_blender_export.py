@@ -64,7 +64,7 @@ def __export(export_settings):
     buffer = __create_buffer(exporter, export_settings)
     exporter.finalize_images()
 
-    export_user_extensions('gather_gltf_hook', export_settings, exporter.glTF)
+    export_user_extensions('gather_gltf_extensions_hook', export_settings, exporter.glTF)
     exporter.traverse_extensions()
 
     # now that addons possibly add some fields in json, we can fix in needed
@@ -76,14 +76,19 @@ def __export(export_settings):
 def __gather_gltf(exporter, export_settings):
     active_scene_idx, scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
 
+    unused_skins = export_settings['vtree'].get_unused_skins()
+
     if export_settings['gltf_draco_mesh_compression']:
         gltf2_io_draco_compression_extension.encode_scene_primitives(scenes, export_settings)
         exporter.add_draco_extension()
+
+    export_user_extensions('gather_gltf_hook', export_settings, active_scene_idx, scenes, animations)
 
     for idx, scene in enumerate(scenes):
         exporter.add_scene(scene, idx==active_scene_idx)
     for animation in animations:
         exporter.add_animation(animation)
+    exporter.traverse_unused_skins(unused_skins)
 
 
 def __create_buffer(exporter, export_settings):

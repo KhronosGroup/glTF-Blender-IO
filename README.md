@@ -15,7 +15,8 @@ Notes:
 * 2.80 - 2.93 are previous stable releases.
 * 2.93 is the current Blender LTS release. Check the `blender-v2.93-release` branch.
 * 3.0 is the current stable release. Check the `blender-v3.0-release` branch.
-* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become 3.1.
+* 3.1 will be the next release. Check the `blender-v3.1-release` branch.
+* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become Blender 3.2.
 
 ### Legacy 2.79 Support
 

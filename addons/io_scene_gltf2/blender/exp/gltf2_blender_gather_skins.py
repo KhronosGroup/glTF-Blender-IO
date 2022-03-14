@@ -25,7 +25,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 
 
-#@cached
+@cached
 def gather_skin(armature_uuid, export_settings):
     """
     Gather armatures, bones etc into a glTF2 skin object.
@@ -48,6 +48,11 @@ def gather_skin(armature_uuid, export_settings):
         name=__gather_name(blender_armature_object, export_settings),
         skeleton=__gather_skeleton(blender_armature_object, export_settings)
     )
+
+    # If armature is not exported, joints will be empty.
+    # Do not construct skin in that case
+    if len(skin.joints) == 0:
+        return None
 
     export_user_extensions('gather_skin_hook', export_settings, skin, blender_armature_object)
 

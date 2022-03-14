@@ -148,22 +148,18 @@ def get_object_matrix(blender_obj_uuid: str,
 
     data = {}
 
-
-    # If we bake (because export selection), we don't know exactly the frame range, 
+    # TODO : bake_range_start & bake_range_end are no more needed here
+    # Because we bake, we don't know exactly the frame range,
     # So using min / max of all actions
 
-    if export_settings['gltf_selected'] is True and export_settings['vtree'].tree_troncated is True:
-        start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
-        end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
-    else:
-        start_frame  = bake_range_start
-        end_frame = bake_range_end
+    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
 
     frame = start_frame
     while frame <= end_frame:
         bpy.context.scene.frame_set(int(frame))
 
-        for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type != [VExportNode.BONE]]:
+        for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]:
             blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
 
             # if this object is not animated, do not skip :
@@ -173,7 +169,16 @@ def get_object_matrix(blender_obj_uuid: str,
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
             else:
-                parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type not in [VExportNode.BONE]:
+                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                else:
+                    # Object animated is parented to a bone
+                    blender_bone = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].blender_bone
+                    armature_object = export_settings['vtree'].nodes[export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].armature].blender_object
+                    axis_basis_change = mathutils.Matrix(
+                        ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+
+                    parent_mat = armature_object.matrix_world @ blender_bone.matrix @ axis_basis_change
 
             #For object inside collection (at root), matrix world is already expressed regarding collection parent
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.COLLECTION:
@@ -183,7 +188,7 @@ def get_object_matrix(blender_obj_uuid: str,
 
             if obj_uuid not in data.keys():
                 data[obj_uuid] = {}
-            
+
             if blender_obj.animation_data and blender_obj.animation_data.action:
                 if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
                     data[obj_uuid][blender_obj.animation_data.action.name] = {}
@@ -235,7 +240,11 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
                 rest_mat = blender_bone_parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local
                 matrix = rest_mat.inverted_safe() @ blender_bone_parent.matrix.inverted_safe() @ blender_bone.matrix
             else:
-                matrix = blender_bone.bone.matrix_local.inverted_safe() @ blender_bone.matrix
+                if blender_bone.parent is None:
+                    matrix = blender_bone.bone.matrix_local.inverted_safe() @ blender_bone.matrix
+                else:
+                    # Bone has a parent, but in export, after filter, is at root of armature
+                    matrix = blender_bone.matrix.copy()
 
             data[frame][blender_bone.name] = matrix
 
@@ -418,6 +427,9 @@ def gather_keyframes(blender_obj_uuid: str,
                 complete_key_tangents(key, non_keyed_values)
 
             keyframes.append(key)
+
+    if not export_settings[gltf2_blender_export_keys.OPTIMIZE_ANIMS]:
+        return (keyframes, baking_is_needed)
 
     # For armature only
     # Check if all values are the same
