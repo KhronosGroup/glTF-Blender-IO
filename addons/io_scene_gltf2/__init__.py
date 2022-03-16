@@ -1062,6 +1062,12 @@ class ImportGLTF2(Operator, ImportHelper):
         default=True,
     )
 
+    restore_first_animation: BoolProperty(
+        name='Restore First Animation',
+        description="Restore the actions on the first animation in the glTF",
+        default=True,
+    )
+
     def draw(self, context):
         layout = self.layout
 
@@ -1073,6 +1079,7 @@ class ImportGLTF2(Operator, ImportHelper):
         layout.prop(self, 'import_shading')
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
+        layout.prop(self, 'restore_first_animation')
 
     def invoke(self, context, event):
         import sys

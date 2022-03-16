@@ -69,8 +69,9 @@ class BlenderScene():
                 BlenderAnimation.anim(gltf, anim_idx)
 
             # Restore first animation
-            anim_name = gltf.data.animations[0].track_name
-            BlenderAnimation.restore_animation(gltf, anim_name)
+            if gltf.import_settings['restore_first_animation']:
+                anim_name = gltf.data.animations[0].track_name
+                BlenderAnimation.restore_animation(gltf, anim_name)
 
     @staticmethod
     def select_imported_objects(gltf):
