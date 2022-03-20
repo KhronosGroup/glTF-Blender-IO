@@ -39,5 +39,5 @@ gather_import_animation_channel_before_hook(self, gltf_animation, gltf_node, pat
 gather_import_animation_channel_after_hook(self, gltf_animation, gltf_node, path, channel, blender_action, import_settings)
 gather_import_animation_weight_before_hook(self, gltf_node, blender_animation, import_settings)
 gather_import_animation_weight_after_hook(self, gltf_node, blender_animation, import_settings)
-gather_import_decode_primitive(self, gltf_mesh, gltf_primitive, import_settings)
+gather_import_decode_primitive(self, gltf_mesh, gltf_primitive, skin_idx, import_settings)
 ```
