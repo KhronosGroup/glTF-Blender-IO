@@ -446,7 +446,7 @@ def __gather_transmission_extension(blender_material, export_settings):
         transmission_enabled = True
 
     if not transmission_enabled:
-        return None
+        return None, None
 
     # Pack transmission channel (R).
     if has_transmission_texture:
