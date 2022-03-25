@@ -451,6 +451,8 @@ def __gather_transmission_extension(blender_material, export_settings):
     if has_transmission_texture:
         transmission_slots = (transmission_socket,)
 
+    use_actives_uvmaps = []
+
     if len(transmission_slots) > 0:
         combined_texture, use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
             transmission_socket,
@@ -459,8 +461,10 @@ def __gather_transmission_extension(blender_material, export_settings):
         )
         if has_transmission_texture:
             transmission_extension['transmissionTexture'] = combined_texture
+        if use_active_uvmap:
+            use_actives_uvmaps.append("transmissionTexture")
 
-    return Extension('KHR_materials_transmission', transmission_extension, False), ["transmissionTexture"] if use_active_uvmap else []
+    return Extension('KHR_materials_transmission', transmission_extension, False), use_actives_uvmaps
 
 
 def __gather_material_unlit(blender_material, active_uvmap_index, export_settings):
