@@ -259,9 +259,10 @@ def __gather_extensions(blender_material, export_settings):
 
     # KHR_materials_transmission
 
-    transmission_extension = __gather_transmission_extension(blender_material, export_settings)
+    transmission_extension, use_actives_uvmap_transmission = __gather_transmission_extension(blender_material, export_settings)
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
+        actives_uvmaps.extend(use_actives_uvmap_transmission)
 
     return extensions, actives_uvmaps if extensions else None
 
@@ -440,7 +441,7 @@ def __gather_transmission_extension(blender_material, export_settings):
         transmission_extension['transmissionFactor'] = transmission_socket.default_value
         transmission_enabled = transmission_extension['transmissionFactor'] > 0
     elif __has_image_node_from_socket(transmission_socket):
-        transmission_extension['transmissionFactor'] = 1
+        transmission_extension['transmissionFactor'] = 1.0
         has_transmission_texture = True
         transmission_enabled = True
 
