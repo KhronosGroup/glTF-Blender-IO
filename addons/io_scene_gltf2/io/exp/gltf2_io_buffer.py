@@ -21,8 +21,10 @@ from io_scene_gltf2.io.exp import gltf2_io_binary_data
 class Buffer:
     """Class representing binary data for use in a glTF file as 'buffer' property."""
 
-    def __init__(self, buffer_index=0):
+    def __init__(self, buffer_index=0, initial_data=None):
         self.__data = bytearray(b"")
+        if initial_data is not None:
+            self.__data = bytearray(initial_data.tobytes())
         self.__buffer_index = buffer_index
 
     def add_and_get_view(self, binary_data: gltf2_io_binary_data.BinaryData) -> gltf2_io.BufferView:
