@@ -386,8 +386,8 @@ class ExportGLTF2_Base:
     optimize_animation_size: BoolProperty(
         name='Optimize Animation Size',
         description=(
-            "Reduces exported filesize by removing duplicate keyframes"
-            "Can cause problems with stepped animation"
+            "Reduce exported file-size by removing duplicate keyframes"
+            "(can cause problems with stepped animation)"
         ),
         default=True
     )
