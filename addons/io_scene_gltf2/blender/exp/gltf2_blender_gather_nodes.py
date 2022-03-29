@@ -205,7 +205,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if len(modifiers) == 0:
         modifiers = None
 
- 
+
     if export_settings[gltf2_blender_export_keys.APPLY]:
         if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
             blender_mesh = blender_object.data
