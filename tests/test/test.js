@@ -773,7 +773,21 @@ describe('Exporter', function() {
                 assert.strictEqual(anim.samplers[anim.channels[0].sampler].input, anim.samplers[anim.channels[1].sampler].input);
                 assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].input].count, asset.accessors[anim.samplers[anim.channels[0].sampler].output].count);
                 assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].output].count, asset.accessors[anim.samplers[anim.channels[1].sampler].output].count);
-              })
+              });
+
+              it('exports transmission', function() {
+                let gltfPath = path.resolve(outDirPath, '14_transmission.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const mat_no_transmission = asset.materials.find(mat => mat.name === 'NoTransmission');
+                const mat_transmission = asset.materials.find(mat => mat.name === 'Transmission');
+
+                assert.ok('KHR_materials_transmission' in mat_transmission.extensions);
+                assert.strictEqual(mat_no_transmission.extensions, undefined);
+                const transmission = mat_transmission.extensions.KHR_materials_transmission;
+                assert.equalEpsilon(transmission.transmissionFactor, 0.2);
+
+              });
+
         });
     });
 });
