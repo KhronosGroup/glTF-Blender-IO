@@ -20,6 +20,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 
 
 def __gather_channels_baked(obj_uuid, export_settings):
@@ -317,6 +318,15 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                         blender_actions.append(strip.action)
                         blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                         action_on_type[strip.action.name] = "SHAPEKEY"
+
+    # If there are only 1 armature, include all animations, even if not in NLA
+    if blender_object.type == "ARMATURE":
+        if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
+            # Keep all actions on objects (no keyframe animation)
+            # Some other object animation can be added here, and will affect armature object itself :-/
+            for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
+                blender_actions.append(act)
+                blender_tracks[act.name] = None
 
     export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
 
