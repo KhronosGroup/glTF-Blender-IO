@@ -400,7 +400,7 @@ class VExportTree:
             axis_basis_change = Matrix.Identity(4)
             if self.export_settings[gltf2_blender_export_keys.YUP]:
                 axis_basis_change = Matrix(((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-            
+
             trans, rot, sca = axis_basis_change.decompose()
             translation, rotation, scale = (None, None, None)
             if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
@@ -437,9 +437,8 @@ class VExportTree:
                     ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
             inverse_bind_matrix = (
-                axis_basis_change @ self.nodes[n.armature].matrix_world_armature 
-            ).inverted_safe()
-            
+                axis_basis_change @ self.nodes[n.armature].matrix_world_armature).inverted_safe()
+
             matrix = []
             for column in range(0, 4):
                 for row in range(0, 4):

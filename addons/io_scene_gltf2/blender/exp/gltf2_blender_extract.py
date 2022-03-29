@@ -578,7 +578,7 @@ def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
                     continue
                 bones.append((joint, weight))
         bones.sort(key=lambda x: x[1], reverse=True)
-        if not bones: 
+        if not bones:
             # Is not assign to any bone
             bones = ((len(skin.joints), 1.0),)  # Assign to a joint that will be created later
             need_neutral_bone = True
