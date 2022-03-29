@@ -23,7 +23,6 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
-@cached
 def get_mesh_cache_key(blender_mesh,
                 blender_object,
                 vertex_groups,
