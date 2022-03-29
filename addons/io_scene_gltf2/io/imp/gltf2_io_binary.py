@@ -88,6 +88,37 @@ class BinaryData():
 
         return array
 
+
+    @staticmethod
+    def decode_accessor_internal(accessor):
+        # Is use internally when accessor binary data is not yet in a glTF buffer_view
+        # MAT2/3 have special alignment requirements that aren't handled. But it
+        # doesn't matter because nothing uses them.
+        assert accessor.type not in ['MAT2', 'MAT3']
+
+        dtype = ComponentType.to_numpy_dtype(accessor.component_type)
+        component_nb = DataType.num_elements(accessor.type)
+
+        buffer_data = accessor.buffer_view.data
+
+        accessor_offset = accessor.byte_offset or 0
+        buffer_data = buffer_data[accessor_offset:]
+
+        bytes_per_elem = dtype(1).nbytes
+        default_stride = bytes_per_elem * component_nb
+        stride = default_stride
+
+        array = np.frombuffer(
+                    buffer_data,
+                    dtype=np.dtype(dtype).newbyteorder('<'),
+                    count=accessor.count * component_nb,
+                )
+        array = array.reshape(accessor.count, component_nb)
+
+        return array
+
+
+
     @staticmethod
     def decode_accessor_obj(gltf, accessor):
         # MAT2/3 have special alignment requirements that aren't handled. But it

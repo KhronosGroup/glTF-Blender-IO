@@ -79,6 +79,8 @@ def __gather_scene(blender_scene, export_settings):
         if node is not None:
             scene.nodes.append(node)
 
+    vtree.add_neutral_bones()
+
     export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)
 
     return scene
