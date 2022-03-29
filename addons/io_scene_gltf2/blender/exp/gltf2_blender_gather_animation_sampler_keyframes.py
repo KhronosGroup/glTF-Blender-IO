@@ -143,7 +143,8 @@ def get_object_matrix(blender_obj_uuid: str,
                       bake_range_end: int,
                       current_frame: int,
                       step: int,
-                      export_settings
+                      export_settings,
+                      only_gather_provided=False
                     ):
 
     data = {}
@@ -155,11 +156,16 @@ def get_object_matrix(blender_obj_uuid: str,
     start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
     end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
 
+    if only_gather_provided:
+        obj_uuids = [blender_obj_uuid]
+    else:
+        obj_uuids = [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]
+
     frame = start_frame
     while frame <= end_frame:
         bpy.context.scene.frame_set(int(frame))
 
-        for obj_uuid in [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]:
+        for obj_uuid in obj_uuids:
             blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
 
             # if this object is not animated, do not skip :

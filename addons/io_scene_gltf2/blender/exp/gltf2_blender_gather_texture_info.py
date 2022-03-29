@@ -47,15 +47,15 @@ def __gather_texture_info_helper(
         kind: str,
         export_settings):
     if not __filter_texture_info(primary_socket, blender_shader_sockets, export_settings):
-        return None
+        return None, None
 
-    tex_transform, tex_coord = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
+    tex_transform, tex_coord, use_active_uvmap = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
 
     fields = {
         'extensions': __gather_extensions(tex_transform, export_settings),
         'extras': __gather_extras(blender_shader_sockets, export_settings),
         'index': __gather_index(blender_shader_sockets, export_settings),
-        'tex_coord': tex_coord,
+        'tex_coord': tex_coord
     }
 
     if kind == 'DEFAULT':
@@ -70,11 +70,11 @@ def __gather_texture_info_helper(
         texture_info = gltf2_io.MaterialOcclusionTextureInfoClass(**fields)
 
     if texture_info.index is None:
-        return None
+        return None, None
 
     export_user_extensions('gather_texture_info_hook', export_settings, texture_info, blender_shader_sockets)
 
-    return texture_info
+    return texture_info, use_active_uvmap
 
 
 def __filter_texture_info(primary_socket, blender_shader_sockets, export_settings):
@@ -162,15 +162,17 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
         node = previous_node(node.inputs['Vector'])
 
     texcoord_idx = 0
+    use_active_uvmap = True
     if node and node.type == 'UVMAP' and node.uv_map:
         # Try to gather map index.
         for blender_mesh in bpy.data.meshes:
             i = blender_mesh.uv_layers.find(node.uv_map)
             if i >= 0:
                 texcoord_idx = i
+                use_active_uvmap = False
                 break
 
-    return texture_transform, texcoord_idx or None
+    return texture_transform, texcoord_idx or None, use_active_uvmap
 
 
 def __get_tex_from_socket(socket):

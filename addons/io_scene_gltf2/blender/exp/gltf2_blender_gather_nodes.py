@@ -205,28 +205,31 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if len(modifiers) == 0:
         modifiers = None
 
-    # TODO for objects without any modifiers, we can keep original mesh_data
-    # It will instance mesh in glTF
+
     if export_settings[gltf2_blender_export_keys.APPLY]:
-        armature_modifiers = {}
-        if export_settings[gltf2_blender_export_keys.SKINS]:
-            # temporarily disable Armature modifiers if exporting skins
-            for idx, modifier in enumerate(blender_object.modifiers):
-                if modifier.type == 'ARMATURE':
-                    armature_modifiers[idx] = modifier.show_viewport
-                    modifier.show_viewport = False
+        if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
+            blender_mesh = blender_object.data
+            skip_filter = False
+        else:
+            armature_modifiers = {}
+            if export_settings[gltf2_blender_export_keys.SKINS]:
+                # temporarily disable Armature modifiers if exporting skins
+                for idx, modifier in enumerate(blender_object.modifiers):
+                    if modifier.type == 'ARMATURE':
+                        armature_modifiers[idx] = modifier.show_viewport
+                        modifier.show_viewport = False
 
-        depsgraph = bpy.context.evaluated_depsgraph_get()
-        blender_mesh_owner = blender_object.evaluated_get(depsgraph)
-        blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
-        for prop in blender_object.data.keys():
-            blender_mesh[prop] = blender_object.data[prop]
-        skip_filter = True
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            blender_mesh_owner = blender_object.evaluated_get(depsgraph)
+            blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
+            for prop in blender_object.data.keys():
+                blender_mesh[prop] = blender_object.data[prop]
+            skip_filter = True
 
-        if export_settings[gltf2_blender_export_keys.SKINS]:
-            # restore Armature modifiers
-            for idx, show_viewport in armature_modifiers.items():
-                blender_object.modifiers[idx].show_viewport = show_viewport
+            if export_settings[gltf2_blender_export_keys.SKINS]:
+                # restore Armature modifiers
+                for idx, show_viewport in armature_modifiers.items():
+                    blender_object.modifiers[idx].show_viewport = show_viewport
     else:
         blender_mesh = blender_object.data
         skip_filter = False
@@ -260,7 +263,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                                                    None,
                                                    export_settings)
 
-    if export_settings[gltf2_blender_export_keys.APPLY]:
+    if export_settings[gltf2_blender_export_keys.APPLY] and modifiers is not None:
         blender_mesh_owner.to_mesh_clear()
 
     return result

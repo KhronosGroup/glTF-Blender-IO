@@ -93,7 +93,14 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     locs, morph_locs = __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings)
     if skin:
-        vert_bones, num_joint_sets = __get_bone_data(blender_mesh, skin, blender_vertex_groups)
+        vert_bones, num_joint_sets, need_neutral_bone = __get_bone_data(blender_mesh, skin, blender_vertex_groups)
+        if need_neutral_bone is True:
+            # Need to create a fake joint at root of armature
+            # In order to assign not assigned vertices to it
+            # But for now, this is not yet possible, we need to wait the armature node is created
+            # Just store this, to be used later
+            armature_uuid = export_settings['vtree'].nodes[uuid_for_skined_data].armature
+            export_settings['vtree'].nodes[armature_uuid].need_neutral_bone = True
 
     # In Blender there is both per-vert data, like position, and also per-loop
     # (loop=corner-of-poly) data, like normals or UVs. glTF only has per-vert
@@ -546,6 +553,9 @@ def __get_colors(blender_mesh, color_i):
 
 
 def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
+
+    need_neutral_bone = False
+
     joint_name_to_index = {joint.name: index for index, joint in enumerate(skin.joints)}
     group_to_joint = [joint_name_to_index.get(g.name) for g in blender_vertex_groups]
 
@@ -568,7 +578,10 @@ def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
                     continue
                 bones.append((joint, weight))
         bones.sort(key=lambda x: x[1], reverse=True)
-        if not bones: bones = ((0, 1.0),)  # HACK for verts with zero weight (#308)
+        if not bones:
+            # Is not assign to any bone
+            bones = ((len(skin.joints), 1.0),)  # Assign to a joint that will be created later
+            need_neutral_bone = True
         vert_bones.append(bones)
         if len(bones) > max_num_influences:
             max_num_influences = len(bones)
@@ -576,7 +589,7 @@ def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
     # How many joint sets do we need? 1 set = 4 influences
     num_joint_sets = (max_num_influences + 3) // 4
 
-    return vert_bones, num_joint_sets
+    return vert_bones, num_joint_sets, need_neutral_bone
 
 
 def __zup2yup(array):

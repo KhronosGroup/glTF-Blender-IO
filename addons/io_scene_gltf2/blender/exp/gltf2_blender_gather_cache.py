@@ -104,7 +104,7 @@ def objectcache(func):
         # object is in cache, but not this action
         # We need to keep other actions
         elif cache_key_args[1] not in func.__objectcache[cache_key_args[0]].keys():
-            result = func(*args)
+            result = func(*args, only_gather_provided=True)
             func.__objectcache[cache_key_args[0]][cache_key_args[1]] = result[cache_key_args[0]][cache_key_args[1]]
             return result[cache_key_args[0]][cache_key_args[1]][cache_key_args[4]]
         # all is already cached
