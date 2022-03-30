@@ -104,9 +104,12 @@ def __gather_animations(blender_scene, export_settings):
     if export_settings['gltf_nla_strips'] is False:
         # Fake an animation with all animations of the scene
         merged_tracks = {}
-        merged_tracks['Animation'] = []
+        merged_tracks_name = 'Animation'
+        if(len(export_settings['gltf_nla_strips_merged_animation_name']) > 0):
+            merged_tracks_name = export_settings['gltf_nla_strips_merged_animation_name']
+        merged_tracks[merged_tracks_name] = []
         for idx, animation in enumerate(animations):
-            merged_tracks['Animation'].append(idx)
+            merged_tracks[merged_tracks_name].append(idx)
 
 
     to_delete_idx = []
