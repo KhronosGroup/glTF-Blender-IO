@@ -555,6 +555,7 @@ def __get_colors(blender_mesh, color_i):
 def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
 
     need_neutral_bone = False
+    min_influence = 0.0001
 
     joint_name_to_index = {joint.name: index for index, joint in enumerate(skin.joints)}
     group_to_joint = [joint_name_to_index.get(g.name) for g in blender_vertex_groups]
@@ -568,7 +569,7 @@ def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
         if vertex.groups:
             for group_element in vertex.groups:
                 weight = group_element.weight
-                if weight <= 0.0:
+                if weight < min_influence:
                     continue
                 try:
                     joint = group_to_joint[group_element.group]
