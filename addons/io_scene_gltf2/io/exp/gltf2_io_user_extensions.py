@@ -17,11 +17,14 @@ def export_user_extensions(hook_name, export_settings, *args):
         if args[0].extensions is None:
             args[0].extensions = {}
 
+    return_values = []
     for extension in export_settings['gltf_user_extensions']:
         hook = getattr(extension, hook_name, None)
         if hook is not None:
             try:
-                return hook(*args, export_settings)
+                return_values.append(hook(*args, export_settings))
             except Exception as e:
                 print(hook_name, "fails on", extension)
                 print(str(e))
+    
+    return return_values
