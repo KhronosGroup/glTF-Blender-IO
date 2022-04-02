@@ -327,6 +327,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
             for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
                 blender_actions.append(act)
                 blender_tracks[act.name] = None
+                action_on_type[act.name] = "OBJECT"
 
     export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
 
