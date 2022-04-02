@@ -17,7 +17,7 @@ def import_user_extensions(hook_name, gltf_importer, *args):
         hook = getattr(extension, hook_name, None)
         if hook is not None:
             try:
-                hook(*args, gltf_importer)
+                return hook(*args, gltf_importer)
             except Exception as e:
                 print(hook_name, "fails on", extension)
                 print(str(e))

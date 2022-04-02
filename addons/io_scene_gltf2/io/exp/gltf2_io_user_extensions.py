@@ -21,7 +21,7 @@ def export_user_extensions(hook_name, export_settings, *args):
         hook = getattr(extension, hook_name, None)
         if hook is not None:
             try:
-                hook(*args, export_settings)
+                return hook(*args, export_settings)
             except Exception as e:
                 print(hook_name, "fails on", extension)
                 print(str(e))
