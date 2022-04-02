@@ -569,7 +569,7 @@ def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
         if vertex.groups:
             for group_element in vertex.groups:
                 weight = group_element.weight
-                if weight < min_influence:
+                if weight <= min_influence:
                     continue
                 try:
                     joint = group_to_joint[group_element.group]
