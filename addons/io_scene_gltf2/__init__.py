@@ -389,7 +389,7 @@ class ExportGLTF2_Base:
             "Reduce exported file-size by removing duplicate keyframes"
             "(can cause problems with stepped animation)"
         ),
-        default=True
+        default=False
     )
 
     export_current_frame: BoolProperty(
