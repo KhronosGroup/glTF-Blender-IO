@@ -181,7 +181,7 @@ class VExportTree:
                 node.matrix_world @= correction.to_matrix().to_4x4()
         elif node.blender_type == VExportNode.BONE:
             node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
-            axis_basis_change = Matrix.Identity(4) 
+            axis_basis_change = Matrix.Identity(4)
             if self.export_settings[gltf2_blender_export_keys.YUP]:
                 axis_basis_change = Matrix(
                     ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
