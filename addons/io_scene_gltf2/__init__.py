@@ -292,6 +292,12 @@ class ExportGLTF2_Base:
         default=False,
     )
 
+    export_face_maps: BoolProperty(
+        name='Face Maps',
+        description='Export face maps as a mesh attribute (the names will be exported to the current node\'s extras)',
+        default=True
+    )
+
     export_cameras: BoolProperty(
         name='Cameras',
         description='Export cameras',
@@ -327,6 +333,9 @@ class ExportGLTF2_Base:
         description='Export custom properties as glTF extras',
         default=False
     )
+
+
+
 
     export_yup: BoolProperty(
         name='+Y Up',
@@ -535,6 +544,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
         export_settings['gltf_loose_edges'] = self.use_mesh_edges
         export_settings['gltf_loose_points'] = self.use_mesh_vertices
+        export_settings['gltf_face_maps'] = self.export_face_maps
 
         if self.is_draco_available:
             export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression_enable
@@ -758,6 +768,9 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         col = layout.column()
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
+
+        col = layout.column()
+        col.prop(operator, 'export_face_maps')
 
         layout.prop(operator, 'export_materials')
         col = layout.column()

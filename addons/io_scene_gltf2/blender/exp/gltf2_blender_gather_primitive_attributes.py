@@ -34,7 +34,7 @@ def gather_primitive_attributes(blender_primitive, export_settings):
     attributes.update(__gather_texcoord(blender_primitive, export_settings))
     attributes.update(__gather_colors(blender_primitive, export_settings))
     attributes.update(__gather_skins(blender_primitive, export_settings))
-    attributes.update(__gather_custom_data(blender_primitive, export_settings))
+    attributes.update(__gather_face_maps(blender_primitive, export_settings))
     return attributes
 
 
@@ -219,108 +219,14 @@ def __gather_skins(blender_primitive, export_settings):
     return attributes
 
 
-def custom_data_array_to_accessor(array):
-    if type(array) is not np.ndarray:
-        array = np.array(array, dtype=np.float32)
-
-    assert array.dtype == np.float32
-    assert len(array.shape) == 1
-
-    # Calculate how big a sparse array would be and switch to it if smaller
-
-    indices_nonzero = np.nonzero(array)[0]
-    num_nonzero = len(indices_nonzero)
-
-    if num_nonzero == 0:
-        return gltf2_io.Accessor(
-            count=len(array),
-            component_type=gltf2_io_constants.ComponentType.Float,
-            type=gltf2_io_constants.DataType.Scalar,
-            buffer_view=None,
-            byte_offset=None,
-            extensions=None,
-            extras=None,
-            max=None,
-            min=None,
-            name=None,
-            normalized=None,
-            sparse=None,
-        )
-
-    index_size = (
-        1 if indices_nonzero[-1] < 256 else
-        2 if indices_nonzero[-1] < 65536 else
-        4
-    )
-    value_size = 4  # float32
-
-    dense_bin_size = len(array) * value_size
-    sparse_bin_size = num_nonzero * (index_size + value_size)
-    bin_size_increase = sparse_bin_size - dense_bin_size
-    json_size_increase = 160  # approximate
-    net_size_increase = bin_size_increase + json_size_increase
-
-    if net_size_increase >= 0:
-        # Dense is better
-        return array_to_accessor(
-            array,
-            component_type=gltf2_io_constants.ComponentType.Float,
-            data_type=gltf2_io_constants.DataType.Scalar,
-        )
-
-    index_type = (
-        gltf2_io_constants.ComponentType.UnsignedByte if index_size == 1 else
-        gltf2_io_constants.ComponentType.UnsignedShort if index_size == 2 else
-        gltf2_io_constants.ComponentType.UnsignedInt
-    )
-    index_dtype = gltf2_io_constants.ComponentType.to_numpy_dtype(index_type)
-    indices_nonzero = indices_nonzero.astype(index_dtype)
-    values_nonzero = array[indices_nonzero]
-
-    return gltf2_io.Accessor(
-        buffer_view=None,
-        byte_offset=None,
-        component_type=gltf2_io_constants.ComponentType.Float,
-        count=len(array),
-        extensions=None,
-        extras=None,
-        max=None,
-        min=None,
-        name=None,
-        normalized=None,
-        type=gltf2_io_constants.DataType.Scalar,
-        sparse=gltf2_io.AccessorSparse(
-            count=num_nonzero,
-            indices=gltf2_io.AccessorSparseIndices(
-                buffer_view=gltf2_io_binary_data.BinaryData(indices_nonzero.tobytes()),
-                component_type=index_type,
-                byte_offset=None,
-                extensions=None,
-                extras=None,
-            ),
-            values=gltf2_io.AccessorSparseValues(
-                buffer_view=gltf2_io_binary_data.BinaryData(values_nonzero.tobytes()),
-                byte_offset=None,
-                extensions=None,
-                extras=None,
-            ),
-            extensions=None,
-            extras=None,
-        ),
-    )
-
-
-def __gather_custom_data(blender_primitive, export_settings):
+def __gather_face_maps(blender_primitive, export_settings):
     attributes = {}
-    for key in blender_primitive["attributes"]:
-        if key == '_FACEMAPS':
-            attributes[key] = array_to_accessor(
-                blender_primitive["attributes"][key],
-                component_type=gltf2_io_constants.ComponentType.Float,
-                data_type=gltf2_io_constants.DataType.Scalar,
-            )
-        elif key.startswith('_VG_'):
-            attributes[key] = custom_data_array_to_accessor(
-                blender_primitive["attributes"][key],
-            )
+    if export_settings['gltf_face_maps']:
+        for key in blender_primitive["attributes"]:
+            if key == '_FACEMAPS':
+                attributes[key] = array_to_accessor(
+                    blender_primitive["attributes"][key],
+                    component_type=gltf2_io_constants.ComponentType.Float,
+                    data_type=gltf2_io_constants.DataType.Scalar,
+                )
     return attributes

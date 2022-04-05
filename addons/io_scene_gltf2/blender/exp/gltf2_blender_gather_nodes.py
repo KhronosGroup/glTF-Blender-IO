@@ -238,12 +238,12 @@ def __gather_mesh(vnode, blender_object, export_settings):
         skip_filter = False
         # If no skin are exported, no need to have vertex group, this will create a cache miss
         if not export_settings[gltf2_blender_export_keys.SKINS]:
-            #vertex_groups = None
+            vertex_groups = None
             modifiers = None
         else:
             # Check if there is an armature modidier
             if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
-                #vertex_groups = None # Not needed if no armature, avoid a cache miss
+                vertex_groups = None # Not needed if no armature, avoid a cache miss
                 modifiers = None
 
     materials = tuple(ms.material for ms in blender_object.material_slots)
