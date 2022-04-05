@@ -295,7 +295,7 @@ class ExportGLTF2_Base:
     export_face_maps: BoolProperty(
         name='Face Maps',
         description='Export face maps as a mesh attribute (the names will be exported to the current node\'s extras)',
-        default=True
+        default=False
     )
 
     export_cameras: BoolProperty(
