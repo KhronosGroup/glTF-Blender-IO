@@ -334,9 +334,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-
-
-
     export_yup: BoolProperty(
         name='+Y Up',
         description='Export using glTF convention, +Y up',

@@ -89,7 +89,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     use_materials = export_settings[gltf2_blender_export_keys.MATERIALS]
 
-    # Fetch vert data
+    # Fetch face maps
     use_facemaps = bool(blender_mesh.face_maps)
 
     # Fetch vert positions and bone data (joint,weights)
