@@ -78,7 +78,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             self.use_auto_smooth = use_auto_smooth
 
     mesh_options = IMPORT_mesh_options()
-    import_user_extensions('gather_import_mesh_options', mesh_options, gltf, pymesh, skin_idx)
+    import_user_extensions('gather_import_mesh_options', gltf, mesh_options, pymesh, skin_idx)
 
     # Scan the primitives to find out what we need to create
 
