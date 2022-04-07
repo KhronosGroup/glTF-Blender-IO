@@ -62,6 +62,15 @@ class BlenderScene():
     @staticmethod
     def create_animations(gltf):
         """Create animations."""
+
+        # Use a class here, to be able to pass data by reference to hook (to be able to change them inside hook)
+        class IMPORT_animation_options:
+            def __init__(self, restore_first_anim: bool = True):
+                self.restore_first_anim = restore_first_anim
+
+        animation_options = IMPORT_animation_options()
+        import_user_extensions('gather_import_animations', gltf, gltf.data.animations, animation_options)
+
         if gltf.data.animations:
             # NLA tracks are added bottom to top, so create animations in
             # reverse so the first winds up on top
@@ -69,8 +78,9 @@ class BlenderScene():
                 BlenderAnimation.anim(gltf, anim_idx)
 
             # Restore first animation
-            anim_name = gltf.data.animations[0].track_name
-            BlenderAnimation.restore_animation(gltf, anim_name)
+            if animation_options.restore_first_anim:
+                anim_name = gltf.data.animations[0].track_name
+                BlenderAnimation.restore_animation(gltf, anim_name)
 
     @staticmethod
     def select_imported_objects(gltf):
