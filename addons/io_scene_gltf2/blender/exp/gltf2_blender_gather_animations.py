@@ -110,11 +110,6 @@ def gather_animations(  obj_uuid: int,
     if blender_object.animation_data:
         restore_tweak_mode = blender_object.animation_data.use_tweak_mode
 
-    # Remove use of NLA. Restore after export
-    if blender_object.animation_data:
-        current_use_nla = blender_object.animation_data.use_nla
-        blender_object.animation_data.use_nla = False
-
     # Export all collected actions.
     for blender_action, track_name, on_type in blender_actions:
 
@@ -158,8 +153,6 @@ def gather_animations(  obj_uuid: int,
         if solo_track is not None:
             solo_track.is_solo = True
         blender_object.animation_data.use_tweak_mode = restore_tweak_mode
-        blender_object.animation_data.use_nla = current_use_nla
-
     return animations, tracks
 
 
