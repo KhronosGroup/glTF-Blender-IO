@@ -47,6 +47,9 @@ def gather_image(
     else:
         # Retrieve URI relative to exported glTF files
         uri = __gather_original_uri(image_data.original.filepath, export_settings)
+        # In case we can't retrieve image (for example packed images, with original moved)
+        # We don't create invalid image without uri
+        if uri is None: return None
 
     buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
