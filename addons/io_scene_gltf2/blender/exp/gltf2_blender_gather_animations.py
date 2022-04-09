@@ -21,6 +21,7 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
+from ..com.gltf2_blender_data_path import is_bone_anim_channel
 
 
 def __gather_channels_baked(obj_uuid, export_settings):
@@ -322,9 +323,15 @@ def __get_blender_actions(blender_object: bpy.types.Object,
     # If there are only 1 armature, include all animations, even if not in NLA
     if blender_object.type == "ARMATURE":
         if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
-            # Keep all actions on objects (no keyframe animation)
-            # Some other object animation can be added here, and will affect armature object itself :-/
+            # Keep all actions on objects (no Shapekey animation)
             for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
+                # We need to check this is an armature action
+                # Checking that at least 1 bone is animated
+                if not __is_armature_action(act):
+                    continue
+                # Check if this action is already taken into account
+                if act.name in blender_tracks.keys():
+                    continue
                 blender_actions.append(act)
                 blender_tracks[act.name] = None
                 action_on_type[act.name] = "OBJECT"
@@ -337,3 +344,10 @@ def __get_blender_actions(blender_object: bpy.types.Object,
     blender_actions.sort(key = lambda a: a.name.lower())
 
     return [(blender_action, blender_tracks[blender_action.name], action_on_type[blender_action.name]) for blender_action in blender_actions]
+
+
+def __is_armature_action(blender_action) -> bool:
+    for fcurve in blender_action.fcurves:
+        if is_bone_anim_channel(fcurve.data_path):
+            return True
+    return False
