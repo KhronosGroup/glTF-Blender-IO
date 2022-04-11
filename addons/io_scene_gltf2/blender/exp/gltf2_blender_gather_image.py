@@ -189,11 +189,16 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
     composed_image = ExportImage()
     for result, socket in zip(results, sockets):
+        # # TODO perf: checking channels is very long and bad for memory usage
+        # # In a first step, free buffers
+        # # This is still long, but at least memory using is no more impacted
         if result.shader_node.image.channels == 0:
             gltf2_io_debug.print_console("WARNING",
                                          "Image '{}' has no color channels and cannot be exported.".format(
                                              result.shader_node.image))
+            result.shader_node.image.buffers_free()
             continue
+        result.shader_node.image.buffers_free()
 
         # Assume that user know what he does, and that channels/images are already combined correctly for pbr
         # If not, we are going to keep only the first texture found
