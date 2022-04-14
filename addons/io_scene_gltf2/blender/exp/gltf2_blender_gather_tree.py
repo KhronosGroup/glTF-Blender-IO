@@ -115,12 +115,6 @@ class VExportTree:
         node.parent_uuid = parent_uuid
         node.set_blender_data(blender_object, blender_bone)
 
-        # add to parent if needed
-        if parent_uuid is not None:
-            self.add_children(parent_uuid, node.uuid)
-        else:
-            self.roots.append(node.uuid)
-
         # Set blender type
         if blender_bone is not None:
             node.blender_type = VExportNode.BONE
@@ -151,6 +145,15 @@ class VExportTree:
                     node.armature_needed = modifiers["ARMATURE"].object.name
                 else:
                     node.armature = parent_uuid
+
+                # In glTF, meshes should be at root, so clearing parent, and setting as root
+                node.parent_uuid = None
+
+        # add to parent if needed
+        if node.parent_uuid is not None:
+            self.add_children(parent_uuid, node.uuid)
+        else:
+            self.roots.append(node.uuid)
 
         # For bones, store uuid of armature
         if blender_bone is not None:
