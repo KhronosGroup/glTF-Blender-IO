@@ -89,8 +89,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     use_materials = export_settings[gltf2_blender_export_keys.MATERIALS]
 
-    # Fetch face maps
-    use_facemaps = bool(blender_mesh.face_maps)
+    use_face_maps = export_settings['gltf_face_maps'] and blender_mesh.face_maps
 
     # Fetch vert positions and bone data (joint,weights)
     locs, morph_locs = __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings)
@@ -137,8 +136,8 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 ('morph%dny' % morph_i, np.float32),
                 ('morph%dnz' % morph_i, np.float32),
             ]
-    if use_facemaps:
-        dot_fields += [('facemaps', np.float32)]
+    if use_face_maps:
+        dot_fields += [('face_maps', np.int16)]
 
     dots = np.empty(len(blender_mesh.loops), dtype=np.dtype(dot_fields))
 
@@ -186,8 +185,8 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         dots['color%da' % col_i] = colors[:, 3]
         del colors
 
-    if use_facemaps:
-        dots['facemaps'] = __get_facemaps(blender_mesh)
+    if use_face_maps:
+        dots['face_maps'] = __get_face_maps(blender_mesh)
 
     # Calculate triangles and sort them into primitives.
 
@@ -295,8 +294,8 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 attributes['JOINTS_%d' % i] = js
                 attributes['WEIGHTS_%d' % i] = ws
 
-        if use_facemaps:
-            attributes['_FACEMAPS'] = prim_dots['facemaps']
+        if use_face_maps:
+            attributes['_FACEMAPS'] = prim_dots['face_maps']
 
         primitives.append({
             'attributes': attributes,
@@ -603,10 +602,10 @@ def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
     return vert_bones, num_joint_sets, need_neutral_bone
 
 
-def __get_facemaps(blender_mesh):
-    """Gets a facemap index for each loop."""
-    poly_facemap = np.empty(len(blender_mesh.polygons), dtype=np.float32)
-    blender_mesh.face_maps[0].data.foreach_get('value', poly_facemap)
+def __get_face_maps(blender_mesh):
+    """Gets a face map index for each loop."""
+    poly_face_map = np.empty(len(blender_mesh.polygons), dtype=np.int16)
+    blender_mesh.face_maps[0].data.foreach_get('value', poly_face_map)
 
     # Get polygon_index for each loop in the mesh
     loop_polyidx = np.zeros(len(blender_mesh.loops), dtype=np.uint32)
@@ -614,7 +613,7 @@ def __get_facemaps(blender_mesh):
         for i in range(poly.loop_start, poly.loop_start + poly.loop_total):
             loop_polyidx[i] = polyi
 
-    return poly_facemap[loop_polyidx]
+    return poly_face_map[loop_polyidx]
 
 
 def __zup2yup(array):
