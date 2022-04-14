@@ -131,6 +131,8 @@ class VExportTree:
         else:
             node.blender_type = VExportNode.OBJECT
 
+        force_node_at_world_center = False
+
         # For meshes with armature modifier (parent is armature), keep armature uuid
         if node.blender_type == VExportNode.OBJECT:
             modifiers = {m.type: m for m in blender_object.modifiers}
@@ -148,6 +150,7 @@ class VExportTree:
 
                 # In glTF, meshes should be at root, so clearing parent, and setting as root
                 node.parent_uuid = None
+                force_node_at_world_center = True
 
         # add to parent if needed
         if node.parent_uuid is not None:
@@ -194,6 +197,12 @@ class VExportTree:
         # For duplis, if instancer is not display, we should create an empty
         if blender_object.is_instancer is True and blender_object.show_instancer_for_render is False:
             node.force_as_empty = True
+
+        # Because no local transforms are set in glTF for skinned meshes, we need to 
+        # artificially set the mesh at world center
+        # This way, any children local transforms will be correclty calculated
+        if force_node_at_world_center is True:
+            node.matrix_world = Matrix.Identity(4)
 
         # Storing this node
         self.add_node(node)
