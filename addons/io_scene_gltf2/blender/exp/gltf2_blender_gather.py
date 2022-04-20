@@ -36,7 +36,8 @@ def gather_gltf2(export_settings):
     animations = []  # unfortunately animations in gltf2 are just as 'root' as scenes.
     active_scene = None
     store_user_scene = bpy.context.scene
-    for blender_scene in bpy.data.scenes:
+    scenes_to_export = bpy.data.scenes if export_settings['gltf_active_scene'] is False else [scene for scene in bpy.data.scenes if scene.name == store_user_scene.name]
+    for blender_scene in scenes_to_export:
         scenes.append(__gather_scene(blender_scene, export_settings))
         if export_settings[gltf2_blender_export_keys.ANIMATIONS]:
             # resetting object cache
