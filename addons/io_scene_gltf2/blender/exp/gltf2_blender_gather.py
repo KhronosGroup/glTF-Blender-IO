@@ -42,7 +42,7 @@ def gather_gltf2(export_settings):
             # resetting object cache
             gltf2_blender_gather_animation_sampler_keyframes.get_object_matrix.reset_cache()
             animations += __gather_animations(blender_scene, export_settings)
-        if bpy.context.scene.name == blender_scene.name:
+        if bpy.context.scene.name == store_user_scene.name:
             active_scene = len(scenes) -1
 
     # restore user scene
