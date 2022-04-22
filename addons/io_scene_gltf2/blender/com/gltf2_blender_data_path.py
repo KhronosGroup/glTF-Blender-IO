@@ -40,3 +40,6 @@ def get_rotation_modes(target_property: str) -> str:
         return True, False, ["AXIS_ANGLE"]
     else:
         return False, False, []
+
+def is_bone_anim_channel(data_path: str) -> bool:
+    return data_path[:10] == "pose.bones"
