@@ -180,7 +180,12 @@ class VExportTree:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 node.matrix_world @= correction.to_matrix().to_4x4()
         elif node.blender_type == VExportNode.BONE:
-            node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
+            if self.export_settings['gltf_current_frame'] is True:
+                # Use pose bone for TRS
+                node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
+            else:
+                # Use edit bone for TRS --> REST pose will be used
+                node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.bone.matrix_local
             axis_basis_change = Matrix.Identity(4)
             if self.export_settings[gltf2_blender_export_keys.YUP]:
                 axis_basis_change = Matrix(
