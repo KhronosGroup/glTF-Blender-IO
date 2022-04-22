@@ -137,7 +137,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 ('morph%dnz' % morph_i, np.float32),
             ]
     if use_face_maps:
-        dot_fields += [('face_maps', np.int16)]
+        dot_fields += [('face_maps', np.float32)]
 
     dots = np.empty(len(blender_mesh.loops), dtype=np.dtype(dot_fields))
 
@@ -604,7 +604,7 @@ def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
 
 def __get_face_maps(blender_mesh):
     """Gets a face map index for each loop."""
-    poly_face_map = np.empty(len(blender_mesh.polygons), dtype=np.int16)
+    poly_face_map = np.empty(len(blender_mesh.polygons), dtype=np.float32)
     blender_mesh.face_maps[0].data.foreach_get('value', poly_face_map)
 
     # Get polygon_index for each loop in the mesh
