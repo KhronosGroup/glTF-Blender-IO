@@ -179,6 +179,10 @@ def __gather_skins(blender_primitive, export_settings):
         max_bone_set_index += 1
     max_bone_set_index -= 1
 
+    # If no skinning
+    if max_bone_set_index < 0:
+        return attributes
+
     if max_bone_set_index > 0 and not export_settings['gltf_all_vertex_influences']:
         gltf2_io_debug.print_console("WARNING", "There are more than 4 joint vertex influences."
                                                 "The 4 with highest weight will be used (and normalized).")
