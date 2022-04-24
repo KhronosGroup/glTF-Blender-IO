@@ -85,9 +85,6 @@ class BlenderGlTF():
             # Need to carry Blender --> glTF after Yup2Zup
             gltf.camera_correction = Quaternion((2**0.5/2, 2**0.5/2, 0.0, 0.0))
 
-            def distance_gltf_to_blender(dist):
-                return 
-
         else:
             def convert_loc(x): return Vector(x)
             def convert_quat(q): return Quaternion([q[3], q[0], q[1], q[2]])
