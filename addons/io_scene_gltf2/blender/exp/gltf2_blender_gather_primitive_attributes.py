@@ -186,11 +186,19 @@ def __gather_skins(blender_primitive, export_settings):
         # Take into account only the first set of 4 weights
         max_bone_set_index = 0
 
+    # Convert weights to numpy arrays, and setting joints
+    weight_arrs = []
     for s in range(0, max_bone_set_index+1):
-        joint_id = 'JOINTS_' + str(s)
+
         weight_id = 'WEIGHTS_' + str(s)
+        weight = blender_primitive["attributes"][weight_id]
+        weight = np.array(weight, dtype=np.float32)
+        weight = weight.reshape(len(weight) // 4, 4)
+        weight_arrs.append(weight)
+
 
         # joints
+        joint_id = 'JOINTS_' + str(s)
         internal_joint = blender_primitive["attributes"][joint_id]
         component_type = gltf2_io_constants.ComponentType.UnsignedShort
         if max(internal_joint) < 256:
@@ -202,42 +210,21 @@ def __gather_skins(blender_primitive, export_settings):
         )
         attributes[joint_id] = joint
 
-        # weights
-        internal_weight = blender_primitive["attributes"][weight_id]
-        
-        for idx in range(0, len(internal_weight), 4):
-            if max_bone_set_index == 0:
-            # Only one set, we can directly normalized
-                weight_slice = internal_weight[idx:idx + 4]
-                total = sum(weight_slice)
-                if total > 0:
-                    factor = 1.0 / total
-                    internal_weight[idx:idx + 4] = [w * factor for w in weight_slice]
-            else:
-                # We need to normalize across all sets
-                # For first set, retrieve all data, and calculate norm factor, and apply it
-                if s == 0:
-                    total_weights = np.empty(0, dtype=float)
-                    total_weights = np.append(total_weights, internal_weight[idx:idx + 4])
-                    for s_loop in range(1, max_bone_set_index+1):
-                        total_weights = np.append(total_weights, blender_primitive["attributes"]["WEIGHTS_" + str(s_loop)][idx:idx + 4])
+    # Sum weights for each vertex
+    for s in range(0, max_bone_set_index+1):
+        sums = weight_arrs[s].sum(axis=1)
+        if s == 0:
+            weight_total = sums
+        else:
+            weight_total += sums
 
-                    total = sum(total_weights)
-                    if total > 0:
-                        factors[idx] = 1.0 / total
-                    else:
-                        factors[idx] = 1.0
-                    
-                    # apply for this first set
-                    internal_weight[idx:idx + 4] = [w * factors[idx] for w in internal_weight[idx:idx + 4]]
-
-
-                else:
-                    # We already calcule the norm factor, apply it
-                    internal_weight[idx:idx + 4] = [w * factors[idx] for w in internal_weight[idx:idx + 4]]
+    # Normalize weights so they sum to 1
+    weight_total = weight_total.reshape(-1, 1)
+    for s in range(0, max_bone_set_index+1):
+        weight_arrs[s] /= weight_total
 
         weight = array_to_accessor(
-            internal_weight,
+            weight_arrs[s],
             component_type=gltf2_io_constants.ComponentType.Float,
             data_type=gltf2_io_constants.DataType.Vec4,
             )
