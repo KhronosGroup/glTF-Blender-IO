@@ -42,7 +42,7 @@ class Buffer:
             buffer=self.__buffer_index,
             byte_length=length,
             byte_offset=offset,
-            byte_stride=None,
+            byte_stride=binary_data.byte_stride,
             extensions=None,
             extras=None,
             name=None,

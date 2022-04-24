@@ -258,6 +258,16 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    export_attributes_interleaving: EnumProperty(
+        name='Interleaving',
+        items=(('PACKED', 'Packed',
+        'Vertex attributes are tightly packed and each has its own buffer view'),
+        ('INTERLEAVED', 'Interleaved',
+        'Vertex attributes are stored as a Array-Of-Structures using a single buffer view')),
+        description='Specify how the vertex attributes should be packed',
+        default='PACKED'
+    )
+
     export_materials: EnumProperty(
         name='Materials',
         items=(('EXPORT', 'Export',
@@ -554,6 +564,8 @@ class ExportGLTF2_Base:
         else:
             export_settings['gltf_draco_mesh_compression'] = False
 
+        export_settings['gltf_attributes_interleaving'] = self.export_attributes_interleaving
+
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
@@ -767,6 +779,8 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         col = layout.column()
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
+
+        layout.prop(operator, 'export_attributes_interleaving')
 
         layout.prop(operator, 'export_materials')
         col = layout.column()

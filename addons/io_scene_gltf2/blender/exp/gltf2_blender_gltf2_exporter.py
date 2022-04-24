@@ -24,6 +24,7 @@ from io_scene_gltf2.io.exp import gltf2_io_buffer
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 class GlTF2Exporter:
@@ -310,8 +311,9 @@ class GlTF2Exporter:
 
         # binary data needs to be moved to a buffer and referenced with a buffer view
         if isinstance(node, gltf2_io_binary_data.BinaryData):
-            buffer_view = self.__buffer.add_and_get_view(node)
-            return self.__to_reference(buffer_view)
+            if node.buffer_view is None:
+                node.buffer_view = self.__buffer.add_and_get_view(node)
+            return self.__to_reference(node.buffer_view)
 
         # image data needs to be saved to file
         if isinstance(node, gltf2_io_image_data.ImageData):
