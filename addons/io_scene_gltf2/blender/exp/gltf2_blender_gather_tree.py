@@ -215,7 +215,7 @@ class VExportTree:
 
         # Collections
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            for dupli_object in blender_object.instance_collection.objects:
+            for dupli_object in blender_object.instance_collection.all_objects:
                 if dupli_object.parent is not None:
                     continue
                 self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world)
