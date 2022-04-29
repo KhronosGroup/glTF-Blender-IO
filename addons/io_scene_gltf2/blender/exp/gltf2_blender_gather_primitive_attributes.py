@@ -168,7 +168,6 @@ def __gather_colors(blender_primitive, export_settings):
 
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
-    factors = {}
 
     if not export_settings[gltf2_blender_export_keys.SKINS]:
         return attributes
