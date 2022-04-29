@@ -398,8 +398,8 @@ def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_s
 
     # Transform for skinning
     if armature and blender_object:
-        apply_matrix = armature.matrix_world.inverted_safe() @ blender_object.matrix_world
-        loc_transform = armature.matrix_world @ apply_matrix
+        # apply_matrix = armature.matrix_world.inverted_safe() @ blender_object.matrix_world
+        # loc_transform = armature.matrix_world @ apply_matrix
 
         loc_transform = blender_object.matrix_world
         locs[:] = __apply_mat_to_all(loc_transform, locs)
