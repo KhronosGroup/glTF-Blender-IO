@@ -180,7 +180,12 @@ class VExportTree:
                 correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 node.matrix_world @= correction.to_matrix().to_4x4()
         elif node.blender_type == VExportNode.BONE:
-            node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
+            if self.export_settings['gltf_current_frame'] is True:
+                # Use pose bone for TRS
+                node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
+            else:
+                # Use edit bone for TRS --> REST pose will be used
+                node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.bone.matrix_local
             axis_basis_change = Matrix.Identity(4)
             if self.export_settings[gltf2_blender_export_keys.YUP]:
                 axis_basis_change = Matrix(
@@ -210,7 +215,7 @@ class VExportTree:
 
         # Collections
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            for dupli_object in blender_object.instance_collection.objects:
+            for dupli_object in blender_object.instance_collection.all_objects:
                 if dupli_object.parent is not None:
                     continue
                 self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world)

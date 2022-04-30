@@ -52,6 +52,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
 
     mat_unlit = __gather_material_unlit(blender_material, active_uvmap_index, export_settings)
     if mat_unlit is not None:
+        export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
         return mat_unlit
 
     orm_texture = __gather_orm_texture(blender_material, export_settings)
