@@ -8,7 +8,7 @@ Documentation
 
 | Blender Version | Documentation |
 |---------|---------------------|
-| 3.1    | https://docs.blender.org/manual/en/3.1/addons/import_export/scene_gltf2.html  |
+| 3.2    | https://docs.blender.org/manual/en/3.2/addons/import_export/scene_gltf2.html  |
 | dev     | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
