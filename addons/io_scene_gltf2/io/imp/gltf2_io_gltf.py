@@ -55,7 +55,8 @@ class glTFImporter():
             'KHR_texture_transform',
             'KHR_materials_clearcoat',
             'KHR_mesh_quantization',
-            'KHR_draco_mesh_compression'
+            'KHR_draco_mesh_compression',
+            'KHR_materials_variants'
         ]
 
         # Add extensions required supported by custom import extensions

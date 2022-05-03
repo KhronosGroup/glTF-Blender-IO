@@ -15,6 +15,8 @@
 import bpy
 from mathutils import Vector, Quaternion, Matrix
 from .gltf2_blender_scene import BlenderScene
+from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_primitive
+from .gltf2_blender_material import BlenderMaterial
 
 
 class BlenderGlTF():
@@ -191,6 +193,10 @@ class BlenderGlTF():
 
                     mesh.shapekey_names.append(shapekey_name)
 
+        # Manage KHR_materials_variants
+        BlenderGlTF.manage_material_variants(gltf)
+
+
     @staticmethod
     def find_unused_name(haystack, desired_name):
         """Finds a name not in haystack and <= 63 UTF-8 bytes.
@@ -212,3 +218,24 @@ class BlenderGlTF():
 
             suffix = '.%03d' % cntr
             cntr += 1
+
+
+    @staticmethod
+    def manage_material_variants(gltf):
+        if not (gltf.data.extensions is not None and 'KHR_materials_variants' in gltf.data.extensions.keys()):
+            gltf.KHR_materials_variants = False
+            return
+
+        gltf.KHR_materials_variants = True
+        # If there is no KHR_materials_variants data in scene, create it
+        if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is False:
+            #TODOVariant Manage better. What happen if user just activate option without restart Blender
+            bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
+            bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
+            bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
+            bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
+
+        for idx_variant, variant in enumerate(gltf.data.extensions['KHR_materials_variants']['variants']):
+            var = bpy.data.scenes[0].gltf2_KHR_materials_variants_variants.add()
+            var.name = variant['name']
+            var.variant_idx = idx_variant

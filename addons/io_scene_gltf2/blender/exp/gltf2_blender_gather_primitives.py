@@ -23,10 +23,12 @@ from io_scene_gltf2.blender.exp import gltf2_blender_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_variants
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.com import gltf2_io_constants
+from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
@@ -97,7 +99,7 @@ def gather_primitives(
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
-            extensions=None,
+            extensions=__gather_extensions(blender_mesh, material_idx, active_uvmap_idx, export_settings),
             extras=None,
             indices=internal_primitive['indices'],
             material=material,
@@ -225,3 +227,50 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                     morph_index += 1
         return targets
     return None
+
+def __gather_extensions(blender_mesh,
+                        material_idx: int,
+                        active_uvmap_idx,
+                        export_settings):
+    extensions = {}
+
+    if bpy.data.scenes[0].get('gltf2_KHR_materials_variants_variants') is None:
+        return None
+    if len(bpy.data.scenes[0]['gltf2_KHR_materials_variants_variants']) == 0:
+        return None
+
+    # Material idx is the slot idx. Retrieve associated variant, if any
+    mapping = []
+    for i in [v for v in blender_mesh.gltf2_variant_mesh_data if v.material_slot_index == material_idx]:
+        variants = []
+        for v in i.variants:
+            vari = gltf2_blender_gather_materials_variants.gather_variant(v.variant.variant_idx, export_settings)
+            if vari is not None:
+                variant_extension = gltf2_io_extensions.ChildOfRootExtension(
+                name="KHR_materials_variants",
+                path=["variants"],
+                extension=vari
+            )
+            variants.append(variant_extension)
+        # TODOVariants: avoid duplicates?
+        if len(variants) > 0:
+            if i.material:
+                mat = gltf2_blender_gather_materials.gather_material(
+                        i.material,
+                        active_uvmap_idx,
+                        export_settings
+                    )
+            else:
+                # empty slot
+                mat = None
+            mapping.append({'material': mat, 'variants': variants})
+
+    if len(mapping) > 0:
+        extensions["KHR_materials_variants"] = gltf2_io_extensions.Extension(
+            name="KHR_materials_variants",
+            extension={
+                "mappings": mapping
+            }
+        )
+
+    return extensions if extensions else None
