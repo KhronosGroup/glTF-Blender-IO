@@ -57,17 +57,24 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
 
     orm_texture = __gather_orm_texture(blender_material, export_settings)
 
+    emissive_factor = __gather_emissive_factor(blender_material, export_settings)
     emissive_texture, uvmap_actives_emissive_texture = __gather_emissive_texture(blender_material, export_settings)
-    extensions, uvmap_actives_extensions = __gather_extensions(blender_material, export_settings)
+    extensions, uvmap_actives_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
     normal_texture, uvmap_actives_normal_texture = __gather_normal_texture(blender_material, export_settings)
     occlusion_texture, uvmap_actives_occlusion_texture = __gather_occlusion_texture(blender_material, orm_texture, export_settings)
     pbr_metallic_roughness, uvmap_actives_pbr_metallic_roughness = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
+
+    if any([i>1.0 for i in emissive_factor]) is True:
+        # Strength is set on extension
+        emission_strength = max(emissive_factor)
+        emissive_factor = [f / emission_strength for f in emissive_factor]
+
 
     base_material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
         double_sided=__gather_double_sided(blender_material, export_settings),
-        emissive_factor=__gather_emissive_factor(blender_material, export_settings),
+        emissive_factor=emissive_factor,
         emissive_texture=emissive_texture,
         extensions=extensions,
         extras=__gather_extras(blender_material, export_settings),
@@ -230,7 +237,8 @@ def __gather_emissive_factor(blender_material, export_settings):
             factor = [f * strength for f in factor]
 
         # Clamp to range [0,1]
-        factor = [min(1.0, f) for f in factor]
+        # Official glTF clamp to range [0,1]
+        # If we are outside, we need to use extension KHR_materials_emissive_strength
 
         if factor == [0, 0, 0]: factor = None
 
@@ -247,7 +255,7 @@ def __gather_emissive_texture(blender_material, export_settings):
     return emissive_texture, ["emissiveTexture"] if use_actives_uvmap_emissive else None
 
 
-def __gather_extensions(blender_material, export_settings):
+def __gather_extensions(blender_material, emissive_factor, export_settings):
     extensions = {}
 
     # KHR_materials_clearcoat
@@ -264,6 +272,12 @@ def __gather_extensions(blender_material, export_settings):
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
         actives_uvmaps.extend(use_actives_uvmap_transmission)
+
+    # KHR_materials_emissive_strength
+    if any([i>1.0 for i in emissive_factor]):
+        emissive_strength_extension = __gather_emissive_strength_extension(emissive_factor, export_settings)
+        if emissive_strength_extension:
+            extensions["KHR_materials_emissive_strength"] = emissive_strength_extension
 
     return extensions, actives_uvmaps if extensions else None
 
@@ -467,6 +481,13 @@ def __gather_transmission_extension(blender_material, export_settings):
             use_actives_uvmaps.append("transmissionTexture")
 
     return Extension('KHR_materials_transmission', transmission_extension, False), use_actives_uvmaps
+
+
+def __gather_emissive_strength_extension(emissive_factor, export_settings):
+    emissive_strength_extension = {}
+    emissive_strength_extension['emissiveStrength'] = max(emissive_factor)
+
+    return Extension('KHR_materials_emissive_strength', emissive_strength_extension, True)
 
 
 def __gather_material_unlit(blender_material, active_uvmap_index, export_settings):
