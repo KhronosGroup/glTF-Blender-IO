@@ -56,7 +56,8 @@ class glTFImporter():
             'KHR_materials_clearcoat',
             'KHR_mesh_quantization',
             'KHR_draco_mesh_compression',
-            'KHR_materials_variants'
+            'KHR_materials_variants',
+            'KHR_materials_emissive_strength'
         ]
 
         # Add extensions required supported by custom import extensions
