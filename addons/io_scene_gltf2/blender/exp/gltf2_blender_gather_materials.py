@@ -279,6 +279,12 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
         if emissive_strength_extension:
             extensions["KHR_materials_emissive_strength"] = emissive_strength_extension
 
+    # KHR_materials_ior
+    # Keep this extension at the end, because we export it only if some others are exported
+    ior_extension = __gather_ior_extension(blender_material, extensions, export_settings)
+    if ior_extension:
+        extensions["KHR_materials_ior"] = ior_extension
+
     return extensions, actives_uvmaps if extensions else None
 
 
@@ -538,3 +544,30 @@ def __gather_material_unlit(blender_material, active_uvmap_index, export_setting
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
 
     return material
+
+
+def __gather_ior_extension(blender_material, extensions, export_settings):
+    ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
+
+    # We don't manage case where socket is linked, always check default value
+    if ior_socket.is_linked:
+        # TODOExt: add warning?
+        return None
+
+    if ior_socket.default_value == 1.5:
+        return None
+
+    # Export only if the following extensions are exported:
+    need_to_export_ior = [
+        'KHR_materials_transmission',
+        'KHR_materials_volume',
+        'KHR_materials_specular'
+    ]
+
+    if not any([e in extensions.keys() for e in need_to_export_ior]):
+        return None
+
+    ior_extension = {}
+    ior_extension['ior'] = ior_socket.default_value
+
+    return Extension('KHR_materials_ior', ior_extension, False)
