@@ -18,7 +18,7 @@ from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_sett
 from .gltf2_blender_texture import texture
 from .gltf2_blender_KHR_materials_clearcoat import \
     clearcoat, clearcoat_roughness, clearcoat_normal
-
+from .gltf2_blender_KHR_materials_ior import ior
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
@@ -47,6 +47,10 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     """Creates node tree for pbrMetallicRoughness materials."""
     pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     pbr_node.location = 10, 300
+
+    # Set IOR to 1.5, this is the default in glTF
+    # This value may be overidden later if IOR extension is set on file
+    pbr_node.inputs['IOR'].default_value = 1.5
 
     make_output_nodes(
         mh,
@@ -111,6 +115,11 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         mh,
         location=locs['clearcoat_normal'],
         normal_socket=pbr_node.inputs['Clearcoat Normal'],
+    )
+
+    ior(
+        mh,
+        ior_socket=pbr_node.inputs['IOR']
     )
 
 
