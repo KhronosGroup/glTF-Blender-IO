@@ -64,7 +64,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     occlusion_texture, uvmap_actives_occlusion_texture = __gather_occlusion_texture(blender_material, orm_texture, export_settings)
     pbr_metallic_roughness, uvmap_actives_pbr_metallic_roughness = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
 
-    if any([i>1.0 for i in emissive_factor]) is True:
+    if any([i>1.0 for i in emissive_factor or []]) is True:
         # Strength is set on extension
         emission_strength = max(emissive_factor)
         emissive_factor = [f / emission_strength for f in emissive_factor]
@@ -274,7 +274,7 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
         actives_uvmaps.extend(use_actives_uvmap_transmission)
 
     # KHR_materials_emissive_strength
-    if any([i>1.0 for i in emissive_factor]):
+    if any([i>1.0 for i in emissive_factor or []]):
         emissive_strength_extension = __gather_emissive_strength_extension(emissive_factor, export_settings)
         if emissive_strength_extension:
             extensions["KHR_materials_emissive_strength"] = emissive_strength_extension
