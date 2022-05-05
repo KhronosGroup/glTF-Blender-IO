@@ -58,7 +58,7 @@ def get_node_socket(blender_material, type, name):
     return None
 
 
-def get_socket(blender_material: bpy.types.Material, name: str):
+def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
     """
     For a given material input name, retrieve the corresponding node tree socket.
 
@@ -82,7 +82,10 @@ def get_socket(blender_material: bpy.types.Material, name: str):
             type = bpy.types.ShaderNodeBackground
             name = "Color"
         else:
-            type = bpy.types.ShaderNodeBsdfPrincipled
+            if volume is False:
+                type = bpy.types.ShaderNodeBsdfPrincipled
+            else:
+                type = bpy.types.ShaderNodeVolumeAbsorption
 
         return get_node_socket(blender_material, type, name)
 
