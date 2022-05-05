@@ -153,6 +153,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         location=locs['volume_thickness'],
         volume_socket=volume_socket,
         thickness_socket=mh.settings_node.inputs[1] if mh.settings_node else None
+    )
 
     ior(
         mh,
