@@ -228,6 +228,8 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
                 dst_chan = Channel.R
             elif socket.name == 'Clearcoat Roughness':
                 dst_chan = Channel.G
+            elif socket.name == 'Thickness': # For KHR_materials_volume
+                dst_chan = Channel.G
 
             if dst_chan is not None:
                 composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)

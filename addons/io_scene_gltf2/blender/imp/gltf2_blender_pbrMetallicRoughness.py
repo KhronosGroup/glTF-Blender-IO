@@ -20,6 +20,7 @@ from .gltf2_blender_KHR_materials_clearcoat import \
     clearcoat, clearcoat_roughness, clearcoat_normal
 from .gltf2_blender_KHR_materials_transmission import transmission
 from .gltf2_blender_KHR_materials_ior import ior
+from .gltf2_blender_KHR_materials_volume import volume
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
@@ -32,6 +33,7 @@ class MaterialHelper:
         if pymat.pbr_metallic_roughness is None:
             pymat.pbr_metallic_roughness = \
                 MaterialPBRMetallicRoughness.from_dict({})
+        self.settings_node = None
 
     def is_opaque(self):
         alpha_mode = self.pymat.alpha_mode
@@ -48,18 +50,37 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     """Creates node tree for pbrMetallicRoughness materials."""
     pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     pbr_node.location = 10, 300
+    additional_location = 40, -370 # For occlusion and/or volume
 
     # Set IOR to 1.5, this is the default in glTF
     # This value may be overidden later if IOR extension is set on file
     pbr_node.inputs['IOR'].default_value = 1.5
 
-    make_output_nodes(
+    need_volume_node = False
+    if mh.pymat.extensions and 'KHR_materials_volume' in mh.pymat.extensions:
+        if 'thicknessFactor' in mh.pymat.extensions['KHR_materials_volume'] \
+            and mh.pymat.extensions['KHR_materials_volume']['thicknessFactor'] != 0.0:
+
+            need_volume_node = True
+
+            # We also need glTF Settings Node, to set thicknessFactor and thicknessTexture
+            mh.settings_node = make_settings_node(mh)
+            mh.settings_node.location = additional_location
+            mh.settings_node.width = 180
+            additional_location = additional_location[0], additional_location[1] - 150    
+
+    _, _, volume_socket = make_output_nodes(
         mh,
         location=(250, 260),
+        additional_location=additional_location,
         shader_socket=pbr_node.outputs[0],
         make_emission_socket=False,
         make_alpha_socket=False,
+        make_volume_socket=need_volume_node
     )
+
+    if need_volume_node:
+        additional_location = additional_location[0], additional_location[1] -150
 
     locs = calc_locations(mh)
 
@@ -91,13 +112,16 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     )
 
     if mh.pymat.occlusion_texture is not None:
-        node = make_settings_node(mh)
-        node.location = 40, -370
-        node.width = 180
+        if mh.settings_node is None:
+            mh.settings_node = make_settings_node(mh)
+            mh.settings_node.location = additional_location
+            mh.settings_node.width = 180
+            additional_location = additional_location[0], additional_location[1] - 150
+
         occlusion(
             mh,
             location=locs['occlusion'],
-            occlusion_socket=node.inputs['Occlusion'],
+            occlusion_socket=mh.settings_node.inputs['Occlusion'],
         )
 
     clearcoat(
@@ -124,6 +148,12 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         transmission_socket=pbr_node.inputs['Transmission']
     )
 
+    volume(
+        mh,
+        location=locs['volume_thickness'],
+        volume_socket=volume_socket,
+        thickness_socket=mh.settings_node.inputs[1] if mh.settings_node else None
+
     ior(
         mh,
         ior_socket=pbr_node.inputs['IOR']
@@ -147,6 +177,11 @@ def calc_locations(mh):
         transmission_ext = mh.pymat.exntesions['KHR_materials_transmission']
     except:
         transmission_ext = {}
+
+    try:
+        volume_ext = mh.pymat.extensions['KHR_materials_volume']
+    except Exception:
+        volume_ext = {}
 
     locs['base_color'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
@@ -175,6 +210,10 @@ def calc_locations(mh):
     locs['occlusion'] = (x, y)
     if mh.pymat.occlusion_texture is not None:
         y -= height
+    locs['volume_thickness'] = (x, y)
+    if 'thicknessTexture' in volume_ext:
+        y -= height
+
 
     # Center things
     total_height = -y
@@ -520,9 +559,11 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
 def make_output_nodes(
     mh: MaterialHelper,
     location,
+    additional_location,
     shader_socket,
     make_emission_socket,
     make_alpha_socket,
+    make_volume_socket
 ):
     """
     Creates the Material Output node and connects shader_socket to it.
@@ -585,12 +626,23 @@ def make_output_nodes(
         y -= 210
 
     # Material output
-    node = mh.node_tree.nodes.new('ShaderNodeOutputMaterial')
-    node.location = x + 70, y + 10
-    # Outputs
-    mh.node_tree.links.new(node.inputs[0], shader_socket)
+    node_output = mh.node_tree.nodes.new('ShaderNodeOutputMaterial')
+    node_output.location = x + 70, y + 10
 
-    return emission_socket, alpha_socket
+    # Outputs
+    mh.node_tree.links.new(node_output.inputs[0], shader_socket)
+
+    # Volume Node
+    volume_socket = None
+    if make_volume_socket:
+        node = mh.node_tree.nodes.new('ShaderNodeVolumeAbsorption')
+        node.location = additional_location
+        # Outputs
+        mh.node_tree.links.new(node_output.inputs[1], node.outputs[0])
+        volume_socket = node.outputs[0]
+
+
+    return emission_socket, alpha_socket, volume_socket
 
 
 def make_settings_node(mh):

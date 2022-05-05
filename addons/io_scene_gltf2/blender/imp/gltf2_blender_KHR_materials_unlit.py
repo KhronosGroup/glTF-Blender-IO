@@ -35,12 +35,14 @@ def unlit(mh):
     mh.node_tree.links.new(mix_node.inputs[1], transparent_node.outputs[0])
     mh.node_tree.links.new(mix_node.inputs[2], emission_node.outputs[0])
 
-    _emission_socket, alpha_socket = make_output_nodes(
+    _emission_socket, alpha_socket, _ = make_output_nodes(
         mh,
         location=(420, 280) if mh.is_opaque() else (150, 130),
+        additional_location=None, #No additional location needed for Unlit
         shader_socket=mix_node.outputs[0],
         make_emission_socket=False,
         make_alpha_socket=not mh.is_opaque(),
+        make_volume_socket=None # Not possible to have KHR_materials_volume with unlit
     )
 
     base_color(
