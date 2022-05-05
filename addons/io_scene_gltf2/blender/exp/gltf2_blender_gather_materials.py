@@ -620,6 +620,9 @@ def __gather_material_unlit(blender_material, active_uvmap_index, export_setting
 def __gather_ior_extension(blender_material, extensions, export_settings):
     ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
 
+    if not ior_socket:
+        return None
+
     # We don't manage case where socket is linked, always check default value
     if ior_socket.is_linked:
         # TODOExt: add warning?

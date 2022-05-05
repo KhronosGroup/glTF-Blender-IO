@@ -243,7 +243,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket=None):
         color_socket.default_value = emissive_factor + [1]
 
         # KHR_materials_emissive_strength if needed
-        if mh.pymat.extensions['KHR_materials_emissive_strength']:
+        if mh.pymat.extensions and mh.pymat.extensions['KHR_materials_emissive_strength']:
             emission_strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
             strength_socket.default_value = emission_strength
         return
@@ -252,7 +252,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket=None):
     e0, e1, e2 = emissive_factor
     if strength_socket and e0 == e1 == e2:
         # Set emission strength if extension KHR_materials_emissive_strength
-        if mh.pymat.extensions['KHR_materials_emissive_strength']:
+        if mh.pymat.extensions and mh.pymat.extensions['KHR_materials_emissive_strength']:
             emission_strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
             strength_socket.default_value = e0 * emission_strength
         else:
@@ -275,7 +275,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket=None):
             x -= 200
 
         # Set emission strength if extension KHR_materials_emissive_strength
-        if strength_socket and mh.pymat.extensions['KHR_materials_emissive_strength']:
+        if strength_socket and mh.pymat.extensions and mh.pymat.extensions['KHR_materials_emissive_strength']:
             emission_strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
             strength_socket.default_value = emission_strength
 
