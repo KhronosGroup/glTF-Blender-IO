@@ -22,7 +22,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage, FillImage
+from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage, FillImage, StoreImage, StoreData
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
@@ -190,6 +190,20 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
     results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
+
+    # Check if we need a simple mapping or more complex calculation
+    if any([socket.name == "Specular" for socket in sockets]):
+        return __get_image_data_specular(sockets, results, export_settings)
+    # elif any([socket.name == "Fac" for socket in sockets]):
+    #     return __get_image_data_test(sockets, results, export_settings)
+    else:
+        return __get_image_data_mapping(sockets, results, export_settings)
+    
+def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
+    """
+    Simple mapping
+    Will fit for most of exported textures : RoughnessMetallic, Basecolor, normal, ...
+    """
     composed_image = ExportImage()
     for result, socket in zip(results, sockets):
         # Assume that user know what he does, and that channels/images are already combined correctly for pbr
@@ -255,6 +269,47 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
 
     return composed_image
 
+def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
+    """
+    calculating Specular Texture, settings needed data
+    """   
+    from io_scene_gltf2.blender.exp.gltf2_blender_texture_specular import specular_calculation
+    composed_image = ExportImage()
+    composed_image.set_calc(specular_calculation)
+
+    composed_image.store_data("ior", sockets[4].default_value, type="Data")
+
+    results = [__get_tex_from_socket(socket, export_settings) for socket in sockets[:-1]] #Do not retrieve IOR --> No texture allowed
+
+    mapping = {
+        0: "specular",
+        1: "specular_tint",
+        2: "base_color",
+        3: "transmission"
+    }
+
+    for idx, result in enumerate(results):
+        if __get_tex_from_socket(sockets[idx], export_settings):
+
+            composed_image.store_data(mapping[idx], result.shader_node.image, type="Image")
+
+            # rudimentarily try follow the node tree to find the correct image data.
+            src_chan = Channel.R
+            for elem in result.path:
+                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
+                    src_chan = {
+                        'R': Channel.R,
+                        'G': Channel.G,
+                        'B': Channel.B,
+                    }[elem.from_socket.name]
+                if elem.from_socket.name == 'Alpha':
+                    src_chan = Channel.A
+            composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
+
+        else:
+            composed_image.store_data(mapping[idx], sockets[idx].default_value, type="Data")
+
+    return composed_image
 
 @cached
 def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket, export_settings):

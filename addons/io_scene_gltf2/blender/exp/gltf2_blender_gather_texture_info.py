@@ -30,14 +30,14 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 # occlusion the primary_socket would be the occlusion socket, and
 # blender_shader_sockets would be the (O,R,M) sockets.
 
-def gather_texture_info(primary_socket, blender_shader_sockets, export_settings):
-    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'DEFAULT', export_settings)
+def gather_texture_info(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
+    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'DEFAULT', filter_type, export_settings)
 
-def gather_material_normal_texture_info_class(primary_socket, blender_shader_sockets, export_settings):
-    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'NORMAL', export_settings)
+def gather_material_normal_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
+    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'NORMAL', filter_type, export_settings)
 
-def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, export_settings):
-    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'OCCLUSION', export_settings)
+def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
+    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'OCCLUSION', filter_type, export_settings)
 
 
 @cached
@@ -45,8 +45,9 @@ def __gather_texture_info_helper(
         primary_socket: bpy.types.NodeSocket,
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         kind: str,
+        filter_type: str,
         export_settings):
-    if not __filter_texture_info(primary_socket, blender_shader_sockets, export_settings):
+    if not __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
         return None, None
 
     tex_transform, tex_coord, use_active_uvmap = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
@@ -77,7 +78,7 @@ def __gather_texture_info_helper(
     return texture_info, use_active_uvmap
 
 
-def __filter_texture_info(primary_socket, blender_shader_sockets, export_settings):
+def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
     if primary_socket is None:
         return False
     if __get_tex_from_socket(primary_socket) is None:
@@ -86,9 +87,18 @@ def __filter_texture_info(primary_socket, blender_shader_sockets, export_setting
         return False
     if not all([elem is not None for elem in blender_shader_sockets]):
         return False
-    if any([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
-        # sockets do not lead to a texture --> discard
-        return False
+    if filter_type == "ALL":
+        # Check that all sockets link to texture
+        if any([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
+            # sockets do not lead to a texture --> discard
+            return False
+    elif filter_type == "ANY":
+        # Check that at least one socket link to texture
+        if all([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
+            return False
+    elif filter_type == "NONE":
+        # No check 
+        pass
 
     return True
 
