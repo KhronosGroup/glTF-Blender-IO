@@ -21,6 +21,7 @@ from .gltf2_blender_KHR_materials_clearcoat import \
 from .gltf2_blender_KHR_materials_transmission import transmission
 from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
+from .gltf2_blender_KHR_materials_specular import specular
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
@@ -155,6 +156,14 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         thickness_socket=mh.settings_node.inputs[1] if mh.settings_node else None
     )
 
+    specular(
+        mh, 
+        location_specular=locs['specularTexture'],
+        location_specular_tint=locs['specularColorTexture'],
+        specular_socket=pbr_node.inputs['Specular'],
+        specular_tint_socket=pbr_node.inputs['Specular Tint']
+    )
+
     ior(
         mh,
         ior_socket=pbr_node.inputs['IOR']
@@ -184,11 +193,22 @@ def calc_locations(mh):
     except Exception:
         volume_ext = {}
 
+    try:
+        specular_ext = mh.pymat.extensions['KHR_materials_specular']
+    except:
+        specular_ext = {}
+
     locs['base_color'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
         y -= height
     locs['metallic_roughness'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.metallic_roughness_texture is not None:
+        y -= height
+    locs['specularTexture'] = (x, y)
+    if 'specularTexture' in specular_ext:
+        y -= height
+    locs['specularColorTexture'] = (x, y)
+    if 'specularColorTexture' in specular_ext:
         y -= height
     locs['clearcoat'] = (x, y)
     if 'clearcoatTexture' in clearcoat_ext:
@@ -243,7 +263,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket=None):
         color_socket.default_value = emissive_factor + [1]
 
         # KHR_materials_emissive_strength if needed
-        if mh.pymat.extensions and mh.pymat.extensions['KHR_materials_emissive_strength']:
+        if mh.pymat.extensions and mh.pymat.extensions.get('KHR_materials_emissive_strength'):
             emission_strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
             strength_socket.default_value = emission_strength
         return

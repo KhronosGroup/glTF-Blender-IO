@@ -60,7 +60,8 @@ def texture(
     # Set filtering
     set_filtering(tex_img, pysampler)
     # Outputs
-    mh.node_tree.links.new(color_socket, tex_img.outputs['Color'])
+    if color_socket is not None:
+        mh.node_tree.links.new(color_socket, tex_img.outputs['Color'])
     if alpha_socket is not None:
         mh.node_tree.links.new(alpha_socket, tex_img.outputs['Alpha'])
     # Inputs
