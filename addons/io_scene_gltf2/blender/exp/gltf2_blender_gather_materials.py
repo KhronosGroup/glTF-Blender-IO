@@ -27,6 +27,8 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
+from io_scene_gltf2.io.com.gltf2_io_constants import GLTF_IOR
+from io_scene_gltf2.blender.com.gltf2_blender_default import BLENDER_SPECULAR, BLENDER_SPECULAR_TINT
 
 @cached
 def get_material_cache_key(blender_material, active_uvmap_index, export_settings):
@@ -117,6 +119,8 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
             material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = active_uvmap_index
         elif tex == "transmissionTexture": #TODO not tested yet
             material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = active_uvmap_index
+        elif tex == "specularColorTexture":
+            material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = active_uvmap_index
 
     # If material is not using active UVMap, we need to return the same material,
     # Even if multiples meshes are using different active UVMap
@@ -265,6 +269,12 @@ def __gather_extensions(blender_material, export_settings):
         extensions["KHR_materials_transmission"] = transmission_extension
         actives_uvmaps.extend(use_actives_uvmap_transmission)
 
+    # KHR_materials_specular
+    specular_extension, use_actives_uvmap_specular = __gather_specular_extension(blender_material, export_settings)
+    if specular_extension:
+        extensions["KHR_materials_specular"] = specular_extension
+        actives_uvmaps.extend(use_actives_uvmap_specular)
+
     return extensions, actives_uvmaps if extensions else None
 
 
@@ -347,6 +357,7 @@ def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settin
         orm_texture,
         export_settings)
 
+#TODOExt is this the same as __get_tex_from_socket from gather_image ?
 def __has_image_node_from_socket(socket):
     result = gltf2_blender_search_node_tree.from_socket(
         socket,
@@ -468,6 +479,82 @@ def __gather_transmission_extension(blender_material, export_settings):
 
     return Extension('KHR_materials_transmission', transmission_extension, False), use_actives_uvmaps
 
+def __gather_specular_extension(blender_material, export_settings):
+
+    specular_extension = {}
+    specular_ext_enabled = False
+
+    specular_socket = gltf2_blender_get.get_socket(blender_material, 'Specular')
+    specular_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Specular Tint')
+    base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
+    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
+    ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
+
+    # TODOExt replace by __has_image_node_from_socket calls
+    specular_not_linked = isinstance(specular_socket, bpy.types.NodeSocket) and not specular_socket.is_linked
+    specular_tint_not_linked = isinstance(specular_tint_socket, bpy.types.NodeSocket) and not specular_tint_socket.is_linked
+    base_color_not_linked = isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked
+    transmission_not_linked = isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked
+    ior_not_linked = isinstance(ior_socket, bpy.types.NodeSocket) and not ior_socket.is_linked
+
+    specular = specular_socket.default_value if specular_not_linked else None
+    specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
+    transmission = transmission_socket.default_value if transmission_not_linked else None
+    ior = ior_socket.default_value if ior_not_linked else GLTF_IOR   # textures not supported #TODOExt add warning?
+
+    no_texture = (specular_not_linked and specular_tint_not_linked and
+        (specular_tint == 0.0 or (specular_tint != 0.0 and base_color_not_linked)))
+
+    use_actives_uvmaps = []
+
+    if no_texture:
+        if specular != BLENDER_SPECULAR or specular_tint != BLENDER_SPECULAR_TINT:
+            # See https://github.com/KhronosGroup/glTF/pull/1719#issuecomment-608289714 for conversion
+            specular_ext_enabled = True
+            lerp = lambda a, b, v: (1-v)*a + v*b
+            luminance = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
+            base_color = base_color_socket.default_value[0:3] if base_color_not_linked else [0, 0, 0]
+            normalized_base_color = [bc / luminance(base_color) if luminance(base_color) > 0 else 0 for bc in base_color]
+            specular_color = [lerp(1, bc, specular_tint) for bc in normalized_base_color]
+        
+            # The IOR dictates the maximal reflection strength, therefore we need to clamp
+            # reflection strenth of non-transmissive (aka plastic) fraction (if any)
+            plastic = [1/((ior - 1) / (ior + 1))**2 * 0.08 * specular * sc for sc in specular_color]
+            glass = specular_color
+            specular_extension['specularColorFactor'] = [lerp(plastic[c], glass[c], transmission) for c in range(0,3)]
+    else:
+        # There will be a texture, with a complex calculation (no direct channel mapping)
+        sockets = (specular_socket, specular_tint_socket, base_color_socket, transmission_socket, ior_socket)
+        # Set primary socket having a texture
+        primary_socket = specular_socket
+        if specular_not_linked:
+            primary_socket = specular_tint_socket
+            if specular_tint_not_linked:
+                primary_socket = base_color_socket
+                if base_color_not_linked:
+                    primary_socket = transmission_socket
+
+        specularColorTexture, use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+            primary_socket, 
+            sockets, 
+            export_settings,
+            filter_type='ANY')
+        if specularColorTexture is None:
+            return None, None
+        if use_active_uvmap:
+            use_actives_uvmaps.append("specularColorTexture")
+
+        specular_ext_enabled = True
+        specular_extension['specularColorTexture'] = specularColorTexture
+
+
+        # If specular>0.5, specular color may be >1. As we cannot store values >1 in a byte texture,
+        # we use the specular color factor to rescale the value range.
+        specular_extension['specularColorFactor'] = [2, 2, 2]
+            
+
+    specular_extension = Extension('KHR_materials_specular', specular_extension, False) if specular_ext_enabled else None
+    return specular_extension, use_actives_uvmaps
 
 def __gather_material_unlit(blender_material, active_uvmap_index, export_settings):
     gltf2_unlit = gltf2_blender_gather_materials_unlit
