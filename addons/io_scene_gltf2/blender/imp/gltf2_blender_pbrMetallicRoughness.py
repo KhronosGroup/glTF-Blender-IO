@@ -68,7 +68,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             mh.settings_node = make_settings_node(mh)
             mh.settings_node.location = additional_location
             mh.settings_node.width = 180
-            additional_location = additional_location[0], additional_location[1] - 150    
+            additional_location = additional_location[0], additional_location[1] - 150
 
     _, _, volume_socket = make_output_nodes(
         mh,
@@ -157,7 +157,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     )
 
     specular(
-        mh, 
+        mh,
         location_specular=locs['specularTexture'],
         location_specular_tint=locs['specularColorTexture'],
         specular_socket=pbr_node.inputs['Specular'],
