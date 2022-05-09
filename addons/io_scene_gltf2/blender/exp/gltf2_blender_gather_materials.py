@@ -639,6 +639,7 @@ def __gather_specular_extension(blender_material, export_settings):
         specular_extension['specularColorTexture'] = specularColorTexture
 
 
+        # TODOExt Better management of > 1 ?
         # If specular>0.5, specular color may be >1. As we cannot store values >1 in a byte texture,
         # we use the specular color factor to rescale the value range.
         specular_extension['specularColorFactor'] = [2, 2, 2]
