@@ -75,8 +75,8 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         location=(250, 260),
         additional_location=additional_location,
         shader_socket=pbr_node.outputs[0],
-        make_emission_socket=False,
-        make_alpha_socket=False,
+        make_emission_socket=False, # is managed by Principled shader node
+        make_alpha_socket=False, # is managed by Principled shader node
         make_volume_socket=need_volume_node
     )
 
@@ -252,31 +252,29 @@ def calc_locations(mh):
 
 
 # [Texture] => [Emissive Factor] =>
-def emission(mh: MaterialHelper, location, color_socket, strength_socket=None):
+def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     x, y = location
     emissive_factor = mh.pymat.emissive_factor or [0, 0, 0]
+
+    strength = 1
+    try:
+        # Get strength from KHR_materials_emissive_strength if exists
+        strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
+    except Exception:
+        pass
 
     if color_socket is None:
         return
 
     if mh.pymat.emissive_texture is None:
         color_socket.default_value = emissive_factor + [1]
-
-        # KHR_materials_emissive_strength if needed
-        if mh.pymat.extensions and mh.pymat.extensions.get('KHR_materials_emissive_strength'):
-            emission_strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
-            strength_socket.default_value = emission_strength
+        strength_socket.default_value = strength
         return
 
     # Put grayscale emissive factors into the Emission Strength
     e0, e1, e2 = emissive_factor
     if strength_socket and e0 == e1 == e2:
-        # Set emission strength if extension KHR_materials_emissive_strength
-        if mh.pymat.extensions and mh.pymat.extensions['KHR_materials_emissive_strength']:
-            emission_strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
-            strength_socket.default_value = e0 * emission_strength
-        else:
-            strength_socket.default_value = e0
+        strength_socket.default_value = e0 * strength
 
     # Otherwise, use a multiply node for it
     else:
@@ -294,10 +292,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket=None):
 
             x -= 200
 
-        # Set emission strength if extension KHR_materials_emissive_strength
-        if strength_socket and mh.pymat.extensions and mh.pymat.extensions['KHR_materials_emissive_strength']:
-            emission_strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
-            strength_socket.default_value = emission_strength
+        strength_socket.default_value = strength
 
     texture(
         mh,

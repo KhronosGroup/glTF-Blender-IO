@@ -43,11 +43,13 @@ def pbr_specular_glossiness(mh):
         make_volume_socket=None # No possible to have KHR_materials_volume with specular/glossiness
     )
 
-    emission(
-        mh,
-        location=(-200, 860),
-        color_socket=emission_socket,
-    )
+    if emission_socket:
+        emission(
+            mh,
+            location=(-200, 860),
+            color_socket=emission_socket,
+            strength_socket=emission_socket.node.inputs['Strength']
+        )
 
     base_color(
         mh,
