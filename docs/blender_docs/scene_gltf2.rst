@@ -231,6 +231,8 @@ channels if they are not needed.
    This arrangement is supported for backwards compatibility. It is simpler to use
    the Principled BSDF node directly.
 
+If any component of emissiveFactor is > 1.0, ``KHR_materials_emissive_strength`` extension will be used.
+
 
 Clearcoat
 ^^^^^^^^^
@@ -405,11 +407,13 @@ are supported directly by this add-on:
 .. rubric:: Import
 
 - ``KHR_materials_pbrSpecularGlossiness``
-- ``KHR_lights_punctual``
 - ``KHR_materials_unlit``
-- ``KHR_texture_transform``
 - ``KHR_materials_clearcoat``
+- ``KHR_materials_emissive_strength``
+- ``KHR_lights_punctual``
+- ``KHR_texture_transform``
 - ``KHR_mesh_quantization``
+
 
 
 .. rubric:: Export
@@ -419,6 +423,7 @@ are supported directly by this add-on:
 - ``KHR_materials_clearcoat``
 - ``KHR_materials_transmission``
 - ``KHR_materials_unlit``
+- ``KHR_materials_emissive_strength``
 - ``KHR_texture_transform``
 
 
