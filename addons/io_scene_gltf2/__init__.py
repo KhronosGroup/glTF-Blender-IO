@@ -1181,7 +1181,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
 
     KHR_materials_variants_ui : bpy.props.BoolProperty(
         default= False,
-        description="Displays glTF Settings node in Shader Editor (Menu Add > Ouput)"
+        description="Displays glTF UI to manage material variants"
         )
 
 
