@@ -1256,7 +1256,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.deepStrictEqual(samp2.wrapT, 33071);  // CLAMP_TO_EDGE
             });
 
-            it('roundtrip emissive_strength', function() {
+            it('roundtrips emissive/emissive_strength', function() {
                 let dir = '14_emission_strength';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
