@@ -544,7 +544,8 @@ def __gather_transmission_extension(blender_material, export_settings):
         transmission_extension['transmissionFactor'] = transmission_socket.default_value
         transmission_enabled = transmission_extension['transmissionFactor'] > 0
     elif __has_image_node_from_socket(transmission_socket):
-        transmission_extension['transmissionFactor'] = 1.0
+        fac = gltf2_blender_get.get_factor_from_socket(transmission_socket, kind='VALUE')
+        transmission_extension['transmissionFactor'] = fac if fac is not None else 1.0
         has_transmission_texture = True
         transmission_enabled = True
 
