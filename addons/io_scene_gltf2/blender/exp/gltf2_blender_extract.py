@@ -538,7 +538,8 @@ def __get_uvs(blender_mesh, uv_i):
 
 def __get_colors(blender_mesh, color_i):
     colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
-    blender_mesh.color_attributes[color_i].data.foreach_get('color', colors)
+    layer = blender_mesh.vertex_colors[color_i]
+    blender_mesh.color_attributes[layer.name].data.foreach_get('color', colors)
     colors = colors.reshape(len(blender_mesh.loops), 4)
     # colors are already linear, no need to switch color space
     return colors
