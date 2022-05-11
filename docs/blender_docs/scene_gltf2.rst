@@ -614,6 +614,14 @@ Include
 
 Selected Objects
    Export selected objects only.
+Visible Objects
+   Export visible objects only.
+Renderable Objects
+   Export renderable objects only.
+Active Collection
+   Export objects from active collection only.
+Active Scene
+   Export active scene only.
 Custom Properties
    Export custom properties as glTF extras.
 Cameras
@@ -647,10 +655,12 @@ Loose Edges
 Loose Points
    Export loose points as glTF points, using the material from the first material slot.
 Materials
-   Export materials.
+   Export full materials, only placeholders (all primitives but without materials), 
+   or does not export materials. (In that last case, primitive are merged, lossing material slot information).
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
+   If None is chosen, materials are exported without textures.
 
 
 Compression
@@ -666,6 +676,8 @@ Normal
    Higher values result in better compression rates.
 Texture Coordinates
    Higher values result in better compression rates.
+Color
+   Higher values result in better compression rates.
 Generic
    Higher values result in better compression rates.
 
@@ -675,6 +687,8 @@ Animation
 
 Use Current Frame
    Export the scene in the current animation frame.
+   For rigs, when off, rest pose is used as default pose for joints in glTF file.
+   When on, the current frame is used as default pose for joints in glTF file.
 
 
 Animation
@@ -690,8 +704,10 @@ Always Sample Animations
    Apply sampling to all animations.
 Group by NLA Track
    Whether to export NLA strip animations.
+Optimize Animation Size
+   Reduce exported file-size by removing duplicate keyframes.
 Export Deformation Bones Only
-   Export deformation bones only (and needed bones for hierarchy).
+   Export deformation bones only.
 
 
 Shape Keys
