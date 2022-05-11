@@ -25,6 +25,11 @@ def transmission(mh, location, transmission_socket):
     except Exception:
         return
     transmission_factor = ext.get('transmissionFactor', 0)
+
+    # Default value is 0, so no transmission
+    if transmission_factor == 0:
+        return
+
     tex_info = ext.get('transmissionTexture')
     if tex_info is not None:
         tex_info = TextureInfo.from_dict(tex_info)
