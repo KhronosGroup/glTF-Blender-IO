@@ -1324,6 +1324,29 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(SpecGlossEmissiveStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
 
             });
+
+            it('roundtrips transmission', function() {
+                let dir = '15_transmission';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 5);
+
+                const pbr = asset.materials.filter(m => m.name === "pbr")[0];
+
+                const transmissionFactor = asset.materials.filter(m => m.name === "transmissionFactor")[0];
+                assert.equalEpsilon(transmissionFactor.extensions["KHR_materials_transmission"]["transmissionFactor"], 0.8);
+                
+                const transmissionTexture = asset.materials.filter(m => m.name === "transmissionTexture")[0];
+                assert.equalEpsilon(transmissionTexture.extensions["KHR_materials_transmission"]["transmissionFactor"], 1.0);
+                assert.ok(transmissionTexture.extensions["KHR_materials_transmission"]["transmissionTexture"]["index"] <= 1);
+
+                const transmissionFactorTexture = asset.materials.filter(m => m.name === "transmissionFactorTexture")[0];
+                assert.equalEpsilon(transmissionFactorTexture.extensions["KHR_materials_transmission"]["transmissionFactor"], 0.7);
+                assert.ok(transmissionFactorTexture.extensions["KHR_materials_transmission"]["transmissionTexture"]["index"] <= 1);
+
+            });
         });
     });
 });
