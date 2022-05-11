@@ -1254,7 +1254,76 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const samp2 = asset.samplers[tex2.sampler];
                 assert.deepStrictEqual(samp2.wrapS || 10497, 10497);  // REPEAT
                 assert.deepStrictEqual(samp2.wrapT, 33071);  // CLAMP_TO_EDGE
-            })
+            });
+
+            it('roundtrip emissive_strength', function() {
+                let dir = '14_emission_strength';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 18);
+
+                const SpecGloss = asset.materials.filter(m => m.name === "SpecGloss");
+
+                const SpecGlossEmissive = asset.materials.filter(m => m.name === "SpecGlossEmissive")[0];
+                assert.equalEpsilonArray(SpecGlossEmissive.emissiveFactor, [0.2, 0.1, 0.0]);
+
+                const SpecGlossEmissiveGray = asset.materials.filter(m => m.name === "SpecGlossEmissiveGray")[0];
+                assert.equalEpsilonArray(SpecGlossEmissiveGray.emissiveFactor, [0.3, 0.3, 0.3]);
+
+                const SpecGlossEmissiveGrayStrength = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayStrength")[0];
+                assert.equalEpsilon(SpecGlossEmissiveGrayStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                const SpecGlossEmissiveStrength = asset.materials.filter(m => m.name === "SpecGlossEmissiveStrength")[0];
+                assert.equalEpsilonArray(SpecGlossEmissiveStrength.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
+                assert.equalEpsilon(SpecGlossEmissiveStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                const pbrMetallicRoughness = asset.materials.filter(m => m.name === "pbrMetallicRoughness")[0];
+
+                const pbrEmissive = asset.materials.filter(m => m.name === "pbrEmissive")[0];
+                assert.equalEpsilonArray(pbrEmissive.emissiveFactor, [0.9, 0.8, 0.7]);
+
+                const pbrEmissiveGray = asset.materials.filter(m => m.name === "pbrEmissiveGray")[0];
+                assert.equalEpsilonArray(pbrEmissiveGray.emissiveFactor, [0.9, 0.9, 0.9]);
+
+                const pbrEmissiveGrayStrength = asset.materials.filter(m => m.name === "pbrEmissiveGrayStrength")[0];
+                assert.equalEpsilonArray(pbrEmissiveGrayStrength.emissiveFactor, [1.0, 1.0, 1.0]);
+                assert.equalEpsilon(pbrEmissiveGrayStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                const pbrEmissiveStrength = asset.materials.filter(m => m.name === "pbrEmissiveStrength")[0];
+                assert.equalEpsilonArray(pbrEmissiveStrength.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
+                assert.equalEpsilon(pbrEmissiveStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                const pbrEmissiveStrengthTexture = asset.materials.filter(m => m.name === "pbrEmissiveStrengthTexture")[0];
+                assert.equalEpsilonArray(pbrEmissiveStrengthTexture.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
+                assert.equalEpsilon(pbrEmissiveStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                const pbrEmissiveGrayStrengthTexture = asset.materials.filter(m => m.name === "pbrEmissiveGrayStrengthTexture")[0];
+                assert.equalEpsilonArray(pbrEmissiveGrayStrengthTexture.emissiveFactor, [1.0, 1.0, 1.0]);
+                assert.equalEpsilon(pbrEmissiveGrayStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                const pbrEmissiveTexture = asset.materials.filter(m => m.name === "pbrEmissiveTexture")[0];
+                assert.equalEpsilonArray(pbrEmissiveTexture.emissiveFactor, [0.9, 0.8, 0.7]);
+
+                const pbrEmissiveGrayTexture = asset.materials.filter(m => m.name === "pbrEmissiveGrayTexture")[0];
+                assert.equalEpsilonArray(pbrEmissiveGrayTexture.emissiveFactor, [0.9, 0.9, 0.9]);
+
+                const SpecGlossEmissiveTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveTexture")[0];
+                assert.equalEpsilonArray(SpecGlossEmissiveTexture.emissiveFactor, [0.9, 0.8, 0.7]);
+
+                const SpecGlossEmissiveGrayTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayTexture")[0];
+                assert.equalEpsilonArray(SpecGlossEmissiveGrayTexture.emissiveFactor, [0.9, 0.9, 0.9]);
+
+                const SpecGlossEmissiveGrayStrengthTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayStrengthTexture")[0];
+                assert.equalEpsilonArray(SpecGlossEmissiveGrayStrengthTexture.emissiveFactor, [1.0, 1.0, 1.0]);
+                assert.equalEpsilon(SpecGlossEmissiveGrayStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                const SpecGlossEmissiveStrengthTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveStrengthTexture")[0];
+                assert.equalEpsilonArray(SpecGlossEmissiveStrengthTexture.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
+                assert.equalEpsilon(SpecGlossEmissiveStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+            });
         });
     });
 });
