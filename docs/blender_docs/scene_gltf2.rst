@@ -407,8 +407,9 @@ are supported directly by this add-on:
 .. rubric:: Import
 
 - ``KHR_materials_pbrSpecularGlossiness``
-- ``KHR_materials_unlit``
 - ``KHR_materials_clearcoat``
+- ``KHR_materials_transmission``
+- ``KHR_materials_unlit``
 - ``KHR_materials_emissive_strength``
 - ``KHR_lights_punctual``
 - ``KHR_texture_transform``
