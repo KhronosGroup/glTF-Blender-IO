@@ -289,7 +289,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             print("WARNING: UV map is ignored because the maximum number of UV layers has been reached.")
             break
 
-        mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
+        layer.data.foreach_set('uv', squish(loop_uvs[uv_i]))
 
     for col_i in range(num_cols):
         name = 'Col' if col_i == 0 else 'Col.%03d' % col_i
@@ -300,7 +300,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                   "reached.")
             break
 
-        layer.data.foreach_set('color', squish(loop_cols[col_i]))
+        mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
 
     # Skinning
     # TODO: this is slow :/
