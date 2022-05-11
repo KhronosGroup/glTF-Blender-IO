@@ -537,18 +537,10 @@ def __get_uvs(blender_mesh, uv_i):
 
 
 def __get_colors(blender_mesh, color_i):
-    layer = blender_mesh.vertex_colors[color_i]
     colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
-    layer.data.foreach_get('color', colors)
+    blender_mesh.color_attributes[color_i].data.foreach_get('color', colors)
     colors = colors.reshape(len(blender_mesh.loops), 4)
-
-    # sRGB -> Linear
-    rgb = colors[:, :-1]
-    not_small = rgb >= 0.04045
-    small_result = np.where(rgb < 0.0, 0.0, rgb * (1.0 / 12.92))
-    large_result = np.power((rgb + 0.055) * (1.0 / 1.055), 2.4, where=not_small)
-    rgb[:] = np.where(not_small, large_result, small_result)
-
+    # colors are already linear, no need to switch color space
     return colors
 
 
