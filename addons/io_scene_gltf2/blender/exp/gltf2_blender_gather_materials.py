@@ -128,6 +128,10 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
             material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = active_uvmap_index
         elif tex == "specularColorTexture":
             material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = active_uvmap_index
+        elif tex == "sheenColorTexture":
+            material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = active_uvmap_index
+        elif tex == "sheenRoughnessTexture":
+            material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = active_uvmap_index
 
     # If material is not using active UVMap, we need to return the same material,
     # Even if multiples meshes are using different active UVMap
@@ -295,6 +299,12 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     if specular_extension:
         extensions["KHR_materials_specular"] = specular_extension
         actives_uvmaps.extend(use_actives_uvmap_specular)
+
+    # KHR_materials_sheen
+    sheen_extension, use_actives_uvmap_sheen = __gather_sheen_extension(blender_material, export_settings)
+    if sheen_extension:
+        extensions["KHR_materials_sheen"] = sheen_extension
+        actives_uvmaps.extend(use_actives_uvmap_sheen)   
 
     # KHR_materials_ior
     # Keep this extension at the end, because we export it only if some others are exported
@@ -648,6 +658,65 @@ def __gather_specular_extension(blender_material, export_settings):
 
     specular_extension = Extension('KHR_materials_specular', specular_extension, False) if specular_ext_enabled else None
     return specular_extension, use_actives_uvmaps
+
+def __gather_sheen_extension(blender_material, export_settings):
+    return None, None # Deactivate for now #TODOExt
+    sheen_extension = {}
+    sheen_ext_enabled = False
+
+    sheen_socket = gltf2_blender_get.get_socket(blender_material, 'Sheen')
+    sheen_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Sheen Tint')
+    base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
+
+    # TODOExt replace by __has_image_node_from_socket calls
+    sheen_not_linked = isinstance(sheen_socket, bpy.types.NodeSocket) and not sheen_socket.is_linked
+    sheen_tint_not_linked = isinstance(sheen_tint_socket, bpy.types.NodeSocket) and not sheen_tint_socket.is_linked
+    base_color_not_linked = isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked
+
+    sheen = sheen_socket.default_value if sheen_not_linked else None
+    sheen_tint = sheen_tint_socket.default_value if sheen_tint_not_linked else None
+
+    if sheen == 0.0:
+        return None, None
+
+    no_texture = sheen_not_linked and sheen_tint_not_linked and base_color_not_linked
+
+    use_actives_uvmaps = []
+
+    if no_texture:
+        #TODOExt how to approximate?
+        # This is not the definitive mapping, only a placeholder
+        sheen_ext_enabled = True
+        sheen_extension['sheenColorFactor'] = [sheen * sheen_tint] * 3
+    else:
+        # There will be a texture, with a complex calculation (no direct channel mapping)
+        sockets = (sheen_socket, sheen_tint_socket, base_color_socket)
+
+        # Set primary socket having a texture
+        primary_socket = sheen_socket
+        if sheen_not_linked:
+            primary_socket = sheen_tint_socket
+            if sheen_tint_not_linked:
+                primary_socket = base_color_socket
+        
+        #TODOExt if both output textures are needed, using same socket as input:
+         # * use primary socket to differenciate?
+            
+        sheenColorTexture, use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+            primary_socket, 
+            sockets, 
+            export_settings,
+            filter_type='ANY')
+        if sheenColorTexture is None:
+            return None, None
+        if use_active_uvmap:
+            use_actives_uvmaps.append("sheenColorTexture")
+
+        sheen_ext_enabled = True
+        sheen_extension['sheenColorTexture'] = sheenColorTexture
+
+    sheen_extension = Extension('KHR_materials_sheen', sheen_extension, False) if sheen_ext_enabled else None
+    return sheen_extension, use_actives_uvmaps
 
 def __gather_emissive_strength_extension(emissive_factor, export_settings):
     emissive_strength_extension = {}
