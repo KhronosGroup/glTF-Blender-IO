@@ -653,7 +653,7 @@ def __gather_emissive_strength_extension(emissive_factor, export_settings):
     emissive_strength_extension = {}
     emissive_strength_extension['emissiveStrength'] = max(emissive_factor)
 
-    return Extension('KHR_materials_emissive_strength', emissive_strength_extension, True)
+    return Extension('KHR_materials_emissive_strength', emissive_strength_extension, False)
 
 
 def __gather_material_unlit(blender_material, active_uvmap_index, export_settings):
