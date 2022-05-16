@@ -22,6 +22,7 @@ from .gltf2_blender_KHR_materials_transmission import transmission
 from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_specular import specular
+from .gltf2_blender_KHR_materials_sheen import sheen
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
@@ -164,6 +165,13 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         specular_tint_socket=pbr_node.inputs['Specular Tint']
     )
 
+    sheen(
+        mh,
+        location_sheen=locs['sheenColorTexture'],
+        sheen_socket=pbr_node.inputs['Sheen'],
+        sheen_tint_socket=pbr_node.inputs['Sheen Tint']
+    )
+
     ior(
         mh,
         ior_socket=pbr_node.inputs['IOR']
@@ -198,6 +206,11 @@ def calc_locations(mh):
     except:
         specular_ext = {}
 
+    try:
+        sheen_ext = mh.pymat.extensions['KHR_materials_sheen']
+    except:
+        sheen_ext = {}
+
     locs['base_color'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
         y -= height
@@ -209,6 +222,9 @@ def calc_locations(mh):
         y -= height
     locs['specularColorTexture'] = (x, y)
     if 'specularColorTexture' in specular_ext:
+        y -= height
+    locs['sheenColorTexture'] = (x, y)
+    if 'sheenColorTexture' in sheen_ext:
         y -= height
     locs['clearcoat'] = (x, y)
     if 'clearcoatTexture' in clearcoat_ext:
