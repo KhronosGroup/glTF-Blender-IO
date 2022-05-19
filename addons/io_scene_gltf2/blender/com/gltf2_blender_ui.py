@@ -123,7 +123,7 @@ class SCENE_OT_gltf2_variant_add(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# Operator to assign a variant to objects
+# Operator to display a variant
 class SCENE_OT_gltf2_display_variant(bpy.types.Operator):
     bl_idname = "scene.gltf2_display_variant"
     bl_label = "Display Variant"
