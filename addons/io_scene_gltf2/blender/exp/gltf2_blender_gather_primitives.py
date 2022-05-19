@@ -243,7 +243,10 @@ def __gather_extensions(blender_mesh,
     mapping = []
     for i in [v for v in blender_mesh.gltf2_variant_mesh_data if v.material_slot_index == material_idx]:
         variants = []
-        for v in i.variants:
+        for idx, v in enumerate(i.variants):
+            if v.variant.variant_idx in [o.variant.variant_idx for o in i.variants[:idx]]:
+                # Avoid duplicates
+                continue
             vari = gltf2_blender_gather_materials_variants.gather_variant(v.variant.variant_idx, export_settings)
             if vari is not None:
                 variant_extension = gltf2_io_extensions.ChildOfRootExtension(
@@ -252,7 +255,6 @@ def __gather_extensions(blender_mesh,
                 extension=vari
             )
             variants.append(variant_extension)
-        # TODOVariants: avoid duplicates?
         if len(variants) > 0:
             if i.material:
                 mat = gltf2_blender_gather_materials.gather_material(
