@@ -392,7 +392,6 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             f += prim.num_faces
 
             # Manage variants
-            # TODOVariants : store original material (not in variant), to be able to reset
             if has_variant:
 
                 if mesh.get('gltf2_variant_mesh_data') is None:
