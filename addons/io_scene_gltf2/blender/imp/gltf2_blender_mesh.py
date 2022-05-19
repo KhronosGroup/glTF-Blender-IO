@@ -404,7 +404,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                 # Store default material
                 default_mat = mesh.gltf2_variant_default_materials.add()
                 default_mat.material_slot_index = material_index
-                default_mat.default_material = bpy.data.materials[material_name]
+                default_mat.default_material = bpy.data.materials[material_name] if prim.material is not None else None
 
                 for mapping in prim.extensions['KHR_materials_variants']['mappings']:
                     # Store, for each variant, the material link to this primitive
