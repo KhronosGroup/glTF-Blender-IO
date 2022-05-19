@@ -14,7 +14,6 @@
 
 import bpy
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
-from ..imp.gltf2_blender_KHR_materials_variants import op_register, op_unregister
 
 
 ################ glTF Settings node ###########################################
@@ -119,6 +118,33 @@ class SCENE_OT_gltf2_variant_add(bpy.types.Operator):
         var.variant_idx = len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) - 1
         var.name = "VariantName"
         bpy.data.scenes[0].gltf2_active_variant = len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) - 1
+        return {'FINISHED'}
+
+
+# Operator to assign a variant to objects
+class SCENE_OT_gltf2_assign_variant(bpy.types.Operator):
+    bl_idname = "scene.gltf2_assign_variant"
+    bl_label = "Display Text"
+    bl_options = {'REGISTER'}
+
+
+    @classmethod
+    def poll(self, context):
+        return True #TODOVariants check there are variants
+
+    def execute(self, context):
+
+        gltf2_active_variant = bpy.data.scenes[0].gltf2_active_variant
+
+        # loop on all mesh
+        for obj in [o for o in bpy.data.objects if o.type == "MESH"]:
+            mesh = obj.data
+            for i in mesh.gltf2_variant_mesh_data:
+                if i.variants and gltf2_active_variant in [v.variant.variant_idx for v in i.variants]:
+                    mat = i.material
+                    slot = i.material_slot_index
+                    obj.material_slots[slot].material = mat
+
         return {'FINISHED'}
 
 # Mesh Panel
@@ -270,6 +296,7 @@ class SCENE_OT_gltf2_material_to_variant(bpy.types.Operator):
 
 def register():
     bpy.utils.register_class(NODE_OT_GLTF_SETTINGS)
+    bpy.utils.register_class(SCENE_OT_gltf2_assign_variant)
     bpy.utils.register_class(gltf2_KHR_materials_variants_variant)
     bpy.utils.register_class(gltf2_KHR_materials_variant_pointer)
     bpy.utils.register_class(gltf2_KHR_materials_variants_primitive)
@@ -281,7 +308,6 @@ def register():
     bpy.utils.register_class(SCENE_OT_gltf2_material_to_variant)
     bpy.utils.register_class(SCENE_OT_gltf2_variant_slot_add)
     bpy.types.NODE_MT_category_SH_NEW_OUTPUT.append(add_gltf_settings_to_menu)
-    op_register()
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
         bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
         bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
@@ -289,10 +315,10 @@ def register():
         bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
 
 def unregister():
-    op_unregister()
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_add)
     bpy.utils.unregister_class(SCENE_OT_gltf2_material_to_variant)
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_slot_add)
+    bpy.utils.unregister_class(SCENE_OT_gltf2_assign_variant)
     bpy.utils.unregister_class(NODE_OT_GLTF_SETTINGS)
     bpy.utils.unregister_class(SCENE_PT_gltf2_variants)
     bpy.utils.unregister_class(SCENE_UL_gltf2_variants)
