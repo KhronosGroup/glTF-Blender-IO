@@ -192,7 +192,6 @@ class gltf2_KHR_materials_variant_pointer(bpy.types.PropertyGroup):
     variant: bpy.props.PointerProperty(type=gltf2_KHR_materials_variants_variant)
 
 class gltf2_KHR_materials_variants_primitive(bpy.types.PropertyGroup):
-    primtitive_index : bpy.props.IntProperty(name="Primitive Index")
     material_slot_index : bpy.props.IntProperty(name="Material Slot Index")
     material: bpy.props.PointerProperty(type=bpy.types.Material)
     variants: bpy.props.CollectionProperty(type=gltf2_KHR_materials_variant_pointer)
