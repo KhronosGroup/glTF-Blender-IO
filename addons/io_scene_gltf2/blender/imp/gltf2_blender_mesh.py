@@ -348,7 +348,6 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     has_materials = any(prim.material is not None for prim in pymesh.primitives)
     # Even if no primitive have material, we need to create slots if some primitives have some variant
     if has_materials is False:
-        #TODOVariants : to be tested
         has_materials = any(prim.extensions is not None and 'KHR_materials_variants' in prim.extensions.keys() for prim in pymesh.primitives)
 
     has_variant = prim.extensions is not None and 'KHR_materials_variants' in prim.extensions.keys() \
