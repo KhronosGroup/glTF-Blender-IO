@@ -74,9 +74,9 @@ class SCENE_UL_gltf2_variants(bpy.types.UIList):
 
 class SCENE_PT_gltf2_variants(bpy.types.Panel):
     bl_label = "glTF Material Variants"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "scene"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "glTF Variants"
 
     @classmethod
     def poll(self, context):
