@@ -102,6 +102,7 @@ class SCENE_PT_gltf2_variants(bpy.types.Panel):
             row.operator("scene.gltf2_assign_to_variant", text="Assign To Variant")
             row = layout.row()
             row.operator("scene.gltf2_reset_to_original", text="Reset To Original")
+            row.operator("scene.gltf2_assign_as_original", text="Assign as Original")
         else:
             row.operator("scene.gltf2_variant_add", text="Add Material Variant")
 
@@ -208,6 +209,37 @@ class SCENE_OT_gltf2_reset_to_original(bpy.types.Operator):
                 if i.material_slot_index == mat_slot_idx:
                     s.material = i.default_material
                     break
+
+        return {'FINISHED'}
+
+# Operator to assign current materials as default materials
+class SCENE_OT_gltf2_assign_as_original(bpy.types.Operator):
+    bl_idname = "scene.gltf2_assign_as_original"
+    bl_label = "Assign as Original"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(self, context):
+        return bpy.context.object.type == "MESH"
+
+    def execute(self, context):
+        obj = bpy.context.object
+
+        # loop on material slots ( primitives )
+        for mat_slot_idx, s in enumerate(obj.material_slots):
+            # Check if there is a default material for this slot
+            found = False
+            for i in obj.data.gltf2_variant_default_materials:
+                if i.material_slot_index == mat_slot_idx:
+                    found = True
+                    # Update if needed
+                    i.default_material = s.material
+                    break
+
+            if found is False:
+                default_mat = obj.data.gltf2_variant_default_materials.add()
+                default_mat.material_slot_index = mat_slot_idx
+                default_mat.default_material = s.material
 
         return {'FINISHED'}
 
@@ -367,6 +399,7 @@ def register():
     bpy.utils.register_class(SCENE_OT_gltf2_display_variant)
     bpy.utils.register_class(SCENE_OT_gltf2_assign_to_variant)
     bpy.utils.register_class(SCENE_OT_gltf2_reset_to_original)
+    bpy.utils.register_class(SCENE_OT_gltf2_assign_as_original)
     bpy.utils.register_class(gltf2_KHR_materials_variants_variant)
     bpy.utils.register_class(gltf2_KHR_materials_variant_pointer)
     bpy.utils.register_class(gltf2_KHR_materials_variants_primitive)
@@ -393,6 +426,7 @@ def unregister():
     bpy.utils.unregister_class(SCENE_OT_gltf2_display_variant)
     bpy.utils.unregister_class(SCENE_OT_gltf2_assign_to_variant)
     bpy.utils.unregister_class(SCENE_OT_gltf2_reset_to_original)
+    bpy.utils.unregister_class(SCENE_OT_gltf2_assign_as_original)
     bpy.utils.unregister_class(NODE_OT_GLTF_SETTINGS)
     bpy.utils.unregister_class(SCENE_PT_gltf2_variants)
     bpy.utils.unregister_class(SCENE_UL_gltf2_variants)
