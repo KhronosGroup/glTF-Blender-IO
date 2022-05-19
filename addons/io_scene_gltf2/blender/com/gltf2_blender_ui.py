@@ -150,7 +150,8 @@ class SCENE_OT_gltf2_display_variant(bpy.types.Operator):
                 if i.variants and gltf2_active_variant in [v.variant.variant_idx for v in i.variants]:
                     mat = i.material
                     slot = i.material_slot_index
-                    obj.material_slots[slot].material = mat
+                    if slot < len(obj.material_slots): # Seems user remove some slots...
+                        obj.material_slots[slot].material = mat
 
         return {'FINISHED'}
 
