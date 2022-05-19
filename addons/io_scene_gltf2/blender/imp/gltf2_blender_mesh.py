@@ -410,9 +410,9 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                         variant_primitive.material = None
                     else:
                         vertex_color = 'COLOR_0' if 'COLOR_0' in prim.attributes else None
-                        if str(mapping['material']) + str(vertex_color) not in bpy.data.scenes[0]['gltf2_material_variants_idx'].keys():
+                        if str(mapping['material']) + str(vertex_color) not in gltf.variant_mapping.keys():
                             BlenderMaterial.create(gltf, mapping['material'], vertex_color)
-                        variant_primitive.material = bpy.data.scenes[0]['gltf2_material_variants_idx'][str(mapping['material']) + str(vertex_color)]
+                        variant_primitive.material = gltf.variant_mapping[str(mapping['material']) + str(vertex_color)]
 
                     for variant in mapping['variants']:
                         vari = variant_primitive.variants.add()

@@ -62,10 +62,7 @@ class BlenderMaterial():
         # Manage KHR_materials_variants
         # We need to store link between material idx in glTF and Blender Material id
         # TODOVariants: make this only if there are some variant, to avoid to create data not needed for regular (no variant) glb files
-        # If not needed after import, delete at the end of import process
-        if bpy.data.scenes[0].get('gltf2_material_variants_idx') is None:
-            bpy.data.scenes[0]['gltf2_material_variants_idx'] = {}
-        bpy.data.scenes[0]['gltf2_material_variants_idx'][str(material_idx) + str(vertex_color)] = mat
+        gltf.variant_mapping[str(material_idx) + str(vertex_color)] = mat
 
         import_user_extensions('gather_import_material_after_hook', gltf, pymaterial, vertex_color, mat)
 
