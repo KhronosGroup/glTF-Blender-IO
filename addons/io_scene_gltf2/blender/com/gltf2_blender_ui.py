@@ -191,6 +191,10 @@ class SCENE_OT_gltf2_assign_to_variant(bpy.types.Operator):
 class gltf2_KHR_materials_variant_pointer(bpy.types.PropertyGroup):
     variant: bpy.props.PointerProperty(type=gltf2_KHR_materials_variants_variant)
 
+class gltf2_KHR_materials_variants_default_material(bpy.types.PropertyGroup):
+    material_slot_index: bpy.props.IntProperty(name="Material Slot Index")
+    default_material: bpy.props.PointerProperty(type=bpy.types.Material)
+
 class gltf2_KHR_materials_variants_primitive(bpy.types.PropertyGroup):
     material_slot_index : bpy.props.IntProperty(name="Material Slot Index")
     material: bpy.props.PointerProperty(type=bpy.types.Material)
@@ -266,6 +270,7 @@ class SCENE_OT_gltf2_variant_slot_add(bpy.types.Operator):
         mesh = context.object.data
         if 'gltf2_variant_mesh_data' not in mesh.keys():
             bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
+            bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
             bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
 
         if 'gltf2_KHR_materials_variants_variants' not in bpy.data.scenes[0].keys():
@@ -339,6 +344,7 @@ def register():
     bpy.utils.register_class(gltf2_KHR_materials_variants_variant)
     bpy.utils.register_class(gltf2_KHR_materials_variant_pointer)
     bpy.utils.register_class(gltf2_KHR_materials_variants_primitive)
+    bpy.utils.register_class(gltf2_KHR_materials_variants_default_material)
     bpy.utils.register_class(SCENE_UL_gltf2_variants)
     bpy.utils.register_class(SCENE_PT_gltf2_variants)
     bpy.utils.register_class(MESH_UL_gltf2_mesh_variants)
@@ -349,6 +355,7 @@ def register():
     bpy.types.NODE_MT_category_SH_NEW_OUTPUT.append(add_gltf_settings_to_menu)
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
         bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
+        bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
         bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
         bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
         bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
@@ -364,6 +371,7 @@ def unregister():
     bpy.utils.unregister_class(SCENE_UL_gltf2_variants)
     bpy.utils.unregister_class(MESH_PT_gltf2_mesh_variants)
     bpy.utils.unregister_class(MESH_UL_gltf2_mesh_variants)
+    bpy.utils.unregister_class(gltf2_KHR_materials_variants_default_material)
     bpy.utils.unregister_class(gltf2_KHR_materials_variants_primitive)
     bpy.utils.unregister_class(gltf2_KHR_materials_variants_variant)
     bpy.utils.unregister_class(gltf2_KHR_materials_variant_pointer)

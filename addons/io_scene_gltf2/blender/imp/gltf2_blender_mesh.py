@@ -22,7 +22,7 @@ from .gltf2_blender_material import BlenderMaterial
 from ...io.com.gltf2_io_debug import print_console
 from .gltf2_io_draco_compression_extension import decode_primitive
 from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
-from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_variant
+from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_default_material
 
 
 class BlenderMesh():
@@ -395,12 +395,20 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             # TODOVariants : store original material (not in variant), to be able to reset
             if has_variant:
 
+                if mesh.get('gltf2_variant_mesh_data') is None:
+                    bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
+                    bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
+                    bpy.types.Mesh.gltf2_variant_pointer = bpy.props.PointerProperty(type=gltf2_KHR_materials_variants_variant)
+
+
+                # Store default material
+                default_mat = mesh.gltf2_variant_default_materials.add()
+                default_mat.material_slot_index = material_index
+                default_mat.default_material = bpy.data.materials[material_name]
+
                 for mapping in prim.extensions['KHR_materials_variants']['mappings']:
                     # Store, for each variant, the material link to this primitive
-                    if mesh.get('gltf2_variant_mesh_data') is None:
-                        bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
-                        bpy.types.Mesh.gltf2_variant_pointer = bpy.props.PointerProperty(type=gltf2_KHR_materials_variants_variant)
-
+                    
                     variant_primitive = mesh.gltf2_variant_mesh_data.add()
                     variant_primitive.material_slot_index = material_index
                     if 'material' not in mapping.keys():

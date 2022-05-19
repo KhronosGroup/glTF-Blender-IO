@@ -15,7 +15,7 @@
 import bpy
 from mathutils import Vector, Quaternion, Matrix
 from .gltf2_blender_scene import BlenderScene
-from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_primitive
+from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_default_material
 from .gltf2_blender_material import BlenderMaterial
 
 
@@ -231,6 +231,7 @@ class BlenderGlTF():
         if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is False:
             #TODOVariant Manage better. What happen if user just activate option without restart Blender
             bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
+            bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
             bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
             bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
             bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
