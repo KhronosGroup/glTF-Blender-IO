@@ -94,7 +94,7 @@ class SCENE_PT_gltf2_variants(bpy.types.Panel):
             row.operator("scene.gltf2_variant_add", icon="ADD", text="")
 
             row = layout.row()
-            row.operator("scene.gltf2_assign_variant", text="Display Variant")
+            row.operator("scene.gltf2_display_variant", text="Display Variant")
             # TODOVariants to restore defaults (no variants) : I need to store them somewhere ?
         else:
             row.operator("scene.gltf2_variant_add", text="Add Material Variant")
@@ -122,9 +122,9 @@ class SCENE_OT_gltf2_variant_add(bpy.types.Operator):
 
 
 # Operator to assign a variant to objects
-class SCENE_OT_gltf2_assign_variant(bpy.types.Operator):
-    bl_idname = "scene.gltf2_assign_variant"
-    bl_label = "Display Text"
+class SCENE_OT_gltf2_display_variant(bpy.types.Operator):
+    bl_idname = "scene.gltf2_display_variant"
+    bl_label = "Display Variant"
     bl_options = {'REGISTER'}
 
 
@@ -296,7 +296,7 @@ class SCENE_OT_gltf2_material_to_variant(bpy.types.Operator):
 
 def register():
     bpy.utils.register_class(NODE_OT_GLTF_SETTINGS)
-    bpy.utils.register_class(SCENE_OT_gltf2_assign_variant)
+    bpy.utils.register_class(SCENE_OT_gltf2_display_variant)
     bpy.utils.register_class(gltf2_KHR_materials_variants_variant)
     bpy.utils.register_class(gltf2_KHR_materials_variant_pointer)
     bpy.utils.register_class(gltf2_KHR_materials_variants_primitive)
@@ -318,7 +318,7 @@ def unregister():
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_add)
     bpy.utils.unregister_class(SCENE_OT_gltf2_material_to_variant)
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_slot_add)
-    bpy.utils.unregister_class(SCENE_OT_gltf2_assign_variant)
+    bpy.utils.unregister_class(SCENE_OT_gltf2_display_variant)
     bpy.utils.unregister_class(NODE_OT_GLTF_SETTINGS)
     bpy.utils.unregister_class(SCENE_PT_gltf2_variants)
     bpy.utils.unregister_class(SCENE_UL_gltf2_variants)
