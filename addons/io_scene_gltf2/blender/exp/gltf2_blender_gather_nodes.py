@@ -219,7 +219,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
                         armature_modifiers[idx] = modifier.show_viewport
                         modifier.show_viewport = False
 
-            #TODOVariant need to copy variant data from original to new mesh?
             depsgraph = bpy.context.evaluated_depsgraph_get()
             blender_mesh_owner = blender_object.evaluated_get(depsgraph)
             blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
