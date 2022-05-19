@@ -130,7 +130,7 @@ class SCENE_OT_gltf2_display_variant(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
-        return True #TODOVariants check there are variants
+        return len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) > 0
 
     def execute(self, context):
 
