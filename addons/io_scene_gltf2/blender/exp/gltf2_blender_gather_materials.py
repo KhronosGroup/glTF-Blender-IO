@@ -259,7 +259,7 @@ def __gather_emissive_texture(blender_material, export_settings):
     emissive = gltf2_blender_get.get_socket(blender_material, "Emissive")
     if emissive is None:
         emissive = gltf2_blender_get.get_socket_old(blender_material, "Emissive")
-    emissive_texture, use_actives_uvmap_emissive = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
+    emissive_texture, use_actives_uvmap_emissive, _ = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
     return emissive_texture, ["emissiveTexture"] if use_actives_uvmap_emissive else None
 
 
@@ -329,7 +329,7 @@ def __gather_normal_texture(blender_material, export_settings):
     normal = gltf2_blender_get.get_socket(blender_material, "Normal")
     if normal is None:
         normal = gltf2_blender_get.get_socket_old(blender_material, "Normal")
-    normal_texture, use_active_uvmap_normal = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+    normal_texture, use_active_uvmap_normal, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
         normal,
         (normal,),
         export_settings)
@@ -371,7 +371,7 @@ def __gather_orm_texture(blender_material, export_settings):
         return None
 
     # Double-check this will past the filter in texture_info
-    info, info_use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, export_settings)
+    info, info_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, export_settings)
     if info is None:
         return None
 
@@ -381,7 +381,7 @@ def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None:
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
-    occlusion_texture, use_active_uvmap_occlusion = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
+    occlusion_texture, use_active_uvmap_occlusion, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),
         export_settings)
@@ -455,7 +455,7 @@ def __gather_volume_extension(blender_material, export_settings):
     use_actives_uvmaps = []
 
     if len(thickness_slots) > 0:
-        combined_texture, use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             thicknesss_socket,
             thickness_slots,
             export_settings,
@@ -512,7 +512,7 @@ def __gather_clearcoat_extension(blender_material, export_settings):
 
     if len(clearcoat_roughness_slots) > 0:
         if has_clearcoat_texture:
-            clearcoat_texture, clearcoat_texture_use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+            clearcoat_texture, clearcoat_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_socket,
                 clearcoat_roughness_slots,
                 export_settings,
@@ -521,7 +521,7 @@ def __gather_clearcoat_extension(blender_material, export_settings):
             if clearcoat_texture_use_active_uvmap:
                 use_actives_uvmaps.append("clearcoatTexture")
         if has_clearcoat_roughness_texture:
-            clearcoat_roughness_texture, clearcoat_roughness_texture_use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+            clearcoat_roughness_texture, clearcoat_roughness_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_roughness_socket,
                 clearcoat_roughness_slots,
                 export_settings,
@@ -530,7 +530,7 @@ def __gather_clearcoat_extension(blender_material, export_settings):
             if clearcoat_roughness_texture_use_active_uvmap:
                 use_actives_uvmaps.append("clearcoatRoughnessTexture")
     if __has_image_node_from_socket(clearcoat_normal_socket):
-        clearcoat_normal_texture, clearcoat_normal_texture_use_active_uvmap = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+        clearcoat_normal_texture, clearcoat_normal_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             clearcoat_normal_socket,
             (clearcoat_normal_socket,),
             export_settings
@@ -569,7 +569,7 @@ def __gather_transmission_extension(blender_material, export_settings):
     use_actives_uvmaps = []
 
     if len(transmission_slots) > 0:
-        combined_texture, use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             transmission_socket,
             transmission_slots,
             export_settings,
@@ -612,6 +612,7 @@ def __gather_specular_extension(blender_material, export_settings):
     if no_texture:
         if specular != BLENDER_SPECULAR or specular_tint != BLENDER_SPECULAR_TINT:
             # See https://github.com/KhronosGroup/glTF/pull/1719#issuecomment-608289714 for conversion
+            # See also https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
             specular_ext_enabled = True
             lerp = lambda a, b, v: (1-v)*a + v*b
             luminance = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
@@ -636,7 +637,7 @@ def __gather_specular_extension(blender_material, export_settings):
                 if base_color_not_linked:
                     primary_socket = transmission_socket
 
-        specularColorTexture, use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+        specularColorTexture, use_active_uvmap, specularColorFactor = gltf2_blender_gather_texture_info.gather_texture_info(
             primary_socket, 
             sockets, 
             export_settings,
@@ -650,10 +651,8 @@ def __gather_specular_extension(blender_material, export_settings):
         specular_extension['specularColorTexture'] = specularColorTexture
 
 
-        # TODOExt Better management of > 1 ?
-        # If specular>0.5, specular color may be >1. As we cannot store values >1 in a byte texture,
-        # we use the specular color factor to rescale the value range.
-        specular_extension['specularColorFactor'] = [2, 2, 2]
+        if specularColorFactor is not None:
+            specular_extension['specularColorFactor'] = specularColorFactor
             
 
     specular_extension = Extension('KHR_materials_specular', specular_extension, False) if specular_ext_enabled else None
@@ -702,7 +701,7 @@ def __gather_sheen_extension(blender_material, export_settings):
         #TODOExt if both output textures are needed, using same socket as input:
          # * use primary socket to differenciate?
             
-        sheenColorTexture, use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+        sheenColorTexture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             primary_socket, 
             sockets, 
             export_settings,

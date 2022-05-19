@@ -136,7 +136,7 @@ class ExportImage:
             len(set(fill.image.name for fill in self.fills.values())) == 1
         )
 
-    def encode(self, mime_type: Optional[str]) -> bytes:
+    def encode(self, mime_type: Optional[str]) -> Tuple[bytes, bool]:
         self.file_format = {
             "image/jpeg": "JPEG",
             "image/png": "PNG"
@@ -144,14 +144,14 @@ class ExportImage:
 
         # Happy path = we can just use an existing Blender image
         if self.__on_happy_path():
-            return self.__encode_happy()
+            return self.__encode_happy(), None
 
         # Unhappy path = we need to create the image self.fills describes or self.stores describes
         if self.numpy_calc is None:
-            return self.__encode_unhappy()
+            return self.__encode_unhappy(), None
         else:
-            pixels, width, height = self.numpy_calc(self.stored)
-            return self.__encode_from_numpy_array(pixels, (width, height))
+            pixels, width, height, factor = self.numpy_calc(self.stored)
+            return self.__encode_from_numpy_array(pixels, (width, height)), factor
 
     def __encode_happy(self) -> bytes:
         return self.__encode_from_image(self.blender_image())

@@ -26,8 +26,8 @@ def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export
     if not __filter_pbr_material(blender_material, export_settings):
         return None, None
 
-    base_color_texture, use_active_uvmap_base_color_texture = __gather_base_color_texture(blender_material, export_settings)
-    metallic_roughness_texture, use_active_uvmap_metallic_roughness_texture = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
+    base_color_texture, use_active_uvmap_base_color_texture, _ = __gather_base_color_texture(blender_material, export_settings)
+    metallic_roughness_texture, use_active_uvmap_metallic_roughness_texture, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
 
     material = gltf2_io.MaterialPBRMetallicRoughness(
         base_color_factor=__gather_base_color_factor(blender_material, export_settings),
@@ -103,7 +103,7 @@ def __gather_base_color_texture(blender_material, export_settings):
         if socket is not None and __has_image_node_from_socket(socket)
     )
     if not inputs:
-        return None, None
+        return None, None, None
 
     return gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
 
@@ -139,7 +139,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not __has_image_node_from_socket(metallic_roughness):
-            return None, None
+            return None, None, None
         texture_input = (metallic_roughness,)
     elif not hasMetal:
         texture_input = (roughness_socket,)

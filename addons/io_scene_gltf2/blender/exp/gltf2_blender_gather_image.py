@@ -32,18 +32,20 @@ def gather_image(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
-        return None
+        return None, None
 
     image_data = __get_image_data(blender_shader_sockets, export_settings)
     if image_data.empty():
         # The export image has no data
-        return None
+        return None, None
 
     mime_type = __gather_mime_type(blender_shader_sockets, image_data, export_settings)
     name = __gather_name(image_data, export_settings)
 
+    factor = None
+
     if image_data.original is None:
-        uri = __gather_uri(image_data, mime_type, name, export_settings)
+        uri, factor_uri = __gather_uri(image_data, mime_type, name, export_settings)
     else:
         # Retrieve URI relative to exported glTF files
         uri = __gather_original_uri(image_data.original.filepath, export_settings)
@@ -51,7 +53,9 @@ def gather_image(
         # We don't create invalid image without uri
         if uri is None: return None
 
-    buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
+    buffer_view, factor_buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
+
+    factor = factor_uri if uri is not None else factor_buffer_view
 
     image = __make_image(
         buffer_view,
@@ -65,7 +69,7 @@ def gather_image(
 
     export_user_extensions('gather_image_hook', export_settings, image, blender_shader_sockets)
 
-    return image
+    return image, factor
 
 def __gather_original_uri(original_uri, export_settings):
 
@@ -109,8 +113,9 @@ def __filter_image(sockets, export_settings):
 @cached
 def __gather_buffer_view(image_data, mime_type, name, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
-        return gltf2_io_binary_data.BinaryData(data=image_data.encode(mime_type))
-    return None
+        data, factor = image_data.encode(mime_type)
+        return gltf2_io_binary_data.BinaryData(data=data), factor
+    return None, None
 
 
 def __gather_extensions(sockets, export_settings):
@@ -176,13 +181,14 @@ def __gather_name(export_image, export_settings):
 def __gather_uri(image_data, mime_type, name, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_SEPARATE':
         # as usual we just store the data in place instead of already resolving the references
+        data, factor = image_data.encode(mime_type=mime_type)
         return gltf2_io_image_data.ImageData(
-            data=image_data.encode(mime_type=mime_type),
+            data=data,
             mime_type=mime_type,
             name=name
-        )
+        ), factor
 
-    return None
+    return None, None
 
 
 def __get_image_data(sockets, export_settings) -> ExportImage:
@@ -332,7 +338,7 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
             composed_image.store_data(mapping[idx], result.shader_node.image, type="Image")
 
             # rudimentarily try follow the node tree to find the correct image data.
-            src_chan = Channel.R
+            src_chan = None if idx == 2 else Channel.R
             for elem in result.path:
                 if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
                     src_chan = {
@@ -342,7 +348,12 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
                     }[elem.from_socket.name]
                 if elem.from_socket.name == 'Alpha':
                     src_chan = Channel.A
-            composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
+            # For base_color, keep all channels, as this is a Vec, not scalar
+            if idx != 2:
+                composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
+            else:
+                if src_chan is not None:
+                    composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
 
         else:
             composed_image.store_data(mapping[idx], sockets[idx].default_value, type="Data")
