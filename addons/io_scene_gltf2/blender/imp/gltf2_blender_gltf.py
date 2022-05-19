@@ -235,6 +235,9 @@ class BlenderGlTF():
             bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
             bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
 
+        if len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) > 0:
+            bpy.data.scenes[0].gltf2_KHR_materials_variants_variants.clear()
+
         for idx_variant, variant in enumerate(gltf.data.extensions['KHR_materials_variants']['variants']):
             var = bpy.data.scenes[0].gltf2_KHR_materials_variants_variants.add()
             var.name = variant['name']
