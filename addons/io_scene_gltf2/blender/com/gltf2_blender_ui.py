@@ -59,6 +59,9 @@ def add_gltf_settings_to_menu(self, context) :
 
 # Global UI panel
 
+# TODOVariant : remove a variant
+# TODOVariant : remove a variant slot in material
+
 class gltf2_KHR_materials_variants_variant(bpy.types.PropertyGroup):
     variant_idx : bpy.props.IntProperty()
     name : bpy.props.StringProperty(name="Variant Name")
