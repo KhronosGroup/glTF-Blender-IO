@@ -59,6 +59,8 @@ def add_gltf_settings_to_menu(self, context) :
 
 # Global UI panel
 
+# TODOVariant : Global assignment for entire mesh, not slot by slot
+
 class gltf2_KHR_materials_variants_variant(bpy.types.PropertyGroup):
     variant_idx : bpy.props.IntProperty()
     name : bpy.props.StringProperty(name="Variant Name")
