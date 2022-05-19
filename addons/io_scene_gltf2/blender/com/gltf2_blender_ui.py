@@ -97,6 +97,8 @@ class SCENE_PT_gltf2_variants(bpy.types.Panel):
 
             row = layout.row()
             row.operator("scene.gltf2_display_variant", text="Display Variant")
+            row = layout.row()
+            row.operator("scene.gltf2_assign_to_variant", text="Assign To Variant")
             # TODOVariants to restore defaults (no variants) : I need to store them somewhere ?
         else:
             row.operator("scene.gltf2_variant_add", text="Add Material Variant")
@@ -148,6 +150,41 @@ class SCENE_OT_gltf2_display_variant(bpy.types.Operator):
                     obj.material_slots[slot].material = mat
 
         return {'FINISHED'}
+
+# Operator to assign current mesh materials to a variant
+class SCENE_OT_gltf2_assign_to_variant(bpy.types.Operator):
+    bl_idname = "scene.gltf2_assign_to_variant"
+    bl_label = "Assign To Variant"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(self, context):
+        return len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) > 0 \
+            and bpy.context.object.type == "MESH"
+
+    def execute(self, context):
+        gltf2_active_variant = bpy.data.scenes[0].gltf2_active_variant
+        obj = bpy.context.object
+
+        # loop on material slots ( primitives )
+        for mat_slot_idx, s in enumerate(obj.material_slots):
+            # Check if there is already data for this slot
+            found = False
+            for i in obj.data.gltf2_variant_mesh_data:
+                if i.material_slot_index == mat_slot_idx and i.material == s.material:
+                    found = True
+                    variant_primitive = i
+
+            if found is False:
+                variant_primitive = obj.data.gltf2_variant_mesh_data.add()
+                variant_primitive.material_slot_index = mat_slot_idx
+                variant_primitive.material = s.material
+
+            vari = variant_primitive.variants.add()
+            vari.variant.variant_idx = bpy.data.scenes[0].gltf2_active_variant
+
+        return {'FINISHED'}
+
 
 # Mesh Panel
 
@@ -219,7 +256,7 @@ class MESH_PT_gltf2_mesh_variants(bpy.types.Panel):
 class SCENE_OT_gltf2_variant_slot_add(bpy.types.Operator):
     """Add a new Slot"""
     bl_idname = "scene.gltf2_variants_slot_add"
-    bl_label = "Add new slot"
+    bl_label = "Add new Slot"
     bl_options = {'REGISTER'}
 
     @classmethod
@@ -299,6 +336,7 @@ class SCENE_OT_gltf2_material_to_variant(bpy.types.Operator):
 def register():
     bpy.utils.register_class(NODE_OT_GLTF_SETTINGS)
     bpy.utils.register_class(SCENE_OT_gltf2_display_variant)
+    bpy.utils.register_class(SCENE_OT_gltf2_assign_to_variant)
     bpy.utils.register_class(gltf2_KHR_materials_variants_variant)
     bpy.utils.register_class(gltf2_KHR_materials_variant_pointer)
     bpy.utils.register_class(gltf2_KHR_materials_variants_primitive)
@@ -321,6 +359,7 @@ def unregister():
     bpy.utils.unregister_class(SCENE_OT_gltf2_material_to_variant)
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_slot_add)
     bpy.utils.unregister_class(SCENE_OT_gltf2_display_variant)
+    bpy.utils.unregister_class(SCENE_OT_gltf2_assign_to_variant)
     bpy.utils.unregister_class(NODE_OT_GLTF_SETTINGS)
     bpy.utils.unregister_class(SCENE_PT_gltf2_variants)
     bpy.utils.unregister_class(SCENE_UL_gltf2_variants)
