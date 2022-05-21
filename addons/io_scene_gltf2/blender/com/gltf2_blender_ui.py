@@ -59,8 +59,6 @@ def add_gltf_settings_to_menu(self, context) :
 
 # Global UI panel
 
-# TODOVariant : remove a variant
-
 class gltf2_KHR_materials_variants_variant(bpy.types.PropertyGroup):
     variant_idx : bpy.props.IntProperty()
     name : bpy.props.StringProperty(name="Variant Name")
@@ -94,6 +92,7 @@ class SCENE_PT_gltf2_variants(bpy.types.Panel):
             col = row.column()
             row = col.column(align=True)
             row.operator("scene.gltf2_variant_add", icon="ADD", text="")
+            row.operator("scene.gltf2_variant_remove", icon="REMOVE", text="")
 
             row = layout.row()
             row.operator("scene.gltf2_display_variant", text="Display Variant")
@@ -125,6 +124,44 @@ class SCENE_OT_gltf2_variant_add(bpy.types.Operator):
         var.name = "VariantName"
         bpy.data.scenes[0].gltf2_active_variant = len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) - 1
         return {'FINISHED'}
+
+class SCENE_OT_gltf2_variant_remove(bpy.types.Operator):
+    """Add a new Material Variant"""
+    bl_idname = "scene.gltf2_variant_remove"
+    bl_label = "Remove Variant"
+    bl_options = {'REGISTER'}
+
+    @classmethod
+    def poll(self, context):
+        return len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) > 0
+
+    def execute(self, context):
+        bpy.data.scenes[0].gltf2_KHR_materials_variants_variants.remove(bpy.data.scenes[0].gltf2_active_variant)
+
+        # loop on all mesh
+        for obj in [o for o in bpy.data.objects if o.type == "MESH"]:
+            mesh = obj.data
+            remove_idx_data = []
+            for idx, i in enumerate(mesh.gltf2_variant_mesh_data):
+                remove_idx_variants = []
+                for idx_var, v in enumerate(i.variants):
+                    if v.variant.variant_idx == bpy.data.scenes[0].gltf2_active_variant:
+                        remove_idx_variants.append(idx_var)
+                    elif v.variant.variant_idx > bpy.data.scenes[0].gltf2_active_variant:
+                        v.variant.variant_idx -= 1
+
+                if len(remove_idx_variants) > 0:
+                    for idx_var in remove_idx_variants:
+                        i.variants.remove(idx_var)
+
+                if len(i.variants) == 0:
+                    remove_idx_data.append(idx)
+
+            if len(remove_idx_data) > 0:
+                for idx_data in remove_idx_data:
+                    mesh.gltf2_variant_mesh_data.remove(idx_data)
+                
+        return {'FINISHED'}    
 
 
 # Operator to display a variant
@@ -443,6 +480,7 @@ def register():
     bpy.utils.register_class(MESH_UL_gltf2_mesh_variants)
     bpy.utils.register_class(MESH_PT_gltf2_mesh_variants)
     bpy.utils.register_class(SCENE_OT_gltf2_variant_add)
+    bpy.utils.register_class(SCENE_OT_gltf2_variant_remove)
     bpy.utils.register_class(SCENE_OT_gltf2_material_to_variant)
     bpy.utils.register_class(SCENE_OT_gltf2_variant_slot_add)
     bpy.types.NODE_MT_category_SH_NEW_OUTPUT.append(add_gltf_settings_to_menu)
@@ -455,6 +493,7 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_add)
+    bpy.utils.unregister_class(SCENE_OT_gltf2_variant_remove)
     bpy.utils.unregister_class(SCENE_OT_gltf2_material_to_variant)
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_slot_add)
     bpy.utils.unregister_class(SCENE_OT_gltf2_display_variant)
