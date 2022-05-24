@@ -73,10 +73,10 @@ def volume(mh, location, volume_socket, thickness_socket):
         x -= 200
 
     # Separate RGB
-    node = mh.node_tree.nodes.new('ShaderNodeSeparateRGB')
+    node = mh.node_tree.nodes.new('ShaderNodeSeparateColor')
     node.location = x - 150, y - 75
     # Outputs
-    mh.node_tree.links.new(thickness_socket, node.outputs['G'])
+    mh.node_tree.links.new(thickness_socket, node.outputs['Green'])
     # Inputs
     thickness_socket = node.inputs[0]
 

@@ -56,10 +56,10 @@ def transmission(mh, location, transmission_socket):
         x -= 200
 
     # Separate RGB
-    node = mh.node_tree.nodes.new('ShaderNodeSeparateRGB')
+    node = mh.node_tree.nodes.new('ShaderNodeSeparateColor')
     node.location = x - 150, y - 75
     # Outputs
-    mh.node_tree.links.new(transmission_socket, node.outputs['R'])
+    mh.node_tree.links.new(transmission_socket, node.outputs['Red'])
     # Inputs
     transmission_socket = node.inputs[0]
 
