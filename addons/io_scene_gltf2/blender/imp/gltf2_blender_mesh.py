@@ -261,9 +261,6 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for uvs in loop_uvs:
         uvs_gltf_to_blender(uvs)
 
-    for cols in loop_cols:
-        colors_linear_to_srgb(cols[:, :-1])
-
     # ---------------
     # Start creating things
 
@@ -303,7 +300,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                   "reached.")
             break
 
-        layer.data.foreach_set('color', squish(loop_cols[col_i]))
+        mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
 
     # Skinning
     # TODO: this is slow :/
@@ -478,16 +475,6 @@ def colors_rgb_to_rgba(rgb):
     rgba = np.ones((len(rgb), 4), dtype=np.float32)
     rgba[:, :3] = rgb
     return rgba
-
-
-def colors_linear_to_srgb(color):
-    assert color.shape[1] == 3  # only change RGB, not A
-
-    not_small = color >= 0.0031308
-    small_result = np.where(color < 0.0, 0.0, color * 12.92)
-    large_result = 1.055 * np.power(color, 1.0 / 2.4, where=not_small) - 0.055
-    color[:] = np.where(not_small, large_result, small_result)
-
 
 def uvs_gltf_to_blender(uvs):
     # u,v -> u,1-v
