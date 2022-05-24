@@ -48,6 +48,7 @@ def gather_texture(
     )
 
     # although valid, most viewers can't handle missing source properties
+    # This can have None source for "keep original", when original can't be found
     if texture.source is None:
         return None
 

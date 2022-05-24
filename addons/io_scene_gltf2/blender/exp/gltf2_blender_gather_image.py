@@ -47,6 +47,9 @@ def gather_image(
     else:
         # Retrieve URI relative to exported glTF files
         uri = __gather_original_uri(image_data.original.filepath, export_settings)
+        # In case we can't retrieve image (for example packed images, with original moved)
+        # We don't create invalid image without uri
+        if uri is None: return None
 
     buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -189,12 +192,6 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
     composed_image = ExportImage()
     for result, socket in zip(results, sockets):
-        if result.shader_node.image.channels == 0:
-            gltf2_io_debug.print_console("WARNING",
-                                         "Image '{}' has no color channels and cannot be exported.".format(
-                                             result.shader_node.image))
-            continue
-
         # Assume that user know what he does, and that channels/images are already combined correctly for pbr
         # If not, we are going to keep only the first texture found
         # Example : If user set up 2 or 3 different textures for Metallic / Roughness / Occlusion
@@ -244,6 +241,15 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
             else:
                 # copy full image...eventually following sockets might overwrite things
                 composed_image = ExportImage.from_blender_image(result.shader_node.image)
+
+    # Check that we don't have some empty channels (based on weird images without any size for example)
+    keys = list(composed_image.fills.keys()) # do not loop on dict, we may have to delete an element
+    for k in [k for k in keys if isinstance(composed_image.fills[k], FillImage)]:
+        if composed_image.fills[k].image.size[0] == 0 or composed_image.fills[k].image.size[1] == 0:
+            gltf2_io_debug.print_console("WARNING",
+                                         "Image '{}' has no size and cannot be exported.".format(
+                                             composed_image.fills[k].image))
+            del composed_image.fills[k]
 
     return composed_image
 

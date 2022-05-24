@@ -47,12 +47,18 @@ class BlenderScene():
         BlenderNode.create_vnode(gltf, 'root')
 
         # User extensions before scene creation
-        import_user_extensions('gather_import_scene_after_nodes_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
+        gltf_scene = None
+        if gltf.data.scene is not None:
+            gltf_scene = gltf.data.scenes[gltf.data.scene]
+        import_user_extensions('gather_import_scene_after_nodes_hook', gltf, gltf_scene, scene)
 
-        # User extensions after scene creation
         BlenderScene.create_animations(gltf)
 
-        import_user_extensions('gather_import_scene_after_animation_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
+        # User extensions after scene creation
+        gltf_scene = None
+        if gltf.data.scene is not None:
+            gltf_scene = gltf.data.scenes[gltf.data.scene]
+        import_user_extensions('gather_import_scene_after_animation_hook', gltf, gltf_scene, scene)
 
         if bpy.context.mode != 'OBJECT':
             bpy.ops.object.mode_set(mode='OBJECT')

@@ -398,8 +398,8 @@ def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_s
 
     # Transform for skinning
     if armature and blender_object:
-        apply_matrix = armature.matrix_world.inverted_safe() @ blender_object.matrix_world
-        loc_transform = armature.matrix_world @ apply_matrix
+        # apply_matrix = armature.matrix_world.inverted_safe() @ blender_object.matrix_world
+        # loc_transform = armature.matrix_world @ apply_matrix
 
         loc_transform = blender_object.matrix_world
         locs[:] = __apply_mat_to_all(loc_transform, locs)
@@ -537,24 +537,18 @@ def __get_uvs(blender_mesh, uv_i):
 
 
 def __get_colors(blender_mesh, color_i):
-    layer = blender_mesh.vertex_colors[color_i]
     colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
-    layer.data.foreach_get('color', colors)
+    layer = blender_mesh.vertex_colors[color_i]
+    blender_mesh.color_attributes[layer.name].data.foreach_get('color', colors)
     colors = colors.reshape(len(blender_mesh.loops), 4)
-
-    # sRGB -> Linear
-    rgb = colors[:, :-1]
-    not_small = rgb >= 0.04045
-    small_result = np.where(rgb < 0.0, 0.0, rgb * (1.0 / 12.92))
-    large_result = np.power((rgb + 0.055) * (1.0 / 1.055), 2.4, where=not_small)
-    rgb[:] = np.where(not_small, large_result, small_result)
-
+    # colors are already linear, no need to switch color space
     return colors
 
 
 def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
 
     need_neutral_bone = False
+    min_influence = 0.0001
 
     joint_name_to_index = {joint.name: index for index, joint in enumerate(skin.joints)}
     group_to_joint = [joint_name_to_index.get(g.name) for g in blender_vertex_groups]
@@ -568,7 +562,7 @@ def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
         if vertex.groups:
             for group_element in vertex.groups:
                 weight = group_element.weight
-                if weight <= 0.0:
+                if weight <= min_influence:
                     continue
                 try:
                     joint = group_to_joint[group_element.group]

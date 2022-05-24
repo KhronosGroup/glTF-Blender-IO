@@ -71,8 +71,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
     # Use a class here, to be able to pass data by reference to hook (to be able to change them inside hook)
     class IMPORT_mesh_options:
-        def __init__(self, vertex_colors: bool = True, skinning: bool = True, skin_into_bind_pose: bool = True, use_auto_smooth: bool = True):
-            self.vertex_colors = vertex_colors
+        def __init__(self, skinning: bool = True, skin_into_bind_pose: bool = True, use_auto_smooth: bool = True):
             self.skinning = skinning
             self.skin_into_bind_pose = skin_into_bind_pose
             self.use_auto_smooth = use_auto_smooth
@@ -274,9 +273,6 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for uvs in loop_uvs:
         uvs_gltf_to_blender(uvs)
 
-    for cols in loop_cols:
-        colors_linear_to_srgb(cols[:, :-1])
-
     # ---------------
     # Start creating things
 
@@ -307,17 +303,16 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
         layer.data.foreach_set('uv', squish(loop_uvs[uv_i]))
 
-    if mesh_options.vertex_colors:
-        for col_i in range(num_cols):
-            name = 'Col' if col_i == 0 else 'Col.%03d' % col_i
-            layer = mesh.vertex_colors.new(name=name)
+    for col_i in range(num_cols):
+        name = 'Col' if col_i == 0 else 'Col.%03d' % col_i
+        layer = mesh.vertex_colors.new(name=name)
 
-            if layer is None:
-                print("WARNING: Vertex colors are ignored because the maximum number of vertex color layers has been "
-                    "reached.")
-                break
+        if layer is None:
+            print("WARNING: Vertex colors are ignored because the maximum number of vertex color layers has been "
+                "reached.")
+            break
 
-            layer.data.foreach_set('color', squish(loop_cols[col_i]))
+        mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
 
     # Skinning
     # TODO: this is slow :/
@@ -368,7 +363,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             if prim.material is not None:
                 # Get the material
                 pymaterial = gltf.data.materials[prim.material]
-                vertex_color = 'COLOR_0' if ('COLOR_0' in prim.attributes and mesh_options.vertex_colors) else None
+                vertex_color = 'COLOR_0' if ('COLOR_0' in prim.attributes) else None
                 if vertex_color not in pymaterial.blender_material:
                     BlenderMaterial.create(gltf, prim.material, vertex_color)
                 material_name = pymaterial.blender_material[vertex_color]
@@ -492,16 +487,6 @@ def colors_rgb_to_rgba(rgb):
     rgba = np.ones((len(rgb), 4), dtype=np.float32)
     rgba[:, :3] = rgb
     return rgba
-
-
-def colors_linear_to_srgb(color):
-    assert color.shape[1] == 3  # only change RGB, not A
-
-    not_small = color >= 0.0031308
-    small_result = np.where(color < 0.0, 0.0, color * 12.92)
-    large_result = 1.055 * np.power(color, 1.0 / 2.4, where=not_small) - 0.055
-    color[:] = np.where(not_small, large_result, small_result)
-
 
 def uvs_gltf_to_blender(uvs):
     # u,v -> u,1-v

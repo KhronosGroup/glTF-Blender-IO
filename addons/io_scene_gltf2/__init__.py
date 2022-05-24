@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 2, 22),
+    "version": (3, 2, 38),
     'blender': (3, 1, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -322,6 +322,12 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    use_active_scene: BoolProperty(
+        name='Active Scene',
+        description='Export active scene only',
+        default=False
+    )
+
     export_extras: BoolProperty(
         name='Custom Properties',
         description='Export custom properties as glTF extras',
@@ -389,7 +395,7 @@ class ExportGLTF2_Base:
             "Reduce exported file-size by removing duplicate keyframes"
             "(can cause problems with stepped animation)"
         ),
-        default=True
+        default=False
     )
 
     export_current_frame: BoolProperty(
@@ -496,6 +502,7 @@ class ExportGLTF2_Base:
             'use_active_collection',
             'use_mesh_edges',
             'use_mesh_vertices',
+            'use_active_scene',
         ]
         all_props = self.properties
         export_props = {
@@ -555,6 +562,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
         export_settings['gltf_active_collection'] = self.use_active_collection
+        export_settings['gltf_active_scene'] = self.use_active_scene
 
         export_settings['gltf_selected'] = self.use_selection
         export_settings['gltf_layers'] = True  # self.export_layers
@@ -693,6 +701,7 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'use_visible')
         col.prop(operator, 'use_renderable')
         col.prop(operator, 'use_active_collection')
+        col.prop(operator, 'use_active_scene')
 
         col = layout.column(heading = "Data", align = True)
         col.prop(operator, 'export_extras')

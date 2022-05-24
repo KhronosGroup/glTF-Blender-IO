@@ -168,48 +168,69 @@ def __gather_colors(blender_primitive, export_settings):
 
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
-    if export_settings[gltf2_blender_export_keys.SKINS]:
-        bone_set_index = 0
-        joint_id = 'JOINTS_' + str(bone_set_index)
-        weight_id = 'WEIGHTS_' + str(bone_set_index)
-        while blender_primitive["attributes"].get(joint_id) and blender_primitive["attributes"].get(weight_id):
-            if bone_set_index >= 1:
-                if not export_settings['gltf_all_vertex_influences']:
-                    gltf2_io_debug.print_console("WARNING", "There are more than 4 joint vertex influences."
-                                                            "The 4 with highest weight will be used (and normalized).")
-                    break
 
-            # joints
-            internal_joint = blender_primitive["attributes"][joint_id]
-            component_type = gltf2_io_constants.ComponentType.UnsignedShort
-            if max(internal_joint) < 256:
-                component_type = gltf2_io_constants.ComponentType.UnsignedByte
-            joint = array_to_accessor(
-                internal_joint,
-                component_type,
-                data_type=gltf2_io_constants.DataType.Vec4,
+    if not export_settings[gltf2_blender_export_keys.SKINS]:
+        return attributes
+
+    # Retrieve max set index
+    max_bone_set_index = 0
+    while blender_primitive["attributes"].get('JOINTS_' + str(max_bone_set_index)) and blender_primitive["attributes"].get('WEIGHTS_' + str(max_bone_set_index)):
+        max_bone_set_index += 1
+    max_bone_set_index -= 1
+
+    # If no skinning
+    if max_bone_set_index < 0:
+        return attributes
+
+    if max_bone_set_index > 0 and not export_settings['gltf_all_vertex_influences']:
+        gltf2_io_debug.print_console("WARNING", "There are more than 4 joint vertex influences."
+                                                "The 4 with highest weight will be used (and normalized).")
+
+        # Take into account only the first set of 4 weights
+        max_bone_set_index = 0
+
+    # Convert weights to numpy arrays, and setting joints
+    weight_arrs = []
+    for s in range(0, max_bone_set_index+1):
+
+        weight_id = 'WEIGHTS_' + str(s)
+        weight = blender_primitive["attributes"][weight_id]
+        weight = np.array(weight, dtype=np.float32)
+        weight = weight.reshape(len(weight) // 4, 4)
+        weight_arrs.append(weight)
+
+
+        # joints
+        joint_id = 'JOINTS_' + str(s)
+        internal_joint = blender_primitive["attributes"][joint_id]
+        component_type = gltf2_io_constants.ComponentType.UnsignedShort
+        if max(internal_joint) < 256:
+            component_type = gltf2_io_constants.ComponentType.UnsignedByte
+        joint = array_to_accessor(
+            internal_joint,
+            component_type,
+            data_type=gltf2_io_constants.DataType.Vec4,
+        )
+        attributes[joint_id] = joint
+
+    # Sum weights for each vertex
+    for s in range(0, max_bone_set_index+1):
+        sums = weight_arrs[s].sum(axis=1)
+        if s == 0:
+            weight_total = sums
+        else:
+            weight_total += sums
+
+    # Normalize weights so they sum to 1
+    weight_total = weight_total.reshape(-1, 1)
+    for s in range(0, max_bone_set_index+1):
+        weight_arrs[s] /= weight_total
+
+        weight = array_to_accessor(
+            weight_arrs[s],
+            component_type=gltf2_io_constants.ComponentType.Float,
+            data_type=gltf2_io_constants.DataType.Vec4,
             )
-            attributes[joint_id] = joint
+        attributes[weight_id] = weight
 
-            # weights
-            internal_weight = blender_primitive["attributes"][weight_id]
-            # normalize first 4 weights, when not exporting all influences
-            if not export_settings['gltf_all_vertex_influences']:
-                for idx in range(0, len(internal_weight), 4):
-                    weight_slice = internal_weight[idx:idx + 4]
-                    total = sum(weight_slice)
-                    if total > 0:
-                        factor = 1.0 / total
-                        internal_weight[idx:idx + 4] = [w * factor for w in weight_slice]
-
-            weight = array_to_accessor(
-                internal_weight,
-                component_type=gltf2_io_constants.ComponentType.Float,
-                data_type=gltf2_io_constants.DataType.Vec4,
-            )
-            attributes[weight_id] = weight
-
-            bone_set_index += 1
-            joint_id = 'JOINTS_' + str(bone_set_index)
-            weight_id = 'WEIGHTS_' + str(bone_set_index)
     return attributes
