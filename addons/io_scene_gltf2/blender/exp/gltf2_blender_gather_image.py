@@ -224,11 +224,11 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
             # rudimentarily try follow the node tree to find the correct image data.
             src_chan = Channel.R
             for elem in result.path:
-                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateRGB):
+                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateColor):
                     src_chan = {
-                        'R': Channel.R,
-                        'G': Channel.G,
-                        'B': Channel.B,
+                        'Red': Channel.R,
+                        'Green': Channel.G,
+                        'Blue': Channel.B,
                     }[elem.from_socket.name]
                 if elem.from_socket.name == 'Alpha':
                     src_chan = Channel.A
