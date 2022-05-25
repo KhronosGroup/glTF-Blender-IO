@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ...io.com.gltf2_io_constants import GLTF_IOR
+
 def ior(mh, ior_socket):
     try:
         ext = mh.pymat.extensions['KHR_materials_ior']
     except Exception:
         return
-    ior = ext.get('ior', 1.5)
+    ior = ext.get('ior', GLTF_IOR)
     ior_socket.default_value = ior

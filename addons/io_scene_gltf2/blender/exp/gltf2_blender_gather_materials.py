@@ -785,7 +785,7 @@ def __gather_ior_extension(blender_material, extensions, export_settings):
         # TODOExt: add warning?
         return None
 
-    if ior_socket.default_value == 1.5:
+    if ior_socket.default_value == GLTF_IOR:
         return None
 
     # Export only if the following extensions are exported:

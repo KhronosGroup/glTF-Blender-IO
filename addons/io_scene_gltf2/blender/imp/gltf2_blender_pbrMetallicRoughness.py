@@ -23,6 +23,7 @@ from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_specular import specular
 from .gltf2_blender_KHR_materials_sheen import sheen
+from ...io.com.gltf2_io_constants import GLTF_IOR
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
@@ -56,7 +57,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
 
     # Set IOR to 1.5, this is the default in glTF
     # This value may be overidden later if IOR extension is set on file
-    pbr_node.inputs['IOR'].default_value = 1.5
+    pbr_node.inputs['IOR'].default_value = GLTF_IOR
 
     need_volume_node = False
     if mh.pymat.extensions and 'KHR_materials_volume' in mh.pymat.extensions:
