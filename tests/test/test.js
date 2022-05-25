@@ -788,6 +788,21 @@ describe('Exporter', function() {
 
               });
 
+              it('exports volume', function() {
+                let gltfPath = path.resolve(outDirPath, '16_volume.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat_no_volume = asset.materials.find(mat => mat.name === 'NoVolume');
+                assert.ok(!("KHR_materials_volume" in mat_no_volume.extensions));
+
+                const mat_volume = asset.materials.find(mat => mat.name === 'Volume');
+                assert.ok("KHR_materials_volume" in mat_volume.extensions);
+                
+                const mat_thickness_zero = asset.materials.find(mat => mat.name === 'ThicknessZero');
+                assert.ok(!("KHR_materials_volume" in mat_thickness_zero.extensions));
+
+              });              
+
         });
     });
 });
@@ -1345,6 +1360,88 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const transmissionFactorTexture = asset.materials.filter(m => m.name === "transmissionFactorTexture")[0];
                 assert.equalEpsilon(transmissionFactorTexture.extensions["KHR_materials_transmission"]["transmissionFactor"], 0.7);
                 assert.ok(transmissionFactorTexture.extensions["KHR_materials_transmission"]["transmissionTexture"]["index"] <= 1);
+
+            });
+
+            it('roundtrips volume', function() {
+                let dir = '16_volume';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 20);
+
+                const thickness_025 = asset.materials.filter(m => m.name === "R2_ThicknessFac_0.25")[0];
+                assert.equalEpsilon(thickness_025.extensions['KHR_materials_volume']["thicknessFactor"], 0.25);
+                assert.equalEpsilon(thickness_025.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                assert.equalEpsilonArray(thickness_025.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in thickness_025.extensions['KHR_materials_volume']));
+
+                const thickness_050 = asset.materials.filter(m => m.name === "R2_ThicknessFac_0.50")[0];
+                assert.equalEpsilon(thickness_050.extensions['KHR_materials_volume']["thicknessFactor"], 0.5);
+                assert.equalEpsilon(thickness_050.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                assert.equalEpsilonArray(thickness_050.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in thickness_050.extensions['KHR_materials_volume']));
+
+                const thickness_10 = asset.materials.filter(m => m.name === "R2_and_R4_ThicknessFac_1.0")[0];
+                assert.equalEpsilon(thickness_10.extensions['KHR_materials_volume']["thicknessFactor"], 1.0);
+                assert.equalEpsilon(thickness_10.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                assert.equalEpsilonArray(thickness_10.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in thickness_10.extensions['KHR_materials_volume']));
+
+                const thickness_15 = asset.materials.filter(m => m.name === "R2_ThicknessFac_1.5")[0];
+                assert.equalEpsilon(thickness_15.extensions['KHR_materials_volume']["thicknessFactor"], 1.5);
+                assert.equalEpsilon(thickness_15.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                assert.equalEpsilonArray(thickness_15.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in thickness_15.extensions['KHR_materials_volume']));
+
+                const thickness_20 = asset.materials.filter(m => m.name === "R2_ThicknessFac_2.0")[0];
+                assert.equalEpsilon(thickness_20.extensions['KHR_materials_volume']["thicknessFactor"], 2.0);
+                assert.equalEpsilon(thickness_20.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                assert.equalEpsilonArray(thickness_20.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in thickness_20.extensions['KHR_materials_volume']));
+
+                const tick_2_text = asset.materials.filter(m => m.name === "R3_ThicknessTex_Mat")[0];
+                assert.equalEpsilon(tick_2_text.extensions['KHR_materials_volume']["thicknessFactor"], 2);
+                assert.equalEpsilon(tick_2_text.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                assert.equalEpsilonArray(tick_2_text.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok("thicknessTexture" in tick_2_text.extensions['KHR_materials_volume']);
+
+                const dist_025 = asset.materials.filter(m => m.name === "R5_Attenuation_0.25")[0];
+                assert.equalEpsilon(dist_025.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                assert.equalEpsilon(dist_025.extensions['KHR_materials_volume']["attenuationDistance"], 4.0);
+                assert.equalEpsilonArray(dist_025.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in dist_025.extensions['KHR_materials_volume']));
+
+                const dist_05 = asset.materials.filter(m => m.name === "R5_Attenuation_0.50")[0];
+                assert.equalEpsilon(dist_05.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                assert.equalEpsilon(dist_05.extensions['KHR_materials_volume']["attenuationDistance"], 2.0);
+                assert.equalEpsilonArray(dist_05.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in dist_05.extensions['KHR_materials_volume']));
+
+                const dist_10 = asset.materials.filter(m => m.name === "R5_Attenuation_1.0")[0];
+                assert.equalEpsilon(dist_10.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                assert.equalEpsilon(dist_10.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                assert.equalEpsilonArray(dist_10.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in dist_10.extensions['KHR_materials_volume']));
+
+                const dist_15 = asset.materials.filter(m => m.name === "R5_Attenuation_1.5")[0];
+                assert.equalEpsilon(dist_15.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                assert.equalEpsilon(dist_15.extensions['KHR_materials_volume']["attenuationDistance"], 0.6666666666666666);
+                assert.equalEpsilonArray(dist_15.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in dist_15.extensions['KHR_materials_volume']));
+
+                const dist_20 = asset.materials.filter(m => m.name === "R5_Attenuation_2.0")[0];
+                assert.equalEpsilon(dist_20.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                assert.equalEpsilon(dist_20.extensions['KHR_materials_volume']["attenuationDistance"], 0.5);
+                assert.equalEpsilonArray(dist_20.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                assert.ok(!("thicknessTexture" in dist_20.extensions['KHR_materials_volume']));
+
+                const NoThickness = asset.materials.filter(m => m.name === "NoThickness")[0];
+                assert.ok(!("KHR_materials_volume" in NoThickness.extensions));
+
+                const Thicknesszero = asset.materials.filter(m => m.name === "Thicknesszero")[0];
+                assert.ok(!("KHR_materials_volume" in Thicknesszero.extensions));
 
             });
         });
