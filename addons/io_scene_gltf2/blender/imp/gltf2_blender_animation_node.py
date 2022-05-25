@@ -31,6 +31,7 @@ class BlenderNodeAnim():
         """Manage animation targeting a node's TRS."""
         animation = gltf.data.animations[anim_idx]
         node = gltf.data.nodes[node_idx]
+
         if anim_idx not in node.animations.keys():
             return
 
