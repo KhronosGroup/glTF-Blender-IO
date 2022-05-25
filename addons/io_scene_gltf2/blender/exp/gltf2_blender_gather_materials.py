@@ -1,4 +1,4 @@
-# Copyright 2018-2021 The glTF-Blender-IO authors.
+# Copyright 2018-2022 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,18 +18,22 @@ from sys import maxsize
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_export_keys
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
-
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_unlit
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_export_keys
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
-from io_scene_gltf2.io.com.gltf2_io_constants import GLTF_IOR
-from io_scene_gltf2.blender.com.gltf2_blender_default import BLENDER_SPECULAR, BLENDER_SPECULAR_TINT
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_volume import export_volume
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_emission import export_emission_factor, \
+    export_emission_texture, export_emission_strength_extension
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_sheen import export_sheen
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_specular import export_specular
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_transmission import export_transmission
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_clearcoat import export_clearcoat
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_ior import export_ior
+from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 
 @cached
 def get_material_cache_key(blender_material, active_uvmap_index, export_settings):
@@ -53,7 +57,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None
 
-    mat_unlit = __gather_material_unlit(blender_material, active_uvmap_index, export_settings)
+    mat_unlit = __export_unlit(blender_material, active_uvmap_index, export_settings)
     if mat_unlit is not None:
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
         return mat_unlit
@@ -215,53 +219,10 @@ def __gather_double_sided(blender_material, export_settings):
 
 
 def __gather_emissive_factor(blender_material, export_settings):
-    emissive_socket = gltf2_blender_get.get_socket(blender_material, "Emissive")
-    if emissive_socket is None:
-        emissive_socket = gltf2_blender_get.get_socket_old(blender_material, "EmissiveFactor")
-    if isinstance(emissive_socket, bpy.types.NodeSocket):
-        if export_settings['gltf_image_format'] != "NONE":
-            factor = gltf2_blender_get.get_factor_from_socket(emissive_socket, kind='RGB')
-        else:
-            factor = gltf2_blender_get.get_const_from_default_value_socket(emissive_socket, kind='RGB')
-
-        if factor is None and emissive_socket.is_linked:
-            # In glTF, the default emissiveFactor is all zeros, so if an emission texture is connected,
-            # we have to manually set it to all ones.
-            factor = [1.0, 1.0, 1.0]
-
-        if factor is None: factor = [0.0, 0.0, 0.0]
-
-        # Handle Emission Strength
-        strength_socket = None
-        if emissive_socket.node.type == 'EMISSION':
-            strength_socket = emissive_socket.node.inputs['Strength']
-        elif 'Emission Strength' in emissive_socket.node.inputs:
-            strength_socket = emissive_socket.node.inputs['Emission Strength']
-        strength = (
-            gltf2_blender_get.get_const_from_socket(strength_socket, kind='VALUE')
-            if strength_socket is not None
-            else None
-        )
-        if strength is not None:
-            factor = [f * strength for f in factor]
-
-        # Clamp to range [0,1]
-        # Official glTF clamp to range [0,1]
-        # If we are outside, we need to use extension KHR_materials_emissive_strength
-
-        if factor == [0, 0, 0]: factor = None
-
-        return factor
-
-    return None
-
+    return export_emission_factor(blender_material, export_settings)
 
 def __gather_emissive_texture(blender_material, export_settings):
-    emissive = gltf2_blender_get.get_socket(blender_material, "Emissive")
-    if emissive is None:
-        emissive = gltf2_blender_get.get_socket_old(blender_material, "Emissive")
-    emissive_texture, use_actives_uvmap_emissive, _ = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
-    return emissive_texture, ["emissiveTexture"] if use_actives_uvmap_emissive else None
+    return export_emission_texture(blender_material, export_settings)
 
 
 def __gather_extensions(blender_material, emissive_factor, export_settings):
@@ -270,46 +231,46 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     # KHR_materials_clearcoat
     actives_uvmaps = []
 
-    clearcoat_extension, use_actives_uvmap_clearcoat = __gather_clearcoat_extension(blender_material, export_settings)
+    clearcoat_extension, use_actives_uvmap_clearcoat = export_clearcoat(blender_material, export_settings)
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
         actives_uvmaps.extend(use_actives_uvmap_clearcoat)
 
     # KHR_materials_transmission
 
-    transmission_extension, use_actives_uvmap_transmission = __gather_transmission_extension(blender_material, export_settings)
+    transmission_extension, use_actives_uvmap_transmission = export_transmission(blender_material, export_settings)
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
         actives_uvmaps.extend(use_actives_uvmap_transmission)
 
     # KHR_materials_emissive_strength
     if any([i>1.0 for i in emissive_factor or []]):
-        emissive_strength_extension = __gather_emissive_strength_extension(emissive_factor, export_settings)
+        emissive_strength_extension = export_emission_strength_extension(emissive_factor, export_settings)
         if emissive_strength_extension:
             extensions["KHR_materials_emissive_strength"] = emissive_strength_extension
 
     # KHR_materials_volume
 
-    volume_extension, use_actives_uvmap_volume_thickness  = __gather_volume_extension(blender_material, export_settings)
+    volume_extension, use_actives_uvmap_volume_thickness  = export_volume(blender_material, export_settings)
     if volume_extension:
         extensions["KHR_materials_volume"] = volume_extension
         actives_uvmaps.extend(use_actives_uvmap_volume_thickness)
 
     # KHR_materials_specular
-    specular_extension, use_actives_uvmap_specular = __gather_specular_extension(blender_material, export_settings)
+    specular_extension, use_actives_uvmap_specular = export_specular(blender_material, export_settings)
     if specular_extension:
         extensions["KHR_materials_specular"] = specular_extension
         actives_uvmaps.extend(use_actives_uvmap_specular)
 
     # KHR_materials_sheen
-    sheen_extension, use_actives_uvmap_sheen = __gather_sheen_extension(blender_material, export_settings)
+    sheen_extension, use_actives_uvmap_sheen = export_sheen(blender_material, export_settings)
     if sheen_extension:
         extensions["KHR_materials_sheen"] = sheen_extension
         actives_uvmaps.extend(use_actives_uvmap_sheen)   
 
     # KHR_materials_ior
     # Keep this extension at the end, because we export it only if some others are exported
-    ior_extension = __gather_ior_extension(blender_material, extensions, export_settings)
+    ior_extension = export_ior(blender_material, extensions, export_settings)
     if ior_extension:
         extensions["KHR_materials_ior"] = ior_extension
 
@@ -342,20 +303,20 @@ def __gather_orm_texture(blender_material, export_settings):
     # If not fully shared, return None, so the images will be cached and processed separately.
 
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
-    if occlusion is None or not __has_image_node_from_socket(occlusion):
+    if occlusion is None or not gltf2_blender_get.has_image_node_from_socket(occlusion):
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
-        if occlusion is None or not __has_image_node_from_socket(occlusion):
+        if occlusion is None or not gltf2_blender_get.has_image_node_from_socket(occlusion):
             return None
 
     metallic_socket = gltf2_blender_get.get_socket(blender_material, "Metallic")
     roughness_socket = gltf2_blender_get.get_socket(blender_material, "Roughness")
 
-    hasMetal = metallic_socket is not None and __has_image_node_from_socket(metallic_socket)
-    hasRough = roughness_socket is not None and __has_image_node_from_socket(roughness_socket)
+    hasMetal = metallic_socket is not None and gltf2_blender_get.has_image_node_from_socket(metallic_socket)
+    hasRough = roughness_socket is not None and gltf2_blender_get.has_image_node_from_socket(roughness_socket)
 
     if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
-        if metallic_roughness is None or not __has_image_node_from_socket(metallic_roughness):
+        if metallic_roughness is None or not gltf2_blender_get.has_image_node_from_socket(metallic_roughness):
             return None
         result = (occlusion, metallic_roughness)
     elif not hasMetal:
@@ -395,341 +356,7 @@ def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settin
         orm_texture,
         export_settings)
 
-#TODOExt is this the same as __get_tex_from_socket from gather_image ?
-def __has_image_node_from_socket(socket):
-    result = gltf2_blender_search_node_tree.from_socket(
-        socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-    if not result:
-        return False
-    return True
-
-
-def __gather_volume_extension(blender_material, export_settings):
-    # Implementation based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
-
-    # If no transmission --> No volume
-    transmission_enabled = False
-    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
-    if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
-        transmission_enabled = transmission_socket.default_value > 0
-    elif __has_image_node_from_socket(transmission_socket):
-        transmission_enabled = True
-
-    if transmission_enabled is False:
-        return None, None
-
-    volume_extension = {}
-    has_thickness_texture = False
-    thickness_slots = ()
-
-    thicknesss_socket = gltf2_blender_get.get_socket_old(blender_material, 'Thickness')
-    if thicknesss_socket is None:
-        volume_extension['thicknessFactor'] = 1.0
-
-    density_socket = gltf2_blender_get.get_socket(blender_material, 'Density', volume=True)
-    attenuation_color_socket = gltf2_blender_get.get_socket(blender_material, 'Color', volume=True)
-    if density_socket is None or attenuation_color_socket is None:
-        return None, None
-
-    if isinstance(attenuation_color_socket, bpy.types.NodeSocket):
-        rgb = gltf2_blender_get.get_const_from_default_value_socket(attenuation_color_socket, kind='RGB')
-        volume_extension['attenuationColor'] = rgb
-
-    if isinstance(density_socket, bpy.types.NodeSocket):
-        density = gltf2_blender_get.get_const_from_default_value_socket(density_socket, kind='VALUE')
-        volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else maxsize
-
-
-    if isinstance(thicknesss_socket, bpy.types.NodeSocket) and not thicknesss_socket.is_linked:
-        val = thicknesss_socket.default_value
-        if val == 0.0:
-            # If no thickness, no volume extension export 
-            return None, None
-        volume_extension['thicknessFactor'] = val
-    elif __has_image_node_from_socket(thicknesss_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(thicknesss_socket, kind='VALUE')
-        # default value in glTF is 0.0, but if there is a texture without factor, use 1
-        volume_extension['thicknessFactor'] = fac if fac != None else 1.0
-        has_thickness_texture = True
-
-       # Pack thickness channel (R).
-    if has_thickness_texture:
-        thickness_slots = (thicknesss_socket,)
-
-    use_actives_uvmaps = []
-
-    if len(thickness_slots) > 0:
-        combined_texture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
-            thicknesss_socket,
-            thickness_slots,
-            export_settings,
-        )
-        if has_thickness_texture:
-            volume_extension['thicknessTexture'] = combined_texture
-        if use_active_uvmap:
-            use_actives_uvmaps.append("thicknessTexture")
-
-    return Extension('KHR_materials_volume', volume_extension, False), use_actives_uvmaps
-
-def __gather_clearcoat_extension(blender_material, export_settings):
-    clearcoat_enabled = False
-    has_clearcoat_texture = False
-    has_clearcoat_roughness_texture = False
-
-    clearcoat_extension = {}
-    clearcoat_roughness_slots = ()
-
-    clearcoat_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat')
-    clearcoat_roughness_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat Roughness')
-    clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat Normal')
-
-    if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
-        clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
-        clearcoat_enabled = clearcoat_extension['clearcoatFactor'] > 0
-    elif __has_image_node_from_socket(clearcoat_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(clearcoat_socket, kind='VALUE')
-        # default value in glTF is 0.0, but if there is a texture without factor, use 1
-        clearcoat_extension['clearcoatFactor'] = fac if fac != None else 1.0
-        has_clearcoat_texture = True
-        clearcoat_enabled = True
-
-    if not clearcoat_enabled:
-        return None, None
-
-    if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
-        clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
-    elif __has_image_node_from_socket(clearcoat_roughness_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
-        # default value in glTF is 0.0, but if there is a texture without factor, use 1
-        clearcoat_extension['clearcoatRoughnessFactor'] = fac if fac != None else 1.0
-        has_clearcoat_roughness_texture = True
-
-    # Pack clearcoat (R) and clearcoatRoughness (G) channels.
-    if has_clearcoat_texture and has_clearcoat_roughness_texture:
-        clearcoat_roughness_slots = (clearcoat_socket, clearcoat_roughness_socket,)
-    elif has_clearcoat_texture:
-        clearcoat_roughness_slots = (clearcoat_socket,)
-    elif has_clearcoat_roughness_texture:
-        clearcoat_roughness_slots = (clearcoat_roughness_socket,)
-
-    use_actives_uvmaps = []
-
-    if len(clearcoat_roughness_slots) > 0:
-        if has_clearcoat_texture:
-            clearcoat_texture, clearcoat_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
-                clearcoat_socket,
-                clearcoat_roughness_slots,
-                export_settings,
-            )
-            clearcoat_extension['clearcoatTexture'] = clearcoat_texture
-            if clearcoat_texture_use_active_uvmap:
-                use_actives_uvmaps.append("clearcoatTexture")
-        if has_clearcoat_roughness_texture:
-            clearcoat_roughness_texture, clearcoat_roughness_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
-                clearcoat_roughness_socket,
-                clearcoat_roughness_slots,
-                export_settings,
-            )
-            clearcoat_extension['clearcoatRoughnessTexture'] = clearcoat_roughness_texture
-            if clearcoat_roughness_texture_use_active_uvmap:
-                use_actives_uvmaps.append("clearcoatRoughnessTexture")
-    if __has_image_node_from_socket(clearcoat_normal_socket):
-        clearcoat_normal_texture, clearcoat_normal_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
-            clearcoat_normal_socket,
-            (clearcoat_normal_socket,),
-            export_settings
-        )
-        clearcoat_extension['clearcoatNormalTexture'] = clearcoat_normal_texture
-        if clearcoat_normal_texture_use_active_uvmap:
-            use_actives_uvmaps.append("clearcoatNormalTexture")
-
-    return Extension('KHR_materials_clearcoat', clearcoat_extension, False), use_actives_uvmaps
-
-def __gather_transmission_extension(blender_material, export_settings):
-    transmission_enabled = False
-    has_transmission_texture = False
-
-    transmission_extension = {}
-    transmission_slots = ()
-
-    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
-
-    if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
-        transmission_extension['transmissionFactor'] = transmission_socket.default_value
-        transmission_enabled = transmission_extension['transmissionFactor'] > 0
-    elif __has_image_node_from_socket(transmission_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(transmission_socket, kind='VALUE')
-        transmission_extension['transmissionFactor'] = fac if fac is not None else 1.0
-        has_transmission_texture = True
-        transmission_enabled = True
-
-    if not transmission_enabled:
-        return None, None
-
-    # Pack transmission channel (R).
-    if has_transmission_texture:
-        transmission_slots = (transmission_socket,)
-
-    use_actives_uvmaps = []
-
-    if len(transmission_slots) > 0:
-        combined_texture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
-            transmission_socket,
-            transmission_slots,
-            export_settings,
-        )
-        if has_transmission_texture:
-            transmission_extension['transmissionTexture'] = combined_texture
-        if use_active_uvmap:
-            use_actives_uvmaps.append("transmissionTexture")
-
-    return Extension('KHR_materials_transmission', transmission_extension, False), use_actives_uvmaps
-
-def __gather_specular_extension(blender_material, export_settings):
-
-    specular_extension = {}
-    specular_ext_enabled = False
-
-    specular_socket = gltf2_blender_get.get_socket(blender_material, 'Specular')
-    specular_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Specular Tint')
-    base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
-    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
-    ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
-
-    # TODOExt replace by __has_image_node_from_socket calls
-    specular_not_linked = isinstance(specular_socket, bpy.types.NodeSocket) and not specular_socket.is_linked
-    specular_tint_not_linked = isinstance(specular_tint_socket, bpy.types.NodeSocket) and not specular_tint_socket.is_linked
-    base_color_not_linked = isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked
-    transmission_not_linked = isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked
-    ior_not_linked = isinstance(ior_socket, bpy.types.NodeSocket) and not ior_socket.is_linked
-
-    specular = specular_socket.default_value if specular_not_linked else None
-    specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
-    transmission = transmission_socket.default_value if transmission_not_linked else None
-    ior = ior_socket.default_value if ior_not_linked else GLTF_IOR   # textures not supported #TODOExt add warning?
-
-    no_texture = (specular_not_linked and specular_tint_not_linked and
-        (specular_tint == 0.0 or (specular_tint != 0.0 and base_color_not_linked)))
-
-    use_actives_uvmaps = []
-
-    if no_texture:
-        if specular != BLENDER_SPECULAR or specular_tint != BLENDER_SPECULAR_TINT:
-            # See https://github.com/KhronosGroup/glTF/pull/1719#issuecomment-608289714 for conversion
-            # See also https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
-            specular_ext_enabled = True
-            lerp = lambda a, b, v: (1-v)*a + v*b
-            luminance = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
-            base_color = base_color_socket.default_value[0:3] if base_color_not_linked else [0, 0, 0]
-            normalized_base_color = [bc / luminance(base_color) if luminance(base_color) > 0 else 0 for bc in base_color]
-            specular_color = [lerp(1, bc, specular_tint) for bc in normalized_base_color]
-        
-            # The IOR dictates the maximal reflection strength, therefore we need to clamp
-            # reflection strenth of non-transmissive (aka plastic) fraction (if any)
-            plastic = [1/((ior - 1) / (ior + 1))**2 * 0.08 * specular * sc for sc in specular_color]
-            glass = specular_color
-            specular_extension['specularColorFactor'] = [lerp(plastic[c], glass[c], transmission) for c in range(0,3)]
-    else:
-        # There will be a texture, with a complex calculation (no direct channel mapping)
-        sockets = (specular_socket, specular_tint_socket, base_color_socket, transmission_socket, ior_socket)
-        # Set primary socket having a texture
-        primary_socket = specular_socket
-        if specular_not_linked:
-            primary_socket = specular_tint_socket
-            if specular_tint_not_linked:
-                primary_socket = base_color_socket
-                if base_color_not_linked:
-                    primary_socket = transmission_socket
-
-        specularColorTexture, use_active_uvmap, specularColorFactor = gltf2_blender_gather_texture_info.gather_texture_info(
-            primary_socket, 
-            sockets, 
-            export_settings,
-            filter_type='ANY')
-        if specularColorTexture is None:
-            return None, None
-        if use_active_uvmap:
-            use_actives_uvmaps.append("specularColorTexture")
-
-        specular_ext_enabled = True
-        specular_extension['specularColorTexture'] = specularColorTexture
-
-
-        if specularColorFactor is not None:
-            specular_extension['specularColorFactor'] = specularColorFactor
-            
-
-    specular_extension = Extension('KHR_materials_specular', specular_extension, False) if specular_ext_enabled else None
-    return specular_extension, use_actives_uvmaps
-
-def __gather_sheen_extension(blender_material, export_settings):
-    return None, None # Deactivate for now #TODOExt
-    sheen_extension = {}
-    sheen_ext_enabled = False
-
-    sheen_socket = gltf2_blender_get.get_socket(blender_material, 'Sheen')
-    sheen_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Sheen Tint')
-    base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
-
-    # TODOExt replace by __has_image_node_from_socket calls
-    sheen_not_linked = isinstance(sheen_socket, bpy.types.NodeSocket) and not sheen_socket.is_linked
-    sheen_tint_not_linked = isinstance(sheen_tint_socket, bpy.types.NodeSocket) and not sheen_tint_socket.is_linked
-    base_color_not_linked = isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked
-
-    sheen = sheen_socket.default_value if sheen_not_linked else None
-    sheen_tint = sheen_tint_socket.default_value if sheen_tint_not_linked else None
-
-    if sheen == 0.0:
-        return None, None
-
-    no_texture = sheen_not_linked and sheen_tint_not_linked and base_color_not_linked
-
-    use_actives_uvmaps = []
-
-    if no_texture:
-        #TODOExt how to approximate?
-        # This is not the definitive mapping, only a placeholder
-        sheen_ext_enabled = True
-        sheen_extension['sheenColorFactor'] = [sheen * sheen_tint] * 3
-    else:
-        # There will be a texture, with a complex calculation (no direct channel mapping)
-        sockets = (sheen_socket, sheen_tint_socket, base_color_socket)
-
-        # Set primary socket having a texture
-        primary_socket = sheen_socket
-        if sheen_not_linked:
-            primary_socket = sheen_tint_socket
-            if sheen_tint_not_linked:
-                primary_socket = base_color_socket
-        
-        #TODOExt if both output textures are needed, using same socket as input:
-         # * use primary socket to differenciate?
-            
-        sheenColorTexture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
-            primary_socket, 
-            sockets, 
-            export_settings,
-            filter_type='ANY')
-        if sheenColorTexture is None:
-            return None, None
-        if use_active_uvmap:
-            use_actives_uvmaps.append("sheenColorTexture")
-
-        sheen_ext_enabled = True
-        sheen_extension['sheenColorTexture'] = sheenColorTexture
-
-    sheen_extension = Extension('KHR_materials_sheen', sheen_extension, False) if sheen_ext_enabled else None
-    return sheen_extension, use_actives_uvmaps
-
-def __gather_emissive_strength_extension(emissive_factor, export_settings):
-    emissive_strength_extension = {}
-    emissive_strength_extension['emissiveStrength'] = max(emissive_factor)
-
-    return Extension('KHR_materials_emissive_strength', emissive_strength_extension, False)
-
-
-def __gather_material_unlit(blender_material, active_uvmap_index, export_settings):
+def __export_unlit(blender_material, active_uvmap_index, export_settings):
     gltf2_unlit = gltf2_blender_gather_materials_unlit
 
     info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
@@ -777,33 +404,3 @@ def __gather_material_unlit(blender_material, active_uvmap_index, export_setting
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
 
     return material
-
-
-def __gather_ior_extension(blender_material, extensions, export_settings):
-    ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
-
-    if not ior_socket:
-        return None
-
-    # We don't manage case where socket is linked, always check default value
-    if ior_socket.is_linked:
-        # TODOExt: add warning?
-        return None
-
-    if ior_socket.default_value == GLTF_IOR:
-        return None
-
-    # Export only if the following extensions are exported:
-    need_to_export_ior = [
-        'KHR_materials_transmission',
-        'KHR_materials_volume',
-        'KHR_materials_specular'
-    ]
-
-    if not any([e in extensions.keys() for e in need_to_export_ior]):
-        return None
-
-    ior_extension = {}
-    ior_extension['ior'] = ior_socket.default_value
-
-    return Extension('KHR_materials_ior', ior_extension, False)
