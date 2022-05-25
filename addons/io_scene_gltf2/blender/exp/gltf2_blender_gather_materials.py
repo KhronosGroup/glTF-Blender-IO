@@ -14,6 +14,7 @@
 
 from copy import deepcopy
 import bpy
+from sys import maxsize
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.io.com import gltf2_io
@@ -436,7 +437,7 @@ def __gather_volume_extension(blender_material, export_settings):
 
     if isinstance(density_socket, bpy.types.NodeSocket):
         density = gltf2_blender_get.get_const_from_default_value_socket(density_socket, kind='VALUE')
-        volume_extension['attenuationDistance'] = 1.0 / density
+        volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else maxsize
 
 
     if isinstance(thicknesss_socket, bpy.types.NodeSocket) and not thicknesss_socket.is_linked:
