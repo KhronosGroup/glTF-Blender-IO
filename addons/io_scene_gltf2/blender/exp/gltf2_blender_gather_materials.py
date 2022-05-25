@@ -441,7 +441,11 @@ def __gather_volume_extension(blender_material, export_settings):
 
 
     if isinstance(thicknesss_socket, bpy.types.NodeSocket) and not thicknesss_socket.is_linked:
-        volume_extension['thicknessFactor'] = thicknesss_socket.default_value
+        val = thicknesss_socket.default_value
+        if val == 0.0:
+            # If no thickness, no volume extension export 
+            return None, None
+        volume_extension['thicknessFactor'] = val
     elif __has_image_node_from_socket(thicknesss_socket):
         fac = gltf2_blender_get.get_factor_from_socket(thicknesss_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
