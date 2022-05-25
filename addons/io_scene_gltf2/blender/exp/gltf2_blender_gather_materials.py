@@ -432,8 +432,7 @@ def __gather_volume_extension(blender_material, export_settings):
 
     if isinstance(attenuation_color_socket, bpy.types.NodeSocket):
         rgb = gltf2_blender_get.get_const_from_default_value_socket(attenuation_color_socket, kind='RGB')
-        rgba = [*rgb, 1.0]
-        volume_extension['attenuationColor'] = rgba
+        volume_extension['attenuationColor'] = rgb
 
     if isinstance(density_socket, bpy.types.NodeSocket):
         density = gltf2_blender_get.get_const_from_default_value_socket(density_socket, kind='VALUE')
