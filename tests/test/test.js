@@ -801,7 +801,28 @@ describe('Exporter', function() {
                 const mat_thickness_zero = asset.materials.find(mat => mat.name === 'ThicknessZero');
                 assert.ok(!("KHR_materials_volume" in mat_thickness_zero.extensions));
 
-              });              
+              });
+
+              it('exports IOR', function() {
+                let gltfPath = path.resolve(outDirPath, '17_ior.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const pbr = asset.materials.find(mat => mat.name === 'pbr');
+                assert.strictEqual(pbr.extensions, undefined);
+
+                const ior_2_no_transmission = asset.materials.find(mat => mat.name === 'ior_2_no_transmission');
+                assert.strictEqual(ior_2_no_transmission.extensions, undefined);
+                
+                const ior_2 = asset.materials.find(mat => mat.name === 'ior_2');
+                assert.ok("KHR_materials_ior" in ior_2.extensions);
+
+                const ior_145 = asset.materials.find(mat => mat.name === 'ior_1.45');
+                assert.ok("KHR_materials_ior" in ior_145.extensions);
+
+                const ior_15 = asset.materials.find(mat => mat.name === 'ior_1.5');
+                assert.ok(!("KHR_materials_ior" in ior_15.extensions));
+
+              });
 
         });
     });
@@ -1442,6 +1463,29 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
                 const Thicknesszero = asset.materials.filter(m => m.name === "Thicknesszero")[0];
                 assert.ok(!("KHR_materials_volume" in Thicknesszero.extensions));
+
+            });
+
+            it('roundtrips ior', function() {
+                let dir = '17_ior';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const pbr = asset.materials.find(mat => mat.name === 'pbr');
+                assert.strictEqual(pbr.extensions, undefined);
+
+                const ior_2_no_transmission = asset.materials.find(mat => mat.name === 'ior_2_no_transmission');
+                assert.strictEqual(ior_2_no_transmission.extensions, undefined);
+                
+                const ior_2 = asset.materials.find(mat => mat.name === 'ior_2');
+                assert.ok("KHR_materials_ior" in ior_2.extensions);
+
+                const ior_145 = asset.materials.find(mat => mat.name === 'ior_1.45');
+                assert.ok("KHR_materials_ior" in ior_145.extensions);
+
+                const ior_15 = asset.materials.find(mat => mat.name === 'ior_1.5');
+                assert.ok(!("KHR_materials_ior" in ior_15.extensions));              
 
             });
         });
