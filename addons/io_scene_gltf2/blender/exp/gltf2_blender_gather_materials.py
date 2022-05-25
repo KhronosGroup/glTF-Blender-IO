@@ -406,6 +406,7 @@ def __has_image_node_from_socket(socket):
 
 
 def __gather_volume_extension(blender_material, export_settings):
+    # Implementation based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
 
     # If no transmission --> No volume
     transmission_enabled = False

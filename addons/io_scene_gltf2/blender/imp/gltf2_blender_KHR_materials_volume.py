@@ -16,6 +16,7 @@ from ...io.com.gltf2_io import TextureInfo, MaterialNormalTextureInfoClass
 from .gltf2_blender_texture import texture
 
 def volume(mh, location, volume_socket, thickness_socket):
+    # implementation based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
     try:
         ext = mh.pymat.extensions['KHR_materials_volume']
     except Exception:
