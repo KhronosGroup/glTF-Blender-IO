@@ -43,7 +43,6 @@ class BlenderAnimation():
         for (obj, action) in gltf.needs_stash:
             simulate_stash(obj, track_name, action)
 
-        
         import_user_extensions('gather_import_animation_after_hook', gltf, anim_idx, track_name)
 
     @staticmethod
