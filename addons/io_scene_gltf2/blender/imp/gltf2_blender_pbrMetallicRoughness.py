@@ -151,12 +151,13 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         transmission_socket=pbr_node.inputs['Transmission']
     )
 
-    volume(
-        mh,
-        location=locs['volume_thickness'],
-        volume_socket=volume_socket,
-        thickness_socket=mh.settings_node.inputs[1] if mh.settings_node else None
-    )
+    if need_volume_node:
+        volume(
+            mh,
+            location=locs['volume_thickness'],
+            volume_socket=volume_socket,
+            thickness_socket=mh.settings_node.inputs[1] if mh.settings_node else None
+        )
 
     specular(
         mh,
