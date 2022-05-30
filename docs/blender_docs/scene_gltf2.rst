@@ -299,13 +299,13 @@ At import, there are two different situation:
 - if ``KHR_materials_ior`` is not set, IOR value of Principled BSDF node is set to 1.5, that is the glTF default value of IOR.
 - If set, the ``KHR_materials_ior`` is used to set the IOR value of Principled BSDF.
 
-At export, IOR is exported only if one of these extensions are also used:
+At export, IOR is included in the export only if one of these extensions are also used:
 
 - ``KHR_materials_transmission``
 - ``KHR_materials_volume``
 - ``KHR_materials_specular``
 
-IOR of 1.5 are not written in glTF file, because this is the default glTF IOR value.
+IOR of 1.5 are not included in the export, because this is the default glTF IOR value.
 
 
 Double-Sided / Backface Culling
