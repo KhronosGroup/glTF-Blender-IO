@@ -1171,6 +1171,14 @@ class ImportGLTF2(Operator, ImportHelper):
             self.loglevel = logging.NOTSET
 
 
+def gltf_variant_ui_update(self, context):
+    from .blender.com.gltf2_blender_ui import variant_register, variant_unregister
+    if self.KHR_materials_variants_ui is True:
+        # register all needed types
+        variant_register()
+    else:
+        variant_unregister()
+
 class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
@@ -1181,7 +1189,8 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
 
     KHR_materials_variants_ui : bpy.props.BoolProperty(
         default= False,
-        description="Displays glTF UI to manage material variants"
+        description="Displays glTF UI to manage material variants",
+        update=gltf_variant_ui_update
         )
 
 
@@ -1220,6 +1229,8 @@ def register():
     # bpy.utils.register_module(__name__)
 
     blender_ui.register()
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
+        blender_ui.variant_register()
 
     # add to the export / import menu
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -1228,6 +1239,10 @@ def register():
 
 def unregister():
     import io_scene_gltf2.blender.com.gltf2_blender_ui as blender_ui
+    blender_ui.unregister()
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
+        blender_ui.variant_unregister()
+
     for c in classes:
         bpy.utils.unregister_class(c)
     for f in exporter_extension_panel_unregister_functors:
@@ -1237,8 +1252,6 @@ def unregister():
     for f in importer_extension_panel_unregister_functors:
         f()
     importer_extension_panel_unregister_functors.clear()
-
-    blender_ui.unregister()
 
     # bpy.utils.unregister_module(__name__)
 

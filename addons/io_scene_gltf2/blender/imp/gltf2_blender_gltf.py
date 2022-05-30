@@ -229,12 +229,7 @@ class BlenderGlTF():
         gltf.KHR_materials_variants = True
         # If there is no KHR_materials_variants data in scene, create it
         if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is False:
-            #TODOVariant Manage better. What happen if user just activate option without restart Blender
-            bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
-            bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
-            bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
-            bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
-            bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
+            bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
 
         if len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) > 0:
             bpy.data.scenes[0].gltf2_KHR_materials_variants_variants.clear()

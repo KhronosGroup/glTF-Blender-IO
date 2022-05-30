@@ -115,10 +115,6 @@ class SCENE_OT_gltf2_variant_add(bpy.types.Operator):
         return True
 
     def execute(self, context):
-        if 'gltf2_KHR_materials_variants_variants' not in bpy.data.scenes[0].keys():
-            bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
-            bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
-
         var = bpy.data.scenes[0].gltf2_KHR_materials_variants_variants.add()
         var.variant_idx = len(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) - 1
         var.name = "VariantName"
@@ -363,15 +359,6 @@ class SCENE_OT_gltf2_variant_slot_add(bpy.types.Operator):
 
     def execute(self, context):
         mesh = context.object.data
-        if 'gltf2_variant_mesh_data' not in mesh.keys():
-            bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
-            bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
-            bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
-
-        if 'gltf2_KHR_materials_variants_variants' not in bpy.data.scenes[0].keys():
-            bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
-            bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
-
         # Check if there is already a data for this slot_idx + material
 
         found = False
@@ -462,10 +449,10 @@ class SCENE_OT_gltf2_remove_material_variant(bpy.types.Operator):
 
 ###############################################################################
 
-
-
 def register():
     bpy.utils.register_class(NODE_OT_GLTF_SETTINGS)
+
+def variant_register():
     bpy.utils.register_class(SCENE_OT_gltf2_display_variant)
     bpy.utils.register_class(SCENE_OT_gltf2_assign_to_variant)
     bpy.utils.register_class(SCENE_OT_gltf2_reset_to_original)
@@ -484,14 +471,16 @@ def register():
     bpy.utils.register_class(SCENE_OT_gltf2_material_to_variant)
     bpy.utils.register_class(SCENE_OT_gltf2_variant_slot_add)
     bpy.types.NODE_MT_category_SH_NEW_OUTPUT.append(add_gltf_settings_to_menu)
-    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
-        bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
-        bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
-        bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
-        bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
-        bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
+    bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
+    bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
+    bpy.types.Mesh.gltf2_variant_pointer = bpy.props.StringProperty()
+    bpy.types.Scene.gltf2_KHR_materials_variants_variants = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_variant)
+    bpy.types.Scene.gltf2_active_variant = bpy.props.IntProperty()
 
 def unregister():
+    bpy.utils.unregister_class(NODE_OT_GLTF_SETTINGS)    
+
+def variant_unregister():
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_add)
     bpy.utils.unregister_class(SCENE_OT_gltf2_variant_remove)
     bpy.utils.unregister_class(SCENE_OT_gltf2_material_to_variant)
@@ -501,7 +490,6 @@ def unregister():
     bpy.utils.unregister_class(SCENE_OT_gltf2_reset_to_original)
     bpy.utils.unregister_class(SCENE_OT_gltf2_assign_as_original)
     bpy.utils.unregister_class(SCENE_OT_gltf2_remove_material_variant)
-    bpy.utils.unregister_class(NODE_OT_GLTF_SETTINGS)
     bpy.utils.unregister_class(SCENE_PT_gltf2_variants)
     bpy.utils.unregister_class(SCENE_UL_gltf2_variants)
     bpy.utils.unregister_class(MESH_PT_gltf2_mesh_variants)

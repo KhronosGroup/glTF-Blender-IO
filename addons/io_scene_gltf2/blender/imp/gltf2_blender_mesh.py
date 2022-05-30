@@ -391,12 +391,6 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             # Manage variants
             if has_variant:
 
-                if mesh.get('gltf2_variant_mesh_data') is None:
-                    bpy.types.Mesh.gltf2_variant_mesh_data = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_primitive)
-                    bpy.types.Mesh.gltf2_variant_default_materials = bpy.props.CollectionProperty(type=gltf2_KHR_materials_variants_default_material)
-                    bpy.types.Mesh.gltf2_variant_pointer = bpy.props.PointerProperty(type=gltf2_KHR_materials_variants_variant)
-
-
                 # Store default material
                 default_mat = mesh.gltf2_variant_default_materials.add()
                 default_mat.material_slot_index = material_index
