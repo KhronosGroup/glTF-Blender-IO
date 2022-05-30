@@ -291,6 +291,22 @@ can be used to blur the transmission, like frosted glass.
    Transmission is complex for real-time rendering engines to implement,
    and support for the ``KHR_materials_transmission`` glTF extension is not yet widespread.
 
+IOR
+^^^
+
+At import, there are two different situation:
+
+- if ``KHR_materials_ior`` is not set, IOR value of Principled BSDF node is set to 1.5, that is the glTF default value of IOR.
+- If set, the ``KHR_materials_ior`` is used to set the IOR value of Principled BSDF.
+
+At export, IOR is exported only if one of these extensions are also used:
+
+- ``KHR_materials_transmission``
+- ``KHR_materials_volume``
+- ``KHR_materials_specular``
+
+IOR of 1.5 are not written in glTF file, because this is the default glTF IOR value.
+
 
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -410,6 +426,7 @@ are supported directly by this add-on:
 - ``KHR_materials_transmission``
 - ``KHR_materials_unlit``
 - ``KHR_materials_emissive_strength``
+- ``KHR_materials_ior``
 - ``KHR_lights_punctual``
 - ``KHR_texture_transform``
 - ``KHR_mesh_quantization``
@@ -424,6 +441,7 @@ are supported directly by this add-on:
 - ``KHR_materials_transmission``
 - ``KHR_materials_unlit``
 - ``KHR_materials_emissive_strength``
+- ``KHR_materials_ior``
 - ``KHR_texture_transform``
 
 
