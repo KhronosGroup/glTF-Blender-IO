@@ -824,6 +824,53 @@ describe('Exporter', function() {
 
               });
 
+              it('exports Variants', function() {
+                let gltfPath = path.resolve(outDirPath, '18_variants.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const variant_blue_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Blue");
+                const variant_red_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Red");
+                
+
+                const mat_blue_index = asset.materials.findIndex(mat => mat.name === "Blue");
+                const mat_green_index = asset.materials.findIndex(mat => mat.name === "Green");
+                const mat_white_index = asset.materials.findIndex(mat => mat.name === "White");
+                const mat_orange_index = asset.materials.findIndex(mat => mat.name === "Orange");
+                const mat_red_index = asset.materials.findIndex(mat => mat.name === "Red");
+                const prim_blue = asset.meshes[0].primitives.find(prim => prim.material === mat_blue_index);
+                const prim_green = asset.meshes[0].primitives.find(prim => prim.material === mat_green_index);
+                const prim_white = asset.meshes[0].primitives.find(prim => prim.material === mat_white_index);
+
+                assert.strictEqual(asset.extensions['KHR_materials_variants']['variants'].length, 2);
+
+                assert.strictEqual(prim_blue.extensions['KHR_materials_variants']['mappings'].length, 2);
+                prim_blue.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                    assert.strictEqual(mapping.variants.length, 1);
+                });
+                const map_1 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_red_index);
+                assert.strictEqual(map_1.variants[0], variant_red_index);
+                const map_2 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_blue_index);
+                assert.strictEqual(map_2.variants[0], variant_blue_index);
+
+                assert.strictEqual(prim_green.extensions['KHR_materials_variants']['mappings'].length, 2);
+                prim_green.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                    assert.strictEqual(mapping.variants.length, 1);
+                });
+                const map_3 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_orange_index);
+                assert.strictEqual(map_3.variants[0], variant_red_index);
+                const map_4 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_green_index);
+                assert.strictEqual(map_4.variants[0], variant_blue_index);
+
+                assert.strictEqual(prim_white.extensions['KHR_materials_variants']['mappings'].length, 1);
+                prim_white.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                    assert.strictEqual(mapping.variants.length, 2);
+                });
+                const map_5 = prim_white.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_white_index);
+                assert.ok(variant_red_index in map_5.variants);
+                assert.ok(variant_blue_index in map_5.variants);
+
+              });
+
         });
     });
 });
@@ -1486,6 +1533,55 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
                 const ior_15 = asset.materials.find(mat => mat.name === 'ior_1.5');
                 assert.ok(!("KHR_materials_ior" in ior_15.extensions));              
+
+            });
+
+            it('roundtrips Variants', function() {
+                let dir = '18_variants';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const variant_blue_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Blue");
+                const variant_red_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Red");
+                
+
+                const mat_blue_index = asset.materials.findIndex(mat => mat.name === "Blue");
+                const mat_green_index = asset.materials.findIndex(mat => mat.name === "Green");
+                const mat_white_index = asset.materials.findIndex(mat => mat.name === "White");
+                const mat_orange_index = asset.materials.findIndex(mat => mat.name === "Orange");
+                const mat_red_index = asset.materials.findIndex(mat => mat.name === "Red");
+                const prim_blue = asset.meshes[0].primitives.find(prim => prim.material === mat_blue_index);
+                const prim_green = asset.meshes[0].primitives.find(prim => prim.material === mat_green_index);
+                const prim_white = asset.meshes[0].primitives.find(prim => prim.material === mat_white_index);
+
+                assert.strictEqual(asset.extensions['KHR_materials_variants']['variants'].length, 2);
+
+                assert.strictEqual(prim_blue.extensions['KHR_materials_variants']['mappings'].length, 2);
+                prim_blue.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                    assert.strictEqual(mapping.variants.length, 1);
+                });
+                const map_1 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_red_index);
+                assert.strictEqual(map_1.variants[0], variant_red_index);
+                const map_2 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_blue_index);
+                assert.strictEqual(map_2.variants[0], variant_blue_index);
+
+                assert.strictEqual(prim_green.extensions['KHR_materials_variants']['mappings'].length, 2);
+                prim_green.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                    assert.strictEqual(mapping.variants.length, 1);
+                });
+                const map_3 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_orange_index);
+                assert.strictEqual(map_3.variants[0], variant_red_index);
+                const map_4 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_green_index);
+                assert.strictEqual(map_4.variants[0], variant_blue_index);
+
+                assert.strictEqual(prim_white.extensions['KHR_materials_variants']['mappings'].length, 1);
+                prim_white.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                    assert.strictEqual(mapping.variants.length, 2);
+                });
+                const map_5 = prim_white.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_white_index);
+                assert.ok(variant_red_index in map_5.variants);
+                assert.ok(variant_blue_index in map_5.variants);
 
             });
         });
