@@ -40,28 +40,30 @@ def export_specular(blender_material, export_settings):
     specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
     transmission = transmission_socket.default_value if transmission_not_linked else None
     ior = ior_socket.default_value if ior_not_linked else GLTF_IOR   # textures not supported #TODOExt add warning?
+    base_color = base_color_socket.default_value[0:3]
 
-    no_texture = (specular_not_linked and specular_tint_not_linked and
+    no_texture = (transmission_not_linked and specular_not_linked and specular_tint_not_linked and
         (specular_tint == 0.0 or (specular_tint != 0.0 and base_color_not_linked)))
 
     use_actives_uvmaps = []
 
     if no_texture:
-        if specular != BLENDER_SPECULAR or specular_tint != BLENDER_SPECULAR_TINT:
-            # See https://github.com/KhronosGroup/glTF/pull/1719#issuecomment-608289714 for conversion
-            # See also https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
-            specular_ext_enabled = True
-            lerp = lambda a, b, v: (1-v)*a + v*b
+        import numpy as np
+        # See https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
+        specular_ext_enabled = True
+
+        def normalize(c):
             luminance = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
-            base_color = base_color_socket.default_value[0:3] if base_color_not_linked else [0, 0, 0]
-            normalized_base_color = [bc / luminance(base_color) if luminance(base_color) > 0 else 0 for bc in base_color]
-            specular_color = [lerp(1, bc, specular_tint) for bc in normalized_base_color]
-        
-            # The IOR dictates the maximal reflection strength, therefore we need to clamp
-            # reflection strenth of non-transmissive (aka plastic) fraction (if any)
-            plastic = [1/((ior - 1) / (ior + 1))**2 * 0.08 * specular * sc for sc in specular_color]
-            glass = specular_color
-            specular_extension['specularColorFactor'] = [lerp(plastic[c], glass[c], transmission) for c in range(0,3)]
+            assert(len(c) == 3)
+            l = luminance(c)
+            if l == 0:
+                return c
+            return np.array([c[0] / l, c[1] / l, c[2] / l])            
+
+        f0_from_ior = ((ior - 1)/(ior + 1))**2
+        tint_strength = (1 - specular_tint) + normalize(base_color) * specular_tint
+        specular_color = (1 - transmission) * (1 / f0_from_ior) * 0.08 * specular * tint_strength + transmission * tint_strength
+        specular_extension['specularColorFactor'] = list(specular_color)
     else:
         # There will be a texture, with a complex calculation (no direct channel mapping)
         sockets = (specular_socket, specular_tint_socket, base_color_socket, transmission_socket, ior_socket)

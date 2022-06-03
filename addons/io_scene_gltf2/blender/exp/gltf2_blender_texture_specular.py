@@ -19,12 +19,8 @@ from .gltf2_blender_image import TmpImageGuard, make_temp_image_copy
 
 def specular_calculation(stored):
 
-    # See https://github.com/KhronosGroup/glTF/pull/1719#issuecomment-608289714 for conversion
-    # See also https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
-    lerp = lambda a, b, v: (1-v)*a + v*b
-    luminance = lambda c: 0.3 * c[:,:,0] + 0.6 * c[:,:,1] + 0.1 * c[:,:,2]
-    stack3 = lambda v: np.dstack([v]*3)
-
+    # See https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
+    
     # Find all Blender images used
     images = []
     for fill in stored.values():
@@ -82,14 +78,18 @@ def specular_calculation(stored):
     ior = stored['ior'].data
 
     # calculation
+    stack3 = lambda v: np.dstack([v]*3)
 
-    normalized_base_color_buf = buffers['base_color'] / stack3(luminance(buffers['base_color']))
-    np.nan_to_num(normalized_base_color_buf, copy=False, nan=0.0)     # if luminance in a pixel was zero
+    def normalize(c):
+        luminance = lambda c: 0.3 * c[:,:,0] + 0.6 * c[:,:,1] + 0.1 * c[:,:,2]
+        l = luminance(c)
+        # TODOExt Manage all 0
+        return c / stack3(l)
 
-    sc = lerp(1, normalized_base_color_buf, stack3(buffers['specular_tint']))
-    plastic = 1/((ior - 1) / (ior + 1))**2 * 0.08 * stack3(buffers['specular']) * sc
-    glass = sc
-    out_buf = lerp(plastic, glass, stack3(buffers['transmission']))
+    
+    f0_from_ior = ((ior - 1)/(ior + 1))**2
+    tint_strength = (1 - stack3(buffers['specular_tint'])) + normalize(buffers['base_color']) * stack3(buffers['specular_tint'])
+    out_buf = (1 - stack3(buffers['transmission'])) * (1 / f0_from_ior) * 0.08 * stack3(buffers['specular']) * tint_strength + stack3(buffers['transmission']) * tint_strength
 
     # Manage values > 1.0 -> Need to apply factor
     factor = None
@@ -102,4 +102,4 @@ def specular_calculation(stored):
     out_buf = np.dstack((out_buf, np.ones((height, width)))) # Set alpha (glTF specular) to 1
     out_buf = np.reshape(out_buf, (width * height * 4))
     
-    return np.float32(out_buf), width, height, factor
+    return np.float32(out_buf), width, height, [float(f) for f in factor] if factor else None
