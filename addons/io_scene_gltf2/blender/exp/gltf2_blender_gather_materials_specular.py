@@ -69,6 +69,8 @@ def export_specular(blender_material, export_settings):
             specular_color = (1 - transmission) * (1 / f0_from_ior) * 0.08 * specular * tint_strength + transmission * tint_strength
             specular_extension['specularColorFactor'] = list(specular_color)
     else:
+        if specular_not_linked and specular == BLENDER_SPECULAR and specular_tint_not_linked and specular_tint == BLENDER_SPECULAR_TINT:
+            return None, None #TODOext : keep or not?
         # There will be a texture, with a complex calculation (no direct channel mapping)
         sockets = (specular_socket, specular_tint_socket, base_color_socket, transmission_socket, ior_socket)
         # Set primary socket having a texture
