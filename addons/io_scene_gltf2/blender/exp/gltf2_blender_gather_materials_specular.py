@@ -51,22 +51,23 @@ def export_specular(blender_material, export_settings):
     use_actives_uvmaps = []
 
     if no_texture:
-        import numpy as np
-        # See https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
-        specular_ext_enabled = True
+        if specular != BLENDER_SPECULAR or specular_tint != BLENDER_SPECULAR_TINT: #TODOext : keep or not?
+            import numpy as np
+            # See https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
+            specular_ext_enabled = True
 
-        def normalize(c):
-            luminance = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
-            assert(len(c) == 3)
-            l = luminance(c)
-            if l == 0:
-                return c
-            return np.array([c[0] / l, c[1] / l, c[2] / l])            
+            def normalize(c):
+                luminance = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
+                assert(len(c) == 3)
+                l = luminance(c)
+                if l == 0:
+                    return c
+                return np.array([c[0] / l, c[1] / l, c[2] / l])            
 
-        f0_from_ior = ((ior - 1)/(ior + 1))**2
-        tint_strength = (1 - specular_tint) + normalize(base_color) * specular_tint
-        specular_color = (1 - transmission) * (1 / f0_from_ior) * 0.08 * specular * tint_strength + transmission * tint_strength
-        specular_extension['specularColorFactor'] = list(specular_color)
+            f0_from_ior = ((ior - 1)/(ior + 1))**2
+            tint_strength = (1 - specular_tint) + normalize(base_color) * specular_tint
+            specular_color = (1 - transmission) * (1 / f0_from_ior) * 0.08 * specular * tint_strength + transmission * tint_strength
+            specular_extension['specularColorFactor'] = list(specular_color)
     else:
         # There will be a texture, with a complex calculation (no direct channel mapping)
         sockets = (specular_socket, specular_tint_socket, base_color_socket, transmission_socket, ior_socket)
