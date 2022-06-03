@@ -29,6 +29,9 @@ def export_specular(blender_material, export_settings):
     transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
     ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
 
+    if base_color_socket is None:
+        return None, None
+
     # TODOExt replace by __has_image_node_from_socket calls
     specular_not_linked = isinstance(specular_socket, bpy.types.NodeSocket) and not specular_socket.is_linked
     specular_tint_not_linked = isinstance(specular_tint_socket, bpy.types.NodeSocket) and not specular_tint_socket.is_linked
