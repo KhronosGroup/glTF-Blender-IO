@@ -402,8 +402,9 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                 parent_uuid = export_settings['vtree'].nodes[export_settings['vtree'].nodes[blender_obj_uuid].bones[bone.name]].parent_uuid
                 if parent_uuid is not None and export_settings['vtree'].nodes[parent_uuid].blender_type == VExportNode.BONE:
                     # export bone is not at root of armature neither
+                    blender_bone_parent = export_settings['vtree'].nodes[parent_uuid].blender_bone
                     correction_matrix_local = (
-                        bone.parent.bone.matrix_local.inverted_safe() @
+                        blender_bone_parent.bone.matrix_local.inverted_safe() @
                         bone.bone.matrix_local
                     )
                 else:
