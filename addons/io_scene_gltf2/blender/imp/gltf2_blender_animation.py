@@ -16,7 +16,7 @@ from .gltf2_blender_animation_node import BlenderNodeAnim
 from .gltf2_blender_animation_weight import BlenderWeightAnim
 from .gltf2_blender_animation_utils import simulate_stash, restore_animation_on_object
 from .gltf2_blender_vnode import VNode
-
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 class BlenderAnimation():
     """Dispatch Animation to node or morph weights animation."""
@@ -31,6 +31,8 @@ class BlenderAnimation():
         # Things we need to stash when we're done.
         gltf.needs_stash = []
 
+        import_user_extensions('gather_import_animation_before_hook', gltf, anim_idx)
+
         for vnode_id in gltf.vnodes:
             if isinstance(vnode_id, int):
                 BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
@@ -40,6 +42,8 @@ class BlenderAnimation():
         track_name = gltf.data.animations[anim_idx].track_name
         for (obj, action) in gltf.needs_stash:
             simulate_stash(obj, track_name, action)
+
+        import_user_extensions('gather_import_animation_after_hook', gltf, anim_idx, track_name)
 
     @staticmethod
     def restore_animation(gltf, animation_name):

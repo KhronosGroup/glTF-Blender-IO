@@ -70,6 +70,16 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     """Put all primitive data into the mesh."""
     pymesh = gltf.data.meshes[mesh_idx]
 
+    # Use a class here, to be able to pass data by reference to hook (to be able to change them inside hook)
+    class IMPORT_mesh_options:
+        def __init__(self, skinning: bool = True, skin_into_bind_pose: bool = True, use_auto_smooth: bool = True):
+            self.skinning = skinning
+            self.skin_into_bind_pose = skin_into_bind_pose
+            self.use_auto_smooth = use_auto_smooth
+
+    mesh_options = IMPORT_mesh_options()
+    import_user_extensions('gather_import_mesh_options', gltf, mesh_options, pymesh, skin_idx)
+
     # Scan the primitives to find out what we need to create
 
     has_normals = False
@@ -146,6 +156,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         if prim.extensions is not None and 'KHR_draco_mesh_compression' in prim.extensions:
             print_console('INFO', 'Draco Decoder: Decode primitive {}'.format(pymesh.name or '[unnamed]'))
             decode_primitive(gltf, prim)
+
+        import_user_extensions('gather_import_decode_primitive', gltf, pymesh, prim, skin_idx)
 
         if prim.indices is not None:
             indices = BinaryData.decode_accessor(gltf, prim.indices)
@@ -252,7 +264,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for sk_locs in sk_vert_locs:
         gltf.locs_batch_gltf_to_blender(sk_locs)
 
-    if num_joint_sets:
+    if num_joint_sets and mesh_options.skin_into_bind_pose:
         skin_into_bind_pose(
             gltf, skin_idx, vert_joints, vert_weights,
             locs=[vert_locs] + sk_vert_locs,
@@ -298,14 +310,14 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
         if layer is None:
             print("WARNING: Vertex colors are ignored because the maximum number of vertex color layers has been "
-                  "reached.")
+                "reached.")
             break
 
         mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
 
     # Skinning
     # TODO: this is slow :/
-    if num_joint_sets:
+    if num_joint_sets and mesh_options.skinning:
         pyskin = gltf.data.skins[skin_idx]
         for i, node_idx in enumerate(pyskin.joints):
             bone = gltf.vnodes[node_idx]
@@ -359,7 +371,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             if prim.material is not None:
                 # Get the material
                 pymaterial = gltf.data.materials[prim.material]
-                vertex_color = 'COLOR_0' if 'COLOR_0' in prim.attributes else None
+                vertex_color = 'COLOR_0' if ('COLOR_0' in prim.attributes) else None
                 if vertex_color not in pymaterial.blender_material:
                     BlenderMaterial.create(gltf, prim.material, vertex_color)
                 material_name = pymaterial.blender_material[vertex_color]
@@ -429,7 +441,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     if has_normals:
         mesh.create_normals_split()
         mesh.normals_split_custom_set_from_vertices(vert_normals)
-        mesh.use_auto_smooth = True
+        mesh.use_auto_smooth = mesh_options.use_auto_smooth
 
 
 def points_edges_tris(mode, indices):
