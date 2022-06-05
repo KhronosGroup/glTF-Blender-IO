@@ -19,6 +19,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 
 
 def export_volume(blender_material, export_settings):
+    from sys import maxsize
     # Implementation based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
 
     # If no transmission --> No volume
