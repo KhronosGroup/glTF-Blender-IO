@@ -14,7 +14,6 @@
 
 from copy import deepcopy
 import bpy
-from sys import maxsize
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.io.com import gltf2_io
