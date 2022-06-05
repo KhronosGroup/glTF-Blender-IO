@@ -19,7 +19,6 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 
 
 def export_volume(blender_material, export_settings):
-    from sys import maxsize
     # Implementation based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
 
     # If no transmission --> No volume
@@ -52,7 +51,7 @@ def export_volume(blender_material, export_settings):
 
     if isinstance(density_socket, bpy.types.NodeSocket):
         density = gltf2_blender_get.get_const_from_default_value_socket(density_socket, kind='VALUE')
-        volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else maxsize
+        volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else 1e12  # some big number
 
 
     if isinstance(thicknesss_socket, bpy.types.NodeSocket) and not thicknesss_socket.is_linked:
