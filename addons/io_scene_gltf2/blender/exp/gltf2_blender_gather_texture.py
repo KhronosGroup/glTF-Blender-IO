@@ -95,7 +95,7 @@ def __gather_source(blender_shader_sockets, export_settings):
 
 # Helpers
 
-
+# TODOExt deduplicate
 def __get_tex_from_socket(socket):
     result = gltf2_blender_search_node_tree.from_socket(
         socket,

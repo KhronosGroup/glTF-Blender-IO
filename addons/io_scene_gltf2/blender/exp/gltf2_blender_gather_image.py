@@ -360,6 +360,7 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
 
     return composed_image
 
+# TODOExt deduplicate
 @cached
 def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket, export_settings):
     result = gltf2_blender_search_node_tree.from_socket(

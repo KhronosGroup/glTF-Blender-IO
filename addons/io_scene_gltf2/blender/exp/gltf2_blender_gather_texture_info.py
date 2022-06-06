@@ -186,7 +186,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
 
     return texture_transform, texcoord_idx or None, use_active_uvmap
 
-
+# TODOExt deduplicate
 def __get_tex_from_socket(socket):
     result = gltf2_blender_search_node_tree.from_socket(
         socket,

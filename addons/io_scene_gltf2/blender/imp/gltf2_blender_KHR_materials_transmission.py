@@ -23,23 +23,23 @@ def transmission(mh, location, transmission_socket):
     try:
         ext = mh.pymat.extensions['KHR_materials_transmission']
     except Exception:
-        return
+        return None
     transmission_factor = ext.get('transmissionFactor', 0)
 
     # Default value is 0, so no transmission
     if transmission_factor == 0:
-        return
+        return None
 
     tex_info = ext.get('transmissionTexture')
     if tex_info is not None:
         tex_info = TextureInfo.from_dict(tex_info)
 
     if transmission_socket is None:
-        return
+        return None
 
     if tex_info is None:
         transmission_socket.default_value = transmission_factor
-        return
+        return None
 
     # Mix transmission factor
     if transmission_factor != 1:
@@ -65,7 +65,7 @@ def transmission(mh, location, transmission_socket):
 
     x -= 200
 
-    texture(
+    return texture(
         mh,
         tex_info=tex_info,
         label='TRANSMISSION',
