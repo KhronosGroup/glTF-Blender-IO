@@ -51,7 +51,7 @@ def export_volume(blender_material, export_settings):
 
     if isinstance(density_socket, bpy.types.NodeSocket):
         density = gltf2_blender_get.get_const_from_default_value_socket(density_socket, kind='VALUE')
-        volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else 1e12  # some big number
+        volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else None # infinity (Using None as glTF default)
 
 
     if isinstance(thicknesss_socket, bpy.types.NodeSocket) and not thicknesss_socket.is_linked:
