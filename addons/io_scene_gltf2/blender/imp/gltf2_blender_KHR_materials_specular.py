@@ -23,9 +23,7 @@ from ..exp.gltf2_blender_image import TmpImageGuard, make_temp_image_copy
 def specular(mh, location_specular, 
                  location_specular_tint, 
                  specular_socket, 
-                 specular_tint_socket, 
-                 base_color_image_name,
-                 transmission_image_name):
+                 specular_tint_socket):
     x_specular, y_specular = location_specular
     x_tint, y_tint = location_specular_tint
 
@@ -40,6 +38,15 @@ def specular(mh, location_specular,
         return
 
     import numpy as np
+
+    # Retrieve image names
+    try:
+        tex_info = mh.pymat.pbr_metallic_roughness.base_color_texture
+        pytexture = mh.gltf.data.textures[tex_info.index]
+        pyimg = mh.gltf.data.images[pytexture.source]
+        base_color_image_name = pyimg.blender_image_name
+    except:
+        base_color_image_name =  None
 
     # First check if we need a texture or not -> retrieve all info needed
     specular_factor = ext.get('specularFactor', 1.0)
@@ -57,17 +64,21 @@ def specular(mh, location_specular,
     tex_base_color = mh.pymat.pbr_metallic_roughness.base_color_texture
     base_color = base_color[:3]
 
-    transmission_not_linked = transmission_image_name is None
-    
     try:
         ext_transmission = mh.pymat.extensions['KHR_materials_transmission']
         transmission_factor = ext_transmission.get('transmissionFactor', 0)
         tex_transmission_info = ext_transmission.get('transmissionTexture')
         if tex_transmission_info is not None:
             tex_transmission_info = TextureInfo.from_dict(tex_transmission_info)
+            pytexture = mh.gltf.data.textures[tex_transmission_info.index]
+            pyimg = mh.gltf.data.images[pytexture.source]
+            transmission_image_name = pyimg.blender_image_name
     except Exception:
         transmission_factor = 0
         tex_transmission_info = None
+        transmission_image_name = None
+
+    transmission_not_linked = transmission_image_name is None
 
     try:
         ext_ior = mh.pymat.extensions['KHR_materials_ior']

@@ -94,7 +94,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         strength_socket=pbr_node.inputs['Emission Strength'],
     )
 
-    base_color_image_name = base_color(
+    base_color(
         mh,
         location=locs['base_color'],
         color_socket=pbr_node.inputs['Base Color'],
@@ -145,7 +145,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         normal_socket=pbr_node.inputs['Clearcoat Normal'],
     )
 
-    transmission_image_name = transmission(
+    transmission(
         mh,
         location=locs['transmission'],
         transmission_socket=pbr_node.inputs['Transmission']
@@ -164,9 +164,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         location_specular=locs['specularTexture'],
         location_specular_tint=locs['specularColorTexture'],
         specular_socket=pbr_node.inputs['Specular'],
-        specular_tint_socket=pbr_node.inputs['Specular Tint'],
-        base_color_image_name=base_color_image_name,
-        transmission_image_name=transmission_image_name
+        specular_tint_socket=pbr_node.inputs['Specular Tint']
     )
 
     sheen(
@@ -357,7 +355,7 @@ def base_color(
         color_socket.default_value = base_color_factor[:3] + [1]
         if alpha_socket is not None:
             alpha_socket.default_value = base_color_factor[3]
-        return None
+        return
 
     # Mix in base color factor
     needs_color_factor = base_color_factor[:3] != [1, 1, 1]
@@ -434,7 +432,7 @@ def base_color(
 
     # Texture
     if base_color_texture is not None:
-        return texture(
+        texture(
             mh,
             tex_info=base_color_texture,
             label='BASE COLOR' if not is_diffuse else 'DIFFUSE',
