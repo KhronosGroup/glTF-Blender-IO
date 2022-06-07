@@ -254,3 +254,5 @@ def specular(mh, location_specular,
             color_socket=specular_tint_socket,
             forced_image=blender_image_tint
         )
+
+        #TODOExt detect texture all blacks created, and do not create them, use socket default values in that case
