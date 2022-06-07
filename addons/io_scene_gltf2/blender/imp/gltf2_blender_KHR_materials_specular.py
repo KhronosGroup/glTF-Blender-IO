@@ -209,7 +209,6 @@ def specular(mh, location_specular,
         blender_specular_tint = np.reshape(blender_specular_tint, width * height * 4)
 
         # Create images in Blender, width and height are dummy values, then set packed file data
-        # print(blender_specular.dtype)
         blender_image_spec = bpy.data.images.new('Specular', width, height)
         blender_image_spec.pixels.foreach_set(np.float32(blender_specular))
         blender_image_spec.pack()
