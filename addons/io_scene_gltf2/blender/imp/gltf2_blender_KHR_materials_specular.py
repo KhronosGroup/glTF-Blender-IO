@@ -67,6 +67,7 @@ def specular(mh, location_specular,
             tex_transmission_info = TextureInfo.from_dict(tex_transmission_info)
     except Exception:
         transmission_factor = 0
+        tex_transmission_info = None
 
     try:
         ext_ior = mh.pymat.extensions['KHR_materials_ior']
