@@ -61,7 +61,7 @@ def export_specular(blender_material, export_settings):
                 assert(len(c) == 3)
                 l = luminance(c)
                 if l == 0:
-                    return c
+                    return np.array(c)
                 return np.array([c[0] / l, c[1] / l, c[2] / l])            
 
             f0_from_ior = ((ior - 1)/(ior + 1))**2
