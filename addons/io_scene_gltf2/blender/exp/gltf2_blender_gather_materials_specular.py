@@ -51,7 +51,7 @@ def export_specular(blender_material, export_settings):
     use_actives_uvmaps = []
 
     if no_texture:
-        if specular != BLENDER_SPECULAR or specular_tint != BLENDER_SPECULAR_TINT: #TODOext : keep or not?
+        if specular != BLENDER_SPECULAR or specular_tint != BLENDER_SPECULAR_TINT:
             import numpy as np
             # See https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
             specular_ext_enabled = True
@@ -70,7 +70,16 @@ def export_specular(blender_material, export_settings):
             specular_extension['specularColorFactor'] = list(specular_color)
     else:
         if specular_not_linked and specular == BLENDER_SPECULAR and specular_tint_not_linked and specular_tint == BLENDER_SPECULAR_TINT:
-            return None, None #TODOext : keep or not?
+            return None, None
+
+        # Trying to identify cases where exporting a texture will not be needed
+        if specular_not_linked and transmission_not_linked and \
+            specular == 0.0 and transmission == 0.0:
+
+            specular_extension['specularColorFactor'] = [0.0, 0.0, 0.0]
+            return specular_extension, []
+
+
         # There will be a texture, with a complex calculation (no direct channel mapping)
         sockets = (specular_socket, specular_tint_socket, base_color_socket, transmission_socket, ior_socket)
         # Set primary socket having a texture
