@@ -203,66 +203,78 @@ def specular(mh, location_specular,
         luminance = lambda c: 0.3 * c[:,:,0] + 0.6 * c[:,:,1] + 0.1 * c[:,:,2]
         def normalize(c):
             l = luminance(c)
-            # TODOExt Manage all 0
+            if np.all(l == 0.0):
+                return np.array(c)
             return c / stack3(l)
 
         f0_from_ior = ((ior - 1)/(ior + 1))**2
         lum_specular_color = stack3(luminance(buffers['spec']))
         blender_specular = ((lum_specular_color - buffers['transmission']) / (1 - buffers['transmission'])) * (1 / 0.08) * f0_from_ior
         blender_specular_tint = luminance((normalize(buffers['spec']) - 1) / (normalize(buffers['basecolor']) - 1))
+        np.nan_to_num(blender_specular_tint, copy=False)
         blender_specular_tint = np.clip(blender_specular_tint, 0.0, 1.0)
         blender_specular_tint = stack3(blender_specular_tint)
 
         blender_specular = np.dstack((blender_specular, np.ones((height, width)))) # Set alpha to 1
         blender_specular_tint = np.dstack((blender_specular_tint, np.ones((height, width)))) # Set alpha to 1
 
-        blender_specular = np.reshape(blender_specular, width * height * 4)
-        blender_specular_tint = np.reshape(blender_specular_tint, width * height * 4)
+        # Check if we really need to create a texture
+        blender_specular_tex_not_needed = np.all(np.isclose(blender_specular, blender_specular[0][0]))
+        blender_specular_tint_tex_not_needed = np.all(np.isclose(blender_specular_tint, blender_specular_tint[0][0]))
 
-        # Create images in Blender, width and height are dummy values, then set packed file data
-        blender_image_spec = bpy.data.images.new('Specular', width, height)
-        blender_image_spec.pixels.foreach_set(np.float32(blender_specular))
-        blender_image_spec.pack()
+        if blender_specular_tex_not_needed == True:
+            lum = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
+            specular_socket.default_value = lum(blender_specular[0][0][:3])
+        else:
+            blender_specular = np.reshape(blender_specular, width * height * 4)
+            # Create images in Blender, width and height are dummy values, then set packed file data
+            blender_image_spec = bpy.data.images.new('Specular', width, height)
+            blender_image_spec.pixels.foreach_set(np.float32(blender_specular))
+            blender_image_spec.pack()
 
-        blender_image_tint = bpy.data.images.new('Specular Tint', width, height)
-        blender_image_tint.pixels.foreach_set(np.float32(blender_specular_tint))
-        blender_image_tint.pack()
-   
-        # Create Textures in Blender
-        tex_info = tex_specular_info
-        if tex_info is None:
-            tex_info = tex_specular_color_info
-        if tex_info is None:
-            tex_info = tex_transmission_info
-        if tex_info is None:
-            tex_info = tex_base_color
-
-        texture(
-            mh,
-            tex_info=tex_info,
-            label='SPECULAR',
-            location=(x_specular, y_specular),
-            is_data=True,
-            color_socket=specular_socket,
-            forced_image=blender_image_spec
-        )
-
-        tex_info = tex_specular_color_info
-        if tex_info is None:
+            # Create Textures in Blender
             tex_info = tex_specular_info
-        if tex_info is None:
-            tex_info = tex_transmission_info
-        if tex_info is None:
-            tex_info = tex_base_color
+            if tex_info is None:
+                tex_info = tex_specular_color_info
+            if tex_info is None:
+                tex_info = tex_transmission_info
+            if tex_info is None:
+                tex_info = tex_base_color
 
-        texture(
-            mh,
-            tex_info=tex_info,
-            label='SPECULAR TINT',
-            location=(x_tint, y_tint),
-            is_data=True,
-            color_socket=specular_tint_socket,
-            forced_image=blender_image_tint
-        )
+            texture(
+                mh,
+                tex_info=tex_info,
+                label='SPECULAR',
+                location=(x_specular, y_specular),
+                is_data=True,
+                color_socket=specular_socket,
+                forced_image=blender_image_spec
+            )
+    
+        if blender_specular_tint_tex_not_needed == True:
+            specular_tint_socket.default_value = blender_specular_tint[0][0]
+        else:
+            blender_specular_tint = np.reshape(blender_specular_tint, width * height * 4)
+            # Create images in Blender, width and height are dummy values, then set packed file data
+            blender_image_tint = bpy.data.images.new('Specular Tint', width, height)
+            blender_image_tint.pixels.foreach_set(np.float32(blender_specular_tint))
+            blender_image_tint.pack()
+    
+            # Create Textures in Blender
+            tex_info = tex_specular_color_info
+            if tex_info is None:
+                tex_info = tex_specular_info
+            if tex_info is None:
+                tex_info = tex_transmission_info
+            if tex_info is None:
+                tex_info = tex_base_color
 
-        #TODOExt detect texture all blacks created, and do not create them, use socket default values in that case
+            texture(
+                mh,
+                tex_info=tex_info,
+                label='SPECULAR TINT',
+                location=(x_tint, y_tint),
+                is_data=True,
+                color_socket=specular_tint_socket,
+                forced_image=blender_image_tint
+            )
