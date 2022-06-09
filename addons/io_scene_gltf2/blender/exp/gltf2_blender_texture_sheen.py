@@ -65,17 +65,25 @@ def sheen_calculation(stored):
     # Vector 3
     for i in ['base_color']:
         if i in buffers.keys():
-            buffers[i] = buffers[i][:,:,stored[i + "_channel"].data]
+            if i + "_channel" not in stored.keys():
+                buffers[i] = buffers[i][:,:,:3]
+            else:
+                # keep only needed channel
+                for c in range(3):
+                    if c != stored[i+"_channel"].data:
+                        buffers[i][:, :, c] = 0.0
+                buffers[i] = buffers[i][:,:,:3]
         else:
             buffers[i] = np.full((height, width, 3), stored[i].data[0:3])
 
     
     # calculation
-    #TODOExt This is a placeholder, not the sheen approximation :)
-    normalized_base_color_buf = buffers['base_color'] / stack3(luminance(buffers['base_color']))
-    np.nan_to_num(normalized_base_color_buf, copy=False, nan=0.0)     # if luminance in a pixel was zero
+    # TODOExt Approximation discussion in progress
+    
+    tint_from_color = buffers['base_color'] / stack3(luminance(buffers['base_color']))
+    np.nan_to_num(tint_from_color, copy=False, nan=0.0)     # if luminance in a pixel was zero
 
-    out_buf = lerp(normalized_base_color_buf, stack3(buffers['sheen_tint']), buffers['sheen'])
+    out_buf = lerp(tint_from_color, stack3(buffers['sheen_tint']), stack3(buffers['sheen']))
     out_buf = np.dstack((out_buf, np.ones((height, width)))) # Set alpha to 1
     out_buf = np.reshape(out_buf, (width * height * 4))
 
