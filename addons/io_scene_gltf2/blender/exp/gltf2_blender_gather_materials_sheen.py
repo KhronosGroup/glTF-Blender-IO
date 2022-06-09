@@ -73,7 +73,7 @@ def export_sheen(blender_material, export_settings):
         
         # Currently, only color is used
             
-        sheenColorTexture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+        sheenColorTexture, use_active_uvmap, sheenColorFactor = gltf2_blender_gather_texture_info.gather_texture_info(
             primary_socket, 
             sockets, 
             export_settings,
@@ -86,6 +86,9 @@ def export_sheen(blender_material, export_settings):
         sheen_ext_enabled = True
         sheen_extension['sheenColorTexture'] = sheenColorTexture
         sheen_extension['sheenRoughnessFactor'] = 0.25 # TODOExt: Determine correct sheen roughness value.
+
+        if sheenColorFactor is not None:
+            sheen_extension['sheenColorFactor'] = sheenColorFactor
 
     sheen_extension = Extension('KHR_materials_sheen', sheen_extension, False) if sheen_ext_enabled else None
     return sheen_extension, use_actives_uvmaps

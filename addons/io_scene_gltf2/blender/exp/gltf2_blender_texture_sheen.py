@@ -88,4 +88,4 @@ def sheen_calculation(stored):
     out_buf = np.dstack((out_buf, np.ones((height, width)))) # Set alpha to 1
     out_buf = np.reshape(out_buf, (width * height * 4))
 
-    return np.float32(out_buf), width, height, None
+    return np.float32(out_buf), width, height, [1.0, 1.0, 1.0]
