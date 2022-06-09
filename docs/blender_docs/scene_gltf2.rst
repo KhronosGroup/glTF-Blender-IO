@@ -56,11 +56,7 @@ with the following channels of information:
 - Normal Map (tangent space, +Y up)
 - Emissive
 
-Some additional material properties or types of materials can be expressed using glTF extensions:
-
-- Clearcoat, Clearcoat Roughness, Clearcoat Normal (uses ``KHR_materials_clearcoat``)
-- Transmission (uses ``KHR_materials_transmission``)
-- "Shadeless" materials (uses ``KHR_materials_unlit``)
+Some additional material properties or types of materials can be expressed using glTF extensions. The complete is can be found in _Extensions_ part of this documentation.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -76,7 +72,7 @@ The glTF material system is different from Blender's own materials. When a glTF 
 the add-on will construct a set of Blender nodes to replicate each glTF material as closely as possible.
 
 The importer supports Metal/Rough PBR (core glTF), Spec/Gloss PBR (``KHR_materials_pbrSpecularGlossiness``)
-and Shadeless (``KHR_materials_unlit``) materials.
+and some extension materials. The complete is can be found in _Extensions_ part of this documentation.
 
 .. tip::
 
@@ -307,6 +303,19 @@ At export, IOR is included in the export only if one of these extensions are als
 
 IOR of 1.5 are not included in the export, because this is the default glTF IOR value.
 
+Volume
+^^^^^^
+
+Volume can be exported using a Volume Absorption node, linked to Volume socket of Output node.
+Data will be exported using the ``KHR_materials_volume`` extension.
+For volume to be exported, some _transmission_ must be set on Principled BSDF node.
+Color of Volume Absorption node is used as glTF attenuation color. No texture is allowed for this property.
+Density of Volume Absorption node is used as inverse of glTF attenuation distance.
+Thickess can be plugged into the Thickess socket of custom group node ``glTF Settings``. 
+If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
+
 
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -426,6 +435,7 @@ are supported directly by this add-on:
 - ``KHR_materials_transmission``
 - ``KHR_materials_unlit``
 - ``KHR_materials_emissive_strength``
+- ``KHR_materials_volume``
 - ``KHR_materials_ior``
 - ``KHR_lights_punctual``
 - ``KHR_texture_transform``
@@ -443,6 +453,7 @@ are supported directly by this add-on:
 - ``KHR_materials_emissive_strength``
 - ``KHR_materials_ior``
 - ``KHR_texture_transform``
+- ``KHR_materials_volume``
 
 
 Third-party glTF Extensions
