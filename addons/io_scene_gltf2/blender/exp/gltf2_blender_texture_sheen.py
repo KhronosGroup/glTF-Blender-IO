@@ -84,6 +84,7 @@ def sheen_calculation(stored):
     np.nan_to_num(tint_from_color, copy=False, nan=0.0)     # if luminance in a pixel was zero
 
     out_buf = lerp(tint_from_color, stack3(buffers['sheen_tint']), stack3(buffers['sheen']))
+    out_buf = np.clip(out_buf, 0.0, 1.0)
     out_buf = np.dstack((out_buf, np.ones((height, width)))) # Set alpha to 1
     out_buf = np.reshape(out_buf, (width * height * 4))
 
