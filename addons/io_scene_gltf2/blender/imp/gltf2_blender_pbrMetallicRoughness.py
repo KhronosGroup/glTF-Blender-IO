@@ -226,7 +226,7 @@ def calc_locations(mh):
     if 'specularColorTexture' in specular_ext:
         y -= height
     locs['sheenColorTexture'] = (x, y)
-    if 'sheenColorTexture' in sheen_ext:
+    if 'sheenColorTexture' in sheen_ext or mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
         y -= height
     locs['clearcoat'] = (x, y)
     if 'clearcoatTexture' in clearcoat_ext:
