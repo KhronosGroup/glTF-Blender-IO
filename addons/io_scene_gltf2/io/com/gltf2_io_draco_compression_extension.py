@@ -63,5 +63,5 @@ def dll_exists(quiet=False) -> bool:
         if exists:
             print_console('INFO', 'Draco mesh compression is available, use library at %s' % dll_path().absolute())
         else:
-            print_console('INFO', 'Draco mesh compression is not available because no library could be found at %s' % dll_path().absolute())
+            print_console('ERROR', 'Draco mesh compression is not available because library could not be found at %s' % dll_path().absolute())
     return exists
