@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from re import M
 import bpy
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
@@ -56,13 +57,17 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     pbr_node.location = 10, 300
     additional_location = 40, -370 # For occlusion and/or volume / original PBR extensions
-    occlusion_location = additional_location
-    volume_location = None
-    specular_location = None
 
     # Set IOR to 1.5, this is the default in glTF
     # This value may be overidden later if IOR extension is set on file
     pbr_node.inputs['IOR'].default_value = GLTF_IOR
+
+    if mh.pymat.occlusion_texture is not None:
+        if mh.settings_node is None:
+            mh.settings_node = make_settings_node(mh)
+            mh.settings_node.location = additional_location
+            mh.settings_node.width = 180
+            additional_location = additional_location[0], additional_location[1] - 150
 
     need_volume_node = False
     if mh.pymat.extensions and 'KHR_materials_volume' in mh.pymat.extensions:
@@ -81,7 +86,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     _, _, volume_socket = make_output_nodes(
         mh,
         location=(250, 260),
-        additional_location=volume_location,
+        additional_location=additional_location,
         shader_socket=pbr_node.outputs[0],
         make_emission_socket=False, # is managed by Principled shader node
         make_alpha_socket=False, # is managed by Principled shader node
@@ -93,8 +98,14 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         mh.original_pbr_node = make_pbr_non_converted_extensions_node(mh)
         mh.original_pbr_node.location = additional_location
         mh.original_pbr_node.width = 180
-        specular_location = additional_location
         additional_location = additional_location[0], additional_location[1] - 150
+
+    if mh.pymat.extensions and 'KHR_materials_sheen' in mh.pymat.extensions and mh.original_pbr_node is None:
+        # We need glTF PBR Non Converted Extensions Node
+        mh.original_pbr_node = make_pbr_non_converted_extensions_node(mh)
+        mh.original_pbr_node.location = additional_location
+        mh.original_pbr_node.width = 180
+        additional_location = additional_location[0], additional_location[1] - 150        
 
     locs = calc_locations(mh)
 
@@ -126,12 +137,6 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     )
 
     if mh.pymat.occlusion_texture is not None:
-        if mh.settings_node is None:
-            mh.settings_node = make_settings_node(mh)
-            mh.settings_node.location = occlusion_location
-            mh.settings_node.width = 180
-            additional_location = additional_location[0], additional_location[1] - 150
-
         occlusion(
             mh,
             location=locs['occlusion'],
@@ -186,7 +191,11 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         mh,
         location_sheen=locs['sheenColorTexture'],
         sheen_socket=pbr_node.inputs['Sheen'],
-        sheen_tint_socket=pbr_node.inputs['Sheen Tint']
+        sheen_tint_socket=pbr_node.inputs['Sheen Tint'],
+        original_sheenColor_socket=mh.original_pbr_node.inputs[2] if mh.original_pbr_node else None,
+        original_sheenRoughness_socket=mh.original_pbr_node.inputs[3] if mh.original_pbr_node else None,
+        location_original_sheenColor=locs['original_sheenColorTexture'],
+        location_original_sheenRoughness=locs['original_sheenRoughnessTexture']
     )
 
     ior(
@@ -272,6 +281,12 @@ def calc_locations(mh):
         y -= height
     locs['original_specularColorTexture'] = (x, y)
     if 'specularColorTexture' in specular_ext:
+        y -= height
+    locs['original_sheenColorTexture'] = (x, y)
+    if 'sheenColorTexture' in sheen_ext:
+        y -= height
+    locs['original_sheenRoughnessTexture'] = (x, y)
+    if 'sheenRoughnessTexture' in sheen_ext:
         y -= height
 
 
