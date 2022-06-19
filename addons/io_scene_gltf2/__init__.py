@@ -457,13 +457,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    export_displacement: BoolProperty(
-        name='Displacement Textures (EXPERIMENTAL)',
-        description='EXPERIMENTAL: Export displacement textures. '
-                    'Uses incomplete "KHR_materials_displacement" glTF extension',
-        default=False
-    )
-
     will_save_settings: BoolProperty(
         name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
@@ -621,7 +614,6 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
-        export_settings['gltf_displacement'] = self.export_displacement
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
