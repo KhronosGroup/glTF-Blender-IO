@@ -139,28 +139,24 @@ def specular(mh, location_specular,
 
         # Base Color is already created
         # Transmission is already created
-        # specularTexture --> Not needed, as not used during conversion, but we need to get image size if needed
+        # specularTexture is just created by original specular function
         specular_image_name = None
-        if tex_specular_info is not None:
-            tex_specular = mh.gltf.data.textures[tex_specular_info.index]
-            if tex_specular.source is not None:
-                BlenderImage.create(mh.gltf, tex_specular.source)
-
-                # Retrieve image just created
-                pyimg = mh.gltf.data.images[tex_specular.source]
-                specular_image_name = pyimg.blender_image_name
+        try:
+            pytexture = mh.gltf.data.textures[tex_specular_info.index]
+            pyimg = mh.gltf.data.images[pytexture.source]
+            specular_image_name = pyimg.blender_image_name
+        except:
+            specular_image_name =  None
 
 
-        # specularColorTexture : Need to be created
+        # specularColorTexture is just created by original specular function
         specularcolor_image_name = None
-        if tex_specular_color_info is not None:
-            tex_specular_color = mh.gltf.data.textures[tex_specular_color_info.index]
-            if tex_specular_color.source is not None:
-                BlenderImage.create(mh.gltf, tex_specular_color.source)
-
-                # Retrieve image just created
-                pyimg = mh.gltf.data.images[tex_specular_color.source]
-                specularcolor_image_name = pyimg.blender_image_name
+        try:
+            pytexture = mh.gltf.data.textures[tex_specular_color_info.index]
+            pyimg = mh.gltf.data.images[pytexture.source]
+            specularcolor_image_name = pyimg.blender_image_name
+        except:
+            specularcolor_image_name =  None
 
         stack3 = lambda v: np.dstack([v]*3)
 
