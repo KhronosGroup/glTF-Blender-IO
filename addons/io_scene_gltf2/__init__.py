@@ -278,13 +278,13 @@ class ExportGLTF2_Base:
         default=False,
     )
 
-    # export_original_sheen: BoolProperty(
-    #     name='Export original PBR Sheen',
-    #     description=(
-    #         'Export original glTF PBR Sheen, instead of Blender Principled Shader Sheen'
-    #     ),
-    #     default=False,
-    # )  
+    export_original_sheen: BoolProperty(
+        name='Export original PBR Sheen',
+        description=(
+            'Export original glTF PBR Sheen, instead of Blender Principled Shader Sheen'
+        ),
+        default=False,
+    )  
 
     export_colors: BoolProperty(
         name='Vertex Colors',
@@ -568,7 +568,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_cameras'] = self.export_cameras
 
         export_settings['gltf_original_specular'] = self.export_original_specular
-        # export_settings['gltf_original_sheen'] = self.export_original_sheen
+        export_settings['gltf_original_sheen'] = self.export_original_sheen
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
@@ -843,6 +843,7 @@ class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, 'export_original_specular')
+        layout.prop(operator, 'export_original_sheen')
 
 
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
