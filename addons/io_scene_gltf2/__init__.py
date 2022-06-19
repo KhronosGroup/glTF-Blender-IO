@@ -270,6 +270,22 @@ class ExportGLTF2_Base:
         default='EXPORT'
     )
 
+    export_original_specular: BoolProperty(
+        name='Export original PBR Specular',
+        description=(
+            'Export original glTF PBR Specular, instead of Blender Principled Shader Specular'
+        ),
+        default=False,
+    )
+
+    # export_original_sheen: BoolProperty(
+    #     name='Export original PBR Sheen',
+    #     description=(
+    #         'Export original glTF PBR Sheen, instead of Blender Principled Shader Sheen'
+    #     ),
+    #     default=False,
+    # )  
+
     export_colors: BoolProperty(
         name='Vertex Colors',
         description='Export vertex colors with meshes',
@@ -558,6 +574,8 @@ class ExportGLTF2_Base:
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
 
+        export_settings['gltf_original_specular'] = self.export_original_specular
+        # export_settings['gltf_original_sheen'] = self.export_original_sheen
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
@@ -749,6 +767,22 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
 
     def draw(self, context):
+        pass
+
+class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Mesh"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
@@ -768,10 +802,55 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
 
+
+class GLTF_PT_export_geometry_material(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Material"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
         layout.prop(operator, 'export_materials')
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
+
+class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "PBR Extensions"
+    bl_parent_id = "GLTF_PT_export_geometry_material"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_original_specular')
 
 
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
@@ -1210,6 +1289,9 @@ classes = (
     GLTF_PT_export_include,
     GLTF_PT_export_transform,
     GLTF_PT_export_geometry,
+    GLTF_PT_export_geometry_mesh,
+    GLTF_PT_export_geometry_material,
+    GLTF_PT_export_geometry_original_pbr,
     GLTF_PT_export_geometry_compression,
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,
