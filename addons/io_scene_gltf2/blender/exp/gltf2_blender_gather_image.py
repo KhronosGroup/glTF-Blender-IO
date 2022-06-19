@@ -250,6 +250,8 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
                 dst_chan = Channel.G
             elif socket.name == 'Thickness': # For KHR_materials_volume
                 dst_chan = Channel.G
+            elif socket.name == "specularTexture": # For original KHR_material_specular
+                dst_chan = Channel.A
 
             if dst_chan is not None:
                 composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)

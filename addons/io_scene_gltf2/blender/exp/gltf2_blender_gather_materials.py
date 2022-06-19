@@ -130,6 +130,8 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
             material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = active_uvmap_index
         elif tex == "transmissionTexture": #TODO not tested yet
             material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = active_uvmap_index
+        elif tex == "specularTexture":
+            material.extensions["KHR_materials_specular"].extension['specularTexture'].tex_coord = active_uvmap_index
         elif tex == "specularColorTexture":
             material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = active_uvmap_index
         elif tex == "sheenColorTexture":

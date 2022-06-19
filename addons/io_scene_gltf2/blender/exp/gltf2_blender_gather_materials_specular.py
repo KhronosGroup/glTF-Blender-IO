@@ -19,7 +19,73 @@ from io_scene_gltf2.io.com.gltf2_io_constants import GLTF_IOR
 from io_scene_gltf2.blender.com.gltf2_blender_default import BLENDER_SPECULAR, BLENDER_SPECULAR_TINT
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 
+
+
+def export_original_specular(blender_material, export_settings):
+    specular_extension = {}
+
+    original_specular_socket = gltf2_blender_get.get_socket_original(blender_material, 'specularTexture')
+    original_specularcolor_socket = gltf2_blender_get.get_socket_original(blender_material, 'specularColorTexture')
+
+    if original_specular_socket is None or original_specularcolor_socket is None:
+        return None, None
+
+    specular_non_linked = isinstance(original_specular_socket, bpy.types.NodeSocket) and not original_specular_socket.is_linked
+    specularcolor_non_linked = isinstance(original_specularcolor_socket, bpy.types.NodeSocket) and not original_specularcolor_socket.is_linked
+
+
+    use_actives_uvmaps = []
+
+    if specular_non_linked is True:
+        fac = original_specular_socket.default_value
+        if fac != 1.0:
+            specular_extension['specularFactor'] = fac
+    else:
+        # Factor
+        fac = gltf2_blender_get.get_factor_from_socket(original_specular_socket, kind='VALUE')
+        if fac is not None and fac != 1.0:
+            specular_extension['specularFactor'] = fac
+        
+        # Texture
+        if gltf2_blender_get.has_image_node_from_socket(original_specular_socket):
+            original_specular_texture, original_specular_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+                original_specular_socket,
+                (original_specular_socket,),
+                export_settings,
+            )
+            specular_extension['specularTexture'] = original_specular_texture
+            if original_specular_use_active_uvmap:
+                use_actives_uvmaps.append("specularTexture")
+
+
+    if specularcolor_non_linked is True:
+        color = original_specularcolor_socket.default_value[:3]
+        if color != [1.0, 1.0, 1.0]:
+            specular_extension['specularColorFactor'] = color
+    else:
+        # Factor
+        fac = gltf2_blender_get.get_factor_from_socket(original_specularcolor_socket, kind='RGB')
+        if fac is not None and fac != [1.0, 1.0, 1.0]:
+            specular_extension['specularColorFactor'] = fac
+
+        # Texture
+        if gltf2_blender_get.has_image_node_from_socket(original_specularcolor_socket):
+            original_specularcolor_texture, original_specularcolor_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+                original_specularcolor_socket,
+                (original_specularcolor_socket,),
+                export_settings,
+            )
+            specular_extension['specularColorTexture'] = original_specularcolor_texture
+            if original_specularcolor_use_active_uvmap:
+                use_actives_uvmaps.append("specularColorTexture")
+    
+    return Extension('KHR_materials_specular', specular_extension, False), use_actives_uvmaps
+
 def export_specular(blender_material, export_settings):
+
+    if export_settings['gltf_original_specular'] is True:
+        return export_original_specular(blender_material, export_settings)
+
     specular_extension = {}
     specular_ext_enabled = False
 
