@@ -23,7 +23,11 @@ from ..exp.gltf2_blender_image import TmpImageGuard, make_temp_image_copy
 def specular(mh, location_specular, 
                  location_specular_tint, 
                  specular_socket, 
-                 specular_tint_socket):
+                 specular_tint_socket,
+                 original_specular_socket,
+                 original_specularcolor_socket,
+                 location_original_specular,
+                 location_original_specularcolor):
     x_specular, y_specular = location_specular
     x_tint, y_tint = location_specular_tint
 
@@ -88,6 +92,20 @@ def specular(mh, location_specular,
 
     use_texture = tex_specular_info is not None or tex_specular_color_info is not None \
         or transmission_not_linked is False or base_color_not_linked is False
+
+
+    # Before creating converted textures,
+    # Also plug non converted data into glTF PBR Non Converted Extensions node
+    original_specular(  mh,
+                        specular_factor, 
+                        tex_specular_info, 
+                        specular_color_factor, 
+                        tex_specular_color_info,
+                        original_specular_socket,
+                        original_specularcolor_socket,
+                        location_original_specular,
+                        location_original_specularcolor
+                        )
 
     
     if not use_texture:
@@ -279,3 +297,71 @@ def specular(mh, location_specular,
                 color_socket=specular_tint_socket,
                 forced_image=blender_image_tint
             )
+
+def original_specular(  mh,
+                        specular_factor,
+                        tex_specular_info, 
+                        specular_color_factor, 
+                        tex_specular_color_info,
+                        original_specular_socket,
+                        original_specularcolor_socket,
+                        location_original_specular,
+                        location_original_specularcolor
+                        ):
+
+    x_specular, y_specular = location_original_specular
+    x_specularcolor, y_specularcolor = location_original_specularcolor
+
+    if tex_specular_info is None:
+        original_specular_socket.default_value = specular_factor
+    else:
+        # Mix specular factor
+        if specular_factor != 1.0:
+            node = mh.node_tree.nodes.new('ShaderNodeMath')
+            node.label = 'Specular Factor'
+            node.location = x_specular - 140, y_specular
+            node.operation = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(original_specular_socket, node.outputs[0])
+            # Inputs
+            original_specular_socket = node.inputs[0]
+            node.inputs[1].default_value = specular_factor
+            x_specular -= 200
+
+        texture(
+            mh,
+            tex_info=tex_specular_info,
+            label='SPECULAR',
+            location=(x_specular, y_specular),
+            is_data=True,
+            color_socket=None,
+            alpha_socket=original_specular_socket
+            )
+
+    if tex_specular_color_info is None:
+        specular_color_factor = list(specular_color_factor)
+        specular_color_factor.extend([1.0])
+        original_specularcolor_socket.default_value = specular_color_factor
+    else:
+            specular_color_factor = list(specular_color_factor) + [1.0]
+            if specular_color_factor != [1.0, 1.0, 1.0, 1.0]:
+                # Mix specularColorFactor
+                node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+                node.label = 'SpecularColor Factor'
+                node.location = x_specularcolor - 140, y_specularcolor
+                node.blend_type = 'MULTIPLY'
+                # Outputs
+                mh.node_tree.links.new(original_specularcolor_socket, node.outputs[0])
+                # Inputs
+                node.inputs['Fac'].default_value = 1.0
+                original_specularcolor_socket = node.inputs['Color1']
+                node.inputs['Color2'].default_value = specular_color_factor
+                x_specularcolor -= 200
+            
+            texture(
+                mh,
+                tex_info=tex_specular_color_info,
+                label='SPECULAR COLOR',
+                location=(x_specularcolor, y_specularcolor),
+                color_socket=original_specularcolor_socket,
+                )

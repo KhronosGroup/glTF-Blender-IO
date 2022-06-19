@@ -26,3 +26,17 @@ def create_settings_group(name):
     gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
     gltf_node_group_input.location = -200, 0
     return gltf_node_group
+
+def get_gltf_pbr_non_converted_name():
+    return "glTF Non Converted BPR Extensions"
+
+def create_gltf_pbr_non_converted_group(name):
+    gltf_node_group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
+    specularTexture = gltf_node_group.inputs.new("NodeSocketFloat", "specularTexture")
+    specularTexture.default_value = 1.0
+    specularColorTexture = gltf_node_group.inputs.new("NodeSocketColor", "specularColorTexture")
+    specularColorTexture.default_value = [1.0,1.0,1.0,1.0]
+    gltf_node_group.nodes.new('NodeGroupOutput')
+    gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
+    gltf_node_group_input.location = -400, 0
+    return gltf_node_group    

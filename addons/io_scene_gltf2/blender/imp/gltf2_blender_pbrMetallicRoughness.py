@@ -15,6 +15,7 @@
 import bpy
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
+from ..com.gltf2_blender_material_helpers import get_gltf_pbr_non_converted_name, create_gltf_pbr_non_converted_group
 from .gltf2_blender_texture import texture
 from .gltf2_blender_KHR_materials_clearcoat import \
     clearcoat, clearcoat_roughness, clearcoat_normal
@@ -37,6 +38,7 @@ class MaterialHelper:
             pymat.pbr_metallic_roughness = \
                 MaterialPBRMetallicRoughness.from_dict({})
         self.settings_node = None
+        self.original_pbr_node = None
 
     def is_opaque(self):
         alpha_mode = self.pymat.alpha_mode
@@ -53,7 +55,10 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     """Creates node tree for pbrMetallicRoughness materials."""
     pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     pbr_node.location = 10, 300
-    additional_location = 40, -370 # For occlusion and/or volume
+    additional_location = 40, -370 # For occlusion and/or volume / original PBR extensions
+    occlusion_location = additional_location
+    volume_location = None
+    specular_location = None
 
     # Set IOR to 1.5, this is the default in glTF
     # This value may be overidden later if IOR extension is set on file
@@ -70,20 +75,26 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             mh.settings_node = make_settings_node(mh)
             mh.settings_node.location = additional_location
             mh.settings_node.width = 180
+            volume_location = additional_location
             additional_location = additional_location[0], additional_location[1] - 150
 
     _, _, volume_socket = make_output_nodes(
         mh,
         location=(250, 260),
-        additional_location=additional_location,
+        additional_location=volume_location,
         shader_socket=pbr_node.outputs[0],
         make_emission_socket=False, # is managed by Principled shader node
         make_alpha_socket=False, # is managed by Principled shader node
         make_volume_socket=need_volume_node
     )
 
-    if need_volume_node:
-        additional_location = additional_location[0], additional_location[1] -150
+    if mh.pymat.extensions and 'KHR_materials_specular' in mh.pymat.extensions:
+        # We need glTF PBR Non Converted Extensions Node
+        mh.original_pbr_node = make_pbr_non_converted_extensions_node(mh)
+        mh.original_pbr_node.location = additional_location
+        mh.original_pbr_node.width = 180
+        specular_location = additional_location
+        additional_location = additional_location[0], additional_location[1] - 150
 
     locs = calc_locations(mh)
 
@@ -117,7 +128,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     if mh.pymat.occlusion_texture is not None:
         if mh.settings_node is None:
             mh.settings_node = make_settings_node(mh)
-            mh.settings_node.location = additional_location
+            mh.settings_node.location = occlusion_location
             mh.settings_node.width = 180
             additional_location = additional_location[0], additional_location[1] - 150
 
@@ -164,7 +175,11 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         location_specular=locs['specularTexture'],
         location_specular_tint=locs['specularColorTexture'],
         specular_socket=pbr_node.inputs['Specular'],
-        specular_tint_socket=pbr_node.inputs['Specular Tint']
+        specular_tint_socket=pbr_node.inputs['Specular Tint'],
+        original_specular_socket=mh.original_pbr_node.inputs[0] if mh.original_pbr_node else None,
+        original_specularcolor_socket=mh.original_pbr_node.inputs[1] if mh.original_pbr_node else None,
+        location_original_specular=locs['original_specularTexture'],
+        location_original_specularcolor=locs['original_specularColorTexture']
     )
 
     sheen(
@@ -251,6 +266,12 @@ def calc_locations(mh):
         y -= height
     locs['volume_thickness'] = (x, y)
     if 'thicknessTexture' in volume_ext:
+        y -= height
+    locs['original_specularTexture'] = (x, y)
+    if 'specularTexture' in specular_ext:
+        y -= height
+    locs['original_specularColorTexture'] = (x, y)
+    if 'specularColorTexture' in specular_ext:
         y -= height
 
 
@@ -695,4 +716,22 @@ def get_settings_group():
     else:
         # Create a new node group
         gltf_node_group = create_settings_group(gltf_node_group_name)
+    return gltf_node_group
+
+def make_pbr_non_converted_extensions_node(mh):
+    """
+    Make a Group node with a hookup for PBR Non Converted Extensions. No effect in Blender, but
+    used to tell the exporter what the original map(s) should be.
+    """
+    node = mh.node_tree.nodes.new('ShaderNodeGroup')
+    node.node_tree = get_pbr_non_converted_extensions_group()
+    return node
+
+def get_pbr_non_converted_extensions_group():
+    gltf_node_group_name = get_gltf_pbr_non_converted_name()
+    if gltf_node_group_name in bpy.data.node_groups:
+        gltf_node_group = bpy.data.node_groups[gltf_node_group_name]
+    else:
+        # Create a new node group
+        gltf_node_group = create_gltf_pbr_non_converted_group(gltf_node_group_name)
     return gltf_node_group
