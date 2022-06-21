@@ -147,7 +147,7 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
     # https://github.com/KhronosGroup/glTF/pull/1476/files
     # Also, UINT8 mode is not supported:
     # https://github.com/KhronosGroup/glTF/issues/1471
-    max_index = indices.max()
+    max_index = len(indices)
     if max_index < 65535:
         component_type = gltf2_io_constants.ComponentType.UnsignedShort
         indices = indices.astype(np.uint16, copy=False)
