@@ -46,10 +46,14 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         if blender_mesh.uv_layers.active:
             tex_coord_max = len(blender_mesh.uv_layers)
 
-    color_max = 0
-    if export_settings[gltf2_blender_export_keys.COLORS]:
-        color_max = len(blender_mesh.vertex_colors)
+    use_morph_normals = use_normals and export_settings[gltf2_blender_export_keys.MORPH_NORMAL]
+    use_morph_tangents = use_morph_normals and use_tangents and export_settings[gltf2_blender_export_keys.MORPH_TANGENT]
 
+    use_materials = export_settings[gltf2_blender_export_keys.MATERIALS]
+
+    blender_attributes = []
+
+    # Check if we have to export skin
     armature = None
     skin = None
     if blender_vertex_groups and export_settings[gltf2_blender_export_keys.SKINS]:
@@ -76,9 +80,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             if not skin:
                 armature = None
 
-    use_morph_normals = use_normals and export_settings[gltf2_blender_export_keys.MORPH_NORMAL]
-    use_morph_tangents = use_morph_normals and use_tangents and export_settings[gltf2_blender_export_keys.MORPH_TANGENT]
-
     key_blocks = []
     if blender_mesh.shape_keys and export_settings[gltf2_blender_export_keys.MORPH]:
         key_blocks = [
@@ -87,11 +88,10 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             if not (key_block == key_block.relative_key or key_block.mute)
         ]
 
-    use_materials = export_settings[gltf2_blender_export_keys.MATERIALS]
-
     # Fetch vert positions and bone data (joint,weights)
 
     locs, morph_locs = __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings)
+
     if skin:
         vert_bones, num_joint_sets, need_neutral_bone = __get_bone_data(blender_mesh, skin, blender_vertex_groups)
         if need_neutral_bone is True:
@@ -101,6 +101,146 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             # Just store this, to be used later
             armature_uuid = export_settings['vtree'].nodes[uuid_for_skined_data].armature
             export_settings['vtree'].nodes[armature_uuid].need_neutral_bone = True
+
+
+    # Manage attributes + COLOR_0
+    for blender_attribute_index, blender_attribute in enumerate(blender_mesh.attributes):
+        attr = {}
+        attr['blender_attribute_index'] = blender_attribute_index
+        attr['blender_name'] = blender_attribute.name
+        attr['blender_domain'] = blender_attribute.domain
+        attr['blender_data_type'] = blender_attribute.data_type
+        if blender_mesh.color_attributes.find(blender_attribute.name) == blender_mesh.color_attributes.render_color_index:
+            if export_settings[gltf2_blender_export_keys.COLORS] is False:
+                continue
+            attr['gltf_attribute_name'] = 'COLOR_0'
+            attr['func_get'] = __get_color_attribute
+            attr['func_get_args'] = [blender_mesh, blender_mesh.color_attributes.render_color_index]
+
+        else:
+            attr['gltf_attribute_name'] = '_' + blender_attribute.upper()
+            attr['func_get'] = None #TODOATTR
+            attr['func_get_args'] = None #TODOATTR
+        
+        blender_attributes.append(attr)
+
+    # Manage POSITION
+    attr = {}
+    attr['blender_data_type'] = 'FLOAT_VECTOR'
+    attr['gltf_attribute_name'] = 'POSITION'
+    attr['func_set'] = __set_positions_attribute
+    attr['func_set_args'] = [locs]
+    attr['enable_for_edge'] = True
+    attr['enable_for_point'] = True
+    attr['skip_getting_to_dots'] = True
+    blender_attributes.append(attr)
+
+    # Manage uvs TEX_COORD_x
+    for tex_coord_i in range(tex_coord_max):
+        attr = {}
+        attr['blender_data_type'] = 'FLOAT2'
+        attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
+        attr['func_get'] = __get_uvs_attribute
+        attr['func_get_args'] = [blender_mesh, tex_coord_i]
+        blender_attributes.append(attr)
+
+    # Manage NORMALS
+    if use_normals:
+        attr = {}
+        attr['blender_data_type'] = 'FLOAT_VECTOR'
+        attr['gltf_attribute_name'] = 'NORMAL'
+        attr['gltf_attribute_name_morph'] = 'MORPH_NORMAL_'
+        attr['func_get'] = __get_normal_attribute
+        attr['func_get_args'] = [blender_object, armature, blender_mesh, key_blocks, use_morph_normals, export_settings]
+        blender_attributes.append(attr)
+
+    # Manage TANGENT
+    if use_tangents:
+        attr = {}
+        attr['blender_data_type'] = 'FLOAT_VECTOR_4'
+        attr['gltf_attribute_name'] = 'TANGENT'
+        attr['func_get'] = __get_tangent_attribute
+        attr['func_get_args'] = [blender_mesh, armature, blender_object, export_settings]
+        blender_attributes.append(attr)
+
+    # Manage MORPH_POSITION_x
+    for morph_i, vs in enumerate(morph_locs):
+        attr = {}
+        attr['blender_attribute_index'] = morph_i
+        attr['blender_data_type'] = 'FLOAT_VECTOR'
+        attr['gltf_attribute_name'] = 'MORPH_POSITION_' + str(morph_i)
+        attr['enable_for_edge'] = True
+        attr['enable_for_point'] = True
+        attr['skip_getting_to_dots'] = True
+        attr['func_set'] = __set_morph_locs_attribute
+        attr['func_set_args'] = [morph_locs]
+        blender_attributes.append(attr)
+
+        # Manage MORPH_NORMAL_x
+        if use_morph_normals:
+            attr = {}
+            attr['blender_attribute_index'] = morph_i
+            attr['blender_data_type'] = 'FLOAT_VECTOR'
+            attr['gltf_attribute_name'] = 'MORPH_NORMAL_' + str(morph_i)
+            # No func_get is set here, because data are set from NORMALS
+            blender_attributes.append(attr)
+
+            # Manage MORPH_TANGENT_x
+            if use_morph_tangents:
+                attr = {}
+                attr['blender_attribute_index'] = morph_i
+                attr['blender_data_type'] = 'FLOAT_VECTOR'
+                attr['gltf_attribute_name'] = 'MORPH_TANGENT_' + str(morph_i)
+                attr['gltf_attribute_name_normal'] = "NORMAL"
+                attr['gltf_attribute_name_morph_normal'] = "MORPH_NORMAL_" + str(morph_i)
+                attr['gltf_attribute_name_tangent'] = "TANGENT"
+                attr['skip_getting_to_dots'] = True
+                attr['after_others'] = True
+                attr['func_set'] = __set_morph_tangent_attribute
+                attr['func_set_args'] = []
+                blender_attributes.append(attr)
+
+    # Now that we get all attributes that are going to be exported, create numpy array that will store them
+    for attr in blender_attributes:
+        if attr['blender_data_type'] == "BYTE_COLOR":
+            attr['len'] = 4
+            attr['type'] = np.float32
+        elif attr['blender_data_type'] == "INT8":
+            attr['len'] = 1
+            attr['type'] = np.int8
+        elif attr['blender_data_type'] == "FLOAT2":
+            attr['len'] = 2
+            attr['type'] = np.float32
+        elif attr['blender_data_type'] == "BOOLEAN":
+            attr['len'] = 1
+            attr['type'] = bool
+        elif attr['blender_data_type'] == "STRING":
+            attr['len'] = 1
+            attr['type'] = str
+        elif attr['blender_data_type'] == "FLOAT_COLOR":
+            attr['len'] = 4
+            attr['type'] = np.float32
+        elif attr['blender_data_type'] == "FLOAT_VECTOR":
+            attr['len'] = 3
+            attr['type'] = np.float32
+        elif attr['blender_data_type'] == "FLOAT_VECTOR_4": # Specific case for tangent
+            attr['len'] = 4
+            attr['type'] = np.float32
+        elif attr['blender_data_type'] == "INT":
+            attr['len'] = 1
+            attr['type'] = np.int32
+        elif attr['blender_data_type'] == "FLOAT":
+            attr['len'] = 1
+            attr['type'] = np.float32
+        else:
+            print_console('ERROR',"blender type not found " +  attr['blender_data_type'])
+
+    dot_fields = [('vertex_index', np.uint32)]
+    for attr in blender_attributes:
+        if 'skip_getting_to_dots' in attr.keys():
+            continue
+        for i in range(attr['len']):
+            dot_fields.append((attr['gltf_attribute_name'] + str(i), attr['type']))
 
     # In Blender there is both per-vert data, like position, and also per-loop
     # (loop=corner-of-poly) data, like normals or UVs. glTF only has per-vert
@@ -113,29 +253,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     #
     # Each unique dot will become one unique glTF vert.
 
-    # List all fields the dot struct needs.
-    dot_fields = [('vertex_index', np.uint32)]
-    if use_normals:
-        dot_fields += [('nx', np.float32), ('ny', np.float32), ('nz', np.float32)]
-    if use_tangents:
-        dot_fields += [('tx', np.float32), ('ty', np.float32), ('tz', np.float32), ('tw', np.float32)]
-    for uv_i in range(tex_coord_max):
-        dot_fields += [('uv%dx' % uv_i, np.float32), ('uv%dy' % uv_i, np.float32)]
-    for col_i in range(color_max):
-        dot_fields += [
-            ('color%dr' % col_i, np.float32),
-            ('color%dg' % col_i, np.float32),
-            ('color%db' % col_i, np.float32),
-            ('color%da' % col_i, np.float32),
-        ]
-    if use_morph_normals:
-        for morph_i, _ in enumerate(key_blocks):
-            dot_fields += [
-                ('morph%dnx' % morph_i, np.float32),
-                ('morph%dny' % morph_i, np.float32),
-                ('morph%dnz' % morph_i, np.float32),
-            ]
-
     dots = np.empty(len(blender_mesh.loops), dtype=np.dtype(dot_fields))
 
     vidxs = np.empty(len(blender_mesh.loops))
@@ -143,44 +260,12 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     dots['vertex_index'] = vidxs
     del vidxs
 
-    if use_normals:
-        kbs = key_blocks if use_morph_normals else []
-        normals, morph_normals = __get_normals(
-            blender_mesh, kbs, armature, blender_object, export_settings
-        )
-        dots['nx'] = normals[:, 0]
-        dots['ny'] = normals[:, 1]
-        dots['nz'] = normals[:, 2]
-        del normals
-        for morph_i, ns in enumerate(morph_normals):
-            dots['morph%dnx' % morph_i] = ns[:, 0]
-            dots['morph%dny' % morph_i] = ns[:, 1]
-            dots['morph%dnz' % morph_i] = ns[:, 2]
-        del morph_normals
-
-    if use_tangents:
-        tangents = __get_tangents(blender_mesh, armature, blender_object, export_settings)
-        dots['tx'] = tangents[:, 0]
-        dots['ty'] = tangents[:, 1]
-        dots['tz'] = tangents[:, 2]
-        del tangents
-        signs = __get_bitangent_signs(blender_mesh, armature, blender_object, export_settings)
-        dots['tw'] = signs
-        del signs
-
-    for uv_i in range(tex_coord_max):
-        uvs = __get_uvs(blender_mesh, uv_i)
-        dots['uv%dx' % uv_i] = uvs[:, 0]
-        dots['uv%dy' % uv_i] = uvs[:, 1]
-        del uvs
-
-    for col_i in range(color_max):
-        colors = __get_colors(blender_mesh, col_i)
-        dots['color%dr' % col_i] = colors[:, 0]
-        dots['color%dg' % col_i] = colors[:, 1]
-        dots['color%db' % col_i] = colors[:, 2]
-        dots['color%da' % col_i] = colors[:, 3]
-        del colors
+    for attr in blender_attributes:
+        if 'skip_getting_to_dots' in attr.keys():
+            continue
+        if 'func_get' not in attr.keys():
+            continue
+        attr['func_get'](*(attr['func_get_args'] + [attr, dots]))
 
     # Calculate triangles and sort them into primitives.
 
@@ -225,51 +310,29 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
         blender_idxs = prim_dots['vertex_index']
 
-        attributes['POSITION'] = locs[blender_idxs]
+        for attr in blender_attributes:
+            if 'after_others' in attr.keys():
+                continue
+            if 'func_set' in attr.keys():
+                attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+            else:
+                res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
+                for i in range(attr['len']):
+                    res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
+                attributes[attr['gltf_attribute_name']] = res
 
-        for morph_i, vs in enumerate(morph_locs):
-            attributes['MORPH_POSITION_%d' % morph_i] = vs[blender_idxs]
-
-        if use_normals:
-            normals = np.empty((len(prim_dots), 3), dtype=np.float32)
-            normals[:, 0] = prim_dots['nx']
-            normals[:, 1] = prim_dots['ny']
-            normals[:, 2] = prim_dots['nz']
-            attributes['NORMAL'] = normals
-
-        if use_tangents:
-            tangents = np.empty((len(prim_dots), 4), dtype=np.float32)
-            tangents[:, 0] = prim_dots['tx']
-            tangents[:, 1] = prim_dots['ty']
-            tangents[:, 2] = prim_dots['tz']
-            tangents[:, 3] = prim_dots['tw']
-            attributes['TANGENT'] = tangents
-
-        if use_morph_normals:
-            for morph_i, _ in enumerate(key_blocks):
-                ns = np.empty((len(prim_dots), 3), dtype=np.float32)
-                ns[:, 0] = prim_dots['morph%dnx' % morph_i]
-                ns[:, 1] = prim_dots['morph%dny' % morph_i]
-                ns[:, 2] = prim_dots['morph%dnz' % morph_i]
-                attributes['MORPH_NORMAL_%d' % morph_i] = ns
-
-                if use_morph_tangents:
-                    attributes['MORPH_TANGENT_%d' % morph_i] = __calc_morph_tangents(normals, ns, tangents)
-
-        for tex_coord_i in range(tex_coord_max):
-            uvs = np.empty((len(prim_dots), 2), dtype=np.float32)
-            uvs[:, 0] = prim_dots['uv%dx' % tex_coord_i]
-            uvs[:, 1] = prim_dots['uv%dy' % tex_coord_i]
-            attributes['TEXCOORD_%d' % tex_coord_i] = uvs
-
-        for color_i in range(color_max):
-            colors = np.empty((len(prim_dots), 4), dtype=np.float32)
-            colors[:, 0] = prim_dots['color%dr' % color_i]
-            colors[:, 1] = prim_dots['color%dg' % color_i]
-            colors[:, 2] = prim_dots['color%db' % color_i]
-            colors[:, 3] = prim_dots['color%da' % color_i]
-            attributes['COLOR_%d' % color_i] = colors
-
+        # Some attributes need others to be already calculated (exemple : morph tangents)
+        for attr in blender_attributes:
+            if 'after_others' not in attr.keys():
+                continue
+            if 'func_set' in attr.keys():
+                attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+            else:
+                res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
+                for i in range(attr['len']):
+                    res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
+                attributes[attr['gltf_attribute_name']] = res
+            
         if skin:
             joints = [[] for _ in range(num_joint_sets)]
             weights = [[] for _ in range(num_joint_sets)]
@@ -306,10 +369,16 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
             attributes = {}
 
-            attributes['POSITION'] = locs[blender_idxs]
-
-            for morph_i, vs in enumerate(morph_locs):
-                attributes['MORPH_POSITION_%d' % morph_i] = vs[blender_idxs]
+            for attr in blender_attributes:
+                if 'enable_for_edge' not in attr.keys():
+                    continue
+                if 'func_set' in attr.keys():
+                    attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+                else:
+                    res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
+                    for i in range(attr['len']):
+                        res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
+                    attributes[attr['gltf_attribute_name']] = res
 
             if skin:
                 joints = [[] for _ in range(num_joint_sets)]
@@ -349,10 +418,16 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
             attributes = {}
 
-            attributes['POSITION'] = locs[blender_idxs]
-
-            for morph_i, vs in enumerate(morph_locs):
-                attributes['MORPH_POSITION_%d' % morph_i] = vs[blender_idxs]
+            for attr in blender_attributes:
+                if 'enable_for_point' not in attr.keys():
+                    continue
+                if 'func_set' in attr.keys():
+                    attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+                else:
+                    res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
+                    for i in range(attr['len']):
+                        res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
+                    attributes[attr['gltf_attribute_name']] = res
 
             if skin:
                 joints = [[] for _ in range(num_joint_sets)]
@@ -382,6 +457,20 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     return primitives
 
+
+def __set_positions_attribute(locs, attr, attributes, blender_idxs):
+    attributes[attr['gltf_attribute_name']] = locs[blender_idxs]
+
+def __set_morph_locs_attribute(morph_locs, attr, attributes, blender_idxs):
+    attributes[attr['gltf_attribute_name']] = morph_locs[attr['blender_attribute_index']][blender_idxs]
+
+def __set_morph_tangent_attribute(attr, attributes, blender_idx):
+    normals = attributes[attr['gltf_attribute_name_normal']]
+    morph_normals = attributes[attr['gltf_attribute_name_morph_normal']]
+    tangent = attributes[attr['gltf_attribute_name_tangent']]
+
+    morph_tangents = __calc_morph_tangents(normals, morph_normals, tangent)
+    attributes[attr['gltf_attribute_name']] = morph_tangents
 
 def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings):
     locs = np.empty(len(blender_mesh.vertices) * 3, dtype=np.float32)
@@ -503,6 +592,15 @@ def __get_bitangent_signs(blender_mesh, armature, blender_object, export_setting
 
     return signs
 
+def __get_tangent_attribute(blender_mesh, armature, blender_object, export_settings, attr, dots):
+    tangents = __get_tangents(blender_mesh, armature, blender_object, export_settings)
+    dots[attr['gltf_attribute_name'] + "0"] = tangents[:, 0]
+    dots[attr['gltf_attribute_name'] + "1"] = tangents[:, 1]
+    dots[attr['gltf_attribute_name'] + "2"] = tangents[:, 2]
+    del tangents
+    signs = __get_bitangent_signs(blender_mesh, armature, blender_object, export_settings)
+    dots[attr['gltf_attribute_name'] + "3"] = signs
+    del signs
 
 def __calc_morph_tangents(normals, morph_normal_deltas, tangents):
     # TODO: check if this works
@@ -521,9 +619,8 @@ def __calc_morph_tangents(normals, morph_normal_deltas, tangents):
 
     return morph_tangent_deltas
 
-
-def __get_uvs(blender_mesh, uv_i):
-    layer = blender_mesh.uv_layers[uv_i]
+def __get_uvs_attribute(blender_mesh, blender_uv_idx, attr, dots):
+    layer = blender_mesh.uv_layers[blender_uv_idx]
     uvs = np.empty(len(blender_mesh.loops) * 2, dtype=np.float32)
     layer.data.foreach_get('uv', uvs)
     uvs = uvs.reshape(len(blender_mesh.loops), 2)
@@ -533,17 +630,37 @@ def __get_uvs(blender_mesh, uv_i):
     uvs[:, 1] *= -1
     uvs[:, 1] += 1
 
-    return uvs
+    dots[attr['gltf_attribute_name'] + '0'] = uvs[:, 0]
+    dots[attr['gltf_attribute_name'] + '1'] = uvs[:, 1]
+    del uvs
 
-
-def __get_colors(blender_mesh, color_i):
-    colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
-    layer = blender_mesh.vertex_colors[color_i]
-    blender_mesh.color_attributes[layer.name].data.foreach_get('color', colors)
+def __get_color_attribute(blender_mesh, blender_color_idx, attr, dots):
+    colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32) #TODOATTR type check on attr
+    blender_mesh.color_attributes[blender_color_idx].data.foreach_get('color', colors)
     colors = colors.reshape(len(blender_mesh.loops), 4)
     # colors are already linear, no need to switch color space
-    return colors
+    dots[attr['gltf_attribute_name'] + '0'] = colors[:, 0]
+    dots[attr['gltf_attribute_name'] + '1'] = colors[:, 1]
+    dots[attr['gltf_attribute_name'] + '2'] = colors[:, 2]
+    dots[attr['gltf_attribute_name'] + '3'] = colors[:, 3]
+    del colors
 
+def __get_normal_attribute(blender_object, armature, blender_mesh, key_blocks, use_morph_normals, export_settings, attr, dots):
+    kbs = key_blocks if use_morph_normals else []
+    normals, morph_normals = __get_normals(
+        blender_mesh, kbs, armature, blender_object, export_settings
+    )
+    dots[attr['gltf_attribute_name'] + "0"] = normals[:, 0]
+    dots[attr['gltf_attribute_name'] + "1"] = normals[:, 1]
+    dots[attr['gltf_attribute_name'] + "2"] = normals[:, 2]
+
+    if use_morph_normals:
+        for morph_i, ns in enumerate(morph_normals):
+            dots[attr['gltf_attribute_name_morph'] + str(morph_i) + "0"] = ns[:, 0]
+            dots[attr['gltf_attribute_name_morph'] + str(morph_i) + "1"] = ns[:, 1]
+            dots[attr['gltf_attribute_name_morph'] + str(morph_i) + "2"] = ns[:, 2]
+        del normals
+        del morph_normals
 
 def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
 
