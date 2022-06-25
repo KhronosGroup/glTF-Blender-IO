@@ -28,20 +28,20 @@ def create_settings_group(name):
     return gltf_node_group
 
 def get_gltf_pbr_non_converted_name():
-    return "glTF Non Converted BPR Extensions"
+    return "glTF Non Converted PBR Extensions"
 
 def create_gltf_pbr_non_converted_group(name):
     gltf_node_group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
 
-    specularTexture = gltf_node_group.inputs.new("NodeSocketFloat", "specularTexture")
-    specularTexture.default_value = 1.0
-    specularColorTexture = gltf_node_group.inputs.new("NodeSocketColor", "specularColorTexture")
-    specularColorTexture.default_value = [1.0,1.0,1.0,1.0]
+    specular = gltf_node_group.inputs.new("NodeSocketFloat", "specular glTF")
+    specular.default_value = 1.0
+    specularColor = gltf_node_group.inputs.new("NodeSocketColor", "specularColor glTF")
+    specularColor.default_value = [1.0,1.0,1.0,1.0]
 
-    sheenColorTexture = gltf_node_group.inputs.new("NodeSocketColor", "sheenColorTexture")
-    sheenColorTexture.default_value = [0.0,0.0,0.0,1.0]
-    sheenRoughnessTexture = gltf_node_group.inputs.new("NodeSocketFloat", "sheenRoughnessTexture")
-    specularTexture.default_value = 0.0
+    sheenColor = gltf_node_group.inputs.new("NodeSocketColor", "sheenColor glTF")
+    sheenColor.default_value = [0.0,0.0,0.0,1.0]
+    sheenRoughnessglTF = gltf_node_group.inputs.new("NodeSocketFloat", "sheenRoughness glTF")
+    sheenRoughnessglTF.default_value = 0.0
 
     gltf_node_group.nodes.new('NodeGroupOutput')
     gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')

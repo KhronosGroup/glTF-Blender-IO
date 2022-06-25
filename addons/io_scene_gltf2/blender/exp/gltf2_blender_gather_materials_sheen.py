@@ -21,8 +21,8 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 def export_original_sheen(blender_material, export_settings):
     sheen_extension = {}
 
-    original_sheenColor_socket = gltf2_blender_get.get_socket_original(blender_material, 'sheenColorTexture')
-    original_sheenRoughness_socket = gltf2_blender_get.get_socket_original(blender_material, 'sheenRoughnessTexture')
+    original_sheenColor_socket = gltf2_blender_get.get_socket_original(blender_material, 'sheenColor glTF')
+    original_sheenRoughness_socket = gltf2_blender_get.get_socket_original(blender_material, 'sheenRoughness glTF')
 
     if original_sheenColor_socket is None or original_sheenRoughness_socket is None:
         return None, None

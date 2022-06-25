@@ -251,9 +251,9 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
                 dst_chan = Channel.G
             elif socket.name == 'Thickness': # For KHR_materials_volume
                 dst_chan = Channel.G
-            elif socket.name == "specularTexture": # For original KHR_material_specular
+            elif socket.name == "specular glTF": # For original KHR_material_specular
                 dst_chan = Channel.A
-            elif socket.name == "sheenRoughnessTexture": # For original KHR_material_sheen
+            elif socket.name == "sheenRoughness glTF": # For original KHR_material_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:
