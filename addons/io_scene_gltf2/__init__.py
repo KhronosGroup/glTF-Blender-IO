@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 3, 6),
+    "version": (3, 3, 7),
     'blender': (3, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -382,14 +382,14 @@ class ExportGLTF2_Base:
         ),
         default=True
     )
-    
+
     export_nla_strips_merged_animation_name: StringProperty(
         name='Merged Animation Name',
         description=(
             "Name of single glTF animation to be exported"
         ),
         default='Animation'
-    )    
+    )
 
     export_def_bones: BoolProperty(
         name='Export Deformation Bones Only',
