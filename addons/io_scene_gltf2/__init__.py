@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 3, 5),
+    "version": (3, 3, 8),
     'blender': (3, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -383,9 +383,17 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    export_nla_strips_merged_animation_name: StringProperty(
+        name='Merged Animation Name',
+        description=(
+            "Name of single glTF animation to be exported"
+        ),
+        default='Animation'
+    )
+
     export_def_bones: BoolProperty(
         name='Export Deformation Bones Only',
-        description='Export Deformation bones only (and needed bones for hierarchy)',
+        description='Export Deformation bones only',
         default=False
     )
 
@@ -571,26 +579,26 @@ class ExportGLTF2_Base:
         export_settings['gltf_apply'] = self.export_apply
         export_settings['gltf_current_frame'] = self.export_current_frame
         export_settings['gltf_animations'] = self.export_animations
+        export_settings['gltf_def_bones'] = self.export_def_bones
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
-            if self.export_force_sampling:
-                export_settings['gltf_def_bones'] = self.export_def_bones
-            else:
+            if not self.export_force_sampling:
                 export_settings['gltf_def_bones'] = False
             export_settings['gltf_nla_strips'] = self.export_nla_strips
+            export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.optimize_animation_size
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
-            export_settings['gltf_def_bones'] = False
             export_settings['gltf_optimize_animation'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
         else:
             export_settings['gltf_all_vertex_influences'] = False
+            export_settings['gltf_def_bones'] = False
         export_settings['gltf_frame_step'] = self.export_frame_step
         export_settings['gltf_morph'] = self.export_morph
         if self.export_morph:
@@ -874,13 +882,9 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_frame_step')
         layout.prop(operator, 'export_force_sampling')
         layout.prop(operator, 'export_nla_strips')
+        if operator.export_nla_strips is False:
+            layout.prop(operator, 'export_nla_strips_merged_animation_name')
         layout.prop(operator, 'optimize_animation_size')
-
-        row = layout.row()
-        row.active = operator.export_force_sampling
-        row.prop(operator, 'export_def_bones')
-        if operator.export_force_sampling is False and operator.export_def_bones is True:
-            layout.label(text="Export only deformation bones is not possible when not sampling animation")
 
 
 class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
@@ -947,6 +951,12 @@ class GLTF_PT_export_animation_skinning(bpy.types.Panel):
 
         layout.active = operator.export_skins
         layout.prop(operator, 'export_all_influences')
+
+        row = layout.row()
+        row.active = operator.export_force_sampling
+        row.prop(operator, 'export_def_bones')
+        if operator.export_force_sampling is False and operator.export_def_bones is True:
+            layout.label(text="Export only deformation bones is not possible when not sampling animation")
 
 class GLTF_PT_export_user_extensions(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
