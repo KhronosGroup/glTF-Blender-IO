@@ -118,9 +118,10 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attr['func_get_args'] = [blender_mesh, blender_mesh.color_attributes.render_color_index]
 
         else:
-            attr['gltf_attribute_name'] = '_' + blender_attribute.upper()
-            attr['func_get'] = None #TODOATTR
-            attr['func_get_args'] = None #TODOATTR
+            attr['gltf_attribute_name'] = '_' + blender_attribute.name.upper()
+            attr['func_get'] = __get_layer_attribute
+            attr['func_get_args'] = [blender_mesh]
+            # TODOATTR add new option to export attributes
         
         blender_attributes.append(attr)
 
@@ -307,19 +308,21 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         # Now just move all the data for prim_dots into attribute arrays
 
         attributes = {}
+        attributes_config = {}
 
         blender_idxs = prim_dots['vertex_index']
 
         for attr in blender_attributes:
-            if 'after_others' in attr.keys():
-                continue
-            if 'func_set' in attr.keys():
+            if 'after_others' in attr.keys(): # Some attributes need others to be already calculated (exemple : morph tangents)
+                continue 
+            if 'func_set' in attr.keys(): # Special function is needed
                 attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
-            else:
+            else: # Regular case
                 res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
                 for i in range(attr['len']):
                     res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
                 attributes[attr['gltf_attribute_name']] = res
+                attributes_config[attr['gltf_attribute_name']] = attr
 
         # Some attributes need others to be already calculated (exemple : morph tangents)
         for attr in blender_attributes:
@@ -332,6 +335,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 for i in range(attr['len']):
                     res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
                 attributes[attr['gltf_attribute_name']] = res
+                attributes_config[attr['gltf_attribute_name']] = attr
             
         if skin:
             joints = [[] for _ in range(num_joint_sets)]
@@ -350,11 +354,13 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             for i, (js, ws) in enumerate(zip(joints, weights)):
                 attributes['JOINTS_%d' % i] = js
                 attributes['WEIGHTS_%d' % i] = ws
+                #TODOATTR add config
 
         primitives.append({
             'attributes': attributes,
             'indices': indices,
             'material': material_idx,
+            'attributes_config': attributes_config
         })
 
     if export_settings['gltf_loose_edges']:
@@ -368,6 +374,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             blender_idxs, indices = np.unique(blender_idxs, return_inverse=True)
 
             attributes = {}
+            attributes_config = {}
 
             for attr in blender_attributes:
                 if 'enable_for_edge' not in attr.keys():
@@ -379,6 +386,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                     for i in range(attr['len']):
                         res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
                     attributes[attr['gltf_attribute_name']] = res
+                    attributes_config[attr['gltf_attribute_name']] = attr
 
             if skin:
                 joints = [[] for _ in range(num_joint_sets)]
@@ -397,12 +405,14 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 for i, (js, ws) in enumerate(zip(joints, weights)):
                     attributes['JOINTS_%d' % i] = js
                     attributes['WEIGHTS_%d' % i] = ws
+                    #TODOATTR add config
 
             primitives.append({
                 'attributes': attributes,
                 'indices': indices,
                 'mode': 1,  # LINES
                 'material': 0,
+                'attributes_config': attributes_config
             })
 
     if export_settings['gltf_loose_points']:
@@ -417,6 +427,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             blender_idxs = np.array(blender_idxs, dtype=np.uint32)
 
             attributes = {}
+            attributes_config = {}
 
             for attr in blender_attributes:
                 if 'enable_for_point' not in attr.keys():
@@ -428,6 +439,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                     for i in range(attr['len']):
                         res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
                     attributes[attr['gltf_attribute_name']] = res
+                    attributes_config[attr['gltf_attribute_name']] = attr
 
             if skin:
                 joints = [[] for _ in range(num_joint_sets)]
@@ -446,11 +458,13 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 for i, (js, ws) in enumerate(zip(joints, weights)):
                     attributes['JOINTS_%d' % i] = js
                     attributes['WEIGHTS_%d' % i] = ws
+                    #TODOATTR add config
 
             primitives.append({
                 'attributes': attributes,
                 'mode': 0,  # POINTS
                 'material': 0,
+                'attributes_config': attributes_config
             })
 
     print_console('INFO', 'Primitives created: %d' % len(primitives))
@@ -644,6 +658,73 @@ def __get_color_attribute(blender_mesh, blender_color_idx, attr, dots):
     dots[attr['gltf_attribute_name'] + '2'] = colors[:, 2]
     dots[attr['gltf_attribute_name'] + '3'] = colors[:, 3]
     del colors
+
+def __get_layer_attribute(blender_mesh, attr, dots):
+    if attr['blender_domain'] in ['CORNER']:
+        data = np.empty(len(blender_mesh.loops) * attr['len'], dtype=attr['type'])
+    elif attr['blender_domain'] in ['POINT']:
+        data = np.empty(len(blender_mesh.vertices) * attr['len'], dtype=attr['type'])
+    elif attr['blender_domain'] in ['EDGE']:
+        data = np.empty(len(blender_mesh.edges) * attr['len'], dtype=attr['type'])
+    elif attr['blender_domain'] in ['FACE']:
+        data = np.empty(len(blender_mesh.polygons) * attr['len'], dtype=attr['type'])
+    else:
+        print_console("ERROR", "domain not known")
+
+    if attr['blender_data_type'] == "BYTE_COLOR":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('color', data)
+        data = data.reshape(-1, attr['len'])
+    elif attr['blender_data_type'] == "INT8":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('value', data)
+        data = data.reshape(-1, attr['len'])
+    elif attr['blender_data_type'] == "FLOAT2":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('vector', data)
+        data = data.reshape(-1, attr['len'])
+    elif attr['blender_data_type'] == "BOOLEAN":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('value', data)
+        data = data.reshape(-1, attr['len'])
+    elif attr['blender_data_type'] == "STRING":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('value', data)
+        data = data.reshape(-1, attr['len'])
+    elif attr['blender_data_type'] == "FLOAT_COLOR":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('color', data)
+        data = data.reshape(-1, attr['len'])
+    elif attr['blender_data_type'] == "FLOAT_VECTOR":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('vector', data)
+        data = data.reshape(-1, attr['len'])
+    elif attr['blender_data_type'] == "FLOAT_VECTOR_4": # Specific case for tangent
+        pass
+    elif attr['blender_data_type'] == "INT":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('value', data)
+        data = data.reshape(-1, attr['len'])
+    elif attr['blender_data_type'] == "FLOAT":
+        blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('value', data)
+        data = data.reshape(-1, attr['len'])
+    else:
+        print_console('ERROR',"blender type not found " +  attr['blender_data_type'])
+
+    if attr['blender_domain'] in ['CORNER']:
+        for i in range(attr['len']):
+            dots[attr['gltf_attribute_name'] + str(i)] = data[:, i]
+    elif attr['blender_domain'] in ['POINT']:
+        if attr['len'] > 1:
+            data = data.reshape(-1, attr['len'])
+        data = data[dots['vertex_index']]
+        for i in range(attr['len']):
+            dots[attr['gltf_attribute_name'] + str(i)] = data[:, i]
+    elif attr['blender_domain'] in ['EDGE']:
+        # edgevidxs = np.array([tuple(edge.vertices) for edge in blender_mesh.edges[:]], dtype="object")
+        # TODOATTR need to find how to dispatch edges data to right dots
+        pass
+    elif attr['blender_domain'] in ['FACE']:
+        if attr['len'] > 1:
+            data = data.reshape(-1, attr['len'])
+        data = data.repeat(4, axis=0)
+        for i in range(attr['len']):
+            dots[attr['gltf_attribute_name'] + str(i)] = data[:, i]
+
+    else:
+        print_console("ERROR", "domain not known")
 
 def __get_normal_attribute(blender_object, armature, blender_mesh, key_blocks, use_morph_normals, export_settings, attr, dots):
     kbs = key_blocks if use_morph_normals else []

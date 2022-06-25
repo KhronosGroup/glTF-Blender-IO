@@ -34,6 +34,7 @@ def gather_primitive_attributes(blender_primitive, export_settings):
     attributes.update(__gather_texcoord(blender_primitive, export_settings))
     attributes.update(__gather_colors(blender_primitive, export_settings))
     attributes.update(__gather_skins(blender_primitive, export_settings))
+    #TODOATTR add other attributes
     return attributes
 
 
