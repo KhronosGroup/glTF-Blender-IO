@@ -147,10 +147,13 @@ def __gather_colors(blender_primitive, export_settings):
                 colors = np.array(colors, dtype=np.float32)
                 colors = colors.reshape(len(colors) // 4, 4)
 
-            # Convert to normalized ushorts
-            colors *= 65535
-            colors += 0.5  # bias for rounding
-            colors = colors.astype(np.uint16)
+            normalized = False
+            if col['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
+                # Convert to normalized ushorts
+                colors *= 65535
+                colors += 0.5  # bias for rounding
+                colors = colors.astype(np.uint16)
+                normalized = True        
 
             attributes[color_id] = gltf2_io.Accessor(
                 buffer_view=gltf2_io_binary_data.BinaryData(colors.tobytes()),
@@ -162,7 +165,7 @@ def __gather_colors(blender_primitive, export_settings):
                 max=None,
                 min=None,
                 name=None,
-                normalized=True,
+                normalized=normalized,
                 sparse=None,
                 type=col['data_type'],
             )

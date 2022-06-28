@@ -327,13 +327,12 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 elif 'gltf_attribute_name' == "TANGENT":
                     attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
                     attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec4
-                elif 'gltf_attribute_name'.startswith('TEXCOORD_'):
+                elif attr['gltf_attribute_name'].startswith('TEXCOORD_'):
                     attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
                     attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec2
-                elif 'gltf_attribute_name'.startswith('COLOR_'):
-                    # TODOATTR manage float
-                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.UnsignedShort
-                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec4               
+                elif attr['gltf_attribute_name'].startswith('COLOR_'):
+                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
+                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])     
                 else:
                     attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
                     attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
@@ -669,9 +668,16 @@ def __get_uvs_attribute(blender_mesh, blender_uv_idx, attr, dots):
     del uvs
 
 def __get_color_attribute(blender_mesh, blender_color_idx, attr, dots):
-    colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
+    if attr['blender_domain'] == "POINT":
+        colors = np.empty(len(blender_mesh.vertices) * 4, dtype=np.float32)
+    elif attr['blender_domain'] == "CORNER":
+        colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
     blender_mesh.color_attributes[blender_color_idx].data.foreach_get('color', colors)
-    colors = colors.reshape(len(blender_mesh.loops), 4)
+    if attr['blender_domain'] == "POINT":
+        colors = colors.reshape(-1, 4)
+        colors = colors[dots['vertex_index']]
+    elif attr['blender_domain'] == "CORNER":
+        colors = colors.reshape(-1, 4)
     # colors are already linear, no need to switch color space
     dots[attr['gltf_attribute_name'] + '0'] = colors[:, 0]
     dots[attr['gltf_attribute_name'] + '1'] = colors[:, 1]
