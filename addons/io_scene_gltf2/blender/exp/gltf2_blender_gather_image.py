@@ -201,8 +201,6 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     # Check if we need a simple mapping or more complex calculation
     if any([socket.name == "Specular" for socket in sockets]):
         return __get_image_data_specular(sockets, results, export_settings)
-    elif any([socket.name == "Sheen" for socket in sockets]):
-         return __get_image_data_sheen(sockets, results, export_settings)
     else:
         return __get_image_data_mapping(sockets, results, export_settings)
     
@@ -253,7 +251,7 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
                 dst_chan = Channel.G
             elif socket.name == "specular glTF": # For original KHR_material_specular
                 dst_chan = Channel.A
-            elif socket.name == "sheenRoughness glTF": # For original KHR_material_sheen
+            elif socket.name == "Sigma": # For KHR_materials_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:
@@ -277,48 +275,6 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
                                          "Image '{}' has no size and cannot be exported.".format(
                                              composed_image.fills[k].image))
             del composed_image.fills[k]
-
-    return composed_image
-
-def __get_image_data_sheen(sockets, results, export_settings) -> ExportImage:
-    """
-    calculating Sheen Texture, settings needed data
-    """
-    from io_scene_gltf2.blender.exp.gltf2_blender_texture_sheen import sheen_calculation
-    composed_image = ExportImage()
-    composed_image.set_calc(sheen_calculation)
-
-    results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
-    mapping = {
-        0: "sheen",
-        1: "sheen_tint",
-        2: "base_color"
-    }
-
-    for idx, result in enumerate(results):
-        if __get_tex_from_socket(sockets[idx], export_settings):
-            composed_image.store_data(mapping[idx], result.shader_node.image, type="Image")
-
-            # rudimentarily try follow the node tree to find the correct image data.
-            src_chan = None if idx == 2 else Channel.R
-            for elem in result.path:
-                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateColor):
-                    src_chan = {
-                        'Red': Channel.R,
-                        'Green': Channel.G,
-                        'Blue': Channel.B,
-                    }[elem.from_socket.name]
-                if elem.from_socket.name == 'Alpha':
-                    src_chan = Channel.A
-            # For base_color, keep all channels, as this is a Vec, not scalar
-            if idx != 2:
-                composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
-            else:
-                if src_chan is not None:
-                    composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
-
-        else:
-            composed_image.store_data(mapping[idx], sockets[idx].default_value, type="Data")
 
     return composed_image
 

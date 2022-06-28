@@ -38,11 +38,6 @@ def create_gltf_pbr_non_converted_group(name):
     specularColor = gltf_node_group.inputs.new("NodeSocketColor", "specularColor glTF")
     specularColor.default_value = [1.0,1.0,1.0,1.0]
 
-    sheenColor = gltf_node_group.inputs.new("NodeSocketColor", "sheenColor glTF")
-    sheenColor.default_value = [0.0,0.0,0.0,1.0]
-    sheenRoughnessglTF = gltf_node_group.inputs.new("NodeSocketFloat", "sheenRoughness glTF")
-    sheenRoughnessglTF.default_value = 0.0
-
     gltf_node_group.nodes.new('NodeGroupOutput')
     gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
     gltf_node_group_input.location = -400, 0
