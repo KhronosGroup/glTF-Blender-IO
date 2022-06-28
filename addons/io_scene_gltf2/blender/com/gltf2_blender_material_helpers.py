@@ -28,7 +28,7 @@ def create_settings_group(name):
     return gltf_node_group
 
 def get_gltf_pbr_non_converted_name():
-    return "glTF Non Converted PBR Extensions"
+    return "original glTF PBR data"
 
 def create_gltf_pbr_non_converted_group(name):
     gltf_node_group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
