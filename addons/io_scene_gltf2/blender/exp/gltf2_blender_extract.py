@@ -113,6 +113,11 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         attr['blender_domain'] = blender_attribute.domain
         attr['blender_data_type'] = blender_attribute.data_type
 
+        # TODOATTR: For now, we don't export edge data, because I need to find how to 
+        # get from edge data to dots data
+        if attr['blender_domain'] == "EDGE":
+            continue
+
         # Some type are not exportable (example : String or bool)
         if gltf2_blender_conversion.get_component_type(blender_attribute.data_type) is None or \
             gltf2_blender_conversion.get_data_type(blender_attribute.data_type) is None:
@@ -128,12 +133,24 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attr['func_get'] = __get_color_attribute
             attr['func_get_args'] = [blender_mesh, blender_mesh.color_attributes.render_color_index]
 
+            # If color are defined at vertex level (not at corner face level), we can export colors for loose edges/points
+            if attr['blender_domain'] == "POINT":
+                attr['enable_for_edge'] = True
+                attr['enable_for_point'] = True
+
         else:
             attr['gltf_attribute_name'] = '_' + blender_attribute.name.upper()
             attr['func_get'] = __get_layer_attribute
             attr['func_get_args'] = [blender_mesh]
             if export_settings['gltf_attributes'] is False:
                 continue
+
+            if attr['blender_domain'] == "POINT":
+                attr['enable_for_point'] = True
+
+            if attr['blender_domain'] == "EDGE":
+                attr['enable_for_edge'] = True
+                attr['enable_for_point'] = True
         
         blender_attributes.append(attr)
 
@@ -371,7 +388,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             blender_idxs, indices = np.unique(blender_idxs, return_inverse=True)
 
             attributes = {}
-            attributes_config = {}
 
             for attr in blender_attributes:
                 if 'enable_for_edge' not in attr.keys():
@@ -382,8 +398,11 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                     res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
                     for i in range(attr['len']):
                         res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
-                    attributes[attr['gltf_attribute_name']] = res
-                    attributes_config[attr['gltf_attribute_name']] = attr
+                    attributes[attr['gltf_attribute_name']] = {}
+                    attributes[attr['gltf_attribute_name']]["data"] = res
+                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
+                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
+
 
             if skin:
                 joints = [[] for _ in range(num_joint_sets)]
@@ -407,8 +426,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 'attributes': attributes,
                 'indices': indices,
                 'mode': 1,  # LINES
-                'material': 0,
-                'attributes_config': attributes_config
+                'material': 0
             })
 
     if export_settings['gltf_loose_points']:
@@ -423,7 +441,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             blender_idxs = np.array(blender_idxs, dtype=np.uint32)
 
             attributes = {}
-            attributes_config = {}
 
             for attr in blender_attributes:
                 if 'enable_for_point' not in attr.keys():
@@ -434,8 +451,11 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                     res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
                     for i in range(attr['len']):
                         res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
-                    attributes[attr['gltf_attribute_name']] = res
-                    attributes_config[attr['gltf_attribute_name']] = attr
+                    attributes[attr['gltf_attribute_name']] = {}
+                    attributes[attr['gltf_attribute_name']]["data"] = res
+                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
+                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
+
 
             if skin:
                 joints = [[] for _ in range(num_joint_sets)]
@@ -458,8 +478,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             primitives.append({
                 'attributes': attributes,
                 'mode': 0,  # POINTS
-                'material': 0,
-                'attributes_config': attributes_config
+                'material': 0
             })
 
     print_console('INFO', 'Primitives created: %d' % len(primitives))
@@ -650,7 +669,7 @@ def __get_uvs_attribute(blender_mesh, blender_uv_idx, attr, dots):
     del uvs
 
 def __get_color_attribute(blender_mesh, blender_color_idx, attr, dots):
-    colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32) #TODOATTR type check on attr
+    colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
     blender_mesh.color_attributes[blender_color_idx].data.foreach_get('color', colors)
     colors = colors.reshape(len(blender_mesh.loops), 4)
     # colors are already linear, no need to switch color space
