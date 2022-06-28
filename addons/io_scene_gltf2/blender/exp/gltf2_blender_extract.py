@@ -18,6 +18,8 @@ from mathutils import Vector
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
+from io_scene_gltf2.io.com import gltf2_io_constants
+from io_scene_gltf2.blender.com import gltf2_blender_conversion
 
 
 def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
@@ -110,7 +112,16 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         attr['blender_name'] = blender_attribute.name
         attr['blender_domain'] = blender_attribute.domain
         attr['blender_data_type'] = blender_attribute.data_type
-        if blender_mesh.color_attributes.find(blender_attribute.name) == blender_mesh.color_attributes.render_color_index:
+
+        # Some type are not exportable (example : String or bool)
+        if gltf2_blender_conversion.get_component_type(blender_attribute.data_type) is None or \
+            gltf2_blender_conversion.get_data_type(blender_attribute.data_type) is None:
+
+            continue
+
+        if blender_mesh.color_attributes.find(blender_attribute.name) == blender_mesh.color_attributes.render_color_index \
+            and blender_mesh.color_attributes.render_color_index != -1:
+
             if export_settings[gltf2_blender_export_keys.COLORS] is False:
                 continue
             attr['gltf_attribute_name'] = 'COLOR_0'
@@ -121,7 +132,8 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attr['gltf_attribute_name'] = '_' + blender_attribute.name.upper()
             attr['func_get'] = __get_layer_attribute
             attr['func_get_args'] = [blender_mesh]
-            # TODOATTR add new option to export attributes
+            if export_settings['gltf_attributes'] is False:
+                continue
         
         blender_attributes.append(attr)
 
@@ -203,38 +215,8 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     # Now that we get all attributes that are going to be exported, create numpy array that will store them
     for attr in blender_attributes:
-        if attr['blender_data_type'] == "BYTE_COLOR":
-            attr['len'] = 4
-            attr['type'] = np.float32
-        elif attr['blender_data_type'] == "INT8":
-            attr['len'] = 1
-            attr['type'] = np.int8
-        elif attr['blender_data_type'] == "FLOAT2":
-            attr['len'] = 2
-            attr['type'] = np.float32
-        elif attr['blender_data_type'] == "BOOLEAN":
-            attr['len'] = 1
-            attr['type'] = bool
-        elif attr['blender_data_type'] == "STRING":
-            attr['len'] = 1
-            attr['type'] = str
-        elif attr['blender_data_type'] == "FLOAT_COLOR":
-            attr['len'] = 4
-            attr['type'] = np.float32
-        elif attr['blender_data_type'] == "FLOAT_VECTOR":
-            attr['len'] = 3
-            attr['type'] = np.float32
-        elif attr['blender_data_type'] == "FLOAT_VECTOR_4": # Specific case for tangent
-            attr['len'] = 4
-            attr['type'] = np.float32
-        elif attr['blender_data_type'] == "INT":
-            attr['len'] = 1
-            attr['type'] = np.int32
-        elif attr['blender_data_type'] == "FLOAT":
-            attr['len'] = 1
-            attr['type'] = np.float32
-        else:
-            print_console('ERROR',"blender type not found " +  attr['blender_data_type'])
+        attr['len'] = gltf2_blender_conversion.get_data_length(attr['blender_data_type'])
+        attr['type'] = gltf2_blender_conversion.get_numpy_type(attr['blender_data_type'])
 
     dot_fields = [('vertex_index', np.uint32)]
     for attr in blender_attributes:
@@ -308,7 +290,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         # Now just move all the data for prim_dots into attribute arrays
 
         attributes = {}
-        attributes_config = {}
 
         blender_idxs = prim_dots['vertex_index']
 
@@ -321,8 +302,24 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
                 for i in range(attr['len']):
                     res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
-                attributes[attr['gltf_attribute_name']] = res
-                attributes_config[attr['gltf_attribute_name']] = attr
+                attributes[attr['gltf_attribute_name']] = {}
+                attributes[attr['gltf_attribute_name']]["data"] = res
+                if 'gltf_attribute_name' == "NORMAL":
+                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
+                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3
+                elif 'gltf_attribute_name' == "TANGENT":
+                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
+                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec4
+                elif 'gltf_attribute_name'.startswith('TEXCOORD_'):
+                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
+                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec2
+                elif 'gltf_attribute_name'.startswith('COLOR_'):
+                    # TODOATTR manage float
+                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.UnsignedShort
+                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec4               
+                else:
+                    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
+                    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
 
         # Some attributes need others to be already calculated (exemple : morph tangents)
         for attr in blender_attributes:
@@ -334,8 +331,10 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
                 for i in range(attr['len']):
                     res[:, i] = prim_dots[attr['gltf_attribute_name'] + str(i)]
-                attributes[attr['gltf_attribute_name']] = res
-                attributes_config[attr['gltf_attribute_name']] = attr
+                attributes[attr['gltf_attribute_name']] = {}
+                attributes[attr['gltf_attribute_name']]["data"] = res
+                attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
+                attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
             
         if skin:
             joints = [[] for _ in range(num_joint_sets)]
@@ -354,13 +353,11 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             for i, (js, ws) in enumerate(zip(joints, weights)):
                 attributes['JOINTS_%d' % i] = js
                 attributes['WEIGHTS_%d' % i] = ws
-                #TODOATTR add config
 
         primitives.append({
             'attributes': attributes,
             'indices': indices,
-            'material': material_idx,
-            'attributes_config': attributes_config
+            'material': material_idx
         })
 
     if export_settings['gltf_loose_edges']:
@@ -405,7 +402,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 for i, (js, ws) in enumerate(zip(joints, weights)):
                     attributes['JOINTS_%d' % i] = js
                     attributes['WEIGHTS_%d' % i] = ws
-                    #TODOATTR add config
 
             primitives.append({
                 'attributes': attributes,
@@ -458,7 +454,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 for i, (js, ws) in enumerate(zip(joints, weights)):
                     attributes['JOINTS_%d' % i] = js
                     attributes['WEIGHTS_%d' % i] = ws
-                    #TODOATTR add config
 
             primitives.append({
                 'attributes': attributes,
@@ -473,18 +468,24 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
 
 def __set_positions_attribute(locs, attr, attributes, blender_idxs):
-    attributes[attr['gltf_attribute_name']] = locs[blender_idxs]
+    attributes[attr['gltf_attribute_name']] = {}
+    attributes[attr['gltf_attribute_name']]["data"] = locs[blender_idxs]
+    attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3
+    attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
+
 
 def __set_morph_locs_attribute(morph_locs, attr, attributes, blender_idxs):
-    attributes[attr['gltf_attribute_name']] = morph_locs[attr['blender_attribute_index']][blender_idxs]
+    attributes[attr['gltf_attribute_name']] = {}
+    attributes[attr['gltf_attribute_name']]["data"] = morph_locs[attr['blender_attribute_index']][blender_idxs]
 
 def __set_morph_tangent_attribute(attr, attributes, blender_idx):
-    normals = attributes[attr['gltf_attribute_name_normal']]
-    morph_normals = attributes[attr['gltf_attribute_name_morph_normal']]
-    tangent = attributes[attr['gltf_attribute_name_tangent']]
+    normals = attributes[attr['gltf_attribute_name_normal']]["data"]
+    morph_normals = attributes[attr['gltf_attribute_name_morph_normal']]["data"]
+    tangent = attributes[attr['gltf_attribute_name_tangent']]["data"]
 
     morph_tangents = __calc_morph_tangents(normals, morph_normals, tangent)
-    attributes[attr['gltf_attribute_name']] = morph_tangents
+    attributes[attr['gltf_attribute_name']] = {}
+    attributes[attr['gltf_attribute_name']]["data"] = morph_tangents
 
 def __get_positions(blender_mesh, key_blocks, armature, blender_object, export_settings):
     locs = np.empty(len(blender_mesh.vertices) * 3, dtype=np.float32)

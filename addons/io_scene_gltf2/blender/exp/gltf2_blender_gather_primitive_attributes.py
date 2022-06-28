@@ -34,7 +34,11 @@ def gather_primitive_attributes(blender_primitive, export_settings):
     attributes.update(__gather_texcoord(blender_primitive, export_settings))
     attributes.update(__gather_colors(blender_primitive, export_settings))
     attributes.update(__gather_skins(blender_primitive, export_settings))
-    #TODOATTR add other attributes
+
+    # Add custom attributes
+    for attribute in [attr_key for attr_key in blender_primitive["attributes"].keys() if attr_key[0] == "_"]:
+        attributes.update(__gather_custom_attribute(blender_primitive, attribute, export_settings))
+
     return attributes
 
 
@@ -75,9 +79,9 @@ def __gather_position(blender_primitive, export_settings):
     position = blender_primitive["attributes"]["POSITION"]
     return {
         "POSITION": array_to_accessor(
-            position,
-            component_type=gltf2_io_constants.ComponentType.Float,
-            data_type=gltf2_io_constants.DataType.Vec3,
+            position['data'],
+            component_type=position['component_type'],
+            data_type=position['data_type'],
             include_max_and_min=True
         )
     }
@@ -91,9 +95,9 @@ def __gather_normal(blender_primitive, export_settings):
     normal = blender_primitive["attributes"]['NORMAL']
     return {
         "NORMAL": array_to_accessor(
-            normal,
-            component_type=gltf2_io_constants.ComponentType.Float,
-            data_type=gltf2_io_constants.DataType.Vec3,
+            normal['data'],
+            component_type=normal['component_type'],
+            data_type=normal['data_type'],
         )
     }
 
@@ -106,9 +110,9 @@ def __gather_tangent(blender_primitive, export_settings):
     tangent = blender_primitive["attributes"]['TANGENT']
     return {
         "TANGENT": array_to_accessor(
-            tangent,
-            component_type=gltf2_io_constants.ComponentType.Float,
-            data_type=gltf2_io_constants.DataType.Vec4,
+            tangent['data'],
+            component_type=tangent['component_type'],
+            data_type=tangent['data_type'],
         )
     }
 
@@ -121,9 +125,9 @@ def __gather_texcoord(blender_primitive, export_settings):
         while blender_primitive["attributes"].get(tex_coord_id) is not None:
             tex_coord = blender_primitive["attributes"][tex_coord_id]
             attributes[tex_coord_id] = array_to_accessor(
-                tex_coord,
-                component_type=gltf2_io_constants.ComponentType.Float,
-                data_type=gltf2_io_constants.DataType.Vec2,
+                tex_coord['data'],
+                component_type=tex_coord['component_type'],
+                data_type=tex_coord['data_type'],
             )
             tex_coord_index += 1
             tex_coord_id = 'TEXCOORD_' + str(tex_coord_index)
@@ -136,7 +140,8 @@ def __gather_colors(blender_primitive, export_settings):
         color_index = 0
         color_id = 'COLOR_' + str(color_index)
         while blender_primitive["attributes"].get(color_id) is not None:
-            colors = blender_primitive["attributes"][color_id]
+            col = blender_primitive["attributes"][color_id]
+            colors = col['data']
 
             if type(colors) is not np.ndarray:
                 colors = np.array(colors, dtype=np.float32)
@@ -150,7 +155,7 @@ def __gather_colors(blender_primitive, export_settings):
             attributes[color_id] = gltf2_io.Accessor(
                 buffer_view=gltf2_io_binary_data.BinaryData(colors.tobytes()),
                 byte_offset=None,
-                component_type=gltf2_io_constants.ComponentType.UnsignedShort,
+                component_type=col['component_type'],
                 count=len(colors),
                 extensions=None,
                 extras=None,
@@ -159,7 +164,7 @@ def __gather_colors(blender_primitive, export_settings):
                 name=None,
                 normalized=True,
                 sparse=None,
-                type=gltf2_io_constants.DataType.Vec4,
+                type=col['data_type'],
             )
 
             color_index += 1
@@ -235,3 +240,14 @@ def __gather_skins(blender_primitive, export_settings):
         attributes[weight_id] = weight
 
     return attributes
+
+def __gather_custom_attribute(blender_primitive, attribute, export_settings):
+    data = blender_primitive["attributes"][attribute]
+    return {
+        attribute: array_to_accessor(
+            data['data'],
+            component_type=data['component_type'],
+            data_type=data['data_type'],
+            include_max_and_min=True
+        )
+    }

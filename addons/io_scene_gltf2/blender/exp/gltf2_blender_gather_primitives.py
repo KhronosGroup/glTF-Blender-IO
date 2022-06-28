@@ -193,7 +193,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
 
                 if blender_primitive["attributes"].get(target_position_id) is not None:
                     target = {}
-                    internal_target_position = blender_primitive["attributes"][target_position_id]
+                    internal_target_position = blender_primitive["attributes"][target_position_id]["data"]
                     target["POSITION"] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
                         internal_target_position,
                         component_type=gltf2_io_constants.ComponentType.Float,
@@ -205,7 +205,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                             and export_settings[MORPH_NORMAL] \
                             and blender_primitive["attributes"].get(target_normal_id) is not None:
 
-                        internal_target_normal = blender_primitive["attributes"][target_normal_id]
+                        internal_target_normal = blender_primitive["attributes"][target_normal_id]["data"]
                         target['NORMAL'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
                             internal_target_normal,
                             component_type=gltf2_io_constants.ComponentType.Float,
@@ -215,7 +215,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                     if export_settings[TANGENTS] \
                             and export_settings[MORPH_TANGENT] \
                             and blender_primitive["attributes"].get(target_tangent_id) is not None:
-                        internal_target_tangent = blender_primitive["attributes"][target_tangent_id]
+                        internal_target_tangent = blender_primitive["attributes"][target_tangent_id]["data"]
                         target['TANGENT'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
                             internal_target_tangent,
                             component_type=gltf2_io_constants.ComponentType.Float,
