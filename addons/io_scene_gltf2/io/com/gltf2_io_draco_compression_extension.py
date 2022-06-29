@@ -38,7 +38,7 @@ def dll_path() -> Path:
             'darwin': blender_root.parent / 'Resources' / python_lib / python_version / 'site-packages'
         }.get(sys.platform)
     else:
-        path = Path(path)
+        return Path(path)
 
     library_name = {
         'win32': '{}.dll'.format(lib_name),
@@ -57,12 +57,11 @@ def dll_exists(quiet=False) -> bool:
     Checks whether the DLL path exists.
     :return: True if the DLL exists.
     """
-    exists = dll_path().exists()
+    path = dll_path()
+    exists = path.exists() and path.is_file()
     if quiet is False:
-        print("'{}' ".format(dll_path().absolute()) + ("exists, draco mesh compression is available" if exists else
-                                                       "{} {} {}".format(
-                                                           "does not exist, draco mesh compression not available,",
-                                                           "please add it or create environment variable BLENDER_EXTERN_DRACO_LIBRARY_PATH",
-                                                           "pointing to the folder"
-                                                      )))
+        if exists:
+            print_console('INFO', 'Draco mesh compression is available, use library at %s' % dll_path().absolute())
+        else:
+            print_console('ERROR', 'Draco mesh compression is not available because library could not be found at %s' % dll_path().absolute())
     return exists
