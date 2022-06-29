@@ -24,7 +24,7 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
     drivers = []
 
     # Take into account skinned mesh, and mesh parented to a bone of the armature
-    children_list = export_settings['vtree'].nodes[blender_armature_uuid].children
+    children_list = export_settings['vtree'].nodes[blender_armature_uuid].children.copy()
     for bone in export_settings['vtree'].get_all_bones(blender_armature_uuid):
         children_list.extend(export_settings['vtree'].nodes[bone].children)
 
