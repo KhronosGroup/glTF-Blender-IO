@@ -70,7 +70,7 @@ def get_component_type(attribute_component_type):
         "FLOAT_COLOR": gltf2_io_constants.ComponentType.Float,
         "FLOAT_VECTOR": gltf2_io_constants.ComponentType.Float,
         "FLOAT_VECTOR_4": gltf2_io_constants.ComponentType.Float,
-        "INT": gltf2_io_constants.ComponentType.UnsignedInt,
+        "INT": gltf2_io_constants.ComponentType.Float, # No signed Int in glTF accessor
         "FLOAT": gltf2_io_constants.ComponentType.Float
     }.get(attribute_component_type)
 
@@ -106,6 +106,6 @@ def get_numpy_type(attribute_component_type):
         "FLOAT_COLOR": np.float32,
         "FLOAT_VECTOR": np.float32,
         "FLOAT_VECTOR_4": np.float32,
-        "INT": np.int32,
+        "INT": np.float32,
         "FLOAT": np.float32
     }.get(attribute_component_type)
