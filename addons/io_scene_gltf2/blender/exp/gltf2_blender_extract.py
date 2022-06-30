@@ -118,7 +118,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         if attr['blender_domain'] == "EDGE":
             continue
 
-        # Some type are not exportable (example : String or bool)
+        # Some type are not exportable (example : String)
         if gltf2_blender_conversion.get_component_type(blender_attribute.data_type) is None or \
             gltf2_blender_conversion.get_data_type(blender_attribute.data_type) is None:
 
@@ -133,11 +133,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attr['func_get'] = __get_color_attribute
             attr['func_get_args'] = [blender_mesh, blender_mesh.color_attributes.render_color_index]
 
-            # If color are defined at vertex level (not at corner face level), we can export colors for loose edges/points
-            if attr['blender_domain'] == "POINT":
-                attr['enable_for_edge'] = True
-                attr['enable_for_point'] = True
-
         else:
             attr['gltf_attribute_name'] = '_' + blender_attribute.name.upper()
             attr['func_get'] = __get_layer_attribute
@@ -145,23 +140,15 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             if export_settings['gltf_attributes'] is False:
                 continue
 
-            if attr['blender_domain'] == "POINT":
-                attr['enable_for_point'] = True
-
-            if attr['blender_domain'] == "EDGE":
-                attr['enable_for_edge'] = True
-                attr['enable_for_point'] = True
-        
         blender_attributes.append(attr)
 
     # Manage POSITION
     attr = {}
     attr['blender_data_type'] = 'FLOAT_VECTOR'
+    attr['blender_domain'] = 'POINT'
     attr['gltf_attribute_name'] = 'POSITION'
     attr['func_set'] = __set_positions_attribute
     attr['func_set_args'] = [locs]
-    attr['enable_for_edge'] = True
-    attr['enable_for_point'] = True
     attr['skip_getting_to_dots'] = True
     blender_attributes.append(attr)
 
@@ -169,6 +156,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     for tex_coord_i in range(tex_coord_max):
         attr = {}
         attr['blender_data_type'] = 'FLOAT2'
+        attr['blender_domain'] = 'CORNER'
         attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
         attr['func_get'] = __get_uvs_attribute
         attr['func_get_args'] = [blender_mesh, tex_coord_i]
@@ -178,6 +166,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     if use_normals:
         attr = {}
         attr['blender_data_type'] = 'FLOAT_VECTOR'
+        attr['blender_domain'] = 'CORNER'
         attr['gltf_attribute_name'] = 'NORMAL'
         attr['gltf_attribute_name_morph'] = 'MORPH_NORMAL_'
         attr['func_get'] = __get_normal_attribute
@@ -188,6 +177,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     if use_tangents:
         attr = {}
         attr['blender_data_type'] = 'FLOAT_VECTOR_4'
+        attr['blender_domain'] = 'CORNER'
         attr['gltf_attribute_name'] = 'TANGENT'
         attr['func_get'] = __get_tangent_attribute
         attr['func_get_args'] = [blender_mesh, armature, blender_object, export_settings]
@@ -198,9 +188,8 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         attr = {}
         attr['blender_attribute_index'] = morph_i
         attr['blender_data_type'] = 'FLOAT_VECTOR'
+        attr['blender_domain'] = 'POINT'
         attr['gltf_attribute_name'] = 'MORPH_POSITION_' + str(morph_i)
-        attr['enable_for_edge'] = True
-        attr['enable_for_point'] = True
         attr['skip_getting_to_dots'] = True
         attr['func_set'] = __set_morph_locs_attribute
         attr['func_set_args'] = [morph_locs]
@@ -211,6 +200,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attr = {}
             attr['blender_attribute_index'] = morph_i
             attr['blender_data_type'] = 'FLOAT_VECTOR'
+            attr['blender_domain'] = 'CORNER'
             attr['gltf_attribute_name'] = 'MORPH_NORMAL_' + str(morph_i)
             # No func_get is set here, because data are set from NORMALS
             blender_attributes.append(attr)
@@ -220,6 +210,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 attr = {}
                 attr['blender_attribute_index'] = morph_i
                 attr['blender_data_type'] = 'FLOAT_VECTOR'
+                attr['blender_domain'] = 'CORNER'
                 attr['gltf_attribute_name'] = 'MORPH_TANGENT_' + str(morph_i)
                 attr['gltf_attribute_name_normal'] = "NORMAL"
                 attr['gltf_attribute_name_morph_normal'] = "MORPH_NORMAL_" + str(morph_i)
@@ -230,11 +221,11 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 attr['func_set_args'] = []
                 blender_attributes.append(attr)
 
-    # Now that we get all attributes that are going to be exported, create numpy array that will store them
     for attr in blender_attributes:
         attr['len'] = gltf2_blender_conversion.get_data_length(attr['blender_data_type'])
         attr['type'] = gltf2_blender_conversion.get_numpy_type(attr['blender_data_type'])
 
+    # Now that we get all attributes that are going to be exported, create numpy array that will store them
     dot_fields = [('vertex_index', np.uint32)]
     for attr in blender_attributes:
         if 'skip_getting_to_dots' in attr:
@@ -389,7 +380,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attributes = {}
 
             for attr in blender_attributes:
-                if 'enable_for_edge' not in attr:
+                if attr['blender_domain'] != 'POINT':
                     continue
                 if 'func_set' in attr:
                     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
@@ -442,7 +433,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attributes = {}
 
             for attr in blender_attributes:
-                if 'enable_for_point' not in attr:
+                if attr['blender_domain'] != 'POINT':
                     continue
                 if 'func_set' in attr:
                     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
