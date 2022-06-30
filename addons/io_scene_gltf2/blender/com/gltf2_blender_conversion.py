@@ -64,14 +64,15 @@ def get_target(property):
 
 def get_component_type(attribute_component_type):
     return {
-        "INT8": gltf2_io_constants.ComponentType.Byte,
+        "INT8": gltf2_io_constants.ComponentType.Float,
         "BYTE_COLOR": gltf2_io_constants.ComponentType.UnsignedShort,
         "FLOAT2": gltf2_io_constants.ComponentType.Float,
         "FLOAT_COLOR": gltf2_io_constants.ComponentType.Float,
         "FLOAT_VECTOR": gltf2_io_constants.ComponentType.Float,
         "FLOAT_VECTOR_4": gltf2_io_constants.ComponentType.Float,
         "INT": gltf2_io_constants.ComponentType.Float, # No signed Int in glTF accessor
-        "FLOAT": gltf2_io_constants.ComponentType.Float
+        "FLOAT": gltf2_io_constants.ComponentType.Float,
+        "BOOLEAN": gltf2_io_constants.ComponentType.Float
     }.get(attribute_component_type)
 
 def get_data_type(attribute_component_type):
@@ -83,7 +84,8 @@ def get_data_type(attribute_component_type):
         "FLOAT_VECTOR": gltf2_io_constants.DataType.Vec3,
         "FLOAT_VECTOR_4": gltf2_io_constants.DataType.Vec4,
         "INT": gltf2_io_constants.DataType.Scalar,
-        "FLOAT": gltf2_io_constants.DataType.Scalar
+        "FLOAT": gltf2_io_constants.DataType.Scalar,
+        "BOOLEAN": gltf2_io_constants.DataType.Scalar,
     }.get(attribute_component_type)
 
 def get_data_length(attribute_component_type):
@@ -95,17 +97,19 @@ def get_data_length(attribute_component_type):
         "FLOAT_VECTOR": 3,
         "FLOAT_VECTOR_4": 4,
         "INT": 1,
-        "FLOAT": 1
+        "FLOAT": 1,
+        "BOOLEAN": 1
     }.get(attribute_component_type)
 
 def get_numpy_type(attribute_component_type):
     return {
-        "INT8": np.int8,
+        "INT8": np.float32,
         "BYTE_COLOR": np.float32,
         "FLOAT2": np.float32,
         "FLOAT_COLOR": np.float32,
         "FLOAT_VECTOR": np.float32,
         "FLOAT_VECTOR_4": np.float32,
         "INT": np.float32,
-        "FLOAT": np.float32
+        "FLOAT": np.float32,
+        "BOOLEAN": np.float32
     }.get(attribute_component_type)
