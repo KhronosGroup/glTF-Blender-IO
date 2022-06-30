@@ -50,6 +50,22 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     if export_settings[gltf2_blender_export_keys.COLORS]:
         color_max = len(blender_mesh.vertex_colors)
 
+    colors_attributes = []
+    rendered_color_idx = blender_mesh.attributes.render_color_index
+    # Check this is a CORNER/BYTECOLOR : The only vertex color supported for now, see #1676 for next refactoring
+    if rendered_color_idx != -1 and (blender_mesh.color_attributes[rendered_color_idx].domain != "CORNER" \
+        or blender_mesh.color_attributes[rendered_color_idx].data_type != "BYTE_COLOR"):
+        color_max = 0
+    
+    if color_max > 0:
+        colors_attributes.append(rendered_color_idx)
+        # Then find other ones
+        colors_attributes.extend([
+            i for i in range(len(blender_mesh.color_attributes)) if i != rendered_color_idx \
+                and blender_mesh.vertex_colors.find(blender_mesh.color_attributes[i].name) != -1
+        ])
+        
+
     armature = None
     skin = None
     if blender_vertex_groups and export_settings[gltf2_blender_export_keys.SKINS]:
@@ -121,7 +137,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         dot_fields += [('tx', np.float32), ('ty', np.float32), ('tz', np.float32), ('tw', np.float32)]
     for uv_i in range(tex_coord_max):
         dot_fields += [('uv%dx' % uv_i, np.float32), ('uv%dy' % uv_i, np.float32)]
-    for col_i in range(color_max):
+    for col_i, _ in enumerate(colors_attributes):
         dot_fields += [
             ('color%dr' % col_i, np.float32),
             ('color%dg' % col_i, np.float32),
@@ -174,8 +190,8 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         dots['uv%dy' % uv_i] = uvs[:, 1]
         del uvs
 
-    for col_i in range(color_max):
-        colors = __get_colors(blender_mesh, col_i)
+    for col_i, blender_col_i in enumerate(colors_attributes):
+        colors = __get_colors(blender_mesh, col_i, blender_col_i)
         dots['color%dr' % col_i] = colors[:, 0]
         dots['color%dg' % col_i] = colors[:, 1]
         dots['color%db' % col_i] = colors[:, 2]
@@ -262,7 +278,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             uvs[:, 1] = prim_dots['uv%dy' % tex_coord_i]
             attributes['TEXCOORD_%d' % tex_coord_i] = uvs
 
-        for color_i in range(color_max):
+        for color_i, _ in enumerate(colors_attributes):
             colors = np.empty((len(prim_dots), 4), dtype=np.float32)
             colors[:, 0] = prim_dots['color%dr' % color_i]
             colors[:, 1] = prim_dots['color%dg' % color_i]
@@ -536,10 +552,9 @@ def __get_uvs(blender_mesh, uv_i):
     return uvs
 
 
-def __get_colors(blender_mesh, color_i):
+def __get_colors(blender_mesh, color_i, blender_color_i):
     colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
-    layer = blender_mesh.vertex_colors[color_i]
-    blender_mesh.color_attributes[layer.name].data.foreach_get('color', colors)
+    blender_mesh.color_attributes[blender_color_i].data.foreach_get('color', colors)
     colors = colors.reshape(len(blender_mesh.loops), 4)
     # colors are already linear, no need to switch color space
     return colors
