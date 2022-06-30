@@ -237,7 +237,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     dot_fields = [('vertex_index', np.uint32)]
     for attr in blender_attributes:
-        if 'skip_getting_to_dots' in attr.keys():
+        if 'skip_getting_to_dots' in attr:
             continue
         for i in range(attr['len']):
             dot_fields.append((attr['gltf_attribute_name'] + str(i), attr['type']))
@@ -261,9 +261,9 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     del vidxs
 
     for attr in blender_attributes:
-        if 'skip_getting_to_dots' in attr.keys():
+        if 'skip_getting_to_dots' in attr:
             continue
-        if 'func_get' not in attr.keys():
+        if 'func_get' not in attr:
             continue
         attr['func_get'](*(attr['func_get_args'] + [attr, dots]))
 
@@ -311,9 +311,9 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         blender_idxs = prim_dots['vertex_index']
 
         for attr in blender_attributes:
-            if 'after_others' in attr.keys(): # Some attributes need others to be already calculated (exemple : morph tangents)
+            if 'after_others' in attr: # Some attributes need others to be already calculated (exemple : morph tangents)
                 continue 
-            if 'func_set' in attr.keys(): # Special function is needed
+            if 'func_set' in attr: # Special function is needed
                 attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
             else: # Regular case
                 res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
@@ -339,9 +339,9 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
         # Some attributes need others to be already calculated (exemple : morph tangents)
         for attr in blender_attributes:
-            if 'after_others' not in attr.keys():
+            if 'after_others' not in attr:
                 continue
-            if 'func_set' in attr.keys():
+            if 'func_set' in attr:
                 attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
             else:
                 res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
@@ -389,9 +389,9 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attributes = {}
 
             for attr in blender_attributes:
-                if 'enable_for_edge' not in attr.keys():
+                if 'enable_for_edge' not in attr:
                     continue
-                if 'func_set' in attr.keys():
+                if 'func_set' in attr:
                     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
                 else:
                     res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
@@ -442,9 +442,9 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attributes = {}
 
             for attr in blender_attributes:
-                if 'enable_for_point' not in attr.keys():
+                if 'enable_for_point' not in attr:
                     continue
-                if 'func_set' in attr.keys():
+                if 'func_set' in attr:
                     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
                 else:
                     res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
