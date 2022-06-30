@@ -246,11 +246,36 @@ def __gather_skins(blender_primitive, export_settings):
 
 def __gather_custom_attribute(blender_primitive, attribute, export_settings):
     data = blender_primitive["attributes"][attribute]
-    return {
-        attribute: array_to_accessor(
-            data['data'],
-            component_type=data['component_type'],
-            data_type=data['data_type'],
-            include_max_and_min=True
-        )
-    }
+
+    if attribute.startswith("_COLOR") and blender_primitive["attributes"][attribute]['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
+        # Byte Color vertex color, need to normalize
+
+        data['data'] *= 65535
+        data['data'] += 0.5  # bias for rounding
+        data['data'] = data['data'].astype(np.uint16)
+
+        return { attribute : gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData(data['data'].tobytes()),
+                byte_offset=None,
+                component_type=data['component_type'],
+                count=data(data['data']),
+                extensions=None,
+                extras=None,
+                max=None,
+                min=None,
+                name=None,
+                normalized=True,
+                sparse=None,
+                type=data['data_type'],
+            )
+        }
+
+    else:
+        return {
+            attribute: array_to_accessor(
+                data['data'],
+                component_type=data['component_type'],
+                data_type=data['data_type'],
+                include_max_and_min=True
+            )
+        }
