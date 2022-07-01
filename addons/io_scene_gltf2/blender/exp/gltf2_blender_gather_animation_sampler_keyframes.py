@@ -412,8 +412,7 @@ def gather_keyframes(blender_obj_uuid: str,
                     # use a point at t-1 to define the tangent. This allows the tangent control point to be transformed
                     # normally
                     key.in_tangent = [
-                        c.keyframe_points[i].co[1] + ((c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]
-                                                       ) / (frame - frames[i - 1]))
+                        c.keyframe_points[i].co[1] + (c.keyframe_points[i].handle_left[1] - c.keyframe_points[i].co[1]) / (c.keyframe_points[i].handle_left[0] - c.keyframe_points[i].co[0])
                         for c in channels if c is not None
                     ]
                 # Construct the out tangent
@@ -425,8 +424,7 @@ def gather_keyframes(blender_obj_uuid: str,
                     # use a point at t+1 to define the tangent. This allows the tangent control point to be transformed
                     # normally
                     key.out_tangent = [
-                        c.keyframe_points[i].co[1] + ((c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]
-                                                       ) / (frames[i + 1] - frame))
+                        c.keyframe_points[i].co[1] + (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (c.keyframe_points[i].handle_right[0] - c.keyframe_points[i].co[0])
                         for c in channels if c is not None
                     ]
 
