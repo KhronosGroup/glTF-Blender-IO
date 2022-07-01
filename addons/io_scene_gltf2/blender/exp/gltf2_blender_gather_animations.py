@@ -75,7 +75,7 @@ def gather_animations(  obj_uuid: int,
         # No TRS animation are found for this object.
         # But we need to bake, in case we export selection
         # (Only when force sampling is ON)
-        # If force sampling is OFF, can lead to inconsistant export anyway
+        # If force sampling is OFF, can lead to inconsistent export anyway
         if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
             channels = __gather_channels_baked(obj_uuid, export_settings)
             if channels is not None:

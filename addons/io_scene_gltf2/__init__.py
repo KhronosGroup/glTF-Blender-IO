@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 3, 10),
+    "version": (3, 3, 11),
     'blender': (3, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -1186,7 +1186,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
 
     settings_node_ui : bpy.props.BoolProperty(
             default= False,
-            description="Displays glTF Settings node in Shader Editor (Menu Add > Ouput)"
+            description="Displays glTF Settings node in Shader Editor (Menu Add > Output)"
             )
 
 
