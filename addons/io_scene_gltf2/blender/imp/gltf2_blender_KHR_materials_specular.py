@@ -77,6 +77,8 @@ def specular(mh, location_specular,
             pytexture = mh.gltf.data.textures[tex_transmission_info.index]
             pyimg = mh.gltf.data.images[pytexture.source]
             transmission_image_name = pyimg.blender_image_name
+        else:
+            transmission_image_name = None
     except Exception:
         transmission_factor = 0
         tex_transmission_info = None
@@ -165,15 +167,10 @@ def specular(mh, location_specular,
             transmission_image_name : 'transmission',
             specularcolor_image_name : 'spec',
         }
+        images = [(name, bpy.data.images[name]) for name in [base_color_image_name, transmission_image_name, specularcolor_image_name, specular_image_name] if name is not None]
         
-        images = [(name, bpy.data.images[name]) for name in [base_color_image_name, transmission_image_name, specularcolor_image_name] if name is not None]
-        if len(images) == 0:
-            # So this is the specular texture...
-            width = bpy.data.images[specular_image_name].size[0]
-            height = bpy.data.images[specular_image_name].size[1]
-        else:
-            width = max(image[1].size[0] for image in images)
-            height = max(image[1].size[1] for image in images)
+        width = max(image[1].size[0] for image in images)
+        height = max(image[1].size[1] for image in images)
 
         buffers = {}
         for name, image in images:
@@ -229,8 +226,8 @@ def specular(mh, location_specular,
         blender_specular_tint = np.clip(blender_specular_tint, 0.0, 1.0)
         blender_specular_tint = stack3(blender_specular_tint)
 
-        blender_specular = np.dstack((blender_specular, np.ones((height, width)))) # Set alpha to 1
-        blender_specular_tint = np.dstack((blender_specular_tint, np.ones((height, width)))) # Set alpha to 1
+        blender_specular = np.dstack((blender_specular, np.ones((width, height)))) # Set alpha to 1
+        blender_specular_tint = np.dstack((blender_specular_tint, np.ones((width, height)))) # Set alpha to 1
 
         # Check if we really need to create a texture
         blender_specular_tex_not_needed = np.all(np.isclose(blender_specular, blender_specular[0][0]))
