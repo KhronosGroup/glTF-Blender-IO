@@ -165,7 +165,8 @@ def specular(mh, location_specular,
         texts = {
             base_color_image_name : 'basecolor',
             transmission_image_name : 'transmission',
-            specularcolor_image_name : 'spec',
+            specularcolor_image_name : 'speccolor',
+            specular_image_name: 'spec'
         }
         images = [(name, bpy.data.images[name]) for name in [base_color_image_name, transmission_image_name, specularcolor_image_name, specular_image_name] if name is not None]
         
@@ -206,8 +207,8 @@ def specular(mh, location_specular,
             buffers['basecolor'] = np.full((width, height, 3), base_color)
         if 'transmission' not in buffers.keys():
             buffers['transmission'] = np.full((width, height, 3), transmission_factor)
-        if 'spec' not in buffers.keys():
-            buffers['spec'] = np.full((width, height, 3), specular_color_factor)
+        if 'speccolor' not in buffers.keys():
+            buffers['speccolor'] = np.full((width, height, 3), specular_color_factor)
 
         # Calculation
 
@@ -219,9 +220,9 @@ def specular(mh, location_specular,
             return c / stack3(l)
 
         f0_from_ior = ((ior - 1)/(ior + 1))**2
-        lum_specular_color = stack3(luminance(buffers['spec']))
+        lum_specular_color = stack3(luminance(buffers['speccolor']))
         blender_specular = ((lum_specular_color - buffers['transmission']) / (1 - buffers['transmission'])) * (1 / 0.08) * f0_from_ior
-        blender_specular_tint = luminance((normalize(buffers['spec']) - 1) / (normalize(buffers['basecolor']) - 1))
+        blender_specular_tint = luminance((normalize(buffers['speccolor']) - 1) / (normalize(buffers['basecolor']) - 1))
         np.nan_to_num(blender_specular_tint, copy=False)
         blender_specular_tint = np.clip(blender_specular_tint, 0.0, 1.0)
         blender_specular_tint = stack3(blender_specular_tint)
