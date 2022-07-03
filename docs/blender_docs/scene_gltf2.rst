@@ -253,6 +253,22 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
    An example of a complex clearcoat application that will export correctly to glTF.
    A much simpler, smooth coating can be applied from just the Principled BSDF node alone.
 
+Sheen
+^^^^^
+
+When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF 
+extension will be included in the export. The Sheen Color will be exported from Color socket of Vevlet node.
+Sheen Roughness will be exported from Sigma socket.
+
+If a Sheen Rougness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-sheen.png
+
+.. note::
+
+   Velvet BSDF node is only available on Cycles render engine. 
+   You may have to temporary switch to Cycles to add this node, and get back to Eevee.
+
 
 Transmission
 ^^^^^^^^^^^^
@@ -436,6 +452,7 @@ are supported directly by this add-on:
 - ``KHR_materials_unlit``
 - ``KHR_materials_emissive_strength``
 - ``KHR_materials_volume``
+- ``KHR_materials_sheen``
 - ``KHR_materials_ior``
 - ``KHR_lights_punctual``
 - ``KHR_texture_transform``
@@ -451,9 +468,10 @@ are supported directly by this add-on:
 - ``KHR_materials_transmission``
 - ``KHR_materials_unlit``
 - ``KHR_materials_emissive_strength``
+- ``KHR_materials_volume``
+- ``KHR_materials_sheen``
 - ``KHR_materials_ior``
 - ``KHR_texture_transform``
-- ``KHR_materials_volume``
 
 
 Third-party glTF Extensions
