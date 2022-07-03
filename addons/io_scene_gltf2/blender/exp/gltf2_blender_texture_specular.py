@@ -59,7 +59,7 @@ def specular_calculation(stored):
         if i in buffers.keys():
             buffers[i] = buffers[i][:,:,stored[i + "_channel"].data]
         else:
-            buffers[i] = np.full((height, width, 1), stored[i].data)
+            buffers[i] = np.full((width, height, 1), stored[i].data)
 
     # Vector 3
     for i in ['base_color']:
@@ -73,7 +73,7 @@ def specular_calculation(stored):
                         buffers[i][:, :, c] = 0.0
                 buffers[i] = buffers[i][:,:,:3]
         else:
-            buffers[i] = np.full((height, width, 3), stored[i].data[0:3])
+            buffers[i] = np.full((width, height, 3), stored[i].data[0:3])
 
     ior = stored['ior'].data
 
@@ -99,7 +99,7 @@ def specular_calculation(stored):
         factor = [1.0 if f < 1.0 else f for f in factors]
         out_buf /= factor
 
-    out_buf = np.dstack((out_buf, np.ones((height, width)))) # Set alpha (glTF specular) to 1
+    out_buf = np.dstack((out_buf, np.ones((width, height)))) # Set alpha (glTF specular) to 1
     out_buf = np.reshape(out_buf, (width * height * 4))
     
     return np.float32(out_buf), width, height, [float(f) for f in factor] if factor else None
