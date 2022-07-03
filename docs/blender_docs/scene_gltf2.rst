@@ -264,10 +264,17 @@ If a Sheen Rougness Texture is used, glTF requires the values be written to the 
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-sheen.png
 
-.. note::
+.. tip::
 
    Velvet BSDF node is only available on Cycles render engine. 
    You may have to temporary switch to Cycles to add this node, and get back to Eevee.
+
+.. note::
+
+   Because the node tree is adding 2 Shaders (Principled and Sheen), the resulting shader is not fully energy conservative.
+   You may find some difference between Blender render, and glTF render.
+   Sheen models are not fully compatible between Blender and glTF. This trick about adding Velvet Shader is the most accurate 
+   approximation (better that using Sheen Principled sockets).
 
 
 Transmission
