@@ -330,20 +330,21 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                         action_on_type[strip.action.name] = "SHAPEKEY"
 
     # If there are only 1 armature, include all animations, even if not in NLA
-    if blender_object.type == "ARMATURE":
-        if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
-            # Keep all actions on objects (no Shapekey animation)
-            for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
-                # We need to check this is an armature action
-                # Checking that at least 1 bone is animated
-                if not __is_armature_action(act):
-                    continue
-                # Check if this action is already taken into account
-                if act.name in blender_tracks.keys():
-                    continue
-                blender_actions.append(act)
-                blender_tracks[act.name] = None
-                action_on_type[act.name] = "OBJECT"
+    if export_settings['gltf_export_anim_single_armature'] is True:
+        if blender_object.type == "ARMATURE":
+            if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
+                # Keep all actions on objects (no Shapekey animation)
+                for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
+                    # We need to check this is an armature action
+                    # Checking that at least 1 bone is animated
+                    if not __is_armature_action(act):
+                        continue
+                    # Check if this action is already taken into account
+                    if act.name in blender_tracks.keys():
+                        continue
+                    blender_actions.append(act)
+                    blender_tracks[act.name] = None
+                    action_on_type[act.name] = "OBJECT"
 
     export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
 
