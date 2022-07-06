@@ -48,7 +48,7 @@ def gather_animation_channels(obj_uuid: int,
     if blender_action.use_frame_range is True:
         bake_range_start = blender_action.frame_start
         bake_range_end = blender_action.frame_end
-        force_range = True # keyframe_points is read-only, we cant restrict here
+        force_range = True # keyframe_points is read-only, we can't restrict here
     else:
         groups = __get_channel_groups(blender_action, blender_object, export_settings)
         # Note: channels has some None items only for SK if some SK are not animated
