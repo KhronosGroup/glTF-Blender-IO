@@ -22,7 +22,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage, FillImage
+from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage, FillImage, StoreImage, StoreData
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
@@ -32,26 +32,31 @@ def gather_image(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
-        return None
+        return None, None
 
     image_data = __get_image_data(blender_shader_sockets, export_settings)
     if image_data.empty():
         # The export image has no data
-        return None
+        return None, None
 
     mime_type = __gather_mime_type(blender_shader_sockets, image_data, export_settings)
     name = __gather_name(image_data, export_settings)
 
+    factor = None
+
     if image_data.original is None:
-        uri = __gather_uri(image_data, mime_type, name, export_settings)
+        uri, factor_uri = __gather_uri(image_data, mime_type, name, export_settings)
     else:
         # Retrieve URI relative to exported glTF files
         uri = __gather_original_uri(image_data.original.filepath, export_settings)
         # In case we can't retrieve image (for example packed images, with original moved)
         # We don't create invalid image without uri
+        factor_uri = None
         if uri is None: return None
 
-    buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
+    buffer_view, factor_buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
+
+    factor = factor_uri if uri is not None else factor_buffer_view
 
     image = __make_image(
         buffer_view,
@@ -65,7 +70,7 @@ def gather_image(
 
     export_user_extensions('gather_image_hook', export_settings, image, blender_shader_sockets)
 
-    return image
+    return image, factor
 
 def __gather_original_uri(original_uri, export_settings):
 
@@ -109,8 +114,9 @@ def __filter_image(sockets, export_settings):
 @cached
 def __gather_buffer_view(image_data, mime_type, name, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
-        return gltf2_io_binary_data.BinaryData(data=image_data.encode(mime_type))
-    return None
+        data, factor = image_data.encode(mime_type)
+        return gltf2_io_binary_data.BinaryData(data=data), factor
+    return None, None
 
 
 def __gather_extensions(sockets, export_settings):
@@ -176,13 +182,14 @@ def __gather_name(export_image, export_settings):
 def __gather_uri(image_data, mime_type, name, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_SEPARATE':
         # as usual we just store the data in place instead of already resolving the references
+        data, factor = image_data.encode(mime_type=mime_type)
         return gltf2_io_image_data.ImageData(
-            data=image_data.encode(mime_type=mime_type),
+            data=data,
             mime_type=mime_type,
             name=name
-        )
+        ), factor
 
-    return None
+    return None, None
 
 
 def __get_image_data(sockets, export_settings) -> ExportImage:
@@ -190,6 +197,18 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
     results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
+
+    # Check if we need a simple mapping or more complex calculation
+    if any([socket.name == "Specular" for socket in sockets]):
+        return __get_image_data_specular(sockets, results, export_settings)
+    else:
+        return __get_image_data_mapping(sockets, results, export_settings)
+    
+def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
+    """
+    Simple mapping
+    Will fit for most of exported textures : RoughnessMetallic, Basecolor, normal, ...
+    """
     composed_image = ExportImage()
     for result, socket in zip(results, sockets):
         # Assume that user know what he does, and that channels/images are already combined correctly for pbr
@@ -228,6 +247,12 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
                 dst_chan = Channel.R
             elif socket.name == 'Clearcoat Roughness':
                 dst_chan = Channel.G
+            elif socket.name == 'Thickness': # For KHR_materials_volume
+                dst_chan = Channel.G
+            elif socket.name == "specular glTF": # For original KHR_material_specular
+                dst_chan = Channel.A
+            elif socket.name == "Sigma": # For KHR_materials_sheen
+                dst_chan = Channel.A
 
             if dst_chan is not None:
                 composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
@@ -254,6 +279,54 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     return composed_image
 
 
+def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
+    """
+    calculating Specular Texture, settings needed data
+    """   
+    from io_scene_gltf2.blender.exp.gltf2_blender_texture_specular import specular_calculation
+    composed_image = ExportImage()
+    composed_image.set_calc(specular_calculation)
+
+    composed_image.store_data("ior", sockets[4].default_value, type="Data")
+
+    results = [__get_tex_from_socket(socket, export_settings) for socket in sockets[:-1]] #Do not retrieve IOR --> No texture allowed
+
+    mapping = {
+        0: "specular",
+        1: "specular_tint",
+        2: "base_color",
+        3: "transmission"
+    }
+
+    for idx, result in enumerate(results):
+        if __get_tex_from_socket(sockets[idx], export_settings):
+
+            composed_image.store_data(mapping[idx], result.shader_node.image, type="Image")
+
+            # rudimentarily try follow the node tree to find the correct image data.
+            src_chan = None if idx == 2 else Channel.R
+            for elem in result.path:
+                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateColor):
+                    src_chan = {
+                        'Red': Channel.R,
+                        'Green': Channel.G,
+                        'Blue': Channel.B,
+                    }[elem.from_socket.name]
+                if elem.from_socket.name == 'Alpha':
+                    src_chan = Channel.A
+            # For base_color, keep all channels, as this is a Vec, not scalar
+            if idx != 2:
+                composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
+            else:
+                if src_chan is not None:
+                    composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
+
+        else:
+            composed_image.store_data(mapping[idx], sockets[idx].default_value, type="Data")
+
+    return composed_image
+
+# TODOExt deduplicate
 @cached
 def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket, export_settings):
     result = gltf2_blender_search_node_tree.from_socket(

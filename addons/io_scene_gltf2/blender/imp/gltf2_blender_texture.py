@@ -28,6 +28,7 @@ def texture(
     color_socket,
     alpha_socket=None,
     is_data=False,
+    forced_image=None
 ):
     """Creates nodes for a TextureInfo and hooks up the color/alpha outputs."""
     x, y = location
@@ -47,12 +48,15 @@ def texture(
     tex_img.location = x - 240, y
     tex_img.label = label
     # Get image
-    if pytexture.source is not None:
-        BlenderImage.create(mh.gltf, pytexture.source)
-        pyimg = mh.gltf.data.images[pytexture.source]
-        blender_image_name = pyimg.blender_image_name
-        if blender_image_name:
-            tex_img.image = bpy.data.images[blender_image_name]
+    if forced_image is None:
+        if pytexture.source is not None:
+            BlenderImage.create(mh.gltf, pytexture.source)
+            pyimg = mh.gltf.data.images[pytexture.source]
+            blender_image_name = pyimg.blender_image_name
+            if blender_image_name:
+                tex_img.image = bpy.data.images[blender_image_name]
+    else:
+        tex_img.image = forced_image
     # Set colorspace for data images
     if is_data:
         if tex_img.image:
@@ -60,7 +64,8 @@ def texture(
     # Set filtering
     set_filtering(tex_img, pysampler)
     # Outputs
-    mh.node_tree.links.new(color_socket, tex_img.outputs['Color'])
+    if color_socket is not None:
+        mh.node_tree.links.new(color_socket, tex_img.outputs['Color'])
     if alpha_socket is not None:
         mh.node_tree.links.new(alpha_socket, tex_img.outputs['Alpha'])
     # Inputs
