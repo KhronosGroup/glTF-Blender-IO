@@ -288,7 +288,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attributes['COLOR_%d' % color_i]["data"] = colors
 
             attributes['COLOR_%d' % color_i]["norm"] = colors_types[color_i] == "BYTE_COLOR"
-            print(attributes['COLOR_%d' % color_i]["norm"])
 
         if skin:
             joints = [[] for _ in range(num_joint_sets)]
