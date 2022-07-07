@@ -70,6 +70,8 @@ def __gather_scene(blender_scene, export_settings):
     # Now, we can filter tree if needed
     vtree.filter()
 
+    vtree.variants_reset_to_original()
+
     export_user_extensions('vtree_after_filter_hook', export_settings, vtree)
 
     export_settings['vtree'] = vtree

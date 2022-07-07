@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 3, 12),
+    "version": (3, 3, 13),
     'blender': (3, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -270,6 +270,14 @@ class ExportGLTF2_Base:
         default='EXPORT'
     )
 
+    export_original_specular: BoolProperty(
+        name='Export original PBR Specular',
+        description=(
+            'Export original glTF PBR Specular, instead of Blender Principled Shader Specular'
+        ),
+        default=False,
+    )
+
     export_colors: BoolProperty(
         name='Vertex Colors',
         description='Export vertex colors with meshes',
@@ -458,13 +466,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    export_displacement: BoolProperty(
-        name='Displacement Textures (EXPERIMENTAL)',
-        description='EXPERIMENTAL: Export displacement textures. '
-                    'Uses incomplete "KHR_materials_displacement" glTF extension',
-        default=False
-    )
-
     will_save_settings: BoolProperty(
         name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
@@ -575,6 +576,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
 
+        export_settings['gltf_original_specular'] = self.export_original_specular
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
@@ -622,7 +624,6 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
-        export_settings['gltf_displacement'] = self.export_displacement
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -768,6 +769,22 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
 
     def draw(self, context):
+        pass
+
+class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Mesh"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
@@ -787,10 +804,55 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
 
+
+class GLTF_PT_export_geometry_material(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Material"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
         layout.prop(operator, 'export_materials')
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
+
+class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "PBR Extensions"
+    bl_parent_id = "GLTF_PT_export_geometry_material"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_original_specular')
 
 
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
@@ -1193,6 +1255,14 @@ class ImportGLTF2(Operator, ImportHelper):
             self.loglevel = logging.NOTSET
 
 
+def gltf_variant_ui_update(self, context):
+    from .blender.com.gltf2_blender_ui import variant_register, variant_unregister
+    if self.KHR_materials_variants_ui is True:
+        # register all needed types
+        variant_register()
+    else:
+        variant_unregister()
+
 class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
@@ -1201,11 +1271,18 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
             description="Displays glTF Settings node in Shader Editor (Menu Add > Output)"
             )
 
+    KHR_materials_variants_ui : bpy.props.BoolProperty(
+        default= False,
+        description="Displays glTF UI to manage material variants",
+        update=gltf_variant_ui_update
+        )
+
 
     def draw(self, context):
         layout = self.layout
         row = layout.row()
         row.prop(self, "settings_node_ui", text="Shader Editor Add-ons")
+        row.prop(self, "KHR_materials_variants_ui", text="Material Variants")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
@@ -1217,6 +1294,9 @@ classes = (
     GLTF_PT_export_include,
     GLTF_PT_export_transform,
     GLTF_PT_export_geometry,
+    GLTF_PT_export_geometry_mesh,
+    GLTF_PT_export_geometry_material,
+    GLTF_PT_export_geometry_original_pbr,
     GLTF_PT_export_geometry_compression,
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,
@@ -1236,6 +1316,8 @@ def register():
     # bpy.utils.register_module(__name__)
 
     blender_ui.register()
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
+        blender_ui.variant_register()
 
     # add to the export / import menu
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
@@ -1244,6 +1326,10 @@ def register():
 
 def unregister():
     import io_scene_gltf2.blender.com.gltf2_blender_ui as blender_ui
+    blender_ui.unregister()
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
+        blender_ui.variant_unregister()
+
     for c in classes:
         bpy.utils.unregister_class(c)
     for f in exporter_extension_panel_unregister_functors:
@@ -1253,8 +1339,6 @@ def unregister():
     for f in importer_extension_panel_unregister_functors:
         f()
     importer_extension_panel_unregister_functors.clear()
-
-    blender_ui.unregister()
 
     # bpy.utils.unregister_module(__name__)
 
