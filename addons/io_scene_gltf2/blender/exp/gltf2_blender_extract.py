@@ -188,7 +188,9 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     colors_types = []
     for col_i, blender_col_i in enumerate(colors_attributes):
-        colors, colors_type = __get_colors(blender_mesh, col_i, blender_col_i)
+        colors, colors_type, domain = __get_colors(blender_mesh, col_i, blender_col_i)
+        if domain == "POINT":
+            colors = colors[dots['vertex_index']]
         colors_types.append(colors_type)
         dots['color%dr' % col_i] = colors[:, 0]
         dots['color%dg' % col_i] = colors[:, 1]
@@ -555,11 +557,14 @@ def __get_uvs(blender_mesh, uv_i):
 
 
 def __get_colors(blender_mesh, color_i, blender_color_i):
-    colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32)
+    if blender_mesh.color_attributes[blender_color_i].domain == "POINT":
+        colors = np.empty(len(blender_mesh.vertices) * 4, dtype=np.float32) #POINT
+    else: 
+        colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32) #CORNER
     blender_mesh.color_attributes[blender_color_i].data.foreach_get('color', colors)
-    colors = colors.reshape(len(blender_mesh.loops), 4)
+    colors = colors.reshape(-1, 4)
     # colors are already linear, no need to switch color space
-    return colors, blender_mesh.color_attributes[blender_color_i].data_type
+    return colors, blender_mesh.color_attributes[blender_color_i].data_type, blender_mesh.color_attributes[blender_color_i].domain
 
 
 def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
