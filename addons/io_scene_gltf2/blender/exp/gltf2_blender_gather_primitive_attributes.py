@@ -135,28 +135,34 @@ def __gather_colors(blender_primitive, export_settings):
         color_index = 0
         color_id = 'COLOR_' + str(color_index)
         while blender_primitive["attributes"].get(color_id) is not None:
-            colors = blender_primitive["attributes"][color_id]
+            colors = blender_primitive["attributes"][color_id]["data"]
 
             if type(colors) is not np.ndarray:
                 colors = np.array(colors, dtype=np.float32)
                 colors = colors.reshape(len(colors) // 4, 4)
 
-            # Convert to normalized ushorts
-            colors *= 65535
-            colors += 0.5  # bias for rounding
-            colors = colors.astype(np.uint16)
+            if blender_primitive["attributes"][color_id]["norm"] is True:
+                comp_type = gltf2_io_constants.ComponentType.UnsignedShort
+
+                # Convert to normalized ushorts
+                colors *= 65535
+                colors += 0.5  # bias for rounding
+                colors = colors.astype(np.uint16)
+
+            else:
+                comp_type = gltf2_io_constants.ComponentType.Float
 
             attributes[color_id] = gltf2_io.Accessor(
                 buffer_view=gltf2_io_binary_data.BinaryData(colors.tobytes()),
                 byte_offset=None,
-                component_type=gltf2_io_constants.ComponentType.UnsignedShort,
+                component_type=comp_type,
                 count=len(colors),
                 extensions=None,
                 extras=None,
                 max=None,
                 min=None,
                 name=None,
-                normalized=True,
+                normalized=blender_primitive["attributes"][color_id]["norm"],
                 sparse=None,
                 type=gltf2_io_constants.DataType.Vec4,
             )

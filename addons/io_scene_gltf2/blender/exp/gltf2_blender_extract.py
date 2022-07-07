@@ -52,10 +52,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     colors_attributes = []
     rendered_color_idx = blender_mesh.attributes.render_color_index
-    # Check this is a CORNER/BYTECOLOR : The only vertex color supported for now, see #1676 for next refactoring
-    if rendered_color_idx != -1 and (blender_mesh.color_attributes[rendered_color_idx].domain != "CORNER" \
-        or blender_mesh.color_attributes[rendered_color_idx].data_type != "BYTE_COLOR"):
-        color_max = 0
     
     if color_max > 0:
         colors_attributes.append(rendered_color_idx)
@@ -190,8 +186,10 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         dots['uv%dy' % uv_i] = uvs[:, 1]
         del uvs
 
+    colors_types = []
     for col_i, blender_col_i in enumerate(colors_attributes):
-        colors = __get_colors(blender_mesh, col_i, blender_col_i)
+        colors, colors_type = __get_colors(blender_mesh, col_i, blender_col_i)
+        colors_types.append(colors_type)
         dots['color%dr' % col_i] = colors[:, 0]
         dots['color%dg' % col_i] = colors[:, 1]
         dots['color%db' % col_i] = colors[:, 2]
@@ -284,7 +282,11 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             colors[:, 1] = prim_dots['color%dg' % color_i]
             colors[:, 2] = prim_dots['color%db' % color_i]
             colors[:, 3] = prim_dots['color%da' % color_i]
-            attributes['COLOR_%d' % color_i] = colors
+            attributes['COLOR_%d' % color_i] = {}
+            attributes['COLOR_%d' % color_i]["data"] = colors
+
+            attributes['COLOR_%d' % color_i]["norm"] = colors_types[color_i] == "BYTE_COLOR"
+            print(attributes['COLOR_%d' % color_i]["norm"])
 
         if skin:
             joints = [[] for _ in range(num_joint_sets)]
@@ -557,7 +559,7 @@ def __get_colors(blender_mesh, color_i, blender_color_i):
     blender_mesh.color_attributes[blender_color_i].data.foreach_get('color', colors)
     colors = colors.reshape(len(blender_mesh.loops), 4)
     # colors are already linear, no need to switch color space
-    return colors
+    return colors, blender_mesh.color_attributes[blender_color_i].data_type
 
 
 def __get_bone_data(blender_mesh, skin, blender_vertex_groups):
