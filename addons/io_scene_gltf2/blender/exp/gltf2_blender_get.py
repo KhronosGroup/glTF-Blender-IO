@@ -15,9 +15,10 @@
 import bpy
 from mathutils import Vector, Matrix
 
-from ..com.gltf2_blender_material_helpers import get_gltf_node_name
+from ..com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_pbr_non_converted_name
 from ...blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
 from io_scene_gltf2.io.com import gltf2_io_debug
+from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
 
 def get_animation_target(action_group: bpy.types.ActionGroup):
@@ -58,7 +59,7 @@ def get_node_socket(blender_material, type, name):
     return None
 
 
-def get_socket(blender_material: bpy.types.Material, name: str):
+def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
     """
     For a given material input name, retrieve the corresponding node tree socket.
 
@@ -81,8 +82,15 @@ def get_socket(blender_material: bpy.types.Material, name: str):
         elif name == "Background":
             type = bpy.types.ShaderNodeBackground
             name = "Color"
+        elif name == "sheenColor":
+            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfVelvet, "Color")
+        elif name == "sheenRoughness":
+            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfVelvet, "Sigma")
         else:
-            type = bpy.types.ShaderNodeBsdfPrincipled
+            if volume is False:
+                type = bpy.types.ShaderNodeBsdfPrincipled
+            else:
+                type = bpy.types.ShaderNodeVolumeAbsorption
 
         return get_node_socket(blender_material, type, name)
 
@@ -107,6 +115,24 @@ def get_socket_old(blender_material: bpy.types.Material, name: str):
             return inputs[0]
 
     return None
+
+def get_socket_original(blender_material: bpy.types.Material, name: str):
+    """
+    For a given material input name, retrieve the corresponding node tree socket in the special glTF node group.
+
+    :param blender_material: a blender material for which to get the socket
+    :param name: the name of the socket
+    :return: a blender NodeSocket
+    """
+    gltf_node_group_name = get_gltf_pbr_non_converted_name().lower()
+    if blender_material.node_tree and blender_material.use_nodes:
+        nodes = [n for n in blender_material.node_tree.nodes if \
+            isinstance(n, bpy.types.ShaderNodeGroup) and  n.node_tree.name.lower() == gltf_node_group_name]
+        inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
+        if inputs:
+            return inputs[0]
+
+    return None    
 
 def check_if_is_linked_to_active_output(shader_socket):
     for link in shader_socket.links:
@@ -308,3 +334,12 @@ def previous_node(socket):
     if prev_socket is not None:
         return prev_socket.node
     return None
+
+#TODOExt is this the same as __get_tex_from_socket from gather_image ?
+def has_image_node_from_socket(socket):
+    result = gltf2_blender_search_node_tree.from_socket(
+        socket,
+        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
+    if not result:
+        return False
+    return True

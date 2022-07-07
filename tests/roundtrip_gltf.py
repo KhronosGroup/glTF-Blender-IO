@@ -41,6 +41,8 @@ try:
     output_dir = os.path.join(path_parts[0], argv[1])
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    if '--use-variants' in argv:
+        bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
     if '--no-sample-anim' in argv:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_force_sampling=False)
     else:

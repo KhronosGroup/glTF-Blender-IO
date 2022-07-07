@@ -1,4 +1,4 @@
-# Copyright 2018-2021 The glTF-Blender-IO authors.
+# Copyright 2018-2022 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 from io_scene_gltf2.blender.exp import gltf2_blender_get
-
+from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 
 def detect_shadeless_material(blender_material, export_settings):
     """Detect if this material is "shadeless" ie. should be exported
@@ -138,7 +138,7 @@ def gather_base_color_texture(info, export_settings):
         # because gather_image determines how to pack images based on the
         # names of sockets, and the names are hard-coded to a Principled
         # style graph.
-        unlit_texture, unlit_use_active_uvmap = gltf2_blender_gather_texture_info.gather_texture_info(
+        unlit_texture, unlit_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             sockets[0],
             sockets,
             export_settings,

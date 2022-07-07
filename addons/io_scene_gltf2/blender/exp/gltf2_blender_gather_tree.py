@@ -173,10 +173,16 @@ class VExportTree:
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
-                correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+                if self.export_settings[gltf2_blender_export_keys.YUP]:
+                    correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+                else:
+                    correction = Matrix.Identity(4).to_quaternion()
                 node.matrix_world @= correction.to_matrix().to_4x4()
             elif node.blender_type == VExportNode.LIGHT and self.export_settings[gltf2_blender_export_keys.LIGHTS]:
-                correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+                if self.export_settings[gltf2_blender_export_keys.YUP]:
+                    correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+                else:
+                    correction = Matrix.Identity(4).to_quaternion()
                 node.matrix_world @= correction.to_matrix().to_4x4()
         elif node.blender_type == VExportNode.BONE:
             if self.export_settings['gltf_current_frame'] is True:
@@ -472,3 +478,20 @@ class VExportTree:
                 skin = gather_skin(n.uuid, self.export_settings)
                 skins.append(skin)
         return skins
+
+    def variants_reset_to_original(self):
+        # Only if Variants are displayed and exported
+        if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is False:
+            return
+        objects = [self.nodes[o].blender_object for o in self.get_all_node_of_type(VExportNode.OBJECT) if self.nodes[o].blender_object.type == "MESH" \
+            and self.nodes[o].blender_object.data.get('gltf2_variant_default_materials') is not None]
+        for obj in objects:
+            # loop on material slots ( primitives )
+            for mat_slot_idx, s in enumerate(obj.material_slots):
+                # Check if there is a default material for this slot
+                for i in obj.data.gltf2_variant_default_materials:
+                    if i.material_slot_index == mat_slot_idx:
+                        s.material = i.default_material
+                        break
+
+            # If not found, keep current material as default

@@ -1,0 +1,651 @@
+{
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5123,
+            "count" : 2880,
+            "max" : [
+                560
+            ],
+            "min" : [
+                0
+            ],
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 561,
+            "max" : [
+                1.000000238418579,
+                1,
+                1.0000003576278687
+            ],
+            "min" : [
+                -0.9999998211860657,
+                -1,
+                -0.9999991655349731
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 561,
+            "max" : [
+                1,
+                1,
+                1
+            ],
+            "min" : [
+                -1,
+                -1,
+                -1
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5126,
+            "count" : 561,
+            "max" : [
+                1,
+                1,
+                0.9795973300933838,
+                1
+            ],
+            "min" : [
+                -0.9769968390464783,
+                0,
+                -0.9795973896980286,
+                -1
+            ],
+            "type" : "VEC4"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5126,
+            "count" : 561,
+            "max" : [
+                1,
+                1
+            ],
+            "min" : [
+                0,
+                0
+            ],
+            "type" : "VEC2"
+        }
+    ],
+    "asset" : {
+        "generator" : "Julien Duroure, mostly manually",
+        "version" : "2.0"
+    },
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 5760,
+            "byteOffset" : 0,
+            "target" : 34963
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6732,
+            "byteOffset" : 5760,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6732,
+            "byteOffset" : 12492,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 8976,
+            "byteOffset" : 19224,
+            "target" : 34962
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 4488,
+            "byteOffset" : 28200,
+            "target" : 34962
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 32688,
+            "uri" : "14_emission_strength.bin"
+        }
+    ],
+    "extensions" : {},
+    "extensionsRequired" : [
+        "KHR_materials_pbrSpecularGlossiness",
+        "KHR_materials_emissive_strength"
+    ],
+    "extensionsUsed" : [
+        "KHR_materials_pbrSpecularGlossiness",
+        "KHR_materials_emissive_strength"
+    ],
+    "materials" : [
+        {
+            "extensions" : {
+                "KHR_materials_pbrSpecularGlossiness" : {
+                    "glossinessFactor" : 0
+                }
+            },
+            "name" : "SpecGloss"
+        },
+        {
+            "extensions" : {
+                "KHR_materials_pbrSpecularGlossiness" : {
+                    "glossinessFactor" : 0
+                }
+            },
+            "emissiveFactor": [ 0.2, 0.1, 0.0 ],
+            "name" : "SpecGlossEmissive"
+        },
+        {
+            "extensions" : {
+                "KHR_materials_pbrSpecularGlossiness" : {
+                    "glossinessFactor" : 0
+                }
+            },
+            "emissiveFactor": [ 0.3, 0.3, 0.3 ],
+            "name" : "SpecGlossEmissiveGray"
+        },
+        {
+	    "extensions" : {
+		"KHR_materials_pbrSpecularGlossiness" : {"glossinessFactor" : 0},
+		"KHR_materials_emissive_strength": {"emissiveStrength": 5.0}
+	    },
+	    "emissiveFactor": [ 0.9, 0.9, 0.9 ],
+	    "name" : "SpecGlossEmissiveGrayStrength"
+        },
+        {
+	    "extensions" : {
+		"KHR_materials_pbrSpecularGlossiness" : {"glossinessFactor" : 0},
+		"KHR_materials_emissive_strength": {"emissiveStrength": 5.0}
+	    },
+	    "emissiveFactor": [ 0.9, 0.8, 0.7 ],
+	    "name" : "SpecGlossEmissiveStrength"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "name" : "pbrMetallicRoughness"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "emissiveFactor": [ 0.9, 0.8, 0.7 ],
+            "name" : "pbrEmissive"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "emissiveFactor": [ 0.9, 0.9, 0.9 ],
+            "name" : "pbrEmissiveGray"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "emissiveFactor": [ 0.9, 0.9, 0.9 ],
+            "extensions" : {
+		"KHR_materials_emissive_strength": {"emissiveStrength": 5.0}
+	    },
+            "name" : "pbrEmissiveGrayStrength"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "emissiveFactor": [ 0.9, 0.8, 0.7 ],
+            "extensions" : {
+		"KHR_materials_emissive_strength": {"emissiveStrength": 5.0}
+	    },
+            "name" : "pbrEmissiveStrength"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "emissiveFactor": [ 0.9, 0.8, 0.7 ],
+            "emissiveTexture": { "index": 0 },
+            "extensions" : {
+		"KHR_materials_emissive_strength": {"emissiveStrength": 5.0}
+	    },
+            "name" : "pbrEmissiveStrengthTexture"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "emissiveFactor": [ 0.9, 0.9, 0.9 ],
+            "emissiveTexture": { "index": 0 },
+            "extensions" : {
+		"KHR_materials_emissive_strength": {"emissiveStrength": 5.0}
+	    },
+            "name" : "pbrEmissiveGrayStrengthTexture"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "emissiveFactor": [ 0.9, 0.8, 0.7 ],
+            "emissiveTexture": { "index": 0 },
+            "name" : "pbrEmissiveTexture"
+        },
+        {
+            "pbrMetallicRoughness": {},
+            "emissiveFactor": [ 0.9, 0.9, 0.9 ],
+            "emissiveTexture": { "index": 0 },
+            "name" : "pbrEmissiveGrayTexture"
+        },
+        {
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness" : {"glossinessFactor" : 0}
+            },
+            "emissiveFactor": [ 0.9, 0.8, 0.7 ],
+            "emissiveTexture": { "index": 0 },
+            "name" : "SpecGlossEmissiveTexture"
+        },
+        {
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness" : {"glossinessFactor" : 0}
+            },
+            "emissiveFactor": [ 0.9, 0.9, 0.9 ],
+            "emissiveTexture": { "index": 0 },
+            "name" : "SpecGlossEmissiveGrayTexture"
+        },
+        {
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness" : {"glossinessFactor" : 0},
+                "KHR_materials_emissive_strength": {"emissiveStrength": 5.0}
+            },
+            "emissiveFactor": [ 0.9, 0.9, 0.9 ],
+            "emissiveTexture": { "index": 0 },
+            "name" : "SpecGlossEmissiveGrayStrengthTexture"
+        },
+        {
+            "extensions": {
+                "KHR_materials_pbrSpecularGlossiness" : {"glossinessFactor" : 0},
+                "KHR_materials_emissive_strength": {"emissiveStrength": 5.0}
+            },
+            "emissiveFactor": [ 0.9, 0.8, 0.7 ],
+            "emissiveTexture": { "index": 0 },
+            "name" : "SpecGlossEmissiveStrengthTexture"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "SpecGloss",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 0
+                }
+            ]
+        },
+        {
+            "name" : "SpecGlossEmissive",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 1
+                }
+            ]
+        },
+        {
+            "name" : "SpecGlossEmissiveGray",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 2
+                }
+            ]
+        },
+        {
+            "name" : "SpecGlossEmissiveGrayStrength",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 3
+                }
+            ]
+        },
+        {
+            "name" : "SpecGlossEmissiveStrength",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 4
+                }
+            ]
+        },
+        {
+            "name" : "pbrMetallicRoughness",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 5
+                }
+            ]
+        },
+        {
+            "name" : "pbrEmissive",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 6
+                }
+            ]
+        },
+        {
+            "name" : "pbrEmissiveGray",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 7
+                }
+            ]
+        },
+        {
+            "name" : "pbrEmissiveGrayStrength",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 8
+                }
+            ]
+        },
+        {
+            "name" : "pbrEmissiveStrength",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 9
+                }
+            ]
+        },
+        {
+            "name" : "pbrEmissiveStrengthTexture",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 10
+                }
+            ]
+        },
+        {
+            "name" : "pbrEmissiveStrengthGrayTexture",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 11
+                }
+            ]
+        },
+        {
+            "name" : "pbrEmissiveTexture",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 12
+                }
+            ]
+        },
+        {
+            "name" : "pbrEmissiveGrayTexture",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 13
+                }
+            ]
+        },
+        {
+            "name" : "SpecGlossEmissiveTexture",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 14
+                }
+            ]
+        },
+        {
+            "name" : "SpecGlossEmissiveGrayTexture",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 15
+                }
+            ]
+        },
+        {
+            "name" : "SpecGlossEmissiveGrayStrengthTexture",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 16
+                }
+            ]
+        },
+        {
+            "name" : "SpecGlossEmissiveStrengthTexture",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "NORMAL" : 2,
+                        "POSITION" : 1,
+                        "TANGENT" : 3,
+                        "TEXCOORD_0" : 4
+                    },
+                    "indices" : 0,
+                    "material" : 17
+                }
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "SpecGloss"
+        },
+        {
+            "mesh" : 1,
+            "name" : "SpecGlossEmissive",
+            "translation" : [2,0,0]
+        },
+        {
+            "mesh" : 2,
+            "name" : "SpecGlossEmissiveGray"
+            ,
+            "translation" : [4,0,0]
+        },
+        {
+            "mesh" : 3,
+            "name" : "SpecGlossEmissiveGrayStrength",
+            "translation" : [6,0,0]
+        },
+        {
+            "mesh" : 4,
+            "name" : "SpecGlossEmissiveStrength",
+            "translation" : [8,0,0]
+        },
+        {
+            "mesh" : 5,
+            "name" : "pbrMetallicRoughness",
+            "translation" : [10,0,0]
+        },
+        {
+            "mesh" : 6,
+            "name" : "pbrEmissive",
+            "translation" : [12,0,0]
+        },
+        {
+            "mesh" : 7,
+            "name" : "pbrEmissiveGray",
+            "translation" : [14,0,0]
+        },
+        {
+            "mesh" : 8,
+            "name" : "pbrEmissiveGrayStrength",
+            "translation" : [16,0,0]
+        },
+        {
+            "mesh" : 9,
+            "name" : "pbrEmissiveStrength",
+            "translation" : [18,0,0]
+        },
+        {
+            "mesh" : 10,
+            "name" : "pbrEmissiveStrengthTexture",
+            "translation" : [20,0,0]
+        },
+        {
+            "mesh" : 11,
+            "name" : "pbrEmissiveStrengthGrayTexture",
+            "translation" : [22,0,0]
+        },
+        {
+            "mesh" : 12,
+            "name" : "pbrEmissiveTexture",
+            "translation" : [24,0,0]
+        },
+        {
+            "mesh" : 13,
+            "name" : "pbrEmissiveGrayTexture",
+            "translation" : [26,0,0]
+        },
+        {
+            "mesh" : 14,
+            "name" : "SpecGlossEmissiveTexture",
+            "translation" : [28,0,0]
+        },
+        {
+            "mesh" : 15,
+            "name" : "SpecGlossEmissiveGrayTexture"
+            ,
+            "translation" : [30,0,0]
+        },
+        {
+            "mesh" : 16,
+            "name" : "SpecGlossEmissiveGrayStrengthTexture",
+            "translation" : [32,0,0]
+        },
+        {
+            "mesh" : 17,
+            "name" : "SpecGlossEmissiveStrengthTexture",
+            "translation" : [34,0,0]
+        }
+    ],
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
+            ]
+        }
+    ],
+    "textures": [
+        {
+            "source" : 0
+        }
+    ],
+    "images": [
+        {"uri": "14_emission_strength.png"}
+    ]
+}
