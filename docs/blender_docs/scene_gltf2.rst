@@ -277,6 +277,36 @@ If a Sheen Rougness Texture is used, glTF requires the values be written to the 
    approximation (better that using Sheen Principled sockets).
 
 
+Specular
+^^^^^^^^
+
+When the *Specular* or *Specular Tint* input of Principled BSDF node have a non default value or
+Image Texture node connected, the ``KHR_materials_specular`` glTF extension will be
+included in the export.
+
+.. note::
+
+   Specular models are not fully compatible between Blender and glTF. By default, Blender data are converted to glTF at export, 
+   with a possible loss of information.
+   Some conversion are also performed at import, will a possible loss of information too.
+
+
+At import, a custom node group is created, to store original Specular data, not converted.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_specular-custom-node.png
+
+At export, by default, Specular data are converted from Principled BSDF node. 
+
+You can export original Specular data, enabling the option at export. If enabled, Principled Specular data are ignored,
+only data from custom node are used.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_specular-export-option.png
+
+
+.. tip::
+   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu: 
+   Add > Output > glTF PBR Original data
+
 Transmission
 ^^^^^^^^^^^^
 
@@ -331,14 +361,61 @@ Volume
 
 Volume can be exported using a Volume Absorption node, linked to Volume socket of Output node.
 Data will be exported using the ``KHR_materials_volume`` extension.
-For volume to be exported, some _transmission_ must be set on Principled BSDF node.
-Color of Volume Absorption node is used as glTF attenuation color. No texture is allowed for this property.
-Density of Volume Absorption node is used as inverse of glTF attenuation distance.
-Thickess can be plugged into the Thickess socket of custom group node ``glTF Settings``. 
-If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
+
+- For volume to be exported, some *transmission* must be set on Principled BSDF node.
+- Color of Volume Absorption node is used as glTF attenuation color. No texture is allowed for this property.
+- Density of Volume Absorption node is used as inverse of glTF attenuation distance.
+- Thickess can be plugged into the Thickess socket of custom group node ``glTF Settings``.
+- If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
 
+glTF Variants
+^^^^^^^^^^^^^
+
+.. note::
+
+   For a full Variants experience, you have to enable UI in Add-on preferences
+
+There are two location to manage glTF Variants in Blender
+
+- In 3D View, on ``glTF Variants`` tab
+- For advanced settings, in Mesh Material Properties (see Advanced glTF Variant checks)
+
+The main concept to understand for using Variants, is that each material slot will be used as equivalent of a glTF primitive.
+
+glTF Variants switching
+^^^^^^^^^^^^^^^^^^^^^^^
+
+After importing a glTF file including ``KHR_materials_variants`` extension, all variants can be displayed.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_variants-switch.png
+
+You can switch Variant, by *selecting* the variant you want to display, then clicking on *Display Variant*.
+
+You can switch to default materials (when no Variant are used), by clicking on *Reset to default*.
+
+glTF Variants creation
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can add a new Variant by clicking the ``+`` at right of the Variant list. Then you can change the name by double-clicking.
+
+After changing Materials in Material Slots, you can assign current materials to the active Variant using *Assign to Variant*.
+
+You can also set default materials using *Assign as Original*. These materials will be exported as default material in glTF. 
+This are materials that will be displayed by any viewer that don't manage ``KHR_materials_variants`` extension.
+
+Advanced glTF Variant checks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to check primitive by primitive, what are Variants used, you can go to Mesh Material Properties.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_variants-detail.png
+
+The *glTF Material Variants* tab refers to the active material Slot and Material used by this slot. 
+You can see every Variants that are using this material for the given Slot/Primitive.
+
+You can also assign material to Variants from this tab, but recommandation is to perform it from 3D View tab.
 
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -460,7 +537,9 @@ are supported directly by this add-on:
 - ``KHR_materials_emissive_strength``
 - ``KHR_materials_volume``
 - ``KHR_materials_sheen``
+- ``KHR_materials_specular``
 - ``KHR_materials_ior``
+- ``KHR_materials_variants``
 - ``KHR_lights_punctual``
 - ``KHR_texture_transform``
 - ``KHR_mesh_quantization``
@@ -477,7 +556,9 @@ are supported directly by this add-on:
 - ``KHR_materials_emissive_strength``
 - ``KHR_materials_volume``
 - ``KHR_materials_sheen``
+- ``KHR_materials_specular``
 - ``KHR_materials_ior``
+- ``KHR_materials_variants``
 - ``KHR_texture_transform``
 
 
@@ -711,7 +792,7 @@ Loose Edges
 Loose Points
    Export loose points as glTF points, using the material from the first material slot.
 Materials
-   Export full materials, only placeholders (all primitives but without materials), 
+   Export full materials, only placeholders (all primitives but without materials),
    or does not export materials. (In that last case, primitive are merged, lossing material slot information).
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
