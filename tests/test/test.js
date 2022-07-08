@@ -1584,6 +1584,49 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.ok(variant_blue_index in map_5.variants);
 
             });
+
+            it('roundtrips Sheen', function() {
+
+                let dir = '19_sheen';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat_NoSheen = asset.materials.find(mat => mat.name === "NoSheen");
+                const mat_SheenDefault = asset.materials.find(mat => mat.name === "SheenDefault");
+                const mat_SheenSigma = asset.materials.find(mat => mat.name === "SheenSigma");
+                const mat_SheenTexture = asset.materials.find(mat => mat.name === "SheenTexture");
+                const mat_SheenTextureFactor = asset.materials.find(mat => mat.name === "SheenTextureFactor");
+                const mat_SheenSigmaTexture = asset.materials.find(mat => mat.name === "SheenSigmaTexture");
+                const mat_SheenSigmaTextureFactor = asset.materials.find(mat => mat.name === "SheenSigmaTextureFactor");
+
+                assert.strictEqual(mat_NoSheen.extensions, undefined);
+
+                assert.ok(!("sheenRoughnessFactor" in mat_SheenDefault.extensions['KHR_materials_sheen']));
+                assert.ok(!("sheenColorTexture" in mat_SheenDefault.extensions['KHR_materials_sheen']));
+                assert.ok(!("sheenRoughnessTexture" in mat_SheenDefault.extensions['KHR_materials_sheen']));
+                assert.equalEpsilonArray(mat_SheenDefault.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.1, 0.2, 0.3]);
+
+                assert.ok(!("sheenColorTexture" in mat_SheenSigma.extensions['KHR_materials_sheen']));
+                assert.ok(!("sheenRoughnessTexture" in mat_SheenSigma.extensions['KHR_materials_sheen']));
+                assert.equalEpsilonArray(mat_SheenSigma.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.8, 0.8, 0.8]);
+                assert.equalEpsilon(mat_SheenSigma.extensions['KHR_materials_sheen']['sheenRoughnessFactor'], 0.8);
+
+                assert.ok("sheenColorTexture" in mat_SheenTexture.extensions['KHR_materials_sheen']);
+                assert.ok(!("sheenColorFactor" in mat_SheenTexture.extensions['KHR_materials_sheen']));
+                assert.ok(!("sheenRoughnessTexture" in mat_SheenTexture.extensions['KHR_materials_sheen']));
+
+                assert.equalEpsilonArray(mat_SheenTextureFactor.extensions['KHR_materials_sheen']['sheenColorFactor'], [0.6, 0.7, 0.8]);
+                assert.ok("sheenColorTexture" in mat_SheenTextureFactor.extensions['KHR_materials_sheen']);
+                assert.ok(!("sheenRoughnessTexture" in mat_SheenTextureFactor.extensions['KHR_materials_sheen']));
+
+                assert.ok("sheenRoughnessTexture" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']);
+                assert.ok(!("sheenRoughnessFactor" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']));
+
+                assert.ok("sheenRoughnessTexture" in mat_SheenSigmaTextureFactor.extensions['KHR_materials_sheen']);
+                assert.equalEpsilon(mat_SheenSigmaTextureFactor.extensions['KHR_materials_sheen']['sheenRoughnessFactor'], 0.75);
+
+            });
         });
     });
 });
