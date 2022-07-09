@@ -871,6 +871,81 @@ describe('Exporter', function() {
 
               });
 
+              it('exports Specular', function() {
+                let gltfPath = path.resolve(outDirPath, '20_specular.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat_NoTextDefault = asset.materials.find(mat => mat.name === "NoTextDefault");
+                const mat_NoTextSpec = asset.materials.find(mat => mat.name === "NoTextSpec");
+                const mat_NoTextTint = asset.materials.find(mat => mat.name === "NoTextTint");
+                const mat_NoTextAll = asset.materials.find(mat => mat.name === "NoTextAll");
+                const mat_NoTextAllIOR = asset.materials.find(mat => mat.name === "NoTextAllIOR");
+                const mat_BaseColorTex_Factor = asset.materials.find(mat => mat.name === "BaseColorTex_Factor");
+                const mat_BaseColorText_NoFactor = asset.materials.find(mat => mat.name === "BaseColorText_NoFactor");
+                const mat_TexTrans = asset.materials.find(mat => mat.name === "TexTrans");
+                const mat_TexTint = asset.materials.find(mat => mat.name === "TexTint");
+                const mat_TextSpec = asset.materials.find(mat => mat.name === "TextSpec");
+                const mat_TextBaseSpec = asset.materials.find(mat => mat.name === "TextBaseSpec");
+                const mat_TextBaseSpecTint = asset.materials.find(mat => mat.name === "TextBaseSpecTint");
+                const mat_TextBaseSpecTintTrans = asset.materials.find(mat => mat.name === "TextBaseSpecTintTrans");
+                const mat_TextTrans = asset.materials.find(mat => mat.name === "TextTrans");
+
+                assert.strictEqual(mat_NoTextDefault.extensions, undefined);
+
+                assert.ok(!("specularTexture" in mat_NoTextSpec.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_NoTextSpec.extensions['KHR_materials_specular']));
+                assert.equalEpsilonArray(mat_NoTextSpec.extensions['KHR_materials_specular']["specularColorFactor"], [1.6599503018401929, 1.6599503018401929, 1.6599503018401929]);
+
+                assert.ok(!("specularTexture" in mat_NoTextTint.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_NoTextTint.extensions['KHR_materials_specular']));
+                assert.equalEpsilonArray(mat_NoTextTint.extensions['KHR_materials_specular']["specularColorFactor"], [1.185679, 1.185679, 1.185679]);
+
+                assert.ok(!("specularTexture" in mat_NoTextAll.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_NoTextAll.extensions['KHR_materials_specular']));
+                assert.equalEpsilonArray(mat_NoTextAll.extensions['KHR_materials_specular']["specularColorFactor"], [1.43114736, 1.72272237, 1.64982862]);
+
+                assert.ok(!("specularTexture" in mat_NoTextAllIOR.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_NoTextAllIOR.extensions['KHR_materials_specular']));
+                assert.equalEpsilonArray(mat_NoTextAllIOR.extensions['KHR_materials_specular']["specularColorFactor"], [0.69732364, 0.82577104, 0.79340282]);
+
+                assert.ok(!("specularTexture" in mat_BaseColorTex_Factor.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_BaseColorTex_Factor.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_BaseColorTex_Factor.extensions['KHR_materials_specular']["specularColorFactor"], [1.5323156568293443, 1.6732413046240955, 1.6432079626899192]);
+
+                assert.ok(!("specularTexture" in mat_BaseColorText_NoFactor.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_BaseColorText_NoFactor.extensions['KHR_materials_specular']);
+                assert.ok(!("specularColorFactor" in mat_BaseColorText_NoFactor.extensions['KHR_materials_specular']));
+
+                assert.ok(!("specularTexture" in mat_TexTrans.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_TexTrans.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_TexTrans.extensions['KHR_materials_specular']["specularColorFactor"], [1.4296006782732589, 1.72086059270931, 1.648045597824881]);
+
+                assert.ok(!("specularTexture" in mat_TexTint.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_TexTint.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_TexTint.extensions['KHR_materials_specular']["specularColorFactor"], [1.4298607500653402, 1.7233414556043727, 1.6499712628201024]);
+
+                assert.ok(!("specularTexture" in mat_TextSpec.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_TextSpec.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_TextSpec.extensions['KHR_materials_specular']["specularColorFactor"], [1.431147245659301, 1.7227222502400155, 1.6498284828018137]);
+
+                assert.ok(!("specularTexture" in mat_TextBaseSpec.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_TextBaseSpec.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_TextBaseSpec.extensions['KHR_materials_specular']["specularColorFactor"], [1.532315749957205, 1.6732414063168393, 1.6432080625573595]);
+
+                assert.ok(!("specularTexture" in mat_TextBaseSpecTint.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_TextBaseSpecTint.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_TextBaseSpecTint.extensions['KHR_materials_specular']["specularColorFactor"], [1.531690612214786, 1.6735372417757837, 1.6433076576487513]);
+
+                assert.ok(!("specularTexture" in mat_TextBaseSpecTintTrans.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_TextBaseSpecTintTrans.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_TextBaseSpecTintTrans.extensions['KHR_materials_specular']["specularColorFactor"], [1.5300354957580566, 1.6717288494110107, 1.6415319442749023]);
+
+                assert.ok(!("specularTexture" in mat_TextTrans.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_TextTrans.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_TextTrans.extensions['KHR_materials_specular']["specularColorFactor"], [1.4296006782732589, 1.72086059270931, 1.648045597824881]);
+
+              });
+
         });
     });
 });
@@ -897,6 +972,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                         let gltfDstPath = path.resolve(outDirPath, `${dir}${ext}`);
                         let gltfOptionsPath = `roundtrip/${dir}/${dir}_options.txt`;
+                        let gltfnovalidatorPath = `roundtrip/${dir}/${dir}_noval.txt`;
                         let options = args;
                         if (fs.existsSync(gltfOptionsPath)) {
                             options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
@@ -925,13 +1001,15 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                     let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
                                     let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
 
-                                    try {
-                                        assert.deepStrictEqual(dstInfo, srcInfo);
-                                    } catch (ex) {
-                                        done(new Error("Validation summary mismatch.\nExpected summary:\n" +
-                                            JSON.stringify(srcInfo, null, '  ') +
-                                            "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
-                                        return;
+                                    if (!fs.existsSync(gltfnovalidatorPath)) {
+                                        try {
+                                            assert.deepStrictEqual(dstInfo, srcInfo);
+                                        } catch (ex) {
+                                            done(new Error("Validation summary mismatch.\nExpected summary:\n" +
+                                                JSON.stringify(srcInfo, null, '  ') +
+                                                "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
+                                            return;
+                                        }
                                     }
 
                                     done();
@@ -1627,6 +1705,178 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(mat_SheenSigmaTextureFactor.extensions['KHR_materials_sheen']['sheenRoughnessFactor'], 0.75);
 
             });
+
+            it('roundtrips Specular Original', function() {
+
+                let dir = '20_specular_original';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat_SpecDefault = asset.materials.find(mat => mat.name === "SpecDefault");
+                const mat_Factor = asset.materials.find(mat => mat.name === "Factor");
+                const mat_Color = asset.materials.find(mat => mat.name === "Color");
+                const mat_SpecTex = asset.materials.find(mat => mat.name === "SpecTex");
+                const mat_SpecTexFac = asset.materials.find(mat => mat.name === "SpecTexFac");
+                const mat_SpecColorTex = asset.materials.find(mat => mat.name === "SpecColorTex");
+                const mat_SpecColorTexFac = asset.materials.find(mat => mat.name === "SpecColorTexFac");
+
+                if ('specularFactor' in mat_SpecDefault.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecDefault.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecDefault.extensions['KHR_materials_specular']));
+                }
+                assert.ok(!("specularTexture" in mat_SpecDefault.extensions['KHR_materials_specular']));
+                if ('specularColorFactor' in mat_SpecDefault.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilonArray(mat_SpecDefault.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
+                } else {
+                    assert.ok(!("specularColorFactor" in mat_SpecDefault.extensions['KHR_materials_specular']));
+                }
+                assert.ok(!("specularColorTexture" in mat_SpecDefault.extensions['KHR_materials_specular']));
+
+                if ('specularColorFactor' in mat_Factor.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilonArray(mat_Factor.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
+                } else {
+                    assert.ok(!("specularColorFactor" in mat_Factor.extensions['KHR_materials_specular']));
+                }
+                assert.ok(!("specularTexture" in mat_Factor.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_Factor.extensions['KHR_materials_specular']));
+                assert.equalEpsilon(mat_Factor.extensions['KHR_materials_specular']['specularFactor'], 0.8);
+
+                if ('specularFactor' in mat_Color.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_Color.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_Color.extensions['KHR_materials_specular']));
+                }
+                assert.equalEpsilonArray(mat_Color.extensions['KHR_materials_specular']['specularColorFactor'], [0.1, 0.2, 0.3]);
+                assert.ok(!("specularTexture" in mat_Color.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_Color.extensions['KHR_materials_specular']));
+
+                if ('specularFactor' in mat_SpecTex.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecTex.extensions['KHR_materials_specular']));
+                }
+                assert.ok("specularTexture" in mat_SpecTex.extensions['KHR_materials_specular']);
+                assert.ok(!("specularColorTexture" in mat_SpecTex.extensions['KHR_materials_specular']));
+
+    
+                assert.equalEpsilon(mat_SpecTexFac.extensions['KHR_materials_specular']['specularFactor'], 0.75);
+                assert.ok("specularTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']);
+                assert.ok(!("specularColorTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']));                
+
+                if ('specularFactor' in mat_SpecColorTex.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecColorTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+                }
+                assert.ok(!("specularTexture" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_SpecColorTex.extensions['KHR_materials_specular']);
+                if ('specularColorFactor' in mat_SpecColorTex.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilonArray(mat_SpecColorTex.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
+                } else {
+                    assert.ok(!("specularColorFactor" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+                }
+
+                if ('specularFactor' in mat_SpecColorTexFac.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
+                }
+                assert.ok(!("specularTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
+                assert.ok("specularColorTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']);
+                assert.equalEpsilonArray(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularColorFactor'], [0.2, 0.3, 0.4]);
+
+            });
+
+            it('roundtrips Specular Converted', function() {
+
+                let dir = '20_specular';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat_SpecDefault = asset.materials.find(mat => mat.name === "SpecDefault");
+                const mat_Factor = asset.materials.find(mat => mat.name === "Factor");
+                const mat_Color = asset.materials.find(mat => mat.name === "Color");
+                const mat_SpecTex = asset.materials.find(mat => mat.name === "SpecTex");
+                const mat_SpecTexFac = asset.materials.find(mat => mat.name === "SpecTexFac");
+                const mat_SpecColorTex = asset.materials.find(mat => mat.name === "SpecColorTex");
+                const mat_SpecColorTexFac = asset.materials.find(mat => mat.name === "SpecColorTexFac");
+
+                if ('specularFactor' in mat_SpecDefault.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecDefault.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecDefault.extensions['KHR_materials_specular']));
+                }
+                assert.ok(!("specularTexture" in mat_SpecDefault.extensions['KHR_materials_specular']));
+                if ('specularColorFactor' in mat_SpecDefault.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilonArray(mat_SpecDefault.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
+                } else {
+                    assert.ok(!("specularColorFactor" in mat_SpecDefault.extensions['KHR_materials_specular']));
+                }
+                assert.ok(!("specularColorTexture" in mat_SpecDefault.extensions['KHR_materials_specular']));
+
+                if ('specularColorFactor' in mat_Factor.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilonArray(mat_Factor.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
+                } else {
+                    assert.ok(!("specularColorFactor" in mat_Factor.extensions['KHR_materials_specular']));
+                }
+                assert.ok(!("specularTexture" in mat_Factor.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_Factor.extensions['KHR_materials_specular']));
+                if ('specularFactor' in mat_Factor.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_Factor.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_Factor.extensions['KHR_materials_specular']));
+                }
+
+                if ('specularFactor' in mat_Color.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_Color.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_Color.extensions['KHR_materials_specular']));
+                }
+                assert.equalEpsilonArray(mat_Color.extensions['KHR_materials_specular']['specularColorFactor'], [0.18, 0.18, 0.18]);
+                assert.ok(!("specularTexture" in mat_Color.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_Color.extensions['KHR_materials_specular']));
+
+                if ('specularFactor' in mat_SpecTex.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecTex.extensions['KHR_materials_specular']));
+                }
+                assert.equalEpsilonArray(mat_SpecTex.extensions['KHR_materials_specular']['specularColorFactor'], [0.18, 0.18, 0.18]);
+                assert.ok(!("specularTexture" in mat_SpecTex.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_SpecTex.extensions['KHR_materials_specular']));
+
+    
+                if ('specularFactor' in mat_SpecTexFac.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecTexFac.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecTexFac.extensions['KHR_materials_specular']));
+                }
+                assert.equalEpsilonArray(mat_SpecTexFac.extensions['KHR_materials_specular']['specularColorFactor'], [0.18, 0.18, 0.18]);
+                assert.ok(!("specularTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']));
+
+                if ('specularFactor' in mat_SpecColorTex.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecColorTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+                }
+                assert.equalEpsilonArray(mat_SpecColorTex.extensions['KHR_materials_specular']['specularColorFactor'], [0.0, 0.0, 0.0]);
+                assert.ok(!("specularTexture" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+
+                if ('specularFactor' in mat_SpecColorTexFac.extensions['KHR_materials_specular']) {
+                    assert.equalEpsilon(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                } else {
+                    assert.ok(!("specularFactor" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
+                }
+                assert.equalEpsilonArray(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularColorFactor'], [0.0, 0.0, 0.0]);
+                assert.ok(!("specularTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
+                assert.ok(!("specularColorTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));            
+
+            }); 
         });
     });
 });
