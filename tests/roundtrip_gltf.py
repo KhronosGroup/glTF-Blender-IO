@@ -43,7 +43,7 @@ try:
         os.makedirs(output_dir)
     if '--use-variants' in argv:
         bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
-    elif '--no-sample-anim' in argv:
+    if '--no-sample-anim' in argv:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_force_sampling=False)
     elif '--use-original-specular' in argv:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_original_specular=True)
