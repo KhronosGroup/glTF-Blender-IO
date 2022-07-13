@@ -52,7 +52,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
 
     colors_attributes = []
     rendered_color_idx = blender_mesh.attributes.render_color_index
-    
+
     if color_max > 0:
         colors_attributes.append(rendered_color_idx)
         # Then find other ones
@@ -60,7 +60,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             i for i in range(len(blender_mesh.color_attributes)) if i != rendered_color_idx \
                 and blender_mesh.vertex_colors.find(blender_mesh.color_attributes[i].name) != -1
         ])
-        
+
 
     armature = None
     skin = None
@@ -558,7 +558,7 @@ def __get_uvs(blender_mesh, uv_i):
 def __get_colors(blender_mesh, color_i, blender_color_i):
     if blender_mesh.color_attributes[blender_color_i].domain == "POINT":
         colors = np.empty(len(blender_mesh.vertices) * 4, dtype=np.float32) #POINT
-    else: 
+    else:
         colors = np.empty(len(blender_mesh.loops) * 4, dtype=np.float32) #CORNER
     blender_mesh.color_attributes[blender_color_i].data.foreach_get('color', colors)
     colors = colors.reshape(-1, 4)
