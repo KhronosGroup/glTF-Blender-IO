@@ -125,10 +125,13 @@ def specular(mh, location_specular,
         f0_from_ior = ((ior - 1)/(ior + 1))**2
         lum_specular_color = luminance(specular_color_factor)
         blender_specular = ((lum_specular_color - transmission_factor) / (1 - transmission_factor)) * (1 / 0.08) * f0_from_ior
-        blender_specular_tint = luminance((normalize(specular_color_factor) - 1) / (normalize(base_color) - 1))
-        if blender_specular_tint < 0 or blender_specular_tint > 1:
-            # TODOExt Warning clamping
-            blender_specular_tint = np.maximum(np.minimum(blender_specular_tint, 1), 0)
+        if not all([i == 0 for i in normalize(base_color) - 1]):
+            blender_specular_tint = luminance((normalize(specular_color_factor) - 1) / (normalize(base_color) - 1))
+            if blender_specular_tint < 0 or blender_specular_tint > 1:
+                # TODOExt Warning clamping
+                blender_specular_tint = np.maximum(np.minimum(blender_specular_tint, 1), 0)
+        else:
+            blender_specular_tint = 1.0
 
         specular_socket.default_value = blender_specular
         specular_tint_socket.default_value = blender_specular_tint
@@ -222,10 +225,13 @@ def specular(mh, location_specular,
         f0_from_ior = ((ior - 1)/(ior + 1))**2
         lum_specular_color = stack3(luminance(buffers['speccolor']))
         blender_specular = ((lum_specular_color - buffers['transmission']) / (1 - buffers['transmission'])) * (1 / 0.08) * f0_from_ior
-        blender_specular_tint = luminance((normalize(buffers['speccolor']) - 1) / (normalize(buffers['basecolor']) - 1))
-        np.nan_to_num(blender_specular_tint, copy=False)
-        blender_specular_tint = np.clip(blender_specular_tint, 0.0, 1.0)
-        blender_specular_tint = stack3(blender_specular_tint)
+        if not np.all(normalize(buffers['basecolor']) - 1 == 0.0):
+            blender_specular_tint = luminance((normalize(buffers['speccolor']) - 1) / (normalize(buffers['basecolor']) - 1))
+            np.nan_to_num(blender_specular_tint, copy=False)
+            blender_specular_tint = np.clip(blender_specular_tint, 0.0, 1.0)
+            blender_specular_tint = stack3(blender_specular_tint)
+        else:
+            blender_specular_tint = stack3(np.ones((width, height)))
 
         blender_specular = np.dstack((blender_specular, np.ones((width, height)))) # Set alpha to 1
         blender_specular_tint = np.dstack((blender_specular_tint, np.ones((width, height)))) # Set alpha to 1

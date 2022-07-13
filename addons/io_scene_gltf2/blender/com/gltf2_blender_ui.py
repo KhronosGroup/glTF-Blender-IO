@@ -56,8 +56,7 @@ def add_gltf_settings_to_menu(self, context) :
 
 class NODE_OT_GLTF_PBR_NON_CONVERTED_EXTENSIONS(bpy.types.Operator):
     bl_idname = "node.gltf_pbr_non_converted_extensions_operator"
-    bl_label  = "glTF PBR Non Converted Extensions"
-
+    bl_label  = "glTF Original PBR data"
 
     @classmethod
     def poll(cls, context):

@@ -425,6 +425,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
         transform = parent_inverse
 
     values = []
+    fps = bpy.context.scene.render.fps
     for keyframe in keyframes:
         # Transform the data and build gltf control points
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform, need_rotation_correction)
@@ -437,11 +438,11 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
             in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform, need_rotation_correction)
             if is_yup and blender_object_if_armature is None:
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
-            # the tangent in glTF is relative to the keyframe value
+            # the tangent in glTF is relative to the keyframe value and uses seconds
             if not isinstance(value, list):
-                in_tangent = value - in_tangent
+                in_tangent = fps * (in_tangent - value)
             else:
-                in_tangent = [value[i] - in_tangent[i] for i in range(len(value))]
+                in_tangent = [fps * (in_tangent[i] - value[i]) for i in range(len(value))]
             keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value  # append
 
         if keyframe.out_tangent is not None:
@@ -449,11 +450,11 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform, need_rotation_correction)
             if is_yup and blender_object_if_armature is None:
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
-            # the tangent in glTF is relative to the keyframe value
+            # the tangent in glTF is relative to the keyframe value and uses seconds
             if not isinstance(value, list):
-                out_tangent = value - out_tangent
+                out_tangent = fps * (out_tangent - value)
             else:
-                out_tangent = [value[i] - out_tangent[i] for i in range(len(value))]
+                out_tangent = [fps * (out_tangent[i] - value[i]) for i in range(len(value))]
             keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)  # append
 
         values += keyframe_value
