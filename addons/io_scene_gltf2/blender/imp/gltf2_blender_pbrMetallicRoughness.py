@@ -627,7 +627,9 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
     )
 
 
-# => [Add Emission] => [Mix Alpha] => [Material Output]
+# => [Add Emission] => [Mix Alpha] => [Material Output] if needed, only for SpecGlossiness
+# => [Volume] => [Add Shader] => [Material Output] if needed
+# => [Velvet] => [Add Shader] => [Material Output] if nedded
 def make_output_nodes(
     mh: MaterialHelper,
     location,
