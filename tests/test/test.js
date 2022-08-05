@@ -946,15 +946,6 @@ describe('Exporter', function() {
 
               });
 
-              it('exports Collections', function() {
-                let gltfPath = path.resolve(outDirPath, '21_scene.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.nodes.length, 47);
-                assert.strictEqual(asset.scenes[0].nodes.length, 8);
-                assert.strictEqual(asset.meshes.length, 6);
-              });
-
         });
     });
 });
