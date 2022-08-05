@@ -60,7 +60,7 @@ def array_to_accessor(array, component_type, data_type, include_max_and_min=Fals
         amin = np.amin(array, axis=0).tolist()
 
     return gltf2_io.Accessor(
-        buffer_view=gltf2_io_binary_data.BinaryData(array.tobytes()),
+        buffer_view=gltf2_io_binary_data.BinaryData(array.tobytes(), gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
         byte_offset=None,
         component_type=component_type,
         count=len(array),
@@ -156,7 +156,7 @@ def __gather_colors(blender_primitive, export_settings):
                 normalized = True        
 
             attributes[color_id] = gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData(colors.tobytes()),
+                buffer_view=gltf2_io_binary_data.BinaryData(colors.tobytes(), gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
                 byte_offset=None,
                 component_type=col['component_type'],
                 count=len(colors),
