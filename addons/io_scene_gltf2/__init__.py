@@ -1268,7 +1268,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
 
     settings_node_ui : bpy.props.BoolProperty(
             default= False,
-            description="Displays glTF Settings node in Shader Editor (Menu Add > Output)"
+            description="Displays glTF Material Output node in Shader Editor (Menu Add > Output)"
             )
 
     KHR_materials_variants_ui : bpy.props.BoolProperty(
