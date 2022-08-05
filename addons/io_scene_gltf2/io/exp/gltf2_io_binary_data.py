@@ -33,7 +33,7 @@ class BinaryData:
         return hash(self.data)
 
     @classmethod
-    def from_list(cls, lst: typing.List[typing.Any], gltf_component_type: gltf2_io_constants.ComponentType, bufferViewTarget=gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER):
+    def from_list(cls, lst: typing.List[typing.Any], gltf_component_type: gltf2_io_constants.ComponentType, bufferViewTarget=None):
         format_char = gltf2_io_constants.ComponentType.to_type_code(gltf_component_type)
         return BinaryData(array.array(format_char, lst).tobytes(), bufferViewTarget)
 
