@@ -951,7 +951,7 @@ describe('Exporter', function() {
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
                 assert.strictEqual(asset.nodes.length, 47);
-                assert.strictEqual(asset.scenes[0].nodes.length, 8);
+                assert.strictEqual(asset.scenes[0].nodes.length, 9);
                 assert.strictEqual(asset.meshes.length, 6);
               });
 
