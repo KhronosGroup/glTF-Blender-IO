@@ -85,6 +85,7 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
             else:
                 all_sorted_channels.append(existing_idx[i])
 
+        # Checks there are some driver on SK, and that there is not only invalid drivers
         if len(all_sorted_channels) > 0 and not all([i is None for i in all_sorted_channels]):
             drivers.append((child_uuid, tuple(all_sorted_channels)))
 
