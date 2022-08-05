@@ -38,12 +38,11 @@ def export_volume(blender_material, export_settings):
 
     thicknesss_socket = gltf2_blender_get.get_socket_old(blender_material, 'Thickness')
     if thicknesss_socket is None:
-        volume_extension['thicknessFactor'] = 1.0
+        volume_extension['thicknessFactor'] = 0.0
 
     density_socket = gltf2_blender_get.get_socket(blender_material, 'Density', volume=True)
     attenuation_color_socket = gltf2_blender_get.get_socket(blender_material, 'Color', volume=True)
-    if density_socket is None or attenuation_color_socket is None:
-        return None, None
+    # Even if density or attenuation are not set, we export volume extension
 
     if isinstance(attenuation_color_socket, bpy.types.NodeSocket):
         rgb = gltf2_blender_get.get_const_from_default_value_socket(attenuation_color_socket, kind='RGB')
