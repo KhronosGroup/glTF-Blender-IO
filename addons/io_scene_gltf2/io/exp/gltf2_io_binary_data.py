@@ -20,10 +20,11 @@ from io_scene_gltf2.io.com import gltf2_io_constants
 class BinaryData:
     """Store for gltf binary data that can later be stored in a buffer."""
 
-    def __init__(self, data: bytes):
+    def __init__(self, data: bytes, bufferViewTarget=None):
         if not isinstance(data, bytes):
             raise TypeError("Data is not a bytes array")
         self.data = data
+        self.bufferviewTarget = bufferViewTarget
 
     def __eq__(self, other):
         return self.data == other.data
@@ -32,9 +33,9 @@ class BinaryData:
         return hash(self.data)
 
     @classmethod
-    def from_list(cls, lst: typing.List[typing.Any], gltf_component_type: gltf2_io_constants.ComponentType):
+    def from_list(cls, lst: typing.List[typing.Any], gltf_component_type: gltf2_io_constants.ComponentType, bufferViewTarget=gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER):
         format_char = gltf2_io_constants.ComponentType.to_type_code(gltf_component_type)
-        return BinaryData(array.array(format_char, lst).tobytes())
+        return BinaryData(array.array(format_char, lst).tobytes(), bufferViewTarget)
 
     @property
     def byte_length(self):
