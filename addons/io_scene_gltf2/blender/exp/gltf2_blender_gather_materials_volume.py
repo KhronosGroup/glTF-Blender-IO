@@ -38,7 +38,7 @@ def export_volume(blender_material, export_settings):
 
     thicknesss_socket = gltf2_blender_get.get_socket_old(blender_material, 'Thickness')
     if thicknesss_socket is None:
-        # If no thickness (here because there is no glTF Material Output node), no volume extension export 
+        # If no thickness (here because there is no glTF Material Output node), no volume extension export
             return None, None
 
     density_socket = gltf2_blender_get.get_socket(blender_material, 'Density', volume=True)
