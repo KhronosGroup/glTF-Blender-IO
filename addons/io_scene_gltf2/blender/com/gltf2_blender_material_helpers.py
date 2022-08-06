@@ -14,8 +14,12 @@
 
 import bpy
 
-def get_gltf_node_name():
+# Get compatibility at export with old files
+def get_gltf_node_old_name():
     return "glTF Settings"
+
+def get_gltf_node_name():
+    return "glTF Material Output"
 
 def create_settings_group(name):
     gltf_node_group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
