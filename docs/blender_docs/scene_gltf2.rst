@@ -305,7 +305,7 @@ only data from custom node are used.
 
 .. tip::
    If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu: 
-   Add > Output > glTF PBR Original data
+   Add > Output > glTF Material Output
 
 Transmission
 ^^^^^^^^^^^^
