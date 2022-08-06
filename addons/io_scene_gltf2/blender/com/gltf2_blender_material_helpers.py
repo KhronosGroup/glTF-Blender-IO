@@ -28,5 +28,9 @@ def create_settings_group(name):
     thicknessFactor.default_value = 0.0
     gltf_node_group.nodes.new('NodeGroupOutput')
     gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
+    specular = gltf_node_group.inputs.new("NodeSocketFloat", "Specular")
+    specular.default_value = 1.0
+    specularColor = gltf_node_group.inputs.new("NodeSocketColor", "Specular Color")
+    specularColor.default_value = [1.0,1.0,1.0,1.0]
     gltf_node_group_input.location = -200, 0
     return gltf_node_group
