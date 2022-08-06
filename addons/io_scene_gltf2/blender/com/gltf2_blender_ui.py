@@ -28,6 +28,7 @@ def create_gltf_ao_group(operator, group_name):
 class NODE_OT_GLTF_SETTINGS(bpy.types.Operator):
     bl_idname = "node.gltf_settings_node_operator"
     bl_label  = "glTF Settings"
+    bl_description = "Add a node to the active tree for glTF export"
 
 
     @classmethod
@@ -57,6 +58,7 @@ def add_gltf_settings_to_menu(self, context) :
 class NODE_OT_GLTF_PBR_NON_CONVERTED_EXTENSIONS(bpy.types.Operator):
     bl_idname = "node.gltf_pbr_non_converted_extensions_operator"
     bl_label  = "glTF Original PBR data"
+    bl_description = "Add a node to the active tree for glTF export"
 
     @classmethod
     def poll(cls, context):
