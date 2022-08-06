@@ -15,7 +15,7 @@
 import bpy
 from mathutils import Vector, Matrix
 
-from ..com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name, get_gltf_pbr_non_converted_name
+from ..com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name
 from ...blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
