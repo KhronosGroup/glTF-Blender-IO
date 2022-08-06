@@ -144,7 +144,7 @@ Baked Ambient Occlusion
 glTF is capable of storing a baked ambient occlusion map.
 Currently there is no arrangement of nodes that causes Blender
 to use such a map in exactly the same way as intended in glTF.
-However, if the exporter finds a custom node group by the name of ``glTF Settings``, and
+However, if the exporter finds a custom node group by the name of ``glTF Material Output``, and
 finds an input named ``Occlusion`` on that node group,
 it will look for an Image Texture attached there to use as the occlusion map in glTF.
 The effect need not be shown in Blender, as Blender has other ways of showing ambient occlusion,
@@ -175,7 +175,7 @@ the same image with the roughness and metallic channels.
 
    The Cycles render engine has a Bake panel that can be used to bake
    ambient occlusion maps. The resulting image can be saved and connected
-   directly to the ``glTF Settings`` node.
+   directly to the ``glTF Material Output`` node.
 
 
 Normal Map
@@ -365,7 +365,7 @@ Data will be exported using the ``KHR_materials_volume`` extension.
 - For volume to be exported, some *transmission* must be set on Principled BSDF node.
 - Color of Volume Absorption node is used as glTF attenuation color. No texture is allowed for this property.
 - Density of Volume Absorption node is used as inverse of glTF attenuation distance.
-- Thickess can be plugged into the Thickess socket of custom group node ``glTF Settings``.
+- Thickess can be plugged into the Thickess socket of custom group node ``glTF Material Output``.
 - If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
