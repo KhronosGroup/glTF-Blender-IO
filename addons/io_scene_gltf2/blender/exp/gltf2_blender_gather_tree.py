@@ -106,10 +106,18 @@ class VExportTree:
         bpy.context.window.scene = blender_scene
         depsgraph = bpy.context.evaluated_depsgraph_get()
 
-        for blender_object in [obj.original for obj in depsgraph.scene_eval.objects if obj.parent is None]:
-            self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4))
+        # Gather parent/children information once, as calling bobj.children is
+        #   very expensive operation : takes O(len(bpy.data.objects)) time.
+        blender_children = dict()
+        for bobj in bpy.data.objects:
+            bparent = bobj.parent
+            blender_children.setdefault(bobj, [])
+            blender_children.setdefault(bparent, []).append(bobj)
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, armature_uuid=None, dupli_world_matrix=None):
+        for blender_object in [obj.original for obj in depsgraph.scene_eval.objects if obj.parent is None]:
+            self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), blender_children)
+
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, blender_children, armature_uuid=None, dupli_world_matrix=None):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
@@ -210,42 +218,42 @@ class VExportTree:
 
         # standard children
         if blender_bone is None and blender_object.is_instancer is False:
-            for child_object in blender_object.children:
+            for child_object in blender_children[blender_object]:
                 if child_object.parent_bone:
                     # Object parented to bones
                     # Will be manage later
                     continue
                 else:
                     # Classic parenting
-                    self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world)
+                    self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, blender_children)
 
         # Collections
         if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
             for dupli_object in blender_object.instance_collection.all_objects:
                 if dupli_object.parent is not None:
                     continue
-                self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world)
+                self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world, blender_children)
 
         # Armature : children are bones with no parent
         if blender_object.type == "ARMATURE" and blender_bone is None:
             for b in [b for b in blender_object.pose.bones if b.parent is None]:
-                self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, node.uuid)
+                self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, blender_children, node.uuid)
 
         # Bones
         if blender_object.type == "ARMATURE" and blender_bone is not None:
             for b in blender_bone.children:
-                self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, armature_uuid)
+                self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, blender_children, armature_uuid)
 
         # Object parented to bone
         if blender_bone is not None:
-            for child_object in [c for c in blender_object.children if c.parent_bone is not None and c.parent_bone == blender_bone.name]:
-                self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world)
+            for child_object in [c for c in blender_children[blender_object] if c.parent_bone is not None and c.parent_bone == blender_bone.name]:
+                self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, blender_children)
 
         # Duplis
         if blender_object.is_instancer is True and blender_object.instance_type != 'COLLECTION':
             depsgraph = bpy.context.evaluated_depsgraph_get()
             for (dupl, mat) in [(dup.object.original, dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(dup.parent.original) == id(blender_object)]:
-                self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, dupli_world_matrix=mat)
+                self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, blender_children, dupli_world_matrix=mat)
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
