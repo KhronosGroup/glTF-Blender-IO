@@ -76,7 +76,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
 
             need_volume_node = True
 
-            # We also need glTF Settings Node, to set thicknessFactor and thicknessTexture
+            # We also need glTF Material Output Node, to set thicknessFactor and thicknessTexture
             mh.settings_node = make_settings_node(mh)
             mh.settings_node.location = additional_location
             mh.settings_node.width = 180

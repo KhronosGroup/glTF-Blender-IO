@@ -16,7 +16,7 @@ import bpy
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
 from ..com.gltf2_blender_material_helpers import get_gltf_pbr_non_converted_name, create_gltf_pbr_non_converted_group
 
-################ glTF Settings node ###########################################
+################ glTF Material Output node ###########################################
 
 def create_gltf_ao_group(operator, group_name):
 
@@ -27,9 +27,8 @@ def create_gltf_ao_group(operator, group_name):
 
 class NODE_OT_GLTF_SETTINGS(bpy.types.Operator):
     bl_idname = "node.gltf_settings_node_operator"
-    bl_label  = "glTF Settings"
+    bl_label  = "glTF Material Ouptut"
     bl_description = "Add a node to the active tree for glTF export"
-
 
     @classmethod
     def poll(cls, context):
