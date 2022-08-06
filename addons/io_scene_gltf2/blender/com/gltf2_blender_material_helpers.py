@@ -21,9 +21,6 @@ def get_gltf_node_old_name():
 def get_gltf_node_name():
     return "glTF Material Output"
 
-def get_gltf_node_name():
-    return "glTF Material Output"
-
 def create_settings_group(name):
     gltf_node_group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
     gltf_node_group.inputs.new("NodeSocketFloat", "Occlusion")
