@@ -161,7 +161,7 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
         return None
 
     element_type = gltf2_io_constants.DataType.Scalar
-    binary_data = gltf2_io_binary_data.BinaryData(indices.tobytes())
+    binary_data = gltf2_io_binary_data.BinaryData(indices.tobytes(), bufferViewTarget=gltf2_io_constants.BufferViewTarget.ELEMENT_ARRAY_BUFFER)
     return gltf2_blender_gather_accessors.gather_accessor(
         binary_data,
         component_type,
