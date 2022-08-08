@@ -16,7 +16,6 @@ from re import M
 import bpy
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
-from ..com.gltf2_blender_material_helpers import get_gltf_pbr_non_converted_name, create_gltf_pbr_non_converted_group
 from .gltf2_blender_texture import texture
 from .gltf2_blender_KHR_materials_clearcoat import \
     clearcoat, clearcoat_roughness, clearcoat_normal
@@ -39,7 +38,6 @@ class MaterialHelper:
             pymat.pbr_metallic_roughness = \
                 MaterialPBRMetallicRoughness.from_dict({})
         self.settings_node = None
-        self.original_pbr_node = None
 
     def is_opaque(self):
         alpha_mode = self.pymat.alpha_mode
@@ -62,7 +60,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     # This value may be overidden later if IOR extension is set on file
     pbr_node.inputs['IOR'].default_value = GLTF_IOR
 
-    if mh.pymat.occlusion_texture is not None:
+    if mh.pymat.occlusion_texture is not None or (mh.pymat.extensions and 'KHR_materials_specular' in mh.pymat.extensions):
         if mh.settings_node is None:
             mh.settings_node = make_settings_node(mh)
             mh.settings_node.location = additional_location
@@ -98,12 +96,6 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         make_velvet_socket=need_velvet_node
     )
 
-    if mh.pymat.extensions and 'KHR_materials_specular' in mh.pymat.extensions:
-        # We need glTF PBR Non Converted Extensions Node
-        mh.original_pbr_node = make_pbr_non_converted_extensions_node(mh)
-        mh.original_pbr_node.location = additional_location
-        mh.original_pbr_node.width = 180
-        additional_location = additional_location[0], additional_location[1] - 150
 
     if mh.pymat.extensions and 'KHR_materials_sheen':
         pass #TOTOEXT     
@@ -182,8 +174,8 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         location_specular_tint=locs['specularColorTexture'],
         specular_socket=pbr_node.inputs['Specular'],
         specular_tint_socket=pbr_node.inputs['Specular Tint'],
-        original_specular_socket=mh.original_pbr_node.inputs[0] if mh.original_pbr_node else None,
-        original_specularcolor_socket=mh.original_pbr_node.inputs[1] if mh.original_pbr_node else None,
+        original_specular_socket=mh.settings_node.inputs[2] if mh.settings_node else None,
+        original_specularcolor_socket=mh.settings_node.inputs[3] if mh.settings_node else None,
         location_original_specular=locs['original_specularTexture'],
         location_original_specularcolor=locs['original_specularColorTexture']
     )
@@ -762,22 +754,4 @@ def get_settings_group():
     else:
         # Create a new node group
         gltf_node_group = create_settings_group(gltf_node_group_name)
-    return gltf_node_group
-
-def make_pbr_non_converted_extensions_node(mh):
-    """
-    Make a Group node with a hookup for PBR Non Converted Extensions. No effect in Blender, but
-    used to tell the exporter what the original map(s) should be.
-    """
-    node = mh.node_tree.nodes.new('ShaderNodeGroup')
-    node.node_tree = get_pbr_non_converted_extensions_group()
-    return node
-
-def get_pbr_non_converted_extensions_group():
-    gltf_node_group_name = get_gltf_pbr_non_converted_name()
-    if gltf_node_group_name in bpy.data.node_groups:
-        gltf_node_group = bpy.data.node_groups[gltf_node_group_name]
-    else:
-        # Create a new node group
-        gltf_node_group = create_gltf_pbr_non_converted_group(gltf_node_group_name)
     return gltf_node_group

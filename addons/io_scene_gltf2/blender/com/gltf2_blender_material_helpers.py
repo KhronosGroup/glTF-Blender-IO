@@ -28,21 +28,9 @@ def create_settings_group(name):
     thicknessFactor.default_value = 0.0
     gltf_node_group.nodes.new('NodeGroupOutput')
     gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
+    specular = gltf_node_group.inputs.new("NodeSocketFloat", "Specular")
+    specular.default_value = 1.0
+    specularColor = gltf_node_group.inputs.new("NodeSocketColor", "Specular Color")
+    specularColor.default_value = [1.0,1.0,1.0,1.0]
     gltf_node_group_input.location = -200, 0
     return gltf_node_group
-
-def get_gltf_pbr_non_converted_name():
-    return "original glTF PBR data"
-
-def create_gltf_pbr_non_converted_group(name):
-    gltf_node_group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
-
-    specular = gltf_node_group.inputs.new("NodeSocketFloat", "specular glTF")
-    specular.default_value = 1.0
-    specularColor = gltf_node_group.inputs.new("NodeSocketColor", "specularColor glTF")
-    specularColor.default_value = [1.0,1.0,1.0,1.0]
-
-    gltf_node_group.nodes.new('NodeGroupOutput')
-    gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
-    gltf_node_group_input.location = -400, 0
-    return gltf_node_group    
