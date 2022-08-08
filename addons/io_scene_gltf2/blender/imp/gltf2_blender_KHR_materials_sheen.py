@@ -15,7 +15,7 @@
 from ...io.com.gltf2_io import TextureInfo
 from .gltf2_blender_texture import texture
 from .gltf2_blender_image import BlenderImage
-from ..exp.gltf2_blender_image import TmpImageGuard, make_temp_image_copy
+from ..exp.gltf2_blender_image import TmpImageGuard
 import numpy as np
 import bpy
 
