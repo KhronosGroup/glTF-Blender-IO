@@ -26,7 +26,7 @@ def create_gltf_ao_group(operator, group_name):
 
 class NODE_OT_GLTF_SETTINGS(bpy.types.Operator):
     bl_idname = "node.gltf_settings_node_operator"
-    bl_label  = "glTF Material Ouptut"
+    bl_label  = "glTF Material Output"
     bl_description = "Add a node to the active tree for glTF export"
 
     @classmethod
