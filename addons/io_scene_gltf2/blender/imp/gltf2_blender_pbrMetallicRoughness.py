@@ -57,7 +57,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     additional_location = 40, -370 # For occlusion and/or volume / original PBR extensions
 
     # Set IOR to 1.5, this is the default in glTF
-    # This value may be overidden later if IOR extension is set on file
+    # This value may be overridden later if IOR extension is set on file
     pbr_node.inputs['IOR'].default_value = GLTF_IOR
 
     if mh.pymat.occlusion_texture is not None or (mh.pymat.extensions and 'KHR_materials_specular' in mh.pymat.extensions):
@@ -621,7 +621,7 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
 
 # => [Add Emission] => [Mix Alpha] => [Material Output] if needed, only for SpecGlossiness
 # => [Volume] => [Add Shader] => [Material Output] if needed
-# => [Velvet] => [Add Shader] => [Material Output] if nedded
+# => [Velvet] => [Add Shader] => [Material Output] if needed
 def make_output_nodes(
     mh: MaterialHelper,
     location,

@@ -416,7 +416,7 @@ def gather_keyframes(blender_obj_uuid: str,
                     # for both in and out tangents, we guarantee that (even if there are errors or numerical imprecisions)
                     # symmetrical control points translate to symmetrical tangents.
                     # Note: I am not sure that linearity is never broken with quaternions and their normalization.
-                    # Especially at sign swap it might occure that the value gets negated but the control point not.
+                    # Especially at sign swap it might occur that the value gets negated but the control point not.
                     # I have however not once encountered an issue with this.
                     key.in_tangent = [
                         c.keyframe_points[i].co[1] + (c.keyframe_points[i].handle_left[1] - c.keyframe_points[i].co[1]) / (c.keyframe_points[i].handle_left[0] - c.keyframe_points[i].co[0])
