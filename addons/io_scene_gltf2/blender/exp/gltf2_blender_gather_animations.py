@@ -98,11 +98,11 @@ def gather_animations(  obj_uuid: int,
 
 
     current_action = None
-    if blender_object.animation_data and blender_object.animation_data.action:
+    if blender_object and blender_object.animation_data and blender_object.animation_data.action:
         current_action = blender_object.animation_data.action
     # Remove any solo (starred) NLA track. Restored after export
     solo_track = None
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         for track in blender_object.animation_data.nla_tracks:
             if track.is_solo:
                 solo_track = track
@@ -110,11 +110,11 @@ def gather_animations(  obj_uuid: int,
                 break
 
     # Remove any tweak mode. Restore after export
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         restore_tweak_mode = blender_object.animation_data.use_tweak_mode
 
     # Remove use of NLA. Restore after export
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         current_use_nla = blender_object.animation_data.use_nla
         blender_object.animation_data.use_nla = False
 
@@ -150,7 +150,7 @@ def gather_animations(  obj_uuid: int,
 
     # Restore action status
     # TODO: do this in a finally
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         if blender_object.animation_data.action is not None:
             if current_action is None:
                 # remove last exported action
@@ -287,7 +287,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
 
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
 
-    if blender_object.animation_data is not None:
+    if blender_object and blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
             blender_actions.append(blender_object.animation_data.action)
@@ -307,7 +307,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                     action_on_type[strip.action.name] = "OBJECT"
 
-    if blender_object.type == "MESH" \
+    if blender_object and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
@@ -331,7 +331,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
 
     # If there are only 1 armature, include all animations, even if not in NLA
     if export_settings['gltf_export_anim_single_armature'] is True:
-        if blender_object.type == "ARMATURE":
+        if blender_object and blender_object.type == "ARMATURE":
             if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
                 # Keep all actions on objects (no Shapekey animation)
                 for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:

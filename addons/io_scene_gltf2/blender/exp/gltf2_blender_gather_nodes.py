@@ -68,6 +68,8 @@ def gather_node(vnode, export_settings):
 
 
 def __gather_camera(blender_object, export_settings):
+    if not blender_object:
+        return
     if blender_object.type != 'CAMERA':
         return None
 
@@ -182,77 +184,102 @@ def __gather_matrix(blender_object, export_settings):
     # return blender_object.matrix_local
     return []
 
+def __get_materials(object, data):
+    materials = []
+    count = len(data.materials) if hasattr(data, "materials") else 0
+    for i in range(count):
+        # Check if overwritten by object
+        if i < len(object.material_slots):
+            slot = object.material_slots[i]
+            if slot.link == 'OBJECT' and slot.material:
+                materials.append(slot.material)
+                continue
+
+        # Otherwise use object data
+        materials.append(data.materials[i])
+
+    return materials
+
 
 def __gather_mesh(vnode, blender_object, export_settings):
-    if blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
+    if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
         return __gather_mesh_from_nonmesh(blender_object, export_settings)
-
-    if blender_object.type != "MESH":
-        return None
-
-    # For duplis instancer, when show is off -> export as empty
-    if vnode.force_as_empty is True:
-        return None
-
-    # Be sure that object is valid (no NaN for example)
-    blender_object.data.validate()
-
-    # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
-    vertex_groups = blender_object.vertex_groups
-    modifiers = blender_object.modifiers
-    if len(vertex_groups) == 0:
+    if blender_object is None and type(vnode.data).__name__ not in ["Mesh"]:
+        return None #TODO
+    if blender_object is None:
+        # GN instance
+        blender_mesh = vnode.data
+        materials = tuple(__get_materials(vnode.original_object, blender_mesh))
+        uuid_for_skined_data = None
         vertex_groups = None
-    if len(modifiers) == 0:
         modifiers = None
+        skip_filter = True
+
+        if blender_mesh is None:
+            return None
+
+    else:
+        if blender_object.type != "MESH":
+            return None
+        # For duplis instancer, when show is off -> export as empty
+        if vnode.force_as_empty is True:
+            return None
+        # Be sure that object is valid (no NaN for example)
+        blender_object.data.validate()
+        # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
+        vertex_groups = blender_object.vertex_groups
+        modifiers = blender_object.modifiers
+        if len(vertex_groups) == 0:
+            vertex_groups = None
+        if len(modifiers) == 0:
+            modifiers = None
 
 
-    if export_settings[gltf2_blender_export_keys.APPLY]:
-        if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
+        if export_settings[gltf2_blender_export_keys.APPLY]:
+            if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
+                blender_mesh = blender_object.data
+                skip_filter = False
+            else:
+                armature_modifiers = {}
+                if export_settings[gltf2_blender_export_keys.SKINS]:
+                    # temporarily disable Armature modifiers if exporting skins
+                    for idx, modifier in enumerate(blender_object.modifiers):
+                        if modifier.type == 'ARMATURE':
+                            armature_modifiers[idx] = modifier.show_viewport
+                            modifier.show_viewport = False
+
+                depsgraph = bpy.context.evaluated_depsgraph_get()
+                blender_mesh_owner = blender_object.evaluated_get(depsgraph)
+                blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
+                for prop in blender_object.data.keys():
+                    blender_mesh[prop] = blender_object.data[prop]
+                skip_filter = True
+
+                if export_settings[gltf2_blender_export_keys.SKINS]:
+                    # restore Armature modifiers
+                    for idx, show_viewport in armature_modifiers.items():
+                        blender_object.modifiers[idx].show_viewport = show_viewport
+        else:
             blender_mesh = blender_object.data
             skip_filter = False
-        else:
-            armature_modifiers = {}
-            if export_settings[gltf2_blender_export_keys.SKINS]:
-                # temporarily disable Armature modifiers if exporting skins
-                for idx, modifier in enumerate(blender_object.modifiers):
-                    if modifier.type == 'ARMATURE':
-                        armature_modifiers[idx] = modifier.show_viewport
-                        modifier.show_viewport = False
-
-            depsgraph = bpy.context.evaluated_depsgraph_get()
-            blender_mesh_owner = blender_object.evaluated_get(depsgraph)
-            blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
-            for prop in blender_object.data.keys():
-                blender_mesh[prop] = blender_object.data[prop]
-            skip_filter = True
-
-            if export_settings[gltf2_blender_export_keys.SKINS]:
-                # restore Armature modifiers
-                for idx, show_viewport in armature_modifiers.items():
-                    blender_object.modifiers[idx].show_viewport = show_viewport
-    else:
-        blender_mesh = blender_object.data
-        skip_filter = False
-        # If no skin are exported, no need to have vertex group, this will create a cache miss
-        if not export_settings[gltf2_blender_export_keys.SKINS]:
-            vertex_groups = None
-            modifiers = None
-        else:
-            # Check if there is an armature modidier
-            if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
-                vertex_groups = None # Not needed if no armature, avoid a cache miss
+            # If no skin are exported, no need to have vertex group, this will create a cache miss
+            if not export_settings[gltf2_blender_export_keys.SKINS]:
+                vertex_groups = None
                 modifiers = None
-
-    materials = tuple(ms.material for ms in blender_object.material_slots)
-
-    # retrieve armature
-    # Because mesh data will be transforms to skeleton space,
-    # we can't instantiate multiple object at different location, skined by same armature
-    uuid_for_skined_data = None
-    if export_settings[gltf2_blender_export_keys.SKINS]:
-        for idx, modifier in enumerate(blender_object.modifiers):
-            if modifier.type == 'ARMATURE':
-                uuid_for_skined_data = vnode.uuid
+            else:
+                # Check if there is an armature modidier
+                if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
+                    vertex_groups = None # Not needed if no armature, avoid a cache miss
+                    modifiers = None
+        materials = tuple(ms.material for ms in blender_object.material_slots)
+        # retrieve armature
+        # Because mesh data will be transforms to skeleton space,
+        # we can't instantiate multiple object at different location, skined by same armature
+        uuid_for_skined_data = None
+        if export_settings[gltf2_blender_export_keys.SKINS]:
+            for idx, modifier in enumerate(blender_object.modifiers):
+                if modifier.type == 'ARMATURE':
+                    uuid_for_skined_data = vnode.uuid
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                    uuid_for_skined_data,
@@ -317,7 +344,7 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
 
 def __gather_name(blender_object, export_settings):
-    return blender_object.name
+    return blender_object.name if blender_object else "GN Instance"
 
 def __gather_trans_rot_scale(vnode, export_settings):
     if vnode.parent_uuid is None:
@@ -336,7 +363,7 @@ def __gather_trans_rot_scale(vnode, export_settings):
     rot = __convert_swizzle_rotation(rot, export_settings)
     sca = __convert_swizzle_scale(sca, export_settings)
 
-    if vnode.blender_object.instance_type == 'COLLECTION' and vnode.blender_object.instance_collection:
+    if vnode.blender_object and vnode.blender_object.instance_type == 'COLLECTION' and vnode.blender_object.instance_collection:
         offset = -__convert_swizzle_location(
             vnode.blender_object.instance_collection.instance_offset, export_settings)
 
@@ -364,7 +391,7 @@ def __gather_trans_rot_scale(vnode, export_settings):
     return translation, rotation, scale
 
 def __gather_skin(vnode, blender_object, export_settings):
-    modifiers = {m.type: m for m in blender_object.modifiers}
+    modifiers = {m.type: m for m in blender_object.modifiers} if blender_object else {}
     if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:
         return None
 

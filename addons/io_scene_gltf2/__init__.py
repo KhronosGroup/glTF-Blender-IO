@@ -198,6 +198,12 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    export_gn_mesh: BoolProperty(
+        name='GN instances meshes',
+        description='Export Geometry nodes instance meshes',
+        default=False
+    )
+
     export_draco_mesh_compression_enable: BoolProperty(
         name='Draco mesh compression',
         description='Compress mesh using Draco',
@@ -572,6 +578,8 @@ class ExportGLTF2_Base:
         else:
             export_settings['gltf_draco_mesh_compression'] = False
 
+        export_settings['gltf_gn_mesh'] = self.export_gn_mesh
+
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_cameras'] = self.export_cameras
@@ -804,6 +812,28 @@ class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
 
+class GLTF_PT_export_geometry_GN(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Experimental GN"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.        
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_gn_mesh')
 
 class GLTF_PT_export_geometry_material(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1296,6 +1326,7 @@ classes = (
     GLTF_PT_export_geometry,
     GLTF_PT_export_geometry_mesh,
     GLTF_PT_export_geometry_material,
+    GLTF_PT_export_geometry_GN,
     GLTF_PT_export_geometry_original_pbr,
     GLTF_PT_export_geometry_compression,
     GLTF_PT_export_animation,

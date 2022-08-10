@@ -167,6 +167,8 @@ def get_object_matrix(blender_obj_uuid: str,
 
         for obj_uuid in obj_uuids:
             blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
+            if blender_obj is None: #GN instance
+                continue
 
             # if this object is not animated, do not skip :
             # We need this object too in case of bake

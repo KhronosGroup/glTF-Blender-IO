@@ -34,6 +34,7 @@ class VExportNode:
     LIGHT = 4
     CAMERA = 5
     COLLECTION = 6
+    MESH = 7 # For instances of GN
 
     # Parent type, to be set on child regarding its parent
     NO_PARENT = 54
@@ -70,6 +71,10 @@ class VExportNode:
 
         # glTF
         self.node = None
+
+        # For mesh instance data of GN instances
+        self.data = None
+        self.materials = None
 
     def add_child(self, uuid):
         self.children.append(uuid)
@@ -117,11 +122,14 @@ class VExportTree:
         for blender_object in [obj.original for obj in depsgraph.scene_eval.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), blender_children)
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, blender_children, armature_uuid=None, dupli_world_matrix=None):
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, blender_children, armature_uuid=None, dupli_world_matrix=None, data=None, original_object=None):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
         node.set_blender_data(blender_object, blender_bone)
+        if blender_object is None:
+            node.data = data
+            node.original_object = original_object
 
         # add to parent if needed
         if parent_uuid is not None:
@@ -130,7 +138,9 @@ class VExportTree:
             self.roots.append(node.uuid)
 
         # Set blender type
-        if blender_bone is not None:
+        if blender_object is None: #GN instance
+            node.blender_type = VExportNode.MESH
+        elif blender_bone is not None:
             node.blender_type = VExportNode.BONE
             self.nodes[armature_uuid].bones[blender_bone.name] = node.uuid
             node.use_deform = blender_bone.id_data.data.bones[blender_bone.name].use_deform
@@ -208,13 +218,17 @@ class VExportTree:
 
         # Force empty ?
         # For duplis, if instancer is not display, we should create an empty
-        if blender_object.is_instancer is True and blender_object.show_instancer_for_render is False:
+        if blender_object and blender_object.is_instancer is True and blender_object.show_instancer_for_render is False:
             node.force_as_empty = True
 
         # Storing this node
         self.add_node(node)
 
         ###### Manage children ######
+
+        # GN instance have no children
+        if blender_object is None:
+            return
 
         # standard children
         if blender_bone is None and blender_object.is_instancer is False:
@@ -254,6 +268,19 @@ class VExportTree:
             depsgraph = bpy.context.evaluated_depsgraph_get()
             for (dupl, mat) in [(dup.object.original, dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(dup.parent.original) == id(blender_object)]:
                 self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, blender_children, dupli_world_matrix=mat)
+
+        # Geometry Nodes instances
+        if self.export_settings['gltf_gn_mesh'] is True:
+            if blender_object and any([mod.type == "NODES" for mod in blender_object.modifiers]): # TODO add more check
+                node.force_as_empty = True
+                print("force as empty 2")
+                depsgraph = bpy.context.evaluated_depsgraph_get()
+                eval = blender_object.evaluated_get(depsgraph)
+                for inst in depsgraph.object_instances: # use only as iterator
+                    if inst.parent == eval:
+                        if not inst.is_instance:
+                            continue
+                        self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object)
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
