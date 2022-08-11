@@ -477,6 +477,12 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    export_hierarchy_full_collections: BoolProperty(
+        name='Full Collection hierarchy',
+        description='Export full hierarchy, including inbetween collection',
+        default=False
+    )
+
     # Custom scene property for saving settings
     scene_key = "glTF2ExportSettings"
 
@@ -632,6 +638,7 @@ class ExportGLTF2_Base:
         export_settings['gltf_lights'] = self.export_lights
 
         export_settings['gltf_hierarchy_flatten_bones'] = self.export_hierarchy_flatten_bones
+        export_settings['gltf_hierarchy_full_collections'] = self.export_hierarchy_full_collections
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1063,6 +1070,7 @@ class GLTF_PT_export_hierarchy(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, 'export_hierarchy_flatten_bones')
+        layout.prop(operator, 'export_hierarchy_full_collections')
 
 class GLTF_PT_export_user_extensions(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'

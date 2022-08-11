@@ -84,6 +84,13 @@ def __gather_scene(blender_scene, export_settings):
         if node is not None:
             scene.nodes.append(node)
 
+    # armatures = [i for i in vtree.nodes.keys() if vtree.nodes[i].blender_type == gltf2_blender_gather_tree.VExportNode.ARMATURE]
+    # for arma in armatures:
+    #     bones = vtree.get_all_children_bones(arma)
+    #     for bone in bones:
+    #         vtree.add_leaf_bone(arma, bone)
+    #     vtree.add_ibm(arma, len(bones))
+
     vtree.add_neutral_bones()
 
     export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)

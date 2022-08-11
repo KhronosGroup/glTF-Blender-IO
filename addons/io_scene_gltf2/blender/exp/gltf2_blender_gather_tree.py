@@ -34,6 +34,8 @@ class VExportNode:
     LIGHT = 4
     CAMERA = 5
     COLLECTION = 6
+    INST_COLLECTION = 7
+    
 
     # Parent type, to be set on child regarding its parent
     NO_PARENT = 54
@@ -114,10 +116,18 @@ class VExportTree:
             blender_children.setdefault(bobj, [])
             blender_children.setdefault(bparent, []).append(bobj)
 
-        for blender_object in [obj.original for obj in depsgraph.scene_eval.objects if obj.parent is None]:
-            self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), blender_children)
+        if self.export_settings['gltf_hierarchy_full_collections'] is False:
+            for blender_object in [obj.original for obj in depsgraph.scene_eval.objects if obj.parent is None]:
+                self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), blender_children)
+        else:
+            for child in depsgraph.scene_eval.collection.children:
+                self.recursive_node_traverse(child, None, None, Matrix.Identity(4), blender_children, is_collection=True)
+            for child in depsgraph.scene_eval.collection.objects:
+                if child.parent is not None:
+                    continue
+                self.recursive_node_traverse(child, None, None, Matrix.Identity(4), blender_children)
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, blender_children, armature_uuid=None, dupli_world_matrix=None):
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, blender_children, armature_uuid=None, dupli_world_matrix=None, is_collection=False):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
@@ -134,6 +144,8 @@ class VExportTree:
             node.blender_type = VExportNode.BONE
             self.nodes[armature_uuid].bones[blender_bone.name] = node.uuid
             node.use_deform = blender_bone.id_data.data.bones[blender_bone.name].use_deform
+        elif is_collection is True:
+            node.blender_type = VExportNode.COLLECTION
         elif blender_object.type == "ARMATURE":
             node.blender_type = VExportNode.ARMATURE
         elif blender_object.type == "CAMERA":
@@ -141,7 +153,7 @@ class VExportTree:
         elif blender_object.type == "LIGHT":
             node.blender_type = VExportNode.LIGHT
         elif blender_object.instance_type == "COLLECTION":
-            node.blender_type = VExportNode.COLLECTION
+            node.blender_type = VExportNode.INST_COLLECTION
         else:
             node.blender_type = VExportNode.OBJECT
 
@@ -177,10 +189,13 @@ class VExportTree:
         # Store World Matrix for objects
         if dupli_world_matrix is not None:
             node.matrix_world = dupli_world_matrix
-        elif node.blender_type in [VExportNode.OBJECT, VExportNode.COLLECTION, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
+        elif node.blender_type in [VExportNode.OBJECT, VExportNode.COLLECTION, VExportNode.INST_COLLECTION, VExportNode.ARMATURE, VExportNode.CAMERA, VExportNode.LIGHT]:
             # Matrix World of object is expressed based on collection instance objects are
             # So real world matrix is collection world_matrix @ "world_matrix" of object
-            node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
+            if is_collection:
+                node.matrix_world = parent_coll_matrix_world.copy()
+            else:
+                node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 if self.export_settings[gltf2_blender_export_keys.YUP]:
                     correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
@@ -208,7 +223,7 @@ class VExportTree:
 
         # Force empty ?
         # For duplis, if instancer is not display, we should create an empty
-        if blender_object.is_instancer is True and blender_object.show_instancer_for_render is False:
+        if is_collection is False and blender_object.is_instancer is True and blender_object.show_instancer_for_render is False:
             node.force_as_empty = True
 
         # Storing this node
@@ -217,7 +232,7 @@ class VExportTree:
         ###### Manage children ######
 
         # standard children
-        if blender_bone is None and blender_object.is_instancer is False:
+        if blender_bone is None and is_collection is False and blender_object.is_instancer is False:
             for child_object in blender_children[blender_object]:
                 if child_object.parent_bone:
                     # Object parented to bones
@@ -228,19 +243,40 @@ class VExportTree:
                     self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, blender_children)
 
         # Collections
-        if blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection:
-            for dupli_object in blender_object.instance_collection.all_objects:
-                if dupli_object.parent is not None:
+        if is_collection is False and (blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection):
+            if self.export_settings['gltf_hierarchy_full_collections'] is False:
+                for dupli_object in blender_object.instance_collection.all_objects:
+                    if dupli_object.parent is not None:
+                        continue
+                    self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world, blender_children)
+            else:
+                # Manage children objects
+                for child in blender_object.instance_collection.objects:
+                    if child.users_collection[0].name != blender_object.name:
+                        continue
+                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, blender_children)
+                # Manage children collections
+                for child in blender_object.instance_collection.children:
+                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, blender_children, is_collection=True)
+
+        if is_collection is True: # Only for gltf_hierarchy_full_collections == True
+            # Manage children objects
+            for child in blender_object.objects:
+                if child.users_collection[0].name != blender_object.name:
                     continue
-                self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world, blender_children)
+                self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, blender_children)
+            # Manage children collections
+            for child in blender_object.children:
+                self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, blender_children, is_collection=True)
+
 
         # Armature : children are bones with no parent
-        if blender_object.type == "ARMATURE" and blender_bone is None:
+        if node.blender_type == VExportNode.ARMATURE and blender_bone is None:
             for b in [b for b in blender_object.pose.bones if b.parent is None]:
                 self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, blender_children, node.uuid)
 
         # Bones
-        if blender_object.type == "ARMATURE" and blender_bone is not None:
+        if node.blender_type == VExportNode.ARMATURE and blender_bone is not None:
             for b in blender_bone.children:
                 self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, blender_children, armature_uuid)
 
@@ -250,7 +286,7 @@ class VExportTree:
                 self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, blender_children)
 
         # Duplis
-        if blender_object.is_instancer is True and blender_object.instance_type != 'COLLECTION':
+        if is_collection is False and blender_object.is_instancer is True and blender_object.instance_type != 'COLLECTION':
             depsgraph = bpy.context.evaluated_depsgraph_get()
             for (dupl, mat) in [(dup.object.original, dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(dup.parent.original) == id(blender_object)]:
                 self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, blender_children, dupli_world_matrix=mat)
@@ -318,7 +354,7 @@ class VExportTree:
             print("This should not happen!")
 
         for child in self.nodes[uuid].children:
-            if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
+            if self.nodes[uuid].blender_type == VExportNode.INST_COLLECTION:
                 self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
             else:
                 self.recursive_filter_tag(child, parent_keep_tag)

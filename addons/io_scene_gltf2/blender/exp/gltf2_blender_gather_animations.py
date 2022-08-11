@@ -69,7 +69,10 @@ def gather_animations(  obj_uuid: int,
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
-    blender_actions = __get_blender_actions(blender_object, export_settings)
+    if export_settings['vtree'].nodes[obj_uuid].blender_type != VExportNode.COLLECTION:
+        blender_actions = __get_blender_actions(blender_object, export_settings)
+    else:
+        return animations, tracks
 
     if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0:
         # No TRS animation are found for this object.
