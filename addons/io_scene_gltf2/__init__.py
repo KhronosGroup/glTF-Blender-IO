@@ -471,6 +471,12 @@ class ExportGLTF2_Base:
         description='Store glTF export settings in the Blender project',
         default=False)
 
+    export_hierarchy_flatten_bones: BoolProperty(
+        name='Flatten Bone Hierarchy',
+        description='Flatten Bone Hierarchy. Usefull in case of non decomposable TRS matrix',
+        default=False
+    )
+
     # Custom scene property for saving settings
     scene_key = "glTF2ExportSettings"
 
@@ -624,6 +630,8 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
+
+        export_settings['gltf_hierarchy_flatten_bones'] = self.export_hierarchy_flatten_bones
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1032,6 +1040,30 @@ class GLTF_PT_export_animation_skinning(bpy.types.Panel):
         if operator.export_force_sampling is False and operator.export_def_bones is True:
             layout.label(text="Export only deformation bones is not possible when not sampling animation")
 
+class GLTF_PT_export_hierarchy(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Hierarchy"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_hierarchy_flatten_bones')
+
 class GLTF_PT_export_user_extensions(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -1305,7 +1337,8 @@ classes = (
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
     GLTF_PT_import_user_extensions,
-    GLTF_AddonPreferences
+    GLTF_AddonPreferences,
+    GLTF_PT_export_hierarchy
 )
 
 
