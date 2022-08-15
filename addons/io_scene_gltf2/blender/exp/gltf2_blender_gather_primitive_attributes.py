@@ -184,6 +184,13 @@ def __gather_skins(blender_primitive, export_settings):
         max_bone_set_index += 1
     max_bone_set_index -= 1
 
+    # Here, a set represents a group of 4 weights.
+    # So max_bone_set_index value:
+    # if -1 => No weights
+    # if 1 => Max 4 weights
+    # if 2 => Max 8 weights
+    # etc...
+
     # If no skinning
     if max_bone_set_index < 0:
         return attributes
