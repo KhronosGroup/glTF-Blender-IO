@@ -109,7 +109,7 @@ def get_numpy_type(attribute_component_type):
         "FLOAT_COLOR": np.float32,
         "FLOAT_VECTOR": np.float32,
         "FLOAT_VECTOR_4": np.float32,
-        "INT": np.float32,
+        "INT": np.float32, #signed integer are not supported by glTF
         "FLOAT": np.float32,
         "BOOLEAN": np.float32
     }.get(attribute_component_type)
