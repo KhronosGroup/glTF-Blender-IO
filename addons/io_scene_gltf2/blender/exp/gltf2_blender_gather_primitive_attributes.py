@@ -43,15 +43,6 @@ def gather_primitive_attributes(blender_primitive, export_settings):
 
 
 def array_to_accessor(array, component_type, data_type, include_max_and_min=False):
-    dtype = gltf2_io_constants.ComponentType.to_numpy_dtype(component_type)
-    num_elems = gltf2_io_constants.DataType.num_elements(data_type)
-
-    if type(array) is not np.ndarray:
-        array = np.array(array, dtype=dtype)
-        array = array.reshape(len(array) // num_elems, num_elems)
-
-    assert array.dtype == dtype
-    assert array.shape[1] == num_elems
 
     amax = None
     amin = None
@@ -215,8 +206,10 @@ def __gather_skins(blender_primitive, export_settings):
         component_type = gltf2_io_constants.ComponentType.UnsignedShort
         if max(internal_joint) < 256:
             component_type = gltf2_io_constants.ComponentType.UnsignedByte
+        joints = np.array(internal_joint, dtype= gltf2_io_constants.ComponentType.to_numpy_dtype(component_type))
+        joints = joints.reshape(-1, 4)
         joint = array_to_accessor(
-            internal_joint,
+            joints,
             component_type,
             data_type=gltf2_io_constants.DataType.Vec4,
         )
