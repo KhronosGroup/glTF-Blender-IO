@@ -16,7 +16,7 @@ import bpy
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket, get_const_from_default_value_socket
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -67,7 +67,7 @@ def __gather_base_color_factor(blender_material, export_settings):
         if export_settings['gltf_image_format'] != "NONE":
             alpha = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
         else:
-            alpha = gltf2_blender_get.get_const_from_default_value_socket(alpha_socket, kind='VALUE')
+            alpha = get_const_from_default_value_socket(alpha_socket, kind='VALUE')
 
     base_color_socket = gltf2_blender_get.get_socket(blender_material, "Base Color")
     if base_color_socket is None:
@@ -78,7 +78,7 @@ def __gather_base_color_factor(blender_material, export_settings):
         if export_settings['gltf_image_format'] != "NONE":
             rgb = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB')
         else:
-            rgb = gltf2_blender_get.get_const_from_default_value_socket(base_color_socket, kind='RGB')
+            rgb = get_const_from_default_value_socket(base_color_socket, kind='RGB')
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0

@@ -115,3 +115,13 @@ def get_texture_node_from_socket(socket, export_settings):
 def has_image_node_from_socket(socket, export_settings):
     result = get_texture_node_from_socket(socket, export_settings)
     return result is not None
+
+# return the default value of a socket, even if this socket is linked
+def get_const_from_default_value_socket(socket, kind):
+    if kind == 'RGB':
+        if socket.type != 'RGBA': return None
+        return list(socket.default_value)[:3]
+    if kind == 'VALUE':
+        if socket.type != 'VALUE': return None
+        return socket.default_value
+    return None

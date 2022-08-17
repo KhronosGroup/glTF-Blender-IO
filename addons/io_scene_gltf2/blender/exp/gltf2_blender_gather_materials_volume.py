@@ -16,7 +16,9 @@ import bpy
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import \
+    has_image_node_from_socket, \
+    get_const_from_default_value_socket
 
 
 def export_volume(blender_material, export_settings):
@@ -47,11 +49,11 @@ def export_volume(blender_material, export_settings):
     # Even if density or attenuation are not set, we export volume extension
 
     if isinstance(attenuation_color_socket, bpy.types.NodeSocket):
-        rgb = gltf2_blender_get.get_const_from_default_value_socket(attenuation_color_socket, kind='RGB')
+        rgb = get_const_from_default_value_socket(attenuation_color_socket, kind='RGB')
         volume_extension['attenuationColor'] = rgb
 
     if isinstance(density_socket, bpy.types.NodeSocket):
-        density = gltf2_blender_get.get_const_from_default_value_socket(density_socket, kind='VALUE')
+        density = get_const_from_default_value_socket(density_socket, kind='VALUE')
         volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else None # infinity (Using None as glTF default)
 
 
