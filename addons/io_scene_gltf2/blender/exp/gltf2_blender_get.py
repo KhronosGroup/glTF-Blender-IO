@@ -127,26 +127,6 @@ def check_if_is_linked_to_active_output(shader_socket):
 
     return False
 
-def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
-    """Find any ShaderNodeTexImage in the path from the socket."""
-    if shader_socket is None:
-        return None
-
-    if max_hops <= 0:
-        return None
-
-    for link in shader_socket.links:
-        if isinstance(link.from_node, bpy.types.ShaderNodeTexImage):
-            return link.from_node
-
-        for socket in link.from_node.inputs.values():
-            image = find_shader_image_from_shader_socket(shader_socket=socket, max_hops=max_hops - 1)
-            if image is not None:
-                return image
-
-    return None
-
-
 def get_texture_transform_from_mapping_node(mapping_node):
     if mapping_node.vector_type not in ["TEXTURE", "POINT", "VECTOR"]:
         gltf2_io_debug.print_console("WARNING",
