@@ -49,6 +49,7 @@ def get_node_socket(blender_material, type, name):
     :param blender_material: a blender material for which to get the socket
     :return: a blender NodeSocket for a given type
     """
+    # TODOSNodes manage groups
     nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
     nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
     inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
@@ -95,6 +96,7 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
     return None
 
 def check_if_is_linked_to_active_output(shader_socket):
+    #TODOSNodes manage groups
     for link in shader_socket.links:
         if isinstance(link.to_node, bpy.types.ShaderNodeOutputMaterial) and link.to_node.is_active_output is True:
             return True
@@ -227,6 +229,7 @@ def get_const_from_socket(socket, kind):
 
 
 def previous_socket(socket):
+    # TODOSNodes manage groups
     while True:
         if not socket.is_linked:
             return None

@@ -59,7 +59,7 @@ class FilterByType(Filter):
         return isinstance(shader_node, self.type)
 
 
-#TODO: is path still used somewhere ?
+#TODOSNodes: is path still used somewhere ?
 class NodeTreeSearchResult:
     def __init__(self, shader_node: bpy.types.Node, path: typing.List[bpy.types.NodeLink]):
         self.shader_node = shader_node
@@ -77,6 +77,7 @@ def from_socket(start_socket: bpy.types.NodeSocket,
     :return: a list of shader nodes for which filter is true
     """
     # hide implementation (especially the search path)
+    #TODOSNodes Manage groups
     def __search_from_socket(start_socket: bpy.types.NodeSocket,
                              shader_node_filter: typing.Union[Filter, typing.Callable],
                              search_path: typing.List[bpy.types.NodeLink]) -> typing.List[NodeTreeSearchResult]:
