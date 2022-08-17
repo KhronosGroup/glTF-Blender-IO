@@ -33,7 +33,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_transmission impo
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_clearcoat import export_clearcoat
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_ior import export_ior
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket, get_socket_from_gltf_material_node
 
 @cached
 def get_material_cache_key(blender_material, active_uvmap_index, export_settings):
@@ -283,7 +283,7 @@ def __gather_orm_texture(blender_material, export_settings):
 
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None or not has_image_node_from_socket(occlusion, export_settings):
-        occlusion = gltf2_blender_get.get_socket_from_gltf_material_node(blender_material, "Occlusion")
+        occlusion = get_socket_from_gltf_material_node(blender_material, "Occlusion")
         if occlusion is None or not has_image_node_from_socket(occlusion, export_settings):
             return None
 
@@ -318,7 +318,7 @@ def __gather_orm_texture(blender_material, export_settings):
 def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None:
-        occlusion = gltf2_blender_get.get_socket_from_gltf_material_node(blender_material, "Occlusion")
+        occlusion = (blender_material, "Occlusion")
     occlusion_texture, use_active_uvmap_occlusion, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),

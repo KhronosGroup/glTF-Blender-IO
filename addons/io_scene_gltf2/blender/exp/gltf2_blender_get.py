@@ -15,7 +15,6 @@
 import bpy
 from mathutils import Vector, Matrix
 
-from ..com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name
 from ...blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
 from io_scene_gltf2.io.com import gltf2_io_debug
 
@@ -92,26 +91,6 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
                 type = bpy.types.ShaderNodeVolumeAbsorption
 
         return get_node_socket(blender_material, type, name)
-
-    return None
-
-
-def get_socket_from_gltf_material_node(blender_material: bpy.types.Material, name: str):
-    """
-    For a given material input name, retrieve the corresponding node tree socket in the special glTF node group.
-
-    :param blender_material: a blender material for which to get the socket
-    :param name: the name of the socket
-    :return: a blender NodeSocket
-    """
-    gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
-    if blender_material.node_tree and blender_material.use_nodes:
-        nodes = [n for n in blender_material.node_tree.nodes if \
-            isinstance(n, bpy.types.ShaderNodeGroup) and \
-            (n.node_tree.name.startswith('glTF Metallic Roughness') or n.node_tree.name.lower() in gltf_node_group_names)]
-        inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
-        if inputs:
-            return inputs[0]
 
     return None
 

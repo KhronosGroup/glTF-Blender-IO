@@ -18,7 +18,8 @@ from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import \
     has_image_node_from_socket, \
-    get_const_from_default_value_socket
+    get_const_from_default_value_socket, \
+    get_socket_from_gltf_material_node
 
 
 def export_volume(blender_material, export_settings):
@@ -39,7 +40,7 @@ def export_volume(blender_material, export_settings):
     has_thickness_texture = False
     thickness_slots = ()
 
-    thicknesss_socket = gltf2_blender_get.get_socket_from_gltf_material_node(blender_material, 'Thickness')
+    thicknesss_socket = get_socket_from_gltf_material_node(blender_material, 'Thickness')
     if thicknesss_socket is None:
         # If no thickness (here because there is no glTF Material Output node), no volume extension export
             return None, None
