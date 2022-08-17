@@ -155,21 +155,6 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
     return material
-    # material = blender_primitive['material']
-    #
-    #     if get_material_requires_texcoords(glTF, material) and not export_settings['gltf_texcoords']:
-    #         material = -1
-    #
-    #     if get_material_requires_normals(glTF, material) and not export_settings['gltf_normals']:
-    #         material = -1
-    #
-    #     # Meshes/primitives without material are allowed.
-    #     if material >= 0:
-    #         primitive.material = material
-    #     else:
-    #         print_console('WARNING', 'Material ' + internal_primitive[
-    #             'material'] + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
-
 
 def __get_new_material_texture_shared(base, node):
         if node is None:
