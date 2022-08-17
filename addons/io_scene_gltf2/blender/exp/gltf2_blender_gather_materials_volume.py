@@ -40,8 +40,8 @@ def export_volume(blender_material, export_settings):
     has_thickness_texture = False
     thickness_slots = ()
 
-    thicknesss_socket = get_socket_from_gltf_material_node(blender_material, 'Thickness')
-    if thicknesss_socket is None:
+    thickness_socket = get_socket_from_gltf_material_node(blender_material, 'Thickness')
+    if thickness_socket is None:
         # If no thickness (here because there is no glTF Material Output node), no volume extension export
             return None, None
 
@@ -58,27 +58,27 @@ def export_volume(blender_material, export_settings):
         volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else None # infinity (Using None as glTF default)
 
 
-    if isinstance(thicknesss_socket, bpy.types.NodeSocket) and not thicknesss_socket.is_linked:
-        val = thicknesss_socket.default_value
+    if isinstance(thickness_socket, bpy.types.NodeSocket) and not thickness_socket.is_linked:
+        val = thickness_socket.default_value
         if val == 0.0:
             # If no thickness, no volume extension export 
             return None, None
         volume_extension['thicknessFactor'] = val
-    elif has_image_node_from_socket(thicknesss_socket, export_settings):
-        fac = gltf2_blender_get.get_factor_from_socket(thicknesss_socket, kind='VALUE')
+    elif has_image_node_from_socket(thickness_socket, export_settings):
+        fac = gltf2_blender_get.get_factor_from_socket(thickness_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         volume_extension['thicknessFactor'] = fac if fac != None else 1.0
         has_thickness_texture = True
 
        # Pack thickness channel (R).
     if has_thickness_texture:
-        thickness_slots = (thicknesss_socket,)
+        thickness_slots = (thickness_socket,)
 
     use_actives_uvmaps = []
 
     if len(thickness_slots) > 0:
         combined_texture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
-            thicknesss_socket,
+            thickness_socket,
             thickness_slots,
             export_settings,
         )
