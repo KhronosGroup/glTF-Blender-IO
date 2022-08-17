@@ -283,7 +283,7 @@ def __gather_orm_texture(blender_material, export_settings):
 
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None or not has_image_node_from_socket(occlusion, export_settings):
-        occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
+        occlusion = gltf2_blender_get.get_socket_from_gltf_material_node(blender_material, "Occlusion")
         if occlusion is None or not has_image_node_from_socket(occlusion, export_settings):
             return None
 
@@ -318,7 +318,7 @@ def __gather_orm_texture(blender_material, export_settings):
 def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None:
-        occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
+        occlusion = gltf2_blender_get.get_socket_from_gltf_material_node(blender_material, "Occlusion")
     occlusion_texture, use_active_uvmap_occlusion, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),

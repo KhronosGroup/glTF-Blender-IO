@@ -96,7 +96,7 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
     return None
 
 
-def get_socket_old(blender_material: bpy.types.Material, name: str):
+def get_socket_from_gltf_material_node(blender_material: bpy.types.Material, name: str):
     """
     For a given material input name, retrieve the corresponding node tree socket in the special glTF node group.
 

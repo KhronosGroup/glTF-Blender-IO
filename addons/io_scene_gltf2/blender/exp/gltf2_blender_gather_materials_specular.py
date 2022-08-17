@@ -25,8 +25,8 @@ from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_
 def export_original_specular(blender_material, export_settings):
     specular_extension = {}
 
-    original_specular_socket = gltf2_blender_get.get_socket_old(blender_material, 'Specular')
-    original_specularcolor_socket = gltf2_blender_get.get_socket_old(blender_material, 'Specular Color')
+    original_specular_socket = gltf2_blender_get.get_socket_from_gltf_material_node(blender_material, 'Specular')
+    original_specularcolor_socket = gltf2_blender_get.get_socket_from_gltf_material_node(blender_material, 'Specular Color')
 
     if original_specular_socket is None or original_specularcolor_socket is None:
         return None, None
