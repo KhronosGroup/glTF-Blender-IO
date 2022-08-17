@@ -114,4 +114,4 @@ def get_texture_node_from_socket(socket, export_settings):
 
 def has_image_node_from_socket(socket, export_settings):
     result = get_texture_node_from_socket(socket, export_settings)
-    return len(result) > 0
+    return result is not None
