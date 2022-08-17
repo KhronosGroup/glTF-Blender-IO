@@ -18,7 +18,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_sampler
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import get_texture_node_from_socket
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_image
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -79,7 +79,7 @@ def __gather_name(blender_shader_sockets, export_settings):
 
 
 def __gather_sampler(blender_shader_sockets, export_settings):
-    shader_nodes = [__get_tex_from_socket(socket) for socket in blender_shader_sockets]
+    shader_nodes = [get_texture_node_from_socket(socket, export_settings) for socket in blender_shader_sockets]
     if len(shader_nodes) > 1:
         gltf2_io_debug.print_console("WARNING",
                                      "More than one shader node tex image used for a texture. "
@@ -94,12 +94,3 @@ def __gather_source(blender_shader_sockets, export_settings):
     return gltf2_blender_gather_image.gather_image(blender_shader_sockets, export_settings)
 
 # Helpers
-
-# TODOExt deduplicate
-def __get_tex_from_socket(socket):
-    result = gltf2_blender_search_node_tree.from_socket(
-        socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-    if not result:
-        return None
-    return result[0]

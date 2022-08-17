@@ -18,6 +18,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.com.gltf2_io_constants import GLTF_IOR
 from io_scene_gltf2.blender.com.gltf2_blender_default import BLENDER_SPECULAR, BLENDER_SPECULAR_TINT
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
 
 
 
@@ -47,7 +48,7 @@ def export_original_specular(blender_material, export_settings):
             specular_extension['specularFactor'] = fac
         
         # Texture
-        if gltf2_blender_get.has_image_node_from_socket(original_specular_socket):
+        if has_image_node_from_socket(original_specular_socket, export_settings):
             original_specular_texture, original_specular_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 original_specular_socket,
                 (original_specular_socket,),
@@ -69,7 +70,7 @@ def export_original_specular(blender_material, export_settings):
             specular_extension['specularColorFactor'] = fac
 
         # Texture
-        if gltf2_blender_get.has_image_node_from_socket(original_specularcolor_socket):
+        if has_image_node_from_socket(original_specularcolor_socket, export_settings):
             original_specularcolor_texture, original_specularcolor_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 original_specularcolor_socket,
                 (original_specularcolor_socket,),
@@ -98,7 +99,7 @@ def export_specular(blender_material, export_settings):
     if base_color_socket is None:
         return None, None
 
-    # TODOExt replace by __has_image_node_from_socket calls
+    # TODOExt replace by has_image_node_from_socket calls
     specular_not_linked = isinstance(specular_socket, bpy.types.NodeSocket) and not specular_socket.is_linked
     specular_tint_not_linked = isinstance(specular_tint_socket, bpy.types.NodeSocket) and not specular_tint_socket.is_linked
     base_color_not_linked = isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked

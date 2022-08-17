@@ -15,6 +15,7 @@
 import bpy
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 
 def export_clearcoat(blender_material, export_settings):
@@ -32,7 +33,7 @@ def export_clearcoat(blender_material, export_settings):
     if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
         clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
         clearcoat_enabled = clearcoat_extension['clearcoatFactor'] > 0
-    elif gltf2_blender_get.has_image_node_from_socket(clearcoat_socket):
+    elif has_image_node_from_socket(clearcoat_socket, export_settings):
         fac = gltf2_blender_get.get_factor_from_socket(clearcoat_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatFactor'] = fac if fac != None else 1.0
@@ -44,7 +45,7 @@ def export_clearcoat(blender_material, export_settings):
 
     if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
         clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
-    elif gltf2_blender_get.has_image_node_from_socket(clearcoat_roughness_socket):
+    elif has_image_node_from_socket(clearcoat_roughness_socket, export_settings):
         fac = gltf2_blender_get.get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatRoughnessFactor'] = fac if fac != None else 1.0
@@ -79,7 +80,7 @@ def export_clearcoat(blender_material, export_settings):
             clearcoat_extension['clearcoatRoughnessTexture'] = clearcoat_roughness_texture
             if clearcoat_roughness_texture_use_active_uvmap:
                 use_actives_uvmaps.append("clearcoatRoughnessTexture")
-    if gltf2_blender_get.has_image_node_from_socket(clearcoat_normal_socket):
+    if has_image_node_from_socket(clearcoat_normal_socket, export_settings):
         clearcoat_normal_texture, clearcoat_normal_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             clearcoat_normal_socket,
             (clearcoat_normal_socket,),

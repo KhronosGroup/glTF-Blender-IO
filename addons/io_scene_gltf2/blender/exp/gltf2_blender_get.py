@@ -18,7 +18,6 @@ from mathutils import Vector, Matrix
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name
 from ...blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
 from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 
 
 def get_animation_target(action_group: bpy.types.ActionGroup):
@@ -317,11 +316,3 @@ def previous_node(socket):
         return prev_socket.node
     return None
 
-#TODOExt is this the same as __get_tex_from_socket from gather_image ?
-def has_image_node_from_socket(socket):
-    result = gltf2_blender_search_node_tree.from_socket(
-        socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-    if not result:
-        return False
-    return True

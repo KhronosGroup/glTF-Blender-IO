@@ -33,6 +33,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_transmission impo
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_clearcoat import export_clearcoat
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_ior import export_ior
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
 
 @cached
 def get_material_cache_key(blender_material, active_uvmap_index, export_settings):
@@ -304,20 +305,20 @@ def __gather_orm_texture(blender_material, export_settings):
     # If not fully shared, return None, so the images will be cached and processed separately.
 
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
-    if occlusion is None or not gltf2_blender_get.has_image_node_from_socket(occlusion):
+    if occlusion is None or not has_image_node_from_socket(occlusion, export_settings):
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
-        if occlusion is None or not gltf2_blender_get.has_image_node_from_socket(occlusion):
+        if occlusion is None or not has_image_node_from_socket(occlusion, export_settings):
             return None
 
     metallic_socket = gltf2_blender_get.get_socket(blender_material, "Metallic")
     roughness_socket = gltf2_blender_get.get_socket(blender_material, "Roughness")
 
-    hasMetal = metallic_socket is not None and gltf2_blender_get.has_image_node_from_socket(metallic_socket)
-    hasRough = roughness_socket is not None and gltf2_blender_get.has_image_node_from_socket(roughness_socket)
+    hasMetal = metallic_socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
+    hasRough = roughness_socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
     if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
-        if metallic_roughness is None or not gltf2_blender_get.has_image_node_from_socket(metallic_roughness):
+        if metallic_roughness is None or not has_image_node_from_socket(metallic_roughness, export_settings):
             return None
         result = (occlusion, metallic_roughness)
     elif not hasMetal:
@@ -327,7 +328,7 @@ def __gather_orm_texture(blender_material, export_settings):
     else:
         result = (occlusion, roughness_socket, metallic_socket)
 
-    if not gltf2_blender_gather_texture_info.check_same_size_images(result):
+    if not gltf2_blender_gather_texture_info.check_same_size_images(result, export_settings):
         print_console("INFO",
             "Occlusion and metal-roughness texture will be exported separately "
             "(use same-sized images if you want them combined)")

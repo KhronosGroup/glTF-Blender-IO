@@ -17,7 +17,7 @@ import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import get_texture_node_from_socket, from_socket, FilterByType
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_get import previous_node
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_sampler import detect_manual_uv_wrapping
@@ -83,7 +83,7 @@ def __gather_texture_info_helper(
 def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
     if primary_socket is None:
         return False
-    if __get_tex_from_socket(primary_socket) is None:
+    if get_texture_node_from_socket(primary_socket, export_settings) is None:
         return False
     if not blender_shader_sockets:
         return False
@@ -91,12 +91,12 @@ def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, e
         return False
     if filter_type == "ALL":
         # Check that all sockets link to texture
-        if any([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
+        if any([get_texture_node_from_socket(socket, export_settings) is None for socket in blender_shader_sockets]):
             # sockets do not lead to a texture --> discard
             return False
     elif filter_type == "ANY":
         # Check that at least one socket link to texture
-        if all([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
+        if all([get_texture_node_from_socket(socket, export_settings) is None for socket in blender_shader_sockets]):
             return False
     elif filter_type == "NONE":
         # No check 
@@ -118,9 +118,9 @@ def __gather_extras(blender_shader_sockets, export_settings):
 
 # MaterialNormalTextureInfo only
 def __gather_normal_scale(primary_socket, export_settings):
-    result = gltf2_blender_search_node_tree.from_socket(
+    result = from_socket(
         primary_socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeNormalMap))
+        FilterByType(bpy.types.ShaderNodeNormalMap))
     if not result:
         return None
     strengthInput = result[0].shader_node.inputs['Strength']
@@ -159,7 +159,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
     #
     # The [UV Wrapping] is for wrap modes like MIRROR that use nodes,
     # [Mapping] is for KHR_texture_transform, and [UV Map] is for texCoord.
-    blender_shader_node = __get_tex_from_socket(primary_socket).shader_node
+    blender_shader_node = get_texture_node_from_socket(primary_socket, export_settings).shader_node
 
     # Skip over UV wrapping stuff (it goes in the sampler)
     result = detect_manual_uv_wrapping(blender_shader_node)
@@ -186,20 +186,9 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
 
     return texture_transform, texcoord_idx or None, use_active_uvmap
 
-# TODOExt deduplicate
-def __get_tex_from_socket(socket):
-    result = gltf2_blender_search_node_tree.from_socket(
-        socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-    if not result:
-        return None
-    if result[0].shader_node.image is None:
-        return None
-    return result[0]
-
-
 def check_same_size_images(
     blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
+    export_settings
 ) -> bool:
     """Check that all sockets leads to images of the same size."""
     if not blender_shader_sockets or not all(blender_shader_sockets):
@@ -207,7 +196,7 @@ def check_same_size_images(
 
     sizes = set()
     for socket in blender_shader_sockets:
-        tex = __get_tex_from_socket(socket)
+        tex = get_texture_node_from_socket(socket, export_settings)
         if tex is None:
             return False
         size = tex.shader_node.image.size

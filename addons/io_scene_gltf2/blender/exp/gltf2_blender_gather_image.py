@@ -18,7 +18,7 @@ import os
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import get_texture_node_from_socket
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.com import gltf2_io_debug
@@ -196,7 +196,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
-    results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
+    results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets]
 
     # Check if we need a simple mapping or more complex calculation
     if any([socket.name == "Specular" and socket.node.type == "BSDF_PRINCIPLED" for socket in sockets]):
@@ -289,7 +289,7 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
 
     composed_image.store_data("ior", sockets[4].default_value, type="Data")
 
-    results = [__get_tex_from_socket(socket, export_settings) for socket in sockets[:-1]] #Do not retrieve IOR --> No texture allowed
+    results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets[:-1]] #Do not retrieve IOR --> No texture allowed
 
     mapping = {
         0: "specular",
@@ -299,7 +299,7 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
     }
 
     for idx, result in enumerate(results):
-        if __get_tex_from_socket(sockets[idx], export_settings):
+        if get_texture_node_from_socket(sockets[idx], export_settings):
 
             composed_image.store_data(mapping[idx], result.shader_node.image, type="Image")
 
@@ -325,17 +325,6 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
             composed_image.store_data(mapping[idx], sockets[idx].default_value, type="Data")
 
     return composed_image
-
-# TODOExt deduplicate
-@cached
-def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket, export_settings):
-    result = gltf2_blender_search_node_tree.from_socket(
-        blender_shader_socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-    if not result:
-        return None
-    return result[0]
-
 
 def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
     if image.source != 'FILE':

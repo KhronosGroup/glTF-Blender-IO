@@ -16,6 +16,7 @@ import bpy
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
 
 
 def export_sheen(blender_material, export_settings):
@@ -44,7 +45,7 @@ def export_sheen(blender_material, export_settings):
             sheen_extension['sheenColorFactor'] = fac
         
         # Texture
-        if gltf2_blender_get.has_image_node_from_socket(sheenColor_socket):
+        if has_image_node_from_socket(sheenColor_socket, export_settings):
             original_sheenColor_texture, original_sheenColor_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 sheenColor_socket,
                 (sheenColor_socket,),
@@ -66,7 +67,7 @@ def export_sheen(blender_material, export_settings):
             sheen_extension['sheenRoughnessFactor'] = fac
         
         # Texture
-        if gltf2_blender_get.has_image_node_from_socket(sheenRoughness_socket):
+        if has_image_node_from_socket(sheenRoughness_socket, export_settings):
             original_sheenRoughness_texture, original_sheenRoughness_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 sheenRoughness_socket,
                 (sheenRoughness_socket,),

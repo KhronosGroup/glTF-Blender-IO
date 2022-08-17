@@ -15,7 +15,8 @@
 import bpy
 
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_search_node_tree
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -100,7 +101,7 @@ def __gather_base_color_texture(blender_material, export_settings):
     # keep sockets that have some texture : color and/or alpha
     inputs = tuple(
         socket for socket in [base_color_socket, alpha_socket]
-        if socket is not None and __has_image_node_from_socket(socket)
+        if socket is not None and has_image_node_from_socket(socket, export_settings)
     )
     if not inputs:
         return None, None, None
@@ -133,12 +134,12 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     metallic_socket = gltf2_blender_get.get_socket(blender_material, "Metallic")
     roughness_socket = gltf2_blender_get.get_socket(blender_material, "Roughness")
 
-    hasMetal = metallic_socket is not None and __has_image_node_from_socket(metallic_socket)
-    hasRough = roughness_socket is not None and __has_image_node_from_socket(roughness_socket)
+    hasMetal = metallic_socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
+    hasRough = roughness_socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
     if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
-        if metallic_roughness is None or not __has_image_node_from_socket(metallic_roughness):
+        if metallic_roughness is None or not has_image_node_from_socket(metallic_roughness, export_settings):
             return None, None, None
         texture_input = (metallic_roughness,)
     elif not hasMetal:
@@ -166,14 +167,6 @@ def __gather_roughness_factor(blender_material, export_settings):
         fac = gltf2_blender_get.get_factor_from_socket(roughness_socket, kind='VALUE')
         return fac if fac != 1 else None
     return None
-
-def __has_image_node_from_socket(socket):
-    result = gltf2_blender_search_node_tree.from_socket(
-        socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-    if not result:
-        return False
-    return True
 
 def get_default_pbr_for_emissive_node():
     return gltf2_io.MaterialPBRMetallicRoughness(

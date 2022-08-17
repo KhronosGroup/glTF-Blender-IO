@@ -17,6 +17,7 @@
 #
 
 import bpy
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 import typing
 
 
@@ -99,3 +100,18 @@ def from_socket(start_socket: bpy.types.NodeSocket,
         return []
 
     return __search_from_socket(start_socket, shader_node_filter, [])
+
+@cached
+def get_texture_node_from_socket(socket, export_settings):
+    result = from_socket(
+        socket,
+        FilterByType(bpy.types.ShaderNodeTexImage))
+    if not result:
+        return None
+    if result[0].shader_node.image is None:
+        return None
+    return result[0]
+
+def has_image_node_from_socket(socket, export_settings):
+    result = get_texture_node_from_socket(socket, export_settings)
+    return result is not None

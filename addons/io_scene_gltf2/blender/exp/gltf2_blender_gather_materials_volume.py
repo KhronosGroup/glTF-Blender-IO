@@ -16,6 +16,7 @@ import bpy
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
 
 
 def export_volume(blender_material, export_settings):
@@ -26,7 +27,7 @@ def export_volume(blender_material, export_settings):
     transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
     if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
         transmission_enabled = transmission_socket.default_value > 0
-    elif gltf2_blender_get.has_image_node_from_socket(transmission_socket):
+    elif has_image_node_from_socket(transmission_socket, export_settings):
         transmission_enabled = True
 
     if transmission_enabled is False:
@@ -60,7 +61,7 @@ def export_volume(blender_material, export_settings):
             # If no thickness, no volume extension export 
             return None, None
         volume_extension['thicknessFactor'] = val
-    elif gltf2_blender_get.has_image_node_from_socket(thicknesss_socket):
+    elif has_image_node_from_socket(thicknesss_socket, export_settings):
         fac = gltf2_blender_get.get_factor_from_socket(thicknesss_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         volume_extension['thicknessFactor'] = fac if fac != None else 1.0
