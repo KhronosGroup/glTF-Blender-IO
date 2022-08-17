@@ -99,12 +99,11 @@ def export_specular(blender_material, export_settings):
     if base_color_socket is None:
         return None, None
 
-    # TODOExt replace by has_image_node_from_socket calls
-    specular_not_linked = isinstance(specular_socket, bpy.types.NodeSocket) and not specular_socket.is_linked
-    specular_tint_not_linked = isinstance(specular_tint_socket, bpy.types.NodeSocket) and not specular_tint_socket.is_linked
-    base_color_not_linked = isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked
-    transmission_not_linked = isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked
-    ior_not_linked = isinstance(ior_socket, bpy.types.NodeSocket) and not ior_socket.is_linked
+    specular_not_linked = not has_image_node_from_socket(specular_socket, export_settings)
+    specular_tint_not_linked = not has_image_node_from_socket(specular_tint_socket, export_settings)
+    base_color_not_linked = not has_image_node_from_socket(base_color_socket, export_settings)
+    transmission_not_linked = not has_image_node_from_socket(transmission_socket, export_settings)
+    ior_not_linked = not has_image_node_from_socket(ior_socket, export_settings)
 
     specular = specular_socket.default_value if specular_not_linked else None
     specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
