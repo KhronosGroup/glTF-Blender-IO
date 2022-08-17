@@ -219,24 +219,6 @@ def get_texture_transform_from_mapping_node(mapping_node):
     return texture_transform
 
 
-def get_node(data_path):
-    """Return Blender node on a given Blender data path."""
-    if data_path is None:
-        return None
-
-    index = data_path.find("[\"")
-    if (index == -1):
-        return None
-
-    node_name = data_path[(index + 2):]
-
-    index = node_name.find("\"")
-    if (index == -1):
-        return None
-
-    return node_name[:(index)]
-
-
 def get_factor_from_socket(socket, kind):
     """
     For baseColorFactor, metallicFactor, etc.
