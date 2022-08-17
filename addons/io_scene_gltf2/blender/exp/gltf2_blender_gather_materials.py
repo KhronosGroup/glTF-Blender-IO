@@ -196,12 +196,6 @@ def __gather_alpha_mode(blender_material, export_settings):
 def __gather_double_sided(blender_material, export_settings):
     if not blender_material.use_backface_culling:
         return True
-
-    old_double_sided_socket = gltf2_blender_get.get_socket_old(blender_material, "DoubleSided")
-    if old_double_sided_socket is not None and\
-            not old_double_sided_socket.is_linked and\
-            old_double_sided_socket.default_value > 0.5:
-        return True
     return None
 
 
@@ -276,8 +270,6 @@ def __gather_name(blender_material, export_settings):
 
 def __gather_normal_texture(blender_material, export_settings):
     normal = gltf2_blender_get.get_socket(blender_material, "Normal")
-    if normal is None:
-        normal = gltf2_blender_get.get_socket_old(blender_material, "Normal")
     normal_texture, use_active_uvmap_normal, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
         normal,
         (normal,),
@@ -302,10 +294,7 @@ def __gather_orm_texture(blender_material, export_settings):
     hasRough = roughness_socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
     if not hasMetal and not hasRough:
-        metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
-        if metallic_roughness is None or not has_image_node_from_socket(metallic_roughness, export_settings):
-            return None
-        result = (occlusion, metallic_roughness)
+        return None
     elif not hasMetal:
         result = (occlusion, roughness_socket)
     elif not hasRough:
