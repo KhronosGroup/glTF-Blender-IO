@@ -417,8 +417,8 @@ class ExportGLTF2_Base:
     export_anim_single_armature: BoolProperty(
         name='Export all Armature Actions',
         description=(
-            "Export all actions of a single armature. "
-            "WARNING: works only if you exports a single armature"
+            "Export all actions, bound to a single armature. "
+            "WARNING: Option does not support exports including multiple armatures"
         ),
         default=True
     )
