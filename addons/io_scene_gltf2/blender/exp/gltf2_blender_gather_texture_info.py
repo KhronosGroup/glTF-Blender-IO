@@ -17,12 +17,18 @@ import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import get_texture_node_from_socket, from_socket, FilterByType
-from io_scene_gltf2.blender.exp import gltf2_blender_get
-from io_scene_gltf2.blender.exp.gltf2_blender_get import previous_node
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_sampler import detect_manual_uv_wrapping
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import \
+    get_texture_node_from_socket, \
+    from_socket, \
+    FilterByType, \
+    previous_node, \
+    get_const_from_socket, \
+    NodeSocket, \
+    get_texture_transform_from_mapping_node
+    
 
 
 # blender_shader_sockets determine the texture and primary_socket determines
@@ -133,11 +139,11 @@ def __gather_normal_scale(primary_socket, export_settings):
 def __gather_occlusion_strength(primary_socket, export_settings):
     # Look for a MixRGB node that mixes with pure white in front of
     # primary_socket. The mix factor gives the occlusion strength.
-    node = gltf2_blender_get.previous_node(primary_socket)
+    node = previous_node(primary_socket)
     if node and node.type == 'MIX_RGB' and node.blend_type == 'MIX':
-        fac = gltf2_blender_get.get_const_from_socket(node.inputs['Fac'], kind='VALUE')
-        col1 = gltf2_blender_get.get_const_from_socket(node.inputs['Color1'], kind='RGB')
-        col2 = gltf2_blender_get.get_const_from_socket(node.inputs['Color2'], kind='RGB')
+        fac = get_const_from_socket(node.inputs['Fac'], kind='VALUE')
+        col1 = get_const_from_socket(node.inputs['Color1'], kind='RGB')
+        col2 = get_const_from_socket(node.inputs['Color2'], kind='RGB')
         if fac is not None:
             if col1 == [1, 1, 1] and col2 is None:
                 return fac
@@ -159,26 +165,27 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
     #
     # The [UV Wrapping] is for wrap modes like MIRROR that use nodes,
     # [Mapping] is for KHR_texture_transform, and [UV Map] is for texCoord.
-    blender_shader_node = get_texture_node_from_socket(primary_socket, export_settings).shader_node
+    result = get_texture_node_from_socket(primary_socket, export_settings)
+    blender_shader_node = result.shader_node
 
     # Skip over UV wrapping stuff (it goes in the sampler)
-    result = detect_manual_uv_wrapping(blender_shader_node)
+    result = detect_manual_uv_wrapping(blender_shader_node, result.group_path)
     if result:
         node = previous_node(result['next_socket'])
     else:
-        node = previous_node(blender_shader_node.inputs['Vector'])
+        node = previous_node(NodeSocket(blender_shader_node.inputs['Vector'], result.group_path))
 
     texture_transform = None
-    if node and node.type == 'MAPPING':
-        texture_transform = gltf2_blender_get.get_texture_transform_from_mapping_node(node)
-        node = previous_node(node.inputs['Vector'])
+    if node.node and node.node.type == 'MAPPING':
+        texture_transform = get_texture_transform_from_mapping_node(node)
+        node = previous_node(NodeSocket(node.inputs['Vector'], node.group_path))
 
     texcoord_idx = 0
     use_active_uvmap = True
-    if node and node.type == 'UVMAP' and node.uv_map:
+    if node.node and node.node.type == 'UVMAP' and node.node.uv_map:
         # Try to gather map index.
         for blender_mesh in bpy.data.meshes:
-            i = blender_mesh.uv_layers.find(node.uv_map)
+            i = blender_mesh.uv_layers.find(node.node.uv_map)
             if i >= 0:
                 texcoord_idx = i
                 use_active_uvmap = False

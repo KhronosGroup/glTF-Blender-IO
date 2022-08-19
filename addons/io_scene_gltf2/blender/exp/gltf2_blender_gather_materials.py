@@ -21,7 +21,6 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_unlit
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from ..com.gltf2_blender_extras import generate_extras
-from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_volume import export_volume
@@ -33,7 +32,11 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_transmission impo
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_clearcoat import export_clearcoat
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_materials_ior import export_ior
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket, get_socket_from_gltf_material_node
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import \
+    has_image_node_from_socket, \
+    get_socket_from_gltf_material_node, \
+    get_socket, \
+    get_node_socket
 
 @cached
 def get_material_cache_key(blender_material, active_uvmap_index, export_settings):
@@ -57,6 +60,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None
 
+    print("##################", blender_material.name)
     mat_unlit = __export_unlit(blender_material, active_uvmap_index, export_settings)
     if mat_unlit is not None:
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
@@ -149,7 +153,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     # If emissive is set, from an emissive node (not PBR)
     # We need to set manually default values for
     # pbr_metallic_roughness.baseColor
-    if material.emissive_factor is not None and gltf2_blender_get.get_node_socket(blender_material, bpy.types.ShaderNodeBsdfPrincipled, "Base Color") is None:
+    if material.emissive_factor is not None and get_node_socket(blender_material, bpy.types.ShaderNodeBsdfPrincipled, "Base Color").socket is None:
         material.pbr_metallic_roughness = gltf2_blender_gather_materials_pbr_metallic_roughness.get_default_pbr_for_emissive_node()
 
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
@@ -269,7 +273,7 @@ def __gather_name(blender_material, export_settings):
 
 
 def __gather_normal_texture(blender_material, export_settings):
-    normal = gltf2_blender_get.get_socket(blender_material, "Normal")
+    normal = get_socket(blender_material, "Normal")
     normal_texture, use_active_uvmap_normal, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
         normal,
         (normal,),
@@ -281,17 +285,17 @@ def __gather_orm_texture(blender_material, export_settings):
     # Check for the presence of Occlusion, Roughness, Metallic sharing a single image.
     # If not fully shared, return None, so the images will be cached and processed separately.
 
-    occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
-    if occlusion is None or not has_image_node_from_socket(occlusion, export_settings):
+    occlusion = get_socket(blender_material, "Occlusion")
+    if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
         occlusion = get_socket_from_gltf_material_node(blender_material, "Occlusion")
-        if occlusion is None or not has_image_node_from_socket(occlusion, export_settings):
+        if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
             return None
 
-    metallic_socket = gltf2_blender_get.get_socket(blender_material, "Metallic")
-    roughness_socket = gltf2_blender_get.get_socket(blender_material, "Roughness")
+    metallic_socket = get_socket(blender_material, "Metallic")
+    roughness_socket = get_socket(blender_material, "Roughness")
 
-    hasMetal = metallic_socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
-    hasRough = roughness_socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
+    hasMetal = metallic_socket.socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
+    hasRough = roughness_socket.socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
     if not hasMetal and not hasRough:
         return None
@@ -316,8 +320,8 @@ def __gather_orm_texture(blender_material, export_settings):
     return result
 
 def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
-    occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
-    if occlusion is None:
+    occlusion = get_socket(blender_material, "Occlusion")
+    if occlusion.socket is None:
         occlusion = get_socket_from_gltf_material_node(blender_material, "Occlusion")
     occlusion_texture, use_active_uvmap_occlusion, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,

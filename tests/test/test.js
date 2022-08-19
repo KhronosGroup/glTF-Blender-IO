@@ -955,6 +955,24 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.meshes.length, 6);
               });
 
+              it('manages node groups', function() {
+                let gltfPath = path.resolve(outDirPath, '22_node_groups.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat_ref = asset.materials.find(mat => mat.name === "Ref");
+                const mat_out = asset.materials.find(mat => mat.name === "out");
+                const mat_in = asset.materials.find(mat => mat.name === "in");
+                const mat_nested = asset.materials.find(mat => mat.name === "nested");
+                const mat_2groups = asset.materials.find(mat => mat.name === "2groups");
+
+                assert.ok("baseColorTexture" in mat_ref.pbrMetallicRoughness);
+                assert.ok("baseColorTexture" in mat_out.pbrMetallicRoughness);
+                assert.ok("baseColorTexture" in mat_in.pbrMetallicRoughness);
+                assert.ok("baseColorTexture" in mat_nested.pbrMetallicRoughness);
+                assert.ok("baseColorTexture" in mat_2groups.pbrMetallicRoughness);
+
+              });
+
         });
     });
 });

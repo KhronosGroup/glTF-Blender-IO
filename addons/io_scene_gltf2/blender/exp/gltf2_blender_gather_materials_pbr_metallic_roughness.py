@@ -16,8 +16,11 @@ import bpy
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket, get_const_from_default_value_socket
-from io_scene_gltf2.blender.exp import gltf2_blender_get
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import \
+    has_image_node_from_socket, \
+    get_const_from_default_value_socket, \
+    get_socket, \
+    get_factor_from_socket
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
@@ -62,19 +65,20 @@ def __gather_base_color_factor(blender_material, export_settings):
 
     rgb, alpha = None, None
 
-    alpha_socket = gltf2_blender_get.get_socket(blender_material, "Alpha")
-    if isinstance(alpha_socket, bpy.types.NodeSocket):
+    alpha_socket = get_socket(blender_material, "Alpha")
+    if isinstance(alpha_socket.socket, bpy.types.NodeSocket):
         if export_settings['gltf_image_format'] != "NONE":
-            alpha = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
+            alpha = get_factor_from_socket(alpha_socket, kind='VALUE')
         else:
             alpha = get_const_from_default_value_socket(alpha_socket, kind='VALUE')
 
-    base_color_socket = gltf2_blender_get.get_socket(blender_material, "Base Color")
-    if base_color_socket is None:
-        base_color_socket = gltf2_blender_get.get_socket(blender_material, "BaseColor")
-    if isinstance(base_color_socket, bpy.types.NodeSocket):
+    #TODOSNodes : remove this old compatibility hack
+    base_color_socket = get_socket(blender_material, "Base Color")
+    if base_color_socket.socket is None:
+        base_color_socket = get_socket(blender_material, "BaseColor")
+    if isinstance(base_color_socket.socket, bpy.types.NodeSocket):
         if export_settings['gltf_image_format'] != "NONE":
-            rgb = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB')
+            rgb = get_factor_from_socket(base_color_socket, kind='RGB')
         else:
             rgb = get_const_from_default_value_socket(base_color_socket, kind='RGB')
 
@@ -88,16 +92,16 @@ def __gather_base_color_factor(blender_material, export_settings):
 
 
 def __gather_base_color_texture(blender_material, export_settings):
-    base_color_socket = gltf2_blender_get.get_socket(blender_material, "Base Color")
-    if base_color_socket is None:
-        base_color_socket = gltf2_blender_get.get_socket(blender_material, "BaseColor")
+    base_color_socket = get_socket(blender_material, "Base Color")
+    if base_color_socket.socket is None:
+        base_color_socket = get_socket(blender_material, "BaseColor")
 
-    alpha_socket = gltf2_blender_get.get_socket(blender_material, "Alpha")
+    alpha_socket = get_socket(blender_material, "Alpha")
 
     # keep sockets that have some texture : color and/or alpha
     inputs = tuple(
         socket for socket in [base_color_socket, alpha_socket]
-        if socket is not None and has_image_node_from_socket(socket, export_settings)
+        if socket.socket is not None and has_image_node_from_socket(socket, export_settings)
     )
     if not inputs:
         return None, None, None
@@ -117,19 +121,19 @@ def __gather_metallic_factor(blender_material, export_settings):
     if not blender_material.use_nodes:
         return blender_material.metallic
 
-    metallic_socket = gltf2_blender_get.get_socket(blender_material, "Metallic")
-    if isinstance(metallic_socket, bpy.types.NodeSocket):
-        fac = gltf2_blender_get.get_factor_from_socket(metallic_socket, kind='VALUE')
+    metallic_socket = get_socket(blender_material, "Metallic")
+    if isinstance(metallic_socket.socket, bpy.types.NodeSocket):
+        fac = get_factor_from_socket(metallic_socket, kind='VALUE')
         return fac if fac != 1 else None
     return None
 
 
 def __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings):
-    metallic_socket = gltf2_blender_get.get_socket(blender_material, "Metallic")
-    roughness_socket = gltf2_blender_get.get_socket(blender_material, "Roughness")
+    metallic_socket = get_socket(blender_material, "Metallic")
+    roughness_socket = get_socket(blender_material, "Roughness")
 
-    hasMetal = metallic_socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
-    hasRough = roughness_socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
+    hasMetal = metallic_socket.socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
+    hasRough = roughness_socket.socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
     if not hasMetal and not hasRough:
         return None, None, None
@@ -151,9 +155,9 @@ def __gather_roughness_factor(blender_material, export_settings):
     if not blender_material.use_nodes:
         return blender_material.roughness
 
-    roughness_socket = gltf2_blender_get.get_socket(blender_material, "Roughness")
-    if isinstance(roughness_socket, bpy.types.NodeSocket):
-        fac = gltf2_blender_get.get_factor_from_socket(roughness_socket, kind='VALUE')
+    roughness_socket = get_socket(blender_material, "Roughness")
+    if isinstance(roughness_socket.socket, bpy.types.NodeSocket):
+        fac = get_factor_from_socket(roughness_socket, kind='VALUE')
         return fac if fac != 1 else None
     return None
 

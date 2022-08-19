@@ -18,7 +18,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_sampler
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import get_texture_node_from_socket
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import get_texture_node_from_socket, NodeSocket
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_image
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -26,7 +26,7 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 
 @cached
 def gather_texture(
-        blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
+        blender_shader_sockets: typing.Tuple[NodeSocket],
         export_settings):
     """
     Gather texture sampling information and image channels from a blender shader texture attached to a shader socket.
@@ -84,9 +84,10 @@ def __gather_sampler(blender_shader_sockets, export_settings):
         gltf2_io_debug.print_console("WARNING",
                                      "More than one shader node tex image used for a texture. "
                                      "The resulting glTF sampler will behave like the first shader node tex image.")
-    first_valid_shader_node = next(filter(lambda x: x is not None, shader_nodes)).shader_node
+    first_valid_shader_node = next(filter(lambda x: x is not None, shader_nodes))
     return gltf2_blender_gather_sampler.gather_sampler(
-        first_valid_shader_node,
+        first_valid_shader_node.shader_node,
+        first_valid_shader_node.group_path,
         export_settings)
 
 

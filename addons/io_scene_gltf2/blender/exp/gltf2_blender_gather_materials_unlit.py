@@ -13,8 +13,13 @@
 # limitations under the License.
 
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
-from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import \
+    get_socket, \
+    NodeSocket, \
+    previous_socket, \
+    previous_node, \
+    get_factor_from_socket
 
 def detect_shadeless_material(blender_material, export_settings):
     """Detect if this material is "shadeless" ie. should be exported
@@ -24,8 +29,8 @@ def detect_shadeless_material(blender_material, export_settings):
     if not blender_material.use_nodes: return None
 
     # Old Background node detection (unlikely to happen)
-    bg_socket = gltf2_blender_get.get_socket(blender_material, "Background")
-    if bg_socket is not None:
+    bg_socket = get_socket(blender_material, "Background")
+    if bg_socket.socket is not None:
         return {'rgb_socket': bg_socket}
 
     # Look for
@@ -36,6 +41,7 @@ def detect_shadeless_material(blender_material, export_settings):
 
     info = {}
 
+    #TODOSNode this can be a function call
     for node in blender_material.node_tree.nodes:
         if node.type == 'OUTPUT_MATERIAL' and node.is_active_output:
             socket = node.inputs[0]
@@ -44,24 +50,24 @@ def detect_shadeless_material(blender_material, export_settings):
         return None
 
     # Be careful not to misidentify a lightpath trick as mix-alpha.
-    result = __detect_lightpath_trick(socket)
+    result = __detect_lightpath_trick(NodeSocket(socket, []))
     if result is not None:
         socket = result['next_socket']
     else:
-        result = __detect_mix_alpha(socket)
+        result = __detect_mix_alpha(NodeSocket(socket, []))
         if result is not None:
             socket = result['next_socket']
             info['alpha_socket'] = result['alpha_socket']
 
-        result = __detect_lightpath_trick(socket)
+        result = __detect_lightpath_trick(NodeSocket(socket, []))
         if result is not None:
             socket = result['next_socket']
 
     # Check if a color socket, or connected to a color socket
     if socket.type != 'RGBA':
-        from_socket = gltf2_blender_get.previous_socket(socket)
-        if from_socket is None: return None
-        if from_socket.type != 'RGBA': return None
+        from_socket = previous_socket(NodeSocket(socket, []))
+        if from_socket.socket is None: return None
+        if from_socket.socket.type != 'RGBA': return None
 
     info['rgb_socket'] = socket
     return info
@@ -77,13 +83,13 @@ def __detect_mix_alpha(socket):
     #
     # Returns None if not detected. Otherwise, a dict containing alpha_socket
     # and next_socket.
-    prev = gltf2_blender_get.previous_node(socket)
-    if prev is None or prev.type != 'MIX_SHADER': return None
-    in1 = gltf2_blender_get.previous_node(prev.inputs[1])
-    if in1 is None or in1.type != 'BSDF_TRANSPARENT': return None
+    prev = previous_node(socket)
+    if prev.node is None or prev.node.type != 'MIX_SHADER': return None
+    in1 = previous_node(NodeSocket(prev.node.inputs[1], prev.group_path))
+    if in1.node is None or in1.node.type != 'BSDF_TRANSPARENT': return None
     return {
-        'alpha_socket': prev.inputs[0],
-        'next_socket': prev.inputs[2],
+        'alpha_socket': NodeSocket(prev.node.inputs[0], prev.group_path),
+        'next_socket': NodeSocket(prev.node.inputs[2], prev.group_path),
     }
 
 
@@ -99,17 +105,17 @@ def __detect_lightpath_trick(socket):
     # The Emission node can be omitted.
     # Returns None if not detected. Otherwise, a dict containing
     # next_socket.
-    prev = gltf2_blender_get.previous_node(socket)
-    if prev is None or prev.type != 'MIX_SHADER': return None
-    in0 = gltf2_blender_get.previous_socket(prev.inputs[0])
-    if in0 is None or in0.node.type != 'LIGHT_PATH': return None
-    if in0.name != 'Is Camera Ray': return None
-    next_socket = prev.inputs[2]
+    prev = previous_node(socket)
+    if prev.node is None or prev.node.type != 'MIX_SHADER': return None
+    in0 = previous_socket(NodeSocket(prev.inputs[0], prev.group_path))
+    if in0.node is None or in0.node.type != 'LIGHT_PATH': return None
+    if in0.node.name != 'Is Camera Ray': return None
+    next_socket = NodeSocket(prev.node.inputs[2], prev.group_path)
 
     # Detect emission
-    prev = gltf2_blender_get.previous_node(next_socket)
-    if prev is not None and prev.type == 'EMISSION':
-        next_socket = prev.inputs[0]
+    prev = previous_node(next_socket)
+    if prev.node is not None and prev.node.type == 'EMISSION':
+        next_socket = NodeSocket(prev.node.inputs[0], prev.group_path)
 
     return {'next_socket': next_socket}
 
@@ -118,9 +124,9 @@ def gather_base_color_factor(info, export_settings):
     rgb, alpha = None, None
 
     if 'rgb_socket' in info:
-        rgb = gltf2_blender_get.get_factor_from_socket(info['rgb_socket'], kind='RGB')
+        rgb = get_factor_from_socket(info['rgb_socket'], kind='RGB')
     if 'alpha_socket' in info:
-        alpha = gltf2_blender_get.get_factor_from_socket(info['alpha_socket'], kind='VALUE')
+        alpha = get_factor_from_socket(info['alpha_socket'], kind='VALUE')
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0
@@ -132,7 +138,7 @@ def gather_base_color_factor(info, export_settings):
 
 def gather_base_color_texture(info, export_settings):
     sockets = (info.get('rgb_socket'), info.get('alpha_socket'))
-    sockets = tuple(s for s in sockets if s is not None)
+    sockets = tuple(s for s in sockets if s.socket is not None)
     if sockets:
         # NOTE: separate RGB and Alpha textures will not get combined
         # because gather_image determines how to pack images based on the

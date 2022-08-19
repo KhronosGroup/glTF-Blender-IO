@@ -18,7 +18,7 @@ import os
 
 from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import get_texture_node_from_socket
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import get_texture_node_from_socket, NodeSocket
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.com import gltf2_io_debug
@@ -29,7 +29,7 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 
 @cached
 def gather_image(
-        blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
+        blender_shader_sockets: typing.Tuple[NodeSocket],
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
         return None, None
@@ -130,7 +130,7 @@ def __gather_extras(sockets, export_settings):
 def __gather_mime_type(sockets, export_image, export_settings):
     # force png if Alpha contained so we can export alpha
     for socket in sockets:
-        if socket.name == "Alpha":
+        if socket.socket.name == "Alpha":
             return "image/png"
 
     if export_settings["gltf_image_format"] == "AUTO":
@@ -199,7 +199,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets]
 
     # Check if we need a simple mapping or more complex calculation
-    if any([socket.name == "Specular" and socket.node.type == "BSDF_PRINCIPLED" for socket in sockets]):
+    if any([socket.socket.name == "Specular" and socket.socket.node.type == "BSDF_PRINCIPLED" for socket in sockets]):
         return __get_image_data_specular(sockets, results, export_settings)
     else:
         return __get_image_data_mapping(sockets, results, export_settings)
@@ -235,23 +235,23 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
             dst_chan = None
 
             # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
-            if socket.name == 'Metallic':
+            if socket.socket.name == 'Metallic':
                 dst_chan = Channel.B
-            elif socket.name == 'Roughness':
+            elif socket.socket.name == 'Roughness':
                 dst_chan = Channel.G
-            elif socket.name == 'Occlusion':
+            elif socket.socket.name == 'Occlusion':
                 dst_chan = Channel.R
-            elif socket.name == 'Alpha':
+            elif socket.socket.name == 'Alpha':
                 dst_chan = Channel.A
-            elif socket.name == 'Clearcoat':
+            elif socket.socket.name == 'Clearcoat':
                 dst_chan = Channel.R
-            elif socket.name == 'Clearcoat Roughness':
+            elif socket.socket.name == 'Clearcoat Roughness':
                 dst_chan = Channel.G
-            elif socket.name == 'Thickness': # For KHR_materials_volume
+            elif socket.socket.name == 'Thickness': # For KHR_materials_volume
                 dst_chan = Channel.G
-            elif socket.name == "Specular": # For original KHR_material_specular
+            elif socket.socket.name == "Specular": # For original KHR_material_specular
                 dst_chan = Channel.A
-            elif socket.name == "Sigma": # For KHR_materials_sheen
+            elif socket.socket.name == "Sigma": # For KHR_materials_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:
@@ -259,9 +259,9 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
 
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
-                if socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
+                if socket.socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
                     composed_image.fill_white(Channel.G)
-                elif socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
+                elif socket.socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
                     composed_image.fill_white(Channel.B)
             else:
                 # copy full image...eventually following sockets might overwrite things
@@ -287,7 +287,7 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
     composed_image = ExportImage()
     composed_image.set_calc(specular_calculation)
 
-    composed_image.store_data("ior", sockets[4].default_value, type="Data")
+    composed_image.store_data("ior", sockets[4].socket.default_value, type="Data")
 
     results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets[:-1]] #Do not retrieve IOR --> No texture allowed
 
@@ -322,7 +322,7 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
                     composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
 
         else:
-            composed_image.store_data(mapping[idx], sockets[idx].default_value, type="Data")
+            composed_image.store_data(mapping[idx], sockets[idx].socket.default_value, type="Data")
 
     return composed_image
 

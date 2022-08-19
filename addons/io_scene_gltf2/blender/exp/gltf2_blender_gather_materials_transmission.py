@@ -14,9 +14,11 @@
 
 import bpy
 from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
-from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import has_image_node_from_socket
+from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import \
+    has_image_node_from_socket, \
+    get_socket, \
+    get_factor_from_socket
 
 def export_transmission(blender_material, export_settings):
     transmission_enabled = False
@@ -25,13 +27,13 @@ def export_transmission(blender_material, export_settings):
     transmission_extension = {}
     transmission_slots = ()
 
-    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
+    transmission_socket = get_socket(blender_material, 'Transmission')
 
     if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
-        transmission_extension['transmissionFactor'] = transmission_socket.default_value
+        transmission_extension['transmissionFactor'] = transmission_socket.socket.default_value
         transmission_enabled = transmission_extension['transmissionFactor'] > 0
     elif has_image_node_from_socket(transmission_socket, export_settings):
-        fac = gltf2_blender_get.get_factor_from_socket(transmission_socket, kind='VALUE')
+        fac = get_factor_from_socket(transmission_socket, kind='VALUE')
         transmission_extension['transmissionFactor'] = fac if fac is not None else 1.0
         has_transmission_texture = True
         transmission_enabled = True
