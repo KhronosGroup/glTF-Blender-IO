@@ -60,7 +60,6 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None
 
-    print("##################", blender_material.name)
     mat_unlit = __export_unlit(blender_material, active_uvmap_index, export_settings)
     if mat_unlit is not None:
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
