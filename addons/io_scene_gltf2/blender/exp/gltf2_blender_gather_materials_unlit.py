@@ -110,7 +110,7 @@ def __detect_lightpath_trick(socket):
     prev = previous_node(socket)
     if prev.node is None or prev.node.type != 'MIX_SHADER': return None
     in0 = previous_socket(NodeSocket(prev.node.inputs[0], prev.group_path))
-    if in0.socket is None or in0.socket.type != 'LIGHT_PATH': return None
+    if in0.socket is None or in0.socket.node.type != 'LIGHT_PATH': return None
     if in0.socket.name != 'Is Camera Ray': return None
     next_socket = NodeSocket(prev.node.inputs[2], prev.group_path)
 
@@ -139,7 +139,7 @@ def gather_base_color_factor(info, export_settings):
 
 
 def gather_base_color_texture(info, export_settings):
-    sockets = (info.get('rgb_socket'), info.get('alpha_socket'))
+    sockets = (info.get('rgb_socket', NodeSocket(None, None)), info.get('alpha_socket', NodeSocket(None, None)))
     sockets = tuple(s for s in sockets if s.socket is not None)
     if sockets:
         # NOTE: separate RGB and Alpha textures will not get combined
