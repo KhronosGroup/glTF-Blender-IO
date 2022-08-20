@@ -126,7 +126,6 @@ def from_socket(start_socket: NodeTreeSearchResult,
     if start_socket.socket is None:
         return []
 
-    print("Looking for", start_socket.socket, start_socket.group_path)
     return __search_from_socket(start_socket.socket, shader_node_filter, [], start_socket.group_path)
 
 @cached
@@ -301,7 +300,6 @@ def get_const_from_socket(socket, kind):
 
 
 def previous_socket(socket: NodeSocket):
-
     soc = socket.socket
     group_path = socket.group_path.copy()
     while True:

@@ -152,13 +152,13 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
         if node.node.type == 'SEPXYZ':
             # Passed through without change
             wrap = None
-            prev_socket = previous_socket(comb.inputs[soc])
+            prev_socket = previous_socket(NodeSocket(comb.node.inputs[soc], comb.group_path))
         elif node.node.type == 'MATH':
             # Math node applies a manual wrap
             if (node.node.operation == 'PINGPONG' and
                     get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE') == 1.0):  # scale = 1
                 wrap = TextureWrap.MirroredRepeat
-            elif (node.operation == 'WRAP' and
+            elif (node.node.operation == 'WRAP' and
                     get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE') == 0.0 and  # min = 0
                     get_const_from_socket(NodeSocket(node.node.inputs[2], node.group_path), kind='VALUE') == 1.0):    # max = 1
                 wrap = TextureWrap.Repeat
@@ -173,7 +173,7 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
         prev_node = prev_socket.socket.node
         if prev_node.type != 'SEPXYZ': return None
         # Make sure X goes to X, etc.
-        if prev_socket.name != soc: return None
+        if prev_socket.socket.name != soc: return None
         # Make sure both attach to the same SeparateXYZ node
         if soc == 'X':
             sep = prev_node

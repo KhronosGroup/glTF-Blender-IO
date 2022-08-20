@@ -49,23 +49,31 @@ def detect_shadeless_material(blender_material, export_settings):
     else:
         return None
 
+    socket = NodeSocket(socket, [])
+
     # Be careful not to misidentify a lightpath trick as mix-alpha.
-    result = __detect_lightpath_trick(NodeSocket(socket, []))
+    result = __detect_lightpath_trick(socket)
+    print(">0")
     if result is not None:
+        print(">1")
         socket = result['next_socket']
     else:
-        result = __detect_mix_alpha(NodeSocket(socket, []))
+        print(">2")
+        result = __detect_mix_alpha(socket)
         if result is not None:
+            print(">3")
             socket = result['next_socket']
+            print("ici:::::", socket)
             info['alpha_socket'] = result['alpha_socket']
 
-        result = __detect_lightpath_trick(NodeSocket(socket, []))
+        result = __detect_lightpath_trick(socket)
         if result is not None:
+            print(">4")
             socket = result['next_socket']
 
     # Check if a color socket, or connected to a color socket
-    if socket.type != 'RGBA':
-        from_socket = previous_socket(NodeSocket(socket, []))
+    if socket.socket.type != 'RGBA':
+        from_socket = previous_socket(socket)
         if from_socket.socket is None: return None
         if from_socket.socket.type != 'RGBA': return None
 
@@ -105,11 +113,12 @@ def __detect_lightpath_trick(socket):
     # The Emission node can be omitted.
     # Returns None if not detected. Otherwise, a dict containing
     # next_socket.
+    print("socket:::::::", socket)
     prev = previous_node(socket)
     if prev.node is None or prev.node.type != 'MIX_SHADER': return None
-    in0 = previous_socket(NodeSocket(prev.inputs[0], prev.group_path))
-    if in0.node is None or in0.node.type != 'LIGHT_PATH': return None
-    if in0.node.name != 'Is Camera Ray': return None
+    in0 = previous_socket(NodeSocket(prev.node.inputs[0], prev.group_path))
+    if in0.socket is None or in0.socket.type != 'LIGHT_PATH': return None
+    if in0.socket.name != 'Is Camera Ray': return None
     next_socket = NodeSocket(prev.node.inputs[2], prev.group_path)
 
     # Detect emission

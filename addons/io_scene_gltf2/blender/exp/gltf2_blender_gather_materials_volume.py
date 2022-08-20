@@ -59,7 +59,7 @@ def export_volume(blender_material, export_settings):
         volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else None # infinity (Using None as glTF default)
 
 
-    if isinstance(thickness_socket.socket, bpy.types.NodeSocket) and not thickness_socket.is_linked:
+    if isinstance(thickness_socket.socket, bpy.types.NodeSocket) and not thickness_socket.socket.is_linked:
         val = thickness_socket.socket.default_value
         if val == 0.0:
             # If no thickness, no volume extension export 
