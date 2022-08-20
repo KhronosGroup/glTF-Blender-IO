@@ -80,8 +80,6 @@ def from_socket(start_socket: NodeTreeSearchResult,
     :param shader_node_filter: should be a function(x: shader_node) -> bool
     :return: a list of shader nodes for which filter is true
     """
-    print("FROM SOCKET call", start_socket.socket.name, start_socket.group_path)
-    print(shader_node_filter.type)
     # hide implementation (especially the search path)
     def __search_from_socket(start_socket: bpy.types.NodeSocket,
                              shader_node_filter: typing.Union[Filter, typing.Callable],
@@ -104,10 +102,7 @@ def from_socket(start_socket: NodeTreeSearchResult,
                 continue
 
             if linked_node.type == "GROUP_INPUT":
-                group_ = linked_node.id_data
-                socket_interface = [sock for sock in group_.inputs if sock.name == link.from_socket.name][0]
-                print("ju", socket_interface.identifier ,[sock for sock in group_path[-1].inputs if sock.identifier == socket_interface.identifier])
-                socket = [sock for sock in group_path[-1].inputs if sock.identifier == socket_interface.identifier][0]
+                socket = [sock for sock in group_path[-1].inputs if sock.name == link.from_socket.name][0]
                 linked_results = __search_from_socket(socket, shader_node_filter, search_path + [link], group_path[:-1])
                 if linked_results:
                     # add the link to the current path
@@ -158,18 +153,20 @@ def get_const_from_default_value_socket(socket, kind):
         return socket.socket.default_value
     return None
 
+#TODOSNode : @cached?
 def get_material_nodes(node_tree: bpy.types.NodeTree, group_path, type):
     """
     For a given tree, recursively return all nodes including node groups.
     """
-    print("GET MATERIAL NODES", type)
+
     nodes = []
     for node in [n for n in node_tree.nodes if isinstance(n, type) and not n.mute]:
         nodes.append((node, group_path.copy()))
 
     for node in [n for n in node_tree.nodes if n.type == "GROUP" and not n.mute]:
-        group_path.append(node)
-        nodes.extend(get_material_nodes(node.node_tree, group_path, type))
+        new_group_path = group_path.copy()
+        new_group_path.append(node)
+        nodes.extend(get_material_nodes(node.node_tree, new_group_path, type))
 
     return nodes
 
@@ -181,10 +178,9 @@ def get_socket_from_gltf_material_node(blender_material: bpy.types.Material, nam
     :param name: the name of the socket
     :return: a blender NodeSocket
     """
-    print("GET MATERIAL GLTF NODES", str)
     gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
     if blender_material.node_tree and blender_material.use_nodes:
-        nodes = get_material_nodes(blender_material.node_tree, [], bpy.types.ShaderNodeGroup)
+        nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeGroup)
         nodes = [n for n in nodes if n[0].node_tree.name.startswith('glTF Metallic Roughness') or n[0].node_tree.name.lower() in gltf_node_group_names]
         inputs = sum([[(input, node[1]) for input in node[0].inputs if input.name == name] for node in nodes], [])
         if inputs:
@@ -209,7 +205,7 @@ def get_node_socket(blender_material, type, name):
     :param blender_material: a blender material for which to get the socket
     :return: a blender NodeSocket for a given type
     """
-    nodes = get_material_nodes(blender_material.node_tree, [], type)
+    nodes = get_material_nodes(blender_material.node_tree, [blender_material], type)
     #TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
     nodes = [node for node in nodes if check_if_is_linked_to_active_output(node[0].outputs[0], node[1])]
     inputs = sum([[(input, node[1]) for input in node[0].inputs if input.name == name] for node in nodes], [])
@@ -410,7 +406,6 @@ def check_if_is_linked_to_active_output(shader_socket, group_path):
 
         # If we are entering a node group
         if link.to_node.type == "GROUP":
-            print("Entering a group")
             socket_name = link.to_socket.name
             sockets = [n for n in link.to_node.node_tree.nodes if n.type == "GROUP_INPUT"][0].outputs
             socket = [s for s in sockets if s.name == socket_name][0]
