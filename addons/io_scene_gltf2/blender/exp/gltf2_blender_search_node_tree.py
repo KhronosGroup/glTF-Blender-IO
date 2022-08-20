@@ -62,7 +62,6 @@ class FilterByType(Filter):
         return isinstance(shader_node, self.type)
 
 
-#TODOSNodes: is path still used somewhere ?
 class NodeTreeSearchResult:
     def __init__(self, shader_node: bpy.types.Node, path: typing.List[bpy.types.NodeLink], group_path: typing.List[bpy.types.Node]):
         self.shader_node = shader_node
