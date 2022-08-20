@@ -85,9 +85,24 @@ def __gather_sampler(blender_shader_sockets, export_settings):
                                      "More than one shader node tex image used for a texture. "
                                      "The resulting glTF sampler will behave like the first shader node tex image.")
     first_valid_shader_node = next(filter(lambda x: x is not None, shader_nodes))
+    
+    # group_path can't be a list, so transform it to str
+    
+    sep_item = "##~~gltf-sep~~##"
+    sep_inside_item = "##~~gltf-inside-sep~~##"
+    group_path_str = ""
+    if len(first_valid_shader_node.group_path) > 0:
+        group_path_str += first_valid_shader_node.group_path[0].name
+    if len(first_valid_shader_node.group_path) > 1:
+        for i in first_valid_shader_node.group_path[1:]:
+            group_path_str += sep_item
+            group_path_str += i.id_data.name
+            group_path_str += sep_inside_item
+            group_path_str += i.name
+
     return gltf2_blender_gather_sampler.gather_sampler(
         first_valid_shader_node.shader_node,
-        first_valid_shader_node.group_path,
+        group_path_str,
         export_settings)
 
 

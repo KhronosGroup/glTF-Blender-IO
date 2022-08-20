@@ -140,10 +140,10 @@ def __gather_occlusion_strength(primary_socket, export_settings):
     # Look for a MixRGB node that mixes with pure white in front of
     # primary_socket. The mix factor gives the occlusion strength.
     node = previous_node(primary_socket)
-    if node and node.type == 'MIX_RGB' and node.blend_type == 'MIX':
-        fac = get_const_from_socket(node.inputs['Fac'], kind='VALUE')
-        col1 = get_const_from_socket(node.inputs['Color1'], kind='RGB')
-        col2 = get_const_from_socket(node.inputs['Color2'], kind='RGB')
+    if node.node and node.node.type == 'MIX_RGB' and node.node.blend_type == 'MIX':
+        fac = get_const_from_socket(NodeSocket(node.inputs['Fac'], node.group_path), kind='VALUE')
+        col1 = get_const_from_socket(NodeSocket(node.inputs['Color1'], node.group_path), kind='RGB')
+        col2 = get_const_from_socket(NodeSocket(node.inputs['Color2'], node.group_path), kind='RGB')
         if fac is not None:
             if col1 == [1, 1, 1] and col2 is None:
                 return fac
@@ -165,20 +165,20 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
     #
     # The [UV Wrapping] is for wrap modes like MIRROR that use nodes,
     # [Mapping] is for KHR_texture_transform, and [UV Map] is for texCoord.
-    result = get_texture_node_from_socket(primary_socket, export_settings)
-    blender_shader_node = result.shader_node
+    result_tex = get_texture_node_from_socket(primary_socket, export_settings)
+    blender_shader_node = result_tex.shader_node
 
     # Skip over UV wrapping stuff (it goes in the sampler)
-    result = detect_manual_uv_wrapping(blender_shader_node, result.group_path)
+    result = detect_manual_uv_wrapping(blender_shader_node, result_tex.group_path)
     if result:
         node = previous_node(result['next_socket'])
     else:
-        node = previous_node(NodeSocket(blender_shader_node.inputs['Vector'], result.group_path))
+        node = previous_node(NodeSocket(blender_shader_node.inputs['Vector'], result_tex.group_path))
 
     texture_transform = None
     if node.node and node.node.type == 'MAPPING':
         texture_transform = get_texture_transform_from_mapping_node(node)
-        node = previous_node(NodeSocket(node.inputs['Vector'], node.group_path))
+        node = previous_node(NodeSocket(node.node.inputs['Vector'], node.group_path))
 
     texcoord_idx = 0
     use_active_uvmap = True

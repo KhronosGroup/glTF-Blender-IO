@@ -306,7 +306,7 @@ def previous_socket(socket: NodeSocket):
     group_path = socket.group_path.copy()
     while True:
         if not soc.is_linked:
-            return None
+            return NodeSocket(None, None)
 
         from_socket = soc.links[0].from_socket
         from_node = soc.links[0].from_node
@@ -340,7 +340,7 @@ def get_texture_transform_from_mapping_node(mapping_node):
         return None
 
 
-    rotation_0, rotation_1 = mapping_node.inputs['Rotation'].default_value[0], mapping_node.inputs['Rotation'].default_value[1]
+    rotation_0, rotation_1 = mapping_node.node.inputs['Rotation'].default_value[0], mapping_node.node.inputs['Rotation'].default_value[1]
     if  rotation_0 or rotation_1:
         # TODO: can we handle this?
         gltf2_io_debug.print_console("WARNING",
@@ -350,11 +350,11 @@ def get_texture_transform_from_mapping_node(mapping_node):
         return None
 
     mapping_transform = {}
-    mapping_transform["offset"] = [mapping_node.inputs['Location'].default_value[0], mapping_node.inputs['Location'].default_value[1]]
-    mapping_transform["rotation"] = mapping_node.inputs['Rotation'].default_value[2]
-    mapping_transform["scale"] = [mapping_node.inputs['Scale'].default_value[0], mapping_node.inputs['Scale'].default_value[1]]
+    mapping_transform["offset"] = [mapping_node.node.inputs['Location'].default_value[0], mapping_node.node.inputs['Location'].default_value[1]]
+    mapping_transform["rotation"] = mapping_node.node.inputs['Rotation'].default_value[2]
+    mapping_transform["scale"] = [mapping_node.node.inputs['Scale'].default_value[0], mapping_node.node.inputs['Scale'].default_value[1]]
 
-    if mapping_node.vector_type == "TEXTURE":
+    if mapping_node.node.vector_type == "TEXTURE":
         # This means use the inverse of the TRS transform.
         def inverted(mapping_transform):
             offset = mapping_transform["offset"]
@@ -384,7 +384,7 @@ def get_texture_transform_from_mapping_node(mapping_node):
             )
             return None
 
-    elif mapping_node.vector_type == "VECTOR":
+    elif mapping_node.node.vector_type == "VECTOR":
         # Vectors don't get translated
         mapping_transform["offset"] = [0, 0]
 
