@@ -25,7 +25,6 @@ def export_sheen(blender_material, export_settings):
     sheen_extension = {}
 
     sheenColor_socket = get_socket(blender_material, "sheenColor")
-    print("sheenColor_socket", sheenColor_socket)
     sheenRoughness_socket = get_socket(blender_material, "sheenRoughness")
 
     if sheenColor_socket.socket is None or sheenRoughness_socket.socket is None:

@@ -53,22 +53,16 @@ def detect_shadeless_material(blender_material, export_settings):
 
     # Be careful not to misidentify a lightpath trick as mix-alpha.
     result = __detect_lightpath_trick(socket)
-    print(">0")
     if result is not None:
-        print(">1")
         socket = result['next_socket']
     else:
-        print(">2")
         result = __detect_mix_alpha(socket)
         if result is not None:
-            print(">3")
             socket = result['next_socket']
-            print("ici:::::", socket)
             info['alpha_socket'] = result['alpha_socket']
 
         result = __detect_lightpath_trick(socket)
         if result is not None:
-            print(">4")
             socket = result['next_socket']
 
     # Check if a color socket, or connected to a color socket
@@ -113,7 +107,6 @@ def __detect_lightpath_trick(socket):
     # The Emission node can be omitted.
     # Returns None if not detected. Otherwise, a dict containing
     # next_socket.
-    print("socket:::::::", socket)
     prev = previous_node(socket)
     if prev.node is None or prev.node.type != 'MIX_SHADER': return None
     in0 = previous_socket(NodeSocket(prev.node.inputs[0], prev.group_path))

@@ -88,15 +88,20 @@ def __gather_sampler(blender_shader_sockets, export_settings):
     
     # group_path can't be a list, so transform it to str
     
+    print("tab")
+    print(first_valid_shader_node.group_path)
     sep_item = "##~~gltf-sep~~##"
     sep_inside_item = "##~~gltf-inside-sep~~##"
     group_path_str = ""
     if len(first_valid_shader_node.group_path) > 0:
         group_path_str += first_valid_shader_node.group_path[0].name
     if len(first_valid_shader_node.group_path) > 1:
-        for i in first_valid_shader_node.group_path[1:]:
+        for idx, i in enumerate(first_valid_shader_node.group_path[1:]):
             group_path_str += sep_item
-            group_path_str += i.id_data.name
+            if idx == 0:
+                group_path_str += first_valid_shader_node.group_path[0].name
+            else:
+                group_path_str += i.id_data.name
             group_path_str += sep_inside_item
             group_path_str += i.name
 
