@@ -29,7 +29,7 @@ def export_transmission(blender_material, export_settings):
 
     transmission_socket = get_socket(blender_material, 'Transmission')
 
-    if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
+    if isinstance(transmission_socket.socket, bpy.types.NodeSocket) and not transmission_socket.socket.is_linked:
         transmission_extension['transmissionFactor'] = transmission_socket.socket.default_value
         transmission_enabled = transmission_extension['transmissionFactor'] > 0
     elif has_image_node_from_socket(transmission_socket, export_settings):
