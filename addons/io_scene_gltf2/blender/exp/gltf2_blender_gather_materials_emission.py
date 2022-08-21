@@ -20,10 +20,13 @@ from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import \
     get_socket, \
     get_factor_from_socket, \
     get_const_from_socket, \
-    NodeSocket
+    NodeSocket, \
+    get_socket_from_gltf_material_node
 
 def export_emission_factor(blender_material, export_settings):
     emissive_socket = get_socket(blender_material, "Emissive")
+    if emissive_socket.socket is None:
+        emissive_socket = get_socket_from_gltf_material_node(blender_material, "EmissiveFactor")
     if isinstance(emissive_socket.socket, bpy.types.NodeSocket):
         if export_settings['gltf_image_format'] != "NONE":
             factor = get_factor_from_socket(emissive_socket, kind='RGB')
@@ -63,6 +66,8 @@ def export_emission_factor(blender_material, export_settings):
 
 def export_emission_texture(blender_material, export_settings):
     emissive = get_socket(blender_material, "Emissive")
+    if emissive.socket is None:
+        emissive = get_socket_from_gltf_material_node(blender_material, "Emissive")
     emissive_texture, use_actives_uvmap_emissive, _ = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
     return emissive_texture, ["emissiveTexture"] if use_actives_uvmap_emissive else None
 
