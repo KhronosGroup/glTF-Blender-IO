@@ -27,8 +27,6 @@ from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import (
 
 @cached
 def gather_sampler(blender_shader_node: bpy.types.Node, group_path_str, export_settings):
-    print("str")
-    print(group_path_str)
     # reconstruct group_path from group_path_str
     sep_item = "##~~gltf-sep~~##"
     sep_inside_item = "##~~gltf-inside-sep~~##"

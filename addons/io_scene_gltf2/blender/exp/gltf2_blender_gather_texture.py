@@ -88,8 +88,6 @@ def __gather_sampler(blender_shader_sockets, export_settings):
     
     # group_path can't be a list, so transform it to str
     
-    print("tab")
-    print(first_valid_shader_node.group_path)
     sep_item = "##~~gltf-sep~~##"
     sep_inside_item = "##~~gltf-inside-sep~~##"
     group_path_str = ""
