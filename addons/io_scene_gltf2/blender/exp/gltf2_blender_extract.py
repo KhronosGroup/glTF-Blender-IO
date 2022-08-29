@@ -108,6 +108,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             armature_uuid = export_settings['vtree'].nodes[uuid_for_skined_data].armature
             export_settings['vtree'].nodes[armature_uuid].need_neutral_bone = True
 
+    ############################### Define attributes ########################################
 
     # Manage attributes + COLOR_0
     for blender_attribute_index, blender_attribute in enumerate(blender_mesh.attributes):
