@@ -152,8 +152,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     attr['blender_data_type'] = 'FLOAT_VECTOR'
     attr['blender_domain'] = 'POINT'
     attr['gltf_attribute_name'] = 'POSITION'
-    attr['func_set'] = __set_positions_attribute
-    attr['func_set_args'] = [locs]
+    attr['set'] = __set_function()
     attr['skip_getting_to_dots'] = True
     blender_attributes.append(attr)
 
@@ -196,8 +195,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         attr['blender_domain'] = 'POINT'
         attr['gltf_attribute_name'] = 'MORPH_POSITION_' + str(morph_i)
         attr['skip_getting_to_dots'] = True
-        attr['func_set'] = __set_morph_locs_attribute
-        attr['func_set_args'] = [morph_locs]
+        attr['set'] = __set_function()
         blender_attributes.append(attr)
 
         # Manage MORPH_NORMAL_x
@@ -226,8 +224,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
                 attr['gltf_attribute_name_morph_normal'] = "MORPH_NORMAL_" + str(morph_i)
                 attr['gltf_attribute_name_tangent'] = "TANGENT"
                 attr['skip_getting_to_dots'] = True
-                attr['func_set'] = __set_morph_tangent_attribute
-                attr['func_set_args'] = []
+                attr['set'] = __set_function()
                 blender_attributes.append(attr)
 
     for attr in blender_attributes:
@@ -325,8 +322,10 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         blender_idxs = prim_dots['vertex_index']
 
         for attr in blender_attributes:
-            if 'func_set' in attr: # Special function is needed
-                attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+            # if 'func_set' in attr: # Special function is needed
+            #     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+            if 'set' in attr:
+                attr['set'](locs, morph_locs, attr, attributes, blender_idxs)
             else: # Regular case
                 __set_regular_attribute(attr, attributes, prim_dots)
             
@@ -369,8 +368,10 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             for attr in blender_attributes:
                 if attr['blender_domain'] != 'POINT':
                     continue
-                if 'func_set' in attr:
-                    attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+                # if 'func_set' in attr:
+                #     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+                if 'set' in attr:
+                    attr['set'](locs, morph_locs, attr, attributes, blender_idxs)
                 else:
                     res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
                     for i in range(attr['len']):
@@ -422,8 +423,10 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             for attr in blender_attributes:
                 if attr['blender_domain'] != 'POINT':
                     continue
-                if 'func_set' in attr:
-                    attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+                # if 'func_set' in attr:
+                #     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
+                if 'set' in attr:
+                    attr['set'](locs, morph_locs, attr, attributes, blender_idxs)
                 else:
                     res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
                     for i in range(attr['len']):
@@ -461,6 +464,18 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     print_console('INFO', 'Primitives created: %d' % len(primitives))
 
     return primitives
+
+def __set_function():
+
+    def setting_function(locs, morph_locs, attr, attributes, blender_idxs):
+        if attr['gltf_attribute_name'] == "POSITION":
+            __set_positions_attribute(locs, attr, attributes, blender_idxs)
+        elif attr['gltf_attribute_name'].startswith("MORPH_POSITION_"):
+            __set_morph_locs_attribute(morph_locs, attr, attributes, blender_idxs)
+        elif attr['gltf_attribute_name'].startswith("MORPH_TANGENT_"):
+            __set_morph_tangent_attribute(attr, attributes, blender_idxs)
+
+    return setting_function
 
 def __set_regular_attribute(attr, attributes, prim_dots):
 
