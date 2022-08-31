@@ -317,8 +317,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         blender_idxs = prim_dots['vertex_index']
 
         for attr in blender_attributes:
-            # if 'func_set' in attr: # Special function is needed
-            #     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
             if 'set' in attr:
                 attr['set'](locs, morph_locs, attr, attributes, blender_idxs)
             else: # Regular case
@@ -363,8 +361,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             for attr in blender_attributes:
                 if attr['blender_domain'] != 'POINT':
                     continue
-                # if 'func_set' in attr:
-                #     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
                 if 'set' in attr:
                     attr['set'](locs, morph_locs, attr, attributes, blender_idxs)
                 else:
@@ -418,8 +414,6 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             for attr in blender_attributes:
                 if attr['blender_domain'] != 'POINT':
                     continue
-                # if 'func_set' in attr:
-                #     attr['func_set'](*attr['func_set_args'] + [attr, attributes, blender_idxs])
                 if 'set' in attr:
                     attr['set'](locs, morph_locs, attr, attributes, blender_idxs)
                 else:
