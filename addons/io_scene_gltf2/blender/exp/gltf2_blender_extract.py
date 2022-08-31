@@ -135,13 +135,11 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             if export_settings[gltf2_blender_export_keys.COLORS] is False:
                 continue
             attr['gltf_attribute_name'] = 'COLOR_0'
-            attr['func_get'] = __get_color_attribute
-            attr['func_get_args'] = [blender_mesh, blender_mesh.color_attributes.render_color_index]
+            attr['get'] = __get_function()
 
         else:
             attr['gltf_attribute_name'] = '_' + blender_attribute.name.upper()
-            attr['func_get'] = __get_layer_attribute
-            attr['func_get_args'] = [blender_mesh]
+            attr['get'] = __get_function()
             if export_settings['gltf_attributes'] is False:
                 continue
 
@@ -162,8 +160,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         attr['blender_data_type'] = 'FLOAT2'
         attr['blender_domain'] = 'CORNER'
         attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
-        attr['func_get'] = __get_uvs_attribute
-        attr['func_get_args'] = [blender_mesh, tex_coord_i]
+        attr['get'] = __get_function()
         blender_attributes.append(attr)
 
     # Manage NORMALS
@@ -173,8 +170,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         attr['blender_domain'] = 'CORNER'
         attr['gltf_attribute_name'] = 'NORMAL'
         attr['gltf_attribute_name_morph'] = 'MORPH_NORMAL_'
-        attr['func_get'] = __get_normal_attribute
-        attr['func_get_args'] = [blender_object, armature, blender_mesh, key_blocks, use_morph_normals, export_settings]
+        attr['get'] = __get_function()
         blender_attributes.append(attr)
 
     # Manage TANGENT
@@ -183,8 +179,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
         attr['blender_data_type'] = 'FLOAT_VECTOR_4'
         attr['blender_domain'] = 'CORNER'
         attr['gltf_attribute_name'] = 'TANGENT'
-        attr['func_get'] = __get_tangent_attribute
-        attr['func_get_args'] = [blender_mesh, armature, blender_object, export_settings]
+        attr['get'] = __get_function()
         blender_attributes.append(attr)
 
     # Manage MORPH_POSITION_x
@@ -205,7 +200,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             attr['blender_data_type'] = 'FLOAT_VECTOR'
             attr['blender_domain'] = 'CORNER'
             attr['gltf_attribute_name'] = 'MORPH_NORMAL_' + str(morph_i)
-            # No func_get is set here, because data are set from NORMALS
+            # No get function is set here, because data are set from NORMALS
             blender_attributes.append(attr)
 
             # Manage MORPH_TANGENT_x
@@ -267,9 +262,9 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     for attr in blender_attributes:
         if 'skip_getting_to_dots' in attr:
             continue
-        if 'func_get' not in attr:
+        if 'get' not in attr:
             continue
-        attr['func_get'](*(attr['func_get_args'] + [attr, dots]))
+        attr['get'](blender_mesh, blender_object, armature, key_blocks, use_morph_normals, attr, dots, export_settings)
 
 
 
@@ -477,6 +472,22 @@ def __set_function():
 
     return setting_function
 
+def __get_function():
+
+    def getting_function(blender_mesh, blender_object, armature, key_blocks, use_morph_normals, attr, dots, export_settings):
+        if attr['gltf_attribute_name'] == "COLOR_0":
+            __get_color_attribute(blender_mesh, attr, dots)
+        elif attr['gltf_attribute_name'].startswith("_"):
+            __get_layer_attribute(blender_mesh, attr, dots)
+        elif attr['gltf_attribute_name'].startswith("TEXCOORD_"):
+            __get_uvs_attribute(blender_mesh, int(attr['gltf_attribute_name'].split("_")[-1]), attr, dots)
+        elif attr['gltf_attribute_name'] == "NORMAL":
+            __get_normal_attribute(blender_object, armature, blender_mesh, key_blocks, use_morph_normals, export_settings, attr, dots)
+        elif attr['gltf_attribute_name'] == "TANGENT":
+            __get_tangent_attribute(blender_mesh, armature, blender_object, export_settings, attr, dots)
+        
+    return getting_function
+
 def __set_regular_attribute(attr, attributes, prim_dots):
 
     res = np.empty((len(prim_dots), attr['len']), dtype=attr['type'])
@@ -681,7 +692,9 @@ def __get_uvs_attribute(blender_mesh, blender_uv_idx, attr, dots):
     dots[attr['gltf_attribute_name'] + '1'] = uvs[:, 1]
     del uvs
 
-def __get_color_attribute(blender_mesh, blender_color_idx, attr, dots):
+def __get_color_attribute(blender_mesh, attr, dots):
+    blender_color_idx = blender_mesh.color_attributes.render_color_index
+
     if attr['blender_domain'] == "POINT":
         colors = np.empty(len(blender_mesh.vertices) * 4, dtype=np.float32)
     elif attr['blender_domain'] == "CORNER":
