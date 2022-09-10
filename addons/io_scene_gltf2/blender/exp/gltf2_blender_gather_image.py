@@ -221,7 +221,7 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
 
         else:
             # rudimentarily try follow the node tree to find the correct image data.
-            src_chan = Channel.R
+            src_chan = None
             for elem in result.path:
                 if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateColor):
                     src_chan = {
@@ -230,6 +230,29 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
                         'Blue': Channel.B,
                     }[elem.from_socket.name]
                 if elem.from_socket.name == 'Alpha':
+                    src_chan = Channel.A
+
+
+            if src_chan is None:
+                # No SeparateColor node found, so take the specification channel that is needed
+                # So export is correct if user plug the texture directly to the socket
+                if socket.name == 'Metallic':
+                    src_chan = Channel.B
+                elif socket.name == 'Roughness':
+                    src_chan = Channel.G
+                elif socket.name == 'Occlusion':
+                    src_chan = Channel.R
+                elif socket.name == 'Alpha':
+                    src_chan = Channel.A
+                elif socket.name == 'Clearcoat':
+                    src_chan = Channel.R
+                elif socket.name == 'Clearcoat Roughness':
+                    src_chan = Channel.G
+                elif socket.name == 'Thickness': # For KHR_materials_volume
+                    src_chan = Channel.G
+                elif socket.name == "Specular": # For original KHR_material_specular
+                    src_chan = Channel.A
+                elif socket.name == "Sigma": # For KHR_materials_sheen
                     src_chan = Channel.A
 
             dst_chan = None
