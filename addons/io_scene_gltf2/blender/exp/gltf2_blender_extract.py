@@ -154,7 +154,7 @@ class PrimitiveCreator:
             attr['blender_domain'] = blender_attribute.domain
             attr['blender_data_type'] = blender_attribute.data_type
 
-            # TODOATTR: For now, we don't export edge data, because I need to find how to 
+            # For now, we don't export edge data, because I need to find how to 
             # get from edge data to dots data
             if attr['blender_domain'] == "EDGE":
                 continue
@@ -604,8 +604,7 @@ class PrimitiveCreator:
             for i in range(attr['len']):
                 self.dots[attr['gltf_attribute_name'] + str(i)] = data[:, i]
         elif attr['blender_domain'] in ['EDGE']:
-            # edgevidxs = np.array([tuple(edge.vertices) for edge in blender_mesh.edges[:]], dtype="object")
-            # TODOATTR need to find how to dispatch edges data to right dots
+            # No edge attribute exports
             pass
         elif attr['blender_domain'] in ['FACE']:
             if attr['len'] > 1:
