@@ -24,7 +24,7 @@ class BinaryData:
         if not isinstance(data, bytes):
             raise TypeError("Data is not a bytes array")
         self.data = data
-        self.bufferviewTarget = bufferViewTarget
+        self.bufferViewTarget = bufferViewTarget
 
     def __eq__(self, other):
         return self.data == other.data
