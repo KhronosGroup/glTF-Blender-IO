@@ -222,7 +222,6 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
                      export_settings
                      ):
 
-    blender_object_if_armature = export_settings['vtree'].nodes[blender_obj_uuid_if_armature].blender_object if blender_obj_uuid_if_armature is not None else None
     data = {}
 
     # Always using bake_range, because some bones may need to be baked,
