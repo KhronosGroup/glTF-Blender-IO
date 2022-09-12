@@ -19,7 +19,7 @@ import numpy as np
 from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
-from io_scene_gltf2.blender.exp import gltf2_blender_extract
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials
@@ -123,7 +123,7 @@ def __gather_cache_primitives(
     """
     primitives = []
 
-    blender_primitives = gltf2_blender_extract.extract_primitives(
+    blender_primitives = gltf2_blender_gather_primitives_extract.extract_primitives(
         blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:

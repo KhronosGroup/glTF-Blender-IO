@@ -823,7 +823,6 @@ class PrimitiveCreator:
             self.morph_tangent_deltas[i] = t_morph - t  # back to delta
 
     def __set_regular_attribute(self, attr):
-
             res = np.empty((len(self.prim_dots), attr['len']), dtype=attr['type'])
             for i in range(attr['len']):
                 res[:, i] = self.prim_dots[attr['gltf_attribute_name'] + str(i)]

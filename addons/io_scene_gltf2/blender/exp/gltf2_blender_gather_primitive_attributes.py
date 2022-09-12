@@ -21,23 +21,29 @@ from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 
 
+
 def gather_primitive_attributes(blender_primitive, export_settings):
     """
-    Gathers the attributes, such as POSITION, NORMAL, TANGENT from a blender primitive.
+    Gathers the attributes, such as POSITION, NORMAL, TANGENT, and all custom attributes from a blender primitive
 
     :return: a dictionary of attributes
-    """
+    """    
     attributes = {}
-    attributes.update(__gather_position(blender_primitive, export_settings))
-    attributes.update(__gather_normal(blender_primitive, export_settings))
-    attributes.update(__gather_tangent(blender_primitive, export_settings))
-    attributes.update(__gather_texcoord(blender_primitive, export_settings))
-    attributes.update(__gather_colors(blender_primitive, export_settings))
-    attributes.update(__gather_skins(blender_primitive, export_settings))
 
-    # Add custom attributes
-    for attribute in [attr_key for attr_key in blender_primitive["attributes"].keys() if attr_key[0] == "_"]:
-        attributes.update(__gather_custom_attribute(blender_primitive, attribute, export_settings))
+    # loop on each attribute extracted
+    # for skinning, all linked attributes (WEIGHTS_ and JOINTS_) need to be calculated
+    # in one shot (because of normalization), so we need to check that it is called only once.
+
+    skin_done = False
+
+    for attribute in blender_primitive["attributes"]:
+        if (attribute.startswith("JOINTS_") or attribute.startswith("WEIGHTS_")) and skin_done is True:
+            continue
+        if attribute.startswith("MORPH_"):
+            continue # Target for morphs will be managed later
+        attributes.update(__gather_attribute(blender_primitive, attribute, export_settings))
+        if (attribute.startswith("JOINTS_") or attribute.startswith("WEIGHTS_")):
+            skin_done = True
 
     return attributes
 
@@ -64,107 +70,6 @@ def array_to_accessor(array, component_type, data_type, include_max_and_min=Fals
         sparse=None,
         type=data_type,
     )
-
-
-def __gather_position(blender_primitive, export_settings):
-    position = blender_primitive["attributes"]["POSITION"]
-    return {
-        "POSITION": array_to_accessor(
-            position['data'],
-            component_type=position['component_type'],
-            data_type=position['data_type'],
-            include_max_and_min=True
-        )
-    }
-
-
-def __gather_normal(blender_primitive, export_settings):
-    if not export_settings[gltf2_blender_export_keys.NORMALS]:
-        return {}
-    if 'NORMAL' not in blender_primitive["attributes"]:
-        return {}
-    normal = blender_primitive["attributes"]['NORMAL']
-    return {
-        "NORMAL": array_to_accessor(
-            normal['data'],
-            component_type=normal['component_type'],
-            data_type=normal['data_type'],
-        )
-    }
-
-
-def __gather_tangent(blender_primitive, export_settings):
-    if not export_settings[gltf2_blender_export_keys.TANGENTS]:
-        return {}
-    if 'TANGENT' not in blender_primitive["attributes"]:
-        return {}
-    tangent = blender_primitive["attributes"]['TANGENT']
-    return {
-        "TANGENT": array_to_accessor(
-            tangent['data'],
-            component_type=tangent['component_type'],
-            data_type=tangent['data_type'],
-        )
-    }
-
-
-def __gather_texcoord(blender_primitive, export_settings):
-    attributes = {}
-    if export_settings[gltf2_blender_export_keys.TEX_COORDS]:
-        tex_coord_index = 0
-        tex_coord_id = 'TEXCOORD_' + str(tex_coord_index)
-        while blender_primitive["attributes"].get(tex_coord_id) is not None:
-            tex_coord = blender_primitive["attributes"][tex_coord_id]
-            attributes[tex_coord_id] = array_to_accessor(
-                tex_coord['data'],
-                component_type=tex_coord['component_type'],
-                data_type=tex_coord['data_type'],
-            )
-            tex_coord_index += 1
-            tex_coord_id = 'TEXCOORD_' + str(tex_coord_index)
-    return attributes
-
-
-def __gather_colors(blender_primitive, export_settings):
-    attributes = {}
-    if export_settings[gltf2_blender_export_keys.COLORS]:
-        color_index = 0
-        color_id = 'COLOR_' + str(color_index)
-        while blender_primitive["attributes"].get(color_id) is not None:
-            col = blender_primitive["attributes"][color_id]
-            colors = col['data']
-
-            if type(colors) is not np.ndarray:
-                colors = np.array(colors, dtype=np.float32)
-                colors = colors.reshape(len(colors) // 4, 4)
-
-            normalized = False
-            if col['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
-                # Convert to normalized ushorts
-                colors *= 65535
-                colors += 0.5  # bias for rounding
-                colors = colors.astype(np.uint16)
-                normalized = True        
-
-            attributes[color_id] = gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData(colors.tobytes(), gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
-                byte_offset=None,
-                component_type=col['component_type'],
-                count=len(colors),
-                extensions=None,
-                extras=None,
-                max=None,
-                min=None,
-                name=None,
-                normalized=normalized,
-                sparse=None,
-                type=col['data_type'],
-            )
-
-            color_index += 1
-            color_id = 'COLOR_' + str(color_index)
-    return attributes
-
 
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
@@ -237,10 +142,16 @@ def __gather_skins(blender_primitive, export_settings):
 
     return attributes
 
-def __gather_custom_attribute(blender_primitive, attribute, export_settings):
+
+def __gather_attribute(blender_primitive, attribute, export_settings):
     data = blender_primitive["attributes"][attribute]
 
-    if attribute.startswith("_COLOR") and blender_primitive["attributes"][attribute]['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
+
+    include_max_and_mins = {
+        "POSITION": True
+    }
+
+    if (attribute.startswith("_COLOR") or attribute.startswith("COLOR_")) and blender_primitive["attributes"][attribute]['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
         # Byte Color vertex color, need to normalize
 
         data['data'] *= 65535
@@ -251,7 +162,7 @@ def __gather_custom_attribute(blender_primitive, attribute, export_settings):
                 buffer_view=gltf2_io_binary_data.BinaryData(data['data'].tobytes()),
                 byte_offset=None,
                 component_type=data['component_type'],
-                count=data(data['data']),
+                count=len(data['data']),
                 extensions=None,
                 extras=None,
                 max=None,
@@ -263,12 +174,15 @@ def __gather_custom_attribute(blender_primitive, attribute, export_settings):
             )
         }
 
+    elif attribute.startswith("JOINTS_") or attribute.startswith("WEIGHTS_"):
+        return __gather_skins(blender_primitive, export_settings)
+
     else:
         return {
             attribute: array_to_accessor(
                 data['data'],
                 component_type=data['component_type'],
                 data_type=data['data_type'],
-                include_max_and_min=True
+                include_max_and_min=include_max_and_mins.get(attribute, False)
             )
         }
