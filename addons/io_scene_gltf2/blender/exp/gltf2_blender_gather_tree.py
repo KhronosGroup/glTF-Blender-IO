@@ -53,6 +53,8 @@ class VExportNode:
         self.blender_object = None
         self.blender_bone = None
 
+        self.default_hide_viewport = False # Need to store the default value for meshes in case of animation baking on armature
+
         self.force_as_empty = False # Used for instancer display
 
         # Only for bone/bone and object parented to bone
@@ -144,6 +146,7 @@ class VExportTree:
             node.blender_type = VExportNode.COLLECTION
         else:
             node.blender_type = VExportNode.OBJECT
+            node.default_hide_viewport = blender_object.hide_viewport
 
         # For meshes with armature modifier (parent is armature), keep armature uuid
         if node.blender_type == VExportNode.OBJECT:

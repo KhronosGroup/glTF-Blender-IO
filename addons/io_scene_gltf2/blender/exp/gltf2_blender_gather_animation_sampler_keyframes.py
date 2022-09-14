@@ -230,6 +230,9 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
     start_frame = bake_range_start
     end_frame = bake_range_end
 
+    # Before baking, desabling from viewport all meshes
+    for obj in [n.blender_object for n in export_settings['vtree'].nodes.values() if n.blender_type == VExportNode.OBJECT]:
+        obj.hide_viewport = True
 
     frame = start_frame
     while frame <= end_frame:
@@ -260,6 +263,10 @@ def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
             vals = get_sk_driver_values(dr_obj_uuid, frame, dr_fcurves, export_settings)
 
         frame += step
+
+    # And now, restoring meshes in viewport
+    for node, obj in [(n, n.blender_object) for n in export_settings['vtree'].nodes.values() if n.blender_type == VExportNode.OBJECT]:
+        obj.hide_viewport = node.default_hide_viewport
 
     return data
 
