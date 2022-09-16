@@ -15,7 +15,7 @@
 import bpy
 import typing
 
-from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes
+from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes, get_delta_modes, is_location, is_rotation, is_scale
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -375,6 +375,8 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
     targets = {}
     multiple_rotation_mode_detected = False
     delta_rotation_detection = [False, False] # Normal / Delta
+    delta_location_detection = [False, False] # Normal / Delta
+    delta_scale_detection = [False, False]    # Normal / Delta
     for fcurve in blender_action.fcurves:
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
@@ -416,24 +418,46 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
 
         # Detect that object or bone are not multiple keyed for euler and quaternion
         # Keep only the current rotation mode used by object
-        rotation, delta, rotation_modes = get_rotation_modes(target_property)
+        rotation, rotation_modes = get_rotation_modes(target_property)
+        delta = get_delta_modes(target_property)
 
         # Delta rotation management
-        if delta is False:
-            if delta_rotation_detection[1] is True: # normal rotation coming, but delta is already present
-                multiple_rotation_mode_detected = True
-                continue
-            delta_rotation_detection[0] = True
-        else:
-            if delta_rotation_detection[0] is True: # delta rotation coming, but normal is already present
-                multiple_rotation_mode_detected = True
-                continue
-            delta_rotation_detection[1] = True
+        if is_rotation(target_property) :
+            if delta is False:
+                if delta_rotation_detection[1] is True: # normal rotation coming, but delta is already present
+                    continue
+                delta_rotation_detection[0] = True
+            else:
+                if delta_rotation_detection[0] is True: # delta rotation coming, but normal is already present
+                    continue
+                delta_rotation_detection[1] = True
 
 
-        if rotation and target.rotation_mode not in rotation_modes:
-            multiple_rotation_mode_detected = True
-            continue
+            if rotation and target.rotation_mode not in rotation_modes:
+                multiple_rotation_mode_detected = True
+                continue
+
+        # Delta location management
+        if is_location(target_property):
+            if delta is False:
+                if delta_location_detection[1] is True: # normal location coming, but delta is already present
+                    continue
+                delta_location_detection[0] = True
+            else:
+                if delta_location_detection[0] is True: # delta location coming, but normal is already present
+                    continue
+                delta_location_detection[1] = True
+
+        # Delta scale management
+        if is_scale(target_property):
+            if delta is False:
+                if delta_scale_detection[1] is True: # normal scale coming, but delta is already present
+                    continue
+                delta_scale_detection[0] = True
+            else:
+                if delta_scale_detection[0] is True: # delta scale coming, but normal is already present
+                    continue
+                delta_scale_detection[1] = True
 
         # group channels by target object and affected property of the target
         target_properties = targets.get(target, {})
