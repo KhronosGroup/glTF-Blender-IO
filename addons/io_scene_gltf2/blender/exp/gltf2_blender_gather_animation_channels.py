@@ -170,7 +170,7 @@ def gather_animation_channels(obj_uuid: int,
             for child_uuid in children_obj_parent_to_bones:
 
                 channels_baked = gather_channels_baked(child_uuid, export_settings)
-                if channels is not None:
+                if channels_baked is not None:
                     channels.extend(channels_baked)
 
     else:
