@@ -77,19 +77,22 @@ def gather_animations(  obj_uuid: int,
         # (Only when force sampling is ON)
         # If force sampling is OFF, can lead to inconsistent export anyway
         if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
-            channels = __gather_channels_baked(obj_uuid, export_settings)
-            if channels is not None:
-                animation = gltf2_io.Animation(
-                        channels=channels,
-                        extensions=None, # as other animations
-                        extras=None, # Because there is no animation to get extras from
-                        name=blender_object.name, # Use object name as animation name
-                        samplers=[]
-                    )
+            # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
+            # (skinned meshes TRS must be ignored, says glTF specification)
+            if export_settings['vtree'].nodes[obj_uuid].skin is None:
+                channels = __gather_channels_baked(obj_uuid, export_settings)
+                if channels is not None:
+                    animation = gltf2_io.Animation(
+                            channels=channels,
+                            extensions=None, # as other animations
+                            extras=None, # Because there is no animation to get extras from
+                            name=blender_object.name, # Use object name as animation name
+                            samplers=[]
+                        )
 
-                __link_samplers(animation, export_settings)
-                if animation is not None:
-                    animations.append(animation)
+                    __link_samplers(animation, export_settings)
+                    if animation is not None:
+                        animations.append(animation)
         elif export_settings['gltf_selected'] is True and blender_object.type == "ARMATURE":
             # We need to bake all bones. Because some bone can have some constraints linking to
             # some other armature bones, for example
