@@ -22,6 +22,7 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_data_path import is_bone_anim_channel
+from mathutils import Matrix
 
 
 def gather_animations(  obj_uuid: int,
@@ -102,6 +103,7 @@ def gather_animations(  obj_uuid: int,
                 if blender_object.animation_data.is_property_readonly('action'):
                     blender_object.animation_data.use_tweak_mode = False
                 try:
+                    __reset_bone_matrix(blender_object, export_settings)
                     blender_object.animation_data.action = blender_action
                 except:
                     error = "Action is readonly. Please check NLA editor"
@@ -128,9 +130,11 @@ def gather_animations(  obj_uuid: int,
         if blender_object.animation_data.action is not None:
             if current_action is None:
                 # remove last exported action
+                __reset_bone_matrix(blender_object, export_settings)
                 blender_object.animation_data.action = None
             elif blender_object.animation_data.action.name != current_action.name:
                 # Restore action that was active at start of exporting
+                __reset_bone_matrix(blender_object, export_settings)
                 blender_object.animation_data.action = current_action
         if solo_track is not None:
             solo_track.is_solo = True
@@ -335,3 +339,21 @@ def __is_armature_action(blender_action) -> bool:
         if is_bone_anim_channel(fcurve.data_path):
             return True
     return False
+
+def __reset_bone_matrix(blender_object, export_settings) -> None:
+    if export_settings['gltf_export_reset_pose_bones'] is False:
+        return
+
+    # Only for armatures
+    if blender_object.type != "ARMATURE":
+        return
+
+    print("Reset...")
+
+    # Remove current action if any
+    if blender_object.animation_data and blender_object.animation_data.action:
+        blender_object.animation_data.action = None
+
+    # Resetting bones TRS to avoid to keep not keyed value on a future action set
+    for bone in blender_object.pose.bones:
+        bone.matrix_basis = Matrix()

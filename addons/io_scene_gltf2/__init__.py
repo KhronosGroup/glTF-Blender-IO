@@ -423,6 +423,15 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    export_reset_pose_bones: BoolProperty(
+        name='Reset pose bones between actions',
+        description=(
+            "Reset pose bones between each action exported. "
+            "This is needed when some bones are not keyed on some animations"
+        ),
+        default=True
+    )
+
     export_current_frame: BoolProperty(
         name='Use Current Frame',
         description='Export the scene in the current animation frame',
@@ -600,12 +609,14 @@ class ExportGLTF2_Base:
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
+            export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
             export_settings['gltf_optimize_animation'] = False
             export_settings['gltf_export_anim_single_armature'] = False
+            export_settings['gltf_export_reset_pose_bones'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -959,6 +970,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
         layout.prop(operator, 'export_optimize_animation_size')
         layout.prop(operator, 'export_anim_single_armature')
+        layout.prop(operator, 'export_reset_pose_bones')
 
 
 class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
