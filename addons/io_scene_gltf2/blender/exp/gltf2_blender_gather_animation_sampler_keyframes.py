@@ -56,6 +56,7 @@ class Keyframe:
         length = {
             "delta_location": 3,
             "delta_rotation_euler": 3,
+            "delta_scale": 3,
             "location": 3,
             "rotation_axis_angle": 4,
             "rotation_euler": 3,
@@ -378,7 +379,10 @@ def gather_keyframes(blender_obj_uuid: str,
                             "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
                             "rotation_euler": rot.to_euler(),
                             "rotation_quaternion": rot,
-                            "scale": sca
+                            "scale": sca,
+                            "delta_location": trans,
+                            "delta_rotation_euler": rot.to_euler(),
+                            "delta_scale": sca
                         }[target]
                 else:
                     key.value = get_sk_driver_values(driver_obj_uuid, frame, channels, export_settings)

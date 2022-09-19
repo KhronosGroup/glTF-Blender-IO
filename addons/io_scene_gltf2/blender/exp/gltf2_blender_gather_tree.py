@@ -114,7 +114,8 @@ class VExportTree:
             blender_children.setdefault(bobj, [])
             blender_children.setdefault(bparent, []).append(bobj)
 
-        for blender_object in [obj.original for obj in depsgraph.scene_eval.objects if obj.parent is None]:
+        scene_eval = blender_scene.evaluated_get(depsgraph=depsgraph)
+        for blender_object in [obj.original for obj in scene_eval.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), blender_children)
 
     def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, blender_children, armature_uuid=None, dupli_world_matrix=None):
