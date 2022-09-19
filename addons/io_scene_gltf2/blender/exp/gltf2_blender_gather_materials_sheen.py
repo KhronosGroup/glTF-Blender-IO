@@ -43,6 +43,8 @@ def export_sheen(blender_material, export_settings):
     else:
         # Factor
         fac = get_factor_from_socket(sheenColor_socket, kind='RGB')
+        if fac is None:
+            fac = [1.0, 1.0, 1.0] # Default is 0.0/0.0/0.0, so we need to set it to 1 if no factor
         if fac is not None and fac != [0.0, 0.0, 0.0]:
             sheen_extension['sheenColorFactor'] = fac
         
@@ -65,6 +67,8 @@ def export_sheen(blender_material, export_settings):
     else:
         # Factor
         fac = get_factor_from_socket(sheenRoughness_socket, kind='VALUE')
+        if fac is None:
+            fac = 1.0 # Default is 0.0 so we need to set it to 1.0 if no factor
         if fac is not None and fac != 0.0:
             sheen_extension['sheenRoughnessFactor'] = fac
         

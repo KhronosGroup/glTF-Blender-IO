@@ -15,7 +15,7 @@
 import bpy
 import typing
 
-from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes
+from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes, get_delta_modes, is_location, is_rotation, is_scale
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
@@ -29,6 +29,35 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from . import gltf2_blender_export_keys
 
+
+def gather_channels_baked(obj_uuid, export_settings):
+    channels = []
+
+    # If no animation in file, no need to bake
+    if len(bpy.data.actions) == 0:
+        return None
+
+    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+
+    for p in ["location", "rotation_quaternion", "scale"]:
+        channel = gather_animation_channel(
+            obj_uuid,
+            (),
+            export_settings,
+            None,
+            p,
+            start_frame,
+            end_frame,
+            False,
+            obj_uuid, # Use obj uuid as action name for caching
+            None,
+            False #If Object is not animated, don't keep animation for this channel
+            )
+        if channel is not None:
+            channels.append(channel)
+
+    return channels if len(channels) > 0 else None
 
 @cached
 def gather_animation_channels(obj_uuid: int,
@@ -128,6 +157,21 @@ def gather_animation_channels(obj_uuid: int,
                 True)
             if channel is not None:
                 channels.append(channel)
+
+        # When An Object is parented to bone, and rest pose is used (not current frame)
+        # If parenting is not done with same TRS than rest pose, this can lead to inconsistencies
+        # So we need to bake object animation too, to be sure that correct TRS animation are used
+        # Here, we want add these channels to same action that the armature
+        if export_settings['gltf_selected'] is False and export_settings['gltf_current_frame'] is False:
+
+            children_obj_parent_to_bones = []
+            for bone_uuid in bones_uuid:
+                children_obj_parent_to_bones.extend([child for child in export_settings['vtree'].nodes[bone_uuid].children if export_settings['vtree'].nodes[child].blender_type != VExportNode.BONE])
+            for child_uuid in children_obj_parent_to_bones:
+
+                channels_baked = gather_channels_baked(child_uuid, export_settings)
+                if channels_baked is not None:
+                    channels.extend(channels_baked)
 
     else:
         done_paths = []
@@ -375,6 +419,8 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
     targets = {}
     multiple_rotation_mode_detected = False
     delta_rotation_detection = [False, False] # Normal / Delta
+    delta_location_detection = [False, False] # Normal / Delta
+    delta_scale_detection = [False, False]    # Normal / Delta
     for fcurve in blender_action.fcurves:
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
@@ -416,24 +462,46 @@ def __get_channel_groups(blender_action: bpy.types.Action, blender_object: bpy.t
 
         # Detect that object or bone are not multiple keyed for euler and quaternion
         # Keep only the current rotation mode used by object
-        rotation, delta, rotation_modes = get_rotation_modes(target_property)
+        rotation, rotation_modes = get_rotation_modes(target_property)
+        delta = get_delta_modes(target_property)
 
         # Delta rotation management
-        if delta is False:
-            if delta_rotation_detection[1] is True: # normal rotation coming, but delta is already present
-                multiple_rotation_mode_detected = True
-                continue
-            delta_rotation_detection[0] = True
-        else:
-            if delta_rotation_detection[0] is True: # delta rotation coming, but normal is already present
-                multiple_rotation_mode_detected = True
-                continue
-            delta_rotation_detection[1] = True
+        if is_rotation(target_property) :
+            if delta is False:
+                if delta_rotation_detection[1] is True: # normal rotation coming, but delta is already present
+                    continue
+                delta_rotation_detection[0] = True
+            else:
+                if delta_rotation_detection[0] is True: # delta rotation coming, but normal is already present
+                    continue
+                delta_rotation_detection[1] = True
 
 
-        if rotation and target.rotation_mode not in rotation_modes:
-            multiple_rotation_mode_detected = True
-            continue
+            if rotation and target.rotation_mode not in rotation_modes:
+                multiple_rotation_mode_detected = True
+                continue
+
+        # Delta location management
+        if is_location(target_property):
+            if delta is False:
+                if delta_location_detection[1] is True: # normal location coming, but delta is already present
+                    continue
+                delta_location_detection[0] = True
+            else:
+                if delta_location_detection[0] is True: # delta location coming, but normal is already present
+                    continue
+                delta_location_detection[1] = True
+
+        # Delta scale management
+        if is_scale(target_property):
+            if delta is False:
+                if delta_scale_detection[1] is True: # normal scale coming, but delta is already present
+                    continue
+                delta_scale_detection[0] = True
+            else:
+                if delta_scale_detection[0] is True: # delta scale coming, but normal is already present
+                    continue
+                delta_scale_detection[1] = True
 
         # group channels by target object and affected property of the target
         target_properties = targets.get(target, {})

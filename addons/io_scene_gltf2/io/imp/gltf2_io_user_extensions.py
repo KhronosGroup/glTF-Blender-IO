@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def import_user_extensions(hook_name, gltf_importer, *args):
-    for extension in gltf_importer.import_user_extensions:
+def import_user_extensions(hook_name, gltf, *args):
+    for extension in gltf.import_user_extensions:
         hook = getattr(extension, hook_name, None)
         if hook is not None:
             try:
-                hook(*args, gltf_importer)
+                hook(*args, gltf)
             except Exception as e:
                 print(hook_name, "fails on", extension)
                 print(str(e))
