@@ -56,6 +56,7 @@ class Keyframe:
         length = {
             "delta_location": 3,
             "delta_rotation_euler": 3,
+            "delta_scale": 3,
             "location": 3,
             "rotation_axis_angle": 4,
             "rotation_euler": 3,
@@ -378,7 +379,10 @@ def gather_keyframes(blender_obj_uuid: str,
                             "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
                             "rotation_euler": rot.to_euler(),
                             "rotation_quaternion": rot,
-                            "scale": sca
+                            "scale": sca,
+                            "delta_location": trans,
+                            "delta_rotation_euler": rot.to_euler(),
+                            "delta_scale": sca
                         }[target]
                 else:
                     key.value = get_sk_driver_values(driver_obj_uuid, frame, channels, export_settings)
@@ -416,7 +420,7 @@ def gather_keyframes(blender_obj_uuid: str,
                     # for both in and out tangents, we guarantee that (even if there are errors or numerical imprecisions)
                     # symmetrical control points translate to symmetrical tangents.
                     # Note: I am not sure that linearity is never broken with quaternions and their normalization.
-                    # Especially at sign swap it might occure that the value gets negated but the control point not.
+                    # Especially at sign swap it might occur that the value gets negated but the control point not.
                     # I have however not once encountered an issue with this.
                     key.in_tangent = [
                         c.keyframe_points[i].co[1] + (c.keyframe_points[i].handle_left[1] - c.keyframe_points[i].co[1]) / (c.keyframe_points[i].handle_left[0] - c.keyframe_points[i].co[0])

@@ -24,35 +24,6 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_data_path import is_bone_anim_channel
 
 
-def __gather_channels_baked(obj_uuid, export_settings):
-    channels = []
-
-    # If no animation in file, no need to bake
-    if len(bpy.data.actions) == 0:
-        return None
-
-    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
-    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
-
-    for p in ["location", "rotation_quaternion", "scale"]:
-        channel = gltf2_blender_gather_animation_channels.gather_animation_channel(
-            obj_uuid,
-            (),
-            export_settings,
-            None,
-            p,
-            start_frame,
-            end_frame,
-            False,
-            obj_uuid, # Use obj uuid as action name for caching
-            None,
-            False #If Object is not animated, don't keep animation for this channel
-            )
-        if channel is not None:
-            channels.append(channel)
-
-    return channels if len(channels) > 0 else None
-
 def gather_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],
                         offset: int,
@@ -77,19 +48,22 @@ def gather_animations(  obj_uuid: int,
         # (Only when force sampling is ON)
         # If force sampling is OFF, can lead to inconsistent export anyway
         if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
-            channels = __gather_channels_baked(obj_uuid, export_settings)
-            if channels is not None:
-                animation = gltf2_io.Animation(
-                        channels=channels,
-                        extensions=None, # as other animations
-                        extras=None, # Because there is no animation to get extras from
-                        name=blender_object.name, # Use object name as animation name
-                        samplers=[]
-                    )
+            # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
+            # (skinned meshes TRS must be ignored, says glTF specification)
+            if export_settings['vtree'].nodes[obj_uuid].skin is None:
+                channels = gltf2_blender_gather_animation_channels.gather_channels_baked(obj_uuid, export_settings)
+                if channels is not None:
+                    animation = gltf2_io.Animation(
+                            channels=channels,
+                            extensions=None, # as other animations
+                            extras=None, # Because there is no animation to get extras from
+                            name=blender_object.name, # Use object name as animation name
+                            samplers=[]
+                        )
 
-                __link_samplers(animation, export_settings)
-                if animation is not None:
-                    animations.append(animation)
+                    __link_samplers(animation, export_settings)
+                    if animation is not None:
+                        animations.append(animation)
         elif export_settings['gltf_selected'] is True and blender_object.type == "ARMATURE":
             # We need to bake all bones. Because some bone can have some constraints linking to
             # some other armature bones, for example

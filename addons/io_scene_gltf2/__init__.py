@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 3, 17),
+    "version": (3, 4, 17),
     'blender': (3, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -411,7 +411,7 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    optimize_animation_size: BoolProperty(
+    export_optimize_animation_size: BoolProperty(
         name='Optimize Animation Size',
         description=(
             "Reduce exported file-size by removing duplicate keyframes"
@@ -423,8 +423,8 @@ class ExportGLTF2_Base:
     export_anim_single_armature: BoolProperty(
         name='Export all Armature Actions',
         description=(
-            "Export all actions of a single armature. "
-            "WARNING: works only if you exports a single armature"
+            "Export all actions, bound to a single armature. "
+            "WARNING: Option does not support exports including multiple armatures"
         ),
         default=True
     )
@@ -605,7 +605,7 @@ class ExportGLTF2_Base:
                 export_settings['gltf_def_bones'] = False
             export_settings['gltf_nla_strips'] = self.export_nla_strips
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
-            export_settings['gltf_optimize_animation'] = self.optimize_animation_size
+            export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
         else:
             export_settings['gltf_frame_range'] = False
@@ -965,7 +965,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_nla_strips')
         if operator.export_nla_strips is False:
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
-        layout.prop(operator, 'optimize_animation_size')
+        layout.prop(operator, 'export_optimize_animation_size')
         layout.prop(operator, 'export_anim_single_armature')
 
 
@@ -1276,7 +1276,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
 
     settings_node_ui : bpy.props.BoolProperty(
             default= False,
-            description="Displays glTF Settings node in Shader Editor (Menu Add > Output)"
+            description="Displays glTF Material Output node in Shader Editor (Menu Add > Output)"
             )
 
     KHR_materials_variants_ui : bpy.props.BoolProperty(

@@ -52,7 +52,7 @@ def gather_image(
         # In case we can't retrieve image (for example packed images, with original moved)
         # We don't create invalid image without uri
         factor_uri = None
-        if uri is None: return None
+        if uri is None: return None, None
 
     buffer_view, factor_buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -199,7 +199,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
     results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
 
     # Check if we need a simple mapping or more complex calculation
-    if any([socket.name == "Specular" for socket in sockets]):
+    if any([socket.name == "Specular" and socket.node.type == "BSDF_PRINCIPLED" for socket in sockets]):
         return __get_image_data_specular(sockets, results, export_settings)
     else:
         return __get_image_data_mapping(sockets, results, export_settings)
@@ -249,7 +249,7 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
                 dst_chan = Channel.G
             elif socket.name == 'Thickness': # For KHR_materials_volume
                 dst_chan = Channel.G
-            elif socket.name == "specular glTF": # For original KHR_material_specular
+            elif socket.name == "Specular": # For original KHR_material_specular
                 dst_chan = Channel.A
             elif socket.name == "Sigma": # For KHR_materials_sheen
                 dst_chan = Channel.A
