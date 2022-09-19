@@ -27,7 +27,7 @@ def gather_primitive_attributes(blender_primitive, export_settings):
     Gathers the attributes, such as POSITION, NORMAL, TANGENT, and all custom attributes from a blender primitive
 
     :return: a dictionary of attributes
-    """    
+    """
     attributes = {}
 
     # loop on each attribute extracted
