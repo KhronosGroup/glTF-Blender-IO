@@ -92,7 +92,8 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     use_morph_tangents = use_morph_normals and use_tangents and export_settings[gltf2_blender_export_keys.MORPH_TANGENT]
 
     key_blocks = []
-    if blender_mesh.shape_keys and export_settings[gltf2_blender_export_keys.MORPH]:
+    # Shape Keys can't be retrieve when using Apply Modifiers (Blender/bpy limitation)
+    if export_settings[gltf2_blender_export_keys.APPLY] is False and blender_mesh.shape_keys and export_settings[gltf2_blender_export_keys.MORPH]:
         key_blocks = [
             key_block
             for key_block in blender_mesh.shape_keys.key_blocks
