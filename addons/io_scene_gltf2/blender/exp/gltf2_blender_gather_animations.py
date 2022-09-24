@@ -348,8 +348,6 @@ def __reset_bone_matrix(blender_object, export_settings) -> None:
     if blender_object.type != "ARMATURE":
         return
 
-    print("Reset...")
-
     # Remove current action if any
     if blender_object.animation_data and blender_object.animation_data.action:
         blender_object.animation_data.action = None
