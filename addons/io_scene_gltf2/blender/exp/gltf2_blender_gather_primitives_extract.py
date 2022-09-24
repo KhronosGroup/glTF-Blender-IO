@@ -265,11 +265,21 @@ class PrimitiveCreator:
     def create_dots_data_structure(self):
         # Now that we get all attributes that are going to be exported, create numpy array that will store them
         dot_fields = [('vertex_index', np.uint32)]
+        if self.export_settings['gltf_loose_edges']:
+            dot_fields_edges = [('vertex_index', np.uint32)]
+        if self.export_settings['gltf_loose_points']:
+            dot_fields_points = [('vertex_index', np.uint32)]
         for attr in self.blender_attributes:
             if 'skip_getting_to_dots' in attr:
                 continue
             for i in range(attr['len']):
                 dot_fields.append((attr['gltf_attribute_name'] + str(i), attr['type']))
+                if attr['blender_domain'] != 'POINT':
+                    continue
+                if self.export_settings['gltf_loose_edges']:
+                    dot_fields_edges.append((attr['gltf_attribute_name'] + str(i), attr['type']))
+                if self.export_settings['gltf_loose_points']:
+                    dot_fields_points.append((attr['gltf_attribute_name'] + str(i), attr['type']))
 
         # In Blender there is both per-vert data, like position, and also per-loop
         # (loop=corner-of-poly) data, like normals or UVs. glTF only has per-vert
@@ -283,6 +293,28 @@ class PrimitiveCreator:
         # Each unique dot will become one unique glTF vert.
 
         self.dots = np.empty(len(self.blender_mesh.loops), dtype=np.dtype(dot_fields))
+
+        # Find loose edges
+        if self.export_settings['gltf_loose_edges']:
+            loose_edges = [e for e in self.blender_mesh.edges if e.is_loose]
+            self.blender_idxs_edges = [vi for e in loose_edges for vi in e.vertices]
+            self.blender_idxs_edges = np.array(self.blender_idxs_edges, dtype=np.uint32)
+
+            self.dots_edges = np.empty(len(self.blender_idxs_edges), dtype=np.dtype(dot_fields_edges))
+            self.dots_edges['vertex_index'] = self.blender_idxs_edges
+
+        # Find loose points
+        if self.export_settings['gltf_loose_points']:
+            verts_in_edge = set(vi for e in self.blender_mesh.edges for vi in e.vertices)
+            self.blender_idxs_points = [
+                vi for vi, _ in enumerate(self.blender_mesh.vertices)
+                if vi not in verts_in_edge
+            ]
+            self.blender_idxs_points = np.array(self.blender_idxs_points, dtype=np.uint32)
+
+            self.dots_points = np.empty(len(self.blender_idxs_points), dtype=np.dtype(dot_fields_points))
+            self.dots_points['vertex_index'] = self.blender_idxs_points
+
 
     def populate_dots_data(self):
         vidxs = np.empty(len(self.blender_mesh.loops))
@@ -371,14 +403,11 @@ class PrimitiveCreator:
             })
 
         if self.export_settings['gltf_loose_edges']:
-            # Find loose edges
-            loose_edges = [e for e in self.blender_mesh.edges if e.is_loose]
-            self.blender_idxs = [vi for e in loose_edges for vi in e.vertices]
 
-            if self.blender_idxs:
+            if self.blender_idxs_edges.shape[0] > 0:
                 # Export one glTF vert per unique Blender vert in a loose edge
-                self.blender_idxs = np.array(self.blender_idxs, dtype=np.uint32)
-                self.blender_idxs, indices = np.unique(self.blender_idxs, return_inverse=True)
+                self.blender_idxs = self.blender_idxs_edges
+                dots_edges, indices = np.unique(self.dots_edges, return_inverse=True)
 
                 self.attributes = {}
 
@@ -388,9 +417,9 @@ class PrimitiveCreator:
                     if 'set' in attr:
                         attr['set'](attr)
                     else:
-                        res = np.empty((len(self.prim_dots), attr['len']), dtype=attr['type'])
+                        res = np.empty((len(dots_edges), attr['len']), dtype=attr['type'])
                         for i in range(attr['len']):
-                            res[:, i] = self.prim_dots[attr['gltf_attribute_name'] + str(i)]
+                            res[:, i] = dots_edges[attr['gltf_attribute_name'] + str(i)]
                         self.attributes[attr['gltf_attribute_name']] = {}
                         self.attributes[attr['gltf_attribute_name']]["data"] = res
                         self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
@@ -423,15 +452,9 @@ class PrimitiveCreator:
                 })
 
         if self.export_settings['gltf_loose_points']:
-            # Find loose points
-            verts_in_edge = set(vi for e in self.blender_mesh.edges for vi in e.vertices)
-            self.blender_idxs = [
-                vi for vi, _ in enumerate(self.blender_mesh.vertices)
-                if vi not in verts_in_edge
-            ]
 
-            if self.blender_idxs:
-                self.blender_idxs = np.array(self.blender_idxs, dtype=np.uint32)
+            if self.blender_idxs_points.shape[0] > 0:
+                self.blender_idxs = self.blender_idxs_points
 
                 self.attributes = {}
 
@@ -441,9 +464,9 @@ class PrimitiveCreator:
                     if 'set' in attr:
                         attr['set'](attr)
                     else:
-                        res = np.empty((len(self.prim_dots), attr['len']), dtype=attr['type'])
+                        res = np.empty((len(self.blender_idxs), attr['len']), dtype=attr['type'])
                         for i in range(attr['len']):
-                            res[:, i] = self.prim_dots[attr['gltf_attribute_name'] + str(i)]
+                            res[:, i] = self.dots_points[attr['gltf_attribute_name'] + str(i)]
                         self.attributes[attr['gltf_attribute_name']] = {}
                         self.attributes[attr['gltf_attribute_name']]["data"] = res
                         self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
@@ -600,9 +623,17 @@ class PrimitiveCreator:
         elif attr['blender_domain'] in ['POINT']:
             if attr['len'] > 1:
                 data = data.reshape(-1, attr['len'])
-            data = data[self.dots['vertex_index']]
+            data_dots = data[self.dots['vertex_index']]
+            if self.export_settings['gltf_loose_edges']:
+                data_dots_edges = data[self.dots_edges['vertex_index']]
+            if self.export_settings['gltf_loose_points']:
+                data_dots_points = data[self.dots_points['vertex_index']]
             for i in range(attr['len']):
-                self.dots[attr['gltf_attribute_name'] + str(i)] = data[:, i]
+                self.dots[attr['gltf_attribute_name'] + str(i)] = data_dots[:, i]
+                if self.export_settings['gltf_loose_edges']:
+                    self.dots_edges[attr['gltf_attribute_name'] + str(i)] = data_dots_edges[:, i]
+                if self.export_settings['gltf_loose_points']:
+                    self.dots_points[attr['gltf_attribute_name'] + str(i)] = data_dots_points[:, i]
         elif attr['blender_domain'] in ['EDGE']:
             # No edge attribute exports
             pass
