@@ -408,6 +408,7 @@ class PrimitiveCreator:
                 # Export one glTF vert per unique Blender vert in a loose edge
                 self.blender_idxs = self.blender_idxs_edges
                 dots_edges, indices = np.unique(self.dots_edges, return_inverse=True)
+                self.blender_idxs = np.unique(self.blender_idxs_edges)
 
                 self.attributes = {}
 
