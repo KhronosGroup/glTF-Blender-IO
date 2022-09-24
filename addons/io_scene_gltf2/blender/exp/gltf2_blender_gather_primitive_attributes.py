@@ -166,7 +166,7 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
         data['data'] = data['data'].astype(np.uint16)
 
         return { attribute : gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData(data['data'].tobytes()),
+                buffer_view=gltf2_io_binary_data.BinaryData(data['data'].tobytes(), gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
                 byte_offset=None,
                 component_type=data['component_type'],
                 count=len(data['data']),
