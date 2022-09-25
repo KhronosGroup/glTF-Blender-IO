@@ -22,7 +22,6 @@ from mathutils import Quaternion, Matrix
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.imp.gltf2_io_binary import BinaryData
 from io_scene_gltf2.io.com import gltf2_io_constants
-from .gltf2_blender_gather_primitive_attributes import array_to_accessor
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 
@@ -404,8 +403,13 @@ class VExportTree:
             if all([c.hide_render for c in self.nodes[uuid].blender_object.users_collection]):
                 return False
 
-        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION]:
+        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
             found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
+            if not found:
+                return False
+
+        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITHOUT_NESTED]:
+            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.objects)
             if not found:
                 return False
 
