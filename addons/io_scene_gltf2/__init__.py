@@ -324,10 +324,16 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    use_active_collection: BoolProperty(
+    use_active_collection_with_nested: BoolProperty(
+        name='Active Collection and nested Collections',
+        description='Export objects in the active collection and nested collections only',
+        default=False
+    )
+
+    use_active_collection_without_nested: BoolProperty(
         name='Active Collection',
         description='Export objects in the active collection only',
-        default=False
+        default=False        
     )
 
     use_active_scene: BoolProperty(
@@ -517,7 +523,8 @@ class ExportGLTF2_Base:
             'use_selection',
             'use_visible',
             'use_renderable',
-            'use_active_collection',
+            'use_active_collection_with_nested',
+            'use_active_collection_without_nested'
             'use_mesh_edges',
             'use_mesh_vertices',
             'use_active_scene',
@@ -580,7 +587,8 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
-        export_settings['gltf_active_collection'] = self.use_active_collection
+        export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested
+        export_settings['gltf_active_collection_without_nested'] = self.use_active_collection_without_nested
         export_settings['gltf_active_scene'] = self.use_active_scene
 
         export_settings['gltf_selected'] = self.use_selection
@@ -720,7 +728,8 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'use_selection')
         col.prop(operator, 'use_visible')
         col.prop(operator, 'use_renderable')
-        col.prop(operator, 'use_active_collection')
+        col.prop(operator, 'use_active_collection_without_nested')
+        col.prop(operator, 'use_active_collection_with_nested')
         col.prop(operator, 'use_active_scene')
 
         col = layout.column(heading = "Data", align = True)
