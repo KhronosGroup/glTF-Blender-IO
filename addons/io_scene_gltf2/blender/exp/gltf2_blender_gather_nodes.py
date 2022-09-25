@@ -36,7 +36,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
 
-    skin = __gather_skin(vnode, blender_object, export_settings)
+    skin = gather_skin(vnode.uuid, export_settings)
     node = gltf2_io.Node(
         camera=__gather_camera(blender_object, export_settings),
         children=__gather_children(vnode, blender_object, export_settings),
@@ -363,7 +363,8 @@ def __gather_trans_rot_scale(vnode, export_settings):
         scale = [sca[0], sca[1], sca[2]]
     return translation, rotation, scale
 
-def __gather_skin(vnode, blender_object, export_settings):
+def gather_skin(vnode, export_settings):
+    blender_object = export_settings['vtree'].nodes[vnode].blender_object
     modifiers = {m.type: m for m in blender_object.modifiers}
     if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:
         return None
@@ -390,7 +391,7 @@ def __gather_skin(vnode, blender_object, export_settings):
         return None
 
     # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-    return gltf2_blender_gather_skins.gather_skin(vnode.armature, export_settings)
+    return gltf2_blender_gather_skins.gather_skin(export_settings['vtree'].nodes[vnode].armature, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):

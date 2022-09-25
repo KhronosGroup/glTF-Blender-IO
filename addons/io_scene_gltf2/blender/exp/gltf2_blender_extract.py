@@ -17,7 +17,7 @@ from mathutils import Vector
 
 from . import gltf2_blender_export_keys
 from ...io.com.gltf2_io_debug import print_console
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 
 
 def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
@@ -84,7 +84,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
             armature = None
 
         if armature:
-            skin = gltf2_blender_gather_skins.gather_skin(export_settings['vtree'].nodes[uuid_for_skined_data].armature, export_settings)
+            skin = gltf2_blender_gather_nodes.gather_skin(uuid_for_skined_data, export_settings)
             if not skin:
                 armature = None
 

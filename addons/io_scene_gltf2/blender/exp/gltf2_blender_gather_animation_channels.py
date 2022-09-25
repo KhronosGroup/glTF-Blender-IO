@@ -166,7 +166,7 @@ def gather_animation_channels(obj_uuid: int,
 
             children_obj_parent_to_bones = []
             for bone_uuid in bones_uuid:
-                children_obj_parent_to_bones.extend([child for child in export_settings['vtree'].nodes[bone_uuid].children if export_settings['vtree'].nodes[child].blender_type != VExportNode.BONE])
+                children_obj_parent_to_bones.extend([child for child in export_settings['vtree'].nodes[bone_uuid].children if export_settings['vtree'].nodes[child].blender_type not in [VExportNode.BONE, VExportNode.ARMATURE]])
             for child_uuid in children_obj_parent_to_bones:
 
                 channels_baked = gather_channels_baked(child_uuid, export_settings)
