@@ -177,12 +177,15 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
     use_active_uvmap = True
     if node and node.type == 'UVMAP' and node.uv_map:
         # Try to gather map index.
-        for blender_mesh in bpy.data.meshes:
-            i = blender_mesh.uv_layers.find(node.uv_map)
-            if i >= 0:
-                texcoord_idx = i
-                use_active_uvmap = False
-                break
+        node_tree = node.id_data
+        for mesh in bpy.data.meshes:
+            for material in mesh.materials:
+                if material.node_tree == node_tree:
+                    i = mesh.uv_layers.find(node.uv_map)
+                    if i >= 0:
+                        texcoord_idx = i
+                        use_active_uvmap = False
+                        break
 
     return texture_transform, texcoord_idx or None, use_active_uvmap
 
