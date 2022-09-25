@@ -184,7 +184,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
     use_active_uvmap = True
     if node.node and node.node.type == 'UVMAP' and node.node.uv_map:
         # Try to gather map index.
-        node_tree = node.id_data
+        node_tree = node.node.id_data
         for mesh in bpy.data.meshes:
             for material in mesh.materials:
                 if material.node_tree == node_tree:
