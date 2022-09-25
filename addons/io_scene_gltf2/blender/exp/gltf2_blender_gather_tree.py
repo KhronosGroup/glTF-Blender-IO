@@ -22,7 +22,6 @@ from mathutils import Quaternion, Matrix
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.imp.gltf2_io_binary import BinaryData
 from io_scene_gltf2.io.com import gltf2_io_constants
-from .gltf2_blender_gather_primitive_attributes import array_to_accessor
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 

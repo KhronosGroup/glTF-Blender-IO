@@ -284,6 +284,12 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    export_attributes: BoolProperty(
+        name='Attributes',
+        description='Export Attributes',
+        default=False
+    )
+
     use_mesh_edges: BoolProperty(
         name='Loose Edges',
         description=(
@@ -590,6 +596,7 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
+        export_settings['gltf_attributes'] = self.export_attributes
         export_settings['gltf_cameras'] = self.export_cameras
 
         export_settings['gltf_original_specular'] = self.export_original_specular
@@ -819,6 +826,7 @@ class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
         col.active = operator.export_normals
         col.prop(operator, 'export_tangents')
         layout.prop(operator, 'export_colors')
+        layout.prop(operator, 'export_attributes')
 
         col = layout.column()
         col.prop(operator, 'use_mesh_edges')
