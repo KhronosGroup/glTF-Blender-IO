@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 4, 18),
+    "version": (3, 4, 22),
     'blender': (3, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -330,10 +330,16 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    use_active_collection: BoolProperty(
+    use_active_collection_with_nested: BoolProperty(
+        name='Active Collection and nested Collections',
+        description='Export objects in the active collection and nested collections only',
+        default=False
+    )
+
+    use_active_collection_without_nested: BoolProperty(
         name='Active Collection',
         description='Export objects in the active collection only',
-        default=False
+        default=False        
     )
 
     use_active_scene: BoolProperty(
@@ -425,6 +431,15 @@ class ExportGLTF2_Base:
         description=(
             "Export all actions, bound to a single armature. "
             "WARNING: Option does not support exports including multiple armatures"
+        ),
+        default=True
+    )
+
+    export_reset_pose_bones: BoolProperty(
+        name='Reset pose bones between actions',
+        description=(
+            "Reset pose bones between each action exported. "
+            "This is needed when some bones are not keyed on some animations"
         ),
         default=True
     )
@@ -523,7 +538,8 @@ class ExportGLTF2_Base:
             'use_selection',
             'use_visible',
             'use_renderable',
-            'use_active_collection',
+            'use_active_collection_with_nested',
+            'use_active_collection_without_nested'
             'use_mesh_edges',
             'use_mesh_vertices',
             'use_active_scene',
@@ -587,7 +603,8 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
-        export_settings['gltf_active_collection'] = self.use_active_collection
+        export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested
+        export_settings['gltf_active_collection_without_nested'] = self.use_active_collection_without_nested
         export_settings['gltf_active_scene'] = self.use_active_scene
 
         export_settings['gltf_selected'] = self.use_selection
@@ -607,12 +624,14 @@ class ExportGLTF2_Base:
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
+            export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
             export_settings['gltf_optimize_animation'] = False
             export_settings['gltf_export_anim_single_armature'] = False
+            export_settings['gltf_export_reset_pose_bones'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -727,7 +746,8 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'use_selection')
         col.prop(operator, 'use_visible')
         col.prop(operator, 'use_renderable')
-        col.prop(operator, 'use_active_collection')
+        col.prop(operator, 'use_active_collection_without_nested')
+        col.prop(operator, 'use_active_collection_with_nested')
         col.prop(operator, 'use_active_scene')
 
         col = layout.column(heading = "Data", align = True)
@@ -967,6 +987,7 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
         layout.prop(operator, 'export_optimize_animation_size')
         layout.prop(operator, 'export_anim_single_armature')
+        layout.prop(operator, 'export_reset_pose_bones')
 
 
 class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
