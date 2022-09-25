@@ -188,7 +188,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
         for mesh in bpy.data.meshes:
             for material in mesh.materials:
                 if material.node_tree == node_tree:
-                    i = mesh.uv_layers.find(node.uv_map)
+                    i = mesh.uv_layers.find(node.node.uv_map)
                     if i >= 0:
                         texcoord_idx = i
                         use_active_uvmap = False
