@@ -23,7 +23,12 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
 
     drivers = []
 
-    for child_uuid in export_settings['vtree'].nodes[blender_armature_uuid].children:
+    # Take into account skinned mesh, and mesh parented to a bone of the armature
+    children_list = export_settings['vtree'].nodes[blender_armature_uuid].children.copy()
+    for bone in export_settings['vtree'].get_all_bones(blender_armature_uuid):
+        children_list.extend(export_settings['vtree'].nodes[bone].children)
+
+    for child_uuid in children_list:
 
         if export_settings['vtree'].nodes[child_uuid].blender_type == "BONE":
             continue
@@ -80,7 +85,8 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
             else:
                 all_sorted_channels.append(existing_idx[i])
 
-        if len(all_sorted_channels) > 0:
+        # Checks there are some driver on SK, and that there is not only invalid drivers
+        if len(all_sorted_channels) > 0 and not all([i is None for i in all_sorted_channels]):
             drivers.append((child_uuid, tuple(all_sorted_channels)))
 
     return tuple(drivers)

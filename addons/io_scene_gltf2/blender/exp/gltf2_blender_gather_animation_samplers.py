@@ -402,8 +402,9 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
                 parent_uuid = export_settings['vtree'].nodes[export_settings['vtree'].nodes[blender_obj_uuid].bones[bone.name]].parent_uuid
                 if parent_uuid is not None and export_settings['vtree'].nodes[parent_uuid].blender_type == VExportNode.BONE:
                     # export bone is not at root of armature neither
+                    blender_bone_parent = export_settings['vtree'].nodes[parent_uuid].blender_bone
                     correction_matrix_local = (
-                        bone.parent.bone.matrix_local.inverted_safe() @
+                        blender_bone_parent.bone.matrix_local.inverted_safe() @
                         bone.bone.matrix_local
                     )
                 else:
@@ -424,6 +425,7 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
         transform = parent_inverse
 
     values = []
+    fps = bpy.context.scene.render.fps
     for keyframe in keyframes:
         # Transform the data and build gltf control points
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform, need_rotation_correction)
@@ -436,11 +438,11 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
             in_tangent = gltf2_blender_math.transform(keyframe.in_tangent, target_datapath, transform, need_rotation_correction)
             if is_yup and blender_object_if_armature is None:
                 in_tangent = gltf2_blender_math.swizzle_yup(in_tangent, target_datapath)
-            # the tangent in glTF is relative to the keyframe value
+            # the tangent in glTF is relative to the keyframe value and uses seconds
             if not isinstance(value, list):
-                in_tangent = value - in_tangent
+                in_tangent = fps * (in_tangent - value)
             else:
-                in_tangent = [value[i] - in_tangent[i] for i in range(len(value))]
+                in_tangent = [fps * (in_tangent[i] - value[i]) for i in range(len(value))]
             keyframe_value = gltf2_blender_math.mathutils_to_gltf(in_tangent) + keyframe_value  # append
 
         if keyframe.out_tangent is not None:
@@ -448,11 +450,11 @@ def __gather_output(channels: typing.Tuple[bpy.types.FCurve],
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform, need_rotation_correction)
             if is_yup and blender_object_if_armature is None:
                 out_tangent = gltf2_blender_math.swizzle_yup(out_tangent, target_datapath)
-            # the tangent in glTF is relative to the keyframe value
+            # the tangent in glTF is relative to the keyframe value and uses seconds
             if not isinstance(value, list):
-                out_tangent = value - out_tangent
+                out_tangent = fps * (out_tangent - value)
             else:
-                out_tangent = [value[i] - out_tangent[i] for i in range(len(value))]
+                out_tangent = [fps * (out_tangent[i] - value[i]) for i in range(len(value))]
             keyframe_value = keyframe_value + gltf2_blender_math.mathutils_to_gltf(out_tangent)  # append
 
         values += keyframe_value

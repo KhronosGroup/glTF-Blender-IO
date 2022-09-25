@@ -46,7 +46,7 @@ class Buffer:
             extensions=None,
             extras=None,
             name=None,
-            target=None
+            target=binary_data.bufferViewTarget
         )
         return buffer_view
 

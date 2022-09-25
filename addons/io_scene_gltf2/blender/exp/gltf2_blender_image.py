@@ -38,6 +38,18 @@ class FillWhite:
     """Fills a channel with all ones (1.0)."""
     pass
 
+class StoreData:
+    def __init__(self, data):
+        """Store numeric data (not an image channel"""
+        self.data = data
+
+class StoreImage:
+    """
+    Store a channel with the channel src_chan from a Blender image.
+    This channel will be used for numpy calculation (no direct channel mapping)
+    """
+    def __init__(self, image: bpy.types.Image):
+        self.image = image
 
 class ExportImage:
     """Custom image class.
@@ -66,9 +78,13 @@ class ExportImage:
 
     def __init__(self, original=None):
         self.fills = {}
+        self.stored = {}
 
-        # In case of keeping original texture images
-        self.original = original
+        self.original = original # In case of keeping original texture images
+        self.numpy_calc = None
+
+    def set_calc(self, numpy_calc):
+        self.numpy_calc = numpy_calc # In case of numpy calculation (no direct channel mapping)
 
     @staticmethod
     def from_blender_image(image: bpy.types.Image):
@@ -84,6 +100,12 @@ class ExportImage:
     def fill_image(self, image: bpy.types.Image, dst_chan: Channel, src_chan: Channel):
         self.fills[dst_chan] = FillImage(image, src_chan)
 
+    def store_data(self, identifier, data, type='Image'):
+        if type == "Image": # This is an image
+            self.stored[identifier] = StoreImage(data)
+        else: # This is a numeric value
+            self.stored[identifier] = StoreData(data)
+
     def fill_white(self, dst_chan: Channel):
         self.fills[dst_chan] = FillWhite()
 
@@ -92,7 +114,7 @@ class ExportImage:
 
     def empty(self) -> bool:
         if self.original is None:
-            return not self.fills
+            return not (self.fills or self.stored)
         else:
             return False
 
@@ -114,7 +136,7 @@ class ExportImage:
             len(set(fill.image.name for fill in self.fills.values())) == 1
         )
 
-    def encode(self, mime_type: Optional[str]) -> bytes:
+    def encode(self, mime_type: Optional[str]) -> Tuple[bytes, bool]:
         self.file_format = {
             "image/jpeg": "JPEG",
             "image/png": "PNG"
@@ -122,10 +144,14 @@ class ExportImage:
 
         # Happy path = we can just use an existing Blender image
         if self.__on_happy_path():
-            return self.__encode_happy()
+            return self.__encode_happy(), None
 
-        # Unhappy path = we need to create the image self.fills describes.
-        return self.__encode_unhappy()
+        # Unhappy path = we need to create the image self.fills describes or self.stores describes
+        if self.numpy_calc is None:
+            return self.__encode_unhappy(), None
+        else:
+            pixels, width, height, factor = self.numpy_calc(self.stored)
+            return self.__encode_from_numpy_array(pixels, (width, height)), factor
 
     def __encode_happy(self) -> bytes:
         return self.__encode_from_image(self.blender_image())
@@ -158,7 +184,7 @@ class ExportImage:
             else:
                 # Image is the wrong size; make a temp copy and scale it.
                 with TmpImageGuard() as guard:
-                    _make_temp_image_copy(guard, src_image=image)
+                    make_temp_image_copy(guard, src_image=image)
                     tmp_image = guard.image
                     tmp_image.scale(width, height)
                     tmp_image.pixels.foreach_get(tmp_buf)
@@ -208,7 +234,7 @@ class ExportImage:
 
         # Copy to a temp image and save.
         with TmpImageGuard() as guard:
-            _make_temp_image_copy(guard, src_image=image)
+            make_temp_image_copy(guard, src_image=image)
             tmp_image = guard.image
             return _encode_temp_image(tmp_image, self.file_format)
 
@@ -239,7 +265,7 @@ class TmpImageGuard:
             bpy.data.images.remove(self.image, do_unlink=True)
 
 
-def _make_temp_image_copy(guard: TmpImageGuard, src_image: bpy.types.Image):
+def make_temp_image_copy(guard: TmpImageGuard, src_image: bpy.types.Image):
     """Makes a temporary copy of src_image. Will be cleaned up with guard."""
     guard.image = src_image.copy()
     tmp_image = guard.image

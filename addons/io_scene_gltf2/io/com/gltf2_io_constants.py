@@ -129,6 +129,9 @@ class TextureWrap(IntEnum):
     MirroredRepeat = 33648
     Repeat = 10497
 
+class BufferViewTarget(IntEnum):
+    ARRAY_BUFFER = 34962
+    ELEMENT_ARRAY_BUFFER = 34963
 
 #################
 # LEGACY DEFINES
@@ -156,3 +159,5 @@ GLTF_DATA_TYPE_VEC4 = "VEC4"
 GLTF_DATA_TYPE_MAT2 = "MAT2"
 GLTF_DATA_TYPE_MAT3 = "MAT3"
 GLTF_DATA_TYPE_MAT4 = "MAT4"
+
+GLTF_IOR = 1.5

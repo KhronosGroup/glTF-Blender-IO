@@ -94,7 +94,7 @@ def create_from_data(gltf, img_idx):
     img_data = BinaryData.get_image_data(gltf, img_idx)
     if img_data is None:
         return
-    img_name = 'Image_%d' % img_idx
+    img_name = gltf.data.images[img_idx].name or 'Image_%d' % img_idx
 
     # Create image, width and height are dummy values
     blender_image = bpy.data.images.new(img_name, 8, 8)

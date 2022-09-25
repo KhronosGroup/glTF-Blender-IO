@@ -22,6 +22,7 @@ from .gltf2_blender_material import BlenderMaterial
 from ...io.com.gltf2_io_debug import print_console
 from .gltf2_io_draco_compression_extension import decode_primitive
 from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
+from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_default_material
 
 
 class BlenderMesh():
@@ -68,6 +69,16 @@ def create_mesh(gltf, mesh_idx, skin_idx):
 def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     """Put all primitive data into the mesh."""
     pymesh = gltf.data.meshes[mesh_idx]
+
+    # Use a class here, to be able to pass data by reference to hook (to be able to change them inside hook)
+    class IMPORT_mesh_options:
+        def __init__(self, skinning: bool = True, skin_into_bind_pose: bool = True, use_auto_smooth: bool = True):
+            self.skinning = skinning
+            self.skin_into_bind_pose = skin_into_bind_pose
+            self.use_auto_smooth = use_auto_smooth
+
+    mesh_options = IMPORT_mesh_options()
+    import_user_extensions('gather_import_mesh_options', gltf, mesh_options, pymesh, skin_idx)
 
     # Scan the primitives to find out what we need to create
 
@@ -145,6 +156,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         if prim.extensions is not None and 'KHR_draco_mesh_compression' in prim.extensions:
             print_console('INFO', 'Draco Decoder: Decode primitive {}'.format(pymesh.name or '[unnamed]'))
             decode_primitive(gltf, prim)
+
+        import_user_extensions('gather_import_decode_primitive', gltf, pymesh, prim, skin_idx)
 
         if prim.indices is not None:
             indices = BinaryData.decode_accessor(gltf, prim.indices)
@@ -251,7 +264,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for sk_locs in sk_vert_locs:
         gltf.locs_batch_gltf_to_blender(sk_locs)
 
-    if num_joint_sets:
+    if num_joint_sets and mesh_options.skin_into_bind_pose:
         skin_into_bind_pose(
             gltf, skin_idx, vert_joints, vert_weights,
             locs=[vert_locs] + sk_vert_locs,
@@ -260,9 +273,6 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
     for uvs in loop_uvs:
         uvs_gltf_to_blender(uvs)
-
-    for cols in loop_cols:
-        colors_linear_to_srgb(cols[:, :-1])
 
     # ---------------
     # Start creating things
@@ -300,14 +310,14 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
         if layer is None:
             print("WARNING: Vertex colors are ignored because the maximum number of vertex color layers has been "
-                  "reached.")
+                "reached.")
             break
 
-        layer.data.foreach_set('color', squish(loop_cols[col_i]))
+        mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
 
     # Skinning
     # TODO: this is slow :/
-    if num_joint_sets:
+    if num_joint_sets and mesh_options.skinning:
         pyskin = gltf.data.skins[skin_idx]
         for i, node_idx in enumerate(pyskin.joints):
             bone = gltf.vnodes[node_idx]
@@ -345,33 +355,76 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     # ----
     # Assign materials to faces
     has_materials = any(prim.material is not None for prim in pymesh.primitives)
+    # Even if no primitive have material, we need to create slots if some primitives have some variant
+    if has_materials is False:
+        has_materials = any(prim.extensions is not None and 'KHR_materials_variants' in prim.extensions.keys() for prim in pymesh.primitives)
+
+    has_variant = prim.extensions is not None and 'KHR_materials_variants' in prim.extensions.keys() \
+                and 'mappings' in prim.extensions['KHR_materials_variants'].keys()
+
     if has_materials:
         material_indices = np.empty(num_faces, dtype=np.uint32)
         empty_material_slot_index = None
         f = 0
 
-        for prim in pymesh.primitives:
+        for idx_prim, prim in enumerate(pymesh.primitives):
             if prim.material is not None:
                 # Get the material
                 pymaterial = gltf.data.materials[prim.material]
-                vertex_color = 'COLOR_0' if 'COLOR_0' in prim.attributes else None
+                vertex_color = 'COLOR_0' if ('COLOR_0' in prim.attributes) else None
                 if vertex_color not in pymaterial.blender_material:
                     BlenderMaterial.create(gltf, prim.material, vertex_color)
                 material_name = pymaterial.blender_material[vertex_color]
 
                 # Put material in slot (if not there)
-                if material_name not in mesh.materials:
+                if not has_variant:
+                    if material_name not in mesh.materials:
+                        mesh.materials.append(bpy.data.materials[material_name])
+                    material_index = mesh.materials.find(material_name)
+                else:
+                    # In case of variant, do not merge slots
                     mesh.materials.append(bpy.data.materials[material_name])
-                material_index = mesh.materials.find(material_name)
+                    material_index = len(mesh.materials) - 1
             else:
-                if empty_material_slot_index is None:
+                if not has_variant:
+                    if empty_material_slot_index is None:
+                        mesh.materials.append(None)
+                        empty_material_slot_index = len(mesh.materials) - 1
+                    material_index = empty_material_slot_index
+                else:
+                    # In case of variant, do not merge slots
                     mesh.materials.append(None)
-                    empty_material_slot_index = len(mesh.materials) - 1
-                material_index = empty_material_slot_index
+                    material_index = len(mesh.materials) - 1
 
             material_indices[f:f + prim.num_faces].fill(material_index)
 
             f += prim.num_faces
+
+            # Manage variants
+            if has_variant:
+
+                # Store default material
+                default_mat = mesh.gltf2_variant_default_materials.add()
+                default_mat.material_slot_index = material_index
+                default_mat.default_material = bpy.data.materials[material_name] if prim.material is not None else None
+
+                for mapping in prim.extensions['KHR_materials_variants']['mappings']:
+                    # Store, for each variant, the material link to this primitive
+                    
+                    variant_primitive = mesh.gltf2_variant_mesh_data.add()
+                    variant_primitive.material_slot_index = material_index
+                    if 'material' not in mapping.keys():
+                        # Default material
+                        variant_primitive.material = None
+                    else:
+                        vertex_color = 'COLOR_0' if 'COLOR_0' in prim.attributes else None
+                        if str(mapping['material']) + str(vertex_color) not in gltf.variant_mapping.keys():
+                            BlenderMaterial.create(gltf, mapping['material'], vertex_color)
+                        variant_primitive.material = gltf.variant_mapping[str(mapping['material']) + str(vertex_color)]
+
+                    for variant in mapping['variants']:
+                        vari = variant_primitive.variants.add()
+                        vari.variant.variant_idx = variant
 
         mesh.polygons.foreach_set('material_index', material_indices)
 
@@ -388,7 +441,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     if has_normals:
         mesh.create_normals_split()
         mesh.normals_split_custom_set_from_vertices(vert_normals)
-        mesh.use_auto_smooth = True
+        mesh.use_auto_smooth = mesh_options.use_auto_smooth
 
 
 def points_edges_tris(mode, indices):
@@ -478,16 +531,6 @@ def colors_rgb_to_rgba(rgb):
     rgba = np.ones((len(rgb), 4), dtype=np.float32)
     rgba[:, :3] = rgb
     return rgba
-
-
-def colors_linear_to_srgb(color):
-    assert color.shape[1] == 3  # only change RGB, not A
-
-    not_small = color >= 0.0031308
-    small_result = np.where(color < 0.0, 0.0, color * 12.92)
-    large_result = 1.055 * np.power(color, 1.0 / 2.4, where=not_small) - 0.055
-    color[:] = np.where(not_small, large_result, small_result)
-
 
 def uvs_gltf_to_blender(uvs):
     # u,v -> u,1-v

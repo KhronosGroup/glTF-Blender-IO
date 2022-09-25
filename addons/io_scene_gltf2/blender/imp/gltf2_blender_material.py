@@ -59,6 +59,11 @@ class BlenderMaterial():
         else:
             pbr_metallic_roughness(mh)
 
+        # Manage KHR_materials_variants
+        # We need to store link between material idx in glTF and Blender Material id
+        if gltf.KHR_materials_variants is True:
+            gltf.variant_mapping[str(material_idx) + str(vertex_color)] = mat
+
         import_user_extensions('gather_import_material_after_hook', gltf, pymaterial, vertex_color, mat)
 
     @staticmethod

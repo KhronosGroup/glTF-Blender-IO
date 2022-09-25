@@ -39,6 +39,7 @@ class glTFImporter():
         self.accessor_cache = {}
         self.decode_accessor_cache = {}
         self.import_user_extensions = import_settings['import_user_extensions']
+        self.variant_mapping = {} # Used to map between mgltf material idx and blender material, for Variants
 
         if 'loglevel' not in self.import_settings.keys():
             self.import_settings['loglevel'] = logging.ERROR
@@ -55,7 +56,13 @@ class glTFImporter():
             'KHR_texture_transform',
             'KHR_materials_clearcoat',
             'KHR_mesh_quantization',
-            'KHR_draco_mesh_compression'
+            'KHR_draco_mesh_compression',
+            'KHR_materials_variants',
+            'KHR_materials_emissive_strength',
+            'KHR_materials_transmission',
+            'KHR_materials_specular',
+            'KHR_materials_sheen',
+            'KHR_materials_ior'
         ]
 
         # Add extensions required supported by custom import extensions

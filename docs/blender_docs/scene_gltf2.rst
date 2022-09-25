@@ -3,8 +3,7 @@
 glTF 2.0
 ********
 
-.. admonition:: Reference
-   :class: refbox
+.. reference::
 
    :Category:  Import-Export
    :Menu:      :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
@@ -57,11 +56,7 @@ with the following channels of information:
 - Normal Map (tangent space, +Y up)
 - Emissive
 
-Some additional material properties or types of materials can be expressed using glTF extensions:
-
-- Clearcoat, Clearcoat Roughness, Clearcoat Normal (uses ``KHR_materials_clearcoat``)
-- Transmission (uses ``KHR_materials_transmission``)
-- "Shadeless" materials (uses ``KHR_materials_unlit``)
+Some additional material properties or types of materials can be expressed using glTF extensions. The complete is can be found in _Extensions_ part of this documentation.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -77,7 +72,7 @@ The glTF material system is different from Blender's own materials. When a glTF 
 the add-on will construct a set of Blender nodes to replicate each glTF material as closely as possible.
 
 The importer supports Metal/Rough PBR (core glTF), Spec/Gloss PBR (``KHR_materials_pbrSpecularGlossiness``)
-and Shadeless (``KHR_materials_unlit``) materials.
+and some extension materials. The complete is can be found in _Extensions_ part of this documentation.
 
 .. tip::
 
@@ -149,7 +144,7 @@ Baked Ambient Occlusion
 glTF is capable of storing a baked ambient occlusion map.
 Currently there is no arrangement of nodes that causes Blender
 to use such a map in exactly the same way as intended in glTF.
-However, if the exporter finds a custom node group by the name of ``glTF Settings``, and
+However, if the exporter finds a custom node group by the name of ``glTF Material Output``, and
 finds an input named ``Occlusion`` on that node group,
 it will look for an Image Texture attached there to use as the occlusion map in glTF.
 The effect need not be shown in Blender, as Blender has other ways of showing ambient occlusion,
@@ -180,7 +175,7 @@ the same image with the roughness and metallic channels.
 
    The Cycles render engine has a Bake panel that can be used to bake
    ambient occlusion maps. The resulting image can be saved and connected
-   directly to the ``glTF Settings`` node.
+   directly to the ``glTF Material Output`` node.
 
 
 Normal Map
@@ -231,11 +226,13 @@ channels if they are not needed.
    This arrangement is supported for backwards compatibility. It is simpler to use
    the Principled BSDF node directly.
 
+If any component of emissiveFactor is > 1.0, ``KHR_materials_emissive_strength`` extension will be used.
+
 
 Clearcoat
 ^^^^^^^^^
 
-When the *Clearcoat* input on the Principled BSDF node has a non-zero default value or
+When the *Clearcoat* input on the Principled BSDF node has a nonzero default value or
 Image Texture node connected, the ``KHR_materials_clearcoat`` glTF extension will be
 included in the export. This extension will also include a value or Image Texture
 from the *Clearcoat Roughness* input if available.
@@ -256,11 +253,64 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
    An example of a complex clearcoat application that will export correctly to glTF.
    A much simpler, smooth coating can be applied from just the Principled BSDF node alone.
 
+Sheen
+^^^^^
+
+When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF 
+extension will be included in the export. The Sheen Color will be exported from Color socket of Vevlet node.
+Sheen Roughness will be exported from Sigma socket.
+
+If a Sheen Rougness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-sheen.png
+
+.. tip::
+
+   Velvet BSDF node is only available on Cycles render engine. 
+   You may have to temporary switch to Cycles to add this node, and get back to Eevee.
+
+.. note::
+
+   Because the node tree is adding 2 Shaders (Principled and Sheen), the resulting shader is not fully energy conservative.
+   You may find some difference between Blender render, and glTF render.
+   Sheen models are not fully compatible between Blender and glTF. This trick about adding Velvet Shader is the most accurate 
+   approximation (better that using Sheen Principled sockets).
+
+
+Specular
+^^^^^^^^
+
+When the *Specular* or *Specular Tint* input of Principled BSDF node have a non default value or
+Image Texture node connected, the ``KHR_materials_specular`` glTF extension will be
+included in the export.
+
+.. note::
+
+   Specular models are not fully compatible between Blender and glTF. By default, Blender data are converted to glTF at export, 
+   with a possible loss of information.
+   Some conversion are also performed at import, will a possible loss of information too.
+
+
+At import, a custom node group is created, to store original Specular data, not converted.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_specular-custom-node.png
+
+At export, by default, Specular data are converted from Principled BSDF node. 
+
+You can export original Specular data, enabling the option at export. If enabled, Principled Specular data are ignored,
+only data from custom node are used.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_specular-export-option.png
+
+
+.. tip::
+   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu: 
+   Add > Output > glTF Material Output
 
 Transmission
 ^^^^^^^^^^^^
 
-When the Transmission input on the Principled BSDF node has a non-zero default value or
+When the Transmission input on the Principled BSDF node has a nonzero default value or
 Image Texture node connected, the ``KHR_materials_transmission`` glTF extension will be
 included in the export. When a texture is used, glTF stores the values in the red (``R``) channel.
 The *Color Space* should be set to Non-Color.
@@ -290,6 +340,82 @@ can be used to blur the transmission, like frosted glass.
    Transmission is complex for real-time rendering engines to implement,
    and support for the ``KHR_materials_transmission`` glTF extension is not yet widespread.
 
+IOR
+^^^
+
+At import, there are two different situation:
+
+- if ``KHR_materials_ior`` is not set, IOR value of Principled BSDF node is set to 1.5, that is the glTF default value of IOR.
+- If set, the ``KHR_materials_ior`` is used to set the IOR value of Principled BSDF.
+
+At export, IOR is included in the export only if one of these extensions are also used:
+
+- ``KHR_materials_transmission``
+- ``KHR_materials_volume``
+- ``KHR_materials_specular``
+
+IOR of 1.5 are not included in the export, because this is the default glTF IOR value.
+
+Volume
+^^^^^^
+
+Volume can be exported using a Volume Absorption node, linked to Volume socket of Output node.
+Data will be exported using the ``KHR_materials_volume`` extension.
+
+- For volume to be exported, some *transmission* must be set on Principled BSDF node.
+- Color of Volume Absorption node is used as glTF attenuation color. No texture is allowed for this property.
+- Density of Volume Absorption node is used as inverse of glTF attenuation distance.
+- Thickess can be plugged into the Thickess socket of custom group node ``glTF Material Output``.
+- If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
+
+glTF Variants
+^^^^^^^^^^^^^
+
+.. note::
+
+   For a full Variants experience, you have to enable UI in Add-on preferences
+
+There are two location to manage glTF Variants in Blender
+
+- In 3D View, on ``glTF Variants`` tab
+- For advanced settings, in Mesh Material Properties (see Advanced glTF Variant checks)
+
+The main concept to understand for using Variants, is that each material slot will be used as equivalent of a glTF primitive.
+
+glTF Variants switching
+^^^^^^^^^^^^^^^^^^^^^^^
+
+After importing a glTF file including ``KHR_materials_variants`` extension, all variants can be displayed.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_variants-switch.png
+
+You can switch Variant, by *selecting* the variant you want to display, then clicking on *Display Variant*.
+
+You can switch to default materials (when no Variant are used), by clicking on *Reset to default*.
+
+glTF Variants creation
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can add a new Variant by clicking the ``+`` at right of the Variant list. Then you can change the name by double-clicking.
+
+After changing Materials in Material Slots, you can assign current materials to the active Variant using *Assign to Variant*.
+
+You can also set default materials using *Assign as Original*. These materials will be exported as default material in glTF. 
+This are materials that will be displayed by any viewer that don't manage ``KHR_materials_variants`` extension.
+
+Advanced glTF Variant checks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you want to check primitive by primitive, what are Variants used, you can go to Mesh Material Properties.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_variants-detail.png
+
+The *glTF Material Variants* tab refers to the active material Slot and Material used by this slot. 
+You can see every Variants that are using this material for the given Slot/Primitive.
+
+You can also assign material to Variants from this tab, but recommandation is to perform it from 3D View tab.
 
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -405,11 +531,19 @@ are supported directly by this add-on:
 .. rubric:: Import
 
 - ``KHR_materials_pbrSpecularGlossiness``
-- ``KHR_lights_punctual``
-- ``KHR_materials_unlit``
-- ``KHR_texture_transform``
 - ``KHR_materials_clearcoat``
+- ``KHR_materials_transmission``
+- ``KHR_materials_unlit``
+- ``KHR_materials_emissive_strength``
+- ``KHR_materials_volume``
+- ``KHR_materials_sheen``
+- ``KHR_materials_specular``
+- ``KHR_materials_ior``
+- ``KHR_materials_variants``
+- ``KHR_lights_punctual``
+- ``KHR_texture_transform``
 - ``KHR_mesh_quantization``
+
 
 
 .. rubric:: Export
@@ -419,6 +553,12 @@ are supported directly by this add-on:
 - ``KHR_materials_clearcoat``
 - ``KHR_materials_transmission``
 - ``KHR_materials_unlit``
+- ``KHR_materials_emissive_strength``
+- ``KHR_materials_volume``
+- ``KHR_materials_sheen``
+- ``KHR_materials_specular``
+- ``KHR_materials_ior``
+- ``KHR_materials_variants``
 - ``KHR_texture_transform``
 
 
@@ -427,7 +567,7 @@ Third-party glTF Extensions
 
 It is possible for Python developers to add Blender support for additional glTF extensions by writing their
 own third-party add-on, without modifying this glTF add-on. For more information, `see the example on GitHub
-<https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons>`__ and if needed,
+<https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons/>`__ and if needed,
 `register an extension prefix <https://github.com/KhronosGroup/glTF/blob/master/extensions/Prefixes.md>`__.
 
 
@@ -445,60 +585,61 @@ and may be used for any user-specific or application-specific purposes.
 Animation
 =========
 
-A glTF animation changes the transforms of objects or pose bones, or the values of
-shape keys. One animation can affect multiple things, and there can be multiple
-animations in a glTF file.
+A glTF animation changes the transforms of objects or pose bones, or the values of shape keys.
+One animation can affect multiple objects, and there can be multiple animations in a glTF file.
+
 
 Import
 ------
 
-Imported models are set up so that the first animation in the file is playing
-automatically. Just scrub the Timeline to see it play.
+Imported models are set up so that the first animation in the file is playing automatically.
+Scrub the Timeline to see it play.
 
-When there are multiple animations, the rest will be organized using the
-:doc:`Nonlinear Animation Editor </editors/nla/tracks>`. Each animation becomes an
-action stashed to an NLA track. The track name is the name of the glTF animation.
-To play an animation, simply star its track.
+When the file contains multiple animations, the rest will be organized using
+the :doc:`Nonlinear Animation editor </editors/nla/tracks>`. Each animation
+becomes an action stashed to an NLA track. The track name is the name of the glTF animation.
+To make the animation within that track visible, click Solo (star icon) next to the track you want to play.
 
-.. figure:: /images/addons_import-export_scene-gltf2-animation-star-track.png
+.. _fig-gltf-solo-track:
 
-   Click Solo (star icon) next to the track you want to play to make that track's
-   animation visible.  This is the `fox sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Fox>`__
-   showing its Run animation.
+.. figure:: /images/addons_import-export_scene-gltf2_animation-solo-track.png
+
+   This is the `fox sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Fox>`__
+   showing its "Run" animation.
 
 If an animation affects multiple objects, it will be broken up into multiple parts.
-The part of the animation that affects one object becomes an action stashed on that
-object. Use the track names to tell which actions are part of the same animation.
-To play the whole animation, you'd need to star all its tracks.
+The part of the animation that affects one object becomes an action stashed on that object.
+Use the track names to tell which actions are part of the same animation.
+To play the whole animation, you need to enable Solo (star icon) for all its tracks.
 
 .. note::
 
-   There is currently no way to see the un-animated pose of a model that had animations.
+   There is currently no way to see the non-animated pose of a model that had animations.
+
 
 Export
 ------
 
-You can export animations by creating actions. How glTF animations are made from
-actions is controlled by the :menuselection:`Animation --> Group by NLA Track` export
-option.
+You can export animations by creating actions. How glTF animations are made from actions is controlled by
+the :menuselection:`Animation --> Group by NLA Track` export option.
+
 
 .. rubric:: Group by NLA Track on (default)
 
-An action will be exported if it is the active action on an object, or it is stashed
-to an NLA track (eg. with the Stash or Push Down buttons in the
-:doc:`Action Editor </editors/dope_sheet/action>`).
-**Actions which are not associated with an object in one of these ways are not exported.
-If you have multiple actions you want to export, make sure they are stashed!**
+An action will be exported if it is the active action on an object, or it is stashed to an NLA track
+(e.g. with the *Stash* or *Push Down* buttons in the :doc:`Action Editor </editors/dope_sheet/action>`).
+Actions which are **not** associated with an object in one of these ways are **not exported**.
+If you have multiple actions you want to export, make sure they are stashed!
 
 A glTF animation can have a name, which is the action name by default. You can override it
-by renaming its NLA track from "NLATrack"/"[Action Stash]" to the name you want to use.
-For example, the fox model shown above will export with three animations, "Survey", "Walk",
-and "Run".
-
+by renaming its NLA track from ``NLATrack``/``[Action Stash]`` to the name you want to use.
+For example, the Fig. :ref:`fox model <fig-gltf-solo-track>` will export with three animations,
+"Survey", "Walk", and "Run".
 If you rename two tracks on two different objects to the same name, they will become part
 of the same glTF animation and will play together.
 
 The importer organizes actions so they will be exported correctly with this mode.
+
 
 .. rubric:: Group by NLA Track off
 
@@ -609,6 +750,14 @@ Include
 
 Selected Objects
    Export selected objects only.
+Visible Objects
+   Export visible objects only.
+Renderable Objects
+   Export renderable objects only.
+Active Collection
+   Export objects from active collection only.
+Active Scene
+   Export active scene only.
 Custom Properties
    Export custom properties as glTF extras.
 Cameras
@@ -628,7 +777,8 @@ Geometry
 ^^^^^^^^
 
 Apply Modifiers
-   Apply modifiers (excluding armatures) to mesh objects.
+   Export objects using the evaluated mesh, meaning the resulting mesh after all
+   :doc:`Modifiers </modeling/modifiers/index>` have been calculated.
 UVs
    Export UVs (texture coordinates) with meshes.
 Normals
@@ -636,16 +786,18 @@ Normals
 Tangents
    Export vertex tangents with meshes.
 Vertex Colors
-   Export vertex colors with meshes.
+   Export Color Attributes with meshes.
 Loose Edges
    Export loose edges as lines, using the material from the first material slot.
 Loose Points
    Export loose points as glTF points, using the material from the first material slot.
 Materials
-   Export materials.
+   Export full materials, only placeholders (all primitives but without materials),
+   or does not export materials. (In that last case, primitive are merged, lossing material slot information).
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
+   If None is chosen, materials are exported without textures.
 
 
 Compression
@@ -661,6 +813,8 @@ Normal
    Higher values result in better compression rates.
 Texture Coordinates
    Higher values result in better compression rates.
+Color
+   Higher values result in better compression rates.
 Generic
    Higher values result in better compression rates.
 
@@ -670,6 +824,8 @@ Animation
 
 Use Current Frame
    Export the scene in the current animation frame.
+   For rigs, when off, rest pose is used as default pose for joints in glTF file.
+   When on, the current frame is used as default pose for joints in glTF file.
 
 
 Animation
@@ -685,8 +841,10 @@ Always Sample Animations
    Apply sampling to all animations.
 Group by NLA Track
    Whether to export NLA strip animations.
+Optimize Animation Size
+   Reduce exported file-size by removing duplicate keyframes.
 Export Deformation Bones Only
-   Export deformation bones only (and needed bones for hierarchy).
+   Export deformation bones only.
 
 
 Shape Keys

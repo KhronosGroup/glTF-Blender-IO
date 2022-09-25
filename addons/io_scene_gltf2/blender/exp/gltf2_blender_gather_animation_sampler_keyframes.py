@@ -56,6 +56,7 @@ class Keyframe:
         length = {
             "delta_location": 3,
             "delta_rotation_euler": 3,
+            "delta_scale": 3,
             "location": 3,
             "rotation_axis_angle": 4,
             "rotation_euler": 3,
@@ -378,7 +379,10 @@ def gather_keyframes(blender_obj_uuid: str,
                             "rotation_axis_angle": [rot.to_axis_angle()[1], rot.to_axis_angle()[0][0], rot.to_axis_angle()[0][1], rot.to_axis_angle()[0][2]],
                             "rotation_euler": rot.to_euler(),
                             "rotation_quaternion": rot,
-                            "scale": sca
+                            "scale": sca,
+                            "delta_location": trans,
+                            "delta_rotation_euler": rot.to_euler(),
+                            "delta_scale": sca
                         }[target]
                 else:
                     key.value = get_sk_driver_values(driver_obj_uuid, frame, channels, export_settings)
@@ -409,11 +413,17 @@ def gather_keyframes(blender_obj_uuid: str,
                     key.set_first_tangent()
                 else:
                     # otherwise construct an in tangent coordinate from the keyframes control points. We intermediately
-                    # use a point at t-1 to define the tangent. This allows the tangent control point to be transformed
-                    # normally
+                    # use a point at t+1 to define the tangent. This allows the tangent control point to be transformed
+                    # normally, but only works for locally linear transformation. The more non-linear a transform, the
+                    # more imprecise this method is.
+                    # We could use any other (v1, t1) for which (v1 - v0) / (t1 - t0) equals the tangent. By using t+1
+                    # for both in and out tangents, we guarantee that (even if there are errors or numerical imprecisions)
+                    # symmetrical control points translate to symmetrical tangents.
+                    # Note: I am not sure that linearity is never broken with quaternions and their normalization.
+                    # Especially at sign swap it might occur that the value gets negated but the control point not.
+                    # I have however not once encountered an issue with this.
                     key.in_tangent = [
-                        c.keyframe_points[i].co[1] + ((c.keyframe_points[i].co[1] - c.keyframe_points[i].handle_left[1]
-                                                       ) / (frame - frames[i - 1]))
+                        c.keyframe_points[i].co[1] + (c.keyframe_points[i].handle_left[1] - c.keyframe_points[i].co[1]) / (c.keyframe_points[i].handle_left[0] - c.keyframe_points[i].co[0])
                         for c in channels if c is not None
                     ]
                 # Construct the out tangent
@@ -421,12 +431,10 @@ def gather_keyframes(blender_obj_uuid: str,
                     # end out-tangent should become all zero
                     key.set_last_tangent()
                 else:
-                    # otherwise construct an in tangent coordinate from the keyframes control points. We intermediately
-                    # use a point at t+1 to define the tangent. This allows the tangent control point to be transformed
-                    # normally
+                    # otherwise construct an in tangent coordinate from the keyframes control points.
+                    # This happens the same way how in tangents are handled above.
                     key.out_tangent = [
-                        c.keyframe_points[i].co[1] + ((c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]
-                                                       ) / (frames[i + 1] - frame))
+                        c.keyframe_points[i].co[1] + (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (c.keyframe_points[i].handle_right[0] - c.keyframe_points[i].co[0])
                         for c in channels if c is not None
                     ]
 
