@@ -545,7 +545,8 @@ def __gather_armature_object_channel_groups(blender_action: bpy.types.Action, bl
 
         # Detect that armature is not multiple keyed for euler and quaternion
         # Keep only the current rotation mode used by bone
-        rotation, delta, rotation_modes = get_rotation_modes(target_property)
+        rotation, rotation_modes = get_rotation_modes(target_property)
+        delta = get_delta_modes(target_property)
 
         # Delta rotation management
         if delta is False:
