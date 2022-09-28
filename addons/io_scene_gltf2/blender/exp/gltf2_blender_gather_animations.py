@@ -324,7 +324,21 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                     blender_tracks[act.name] = None
                     action_on_type[act.name] = "OBJECT"
 
-    export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
+    # Use a class to get parameters, to be able to modify them
+    class GatherActionHookParameters:
+        def __init__(self, blender_actions, blender_tracks, action_on_type):
+            self.blender_actions = blender_actions
+            self.blender_tracks = blender_tracks
+            self.action_on_type = action_on_type
+
+    gatheractionhookparams = GatherActionHookParameters(blender_actions, blender_tracks, action_on_type)
+
+    export_user_extensions('gather_actions_hook', export_settings, blender_object, gatheractionhookparams)
+
+    # Get params back from hooks
+    blender_actions = gatheractionhookparams.blender_actions
+    blender_tracks = gatheractionhookparams.blender_tracks
+    action_on_type = gatheractionhookparams.action_on_type
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))
