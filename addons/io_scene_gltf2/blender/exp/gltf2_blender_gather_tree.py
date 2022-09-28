@@ -300,6 +300,7 @@ class VExportTree:
         self.filter_tag()
         export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
+        self.remove_filtered_nodes()
 
 
     def recursive_filter_tag(self, uuid, parent_keep_tag):
@@ -414,6 +415,9 @@ class VExportTree:
                 return False
 
         return True
+
+    def remove_filtered_nodes(self):
+        self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True}
 
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
