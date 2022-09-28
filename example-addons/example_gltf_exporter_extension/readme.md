@@ -38,7 +38,8 @@ vtree_after_filter_hook(self, vtree, export_settings)
 pre_gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings)
 gather_actions_hook(self, blender_object, params, export_settings) # params = blender_actions, blender_tracks, action_on_type
 pre_gather_actions_hook(self, blender_object, export_settings)
-gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
-gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
-gather_tree_filter_tag_hook(self, tree, export_settings)
+pre_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings)
+post_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings)
+animation_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop
+_filter_tag_hook(self, tree, export_settings)
 ```
