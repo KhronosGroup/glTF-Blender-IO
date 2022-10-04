@@ -37,11 +37,28 @@ def gather_channels_baked(obj_uuid, frame_range, export_settings):
     if len(bpy.data.actions) == 0:
         return None
 
+    blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
+
     if frame_range is None:
         start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
         end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
     else:
-        start_frame, end_frame = frame_range
+        if blender_obj.animation_data and blender_obj.animation_data.action:
+            # Coming from object parented to bone, and object is also animated. So using range action
+            start_frame, end_frame = blender_obj.animation_data.action.frame_range[0], blender_obj.animation_data.action.frame_range[1]
+        else:
+            # Coming from object parented to bone, and object is not animated. So using range from armature
+            start_frame, end_frame = frame_range
+
+    # use action if exists, else obj_uuid
+    # When an object need some forced baked, there are 2 situtations:
+    # - Non animated object, but there are some selection, so we need to bake
+    # - Object parented to bone. So we need to bake, because of inverse transforms on non default TRS armatures
+    # In this last case, there are 2 situations :
+    # - Object is also animated, so use the action name as key for caching
+    # - Object is not animated, so use obj_uuid as key for caching, like for non animated object (case 1)
+    
+    key_action = blender_obj.animation_data.action.name if blender_obj.animation_data and blender_obj.animation_data.action else obj_uuid
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gather_animation_channel(
@@ -53,7 +70,7 @@ def gather_channels_baked(obj_uuid, frame_range, export_settings):
             start_frame,
             end_frame,
             False,
-            obj_uuid, # Use obj uuid as action name for caching
+            key_action, # Use obj uuid as action name for caching (or action name if case of object parented to bone and animated)
             None,
             False #If Object is not animated, don't keep animation for this channel
             )
