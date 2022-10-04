@@ -403,13 +403,13 @@ class VExportTree:
             if all([c.hide_render for c in self.nodes[uuid].blender_object.users_collection]):
                 return False
 
-        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
-            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
+        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION] and not self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
+            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.objects)
             if not found:
                 return False
 
-        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITHOUT_NESTED]:
-            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.objects)
+        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION] and self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
+            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
             if not found:
                 return False
 

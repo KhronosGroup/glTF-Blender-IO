@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 4, 26),
+    "version": (3, 4, 27),
     'blender': (3, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -331,12 +331,12 @@ class ExportGLTF2_Base:
     )
 
     use_active_collection_with_nested: BoolProperty(
-        name='Active Collection and nested Collections',
-        description='Export objects in the active collection and nested collections only',
-        default=False
+        name='Include Nested Collections',
+        description='Include active collection and nested collections',
+        default=True
     )
 
-    use_active_collection_without_nested: BoolProperty(
+    use_active_collection: BoolProperty(
         name='Active Collection',
         description='Export objects in the active collection only',
         default=False        
@@ -539,7 +539,7 @@ class ExportGLTF2_Base:
             'use_visible',
             'use_renderable',
             'use_active_collection_with_nested',
-            'use_active_collection_without_nested'
+            'use_active_collection',
             'use_mesh_edges',
             'use_mesh_vertices',
             'use_active_scene',
@@ -603,8 +603,12 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
-        export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested
-        export_settings['gltf_active_collection_without_nested'] = self.use_active_collection_without_nested
+        
+        export_settings['gltf_active_collection'] = self.use_active_collection
+        if self.use_active_collection:
+            export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested
+        else:
+            export_settings['gltf_active_collection_with_nested'] = False
         export_settings['gltf_active_scene'] = self.use_active_scene
 
         export_settings['gltf_selected'] = self.use_selection
@@ -746,8 +750,9 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'use_selection')
         col.prop(operator, 'use_visible')
         col.prop(operator, 'use_renderable')
-        col.prop(operator, 'use_active_collection_without_nested')
-        col.prop(operator, 'use_active_collection_with_nested')
+        col.prop(operator, 'use_active_collection')
+        if operator.use_active_collection:
+            col.prop(operator, 'use_active_collection_with_nested')
         col.prop(operator, 'use_active_scene')
 
         col = layout.column(heading = "Data", align = True)
