@@ -52,7 +52,7 @@ def gather_animations(  obj_uuid: int,
             # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             # (skinned meshes TRS must be ignored, says glTF specification)
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
-                channels = gltf2_blender_gather_animation_channels.gather_channels_baked(obj_uuid, export_settings)
+                channels = gltf2_blender_gather_animation_channels.gather_channels_baked(obj_uuid, None, export_settings)
                 if channels is not None:
                     animation = gltf2_io.Animation(
                             channels=channels,

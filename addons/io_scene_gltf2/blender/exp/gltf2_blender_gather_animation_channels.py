@@ -30,15 +30,18 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from . import gltf2_blender_export_keys
 
 
-def gather_channels_baked(obj_uuid, export_settings):
+def gather_channels_baked(obj_uuid, frame_range, export_settings):
     channels = []
 
     # If no animation in file, no need to bake
     if len(bpy.data.actions) == 0:
         return None
 
-    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
-    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+    if frame_range is None:
+        start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+        end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+    else:
+        start_frame, end_frame = frame_range
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gather_animation_channel(
@@ -169,7 +172,7 @@ def gather_animation_channels(obj_uuid: int,
                 children_obj_parent_to_bones.extend([child for child in export_settings['vtree'].nodes[bone_uuid].children if export_settings['vtree'].nodes[child].blender_type not in [VExportNode.BONE, VExportNode.ARMATURE]])
             for child_uuid in children_obj_parent_to_bones:
 
-                channels_baked = gather_channels_baked(child_uuid, export_settings)
+                channels_baked = gather_channels_baked(child_uuid, (bake_range_start, bake_range_end), export_settings)
                 if channels_baked is not None:
                     channels.extend(channels_baked)
 
