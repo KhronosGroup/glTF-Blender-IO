@@ -93,6 +93,8 @@ def gather_animations(  obj_uuid: int,
         current_use_nla = blender_object.animation_data.use_nla
         blender_object.animation_data.use_nla = False
 
+    export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, False)
+
     # Export all collected actions.
     for blender_action, track_name, on_type in blender_actions:
 
@@ -104,7 +106,9 @@ def gather_animations(  obj_uuid: int,
                     blender_object.animation_data.use_tweak_mode = False
                 try:
                     __reset_bone_matrix(blender_object, export_settings)
+                    export_user_extensions('pre_animation_switch_hook', export_settings, blender_object, blender_action, track_name, on_type)
                     blender_object.animation_data.action = blender_action
+                    export_user_extensions('post_animation_switch_hook', export_settings, blender_object, blender_action, track_name, on_type)
                 except:
                     error = "Action is readonly. Please check NLA editor"
                     print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
@@ -140,6 +144,8 @@ def gather_animations(  obj_uuid: int,
             solo_track.is_solo = True
         blender_object.animation_data.use_tweak_mode = restore_tweak_mode
         blender_object.animation_data.use_nla = current_use_nla
+
+    export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, True)
 
     return animations, tracks
 
@@ -324,7 +330,21 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                     blender_tracks[act.name] = None
                     action_on_type[act.name] = "OBJECT"
 
-    export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions, blender_tracks, action_on_type)
+    # Use a class to get parameters, to be able to modify them
+    class GatherActionHookParameters:
+        def __init__(self, blender_actions, blender_tracks, action_on_type):
+            self.blender_actions = blender_actions
+            self.blender_tracks = blender_tracks
+            self.action_on_type = action_on_type
+
+    gatheractionhookparams = GatherActionHookParameters(blender_actions, blender_tracks, action_on_type)
+
+    export_user_extensions('gather_actions_hook', export_settings, blender_object, gatheractionhookparams)
+
+    # Get params back from hooks
+    blender_actions = gatheractionhookparams.blender_actions
+    blender_tracks = gatheractionhookparams.blender_tracks
+    action_on_type = gatheractionhookparams.action_on_type
 
     # Remove duplicate actions.
     blender_actions = list(set(blender_actions))
