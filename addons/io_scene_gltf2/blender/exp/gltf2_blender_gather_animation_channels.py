@@ -57,7 +57,7 @@ def gather_channels_baked(obj_uuid, frame_range, export_settings):
     # In this last case, there are 2 situations :
     # - Object is also animated, so use the action name as key for caching
     # - Object is not animated, so use obj_uuid as key for caching, like for non animated object (case 1)
-    
+
     key_action = blender_obj.animation_data.action.name if blender_obj.animation_data and blender_obj.animation_data.action else obj_uuid
 
     for p in ["location", "rotation_quaternion", "scale"]:
