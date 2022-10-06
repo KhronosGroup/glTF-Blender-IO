@@ -30,15 +30,35 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from . import gltf2_blender_export_keys
 
 
-def gather_channels_baked(obj_uuid, export_settings):
+def gather_channels_baked(obj_uuid, frame_range, export_settings):
     channels = []
 
     # If no animation in file, no need to bake
     if len(bpy.data.actions) == 0:
         return None
 
-    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
-    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+    blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+    if frame_range is None:
+        start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+        end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+    else:
+        if blender_obj.animation_data and blender_obj.animation_data.action:
+            # Coming from object parented to bone, and object is also animated. So using range action
+            start_frame, end_frame = blender_obj.animation_data.action.frame_range[0], blender_obj.animation_data.action.frame_range[1]
+        else:
+            # Coming from object parented to bone, and object is not animated. So using range from armature
+            start_frame, end_frame = frame_range
+
+    # use action if exists, else obj_uuid
+    # When an object need some forced baked, there are 2 situtations:
+    # - Non animated object, but there are some selection, so we need to bake
+    # - Object parented to bone. So we need to bake, because of inverse transforms on non default TRS armatures
+    # In this last case, there are 2 situations :
+    # - Object is also animated, so use the action name as key for caching
+    # - Object is not animated, so use obj_uuid as key for caching, like for non animated object (case 1)
+
+    key_action = blender_obj.animation_data.action.name if blender_obj.animation_data and blender_obj.animation_data.action else obj_uuid
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gather_animation_channel(
@@ -50,7 +70,7 @@ def gather_channels_baked(obj_uuid, export_settings):
             start_frame,
             end_frame,
             False,
-            obj_uuid, # Use obj uuid as action name for caching
+            key_action, # Use obj uuid as action name for caching (or action name if case of object parented to bone and animated)
             None,
             False #If Object is not animated, don't keep animation for this channel
             )
@@ -169,7 +189,7 @@ def gather_animation_channels(obj_uuid: int,
                 children_obj_parent_to_bones.extend([child for child in export_settings['vtree'].nodes[bone_uuid].children if export_settings['vtree'].nodes[child].blender_type not in [VExportNode.BONE, VExportNode.ARMATURE]])
             for child_uuid in children_obj_parent_to_bones:
 
-                channels_baked = gather_channels_baked(child_uuid, export_settings)
+                channels_baked = gather_channels_baked(child_uuid, (bake_range_start, bake_range_end), export_settings)
                 if channels_baked is not None:
                     channels.extend(channels_baked)
 
@@ -545,7 +565,8 @@ def __gather_armature_object_channel_groups(blender_action: bpy.types.Action, bl
 
         # Detect that armature is not multiple keyed for euler and quaternion
         # Keep only the current rotation mode used by bone
-        rotation, delta, rotation_modes = get_rotation_modes(target_property)
+        rotation, rotation_modes = get_rotation_modes(target_property)
+        delta = get_delta_modes(target_property)
 
         # Delta rotation management
         if delta is False:

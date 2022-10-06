@@ -100,6 +100,7 @@ def objectcache(func):
         if cache_key_args[0] not in func.__objectcache.keys():
             result = func(*args)
             func.__objectcache = result
+            # Here are the key used: result[obj_uuid][action_name][frame]
             return result[cache_key_args[0]][cache_key_args[1]][cache_key_args[4]]
         # object is in cache, but not this action
         # We need to keep other actions
