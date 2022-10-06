@@ -1114,6 +1114,20 @@ describe('Exporter', function() {
 
               });
 
+              it('exports Active Collection', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '23_use_active_collection_without_nested.gltf');
+                const asset_1 = JSON.parse(fs.readFileSync(gltfPath_1));
+                assert.strictEqual(asset_1.nodes.length, 1);
+
+                let gltfPath_2 = path.resolve(outDirPath, '23_use_active_collection_all.gltf');
+                const asset_2 = JSON.parse(fs.readFileSync(gltfPath_2));
+                assert.strictEqual(asset_2.nodes.length, 3);
+
+                let gltfPath_3 = path.resolve(outDirPath, '23_use_active_collection_nested.gltf');
+                const asset_3 = JSON.parse(fs.readFileSync(gltfPath_3));
+                assert.strictEqual(asset_3.nodes.length, 2);
+              });              
+
         });
     });
 });

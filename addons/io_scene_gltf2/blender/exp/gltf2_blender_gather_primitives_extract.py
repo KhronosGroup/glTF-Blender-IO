@@ -641,9 +641,15 @@ class PrimitiveCreator:
         elif attr['blender_domain'] in ['FACE']:
             if attr['len'] > 1:
                 data = data.reshape(-1, attr['len'])
-            data = data.repeat(4, axis=0)
+            # data contains face attribute, and is len(faces) long
+            # We need to dispatch these len(faces) attribute in each dots lines
+            data_attr = np.empty(self.dots.shape[0] * attr['len'], dtype=attr['type'])
+            data_attr = data_attr.reshape(-1, attr['len'])
+            for idx, poly in enumerate(self.blender_mesh.polygons):
+                data_attr[list(poly.loop_indices)] = data[idx]
+            data_attr = data_attr.reshape(-1, attr['len'])
             for i in range(attr['len']):
-                self.dots[attr['gltf_attribute_name'] + str(i)] = data[:, i]
+                self.dots[attr['gltf_attribute_name'] + str(i)] = data_attr[:, i]
 
         else:
             print_console("ERROR", "domain not known")
