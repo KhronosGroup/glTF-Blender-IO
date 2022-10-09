@@ -33,9 +33,9 @@ from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 
 
 @cached
-def get_primitive_cache_key(
+def gather_primitive_cache_key(
         blender_mesh,
-        blender_object,
+        uuid_for_skined_data,
         vertex_groups,
         modifiers,
         materials,
@@ -54,11 +54,11 @@ def get_primitive_cache_key(
     )
 
 
-@cached_by_key(key=get_primitive_cache_key)
+@cached_by_key(key=gather_primitive_cache_key)
 def gather_primitives(
         blender_mesh: bpy.types.Mesh,
         uuid_for_skined_data,
-        vertex_groups: Optional[bpy.types.VertexGroups],
+        vertex_groups: bpy.types.VertexGroups,
         modifiers: Optional[bpy.types.ObjectModifiers],
         materials: Tuple[bpy.types.Material],
         export_settings
@@ -110,11 +110,33 @@ def gather_primitives(
 
     return primitives
 
+
 @cached
+def get_primitive_cache_key(
+        blender_mesh,
+        uuid_for_skined_data,
+        vertex_groups,
+        modifiers,
+        export_settings):
+
+    # Use id of mesh
+    # Do not use bpy.types that can be unhashable
+    # Do not use mesh name, that can be not unique (when linked)
+    # Do not use materials here
+
+    # TODO check what is really needed for modifiers
+
+    return (
+        (id(blender_mesh),),
+        (modifiers,)
+    )
+
+
+@cached_by_key(key=get_primitive_cache_key)
 def __gather_cache_primitives(
         blender_mesh: bpy.types.Mesh,
         uuid_for_skined_data,
-        vertex_groups: Optional[bpy.types.VertexGroups],
+        vertex_groups: bpy.types.VertexGroups,
         modifiers: Optional[bpy.types.ObjectModifiers],
         export_settings
 ) -> List[dict]:

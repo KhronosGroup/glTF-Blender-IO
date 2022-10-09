@@ -54,7 +54,7 @@ def get_mesh_cache_key(blender_mesh,
 @cached_by_key(key=get_mesh_cache_key)
 def gather_mesh(blender_mesh: bpy.types.Mesh,
                 uuid_for_skined_data,
-                vertex_groups: Optional[bpy.types.VertexGroups],
+                vertex_groups: bpy.types.VertexGroups,
                 modifiers: Optional[bpy.types.ObjectModifiers],
                 skip_filter: bool,
                 materials: Tuple[bpy.types.Material],
@@ -95,7 +95,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
 
 
 def __filter_mesh(blender_mesh: bpy.types.Mesh,
-                  vertex_groups: Optional[bpy.types.VertexGroups],
+                  vertex_groups: bpy.types.VertexGroups,
                   modifiers: Optional[bpy.types.ObjectModifiers],
                   export_settings
                   ) -> bool:
@@ -106,7 +106,7 @@ def __filter_mesh(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_extensions(blender_mesh: bpy.types.Mesh,
-                        vertex_groups: Optional[bpy.types.VertexGroups],
+                        vertex_groups: bpy.types.VertexGroups,
                         modifiers: Optional[bpy.types.ObjectModifiers],
                         export_settings
                         ) -> Any:
@@ -114,7 +114,7 @@ def __gather_extensions(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_extras(blender_mesh: bpy.types.Mesh,
-                    vertex_groups: Optional[bpy.types.VertexGroups],
+                    vertex_groups: bpy.types.VertexGroups,
                     modifiers: Optional[bpy.types.ObjectModifiers],
                     export_settings
                     ) -> Optional[Dict[Any, Any]]:
@@ -141,7 +141,7 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_name(blender_mesh: bpy.types.Mesh,
-                  vertex_groups: Optional[bpy.types.VertexGroups],
+                  vertex_groups: bpy.types.VertexGroups,
                   modifiers: Optional[bpy.types.ObjectModifiers],
                   export_settings
                   ) -> str:
@@ -150,7 +150,7 @@ def __gather_name(blender_mesh: bpy.types.Mesh,
 
 def __gather_primitives(blender_mesh: bpy.types.Mesh,
                         uuid_for_skined_data,
-                        vertex_groups: Optional[bpy.types.VertexGroups],
+                        vertex_groups: bpy.types.VertexGroups,
                         modifiers: Optional[bpy.types.ObjectModifiers],
                         materials: Tuple[bpy.types.Material],
                         export_settings
@@ -164,7 +164,7 @@ def __gather_primitives(blender_mesh: bpy.types.Mesh,
 
 
 def __gather_weights(blender_mesh: bpy.types.Mesh,
-                     vertex_groups: Optional[bpy.types.VertexGroups],
+                     vertex_groups: bpy.types.VertexGroups,
                      modifiers: Optional[bpy.types.ObjectModifiers],
                      export_settings
                      ) -> Optional[List[float]]:
