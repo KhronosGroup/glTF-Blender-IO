@@ -27,7 +27,6 @@ def get_mesh_cache_key(blender_mesh,
                 blender_object,
                 vertex_groups,
                 modifiers,
-                skip_filter,
                 materials,
                 original_mesh,
                 export_settings):
@@ -47,7 +46,6 @@ def get_mesh_cache_key(blender_mesh,
     return (
         (id(mesh_to_id_cache),),
         (modifiers,),
-        (skip_filter,),             #TODO to check if still needed
         mats
     )
 
@@ -56,12 +54,11 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
                 uuid_for_skined_data,
                 vertex_groups: bpy.types.VertexGroups,
                 modifiers: Optional[bpy.types.ObjectModifiers],
-                skip_filter: bool,
                 materials: Tuple[bpy.types.Material],
                 original_mesh: bpy.types.Mesh,
                 export_settings
                 ) -> Optional[gltf2_io.Mesh]:
-    if not skip_filter and not __filter_mesh(blender_mesh, vertex_groups, modifiers, export_settings):
+    if not __filter_mesh(blender_mesh, vertex_groups, modifiers, export_settings):
         return None
 
     mesh = gltf2_io.Mesh(
@@ -88,7 +85,6 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
                            blender_object,
                            vertex_groups,
                            modifiers,
-                           skip_filter,
                            materials)
 
     return mesh
@@ -99,9 +95,6 @@ def __filter_mesh(blender_mesh: bpy.types.Mesh,
                   modifiers: Optional[bpy.types.ObjectModifiers],
                   export_settings
                   ) -> bool:
-
-    if blender_mesh.users == 0:
-        return False
     return True
 
 

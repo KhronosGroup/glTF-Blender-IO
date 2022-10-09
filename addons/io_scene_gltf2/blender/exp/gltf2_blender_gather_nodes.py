@@ -205,7 +205,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if export_settings[gltf2_blender_export_keys.APPLY]:
         if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
             blender_mesh = blender_object.data
-            skip_filter = False
         else:
             armature_modifiers = {}
             if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -220,7 +219,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
             blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
             for prop in blender_object.data.keys():
                 blender_mesh[prop] = blender_object.data[prop]
-            skip_filter = True
 
             if export_settings[gltf2_blender_export_keys.SKINS]:
                 # restore Armature modifiers
@@ -228,7 +226,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
                     blender_object.modifiers[idx].show_viewport = show_viewport
     else:
         blender_mesh = blender_object.data
-        skip_filter = False
         # If no skin are exported, no need to have vertex group, this will create a cache miss
         if not export_settings[gltf2_blender_export_keys.SKINS]:
             modifiers = None
@@ -252,7 +249,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
                                                    uuid_for_skined_data,
                                                    blender_object.vertex_groups,
                                                    modifiers,
-                                                   skip_filter,
                                                    materials,
                                                    None,
                                                    export_settings)
@@ -288,7 +284,6 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
         needs_to_mesh_clear = True
 
-        skip_filter = True
         materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
         modifiers = None
         blender_object_for_skined_data = None
@@ -297,7 +292,6 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
                                                        blender_object_for_skined_data,
                                                        blender_object.vertex_groups,
                                                        modifiers,
-                                                       skip_filter,
                                                        materials,
                                                        blender_object.data,
                                                        export_settings)
