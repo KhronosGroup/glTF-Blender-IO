@@ -230,6 +230,7 @@ def __gather_skins(blender_primitive, export_settings):
     # Normalize weights so they sum to 1
     weight_total = weight_total.reshape(-1, 1)
     for s in range(0, max_bone_set_index+1):
+        weight_id = 'WEIGHTS_' + str(s)
         weight_arrs[s] /= weight_total
 
         weight = array_to_accessor(
