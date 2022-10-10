@@ -37,6 +37,9 @@ def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
 
     skin = gather_skin(vnode.uuid, export_settings)
+    if skin is not None:
+        vnode.skin = skin
+
     node = gltf2_io.Node(
         camera=__gather_camera(blender_object, export_settings),
         children=__gather_children(vnode, blender_object, export_settings),
@@ -60,9 +63,6 @@ def gather_node(vnode, export_settings):
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
     vnode.node = node
-
-    if node.skin is not None:
-        vnode.skin = skin
 
     return node
 
@@ -312,9 +312,15 @@ def __gather_trans_rot_scale(vnode, export_settings):
         trans, rot, sca = vnode.matrix_world.decompose()
     else:
         # calculate local matrix
-        trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
-
-
+        if export_settings['vtree'].nodes[vnode.parent_uuid].skin is None:
+            trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
+        else:
+            # But ... if parent has skin, the parent TRS are not taken into account, so don't get local from parent, but from armature 
+            # It also depens if skined mesh is parented to armature or not
+            if export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
+                trans, rot, sca = (export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].armature].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
+            else:
+                trans, rot, sca = vnode.matrix_world.decompose()
 
     # make sure the rotation is normalized
     rot.normalize()
