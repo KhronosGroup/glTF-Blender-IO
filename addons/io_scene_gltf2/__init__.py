@@ -58,6 +58,7 @@ from bpy.props import (StringProperty,
                        BoolProperty,
                        EnumProperty,
                        IntProperty,
+                       FloatProperty,
                        CollectionProperty)
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
@@ -487,6 +488,12 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    export_lights_factor: FloatProperty(
+        name='Lights Strength',
+        description='Different platforms scale brightness differently. Setting 1/600 here works well for many engines',
+        default=1.0
+    )
+
     will_save_settings: BoolProperty(
         name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
@@ -654,6 +661,7 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
+        export_settings['gltf_lights_factor'] = self.export_lights_factor
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -759,6 +767,8 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'export_extras')
         col.prop(operator, 'export_cameras')
         col.prop(operator, 'export_lights')
+        if operator.export_lights:
+            col.prop(operator, 'export_lights_factor')
 
 
 class GLTF_PT_export_transform(bpy.types.Panel):
