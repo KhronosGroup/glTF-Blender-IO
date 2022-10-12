@@ -494,6 +494,12 @@ class ExportGLTF2_Base:
         default=1.0
     )
 
+    export_raw_lights: BoolProperty(
+        name='Raw Intensity',
+        description='Export raw light intensity, without converting to glTF units',
+        default=False
+    )
+
     will_save_settings: BoolProperty(
         name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
@@ -662,6 +668,7 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_lights'] = self.export_lights
         export_settings['gltf_lights_factor'] = self.export_lights_factor
+        export_settings['gltf_raw_lights'] = self.export_raw_lights
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -769,6 +776,7 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'export_lights')
         if operator.export_lights:
             col.prop(operator, 'export_lights_factor')
+            col.prop(operator, 'export_raw_lights')
 
 
 class GLTF_PT_export_transform(bpy.types.Panel):
