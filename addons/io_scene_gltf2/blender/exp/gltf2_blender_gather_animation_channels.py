@@ -51,7 +51,7 @@ def gather_channels_baked(obj_uuid, frame_range, export_settings):
             start_frame, end_frame = frame_range
 
     # use action if exists, else obj_uuid
-    # When an object need some forced baked, there are 2 situtations:
+    # When an object need some forced baked, there are 2 situations:
     # - Non animated object, but there are some selection, so we need to bake
     # - Object parented to bone. So we need to bake, because of inverse transforms on non default TRS armatures
     # In this last case, there are 2 situations :
