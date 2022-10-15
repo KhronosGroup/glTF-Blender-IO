@@ -58,7 +58,6 @@ from bpy.props import (StringProperty,
                        BoolProperty,
                        EnumProperty,
                        IntProperty,
-                       FloatProperty,
                        CollectionProperty)
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
@@ -279,6 +278,17 @@ class ExportGLTF2_Base:
         default=False,
     )
 
+    export_lighting_mode: EnumProperty(
+        name='Lighting Mode',
+        items=(
+            ('SPEC', 'Standard', 'Export standard glTF lighting units'),
+            ('COMPAT', 'Compatibility', 'Export unitless PBR lighting'),
+            ('RAW', 'Raw', 'Export Blender lighting strengths directly'),
+        ),
+        description='Optional backwards compatibility for non-standard render engines. Applies to lights',# TODO: and emissive materials',
+        default='SPEC'
+    )
+
     export_colors: BoolProperty(
         name='Vertex Colors',
         description='Export vertex colors with meshes',
@@ -488,18 +498,6 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    export_lights_factor: FloatProperty(
-        name='Lights Strength',
-        description='Different platforms scale brightness differently. Setting 1/600 here works well for many engines',
-        default=1.0
-    )
-
-    export_raw_lights: BoolProperty(
-        name='Raw Intensity',
-        description='Export raw light intensity, without converting to glTF units',
-        default=False
-    )
-
     will_save_settings: BoolProperty(
         name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
@@ -667,8 +665,7 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
-        export_settings['gltf_lights_factor'] = self.export_lights_factor
-        export_settings['gltf_raw_lights'] = self.export_raw_lights
+        export_settings['gltf_lighting_mode'] = self.export_lighting_mode
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -774,9 +771,6 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'export_extras')
         col.prop(operator, 'export_cameras')
         col.prop(operator, 'export_lights')
-        if operator.export_lights:
-            col.prop(operator, 'export_lights_factor')
-            col.prop(operator, 'export_raw_lights')
 
 
 class GLTF_PT_export_transform(bpy.types.Panel):
@@ -807,7 +801,7 @@ class GLTF_PT_export_transform(bpy.types.Panel):
 class GLTF_PT_export_geometry(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Geometry"
+    bl_label = "Data"
     bl_parent_id = "FILE_PT_operator"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -904,6 +898,59 @@ class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, 'export_original_specular')
+
+class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Lighting"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'export_lighting_mode')
+
+class GLTF_PT_export_geometry_lighting_info(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Info"
+    bl_parent_id = "GLTF_PT_export_geometry_lighting"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        for line in (
+            "The GLTF specification requires lighting to be defined in candela, lux, and nits.",
+            "However, some viewers lorem ipsum.",
+            "Dolor sit amet, consectetur adipisci tempor incidunt ut labore et dolore magna aliqua.",
+            "Veniam, quis nostrud exercitation ullamcorpor s commodo consequat. Duis autem vel.",
+            "Eum irrure esse molestiae consequat, vel illum dolore eu fugi et iusto odio dignissim."
+        ):
+            layout.label(text=line)
 
 
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
@@ -1349,6 +1396,8 @@ classes = (
     GLTF_PT_export_geometry_mesh,
     GLTF_PT_export_geometry_material,
     GLTF_PT_export_geometry_original_pbr,
+    GLTF_PT_export_geometry_lighting,
+    GLTF_PT_export_geometry_lighting_info,
     GLTF_PT_export_geometry_compression,
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,

@@ -32,7 +32,7 @@ class BlenderLight():
         import_user_extensions('gather_import_light_before_hook', gltf, vnode, pylight)
 
         if pylight['type'] == "directional":
-            light = BlenderLight.create_directional(gltf, light_id)
+            light = BlenderLight.create_directional(gltf, light_id) # ...Why not pass the pylight?
         elif pylight['type'] == "point":
             light = BlenderLight.create_point(gltf, light_id)
         elif pylight['type'] == "spot":

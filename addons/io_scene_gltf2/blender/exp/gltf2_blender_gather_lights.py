@@ -81,21 +81,25 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
             emission_strength = emission_node.inputs["Strength"].default_value
     else:
         emission_strength = blender_lamp.energy
-    if export_settings['gltf_raw_lights']:
-        emission_luminous = emission_strength
+    if export_settings['gltf_lighting_mode'] == 'RAW':
+        return emission_strength
     else:
-        # Assume at this point this is still in the appropriate watt-related SI unit, which if everything up to here was done with physical basis it hopefully should be.
-        WATTS_TO_LUMENS = 594
-        # At 580nm, according to WolframAlpha, which is probably as authoritative as a source as I can get for something so variable as physical power to perceptual brightness: https://www.wolframalpha.com/input?i=1+watt+in+lumens
+        # Assume at this point the computed strength is still in the appropriate watt-related SI unit, which if everything up to here was done with physical basis it hopefully should be.
+        WATTS_TO_LUMENS = 683
         if blender_lamp.type == 'SUN': # W/m^2 in Blender to lm/m^2 for GLTF/KHR_lights_punctual.
-            emission_luminous = emission_strength * WATTS_TO_LUMENS
+            emission_luminous = emission_strength
         else:
             # Other than directional, only point and spot lamps are supported by GLTF.
             # In Blender, points are omnidirectional W, and spots are specified as if they're points.
             # Point and spot should both be lm/r^2 in GLTF.
-            emission_luminous = emission_strength / (4*math.pi) * WATTS_TO_LUMENS
-    return emission_luminous * export_settings['gltf_lights_factor']
-    # NOTE: The GLTF spec says light intensity is given in lumens, a unit of *perceptual* luminous flux. Perceptual luminance varies with wavelength. So in order to attempt to actually match the spec, we would have to multiply each RGB component by a different (cone cell) responsivity factor as we convert from watts, a unit of *physical* radiation. However, neither the Three.JS nor the Khronos Group reference GLTF model viewers currently technically implement that part of the spec correctly, and in my personal opinion in this PR a unit of perceptual brightness like "lumens" has no place in a model format designed for physically based workflows anyway (and may not have been intentional). I'll raise this issue on the KhronosGroup GLTF issue tracker: https://github.com/KhronosGroup/glTF/issues/2213
+            emission_luminous = emission_strength / (4*math.pi)
+        if export_settings['gltf_lighting_mode'] == 'SPEC':
+            emission_luminous *= WATTS_TO_LUMENS
+        elif export_settings['gltf_lighting_mode'] == 'COMPAT':
+            pass # Just so we have an exhaustive tree to catch bugged values.
+        else:
+            raise ValueError(export_settings['gltf_lighting_mode'])
+        return emission_luminous
 
 
 def __gather_spot(blender_lamp, export_settings) -> Optional[gltf2_io_lights_punctual.LightSpot]:
