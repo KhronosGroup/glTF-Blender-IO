@@ -925,37 +925,6 @@ class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
 
         layout.prop(operator, 'convert_lighting_mode')
 
-class GLTF_PT_export_geometry_lighting_info(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Info"
-    bl_parent_id = "GLTF_PT_export_geometry_lighting"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        for line in (
-            "The GLTF specification requires lighting to be defined in candela, lux, and nits.",
-            "However, some viewers lorem ipsum.",
-            "Dolor sit amet, consectetur adipisci tempor incidunt ut labore et dolore magna aliqua.",
-            "Veniam, quis nostrud exercitation ullamcorpor s commodo consequat. Duis autem vel.",
-            "Eum irrure esse molestiae consequat, vel illum dolore eu fugi et iusto odio dignissim."
-        ):
-            layout.label(text=line)
-
-
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -1401,7 +1370,6 @@ classes = (
     GLTF_PT_export_geometry_material,
     GLTF_PT_export_geometry_original_pbr,
     GLTF_PT_export_geometry_lighting,
-    GLTF_PT_export_geometry_lighting_info,
     GLTF_PT_export_geometry_compression,
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,
