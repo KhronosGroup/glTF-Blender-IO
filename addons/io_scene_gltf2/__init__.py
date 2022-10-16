@@ -109,7 +109,21 @@ def on_export_format_changed(self, context):
     )
 
 
-class ExportGLTF2_Base:
+class ConvertGLTF2_Base:
+    """Base class containing options that should be exposed during both import and export."""
+
+    convert_lighting_mode: EnumProperty(
+        name='Lighting Mode',
+        items=(
+            ('SPEC', 'Standard', 'Use standard glTF lighting units (cd, lx, nt)'),
+            ('COMPAT', 'Compatibility', 'Use unitless PBR lighting'),
+            ('RAW', 'Raw', 'Use Blender lighting strengths directly'),
+        ),
+        description='Optional backwards compatibility for non-standard render engines. Applies to lights',# TODO: and emissive materials',
+        default='SPEC'
+    )
+
+class ExportGLTF2_Base(ConvertGLTF2_Base):
     # TODO: refactor to avoid boilerplate
 
     def __init__(self):
@@ -276,17 +290,6 @@ class ExportGLTF2_Base:
             'Export original glTF PBR Specular, instead of Blender Principled Shader Specular'
         ),
         default=False,
-    )
-
-    export_lighting_mode: EnumProperty(
-        name='Lighting Mode',
-        items=(
-            ('SPEC', 'Standard', 'Export standard glTF lighting units'),
-            ('COMPAT', 'Compatibility', 'Export unitless PBR lighting'),
-            ('RAW', 'Raw', 'Export Blender lighting strengths directly'),
-        ),
-        description='Optional backwards compatibility for non-standard render engines. Applies to lights',# TODO: and emissive materials',
-        default='SPEC'
     )
 
     export_colors: BoolProperty(
@@ -665,7 +668,7 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
-        export_settings['gltf_lighting_mode'] = self.export_lighting_mode
+        export_settings['gltf_lighting_mode'] = self.convert_lighting_mode
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -920,7 +923,7 @@ class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, 'export_lighting_mode')
+        layout.prop(operator, 'convert_lighting_mode')
 
 class GLTF_PT_export_geometry_lighting_info(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1182,7 +1185,7 @@ def menu_func_export(self, context):
     self.layout.operator(ExportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
-class ImportGLTF2(Operator, ImportHelper):
+class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     """Load a glTF 2.0 file"""
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
@@ -1265,6 +1268,7 @@ class ImportGLTF2(Operator, ImportHelper):
         layout.prop(self, 'import_shading')
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
+        layout.prop(self, 'convert_lighting_mode')
 
     def invoke(self, context, event):
         import sys
