@@ -115,9 +115,9 @@ class ConvertGLTF2_Base:
     convert_lighting_mode: EnumProperty(
         name='Lighting Mode',
         items=(
-            ('SPEC', 'Standard', 'Use standard glTF lighting units (cd, lx, nt)'),
-            ('COMPAT', 'Compatibility', 'Use unitless PBR lighting'),
-            ('RAW', 'Raw', 'Use Blender lighting strengths directly'),
+            ('SPEC', 'Standard', 'Physically-based glTF lighting units (cd, lx, nt)'),
+            ('COMPAT', 'Unitless', 'Non-physical, unitless lighting. Useful when exposure controls are not available'),
+            ('RAW', 'Raw', 'Blender lighting strengths with no conversion'),
         ),
         description='Optional backwards compatibility for non-standard render engines. Applies to lights',# TODO: and emissive materials',
         default='SPEC'
