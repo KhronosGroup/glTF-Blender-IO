@@ -117,7 +117,7 @@ class ConvertGLTF2_Base:
         items=(
             ('SPEC', 'Standard', 'Physically-based glTF lighting units (cd, lx, nt)'),
             ('COMPAT', 'Unitless', 'Non-physical, unitless lighting. Useful when exposure controls are not available'),
-            ('RAW', 'Raw', 'Blender lighting strengths with no conversion'),
+            ('RAW', 'Raw (Deprecated)', 'Blender lighting strengths with no conversion'),
         ),
         description='Optional backwards compatibility for non-standard render engines. Applies to lights',# TODO: and emissive materials',
         default='SPEC'
