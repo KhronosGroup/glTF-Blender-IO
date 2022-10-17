@@ -874,10 +874,12 @@ class GLTF_PT_export_geometry_material(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, 'export_materials')
+        col = layout.column()
+        col.prop(operator, 'export_materials', expand=True)
+
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"
-        col.prop(operator, 'export_image_format')
+        col.prop(operator, 'export_image_format', expand=True)
 
 class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -923,7 +925,8 @@ class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        layout.prop(operator, 'convert_lighting_mode')
+        col = layout.column()
+        col.prop(operator, 'convert_lighting_mode', expand=True)
 
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1234,10 +1237,13 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
 
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'merge_vertices')
-        layout.prop(self, 'import_shading')
+        col = layout.column()
+        col.prop(self, 'import_shading', expand=True)
         layout.prop(self, 'guess_original_bind_pose')
-        layout.prop(self, 'bone_heuristic')
-        layout.prop(self, 'convert_lighting_mode')
+        col = layout.column()
+        col.prop(self, 'bone_heuristic', expand=True)
+        col = layout.column()
+        col.prop(self, 'convert_lighting_mode', expand=True)
 
     def invoke(self, context, event):
         import sys
