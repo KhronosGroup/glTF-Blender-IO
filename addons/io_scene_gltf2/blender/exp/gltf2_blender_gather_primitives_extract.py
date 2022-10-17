@@ -175,6 +175,7 @@ class PrimitiveCreator:
 
             else:
                 attr['gltf_attribute_name'] = '_' + blender_attribute.name.upper()
+                attr['need_normalization'] = True
                 attr['get'] = self.get_function()
                 if self.export_settings['gltf_attributes'] is False:
                     continue
@@ -878,3 +879,5 @@ class PrimitiveCreator:
             else:
                 self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
                 self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
+                if 'need_normalization' in attr:
+                    self.attributes[attr['gltf_attribute_name']]["need_normalization"] = True
