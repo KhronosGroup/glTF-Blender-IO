@@ -68,13 +68,13 @@ def __gather_orthographic(blender_camera, export_settings):
             zfar=None,
             znear=None
         )
-        
+
         _render = bpy.context.scene.render
         scene_x = _render.resolution_x * _render.pixel_aspect_x
         scene_y = _render.resolution_y * _render.pixel_aspect_y
         scene_square = max(scene_x, scene_y)
         del _render
-        
+
         # `Camera().ortho_scale` (and also FOV FTR) maps to the maximum of either image width or image height— This is the box that gets shown from camera view with the checkbox `.show_sensor = True`.
 
         orthographic.xmag = blender_camera.ortho_scale * (scene_x / scene_square) / 2
