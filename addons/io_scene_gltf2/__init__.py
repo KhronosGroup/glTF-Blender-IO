@@ -707,27 +707,54 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         pass # Is needed to get panels available
 
 
-class GLTF_PT_export_main(bpy.types.Panel):
+class GLTFPanel_Base(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = ""
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'HIDE_HEADER'}
+    bl_options = {'DEFAULT_CLOSED'}
+
+    show_in_scene: str
+
+    def __init_subclass__(cls, *args, label=None, parent=None, **kwargs):
+        super().__init_subclass__(*args, **kwargs)
+        if label is not None:
+            # Set everything here— Don't mix class attributes and class kwargs unless overriding.
+            cls.bl_label = label
+        if parent is not None:
+            # Type works better with static analysis than string, probably.
+            cls.bl_parent_id = parent.__name__ if isinstance(parent, type) else parent
 
     @classmethod
     def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
+        return operator.bl_idname == cls.show_in_scene
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
-    def draw(self, context):
+    def draw_initial(self, context):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
         sfile = context.space_data
         operator = sfile.active_operator
+
+        return layout, operator
+
+
+class GLTFExportPanel_Base(GLTFPanel_Base):
+    show_in_scene = "EXPORT_SCENE_OT_gltf"
+
+class GLTFImportPanel_base(GLTFPanel_Base):
+    show_in_scene = "IMPORT_SCENE_OT_gltf"
+
+
+class GLTF_PT_export_main(GLTFExportPanel_Base,
+    label="",
+    parent="FILE_PT_operator"
+):
+    bl_options = {'HIDE_HEADER'}
+
+    def draw(self, context):
+        layout, operator = self.draw_initial(context)
 
         layout.prop(operator, 'export_format')
         if operator.export_format == 'GLTF_SEPARATE':
@@ -739,27 +766,12 @@ class GLTF_PT_export_main(bpy.types.Panel):
         layout.prop(operator, 'will_save_settings')
 
 
-class GLTF_PT_export_include(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Include"
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_include(GLTFExportPanel_Base,
+    label="Include",
+    parent="FILE_PT_operator"
+):
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
+        layout, operator = self.draw_initial(context)
 
         col = layout.column(heading = "Limit to", align = True)
         col.prop(operator, 'use_selection')
@@ -776,68 +788,28 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'export_lights')
 
 
-class GLTF_PT_export_transform(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Transform"
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_transform(GLTFExportPanel_Base,
+    label="Transform",
+    parent="FILE_PT_operator"
+):
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
+        layout, operator = self.draw_initial(context)
         layout.prop(operator, 'export_yup')
 
 
-class GLTF_PT_export_geometry(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Data"
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_geometry(GLTFExportPanel_Base,
+    label="Data",
+    parent="FILE_PT_operator",
+):
     def draw(self, context):
         pass
 
-class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Mesh"
-    bl_parent_id = "GLTF_PT_export_geometry"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_geometry_mesh(GLTFExportPanel_Base,
+    label="Mesh",
+    parent=GLTF_PT_export_geometry
+):
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
+        layout, operator = self.draw_initial(context)
 
         layout.prop(operator, 'export_apply')
         layout.prop(operator, 'export_texcoords')
@@ -853,85 +825,38 @@ class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
         col.prop(operator, 'use_mesh_vertices')
 
 
-class GLTF_PT_export_geometry_material(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Material"
-    bl_parent_id = "GLTF_PT_export_geometry"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_geometry_material(GLTFExportPanel_Base,
+    label="Material",
+    parent=GLTF_PT_export_geometry
+):
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
+        layout, operator = self.draw_initial(context)
 
         layout.prop(operator, 'export_materials')
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
 
-class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "PBR Extensions"
-    bl_parent_id = "GLTF_PT_export_geometry_material"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_geometry_original_pbr(GLTFExportPanel_Base,
+    label="PBR Extensions",
+    parent=GLTF_PT_export_geometry_material
+):
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
+        layout, operator = self.draw_initial(context)
         layout.prop(operator, 'export_original_specular')
 
-class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Lighting"
-    bl_parent_id = "GLTF_PT_export_geometry"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_geometry_lighting(GLTFExportPanel_Base,
+    label="Lighting",
+    parent=GLTF_PT_export_geometry
+):
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
+        layout, operator = self.draw_initial(context)
         layout.prop(operator, 'convert_lighting_mode')
 
-class GLTF_PT_export_geometry_compression(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Compression"
-    bl_parent_id = "GLTF_PT_export_geometry"
-    bl_options = {'DEFAULT_CLOSED'}
-
+class GLTF_PT_export_geometry_compression(GLTFExportPanel_Base,
+    label="Compression",
+    parent=GLTF_PT_export_geometry
+):
     def __init__(self):
         from io_scene_gltf2.io.com import gltf2_io_draco_compression_extension
         self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists(quiet=True)
@@ -940,8 +865,7 @@ class GLTF_PT_export_geometry_compression(bpy.types.Panel):
     def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
-        if operator.is_draco_available:
-            return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+        return operator.is_draco_available and super().poll(context)
 
     def draw_header(self, context):
         sfile = context.space_data
@@ -949,12 +873,7 @@ class GLTF_PT_export_geometry_compression(bpy.types.Panel):
         self.layout.prop(operator, "export_draco_mesh_compression_enable", text="")
 
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
+        layout, operator = self.draw_initial(context)
 
         layout.active = operator.export_draco_mesh_compression_enable
         layout.prop(operator, 'export_draco_mesh_compression_level')
@@ -967,57 +886,26 @@ class GLTF_PT_export_geometry_compression(bpy.types.Panel):
         col.prop(operator, 'export_draco_generic_quantization', text="Generic")
 
 
-class GLTF_PT_export_animation(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Animation"
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_animation(GLTFExportPanel_Base,
+    label="Animation",
+    parent="FILE_PT_operator"
+):
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
+        layout, operator = self.draw_initial(context)
         layout.prop(operator, 'export_current_frame')
 
 
-class GLTF_PT_export_animation_export(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Animation"
-    bl_parent_id = "GLTF_PT_export_animation"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_animation_export(GLTFExportPanel_Base,
+    label="Animation",
+    parent=GLTF_PT_export_animation
+):
     def draw_header(self, context):
         sfile = context.space_data
         operator = sfile.active_operator
         self.layout.prop(operator, "export_animations", text="")
 
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
+        layout, operator = self.draw_initial(context)
 
         layout.active = operator.export_animations
 
@@ -1032,32 +920,17 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_reset_pose_bones')
 
 
-class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Shape Keys"
-    bl_parent_id = "GLTF_PT_export_animation"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_animation_shapekeys(GLTFExportPanel_Base,
+    label="Shape Keys",
+    parent=GLTF_PT_export_animation
+):
     def draw_header(self, context):
         sfile = context.space_data
         operator = sfile.active_operator
         self.layout.prop(operator, "export_morph", text="")
 
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
+        layout, operator = self.draw_initial(context)
 
         layout.active = operator.export_morph
 
@@ -1067,32 +940,17 @@ class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
         col.prop(operator, 'export_morph_tangent')
 
 
-class GLTF_PT_export_animation_skinning(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Skinning"
-    bl_parent_id = "GLTF_PT_export_animation"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
+class GLTF_PT_export_animation_skinning(GLTFExportPanel_Base,
+    label="Skinning",
+    parent=GLTF_PT_export_animation
+):
     def draw_header(self, context):
         sfile = context.space_data
         operator = sfile.active_operator
         self.layout.prop(operator, "export_skins", text="")
 
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
+        layout, operator = self.draw_initial(context)
 
         layout.active = operator.export_skins
         layout.prop(operator, 'export_all_influences')
@@ -1103,42 +961,32 @@ class GLTF_PT_export_animation_skinning(bpy.types.Panel):
         if operator.export_force_sampling is False and operator.export_def_bones is True:
             layout.label(text="Export only deformation bones is not possible when not sampling animation")
 
-class GLTF_PT_export_user_extensions(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Exporter Extensions"
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'DEFAULT_CLOSED'}
-
+class GLTF_PT_export_user_extensions(GLTFExportPanel_Base,
+    label="Exporter Extensions",
+    parent="FILE_PT_operator"
+):
     @classmethod
     def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and operator.has_active_exporter_extensions
+        return super().poll(context) and operator.has_active_exporter_extensions
 
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
+        self.draw_initial(context)
 
-class GLTF_PT_import_user_extensions(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Importer Extensions"
-    bl_parent_id = "FILE_PT_operator"
-    bl_options = {'DEFAULT_CLOSED'}
-
+class GLTF_PT_import_user_extensions(GLTFImportPanel_base,
+    label="Importer Extensions",
+    parent="FILE_PT_operator"
+):
     @classmethod
     def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
-        return operator.bl_idname == "IMPORT_SCENE_OT_gltf" and operator.has_active_importer_extensions
+        return super().poll(context) and operator.has_active_importer_extensions
 
     def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
+        self.draw_initial(context)
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
