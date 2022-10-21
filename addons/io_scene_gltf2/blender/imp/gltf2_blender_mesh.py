@@ -316,6 +316,10 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
         mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
 
+    # Make sure the first Vertex Color Attribute is the rendered one
+    if num_cols > 0:
+        mesh.color_attributes.render_color_index = 0
+
     # Skinning
     # TODO: this is slow :/
     if num_joint_sets and mesh_options.skinning:

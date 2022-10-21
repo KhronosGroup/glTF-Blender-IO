@@ -451,7 +451,7 @@ def base_color(
     # Vertex Color
     if mh.vertex_color:
         node = mh.node_tree.nodes.new('ShaderNodeVertexColor')
-        node.layer_name = 'Col'
+        # Do not set the layer name, so rendered one will be used (At import => The first one)
         node.location = x - 250, y - 240
         # Outputs
         mh.node_tree.links.new(vcolor_color_socket, node.outputs['Color'])
