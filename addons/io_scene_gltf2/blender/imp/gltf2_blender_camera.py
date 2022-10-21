@@ -39,7 +39,7 @@ class BlenderCamera():
         if pycamera.type == "orthographic":
             cam.type = "ORTHO"
 
-            # TODO: xmag/ymag
+            cam.ortho_scale = max(pycamera.orthographic.xmag, pycamera.orthographic.ymag) * 2
 
             cam.clip_start = pycamera.orthographic.znear
             cam.clip_end = pycamera.orthographic.zfar
