@@ -57,7 +57,7 @@ with the following channels of information:
 - Emissive
 
 Some additional material properties or types of materials can be expressed using glTF extensions.
-The complete is can be found in _Extensions_ part of this documentation.
+The complete list can be found in _Extensions_ part of this documentation.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -73,7 +73,7 @@ The glTF material system is different from Blender's own materials. When a glTF 
 the add-on will construct a set of Blender nodes to replicate each glTF material as closely as possible.
 
 The importer supports Metal/Rough PBR (core glTF), Spec/Gloss PBR (``KHR_materials_pbrSpecularGlossiness``)
-and some extension materials. The complete is can be found in _Extensions_ part of this documentation.
+and some extension materials. The complete list can be found in _Extensions_ part of this documentation.
 
 .. tip::
 
@@ -311,6 +311,8 @@ If enabled, Principled Specular data are ignored, only data from custom node are
    If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
    Add > Output > glTF Material Output
 
+     .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
+
 Transmission
 ^^^^^^^^^^^^
 
@@ -381,6 +383,8 @@ glTF Variants
 .. note::
 
    For a full Variants experience, you have to enable UI in Add-on preferences
+
+     .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-variant.png
 
 There are two location to manage glTF Variants in Blender
 
