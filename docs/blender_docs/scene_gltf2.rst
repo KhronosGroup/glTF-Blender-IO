@@ -56,7 +56,8 @@ with the following channels of information:
 - Normal Map (tangent space, +Y up)
 - Emissive
 
-Some additional material properties or types of materials can be expressed using glTF extensions. The complete is can be found in _Extensions_ part of this documentation.
+Some additional material properties or types of materials can be expressed using glTF extensions.
+The complete is can be found in _Extensions_ part of this documentation.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -256,7 +257,7 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
 Sheen
 ^^^^^
 
-When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF 
+When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
 extension will be included in the export. The Sheen Color will be exported from Color socket of Vevlet node.
 Sheen Roughness will be exported from Sigma socket.
 
@@ -266,14 +267,16 @@ If a Sheen Rougness Texture is used, glTF requires the values be written to the 
 
 .. tip::
 
-   Velvet BSDF node is only available on Cycles render engine. 
+   Velvet BSDF node is only available on Cycles render engine.
    You may have to temporary switch to Cycles to add this node, and get back to Eevee.
 
 .. note::
 
-   Because the node tree is adding 2 Shaders (Principled and Sheen), the resulting shader is not fully energy conservative.
+   Because the node tree is adding 2 Shaders (Principled and Sheen),
+   the resulting shader is not fully energy conservative.
    You may find some difference between Blender render, and glTF render.
-   Sheen models are not fully compatible between Blender and glTF. This trick about adding Velvet Shader is the most accurate 
+   Sheen models are not fully compatible between Blender and glTF.
+   This trick about adding Velvet Shader is the most accurate
    approximation (better that using Sheen Principled sockets).
 
 
@@ -286,7 +289,8 @@ included in the export.
 
 .. note::
 
-   Specular models are not fully compatible between Blender and glTF. By default, Blender data are converted to glTF at export, 
+   Specular models are not fully compatible between Blender and glTF.
+   By default, Blender data are converted to glTF at export,
    with a possible loss of information.
    Some conversion are also performed at import, will a possible loss of information too.
 
@@ -295,16 +299,16 @@ At import, a custom node group is created, to store original Specular data, not 
 
 .. figure:: /images/addons_import-export_scene-gltf2_material_specular-custom-node.png
 
-At export, by default, Specular data are converted from Principled BSDF node. 
+At export, by default, Specular data are converted from Principled BSDF node.
 
-You can export original Specular data, enabling the option at export. If enabled, Principled Specular data are ignored,
-only data from custom node are used.
+You can export original Specular data, enabling the option at export.
+If enabled, Principled Specular data are ignored, only data from custom node are used.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material_specular-export-option.png
 
 
 .. tip::
-   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu: 
+   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
    Add > Output > glTF Material Output
 
 Transmission
@@ -345,7 +349,8 @@ IOR
 
 At import, there are two different situation:
 
-- if ``KHR_materials_ior`` is not set, IOR value of Principled BSDF node is set to 1.5, that is the glTF default value of IOR.
+- if ``KHR_materials_ior`` is not set, IOR value of Principled BSDF node is set to 1.5,
+  that is the glTF default value of IOR.
 - If set, the ``KHR_materials_ior`` is used to set the IOR value of Principled BSDF.
 
 At export, IOR is included in the export only if one of these extensions are also used:
@@ -382,7 +387,8 @@ There are two location to manage glTF Variants in Blender
 - In 3D View, on ``glTF Variants`` tab
 - For advanced settings, in Mesh Material Properties (see Advanced glTF Variant checks)
 
-The main concept to understand for using Variants, is that each material slot will be used as equivalent of a glTF primitive.
+The main concept to understand for using Variants,
+is that each material slot will be used as equivalent of a glTF primitive.
 
 glTF Variants switching
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -398,11 +404,14 @@ You can switch to default materials (when no Variant are used), by clicking on *
 glTF Variants creation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You can add a new Variant by clicking the ``+`` at right of the Variant list. Then you can change the name by double-clicking.
+You can add a new Variant by clicking the ``+`` at right of the Variant list.
+Then you can change the name by double-clicking.
 
-After changing Materials in Material Slots, you can assign current materials to the active Variant using *Assign to Variant*.
+After changing Materials in Material Slots, you can assign current materials to the active Variant using
+*Assign to Variant*.
 
-You can also set default materials using *Assign as Original*. These materials will be exported as default material in glTF. 
+You can also set default materials using *Assign as Original*.
+These materials will be exported as default material in glTF.
 This are materials that will be displayed by any viewer that don't manage ``KHR_materials_variants`` extension.
 
 Advanced glTF Variant checks
@@ -412,7 +421,7 @@ If you want to check primitive by primitive, what are Variants used, you can go 
 
 .. figure:: /images/addons_import-export_scene-gltf2_material_variants-detail.png
 
-The *glTF Material Variants* tab refers to the active material Slot and Material used by this slot. 
+The *glTF Material Variants* tab refers to the active material Slot and Material used by this slot.
 You can see every Variants that are using this material for the given Slot/Primitive.
 
 You can also assign material to Variants from this tab, but recommandation is to perform it from 3D View tab.
