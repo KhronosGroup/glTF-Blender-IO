@@ -10,6 +10,11 @@ class glTF2ExportUserExtension:
         self.Extension = Extension
 ```
 
+If you want to use this file as a base of your addon, make sure to make it properly installable as Blender addon by either:
+
+- Rename from `__init__.py` to another name
+- Create a zip file of the directory that includes `__init__.py`
+
 Next, define functions that contain the data of the extension you would like to include. Write those functions for each type you want to include extensions for. Currently implemented are:
 
 ```
