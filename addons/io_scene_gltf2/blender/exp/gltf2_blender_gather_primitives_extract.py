@@ -63,6 +63,15 @@ class PrimitiveCreator:
         # x,y,z -> x,z,-y
         array[:, [1,2]] = array[:, [2,1]]  # x,z,y
         array[:, 2] *= -1  # x,z,-y
+    
+    @classmethod
+    def get_special_attributes(cls):
+        return [
+            ".select_vert",
+            ".select_edge",
+            ".select_poly",
+            "material_index"
+        ]
 
     def prepare_data(self):
         self.blender_object = None
@@ -148,6 +157,13 @@ class PrimitiveCreator:
     def define_attributes(self):
         # Manage attributes + COLOR_0
         for blender_attribute_index, blender_attribute in enumerate(self.blender_mesh.attributes):
+
+            print(blender_attribute.name)
+            # Excluse special attributes (used internally by Blender)
+            if blender_attribute.name in PrimitiveCreator.get_special_attributes():
+                print("ignore")
+                continue
+
             attr = {}
             attr['blender_attribute_index'] = blender_attribute_index
             attr['blender_name'] = blender_attribute.name
