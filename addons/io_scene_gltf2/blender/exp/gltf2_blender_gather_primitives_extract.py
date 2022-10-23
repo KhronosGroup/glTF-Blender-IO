@@ -158,10 +158,8 @@ class PrimitiveCreator:
         # Manage attributes + COLOR_0
         for blender_attribute_index, blender_attribute in enumerate(self.blender_mesh.attributes):
 
-            print(blender_attribute.name)
             # Excluse special attributes (used internally by Blender)
             if blender_attribute.name in PrimitiveCreator.get_special_attributes():
-                print("ignore")
                 continue
 
             attr = {}
