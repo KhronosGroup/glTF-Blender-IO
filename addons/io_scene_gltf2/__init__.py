@@ -1200,10 +1200,11 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     bone_heuristic: EnumProperty(
         name="Bone Dir",
         items=(
-            ("BLENDER", "Blender (best for re-importing)",
+            ("BLENDER", "Blender (keep original bone orientations in glTF, best for re-importing)",
+                "The glTF bone orientations are not changed on import and export. "
                 "Good for re-importing glTFs exported from Blender. "
                 "Bone tips are placed on their local +Y axis (in glTF space)"),
-            ("TEMPERANCE", "Temperance (average)",
+            ("TEMPERANCE", "Temperance (heuristic, average)",
                 "Decent all-around strategy. "
                 "A bone with one child has its tip placed on the local axis "
                 "closest to its child"),
@@ -1213,7 +1214,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
                 "Non-uniform scalings may get messed up though, so beware"),
         ),
         description="Heuristic for placing bones. Tries to make bones pretty",
-        default="TEMPERANCE",
+        default="BLENDER",
     )
 
     guess_original_bind_pose: BoolProperty(
