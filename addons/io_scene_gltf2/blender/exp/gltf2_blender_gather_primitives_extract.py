@@ -758,7 +758,7 @@ class PrimitiveCreator:
 
     def __get_bitangent_signs(self):
         self.signs = np.empty(len(self.blender_mesh.loops), dtype=np.float32)
-        self.blender_mesh.loops.foreach_get('bitangent_sign', signs)
+        self.blender_mesh.loops.foreach_get('bitangent_sign', self.signs)
 
         # Transform for skinning
         if self.armature and self.blender_object:
@@ -768,7 +768,7 @@ class PrimitiveCreator:
             tangent_transform = apply_matrix.to_quaternion().to_matrix()
             flipped = tangent_transform.determinant() < 0
             if flipped:
-                signs *= -1
+                self.signs *= -1
 
         # No change for Zup -> Yup
 
