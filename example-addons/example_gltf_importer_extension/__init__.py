@@ -70,11 +70,11 @@ class glTF2ImportUserExtension:
         self.properties = bpy.context.scene.ExampleImporterExtensionProperties
         self.extensions = [Extension(name="TEST_extension1", extension={}, required=True), Extension(name="TEST_extension2", extension={}, required=False)]
 
-    def gather_import_node_before_hook(self, vnode, gltf_node, import_settings):
+    def gather_import_node_before_hook(self, vnode, gltf_node, gltf):
         if self.properties.enabled:
             pass
 
-    def gather_import_node_after_hook(self, vnode, gltf_node, blender_object, import_settings):
+    def gather_import_node_after_hook(self, vnode, gltf_node, blender_object, gltf):
         if self.properties.enabled:
             pass
 

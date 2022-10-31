@@ -155,6 +155,9 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
     case 'SCALAR':
         numElements = 1;
         break;
+    case 'VEC2':
+        numElements = 2;
+        break;
     case 'VEC3':
         numElements = 3;
         break;
@@ -240,6 +243,7 @@ describe('Exporter', function() {
 
                             validateGltf(dstPath, done);
                         }, args);
+                        // validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
                     });
                 });
             });
@@ -955,6 +959,156 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.meshes.length, 6);
               });
 
+              it('exports Attributes', function() {
+                let gltfPath = path.resolve(outDirPath, '22_vertex_colors_and_attributes.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                const primitive = asset.meshes[asset.nodes.filter(m => m.name === 'Cube_attributes')[0].mesh].primitives[0];
+
+                const _vertex_float = asset.accessors[primitive.attributes._VERTEX_FLOAT];
+                const _vertex_float_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_FLOAT, bufferCache);
+                assert.strictEqual(_vertex_float.count, 24);
+                const expected_vertex_float = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 4.0, 4.0, 4.0, 5.0, 5.0, 5.0, 6.0, 6.0, 6.0, 7.0, 7.0, 7.0];
+                assert.deepStrictEqual(_vertex_float_data, expected_vertex_float);
+
+                const _vertex_integer = asset.accessors[primitive.attributes._VERTEX_INTEGER];
+                const _vertex_integer_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_INTEGER, bufferCache);
+                assert.strictEqual(_vertex_integer.count, 24);
+                const expected_vertex_integer = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 4.0, 4.0, 4.0, 5.0, 5.0, 5.0, 6.0, 6.0, 6.0, 7.0, 7.0, 7.0];
+                assert.deepStrictEqual(_vertex_integer_data, expected_vertex_integer);
+
+                assert.ok(!("_VERTEX_STRING" in primitive.attributes));
+
+                const _vertex_8bitinteger = asset.accessors[primitive.attributes._VERTEX_8BITINTEGER];
+                const _vertex_8bitinteger_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_8BITINTEGER, bufferCache);
+                assert.strictEqual(_vertex_8bitinteger.count, 24);
+                const expected_vertex_8bitinteger = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 4.0, 4.0, 4.0, 5.0, 5.0, 5.0, 6.0, 6.0, 6.0, 7.0, 7.0, 7.0];
+                assert.deepStrictEqual(_vertex_8bitinteger_data, expected_vertex_8bitinteger);
+
+                const _vertex_vector = asset.accessors[primitive.attributes._VERTEX_VECTOR];
+                const _vertex_vector_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_VECTOR, bufferCache);
+                assert.strictEqual(_vertex_vector.count, 24);
+                const expected_vertex_vector = [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 6.0, 7.0, 8.0, 6.0, 7.0, 8.0,
+                                                 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 
+                                                 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0];
+                assert.deepStrictEqual(_vertex_vector_data, expected_vertex_vector);
+
+                const _vertex_2dvector = asset.accessors[primitive.attributes._VERTEX_2DVECTOR];
+                const _vertex_2dvector_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_2DVECTOR, bufferCache);
+                assert.strictEqual(_vertex_2dvector.count, 24);
+                const expected_vertex_2dvector = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 2.0, 3.0, 2.0, 3.0, 4.0, 5.0, 4.0, 5.0, 4.0, 5.0, 6.0, 7.0, 6.0, 7.0, 6.0, 7.0,
+                                                  8.0, 9.0, 8.0, 9.0, 8.0, 9.0, 10.0, 11.0, 10.0, 11.0, 10.0, 11.0, 12.0, 13.0, 12.0, 13.0, 12.0, 13.0, 14.0, 15.0, 14.0, 15.0, 14.0, 15.0];
+                assert.deepStrictEqual(_vertex_2dvector_data, expected_vertex_2dvector);
+
+                const _vertex_boolean = asset.accessors[primitive.attributes._VERTEX_BOOLEAN];
+                const _vertex_boolean_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_BOOLEAN, bufferCache);
+                assert.strictEqual(_vertex_boolean.count, 24);
+                const expected_vertex_boolean = [1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0];
+                assert.deepStrictEqual(_vertex_boolean_data, expected_vertex_boolean);
+
+                assert.ok(!("_EDGE_FLOAT" in primitive.attributes));
+
+                const _face_float = asset.accessors[primitive.attributes._FACE_FLOAT];
+                const _face_float_data = getAccessorData(gltfPath, asset, primitive.attributes._FACE_FLOAT, bufferCache);
+                assert.strictEqual(_face_float.count, 24);
+                const expected_face_float = [0.0, 4.0, 5.0, 3.0, 4.0, 5.0, 0.0, 1.0, 4.0, 1.0, 3.0, 4.0, 0.0, 2.0, 5.0, 2.0, 3.0, 5.0, 0.0, 1.0, 2.0, 1.0, 2.0, 3.0];
+                assert.deepStrictEqual(_face_float_data, expected_face_float);
+
+                const _facecorner_float = asset.accessors[primitive.attributes._FACECORNER_FLOAT];
+                const _facecorner_float_data = getAccessorData(gltfPath, asset, primitive.attributes._FACECORNER_FLOAT, bufferCache);
+                assert.strictEqual(_facecorner_float.count, 24);
+                const expected_facecorner_float = [100, 117, 122, 113, 116, 123, 103, 105, 118, 104, 114, 119, 101, 110, 121, 111, 112, 120, 102, 106, 109, 107, 108, 115];
+                assert.deepStrictEqual(_facecorner_float_data, expected_facecorner_float);
+
+                const _facecorner_vector = asset.accessors[primitive.attributes._FACECORNER_VECTOR];
+                assert.strictEqual(_facecorner_vector.count, 24);
+
+                const _face_vector = asset.accessors[primitive.attributes._FACE_VECTOR];
+                assert.strictEqual(_face_vector.count, 24);
+
+                const _facecorner_vector2d = asset.accessors[primitive.attributes._FACECORNER_VECTOR2D];
+                assert.strictEqual(_facecorner_vector2d.count, 24);
+
+                const _face_vector2d = asset.accessors[primitive.attributes._FACE_VECTOR2D];
+                assert.strictEqual(_face_vector2d.count, 24);
+
+                // Edge only
+                const primitive_edge_only = asset.meshes[asset.nodes.filter(m => m.name === 'Edge')[0].mesh].primitives[0];
+                assert.ok(!("_FACE_FLOAT" in primitive_edge_only.attributes));
+
+                const _vertex_float_edge = asset.accessors[primitive_edge_only.attributes._VERTEX_FLOAT];
+                const _vertex_float_edge_data = getAccessorData(gltfPath, asset, primitive_edge_only.attributes._VERTEX_FLOAT, bufferCache);
+                assert.strictEqual(_vertex_float_edge.count, 2);
+                const expected_vertex_float_edge = [1.0, 2.0];
+                assert.deepStrictEqual(_vertex_float_edge_data, expected_vertex_float_edge);
+
+                // Vertices only
+                const primitive_vertex_only = asset.meshes[asset.nodes.filter(m => m.name === 'Vertex')[0].mesh].primitives[0];
+                assert.ok(!("_EDGE_FLOAT" in primitive_vertex_only.attributes));
+
+                const _vertex_float_vertex = asset.accessors[primitive_vertex_only.attributes._VERTEX_FLOAT];
+                const _vertex_float_vertex_data = getAccessorData(gltfPath, asset, primitive_vertex_only.attributes._VERTEX_FLOAT, bufferCache);
+                assert.strictEqual(_vertex_float_vertex.count, 2);
+                const expected_vertex_float_vertex = [3.0, 4.0];
+                assert.deepStrictEqual(_vertex_float_vertex_data, expected_vertex_float_vertex);
+
+                // Mix
+                const primitive_face = asset.meshes[asset.nodes.filter(m => m.name === 'Cube_and_edges')[0].mesh].primitives[0];
+                const primitive_edge = asset.meshes[asset.nodes.filter(m => m.name === 'Cube_and_edges')[0].mesh].primitives[1];
+
+                const mix_p0_vertex_float = asset.accessors[primitive_face.attributes._VERTEX_FLOAT];
+                const mix_p0_vertex_float_data = getAccessorData(gltfPath, asset, primitive_face.attributes._VERTEX_FLOAT, bufferCache);
+                assert.strictEqual(mix_p0_vertex_float.count, 24);
+                const expected_mix_p0_vertex_float_data = [3.0, 3.0, 3.0, 4.0, 4.0, 4.0, 5.0, 5.0, 5.0, 6.0, 6.0, 6.0, 7.0, 7.0, 7.0, 8.0, 8.0, 8.0, 9.0, 9.0, 9.0, 10.0, 10.0, 10.0];
+                assert.deepStrictEqual(mix_p0_vertex_float_data, expected_mix_p0_vertex_float_data);
+
+                const mix_p1_vertex_float = asset.accessors[primitive_edge.attributes._VERTEX_FLOAT];
+                const mix_p1_vertex_float_data = getAccessorData(gltfPath, asset, primitive_edge.attributes._VERTEX_FLOAT, bufferCache);
+                assert.strictEqual(mix_p1_vertex_float.count, 2);
+                const expected_mix_p1_vertex_float_data = [1.0, 2.0];
+                assert.deepStrictEqual(mix_p1_vertex_float_data, expected_mix_p1_vertex_float_data);
+
+                // GLobal Mix
+                const primitive_faces = asset.meshes[asset.nodes.filter(m => m.name === 'Cube_and_edges_and_vertex')[0].mesh].primitives[0];
+                const primitive_edges = asset.meshes[asset.nodes.filter(m => m.name === 'Cube_and_edges_and_vertex')[0].mesh].primitives[1];
+                const primitive_vertices = asset.meshes[asset.nodes.filter(m => m.name === 'Cube_and_edges_and_vertex')[0].mesh].primitives[2];
+
+                const gmix_p0_vertex_float = asset.accessors[primitive_faces.attributes._VERTEX_FLOAT];
+                const gmix_p0_vertex_float_data = getAccessorData(gltfPath, asset, primitive_faces.attributes._VERTEX_FLOAT, bufferCache);
+                assert.strictEqual(gmix_p0_vertex_float.count, 24);
+                const expected_gmix_p0_vertex_float_data = [0.3, 0.3, 0.3, 0.4, 0.4, 0.4, 0.5, 0.5, 0.5, 0.6, 0.6, 0.6, 0.7, 0.7, 0.7, 0.8, 0.8, 0.8, 0.9, 0.9, 0.9, 0.01, 0.01, 0.01];
+                assert.equalEpsilonArray(gmix_p0_vertex_float_data, expected_gmix_p0_vertex_float_data);
+
+                const mix_p2_vertex_float = asset.accessors[primitive_edges.attributes._VERTEX_FLOAT];
+                const mix_p2_vertex_float_data = getAccessorData(gltfPath, asset, primitive_edges.attributes._VERTEX_FLOAT, bufferCache);
+                assert.strictEqual(mix_p2_vertex_float.count, 3);
+                const expected_mix_p2_vertex_float_data = [0.1, 0.2, 1.2];
+                assert.equalEpsilonArray(mix_p2_vertex_float_data, expected_mix_p2_vertex_float_data);
+
+                const mix_p3_vertex_float = asset.accessors[primitive_vertices.attributes._VERTEX_FLOAT];
+                const mix_p3_vertex_float_data = getAccessorData(gltfPath, asset, primitive_vertices.attributes._VERTEX_FLOAT, bufferCache);
+                assert.strictEqual(mix_p3_vertex_float.count, 1);
+                const expected_mix_p3_vertex_float_data = [1.1];
+                assert.equalEpsilonArray(mix_p3_vertex_float_data, expected_mix_p3_vertex_float_data);
+
+              });
+
+              it('exports Active Collection', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '23_use_active_collection_without_nested.gltf');
+                const asset_1 = JSON.parse(fs.readFileSync(gltfPath_1));
+                assert.strictEqual(asset_1.nodes.length, 1);
+
+                let gltfPath_2 = path.resolve(outDirPath, '23_use_active_collection_all.gltf');
+                const asset_2 = JSON.parse(fs.readFileSync(gltfPath_2));
+                assert.strictEqual(asset_2.nodes.length, 3);
+
+                let gltfPath_3 = path.resolve(outDirPath, '23_use_active_collection_nested.gltf');
+                const asset_3 = JSON.parse(fs.readFileSync(gltfPath_3));
+                assert.strictEqual(asset_3.nodes.length, 2);
+              });
+
               it('exports GN', function() {
                 let gltfPath = path.resolve(outDirPath, '22_simple_GN.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
@@ -964,6 +1118,14 @@ describe('Exporter', function() {
               });
 
         });
+
+                      it('exports GN', function() {
+                let gltfPath = path.resolve(outDirPath, '22_simple_GN.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 2);
+                assert.strictEqual(asset.meshes.length, 2);
+              });
     });
 });
 
@@ -994,6 +1156,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         if (fs.existsSync(gltfOptionsPath)) {
                             options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                         }
+                        // return done(); // uncomment to not roundtrip all files
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);

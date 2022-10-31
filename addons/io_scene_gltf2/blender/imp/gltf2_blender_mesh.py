@@ -109,11 +109,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         while i < COLOR_MAX and ('COLOR_%d' % i) in prim.attributes: i += 1
         num_cols = max(i, num_cols)
 
-    num_shapekeys = 0
-    if len(pymesh.primitives) > 0: # Empty primitive tab is not allowed, but some invalid files...
-        for morph_i, _ in enumerate(pymesh.primitives[0].targets or []):
-            if pymesh.shapekey_names[morph_i] is not None:
-                num_shapekeys += 1
+    num_shapekeys = sum(sk_name is not None for sk_name in pymesh.shapekey_names)
 
     # -------------
     # We'll process all the primitives gathering arrays to feed into the
@@ -201,12 +197,17 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             vert_joints[i] = np.concatenate((vert_joints[i], js))
             vert_weights[i] = np.concatenate((vert_weights[i], ws))
 
-        for morph_i, target in enumerate(prim.targets or []):
-            if pymesh.shapekey_names[morph_i] is None:
+        sk_i = 0
+        for sk, sk_name in enumerate(pymesh.shapekey_names):
+            if sk_name is None:
                 continue
-            morph_vs = BinaryData.decode_accessor(gltf, target['POSITION'], cache=True)
-            morph_vs = morph_vs[unique_indices]
-            sk_vert_locs[morph_i] = np.concatenate((sk_vert_locs[morph_i], morph_vs))
+            if prim.targets and 'POSITION' in prim.targets[sk]:
+                morph_vs = BinaryData.decode_accessor(gltf, prim.targets[sk]['POSITION'], cache=True)
+                morph_vs = morph_vs[unique_indices]
+            else:
+                morph_vs = np.zeros((len(unique_indices), 3), dtype=np.float32)
+            sk_vert_locs[sk_i] = np.concatenate((sk_vert_locs[sk_i], morph_vs))
+            sk_i += 1
 
         # inv_indices are the indices into the verts just for this prim;
         # calculate indices into the overall verts array
@@ -314,6 +315,10 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             break
 
         mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
+
+    # Make sure the first Vertex Color Attribute is the rendered one
+    if num_cols > 0:
+        mesh.color_attributes.render_color_index = 0
 
     # Skinning
     # TODO: this is slow :/

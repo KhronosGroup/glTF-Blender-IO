@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 4, 8),
+    "version": (3, 4, 41),
     'blender': (3, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -109,7 +109,21 @@ def on_export_format_changed(self, context):
     )
 
 
-class ExportGLTF2_Base:
+class ConvertGLTF2_Base:
+    """Base class containing options that should be exposed during both import and export."""
+
+    convert_lighting_mode: EnumProperty(
+        name='Lighting Mode',
+        items=(
+            ('SPEC', 'Standard', 'Physically-based glTF lighting units (cd, lx, nt)'),
+            ('COMPAT', 'Unitless', 'Non-physical, unitless lighting. Useful when exposure controls are not available'),
+            ('RAW', 'Raw (Deprecated)', 'Blender lighting strengths with no conversion'),
+        ),
+        description='Optional backwards compatibility for non-standard render engines. Applies to lights',# TODO: and emissive materials',
+        default='SPEC'
+    )
+
+class ExportGLTF2_Base(ConvertGLTF2_Base):
     # TODO: refactor to avoid boilerplate
 
     def __init__(self):
@@ -290,6 +304,12 @@ class ExportGLTF2_Base:
         default=True
     )
 
+    export_attributes: BoolProperty(
+        name='Attributes',
+        description='Export Attributes',
+        default=False
+    )
+
     use_mesh_edges: BoolProperty(
         name='Loose Edges',
         description=(
@@ -330,10 +350,16 @@ class ExportGLTF2_Base:
         default=False
     )
 
+    use_active_collection_with_nested: BoolProperty(
+        name='Include Nested Collections',
+        description='Include active collection and nested collections',
+        default=True
+    )
+
     use_active_collection: BoolProperty(
         name='Active Collection',
         description='Export objects in the active collection only',
-        default=False
+        default=False        
     )
 
     use_active_scene: BoolProperty(
@@ -411,7 +437,7 @@ class ExportGLTF2_Base:
         default=False
     )
 
-    optimize_animation_size: BoolProperty(
+    export_optimize_animation_size: BoolProperty(
         name='Optimize Animation Size',
         description=(
             "Reduce exported file-size by removing duplicate keyframes"
@@ -423,8 +449,17 @@ class ExportGLTF2_Base:
     export_anim_single_armature: BoolProperty(
         name='Export all Armature Actions',
         description=(
-            "Export all actions of a single armature. "
-            "WARNING: works only if you exports a single armature"
+            "Export all actions, bound to a single armature. "
+            "WARNING: Option does not support exports including multiple armatures"
+        ),
+        default=True
+    )
+
+    export_reset_pose_bones: BoolProperty(
+        name='Reset pose bones between actions',
+        description=(
+            "Reset pose bones between each action exported. "
+            "This is needed when some bones are not keyed on some animations"
         ),
         default=True
     )
@@ -523,6 +558,7 @@ class ExportGLTF2_Base:
             'use_selection',
             'use_visible',
             'use_renderable',
+            'use_active_collection_with_nested',
             'use_active_collection',
             'use_mesh_edges',
             'use_mesh_vertices',
@@ -582,13 +618,19 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_colors'] = self.export_colors
+        export_settings['gltf_attributes'] = self.export_attributes
         export_settings['gltf_cameras'] = self.export_cameras
 
         export_settings['gltf_original_specular'] = self.export_original_specular
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
+        
         export_settings['gltf_active_collection'] = self.use_active_collection
+        if self.use_active_collection:
+            export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested
+        else:
+            export_settings['gltf_active_collection_with_nested'] = False
         export_settings['gltf_active_scene'] = self.use_active_scene
 
         export_settings['gltf_selected'] = self.use_selection
@@ -606,14 +648,16 @@ class ExportGLTF2_Base:
                 export_settings['gltf_def_bones'] = False
             export_settings['gltf_nla_strips'] = self.export_nla_strips
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
-            export_settings['gltf_optimize_animation'] = self.optimize_animation_size
+            export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
+            export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
             export_settings['gltf_optimize_animation'] = False
             export_settings['gltf_export_anim_single_armature'] = False
+            export_settings['gltf_export_reset_pose_bones'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -632,6 +676,7 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
+        export_settings['gltf_lighting_mode'] = self.convert_lighting_mode
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -729,6 +774,8 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'use_visible')
         col.prop(operator, 'use_renderable')
         col.prop(operator, 'use_active_collection')
+        if operator.use_active_collection:
+            col.prop(operator, 'use_active_collection_with_nested')
         col.prop(operator, 'use_active_scene')
 
         col = layout.column(heading = "Data", align = True)
@@ -765,7 +812,7 @@ class GLTF_PT_export_transform(bpy.types.Panel):
 class GLTF_PT_export_geometry(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Geometry"
+    bl_label = "Data"
     bl_parent_id = "FILE_PT_operator"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -807,6 +854,7 @@ class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
         col.active = operator.export_normals
         col.prop(operator, 'export_tangents')
         layout.prop(operator, 'export_colors')
+        layout.prop(operator, 'export_attributes')
 
         col = layout.column()
         col.prop(operator, 'use_mesh_edges')
@@ -884,6 +932,28 @@ class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
 
         layout.prop(operator, 'export_original_specular')
 
+class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Lighting"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'convert_lighting_mode')
 
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -987,8 +1057,9 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_nla_strips')
         if operator.export_nla_strips is False:
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
-        layout.prop(operator, 'optimize_animation_size')
+        layout.prop(operator, 'export_optimize_animation_size')
         layout.prop(operator, 'export_anim_single_armature')
+        layout.prop(operator, 'export_reset_pose_bones')
 
 
 class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
@@ -1113,7 +1184,7 @@ def menu_func_export(self, context):
     self.layout.operator(ExportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
-class ImportGLTF2(Operator, ImportHelper):
+class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     """Load a glTF 2.0 file"""
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
@@ -1196,6 +1267,7 @@ class ImportGLTF2(Operator, ImportHelper):
         layout.prop(self, 'import_shading')
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
+        layout.prop(self, 'convert_lighting_mode')
 
     def invoke(self, context, event):
         import sys
@@ -1328,6 +1400,7 @@ classes = (
     GLTF_PT_export_geometry_material,
     GLTF_PT_export_geometry_GN,
     GLTF_PT_export_geometry_original_pbr,
+    GLTF_PT_export_geometry_lighting,
     GLTF_PT_export_geometry_compression,
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,
