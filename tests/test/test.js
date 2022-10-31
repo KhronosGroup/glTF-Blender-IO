@@ -1119,13 +1119,6 @@ describe('Exporter', function() {
 
         });
 
-                      it('exports GN', function() {
-                let gltfPath = path.resolve(outDirPath, '22_simple_GN.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 2);
-                assert.strictEqual(asset.meshes.length, 2);
-              });
     });
 });
 
