@@ -20,6 +20,7 @@ from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.com import gltf2_blender_conversion
+from io_scene_gltf2.blender.com import gltf2_blender_default
 
 
 def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
@@ -63,15 +64,6 @@ class PrimitiveCreator:
         # x,y,z -> x,z,-y
         array[:, [1,2]] = array[:, [2,1]]  # x,z,y
         array[:, 2] *= -1  # x,z,-y
-    
-    @classmethod
-    def get_special_attributes(cls):
-        return [
-            ".select_vert",
-            ".select_edge",
-            ".select_poly",
-            "material_index"
-        ]
 
     def prepare_data(self):
         self.blender_object = None
@@ -159,7 +151,7 @@ class PrimitiveCreator:
         for blender_attribute_index, blender_attribute in enumerate(self.blender_mesh.attributes):
 
             # Excluse special attributes (used internally by Blender)
-            if blender_attribute.name in PrimitiveCreator.get_special_attributes():
+            if blender_attribute.name in gltf2_blender_default.SPECIAL_ATTRIBUTES:
                 continue
 
             attr = {}
