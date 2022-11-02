@@ -18,7 +18,7 @@ BLENDER_SPECULAR_TINT = 0.0
 
 
 SPECIAL_ATTRIBUTES = {
-    ".select_vert", 
+    ".select_vert",
     ".select_edge",
     ".select_poly",
     "material_index"
