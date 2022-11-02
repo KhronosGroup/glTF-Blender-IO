@@ -341,6 +341,12 @@ can be used to blur the transmission, like frosted glass.
    In particular, transmissive materials may not be visible behind other transmissive materials.
    These limitations affect physically-based transmission, but not alpha-blended non-transmissive materials.
 
+.. note::
+
+   If you want to enable refraction on your model, ``KHR_materials_transmission`` must also
+   be used in addtion with ``KHR_materials_volume``. See the dedicated *Volume* part of
+   the documentation.
+
 .. warning::
 
    Transmission is complex for real-time rendering engines to implement,
