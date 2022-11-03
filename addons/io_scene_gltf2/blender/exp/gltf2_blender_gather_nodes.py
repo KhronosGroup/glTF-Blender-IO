@@ -210,6 +210,9 @@ def __gather_mesh(vnode, blender_object, export_settings):
         if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
             blender_mesh = blender_object.data
             skip_filter = False
+            # Keep materials from object, as no modifiers are applied, so no risk that
+            # modifiers changed them
+            materials = tuple(ms.material for ms in blender_object.material_slots)
         else:
             armature_modifiers = {}
             if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -230,6 +233,9 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 # restore Armature modifiers
                 for idx, show_viewport in armature_modifiers.items():
                     blender_object.modifiers[idx].show_viewport = show_viewport
+
+            # Keep materials from the newly created tmp mesh
+            materials = tuple(mat for mat in blender_mesh.materials)
     else:
         blender_mesh = blender_object.data
         skip_filter = False
@@ -242,6 +248,9 @@ def __gather_mesh(vnode, blender_object, export_settings):
             if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
                 vertex_groups = None # Not needed if no armature, avoid a cache miss
                 modifiers = None
+        # Keep materials from object, as no modifiers are applied, so no risk that
+        # modifiers changed them
+        materials = tuple(ms.material for ms in blender_object.material_slots)
 
     materials = tuple(ms.material for ms in blender_object.material_slots)
 
