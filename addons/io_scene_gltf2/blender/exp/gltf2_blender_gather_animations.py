@@ -48,7 +48,7 @@ def gather_animations(  obj_uuid: int,
         # But we need to bake, in case we export selection
         # (Only when force sampling is ON)
         # If force sampling is OFF, can lead to inconsistent export anyway
-        if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
+        if export_settings['gltf_selected'] is True and blender_object is not None and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
             # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             # (skinned meshes TRS must be ignored, says glTF specification)
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
@@ -65,7 +65,7 @@ def gather_animations(  obj_uuid: int,
                     __link_samplers(animation, export_settings)
                     if animation is not None:
                         animations.append(animation)
-        elif export_settings['gltf_selected'] is True and blender_object.type == "ARMATURE":
+        elif export_settings['gltf_selected'] is True and blender_object is not None and blender_object.type == "ARMATURE":
             # We need to bake all bones. Because some bone can have some constraints linking to
             # some other armature bones, for example
             #TODO
