@@ -88,7 +88,7 @@ class VExportNode:
     def recursive_display(self, tree, mode):
         if mode == "simple":
             for c in self.children:
-                print(self.blender_object.name, "/", self.blender_bone.name if self.blender_bone else "", "-->", tree.nodes[c].blender_object.name, "/", tree.nodes[c].blender_bone.name if tree.nodes[c].blender_bone else "" )
+                print(self.blender_object.name if self.blender_object is not None else "GN" + self.data.name, "/", self.blender_bone.name if self.blender_bone else "", "-->", tree.nodes[c].blender_object.name if tree.nodes[c].blender_object else "GN" + tree.nodes[c].data.name, "/", tree.nodes[c].blender_bone.name if tree.nodes[c].blender_bone else "" )
                 tree.nodes[c].recursive_display(tree, mode)
 
 class VExportTree:
@@ -272,7 +272,8 @@ class VExportTree:
         # Geometry Nodes instances
         if self.export_settings['gltf_gn_mesh'] is True:
             if blender_object and any([mod.type == "NODES" for mod in blender_object.modifiers]): # TODO add more check
-                node.force_as_empty = True
+                # Do not force export as empty
+                # Because GN graph can have both geometry and instances
                 depsgraph = bpy.context.evaluated_depsgraph_get()
                 eval = blender_object.evaluated_get(depsgraph)
                 for inst in depsgraph.object_instances: # use only as iterator
@@ -404,6 +405,10 @@ class VExportTree:
         return True
 
     def node_filter_inheritable_is_kept(self, uuid):
+
+        if self.nodes[uuid].blender_object is None:
+            # geometry node instances
+            return True
 
         if self.export_settings[gltf2_blender_export_keys.SELECTED] and self.nodes[uuid].blender_object.select_get() is False:
             return False
