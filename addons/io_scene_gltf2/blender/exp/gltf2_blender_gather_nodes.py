@@ -184,23 +184,6 @@ def __gather_matrix(blender_object, export_settings):
     # return blender_object.matrix_local
     return []
 
-def __get_materials(object, data):
-    materials = []
-    count = len(data.materials) if hasattr(data, "materials") else 0
-    for i in range(count):
-        # Check if overwritten by object
-        if i < len(object.material_slots):
-            slot = object.material_slots[i]
-            if slot.link == 'OBJECT' and slot.material:
-                materials.append(slot.material)
-                continue
-
-        # Otherwise use object data
-        materials.append(data.materials[i])
-
-    return materials
-
-
 def __gather_mesh(vnode, blender_object, export_settings):
     if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
         return __gather_mesh_from_nonmesh(blender_object, export_settings)
@@ -209,7 +192,10 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if blender_object is None:
         # GN instance
         blender_mesh = vnode.data
-        materials = tuple(__get_materials(vnode.original_object, blender_mesh))
+        # Keep materials from the tmp mesh, but if no material, keep from object
+        materials = tuple(mat for mat in blender_mesh.materials)
+        if len(materials) == 1 and materials[0] is None:
+            materials = tuple(ms.material for ms in vnode.original_object.material_slots)
         uuid_for_skined_data = None
         vertex_groups = None
         modifiers = None
@@ -240,6 +226,9 @@ def __gather_mesh(vnode, blender_object, export_settings):
             if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
                 blender_mesh = blender_object.data
                 skip_filter = False
+                # Keep materials from object, as no modifiers are applied, so no risk that
+                # modifiers changed them
+                materials = tuple(ms.material for ms in blender_object.material_slots)
             else:
                 armature_modifiers = {}
                 if export_settings[gltf2_blender_export_keys.SKINS]:
@@ -260,6 +249,11 @@ def __gather_mesh(vnode, blender_object, export_settings):
                     # restore Armature modifiers
                     for idx, show_viewport in armature_modifiers.items():
                         blender_object.modifiers[idx].show_viewport = show_viewport
+
+                # Keep materials from the newly created tmp mesh, but if no materials, keep from object
+                materials = tuple(mat for mat in blender_mesh.materials)
+                if len(materials) == 1 and materials[0] is None:
+                    materials = tuple(ms.material for ms in blender_object.material_slots)
         else:
             blender_mesh = blender_object.data
             skip_filter = False
@@ -272,7 +266,11 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
                     vertex_groups = None # Not needed if no armature, avoid a cache miss
                     modifiers = None
-        materials = tuple(ms.material for ms in blender_object.material_slots)
+
+            # Keep materials from object, as no modifiers are applied, so no risk that
+            # modifiers changed them
+            materials = tuple(ms.material for ms in blender_object.material_slots)
+
         # retrieve armature
         # Because mesh data will be transforms to skeleton space,
         # we can't instantiate multiple object at different location, skined by same armature
