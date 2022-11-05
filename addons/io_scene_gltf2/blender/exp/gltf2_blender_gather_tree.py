@@ -273,7 +273,6 @@ class VExportTree:
         if self.export_settings['gltf_gn_mesh'] is True:
             if blender_object and any([mod.type == "NODES" for mod in blender_object.modifiers]): # TODO add more check
                 node.force_as_empty = True
-                print("force as empty 2")
                 depsgraph = bpy.context.evaluated_depsgraph_get()
                 eval = blender_object.evaluated_get(depsgraph)
                 for inst in depsgraph.object_instances: # use only as iterator
