@@ -74,7 +74,7 @@ def gather_animations(  obj_uuid: int,
 
     current_action = None
     current_world_matrix = None
-    if blender_object.animation_data and blender_object.animation_data.action:
+    if blender_object and blender_object.animation_data and blender_object.animation_data.action:
         # There is an active action. Storing it, to be able to restore after switching all actions during export
         current_action = blender_object.animation_data.action
     elif len(blender_actions) != 0 and blender_object.animation_data is not None and blender_object.animation_data.action is None:
