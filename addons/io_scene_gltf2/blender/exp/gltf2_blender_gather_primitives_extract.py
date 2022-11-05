@@ -20,6 +20,7 @@ from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.com import gltf2_blender_conversion
+from io_scene_gltf2.blender.com import gltf2_blender_default
 
 
 def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
@@ -148,6 +149,11 @@ class PrimitiveCreator:
     def define_attributes(self):
         # Manage attributes + COLOR_0
         for blender_attribute_index, blender_attribute in enumerate(self.blender_mesh.attributes):
+
+            # Excluse special attributes (used internally by Blender)
+            if blender_attribute.name in gltf2_blender_default.SPECIAL_ATTRIBUTES:
+                continue
+
             attr = {}
             attr['blender_attribute_index'] = blender_attribute_index
             attr['blender_name'] = blender_attribute.name

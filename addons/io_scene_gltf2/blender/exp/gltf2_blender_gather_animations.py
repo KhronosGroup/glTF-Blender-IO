@@ -73,8 +73,14 @@ def gather_animations(  obj_uuid: int,
 
 
     current_action = None
-    if blender_object and blender_object.animation_data and blender_object.animation_data.action:
+    current_world_matrix = None
+    if blender_object.animation_data and blender_object.animation_data.action:
+        # There is an active action. Storing it, to be able to restore after switching all actions during export
         current_action = blender_object.animation_data.action
+    elif len(blender_actions) != 0 and blender_object.animation_data is not None and blender_object.animation_data.action is None:
+        # No current action set, storing world matrix of object
+        current_world_matrix = blender_object.matrix_world.copy()
+
     # Remove any solo (starred) NLA track. Restored after export
     solo_track = None
     if blender_object and blender_object.animation_data:
@@ -144,6 +150,9 @@ def gather_animations(  obj_uuid: int,
             solo_track.is_solo = True
         blender_object.animation_data.use_tweak_mode = restore_tweak_mode
         blender_object.animation_data.use_nla = current_use_nla
+
+    if current_world_matrix is not None:
+        blender_object.matrix_world = current_world_matrix
 
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, True)
 

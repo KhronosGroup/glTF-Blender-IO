@@ -19,6 +19,10 @@ from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_object
 @skdriverdiscovercache
 def get_sk_drivers(blender_armature_uuid, export_settings):
 
+    # If no SK are exported --> No driver animation to export
+    if export_settings['gltf_morph'] is False:
+        return tuple([])
+
     blender_armature = export_settings['vtree'].nodes[blender_armature_uuid].blender_object
 
     drivers = []
