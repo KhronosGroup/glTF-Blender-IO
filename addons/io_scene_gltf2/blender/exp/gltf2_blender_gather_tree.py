@@ -271,16 +271,15 @@ class VExportTree:
 
         # Geometry Nodes instances
         if self.export_settings['gltf_gn_mesh'] is True:
-            if blender_object and any([mod.type == "NODES" for mod in blender_object.modifiers]): # TODO add more check
-                # Do not force export as empty
-                # Because GN graph can have both geometry and instances
-                depsgraph = bpy.context.evaluated_depsgraph_get()
-                eval = blender_object.evaluated_get(depsgraph)
-                for inst in depsgraph.object_instances: # use only as iterator
-                    if inst.parent == eval:
-                        if not inst.is_instance:
-                            continue
-                        self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object)
+            # Do not force export as empty
+            # Because GN graph can have both geometry and instances
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            eval = blender_object.evaluated_get(depsgraph)
+            for inst in depsgraph.object_instances: # use only as iterator
+                if inst.parent == eval:
+                    if not inst.is_instance:
+                        continue
+                    self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object)
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
