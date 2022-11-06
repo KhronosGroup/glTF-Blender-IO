@@ -213,7 +213,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_gn_mesh: BoolProperty(
-        name='GN instances meshes',
+        name='Geometry Nodes Instances',
         description='Export Geometry nodes instance meshes',
         default=False
     )
