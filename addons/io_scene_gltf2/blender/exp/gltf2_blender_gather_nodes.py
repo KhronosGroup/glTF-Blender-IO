@@ -236,6 +236,8 @@ def __gather_mesh(vnode, blender_object, export_settings):
 
             # Keep materials from the newly created tmp mesh
             materials = tuple(mat for mat in blender_mesh.materials)
+            if len(materials) == 1 and materials[0] is None:
+                    materials = tuple(ms.material for ms in blender_object.material_slots)
     else:
         blender_mesh = blender_object.data
         skip_filter = False
@@ -251,8 +253,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
         # Keep materials from object, as no modifiers are applied, so no risk that
         # modifiers changed them
         materials = tuple(ms.material for ms in blender_object.material_slots)
-
-    materials = tuple(ms.material for ms in blender_object.material_slots)
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
