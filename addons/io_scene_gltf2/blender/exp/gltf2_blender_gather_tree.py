@@ -33,7 +33,7 @@ class VExportNode:
     LIGHT = 4
     CAMERA = 5
     COLLECTION = 6
-    MESH = 7 # For instances of GN
+    INSTANCE = 7 # For instances of GN
 
     # Parent type, to be set on child regarding its parent
     NO_PARENT = 54
@@ -139,7 +139,7 @@ class VExportTree:
 
         # Set blender type
         if blender_object is None: #GN instance
-            node.blender_type = VExportNode.MESH
+            node.blender_type = VExportNode.INSTANCE
         elif blender_bone is not None:
             node.blender_type = VExportNode.BONE
             self.nodes[armature_uuid].bones[blender_bone.name] = node.uuid

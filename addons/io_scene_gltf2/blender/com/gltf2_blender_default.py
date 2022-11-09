@@ -23,3 +23,9 @@ SPECIAL_ATTRIBUTES = {
     ".select_poly",
     "material_index"
     }
+
+LIGHTS = {
+        "POINT": "point",
+        "SUN": "directional",
+        "SPOT": "spot"
+    }

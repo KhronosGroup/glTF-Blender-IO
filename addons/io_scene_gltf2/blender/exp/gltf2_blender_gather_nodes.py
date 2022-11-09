@@ -26,6 +26,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_extras import generate_extras
+from ..com.gltf2_blender_default import LIGHTS
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -43,7 +44,7 @@ def gather_node(vnode, export_settings):
     node = gltf2_io.Node(
         camera=__gather_camera(blender_object, export_settings),
         children=__gather_children(vnode, blender_object, export_settings),
-        extensions=__gather_extensions(blender_object, export_settings),
+        extensions=__gather_extensions(vnode, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
         mesh=__gather_mesh(vnode, blender_object, export_settings),
@@ -149,11 +150,18 @@ def __gather_children(vnode, blender_object, export_settings):
     return children
 
 
-def __gather_extensions(blender_object, export_settings):
+def __gather_extensions(vnode, export_settings):
+    blender_object = vnode.blender_object
     extensions = {}
 
-    if export_settings["gltf_lights"] and (blender_object.type == "LAMP" or blender_object.type == "LIGHT"):
+    blender_lamp = None
+    if export_settings["gltf_lights"] and vnode.blender_type == VExportNode.INSTANCE:
+        if vnode.data.type in LIGHTS:
+            blender_lamp = vnode.data
+    elif export_settings["gltf_lights"] and blender_object is not None and (blender_object.type == "LAMP" or blender_object.type == "LIGHT"):
         blender_lamp = blender_object.data
+    
+    if blender_lamp is not None:
         light = gltf2_blender_gather_lights.gather_lights_punctual(
             blender_lamp,
             export_settings
