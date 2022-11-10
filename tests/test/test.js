@@ -1250,7 +1250,9 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const animatedNode = asset.nodes[animation.channels[0].target.node];
                 const animatedMesh = asset.meshes[animatedNode.mesh];
                 const targetNames = animatedMesh.extras.targetNames;
+                const targetAccessors = animatedMesh.primitives[0].targets;
                 assert.strictEqual(targetNames.length, 2);
+                assert.strictEqual(targetAccessors.length, 2);
                 assert.notStrictEqual(targetNames.indexOf('Top'), -1);
                 assert.notStrictEqual(targetNames.indexOf('Bottom'), -1);
 
