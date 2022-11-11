@@ -1107,6 +1107,28 @@ describe('Exporter', function() {
                 let gltfPath_3 = path.resolve(outDirPath, '23_use_active_collection_nested.gltf');
                 const asset_3 = JSON.parse(fs.readFileSync(gltfPath_3));
                 assert.strictEqual(asset_3.nodes.length, 2);
+              });
+
+              it('exports correct no SK when modifier', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '27_apply_modifier_with_shapekeys.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                const modifier_mesh = asset.meshes[asset.nodes.filter(m => m.name === 'modifier')[0].mesh];
+                assert.ok(!('weights' in modifier_mesh));
+                if("extras" in modifier_mesh) {
+                    assert.ok(!('targetNames' in modifier_mesh['extras']));
+                }
+                const primitive_modifier_mesh = modifier_mesh.primitives[0];
+                assert.ok(!('targets' in primitive_modifier_mesh));
+
+                const no_modifier_mesh = asset.meshes[asset.nodes.filter(m => m.name === 'no_modifier')[0].mesh];
+                assert.ok('weights' in no_modifier_mesh);
+                if("extras" in no_modifier_mesh) {
+                    assert.ok('targetNames' in no_modifier_mesh['extras']);
+                }
+                const primitive_no_modifier_mesh = no_modifier_mesh.primitives[0];
+                assert.ok('targets' in primitive_no_modifier_mesh);
+
               });              
 
         });
