@@ -123,7 +123,7 @@ class PrimitiveCreator:
                     self.armature = None
 
         self.key_blocks = []
-        if self.export_settings[gltf2_blender_export_keys.APPLY] is False and self.blender_mesh.shape_keys and self.export_settings[gltf2_blender_export_keys.MORPH]:
+        if self.blender_mesh.shape_keys and self.export_settings[gltf2_blender_export_keys.MORPH]:
             self.key_blocks = [
                 key_block
                 for key_block in self.blender_mesh.shape_keys.key_blocks
