@@ -16,7 +16,7 @@ import bpy
 from typing import List, Optional, Tuple
 import numpy as np
 
-from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH, APPLY
+from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives_extract
@@ -178,7 +178,7 @@ def __gather_attributes(blender_primitive, blender_mesh, modifiers, export_setti
 
 
 def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings):
-    if export_settings[MORPH] and export_settings[APPLY] is False: # Apply Modifiers prevent exporting ShapeKeys
+    if export_settings[MORPH]:
         targets = []
         if blender_mesh.shape_keys is not None:
             morph_index = 0
