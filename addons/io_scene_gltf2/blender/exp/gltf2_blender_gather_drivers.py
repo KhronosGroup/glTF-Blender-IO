@@ -15,12 +15,13 @@
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import skdriverdiscovercache, skdrivervalues
 from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_object_path
+from io_scene_gltf2.blender.exp.gltf2_blender_export_keys import MORPH_ANIM
 
 @skdriverdiscovercache
 def get_sk_drivers(blender_armature_uuid, export_settings):
 
     # If no SK are exported --> No driver animation to export
-    if export_settings['gltf_morph'] is False:
+    if export_settings[MORPH_ANIM] is False:
         return tuple([])
 
     blender_armature = export_settings['vtree'].nodes[blender_armature_uuid].blender_object

@@ -494,6 +494,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_morph_animation: BoolProperty(
+        name='Shape Key Animations',
+        description='Export shape keys animations (morph targets)',
+        default=True
+    )    
+
     export_lights: BoolProperty(
         name='Punctual Lights',
         description='Export directional, point, and spot lights. '
@@ -657,15 +663,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_all_vertex_influences'] = False
             export_settings['gltf_def_bones'] = False
         export_settings['gltf_frame_step'] = self.export_frame_step
+
         export_settings['gltf_morph'] = self.export_morph
         if self.export_morph:
             export_settings['gltf_morph_normal'] = self.export_morph_normal
+            export_settings['gltf_morph_tangent'] = self.export_morph_tangent
+            export_settings['gltf_morph_anim'] = self.export_morph_animation
         else:
             export_settings['gltf_morph_normal'] = False
-        if self.export_morph and self.export_morph_normal:
-            export_settings['gltf_morph_tangent'] = self.export_morph_tangent
-        else:
             export_settings['gltf_morph_tangent'] = False
+            export_settings['gltf_morph_anim'] = False
 
         export_settings['gltf_lights'] = self.export_lights
         export_settings['gltf_lighting_mode'] = self.convert_lighting_mode
@@ -925,6 +932,77 @@ class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
 
         layout.prop(operator, 'convert_lighting_mode')
 
+class GLTF_PT_export_shapekeys(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Shape Keys"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.prop(operator, "export_morph", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_morph
+
+        layout.prop(operator, 'export_morph_normal')
+        col = layout.column()
+        col.active = operator.export_morph_normal
+        col.prop(operator, 'export_morph_tangent')
+
+
+class GLTF_PT_export_skinning(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Skinning"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.prop(operator, "export_skins", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_skins
+        layout.prop(operator, 'export_all_influences')
+
+        row = layout.row()
+        row.active = operator.export_force_sampling
+        row.prop(operator, 'export_def_bones')
+        if operator.export_force_sampling is False and operator.export_def_bones is True:
+            layout.label(text="Export only deformation bones is not possible when not sampling animation")
+
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -990,6 +1068,9 @@ class GLTF_PT_export_animation(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.prop(operator, 'export_current_frame')
+        row = layout.row()
+        row.active = operator.export_morph is True
+        row.prop(operator, 'export_morph_animation')
 
 
 class GLTF_PT_export_animation_export(bpy.types.Panel):
@@ -1031,77 +1112,6 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_anim_single_armature')
         layout.prop(operator, 'export_reset_pose_bones')
 
-
-class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Shape Keys"
-    bl_parent_id = "GLTF_PT_export_animation"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
-    def draw_header(self, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        self.layout.prop(operator, "export_morph", text="")
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.active = operator.export_morph
-
-        layout.prop(operator, 'export_morph_normal')
-        col = layout.column()
-        col.active = operator.export_morph_normal
-        col.prop(operator, 'export_morph_tangent')
-
-
-class GLTF_PT_export_animation_skinning(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Skinning"
-    bl_parent_id = "GLTF_PT_export_animation"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
-    def draw_header(self, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        self.layout.prop(operator, "export_skins", text="")
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.active = operator.export_skins
-        layout.prop(operator, 'export_all_influences')
-
-        row = layout.row()
-        row.active = operator.export_force_sampling
-        row.prop(operator, 'export_def_bones')
-        if operator.export_force_sampling is False and operator.export_def_bones is True:
-            layout.label(text="Export only deformation bones is not possible when not sampling animation")
 
 class GLTF_PT_export_user_extensions(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1369,12 +1379,12 @@ classes = (
     GLTF_PT_export_geometry_mesh,
     GLTF_PT_export_geometry_material,
     GLTF_PT_export_geometry_original_pbr,
+    GLTF_PT_export_shapekeys,
+    GLTF_PT_export_skinning,
     GLTF_PT_export_geometry_lighting,
     GLTF_PT_export_geometry_compression,
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,
-    GLTF_PT_export_animation_shapekeys,
-    GLTF_PT_export_animation_skinning,
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
     GLTF_PT_import_user_extensions,

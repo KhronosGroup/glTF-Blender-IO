@@ -300,7 +300,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                     action_on_type[strip.action.name] = "OBJECT"
 
-    if blender_object.type == "MESH" \
+    if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
