@@ -663,7 +663,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
         else:
             export_settings['gltf_frame_range'] = False
-            export_settings['gltf_move_keyframes'] = False
             export_settings['gltf_force_sampling'] = False
             export_settings['gltf_optimize_animation'] = False
             export_settings['gltf_export_anim_single_armature'] = False
