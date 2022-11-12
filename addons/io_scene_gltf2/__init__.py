@@ -460,8 +460,20 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_current_frame: BoolProperty(
         name='Use Current Frame',
-        description='Export the scene in the current animation frame',
+        description=(
+            'Export the scene in the current animation frame. '
+            'When off, frame O is used as rest transformations'
+        ),
         default=False
+    )
+
+    export_rest_position_armature: BoolProperty(
+        name='Use Rest Position Armature',
+        description=(
+            "Export armatures using rest position as joins rest pose. "
+            "When off, current frame pose is used as rest pose"
+        ),
+        default=True
     )
 
     export_skins: BoolProperty(
@@ -662,6 +674,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         else:
             export_settings['gltf_all_vertex_influences'] = False
             export_settings['gltf_def_bones'] = False
+        export_settings['gltf_rest_position_armature'] = self.export_rest_position_armature
         export_settings['gltf_frame_step'] = self.export_frame_step
 
         export_settings['gltf_morph'] = self.export_morph
@@ -808,7 +821,7 @@ class GLTF_PT_export_transform(bpy.types.Panel):
         layout.prop(operator, 'export_yup')
 
 
-class GLTF_PT_export_geometry(bpy.types.Panel):
+class GLTF_PT_export_data(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Data"
@@ -825,11 +838,11 @@ class GLTF_PT_export_geometry(bpy.types.Panel):
     def draw(self, context):
         pass
 
-class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
+class GLTF_PT_export_data_mesh(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Mesh"
-    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_parent_id = "GLTF_PT_export_data"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -860,11 +873,11 @@ class GLTF_PT_export_geometry_mesh(bpy.types.Panel):
         col.prop(operator, 'use_mesh_vertices')
 
 
-class GLTF_PT_export_geometry_material(bpy.types.Panel):
+class GLTF_PT_export_data_material(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Material"
-    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_parent_id = "GLTF_PT_export_data"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -886,11 +899,11 @@ class GLTF_PT_export_geometry_material(bpy.types.Panel):
         col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
 
-class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
+class GLTF_PT_export_data_original_pbr(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "PBR Extensions"
-    bl_parent_id = "GLTF_PT_export_geometry_material"
+    bl_parent_id = "GLTF_PT_export_data_material"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -909,11 +922,11 @@ class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
 
         layout.prop(operator, 'export_original_specular')
 
-class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
+class GLTF_PT_export_data_lighting(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Lighting"
-    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_parent_id = "GLTF_PT_export_data"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -932,11 +945,11 @@ class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
 
         layout.prop(operator, 'convert_lighting_mode')
 
-class GLTF_PT_export_shapekeys(bpy.types.Panel):
+class GLTF_PT_export_data_shapekeys(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Shape Keys"
-    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_parent_id = "GLTF_PT_export_data"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -967,11 +980,11 @@ class GLTF_PT_export_shapekeys(bpy.types.Panel):
         col.prop(operator, 'export_morph_tangent')
 
 
-class GLTF_PT_export_skinning(bpy.types.Panel):
+class GLTF_PT_export_data_skinning(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Skinning"
-    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_parent_id = "GLTF_PT_export_data"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -995,7 +1008,35 @@ class GLTF_PT_export_skinning(bpy.types.Panel):
         operator = sfile.active_operator
 
         layout.active = operator.export_skins
+
         layout.prop(operator, 'export_all_influences')
+
+
+class GLTF_PT_export_data_armature(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Armature"
+    bl_parent_id = "GLTF_PT_export_data"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_skins
+
+        layout.prop(operator, 'export_rest_position_armature')
 
         row = layout.row()
         row.active = operator.export_force_sampling
@@ -1003,11 +1044,11 @@ class GLTF_PT_export_skinning(bpy.types.Panel):
         if operator.export_force_sampling is False and operator.export_def_bones is True:
             layout.label(text="Export only deformation bones is not possible when not sampling animation")
 
-class GLTF_PT_export_geometry_compression(bpy.types.Panel):
+class GLTF_PT_export_data_compression(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Compression"
-    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_parent_id = "GLTF_PT_export_data"
     bl_options = {'DEFAULT_CLOSED'}
 
     def __init__(self):
@@ -1375,14 +1416,15 @@ classes = (
     GLTF_PT_export_main,
     GLTF_PT_export_include,
     GLTF_PT_export_transform,
-    GLTF_PT_export_geometry,
-    GLTF_PT_export_geometry_mesh,
-    GLTF_PT_export_geometry_material,
-    GLTF_PT_export_geometry_original_pbr,
-    GLTF_PT_export_shapekeys,
-    GLTF_PT_export_skinning,
-    GLTF_PT_export_geometry_lighting,
-    GLTF_PT_export_geometry_compression,
+    GLTF_PT_export_data,
+    GLTF_PT_export_data_mesh,
+    GLTF_PT_export_data_material,
+    GLTF_PT_export_data_original_pbr,
+    GLTF_PT_export_data_shapekeys,
+    GLTF_PT_export_data_armature,
+    GLTF_PT_export_data_skinning,
+    GLTF_PT_export_data_lighting,
+    GLTF_PT_export_data_compression,
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,
     GLTF_PT_export_user_extensions,

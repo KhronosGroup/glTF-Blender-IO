@@ -1189,6 +1189,18 @@ describe('Exporter', function() {
 
               });
 
+              it('exports using armature rest pose', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+                var cube = asset.nodes.filter(m => m.name === 'Bone')[0]
+                assert.ok('rotation' in cube);
+
+                let gltfPath_2 = path.resolve(outDirPath, '29_armature_use_rest_pose.gltf');
+                asset = JSON.parse(fs.readFileSync(gltfPath_2));
+                cube = asset.nodes.filter(m => m.name === 'Bone')[0]
+                assert.ok(!('rotation' in cube));
+              });
+
         });
     });
 });

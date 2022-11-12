@@ -182,7 +182,7 @@ def gather_animation_channels(obj_uuid: int,
         # If parenting is not done with same TRS than rest pose, this can lead to inconsistencies
         # So we need to bake object animation too, to be sure that correct TRS animation are used
         # Here, we want add these channels to same action that the armature
-        if export_settings['gltf_selected'] is False and export_settings['gltf_current_frame'] is False:
+        if export_settings['gltf_selected'] is False and export_settings['gltf_rest_position_armature'] is True:
 
             children_obj_parent_to_bones = []
             for bone_uuid in bones_uuid:
