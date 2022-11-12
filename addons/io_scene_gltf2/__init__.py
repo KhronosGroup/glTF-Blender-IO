@@ -1143,8 +1143,6 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.active = operator.export_animations
 
         layout.prop(operator, 'export_frame_range')
-        layout.prop(operator, 'export_frame_step')
-        layout.prop(operator, 'export_force_sampling')
         layout.prop(operator, 'export_nla_strips')
         if operator.export_nla_strips is False:
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
