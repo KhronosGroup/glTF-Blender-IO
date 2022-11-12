@@ -1177,6 +1177,37 @@ class GLTF_PT_export_animation_armature(bpy.types.Panel):
         layout.prop(operator, 'export_anim_single_armature')
         layout.prop(operator, 'export_reset_pose_bones')
 
+class GLTF_PT_export_animation_sampling(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Sampling Animations"
+    bl_parent_id = "GLTF_PT_export_animation"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.prop(operator, "export_force_sampling", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_animations
+
+        layout.prop(operator, 'export_frame_step')
+
 class GLTF_PT_export_user_extensions(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -1451,6 +1482,7 @@ classes = (
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,
     GLTF_PT_export_animation_armature,
+    GLTF_PT_export_animation_sampling,
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
     GLTF_PT_import_user_extensions,
