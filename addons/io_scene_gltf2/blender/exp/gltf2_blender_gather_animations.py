@@ -22,6 +22,8 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_data_path import is_bone_anim_channel
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_animation_channels import gather_animation_channel
 from mathutils import Matrix
 
 
@@ -97,6 +99,24 @@ def gather_animations(  obj_uuid: int,
 
                     if channel is not None:
                         channels.append(channel)
+
+            # Retrieve channels for drivers, if needed
+            drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(obj_uuid, export_settings)
+            for obj_driver_uuid, fcurves in drivers_to_manage:
+                channel = gather_animation_channel(
+                    obj_uuid,
+                    fcurves,
+                    export_settings,
+                    None,
+                    None,
+                    start_frame,
+                    end_frame,
+                    False,
+                    obj_uuid,
+                    obj_driver_uuid,
+                    True)
+                if channel is not None:
+                    channels.append(channel)
 
             if len(channels) > 0:
                 animation = gltf2_io.Animation(
