@@ -691,6 +691,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_force_sampling'] = self.export_force_sampling
             if not self.export_force_sampling:
                 export_settings['gltf_def_bones'] = False
+                export_settings['gltf_bake_animation'] = False
             export_settings['gltf_nla_strips'] = self.export_nla_strips
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
@@ -702,6 +703,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_force_sampling'] = False
+            export_settings['gltf_bake_animation'] = False
             export_settings['gltf_optimize_animation'] = False
             export_settings['gltf_optimize_animation_keep_armature'] = False
             export_settings['gltf_optimize_animation_keep_object'] = False
@@ -1161,6 +1163,7 @@ class GLTF_PT_export_animation(bpy.types.Panel):
         row.active = operator.export_morph is True
         row.prop(operator, 'export_morph_animation')
         row = layout.row()
+        row.active = operator.export_force_sampling
         row.prop(operator, 'export_bake_animation')
 
 
