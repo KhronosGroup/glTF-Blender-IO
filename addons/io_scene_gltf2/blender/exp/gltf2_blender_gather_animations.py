@@ -43,12 +43,14 @@ def gather_animations(  obj_uuid: int,
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
     blender_actions = __get_blender_actions(blender_object, export_settings)
 
-    if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0:
+    # When object is not animated at all (no SK)
+    # We can create an animation for this object
+    if len(blender_actions) == 0:
         # No TRS animation are found for this object.
-        # But we need to bake, in case we export selection
+        # But we may need to bake
         # (Only when force sampling is ON)
         # If force sampling is OFF, can lead to inconsistent export anyway
-        if export_settings['gltf_selected'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
+        if export_settings['gltf_bake_animation'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
             # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             # (skinned meshes TRS must be ignored, says glTF specification)
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
@@ -65,10 +67,10 @@ def gather_animations(  obj_uuid: int,
                     __link_samplers(animation, export_settings)
                     if animation is not None:
                         animations.append(animation)
-        elif export_settings['gltf_selected'] is True and blender_object.type == "ARMATURE":
+        elif export_settings['gltf_bake_animation'] is True and blender_object.type == "ARMATURE":
             # We need to bake all bones. Because some bone can have some constraints linking to
             # some other armature bones, for example
-            #TODO
+            #TODOANIM
             pass
 
 
@@ -123,7 +125,28 @@ def gather_animations(  obj_uuid: int,
         # No need to set active shapekeys animations, this is needed for bone baking
 
         animation = __gather_animation(obj_uuid, blender_action, export_settings)
+
+        # If we are in a SK animation, and we need to bake (if there also in TRS anim)
+        if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0 and on_type == "SHAPEKEY":
+            if export_settings['gltf_bake_animation'] is True and export_settings['gltf_force_sampling'] is True:
+            # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
+            # (skinned meshes TRS must be ignored, says glTF specification)
+                if export_settings['vtree'].nodes[obj_uuid].skin is None:
+                    channels = gltf2_blender_gather_animation_channels.gather_channels_baked(obj_uuid, None, export_settings)
+                    if channels is not None:
+                        if animation is None:
+                            animation = gltf2_io.Animation(
+                                    channels=channels,
+                                    extensions=None, # as other animations
+                                    extras=None, # Because there is no animation to get extras from
+                                    name=blender_object.name, # Use object name as animation name
+                                    samplers=[]
+                                )
+                        else:
+                            animation.channels.extend(channels)
+
         if animation is not None:
+            __link_samplers(animation, export_settings)
             animations.append(animation)
 
             # Store data for merging animation later
@@ -187,8 +210,7 @@ def __gather_animation( obj_uuid: int,
     if not animation.channels:
         return None
 
-    # To allow reuse of samplers in one animation,
-    __link_samplers(animation, export_settings)
+    # To allow reuse of samplers in one animation : This will be done later, when we know all channels are here
 
     export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object)
 

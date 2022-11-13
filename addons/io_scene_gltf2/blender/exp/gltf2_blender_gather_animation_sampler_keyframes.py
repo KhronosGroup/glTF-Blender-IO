@@ -445,10 +445,10 @@ def gather_keyframes(blender_obj_uuid: str,
     if not export_settings[gltf2_blender_export_keys.OPTIMIZE_ANIMS]:
         return (keyframes, baking_is_needed)
 
-    # For armature only
+    # For armatures
     # Check if all values are the same
     # In that case, if there is no real keyframe on this channel for this given bone,
-    # We can ignore this keyframes
+    # We can ignore these keyframes
     # if there are some fcurve, we can keep only 2 keyframes, first and last
     if blender_object_if_armature is not None:
         cst = fcurve_is_constant(keyframes)
@@ -514,6 +514,7 @@ def needs_baking(blender_object_if_armature: typing.Optional[bpy.types.Object],
         return True
 
     # If tree is troncated, sampling is forced
+    # TODOANIM : keep that? sampling and/or baking ?
     if export_settings['vtree'].tree_troncated is True:
         return True
 

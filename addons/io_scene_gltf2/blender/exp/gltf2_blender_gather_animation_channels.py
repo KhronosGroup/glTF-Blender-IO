@@ -182,7 +182,9 @@ def gather_animation_channels(obj_uuid: int,
         # If parenting is not done with same TRS than rest pose, this can lead to inconsistencies
         # So we need to bake object animation too, to be sure that correct TRS animation are used
         # Here, we want add these channels to same action that the armature
-        if export_settings['gltf_selected'] is False and export_settings['gltf_rest_position_armature'] is True:
+        # No need to do it if animations are baked, because object will be animated anyways by the baking process
+        # TODOANIM : Except if optimization delete the animation ???
+        if export_settings['gltf_bake_animation'] is False and export_settings['gltf_rest_position_armature'] is True:
 
             children_obj_parent_to_bones = []
             for bone_uuid in bones_uuid:
@@ -232,12 +234,13 @@ def gather_animation_channels(obj_uuid: int,
                 done_paths.append(path)
         done_paths = list(set(done_paths))
 
-        if export_settings['gltf_selected'] is True and export_settings['vtree'].tree_troncated is True:
+        if export_settings['gltf_bake_animation'] is True and export_settings['vtree'].tree_troncated is True:
             start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
             end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
             to_be_done = ['location', 'rotation_quaternion', 'scale']
             to_be_done = [c for c in to_be_done if c not in done_paths]
 
+            #TODOANIM : check case of driven shape keys anim
             # In case of weight action, do nothing.
             # If there is only weight --> TRS is already managed at first
             if not (len(done_paths) == 1 and 'weights' in done_paths):

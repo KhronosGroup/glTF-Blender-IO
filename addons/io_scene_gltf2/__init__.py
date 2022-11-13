@@ -440,6 +440,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_bake_animation: BoolProperty(
+        name='Bake animations',
+        description=(
+            "Force exporting animation on every objects. "
+            "Can be usefull when using constraints or driver. "
+            "Also useful when exporting only selection"
+        ),
+        default=True
+    )
+
     export_anim_single_armature: BoolProperty(
         name='Export all Armature Actions',
         description=(
@@ -661,6 +671,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
+            export_settings['gltf_bake_animation'] = self.export_bake_animation
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_force_sampling'] = False
@@ -1099,6 +1110,11 @@ class GLTF_PT_export_animation(bpy.types.Panel):
 
         return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
 
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.prop(operator, "export_animations", text="")
+
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
@@ -1107,10 +1123,14 @@ class GLTF_PT_export_animation(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
+        layout.active = operator.export_animations
+
         layout.prop(operator, 'export_current_frame')
         row = layout.row()
         row.active = operator.export_morph is True
         row.prop(operator, 'export_morph_animation')
+        row = layout.row()
+        row.prop(operator, 'export_bake_animation')
 
 
 class GLTF_PT_export_animation_export(bpy.types.Panel):
@@ -1126,11 +1146,6 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         operator = sfile.active_operator
 
         return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
-    def draw_header(self, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        self.layout.prop(operator, "export_animations", text="")
 
     def draw(self, context):
         layout = self.layout
@@ -1192,6 +1207,7 @@ class GLTF_PT_export_animation_sampling(bpy.types.Panel):
     def draw_header(self, context):
         sfile = context.space_data
         operator = sfile.active_operator
+        self.layout.active = operator.export_animations
         self.layout.prop(operator, "export_force_sampling", text="")
 
     def draw(self, context):
