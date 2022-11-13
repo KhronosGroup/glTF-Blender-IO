@@ -52,7 +52,7 @@ def gather_image(
         # In case we can't retrieve image (for example packed images, with original moved)
         # We don't create invalid image without uri
         factor_uri = None
-        if uri is None: return None
+        if uri is None: return None, None
 
     buffer_view, factor_buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 

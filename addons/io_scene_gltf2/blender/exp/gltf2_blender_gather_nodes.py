@@ -36,10 +36,10 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
 
-    if vnode.blender_type != VExportNode.COLLECTION:
-        skin = __gather_skin(vnode, blender_object, export_settings)
-    else:
-        skin = None
+    skin = gather_skin(vnode.uuid, export_settings)
+    if skin is not None:
+        vnode.skin = skin
+
     node = gltf2_io.Node(
         camera=__gather_camera(vnode, export_settings),
         children=__gather_children(vnode, blender_object, export_settings),
@@ -63,9 +63,6 @@ def gather_node(vnode, export_settings):
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
     vnode.node = node
-
-    if node.skin is not None:
-        vnode.skin = skin
 
     return node
 
@@ -332,9 +329,15 @@ def __gather_trans_rot_scale(vnode, export_settings):
         trans, rot, sca = vnode.matrix_world.decompose()
     else:
         # calculate local matrix
-        trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
-
-
+        if export_settings['vtree'].nodes[vnode.parent_uuid].skin is None:
+            trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
+        else:
+            # But ... if parent has skin, the parent TRS are not taken into account, so don't get local from parent, but from armature 
+            # It also depens if skined mesh is parented to armature or not
+            if export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
+                trans, rot, sca = (export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].armature].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
+            else:
+                trans, rot, sca = vnode.matrix_world.decompose()
 
     # make sure the rotation is normalized
     rot.normalize()
@@ -370,7 +373,8 @@ def __gather_trans_rot_scale(vnode, export_settings):
         scale = [sca[0], sca[1], sca[2]]
     return translation, rotation, scale
 
-def __gather_skin(vnode, blender_object, export_settings):
+def gather_skin(vnode, export_settings):
+    blender_object = export_settings['vtree'].nodes[vnode].blender_object
     modifiers = {m.type: m for m in blender_object.modifiers}
     if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:
         return None
@@ -397,7 +401,7 @@ def __gather_skin(vnode, blender_object, export_settings):
         return None
 
     # Skins and meshes must be in the same glTF node, which is different from how blender handles armatures
-    return gltf2_blender_gather_skins.gather_skin(vnode.armature, export_settings)
+    return gltf2_blender_gather_skins.gather_skin(export_settings['vtree'].nodes[vnode].armature, export_settings)
 
 
 def __gather_weights(blender_object, export_settings):

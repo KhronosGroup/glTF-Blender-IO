@@ -17,6 +17,7 @@ from mathutils import Vector, Quaternion, Matrix
 from .gltf2_blender_scene import BlenderScene
 from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_default_material
 from .gltf2_blender_material import BlenderMaterial
+from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderGlTF():
@@ -27,6 +28,9 @@ class BlenderGlTF():
     @staticmethod
     def create(gltf):
         """Create glTF main method, with optional profiling"""
+
+        import_user_extensions('gather_import_gltf_before_hook', gltf)
+
         profile = bpy.app.debug_value == 102
         if profile:
             import cProfile, pstats, io
@@ -169,22 +173,36 @@ class BlenderGlTF():
             mesh.shapekey_names = []
             used_names = set(['Basis']) #Be sure to not use 'Basis' name at import, this is a reserved name
 
-            # Some invalid glTF files has empty primitive tab
-            if len(mesh.primitives) > 0:
-                for sk, target in enumerate(mesh.primitives[0].targets or []):
-                    if 'POSITION' not in target:
+            # Look for primitive with morph targets
+            for prim in (mesh.primitives or []):
+                if not prim.targets:
+                    continue
+
+                for sk, _ in enumerate(prim.targets):
+                    # Skip shape key for target that doesn't morph POSITION
+                    morphs_position = any(
+                        (prim.targets and 'POSITION' in prim.targets[sk])
+                        for prim in mesh.primitives
+                    )
+                    if not morphs_position:
                         mesh.shapekey_names.append(None)
                         continue
 
-                    # Check if glTF file has some extras with targetNames. Otherwise
-                    # use the name of the POSITION accessor on the first primitive.
                     shapekey_name = None
-                    if mesh.extras is not None:
-                        if 'targetNames' in mesh.extras and sk < len(mesh.extras['targetNames']):
-                            shapekey_name = mesh.extras['targetNames'][sk]
+
+                    # Try to use name from extras.targetNames
+                    try:
+                        shapekey_name = str(mesh.extras['targetNames'][sk])
+                    except Exception:
+                        pass
+
+                    # Try to get name from first primitive's POSITION accessor
                     if shapekey_name is None:
-                        if gltf.data.accessors[target['POSITION']].name is not None:
-                            shapekey_name = gltf.data.accessors[target['POSITION']].name
+                        try:
+                            shapekey_name = gltf.data.accessors[mesh.primitives[0].targets[sk]['POSITION']].name
+                        except Exception:
+                            pass
+
                     if shapekey_name is None:
                         shapekey_name = "target_" + str(sk)
 
@@ -192,6 +210,8 @@ class BlenderGlTF():
                     used_names.add(shapekey_name)
 
                     mesh.shapekey_names.append(shapekey_name)
+
+                break
 
         # Manage KHR_materials_variants
         BlenderGlTF.manage_material_variants(gltf)

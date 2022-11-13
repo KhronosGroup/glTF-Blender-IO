@@ -18,6 +18,7 @@ from typing import Optional, List, Dict, Any
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_extras import generate_extras
+from ..com.gltf2_blender_conversion import PBR_WATTS_TO_LUMENS
 
 from io_scene_gltf2.io.com import gltf2_io_lights_punctual
 from io_scene_gltf2.io.com import gltf2_io_debug
@@ -61,7 +62,7 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
     return list(blender_lamp.color)
 
 
-def __gather_intensity(blender_lamp, _) -> Optional[float]:
+def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
     emission_node = __get_cycles_emission_node(blender_lamp)
     if emission_node is not None:
         if blender_lamp.type != 'SUN':
@@ -79,9 +80,26 @@ def __gather_intensity(blender_lamp, _) -> Optional[float]:
                 emission_strength = blender_lamp.energy
         else:
             emission_strength = emission_node.inputs["Strength"].default_value
+    else:
+        emission_strength = blender_lamp.energy
+    if export_settings['gltf_lighting_mode'] == 'RAW':
         return emission_strength
-
-    return blender_lamp.energy
+    else:
+        # Assume at this point the computed strength is still in the appropriate watt-related SI unit, which if everything up to here was done with physical basis it hopefully should be.
+        if blender_lamp.type == 'SUN': # W/m^2 in Blender to lm/m^2 for GLTF/KHR_lights_punctual.
+            emission_luminous = emission_strength
+        else:
+            # Other than directional, only point and spot lamps are supported by GLTF.
+            # In Blender, points are omnidirectional W, and spots are specified as if they're points.
+            # Point and spot should both be lm/r^2 in GLTF.
+            emission_luminous = emission_strength / (4*math.pi)
+        if export_settings['gltf_lighting_mode'] == 'SPEC':
+            emission_luminous *= PBR_WATTS_TO_LUMENS
+        elif export_settings['gltf_lighting_mode'] == 'COMPAT':
+            pass # Just so we have an exhaustive tree to catch bugged values.
+        else:
+            raise ValueError(export_settings['gltf_lighting_mode'])
+        return emission_luminous
 
 
 def __gather_spot(blender_lamp, export_settings) -> Optional[gltf2_io_lights_punctual.LightSpot]:
