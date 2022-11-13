@@ -519,3 +519,13 @@ class VExportTree:
                         break
 
             # If not found, keep current material as default
+
+    def break_bone_hierarchy(self):
+        # Can be usefull when matrix is not decomposable
+        for arma in self.get_all_node_of_type(VExportNode.ARMATURE):
+            bones = self.get_all_bones(arma)
+            for bone in bones:
+                if self.nodes[bone].parent_uuid is not None and self.nodes[bone].parent_uuid != arma:
+                    self.nodes[self.nodes[bone].parent_uuid].children.remove(bone)
+                    self.nodes[bone].parent_uuid = arma
+                    self.nodes[arma].children.append(bone)

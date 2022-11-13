@@ -431,6 +431,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_hierarchy_flatten_bones: BoolProperty(
+        name='Flatten Bone Hierarchy',
+        description='Flatten Bone Hierarchy. Usefull in case of non decomposable TRS matrix',
+        default=False
+    )
+
     export_optimize_animation_size: BoolProperty(
         name='Optimize Animation Size',
         description=(
@@ -679,6 +685,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_current_frame'] = self.export_current_frame
         export_settings['gltf_animations'] = self.export_animations
         export_settings['gltf_def_bones'] = self.export_def_bones
+        export_settings['gltf_flatten_bones_hierarchy'] = self.export_hierarchy_flatten_bones
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
@@ -1075,6 +1082,8 @@ class GLTF_PT_export_data_armature(bpy.types.Panel):
         row.prop(operator, 'export_def_bones')
         if operator.export_force_sampling is False and operator.export_def_bones is True:
             layout.label(text="Export only deformation bones is not possible when not sampling animation")
+        row = layout.row()
+        row.prop(operator, 'export_hierarchy_flatten_bones')
 
 class GLTF_PT_export_data_compression(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
