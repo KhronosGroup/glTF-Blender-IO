@@ -457,8 +457,12 @@ def gather_keyframes(blender_obj_uuid: str,
              # Keep animation, but keep only 2 keyframes if data are not changing
              return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
         else: # bone is not animated (no fcurve)
-            # Not keeping if not changing property
-            return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
+            # Not keeping if not changing property if user decided to not keep
+            if export_settings['gltf_optimize_animation_keep_armature'] is False:
+                return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
+            else:
+                # Keep at least 2 keyframes if data are not changing
+                return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
     else:
         # For objects, if all values are the same, we keep only first and last
         cst = fcurve_is_constant(keyframes)
@@ -466,9 +470,12 @@ def gather_keyframes(blender_obj_uuid: str,
             return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
         else:
             # baked object (selected but not animated)
-            return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
-
-    return (keyframes, baking_is_needed)
+            # Not keeping if not changing property if user decided to not keep
+            if export_settings['gltf_optimize_animation_keep_object'] is False:
+                return (None, baking_is_needed) if cst is True else (keyframes, baking_is_needed)
+            else:
+                # Keep at least 2 keyframes if data are not changing
+                return ([keyframes[0], keyframes[-1]], baking_is_needed) if cst is True and len(keyframes) >= 2 else (keyframes, baking_is_needed)
 
 
 def fcurve_is_constant(keyframes):

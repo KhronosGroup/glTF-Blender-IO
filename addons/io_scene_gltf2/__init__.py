@@ -437,6 +437,24 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             "Reduce exported file-size by removing duplicate keyframes"
             "(can cause problems with stepped animation)"
         ),
+        default=True
+    )
+
+    export_optimize_animation_keep_anim_armature: BoolProperty(
+        name='Force keeping channel for armature / bones',
+        description=(
+            "if all keyframes are identical in a rig "
+            "force keeping the minimal animation"
+        ),
+        default=True
+    )
+
+    export_optimize_animation_keep_anim_object: BoolProperty(
+        name='Force keeping channel for objects',
+        description=(
+            "if all keyframes are identical for object transformations "
+            "force keeping the minimal animation"
+        ),
         default=False
     )
 
@@ -669,6 +687,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_nla_strips'] = self.export_nla_strips
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
+            export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
+            export_settings['gltf_optimize_animation_keep_object'] = self.export_optimize_animation_keep_anim_object
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
             export_settings['gltf_bake_animation'] = self.export_bake_animation
@@ -676,6 +696,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_force_sampling'] = False
             export_settings['gltf_optimize_animation'] = False
+            export_settings['gltf_optimize_animation_keep_armature'] = False
+            export_settings['gltf_optimize_animation_keep_object'] = False
             export_settings['gltf_export_anim_single_armature'] = False
             export_settings['gltf_export_reset_pose_bones'] = False
         export_settings['gltf_skins'] = self.export_skins
@@ -1161,7 +1183,6 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.prop(operator, 'export_nla_strips')
         if operator.export_nla_strips is False:
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
-        layout.prop(operator, 'export_optimize_animation_size')
 
 class GLTF_PT_export_animation_armature(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1221,6 +1242,42 @@ class GLTF_PT_export_animation_sampling(bpy.types.Panel):
         layout.active = operator.export_animations
 
         layout.prop(operator, 'export_frame_step')
+
+
+class GLTF_PT_export_animation_optimize(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Optimize Animations"
+    bl_parent_id = "GLTF_PT_export_animation"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_animations
+
+        layout.prop(operator, 'export_optimize_animation_size')
+
+        row = layout.row()
+        row.active = operator.export_optimize_animation_size
+        row.prop(operator, 'export_optimize_animation_keep_anim_armature')
+
+        row = layout.row()
+        row.active = operator.export_optimize_animation_size
+        row.prop(operator, 'export_optimize_animation_keep_anim_object')
+
 
 class GLTF_PT_export_user_extensions(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1497,6 +1554,7 @@ classes = (
     GLTF_PT_export_animation_export,
     GLTF_PT_export_animation_armature,
     GLTF_PT_export_animation_sampling,
+    GLTF_PT_export_animation_optimize,
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
     GLTF_PT_import_user_extensions,
