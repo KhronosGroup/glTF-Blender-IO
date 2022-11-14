@@ -119,6 +119,9 @@ class BlenderNode():
                 # backwards from the tip to the root
                 obj.location += Vector((0, -parent_vnode.bone_length, 0))
 
+        # Store Rest matrix of object # TODOANIM
+        # Store default weight if any # TODOANIM
+        
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
         return obj

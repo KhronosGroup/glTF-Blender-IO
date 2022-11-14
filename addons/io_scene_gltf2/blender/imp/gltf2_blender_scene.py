@@ -88,6 +88,9 @@ class BlenderScene():
                 anim_name = gltf.data.animations[0].track_name
                 BlenderAnimation.restore_animation(gltf, anim_name)
 
+                #TODOANIM : better way to store than in bpy.data.scenes[0]
+                bpy.data.scenes[0].gltf2_animation_applied = bpy.data.scenes[0].gltf2_animation_tracks.find(gltf.data.animations[0].track_name)
+
     @staticmethod
     def select_imported_objects(gltf):
         """Select all (and only) the imported objects."""

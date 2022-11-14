@@ -1523,6 +1523,14 @@ def gltf_variant_ui_update(self, context):
     else:
         variant_unregister()
 
+def gltf_animation_ui_update(self, context):
+    from .blender.com.gltf2_blender_ui import anim_ui_register, anim_ui_unregister
+    if self.animation_ui is True:
+        # register all needed types
+        anim_ui_register()
+    else:
+        anim_ui_unregister()
+
 class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
@@ -1537,12 +1545,18 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         update=gltf_variant_ui_update
         )
 
+    animation_ui: bpy.props.BoolProperty(
+        default=False,
+        description="Display glTF UI to manage animations",
+        update=gltf_animation_ui_update
+    )
 
     def draw(self, context):
         layout = self.layout
         row = layout.row()
         row.prop(self, "settings_node_ui", text="Shader Editor Add-ons")
         row.prop(self, "KHR_materials_variants_ui", text="Material Variants")
+        row.prop(self, "animation_ui", text="Animation UI")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
@@ -1583,6 +1597,8 @@ def register():
     blender_ui.register()
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
         blender_ui.variant_register()
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.animation_ui is True:
+        blender_ui.anim_ui_register()
 
     # add to the export / import menu
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)

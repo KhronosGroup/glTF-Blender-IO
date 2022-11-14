@@ -17,6 +17,7 @@ from .gltf2_blender_animation_weight import BlenderWeightAnim
 from .gltf2_blender_animation_utils import simulate_stash, restore_animation_on_object
 from .gltf2_blender_vnode import VNode
 from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
+import bpy
 
 class BlenderAnimation():
     """Dispatch Animation to node or morph weights animation."""
@@ -42,6 +43,12 @@ class BlenderAnimation():
         track_name = gltf.data.animations[anim_idx].track_name
         for (obj, action) in gltf.needs_stash:
             simulate_stash(obj, track_name, action)
+
+        # TODOANIM if UI is not enable, the property is not available
+        # TODOANIM need to store in reverse order
+        if track_name not in [track.name for track in bpy.data.scenes[0].gltf2_animation_tracks]:
+            new_ = bpy.data.scenes[0].gltf2_animation_tracks.add()
+            new_.name = track_name
 
         import_user_extensions('gather_import_animation_after_hook', gltf, anim_idx, track_name)
 
