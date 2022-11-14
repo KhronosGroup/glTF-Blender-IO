@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
@@ -119,7 +119,9 @@ class BlenderNode():
                 # backwards from the tip to the root
                 obj.location += Vector((0, -parent_vnode.bone_length, 0))
 
-        # Store Rest matrix of object # TODOANIM
+        # Store Rest matrix of object
+        # Can't use directly matrix_world because not refreshed yet
+        obj.gltf2_animation_rest = Matrix.LocRotScale(obj.location, obj.rotation_quaternion, obj.scale)
         # Store default weight if any # TODOANIM
         
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)

@@ -533,7 +533,7 @@ class SCENE_OT_gltf2_animation_apply(bpy.types.Operator):
         for obj in bpy.context.scene.objects:
             if obj.animation_data:
                 obj.animation_data.action = None
-                # TODOANIM reset to rest matrix
+                obj.matrix_world = obj.gltf2_animation_rest
 
                 for track in [track for track in obj.animation_data.nla_tracks \
                         if track.name == track_name and len(track.strips) > 0 and track.strips[0].action is not None]:
