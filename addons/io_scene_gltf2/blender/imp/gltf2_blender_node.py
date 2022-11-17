@@ -122,7 +122,6 @@ class BlenderNode():
         # Store Rest matrix of object
         # Can't use directly matrix_world because not refreshed yet
         obj.gltf2_animation_rest = Matrix.LocRotScale(obj.location, obj.rotation_quaternion, obj.scale)
-        # Store default weight if any # TODOANIM
         
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
@@ -262,6 +261,10 @@ class BlenderNode():
                 if weight < kb.slider_min: kb.slider_min = weight
                 if weight > kb.slider_max: kb.slider_max = weight
                 kb.value = weight
+
+                # Store default weight
+                w = obj.gltf2_animation_weight_rest.add()
+                w.val = weight
 
     @staticmethod
     def setup_skinning(gltf, pynode, obj):

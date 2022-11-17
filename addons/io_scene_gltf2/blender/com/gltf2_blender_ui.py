@@ -541,7 +541,8 @@ class SCENE_OT_gltf2_animation_apply(bpy.types.Operator):
 
             if obj.type == "MESH" and obj.data and obj.data.shape_keys and obj.data.shape_keys.animation_data:
                 obj.data.shape_keys.animation_data.action = None
-                # TODOANIM reset to default weight
+                for idx, data in enumerate(obj.gltf2_animation_weight_rest):
+                    obj.data.shape_keys.key_blocks[idx+1].value = data.val 
 
                 for track in [track for track in obj.data.shape_keys.animation_data.nla_tracks \
                         if track.name == track_name and len(track.strips) > 0 and track.strips[0].action is not None]:
@@ -571,6 +572,9 @@ class SCENE_PT_gltf2_animation(bpy.types.Panel):
             row.template_list("SCENE_UL_gltf2_animation_track", "", bpy.data.scenes[0], "gltf2_animation_tracks", bpy.data.scenes[0], "gltf2_animation_active")
         else:
             row.label(text="No glTF Animation")
+
+class GLTF2_weight(bpy.types.PropertyGroup):
+    val : bpy.props.FloatProperty(name="weight")
 
 ###############################################################################
 
@@ -626,6 +630,7 @@ def variant_unregister():
 
 
 def anim_ui_register():
+    bpy.utils.register_class(GLTF2_weight)
     bpy.utils.register_class(SCENE_OT_gltf2_animation_apply)
     bpy.utils.register_class(gltf2_animation_NLATrackNames)
     bpy.utils.register_class(SCENE_UL_gltf2_animation_track)
@@ -634,6 +639,7 @@ def anim_ui_register():
     bpy.types.Scene.gltf2_animation_active = bpy.props.IntProperty()
     bpy.types.Scene.gltf2_animation_applied = bpy.props.IntProperty()
     bpy.types.Object.gltf2_animation_rest = bpy.props.FloatVectorProperty(name="Rest", size=[4, 4], subtype="MATRIX")
+    bpy.types.Object.gltf2_animation_weight_rest = bpy.props.CollectionProperty(type=GLTF2_weight)
     bpy.utils.register_class(SCENE_PT_gltf2_animation)
 
 def anim_ui_unregister():
@@ -642,7 +648,9 @@ def anim_ui_unregister():
     del bpy.types.Scene.gltf2_animation_tracks
     del bpy.types.Scene.gltf2_animation_applied
     del bpy.types.Object.gltf2_animation_rest
+    del bpy.types.Object.gltf2_animation_weight_rest
     bpy.utils.unregister_class(SCENE_OT_gltf2_animation_retrieve)
     bpy.utils.unregister_class(SCENE_UL_gltf2_animation_track)
     bpy.utils.unregister_class(gltf2_animation_NLATrackNames)
     bpy.utils.unregister_class(SCENE_OT_gltf2_animation_apply)
+    bpy.utils.unregister_class(GLTF2_weight)
