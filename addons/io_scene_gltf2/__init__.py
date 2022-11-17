@@ -407,14 +407,19 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
-    export_nla_strips: BoolProperty(
-        name='Group by NLA Track',
-        description=(
-            "When on, multiple actions become part of the same glTF animation if "
-            "they're pushed onto NLA tracks with the same name. "
-            "When off, all the currently assigned actions become one glTF animation"
+    export_animation_mode: EnumProperty(
+        name='Animation mode',
+        items=(('ACTIONS', 'Actions',
+        'Export actions (actives and on NLA tracks) as separate animations'),
+        ('ACTIVE_ACTIONS', 'Active actions merged',
+        'All the currently assigned actions become one glTF animation'),
+        ('NLA_TRACKS', 'NLA Tracks',
+        'Export individual NLA Tracks as separate animation'),
+        ('SCENE', 'Scene',
+        'Export baked scene as a single animation')
         ),
-        default=True
+        description='Export Animation mode',
+        default='ACTIONS'
     )
 
     export_nla_strips_merged_animation_name: StringProperty(
@@ -493,10 +498,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_current_frame: BoolProperty(
-        name='Use Current Frame',
+        name='Use Current Frame as Object Rest Transformations',
         description=(
             'Export the scene in the current animation frame. '
-            'When off, frame O is used as rest transformations'
+            'When off, frame O is used as rest transformations for objects'
         ),
         default=False
     )
@@ -692,7 +697,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             if not self.export_force_sampling:
                 export_settings['gltf_def_bones'] = False
                 export_settings['gltf_bake_animation'] = False
-            export_settings['gltf_nla_strips'] = self.export_nla_strips
+            export_settings['gltf_animation_mode'] = self.export_animation_mode
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
@@ -1192,8 +1197,8 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
         layout.active = operator.export_animations
 
         layout.prop(operator, 'export_frame_range')
-        layout.prop(operator, 'export_nla_strips')
-        if operator.export_nla_strips is False:
+        layout.prop(operator, 'export_animation_mode')
+        if operator.export_animation_mode == "ACTIVE_ACTIONS":
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
 
 class GLTF_PT_export_animation_armature(bpy.types.Panel):

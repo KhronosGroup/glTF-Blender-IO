@@ -106,7 +106,7 @@ def __gather_animations(blender_scene, export_settings):
         animations_, merged_tracks = gltf2_blender_gather_animations.gather_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
 
-    if export_settings['gltf_nla_strips'] is False:
+    if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
         # Fake an animation with all animations of the scene
         merged_tracks = {}
         merged_tracks_name = 'Animation'

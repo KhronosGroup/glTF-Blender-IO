@@ -371,7 +371,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
             action_on_type[blender_object.animation_data.action.name] = "OBJECT"
 
         # Collect associated strips from NLA tracks.
-        if export_settings['gltf_nla_strips'] is True:
+        if export_settings['gltf_animation_mode'] == "ACTIONS":
             for track in blender_object.animation_data.nla_tracks:
                 # Multi-strip tracks do not export correctly yet (they need to be baked),
                 # so skip them for now and only write single-strip tracks.
@@ -393,7 +393,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                 blender_tracks[blender_object.data.shape_keys.animation_data.action.name] = None
                 action_on_type[blender_object.data.shape_keys.animation_data.action.name] = "SHAPEKEY"
 
-            if export_settings['gltf_nla_strips'] is True:
+            if export_settings['gltf_animation_mode'] == "ACTIONS":
                 for track in blender_object.data.shape_keys.animation_data.nla_tracks:
                     # Multi-strip tracks do not export correctly yet (they need to be baked),
                     # so skip them for now and only write single-strip tracks.

@@ -171,6 +171,7 @@ def get_object_matrix(blender_obj_uuid: str,
 
             # if this object is not animated, do not skip :
             # We need this object too in case of bake
+            # TODOANIM : only when bake is enabled. If not, no need to keep not animated objects?
 
             # calculate local matrix
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
@@ -203,6 +204,7 @@ def get_object_matrix(blender_obj_uuid: str,
             else:
                 # case of baking selected object.
                 # There is no animation, so use uuid of object as key
+                # TODOANIM : only when bake is enabled. If not, no need to keep not animated objects?
                 if obj_uuid not in data[obj_uuid].keys():
                     data[obj_uuid][obj_uuid] = {}
                 data[obj_uuid][obj_uuid][frame] = mat
