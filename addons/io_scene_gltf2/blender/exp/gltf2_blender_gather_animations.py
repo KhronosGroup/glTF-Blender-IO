@@ -73,7 +73,7 @@ def gather_animations(  obj_uuid: int,
             # We need to bake all bones. Because some bone can have some constraints linking to
             # some other armature bones, for example
 
-            # if there is no animation is file => no need to bake
+            # if there is no animation in file => no need to bake
             if len(bpy.data.actions) > 0:
                 channels = []
                 to_be_done = ['location', 'rotation_quaternion', 'scale']
