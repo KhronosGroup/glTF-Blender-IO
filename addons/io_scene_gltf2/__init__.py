@@ -1163,7 +1163,10 @@ class GLTF_PT_export_animation(bpy.types.Panel):
 
         layout.active = operator.export_animations
 
-        layout.prop(operator, 'export_current_frame')
+        layout.prop(operator, 'export_animation_mode')
+        if operator.export_animation_mode == "ACTIVE_ACTIONS":
+            layout.prop(operator, 'export_nla_strips_merged_animation_name')
+
         row = layout.row()
         row.active = operator.export_morph is True
         row.prop(operator, 'export_morph_animation')
@@ -1172,10 +1175,10 @@ class GLTF_PT_export_animation(bpy.types.Panel):
         row.prop(operator, 'export_bake_animation')
 
 
-class GLTF_PT_export_animation_export(bpy.types.Panel):
+class GLTF_PT_export_animation_ranges(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Animation"
+    bl_label = "Rest & Ranges"
     bl_parent_id = "GLTF_PT_export_animation"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -1196,10 +1199,8 @@ class GLTF_PT_export_animation_export(bpy.types.Panel):
 
         layout.active = operator.export_animations
 
+        layout.prop(operator, 'export_current_frame')
         layout.prop(operator, 'export_frame_range')
-        layout.prop(operator, 'export_animation_mode')
-        if operator.export_animation_mode == "ACTIVE_ACTIONS":
-            layout.prop(operator, 'export_nla_strips_merged_animation_name')
 
 class GLTF_PT_export_animation_armature(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1582,7 +1583,7 @@ classes = (
     GLTF_PT_export_data_lighting,
     GLTF_PT_export_data_compression,
     GLTF_PT_export_animation,
-    GLTF_PT_export_animation_export,
+    GLTF_PT_export_animation_ranges,
     GLTF_PT_export_animation_armature,
     GLTF_PT_export_animation_sampling,
     GLTF_PT_export_animation_optimize,
