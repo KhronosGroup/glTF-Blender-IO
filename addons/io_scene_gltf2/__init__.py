@@ -469,6 +469,17 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_negative_frame: EnumProperty(
+        name='Negative Frames',
+        items=(('SLIDE', 'Slide',
+        'Slide animation to start at frame 0'),
+        ('CUT', 'Cut',
+        'Keep only frames above frame 0'),
+        ),
+        description='Negative Frames are slided or cut',
+        default='SLIDE'
+    )
+
     export_bake_animation: BoolProperty(
         name='Bake animations',
         description=(
@@ -705,6 +716,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
             export_settings['gltf_bake_animation'] = self.export_bake_animation
+            export_settings['gltf_negative_frames'] = self.export_negative_frame
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_force_sampling'] = False
@@ -1201,6 +1213,7 @@ class GLTF_PT_export_animation_ranges(bpy.types.Panel):
 
         layout.prop(operator, 'export_current_frame')
         layout.prop(operator, 'export_frame_range')
+        layout.prop(operator, 'export_negative_frame')
 
 class GLTF_PT_export_animation_armature(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
