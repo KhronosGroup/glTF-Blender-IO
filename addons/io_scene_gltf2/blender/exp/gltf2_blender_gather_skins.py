@@ -35,6 +35,10 @@ def gather_skin(armature_uuid, export_settings):
     :return: a glTF2 skin object
     """
 
+    if armature_uuid not in export_settings['vtree'].nodes:
+        # User filtered objects to export, and keep the skined mesh, without keeping the armature
+        return None
+
     blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
 
     if not __filter_skin(blender_armature_object, export_settings):
