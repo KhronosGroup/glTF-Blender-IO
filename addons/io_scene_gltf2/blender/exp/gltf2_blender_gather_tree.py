@@ -428,7 +428,11 @@ class VExportTree:
 
     def add_neutral_bones(self):
         added_armatures = []
-        for n in [n for n in self.nodes.values() if n.armature is not None and n.blender_type == VExportNode.OBJECT and hasattr(self.nodes[n.armature], "need_neutral_bone")]: #all skin meshes objects where neutral bone is needed
+        for n in [n for n in self.nodes.values() if \
+                n.armature is not None and \
+                n.armature in self.nodes and \
+                n.blender_type == VExportNode.OBJECT and \
+                hasattr(self.nodes[n.armature], "need_neutral_bone")]: #all skin meshes objects where neutral bone is needed
 
             if n.armature not in added_armatures:
 
