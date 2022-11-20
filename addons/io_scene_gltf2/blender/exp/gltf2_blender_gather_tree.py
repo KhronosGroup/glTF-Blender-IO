@@ -46,7 +46,7 @@ class VExportNode:
     def __init__(self):
         self.children = []
         self.blender_type = None
-        self.world_matrix = None
+        self.matrix_world = None
         self.parent_type = None
 
         self.blender_object = None
@@ -72,9 +72,6 @@ class VExportNode:
 
     def add_child(self, uuid):
         self.children.append(uuid)
-
-    def set_world_matrix(self, matrix):
-        self.world_matrix = matrix
 
     def set_blender_data(self, blender_object, blender_bone):
         self.blender_object = blender_object
@@ -181,6 +178,13 @@ class VExportTree:
             # Matrix World of object is expressed based on collection instance objects are
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
+
+            # If object is parented to bone, and Rest pose is used, we need to keep the world matrix
+            # Of the rest pose, not the current world matrix
+            if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_current_frame'] is False:
+                blender_bone = self.nodes[parent_uuid].blender_bone
+                node.matrix_world = (blender_bone.matrix @ blender_bone.bone.matrix_local.inverted_safe()).inverted_safe() @ node.matrix_world
+
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 if self.export_settings[gltf2_blender_export_keys.YUP]:
                     correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
