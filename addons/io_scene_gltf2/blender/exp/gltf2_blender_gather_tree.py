@@ -179,7 +179,7 @@ class VExportTree:
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
 
-            # If object is parented to bone, and Rest pose is used, we need to keep the world matrix 
+            # If object is parented to bone, and Rest pose is used, we need to keep the world matrix
             # Of the rest pose, not the current world matrix
             if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_current_frame'] is False:
                 blender_bone = self.nodes[parent_uuid].blender_bone
