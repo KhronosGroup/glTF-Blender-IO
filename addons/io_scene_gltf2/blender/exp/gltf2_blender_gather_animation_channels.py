@@ -80,7 +80,7 @@ def gather_channels_baked(obj_uuid, frame_range, export_settings):
     return channels if len(channels) > 0 else None
 
 @cached
-def gather_animation_channels(obj_uuid: int,
+def gather_animation_channels(obj_uuid: str,
                               blender_action: bpy.types.Action,
                               export_settings
                               ) -> typing.List[gltf2_io.AnimationChannel]:

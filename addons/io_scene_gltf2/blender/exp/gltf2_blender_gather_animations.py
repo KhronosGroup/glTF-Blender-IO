@@ -24,6 +24,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_data_path import is_bone_anim_channel
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_animation_channels import gather_animation_channel
+from .gltf2_blender_gather_armature_action_baked import gather_action_armature_baked
 from mathutils import Matrix
 
 
@@ -75,65 +76,11 @@ def gather_animations(  obj_uuid: int,
 
             # if there is no animation in file => no need to bake
             if len(bpy.data.actions) > 0:
-                channels = []
-                to_be_done = ['location', 'rotation_quaternion', 'scale']
-                start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
-                end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+                animation = gather_action_armature_baked(obj_uuid, blender_action, export_settings)
 
-                bones_to_be_animated = []
-                bones_uuid = export_settings["vtree"].get_all_bones(obj_uuid)
-                bones_to_be_animated = [blender_object.pose.bones[export_settings["vtree"].nodes[b].blender_bone.name] for b in bones_uuid]
-
-                for bone in bones_to_be_animated:
-                    for p in to_be_done:
-                        channel = gltf2_blender_gather_animation_channels.gather_animation_channel(
-                            obj_uuid,
-                            (),
-                            export_settings,
-                            bone.name,
-                            p,
-                            start_frame,
-                            end_frame,
-                            False,
-                            obj_uuid,
-                            None,
-                            False
-                            )
-
-                        if channel is not None:
-                            channels.append(channel)
-
-                # Retrieve channels for drivers, if needed
-                drivers_to_manage = gltf2_blender_gather_drivers.get_sk_drivers(obj_uuid, export_settings)
-                for obj_driver_uuid, fcurves in drivers_to_manage:
-                    channel = gather_animation_channel(
-                        obj_uuid,
-                        fcurves,
-                        export_settings,
-                        None,
-                        None,
-                        start_frame,
-                        end_frame,
-                        False,
-                        obj_uuid,
-                        obj_driver_uuid,
-                        True)
-                    if channel is not None:
-                        channels.append(channel)
-
-                if len(channels) > 0:
-                    # Need to create a new animation, because the armature can't be animated (no SK on armature)
-                    animation = gltf2_io.Animation(
-                            channels=channels,
-                            extensions=None, # as other animations
-                            extras=None, # Because there is no animation to get extras from
-                            name=blender_object.name, # Use object name as animation name
-                            samplers=[]
-                            )
-
-                    __link_samplers(animation, export_settings)
-                    if animation is not None:
-                        animations.append(animation)
+                __link_samplers(animation, export_settings)
+                if animation is not None:
+                    animations.append(animation)
 
     current_action = None
     current_world_matrix = None
@@ -185,7 +132,14 @@ def gather_animations(  obj_uuid: int,
 
         # No need to set active shapekeys animations, this is needed for bone baking
 
-        animation = __gather_animation(obj_uuid, blender_action, export_settings)
+        #TODOANIM Currently we dispatch to correct __gather_animation
+        if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
+            if export_settings['gltf_force_sampling'] is True:
+                animation = gather_action_armature_baked(obj_uuid, blender_action, export_settings)
+            else:
+                animation = __gather_animation(obj_uuid, blender_action, export_settings)
+        else:
+            animation = __gather_animation(obj_uuid, blender_action, export_settings)
 
         # If we are in a SK animation, and we need to bake (if there also in TRS anim)
         if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0 and on_type == "SHAPEKEY":

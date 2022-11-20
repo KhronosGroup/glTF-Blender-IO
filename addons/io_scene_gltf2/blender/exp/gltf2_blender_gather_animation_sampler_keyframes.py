@@ -212,6 +212,7 @@ def get_object_matrix(blender_obj_uuid: str,
         frame += step
     return data
 
+# TODOANIM : Warning : If you change some parameter here, need to be changed in cache system
 @bonecache
 def get_bone_matrix(blender_obj_uuid_if_armature: typing.Optional[str],
                      channels: typing.Tuple[bpy.types.FCurve],

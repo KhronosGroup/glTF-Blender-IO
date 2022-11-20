@@ -19,9 +19,9 @@ Next, define functions that contain the data of the extension you would like to 
 
 ```
 gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings)
-gather_animation_channel_hook(self, gltf2_animation_channel, channels, blender_object, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, export_settings)
+gather_animation_channel_hook(self, gltf2_animation_channel, channels, blender_object, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, export_settings) #TODOANIM
 gather_animation_channel_target_hook(self, gltf2_animation_channel_target, channels, blender_object, bake_bone, bake_channel, export_settings)
-gather_animation_sampler_hook(self, gltf2_sampler, channels, blender_object, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, export_settings)
+gather_animation_sampler_hook(self, gltf2_sampler, channels, blender_object, bake_bone, bake_channel, bake_range_start, bake_range_end, action_name, export_settings) #TODOANIM
 gather_asset_hook(self, gltf2_asset, export_settings)
 gather_camera_hook(self, gltf2_camera, blender_camera, export_settings)
 gather_gltf_extensions_hook(self, gltf2_plan, export_settings)
@@ -49,4 +49,5 @@ animation_switch_loop_hook(self, blender_object, post, export_settings) # post =
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
 gather_tree_filter_tag_hook(self, tree, export_settings)
+gather_animation_bone_bake_channel_target_hook #TODOANIM
 ```

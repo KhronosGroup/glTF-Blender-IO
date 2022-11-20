@@ -81,6 +81,10 @@ def default_key(*args, **kwargs):
 def cached(func):
     return cached_by_key(key=default_key)(func)
 
+# TODOANIM
+# Refactoring objectcache / bonecache to have a generic cache system
+# To be able to cache any path (thinking about KHR_animation_pointer)
+
 def objectcache(func):
 
     def reset_cache_objectcache():
@@ -125,27 +129,45 @@ def bonecache(func):
     @functools.wraps(func)
     def wrapper_bonecache(*args, **kwargs):
 
+        # BEFORE TODOANIM : to be removed
+        # 0 : armature_uuid
+        # 1 : channels
+        # 2 : bake_bone
+        # 3 : bake_channel
+        # 4 : bake_range_start
+        # 5 : bake_range_end
+        # 6 : action_name
+        # 7 : current_frame
+        # 8 : step
+        # 9 : export_settings
+
+        # 0 : armature_uuid
+        # 1 : bone
+        # 2 : channel
+        # 3 : action_name
+        # 4 : range_start
+        # 5 : range_end
+        # 6 : current_frame
+        # 7 : step
+        # 8 : export_settings
+
         armature = args[-1]['vtree'].nodes[args[0]].blender_object
 
         cache_key_args = args
         cache_key_args = args[:-1]
 
-        if cache_key_args[2] is None:
-            pose_bone_if_armature = gltf2_blender_get.get_object_from_datapath(armature,
-                                                                cache_key_args[1][0].data_path)
-        else:
-            pose_bone_if_armature = armature.pose.bones[cache_key_args[2]]
+        pose_bone = armature.pose.bones[cache_key_args[1]]
 
         if not hasattr(func, "__current_action_name"):
             func.reset_cache()
-        if cache_key_args[6] != func.__current_action_name or cache_key_args[0] != func.__current_armature_uuid:
+        if cache_key_args[3] != func.__current_action_name or cache_key_args[0] != func.__current_armature_uuid:
             result = func(*args)
             func.__bonecache = result
-            func.__current_action_name = cache_key_args[6]
+            func.__current_action_name = cache_key_args[3]
             func.__current_armature_uuid = cache_key_args[0]
-            return result[cache_key_args[7]][pose_bone_if_armature.name]
+            return result[cache_key_args[6]][pose_bone.name]
         else:
-            return func.__bonecache[cache_key_args[7]][pose_bone_if_armature.name]
+            return func.__bonecache[cache_key_args[6]][pose_bone.name]
     return wrapper_bonecache
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
