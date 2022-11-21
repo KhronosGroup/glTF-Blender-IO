@@ -24,8 +24,6 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
     if export_settings[MORPH_ANIM] is False:
         return tuple([])
 
-    blender_armature = export_settings['vtree'].nodes[blender_armature_uuid].blender_object
-
     drivers = []
 
     # Take into account skinned mesh, and mesh parented to a bone of the armature
