@@ -29,7 +29,7 @@ def gather_object_baked_channels(object_uuid, blender_action, export_settings)  
     list_of_animated_channels = []
 
     for p in ["location", "rotation_quaternion", "scale"]:
-        channel = gather_object_channel(
+        channel = gather_bake_object_channel(
             object_uuid,
             p,
             blender_action.name,
@@ -44,7 +44,7 @@ def gather_object_baked_channels(object_uuid, blender_action, export_settings)  
     return channels if len(channels) > 0 else None
 
 @cached
-def gather_object_channel(
+def gather_bake_object_channel(
         obj_uuid: str,
         channel: str,
         action_name: str,

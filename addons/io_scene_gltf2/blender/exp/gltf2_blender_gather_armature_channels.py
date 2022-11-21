@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import typing
 from io_scene_gltf2.io.com import gltf2_io
 from .gltf2_blender_gather_armature_channel_target import gather_armature_baked_channel_target
@@ -19,6 +20,7 @@ from .gltf2_blender_gather_armature_sampler import gather_bone_bake_animation_sa
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from .gltf2_blender_gather_armature_keyframes import get_bone_matrix
+from .gltf2_blender_gather_object_channels import gather_bake_object_channel
 
 
 #TODOANIM cached?
@@ -56,7 +58,19 @@ def gather_armature_baked_channels(armature_uuid, blender_action, export_setting
                 channels.append(channel)
 
     # Retrieve animation on armature object itself, if any
-    #TODOANIM need to be done on bake object TRS
+    armature_channels = __gather_armature_object_channel(blender_action, export_settings)
+    for channel in armature_channels:
+        armature_channel = gather_bake_object_channel(
+            armature_uuid,
+            channel,
+            blender_action.name,
+            True, # channel is animated (because we detect it on __gather_armature_object_channel)
+            export_settings
+            )
+
+        if armature_channel is not None:
+            channels.append(armature_channel)
+    
 
     # Retrieve channels for drivers, if needed
     #TODOANIM need to be done on bake weights anim
@@ -124,3 +138,21 @@ def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_
         node_channel_is_animated,
         export_settings
         )
+
+def __gather_armature_object_channel(blender_action: bpy.types.Action, export_settings):
+    channels = []
+    for p in ["location", "rotation_quaternion", "scale"]:
+        if p in [f.data_path for f in blender_action.fcurves]:
+            channels.append(
+                {
+                    "location":"location",
+                    "rotation_quaternion": "rotation_quaternion",
+                    "scale": "scale",
+                    "delta_location": "location",
+                    "delta_scale": "scale",
+                    "delta_rotation_euler": "rotation_quaternion",
+                    "delta_rotation_quaternion": "rotation_quaternion"
+                }.get(p)
+            )
+
+    return list(set(channels)) #remove doubles
