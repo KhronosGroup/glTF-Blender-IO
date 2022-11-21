@@ -25,6 +25,7 @@ from ..com.gltf2_blender_data_path import is_bone_anim_channel
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from .gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
 from .gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
+from .gltf2_blender_gather_object_channels import gather_object_sampled_channels
 from mathutils import Matrix
 
 
@@ -129,11 +130,17 @@ def gather_animations(  obj_uuid: int,
             if export_settings['gltf_force_sampling'] is True:
                 animation = gather_action_armature_sampled(obj_uuid, blender_action, export_settings)
             else:
+                #TODOANIM
                 animation = __gather_animation(obj_uuid, blender_action, export_settings)
         else:
             if export_settings['gltf_force_sampling'] is True:
-                animation = gather_action_object_sampled(obj_uuid, blender_action, export_settings)
+                if on_type == "OBJECT":
+                    animation = gather_action_object_sampled(obj_uuid, blender_action, export_settings)
+                else:
+                    #TODOANIM
+                    animation = __gather_animation(obj_uuid, blender_action, export_settings)
             else:
+                #TODOANIM
                 animation = __gather_animation(obj_uuid, blender_action, export_settings)
 
         # If we are in a SK animation, and we need to bake (if there also in TRS anim)
@@ -142,8 +149,7 @@ def gather_animations(  obj_uuid: int,
             # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             # (skinned meshes TRS must be ignored, says glTF specification)
                 if export_settings['vtree'].nodes[obj_uuid].skin is None:
-                    #TODOANIM #TODONEXT
-                    channels = gltf2_blender_gather_animation_channels.gather_channels_baked(obj_uuid, None, export_settings)
+                    channels = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
                     if channels is not None:
                         if animation is None:
                             animation = gltf2_io.Animation(
