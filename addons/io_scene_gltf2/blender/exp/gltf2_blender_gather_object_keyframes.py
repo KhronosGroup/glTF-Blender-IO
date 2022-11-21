@@ -21,7 +21,8 @@ import numpy as np
 
 # TODOANIM : Warning : If you change some parameter here, need to be changed in cache system
 @objectcache
-def get_object_matrix(blender_obj_uuid: str,
+def get_object_matrix(path: str,
+                      blender_obj_uuid: str,
                       action_name: str,
                       bake_range_start: int, #TODOANIM
                       bake_range_end: int,   #TODOANIM
@@ -83,14 +84,16 @@ def get_object_matrix(blender_obj_uuid: str,
             if blender_obj.animation_data and blender_obj.animation_data.action:
                 if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
                     data[obj_uuid][blender_obj.animation_data.action.name] = {}
-                data[obj_uuid][blender_obj.animation_data.action.name][frame] = mat
+                    data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
+                data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][frame] = mat
             else:
                 # case of baking selected object.
                 # There is no animation, so use uuid of object as key
                 # TODOANIM : only when bake is enabled. If not, no need to keep not animated objects?
                 if obj_uuid not in data[obj_uuid].keys():
                     data[obj_uuid][obj_uuid] = {}
-                data[obj_uuid][obj_uuid][frame] = mat
+                    data[obj_uuid][obj_uuid]['matrix'] = {}
+                data[obj_uuid][obj_uuid]['matrix'][frame] = mat
 
         frame += step
     return data
@@ -116,7 +119,9 @@ def gather_object_baked_keyframes(
     while frame <= end_frame:
         key = Keyframe(None, frame, channel)
 
-        mat = get_object_matrix(obj_uuid,
+        mat = get_object_matrix(
+            'matrix',
+            obj_uuid,
             action_name,
             start_frame, #TODOANIM
             end_frame,   #TODOANIM

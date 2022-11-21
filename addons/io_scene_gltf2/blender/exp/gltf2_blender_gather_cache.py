@@ -106,13 +106,14 @@ def objectcache(func):
         # 6 : export_settings
         # only_gather_provided : only_gather_provided
 
-        # 0 : object_uuid
-        # 1 : action_name
-        # 2 : bake_range_start
-        # 3 : bake_range_end
-        # 4 : frame
-        # 5 : step
-        # 6 : export_settings
+        # 0 : path
+        # 1 : object_uuid
+        # 2 : action_name
+        # 3 : bake_range_start
+        # 4 : bake_range_end
+        # 5 : frame
+        # 6 : step
+        # 7 : export_settings
         # only_gather_provided : only_gather_provided
 
         cache_key_args = args
@@ -122,20 +123,20 @@ def objectcache(func):
             func.reset_cache()
 
         # object is not cached yet
-        if cache_key_args[0] not in func.__objectcache.keys():
+        if cache_key_args[1] not in func.__objectcache.keys():
             result = func(*args)
             func.__objectcache = result
-            # Here are the key used: result[obj_uuid][action_name][frame]
-            return result[cache_key_args[0]][cache_key_args[1]][cache_key_args[4]]
+            # Here are the key used: result[obj_uuid][action_name][path][frame]
+            return result[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[5]]
         # object is in cache, but not this action
         # We need to keep other actions
-        elif cache_key_args[1] not in func.__objectcache[cache_key_args[0]].keys():
+        elif cache_key_args[2] not in func.__objectcache[cache_key_args[1]].keys():
             result = func(*args, only_gather_provided=True)
-            func.__objectcache[cache_key_args[0]][cache_key_args[1]] = result[cache_key_args[0]][cache_key_args[1]]
-            return result[cache_key_args[0]][cache_key_args[1]][cache_key_args[4]]
+            func.__objectcache[cache_key_args[1]][cache_key_args[2]] = result[cache_key_args[1]][cache_key_args[2]]
+            return result[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[5]]
         # all is already cached
         else:
-            return func.__objectcache[cache_key_args[0]][cache_key_args[1]][cache_key_args[4]]
+            return func.__objectcache[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[5]]
     return wrapper_objectcache
 
 def bonecache(func):

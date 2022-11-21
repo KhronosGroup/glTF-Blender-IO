@@ -21,8 +21,7 @@ from .gltf2_blender_gather_object_sampler import gather_object_bake_animation_sa
 
 
 #TODOANIM cached?
-def gather_object_baked_channels(object_uuid, blender_action, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
-
+def gather_object_baked_channels(object_uuid: str, blender_action_name: str, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
     # TODOANIM : need to implement that (with not sampled code)
@@ -32,7 +31,7 @@ def gather_object_baked_channels(object_uuid, blender_action, export_settings)  
         channel = gather_bake_object_channel(
             object_uuid,
             p,
-            blender_action.name,
+            blender_action_name,
             p in list_of_animated_channels,
             export_settings
             )
