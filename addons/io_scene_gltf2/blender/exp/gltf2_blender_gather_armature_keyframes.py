@@ -79,7 +79,7 @@ def get_bone_matrix(
     return data
 
 @cached
-def gather_bone_baked_keyframes(
+def gather_bone_sampled_keyframes(
         armature_uuid: str,
         bone: str,
         channel: str,

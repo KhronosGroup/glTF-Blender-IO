@@ -15,7 +15,7 @@
 import bpy
 import typing
 from io_scene_gltf2.io.com import gltf2_io
-from .gltf2_blender_gather_armature_channel_target import gather_armature_baked_channel_target
+from .gltf2_blender_gather_armature_channel_target import gather_armature_sampled_channel_target
 from .gltf2_blender_gather_armature_sampler import gather_bone_bake_animation_sampler
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
@@ -24,10 +24,8 @@ from .gltf2_blender_gather_object_channels import gather_bake_object_channel
 
 
 #TODOANIM cached?
-def gather_armature_baked_channels(armature_uuid, blender_action, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
+def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
-
-    blender_object = export_settings['vtree'].nodes[armature_uuid].blender_object
 
     #TODOANIM use_frame_range? Managed here or at upper level
     #TODOANIM : check if there is really some animation on the action must be done before
@@ -51,19 +49,23 @@ def gather_armature_baked_channels(armature_uuid, blender_action, export_setting
                 armature_uuid,
                 bone,
                 p,
-                blender_action.name,
+                blender_action_name,
                 (bone, p) in list_of_animated_bone_channels,
                 export_settings)
             if channel is not None:
                 channels.append(channel)
 
     # Retrieve animation on armature object itself, if any
-    armature_channels = __gather_armature_object_channel(blender_action, export_settings)
+    # If armature is baked (no animation of armature), need to use all channels
+    if blender_action_name == armature_uuid:
+        armature_channels = ["location", "rotation_quaternion", "scale"]
+    else:
+        armature_channels = __gather_armature_object_channel(bpy.data.actions[blender_action_name], export_settings)
     for channel in armature_channels:
         armature_channel = gather_bake_object_channel(
             armature_uuid,
             channel,
-            blender_action.name,
+            blender_action_name,
             True, # channel is animated (because we detect it on __gather_armature_object_channel)
             export_settings
             )
@@ -126,7 +128,7 @@ def __gather_target(armature_uuid: str,
                     export_settings
                     ) -> gltf2_io.AnimationChannelTarget:
 
-    return gather_armature_baked_channel_target(
+    return gather_armature_sampled_channel_target(
         armature_uuid, bone, channel, export_settings)
 
 def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_animated, export_settings):
@@ -139,7 +141,7 @@ def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_
         export_settings
         )
 
-def __gather_armature_object_channel(blender_action: bpy.types.Action, export_settings):
+def __gather_armature_object_channel(blender_action: str, export_settings):
     channels = []
     for p in ["location", "rotation_quaternion", "scale", "delta_location", "delta_scale", "delta_rotation_euler", "delta_rotation_quaternion"]:
         if p in [f.data_path for f in blender_action.fcurves]:

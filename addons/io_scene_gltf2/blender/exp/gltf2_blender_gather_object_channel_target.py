@@ -20,7 +20,7 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 
 
 @cached
-def gather_object_baked_channel_target(
+def gather_object_sampled_channel_target(
         obj_uuid: str,
         channel: str,
         export_settings

@@ -17,8 +17,8 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from .gltf2_blender_gather_object_keyframes import gather_object_baked_keyframes
-from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_property_name, get_target_object_path
+from .gltf2_blender_gather_object_keyframes import gather_object_sampled_keyframes
+from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_object_path
 from io_scene_gltf2.blender.com import gltf2_blender_math
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 import mathutils
@@ -67,7 +67,7 @@ def __gather_keyframes(
         export_settings
         ):
 
-    keyframes = gather_object_baked_keyframes(
+    keyframes = gather_object_sampled_keyframes(
         obj_uuid,
         channel,
         action_name,

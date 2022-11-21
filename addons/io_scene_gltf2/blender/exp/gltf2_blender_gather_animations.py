@@ -23,8 +23,8 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_data_path import is_bone_anim_channel
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
-from .gltf2_blender_gather_armature_action_baked import gather_action_armature_baked
-from .gltf2_blender_gather_object_action_baked import gather_action_object_baked
+from .gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
+from .gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
 from mathutils import Matrix
 
 
@@ -57,7 +57,7 @@ def gather_animations(  obj_uuid: int,
             # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             # (skinned meshes TRS must be ignored, says glTF specification)
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
-                animation = gather_action_object_baked(obj_uuid, None, export_settings)
+                animation = gather_action_object_sampled(obj_uuid, None, export_settings)
 
                 if animation is not None and animation.channels:
                     __link_samplers(animation, export_settings)
@@ -68,7 +68,7 @@ def gather_animations(  obj_uuid: int,
 
             # if there is no animation in file => no need to bake
             if len(bpy.data.actions) > 0:
-                animation = gather_action_armature_baked(obj_uuid, blender_action, export_settings)
+                animation = gather_action_armature_sampled(obj_uuid, None, export_settings)
 
                 __link_samplers(animation, export_settings)
                 if animation is not None:
@@ -127,12 +127,12 @@ def gather_animations(  obj_uuid: int,
         #TODOANIM Currently we dispatch to correct __gather_animation
         if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
             if export_settings['gltf_force_sampling'] is True:
-                animation = gather_action_armature_baked(obj_uuid, blender_action, export_settings)
+                animation = gather_action_armature_sampled(obj_uuid, blender_action, export_settings)
             else:
                 animation = __gather_animation(obj_uuid, blender_action, export_settings)
         else:
             if export_settings['gltf_force_sampling'] is True:
-                animation = gather_action_object_baked(obj_uuid, blender_action, export_settings)
+                animation = gather_action_object_sampled(obj_uuid, blender_action, export_settings)
             else:
                 animation = __gather_animation(obj_uuid, blender_action, export_settings)
 
@@ -142,6 +142,7 @@ def gather_animations(  obj_uuid: int,
             # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             # (skinned meshes TRS must be ignored, says glTF specification)
                 if export_settings['vtree'].nodes[obj_uuid].skin is None:
+                    #TODOANIM #TODONEXT
                     channels = gltf2_blender_gather_animation_channels.gather_channels_baked(obj_uuid, None, export_settings)
                     if channels is not None:
                         if animation is None:

@@ -99,7 +99,7 @@ def get_object_matrix(path: str,
     return data
 
 @cached
-def gather_object_baked_keyframes(
+def gather_object_sampled_keyframes(
         obj_uuid: str,
         channel: str,
         action_name: str,

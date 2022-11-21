@@ -15,13 +15,13 @@
 import typing
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from .gltf2_blender_gather_object_channel_target import gather_object_baked_channel_target
+from .gltf2_blender_gather_object_channel_target import gather_object_sampled_channel_target
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from .gltf2_blender_gather_object_sampler import gather_object_bake_animation_sampler
 
 
 #TODOANIM cached?
-def gather_object_baked_channels(object_uuid: str, blender_action_name: str, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
+def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
     # TODOANIM : need to implement that (with not sampled code)
@@ -84,7 +84,7 @@ def __gather_target(
         export_settings
         ):
 
-    return gather_object_baked_channel_target(
+    return gather_object_sampled_channel_target(
         obj_uuid, channel, export_settings)
 
 def __gather_sampler(

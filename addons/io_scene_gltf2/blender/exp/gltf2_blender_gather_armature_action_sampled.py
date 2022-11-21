@@ -14,23 +14,23 @@
 
 import typing
 from io_scene_gltf2.io.com import gltf2_io
-from .gltf2_blender_gather_armature_channels import gather_armature_baked_channels
+from .gltf2_blender_gather_armature_channels import gather_armature_sampled_channels
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 import bpy
 
 
-def gather_action_armature_baked(armature_uuid: str, blender_action: bpy.types.Action, export_settings):
+def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
     print("Using New Armature Bake action code") #TODOANIM remove print
 
     blender_object = export_settings['vtree'].nodes[armature_uuid].blender_object
 
-    name = __gather_name(blender_action, blender_object, export_settings)
+    name = __gather_name(blender_action, armature_uuid, export_settings)
 
     try:
         animation = gltf2_io.Animation(
-            channels=__gather_channels(armature_uuid, blender_action, export_settings),
+            channels=__gather_channels(armature_uuid, blender_action.name if blender_action else armature_uuid, export_settings),
             extensions=None,
             extras=__gather_extras(blender_action, export_settings),
             name=name,
@@ -52,14 +52,14 @@ def gather_action_armature_baked(armature_uuid: str, blender_action: bpy.types.A
     return animation
 
 def __gather_name(blender_action: bpy.types.Action,
-                  blender_object: bpy.types.Object,  
+                  armature_uuid: str,  
                   export_settings
                   ) -> str:
-    return blender_action.name
+    return blender_action.name if blender_action else export_settings['vtree'].nodes[armature_uuid].blender_object.name
 
 
-def __gather_channels(armature_uuid, blender_action, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
-    return gather_armature_baked_channels(armature_uuid, blender_action, export_settings)
+def __gather_channels(armature_uuid, blender_action_name, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
+    return gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)
 
 
 def __gather_extras(blender_action: bpy.types.Action, export_settings) -> typing.Any:

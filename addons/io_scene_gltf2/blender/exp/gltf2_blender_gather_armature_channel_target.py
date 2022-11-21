@@ -19,7 +19,7 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 
 @cached
-def gather_armature_baked_channel_target(
+def gather_armature_sampled_channel_target(
         armature_uuid: str,
         bone: str,
         channel: str,

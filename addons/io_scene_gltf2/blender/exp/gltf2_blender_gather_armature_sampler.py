@@ -16,7 +16,7 @@ import bpy
 import typing
 import mathutils
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from .gltf2_blender_gather_armature_keyframes import gather_bone_baked_keyframes
+from .gltf2_blender_gather_armature_keyframes import gather_bone_sampled_keyframes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -80,7 +80,7 @@ def __gather_keyframes(
         export_settings
         ):
 
-    keyframes = gather_bone_baked_keyframes(
+    keyframes = gather_bone_sampled_keyframes(
         armature_uuid,
         bone,
         channel,

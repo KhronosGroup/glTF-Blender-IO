@@ -15,9 +15,9 @@
 import bpy
 import typing
 from io_scene_gltf2.io.com import gltf2_io
-from .gltf2_blender_gather_object_channels import gather_object_baked_channels
+from .gltf2_blender_gather_object_channels import gather_object_sampled_channels
 
-def gather_action_object_baked(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
+def gather_action_object_sampled(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
 
     # If no animation in file, no need to bake
     if len(bpy.data.actions) == 0:
@@ -42,4 +42,4 @@ def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Ac
     return blender_action.name if blender_action else export_settings['vtree'].nodes[object_uuid].blender_object.name
     
 def __gather_channels(object_uuid: str, blender_action_name: str, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
-    return gather_object_baked_channels(object_uuid, blender_action_name, export_settings)
+    return gather_object_sampled_channels(object_uuid, blender_action_name, export_settings)
