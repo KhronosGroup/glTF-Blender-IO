@@ -94,6 +94,27 @@ def objectcache(func):
 
     @functools.wraps(func)
     def wrapper_objectcache(*args, **kwargs):
+
+
+        # BEFORE TODOANIM : to be removed
+        # 0 : object_uuid
+        # 1 : action_name
+        # 2 : bake_range_start
+        # 3 : bake_range_end
+        # 4 : frame
+        # 5 : step
+        # 6 : export_settings
+        # only_gather_provided : only_gather_provided
+
+        # 0 : object_uuid
+        # 1 : action_name
+        # 2 : bake_range_start
+        # 3 : bake_range_end
+        # 4 : frame
+        # 5 : step
+        # 6 : export_settings
+        # only_gather_provided : only_gather_provided
+
         cache_key_args = args
         cache_key_args = args[:-1]
 

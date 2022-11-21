@@ -25,6 +25,7 @@ from ..com.gltf2_blender_data_path import is_bone_anim_channel
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_animation_channels import gather_animation_channel
 from .gltf2_blender_gather_armature_action_baked import gather_action_armature_baked
+from .gltf2_blender_gather_object_action_baked import gather_action_object_baked
 from mathutils import Matrix
 
 
@@ -139,7 +140,10 @@ def gather_animations(  obj_uuid: int,
             else:
                 animation = __gather_animation(obj_uuid, blender_action, export_settings)
         else:
-            animation = __gather_animation(obj_uuid, blender_action, export_settings)
+            if export_settings['gltf_force_sampling'] is True:
+                animation = gather_action_object_baked(obj_uuid, blender_action, export_settings)
+            else:
+                animation = __gather_animation(obj_uuid, blender_action, export_settings)
 
         # If we are in a SK animation, and we need to bake (if there also in TRS anim)
         if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0 and on_type == "SHAPEKEY":
