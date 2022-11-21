@@ -141,7 +141,7 @@ def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_
 
 def __gather_armature_object_channel(blender_action: bpy.types.Action, export_settings):
     channels = []
-    for p in ["location", "rotation_quaternion", "scale"]:
+    for p in ["location", "rotation_quaternion", "scale", "delta_location", "delta_scale", "delta_rotation_euler", "delta_rotation_quaternion"]:
         if p in [f.data_path for f in blender_action.fcurves]:
             channels.append(
                 {
