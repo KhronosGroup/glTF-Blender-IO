@@ -33,6 +33,8 @@ class Keyframe:
                 self.__indices = [i for i, c in enumerate(channels) if c is not None]
                 self.__length_morph = len(channels)
         else:
+            if bake_channel == "value":
+                self.__length_morph = len(channels)
             self.target = bake_channel
             self.__indices = []
             for i in range(self.get_target_len()):

@@ -24,6 +24,7 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
+from .gltf2_blender_gather_object_keyframes import get_object_cache_data
 
 
 def gather_gltf2(export_settings):
@@ -41,7 +42,7 @@ def gather_gltf2(export_settings):
         scenes.append(__gather_scene(blender_scene, export_settings))
         if export_settings[gltf2_blender_export_keys.ANIMATIONS]:
             # resetting object cache
-            gltf2_blender_gather_animation_sampler_keyframes.get_object_matrix.reset_cache()
+            get_object_cache_data.reset_cache()
             animations += __gather_animations(blender_scene, export_settings)
         if bpy.context.scene.name == store_user_scene.name:
             active_scene = len(scenes) -1

@@ -24,6 +24,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_data_path import is_bone_anim_channel
 from .gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
 from .gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
+from .gltf2_blender_gather_sk_action_sampled import gather_action_sk_sampled
 from .gltf2_blender_gather_object_channels import gather_object_sampled_channels
 from mathutils import Matrix
 
@@ -131,8 +132,7 @@ def gather_animations(  obj_uuid: int,
             elif on_type == "OBJECT":
                 animation = gather_action_object_sampled(obj_uuid, blender_action, export_settings)
             else:
-                # SK #TODOANIM
-                animation = __gather_animation(obj_uuid, blender_action, export_settings)
+                animation = gather_action_sk_sampled(obj_uuid, blender_action, export_settings)
         else:
             # Not sampled
             # This also returns fcurve that cannot be handled not sampled, to be sampled
