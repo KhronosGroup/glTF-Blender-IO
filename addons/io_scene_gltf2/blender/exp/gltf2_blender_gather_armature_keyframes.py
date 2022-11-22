@@ -94,8 +94,6 @@ def gather_bone_sampled_keyframes(
 
     keyframes = []
 
-    pose_bone = export_settings['vtree'].nodes[armature_uuid].blender_object.pose.bones[bone] #TODOANIM needed ?
-
     frame = start_frame
     step = export_settings['gltf_frame_step'] #TODOANIM
 
