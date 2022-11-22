@@ -95,17 +95,6 @@ def objectcache(func):
     @functools.wraps(func)
     def wrapper_objectcache(*args, **kwargs):
 
-
-        # BEFORE TODOANIM : to be removed
-        # 0 : object_uuid
-        # 1 : action_name
-        # 2 : bake_range_start
-        # 3 : bake_range_end
-        # 4 : frame
-        # 5 : step
-        # 6 : export_settings
-        # only_gather_provided : only_gather_provided
-
         # 0 : path
         # 1 : object_uuid
         # 2 : action_name
@@ -150,18 +139,6 @@ def bonecache(func):
 
     @functools.wraps(func)
     def wrapper_bonecache(*args, **kwargs):
-
-        # BEFORE TODOANIM : to be removed
-        # 0 : armature_uuid
-        # 1 : channels
-        # 2 : bake_bone
-        # 3 : bake_channel
-        # 4 : bake_range_start
-        # 5 : bake_range_end
-        # 6 : action_name
-        # 7 : current_frame
-        # 8 : step
-        # 9 : export_settings
 
         # 0 : armature_uuid
         # 1 : bone
