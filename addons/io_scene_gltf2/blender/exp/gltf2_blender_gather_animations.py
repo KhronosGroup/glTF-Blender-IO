@@ -22,7 +22,6 @@ from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_data_path import is_bone_anim_channel
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from .gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
 from .gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
 from .gltf2_blender_gather_object_channels import gather_object_sampled_channels
@@ -126,22 +125,18 @@ def gather_animations(  obj_uuid: int,
         # No need to set active shapekeys animations, this is needed for bone baking
 
         #TODOANIM Currently we dispatch to correct __gather_animation
-        if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
-            if export_settings['gltf_force_sampling'] is True:
+        if export_settings['gltf_force_sampling'] is True:
+            if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
                 animation = gather_action_armature_sampled(obj_uuid, blender_action, export_settings)
+            elif on_type == "OBJECT":
+                animation = gather_action_object_sampled(obj_uuid, blender_action, export_settings)
             else:
-                #TODOANIM
+                # SK #TODOANIM
                 animation = __gather_animation(obj_uuid, blender_action, export_settings)
         else:
-            if export_settings['gltf_force_sampling'] is True:
-                if on_type == "OBJECT":
-                    animation = gather_action_object_sampled(obj_uuid, blender_action, export_settings)
-                else:
-                    #TODOANIM
-                    animation = __gather_animation(obj_uuid, blender_action, export_settings)
-            else:
-                #TODOANIM
-                animation = __gather_animation(obj_uuid, blender_action, export_settings)
+            # Not sampled
+            # This also returns fcurve that cannot be handled not sampled, to be sampled
+            animation = __gather_animation(obj_uuid, blender_action, export_settings)
 
         # If we are in a SK animation, and we need to bake (if there also in TRS anim)
         if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0 and on_type == "SHAPEKEY":
@@ -339,6 +334,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                     action_on_type[strip.action.name] = "OBJECT"
 
+    # TODOANIM : for caching, actions linked to SK must be after actions about TRS
     if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
