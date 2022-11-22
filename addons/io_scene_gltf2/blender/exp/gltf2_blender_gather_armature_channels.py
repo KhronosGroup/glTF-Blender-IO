@@ -23,7 +23,6 @@ from .gltf2_blender_gather_armature_keyframes import get_bone_matrix
 from .gltf2_blender_gather_object_channels import gather_bake_object_channel
 
 
-#TODOANIM cached?
 def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
