@@ -22,7 +22,6 @@ import bpy
 
 
 def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
-    print("Using New Armature Bake action code") #TODOANIM remove print
 
     blender_object = export_settings['vtree'].nodes[armature_uuid].blender_object
 
