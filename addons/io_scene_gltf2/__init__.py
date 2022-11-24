@@ -16,7 +16,7 @@ bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
     "version": (3, 4, 48),
-    'blender': (3, 3, 0),
+    'blender': (3, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
@@ -188,6 +188,14 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Textures',
         description='Folder to place texture files in. Relative to the .gltf file',
         default='',
+    )
+
+    export_jpeg_quality: IntProperty(
+        name='JPEG quality',
+        description='Quality of JPEG export',
+        default=75,
+        min=0,
+        max=100
     )
 
     export_keep_originals: BoolProperty(
@@ -590,6 +598,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
+        export_settings['gltf_jpeg_quality'] = self.export_jpeg_quality
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
@@ -878,6 +887,7 @@ class GLTF_PT_export_geometry_material(bpy.types.Panel):
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
+        col.prop(operator, 'export_jpeg_quality')
 
 class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
