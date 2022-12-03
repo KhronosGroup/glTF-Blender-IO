@@ -50,6 +50,7 @@ class Keyframe:
         length = {
             "delta_location": 3,
             "delta_rotation_euler": 3,
+            "delta_rotation_quaternion": 4,
             "delta_scale": 3,
             "location": 3,
             "rotation_axis_angle": 4,

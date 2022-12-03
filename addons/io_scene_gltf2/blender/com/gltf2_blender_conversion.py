@@ -57,13 +57,15 @@ def get_target(property):
     return {
         "delta_location": "translation",
         "delta_rotation_euler": "rotation",
+        "delta_rotation_quaternion": "rotation",
+        "delta_scale": "scale",
         "location": "translation",
         "rotation_axis_angle": "rotation",
         "rotation_euler": "rotation",
         "rotation_quaternion": "rotation",
         "scale": "scale",
         "value": "weights"
-    }.get(property)
+    }.get(property, None)
 
 def get_component_type(attribute_component_type):
     return {

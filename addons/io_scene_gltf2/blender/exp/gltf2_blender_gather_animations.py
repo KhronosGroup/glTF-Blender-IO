@@ -17,6 +17,7 @@ import typing
 
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
+from .gltf2_blender_gather_fcurves_animation import gather_animation_fcurves
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -135,8 +136,12 @@ def gather_animations(  obj_uuid: int,
                 animation = gather_action_sk_sampled(obj_uuid, blender_action, export_settings)
         else:
             # Not sampled
-            # This also returns fcurve that cannot be handled not sampled, to be sampled
-            animation = __gather_animation(obj_uuid, blender_action, export_settings)
+            # This also returns 
+            #  - animation on fcurves
+            #  - fcurve that cannot be handled not sampled, to be sampled
+            
+            animation, to_be_sampled = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
+            # TODOANIM #TODONEXT : to_be_sampled
 
         # If we are in a SK animation, and we need to bake (if there also in TRS anim)
         if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0 and on_type == "SHAPEKEY":

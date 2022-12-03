@@ -57,6 +57,7 @@ class Keyframe:
             "delta_location": 3,
             "delta_rotation_euler": 3,
             "delta_scale": 3,
+            "delta_rotation_quaternion": 4,
             "location": 3,
             "rotation_axis_angle": 4,
             "rotation_euler": 3,
@@ -385,6 +386,7 @@ def gather_keyframes(blender_obj_uuid: str,
                             "scale": sca,
                             "delta_location": trans,
                             "delta_rotation_euler": rot.to_euler(),
+                            "delta_rotation_quaternion": rot,
                             "delta_scale": sca
                         }[target]
                 else:
