@@ -16,7 +16,6 @@ import bpy
 import typing
 
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_channels
 from .gltf2_blender_gather_fcurves_animation import gather_animation_fcurves
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from ..com.gltf2_blender_extras import generate_extras
@@ -198,90 +197,6 @@ def gather_animations(  obj_uuid: int,
 
     return animations, tracks
 
-
-def __gather_animation( obj_uuid: int,
-                        blender_action: bpy.types.Action,
-                        export_settings
-                       ) -> typing.Optional[gltf2_io.Animation]:
-
-    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
-
-    if not __filter_animation(blender_action, blender_object, export_settings):
-        return None
-
-    name = __gather_name(blender_action, blender_object, export_settings)
-    try:
-        animation = gltf2_io.Animation(
-            channels=__gather_channels(obj_uuid, blender_action, export_settings),
-            extensions=__gather_extensions(blender_action, blender_object, export_settings),
-            extras=__gather_extras(blender_action, blender_object, export_settings),
-            name=name,
-            samplers=__gather_samplers(obj_uuid, blender_action, export_settings)
-        )
-    except RuntimeError as error:
-        print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
-        return None
-
-    export_user_extensions('pre_gather_animation_hook', export_settings, animation, blender_action, blender_object)
-
-    if not animation.channels:
-        return None
-
-    # To allow reuse of samplers in one animation : This will be done later, when we know all channels are here
-
-    export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object)
-
-    return animation
-
-
-def __filter_animation(blender_action: bpy.types.Action,
-                       blender_object: bpy.types.Object,
-                       export_settings
-                       ) -> bool:
-    if blender_action.users == 0:
-        return False
-
-    return True
-
-
-def __gather_channels(obj_uuid: int,
-                      blender_action: bpy.types.Action,
-                      export_settings
-                      ) -> typing.List[gltf2_io.AnimationChannel]:
-    return gltf2_blender_gather_animation_channels.gather_animation_channels(
-        obj_uuid, blender_action, export_settings)
-
-
-def __gather_extensions(blender_action: bpy.types.Action,
-                        blender_object: bpy.types.Object,
-                        export_settings
-                        ) -> typing.Any:
-    return None
-
-
-def __gather_extras(blender_action: bpy.types.Action,
-                    blender_object: bpy.types.Object,
-                    export_settings
-                    ) -> typing.Any:
-
-    if export_settings['gltf_extras']:
-        return generate_extras(blender_action)
-    return None
-
-
-def __gather_name(blender_action: bpy.types.Action,
-                  blender_object: bpy.types.Object,
-                  export_settings
-                  ) -> typing.Optional[str]:
-    return blender_action.name
-
-
-def __gather_samplers(obj_uuid: str,
-                      blender_action: bpy.types.Action,
-                      export_settings
-                      ) -> typing.List[gltf2_io.AnimationSampler]:
-    # We need to gather the samplers after gathering all channels --> populate this list in __link_samplers
-    return []
 
 
 def __link_samplers(animation: gltf2_io.Animation, export_settings):

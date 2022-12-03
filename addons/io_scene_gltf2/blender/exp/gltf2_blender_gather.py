@@ -18,7 +18,6 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_animations
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_animation_sampler_keyframes
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
