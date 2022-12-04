@@ -35,7 +35,7 @@ def gather_object_sampled_channel_target(
         path=__gather_path(channel, export_settings)
         )
 
-    export_user_extensions('gather_animation_object_bake_channel_target_hook',
+    export_user_extensions('gather_animation_object_sampled_channel_target_hook',
                             export_settings,
                             blender_object,
                             channel)
