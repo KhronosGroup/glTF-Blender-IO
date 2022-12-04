@@ -29,7 +29,7 @@ def gather_sk_sampled_channels(
 
     channels = []
 
-    channel = gather_bake_sk_channel(
+    channel = gather_sampled_sk_channel(
         object_uuid,
         blender_action_name,
         export_settings
@@ -43,7 +43,7 @@ def gather_sk_sampled_channels(
     return channels if len(channels) > 0 else None
 
 @cached
-def gather_bake_sk_channel(
+def gather_sampled_sk_channel(
         obj_uuid: str,
         action_name: str,
         export_settings

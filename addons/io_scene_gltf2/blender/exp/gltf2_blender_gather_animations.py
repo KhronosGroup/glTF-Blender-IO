@@ -23,9 +23,11 @@ from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extension
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from ..com.gltf2_blender_data_path import is_bone_anim_channel
 from .gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
+from .gltf2_blender_gather_armature_channels import gather_sampled_bone_channel
 from .gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
 from .gltf2_blender_gather_sk_action_sampled import gather_action_sk_sampled
-from .gltf2_blender_gather_object_channels import gather_object_sampled_channels
+from .gltf2_blender_gather_object_channels import gather_object_sampled_channels, gather_sampled_object_channel
+from .gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from mathutils import Matrix
 
 
@@ -125,7 +127,6 @@ def gather_animations(  obj_uuid: int,
 
         # No need to set active shapekeys animations, this is needed for bone baking
 
-        #TODOANIM Currently we dispatch to correct __gather_animation
         if export_settings['gltf_force_sampling'] is True:
             if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
                 animation = gather_action_armature_sampled(obj_uuid, blender_action, export_settings)
@@ -135,12 +136,34 @@ def gather_animations(  obj_uuid: int,
                 animation = gather_action_sk_sampled(obj_uuid, blender_action, export_settings)
         else:
             # Not sampled
-            # This also returns 
+            # This returns 
             #  - animation on fcurves
             #  - fcurve that cannot be handled not sampled, to be sampled
-            
+            # to_be_sampled is : (object_uuid , type , prop, optional(bone.name) )
             animation, to_be_sampled = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
-            # TODOANIM #TODONEXT : to_be_sampled
+            for (obj_uuid, type_, prop, bone) in to_be_sampled:
+                if type_ == "BONE":
+                    channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, export_settings)
+                elif type_ == "OBJECT":
+                    channel = gather_sampled_object_channel(obj_uuid, prop, blender_action.name, True, export_settings)
+                elif type_ == "SK":
+                    channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, export_settings)
+                else:
+                    print("Type unknown. Should not happen")
+
+                if animation is None and channel is not None:
+                    # If all channels need to be sampled, no animation was created
+                    # Need to create animation, and add channel
+                    animation = gltf2_io.Animation(
+                        channels=[channel],
+                        extensions=None,
+                        extras=None,
+                        name=blender_action.name,
+                        samplers=[]
+                    )
+                else:
+                    if channel is not None:
+                        animation.channels.append(channel)
 
         # If we are in a SK animation, and we need to bake (if there also in TRS anim)
         if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0 and on_type == "SHAPEKEY":

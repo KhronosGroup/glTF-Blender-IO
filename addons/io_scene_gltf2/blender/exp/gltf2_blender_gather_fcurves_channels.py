@@ -18,7 +18,7 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes, get_delta_modes, is_location, is_rotation, is_scale
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_get
-from io_scene_gltf2.blender.com.gltf2_blender_conversion import get_target
+from io_scene_gltf2.blender.com.gltf2_blender_conversion import get_target, get_channel_from_target
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_fcurves_channel_target import gather_fcurve_channel_target
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_fcurves_sampler import gather_animation_fcurves_sampler
@@ -142,7 +142,7 @@ def __get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export
             for prop in target_data['properties'].keys():
                 if len([get_target(p) for p in target_data['properties'] if get_target(p) == get_target(prop)]) > 1:
                     # normal + delta
-                    to_be_sampled.append((obj_uuid, target_data['type'] , get_target(prop), None)) #None, because no delta exists on Bones
+                    to_be_sampled.append((obj_uuid, target_data['type'] , get_channel_from_target(get_target(prop)), None)) #None, because no delta exists on Bones
                 else:
                     new_properties[prop] = target_data['properties'][prop]
 
@@ -152,7 +152,7 @@ def __get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export
         new_properties = {}
         for prop in target_data['properties'].keys():
             if __needs_baking(obj_uuid, target_data['properties'][prop], export_settings) is True:
-                to_be_sampled.append((obj_uuid, target_data['type'], get_target(prop), target_data['bone'])) # bone can be None if not a bone :)
+                to_be_sampled.append((obj_uuid, target_data['type'], get_channel_from_target(get_target(prop)), target_data['bone'])) # bone can be None if not a bone :)
             else:
                 new_properties[prop] = target_data['properties'][prop]
 

@@ -20,7 +20,7 @@ from .gltf2_blender_gather_armature_sampler import gather_bone_bake_animation_sa
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from .gltf2_blender_gather_armature_keyframes import get_bone_matrix
-from .gltf2_blender_gather_object_channels import gather_bake_object_channel
+from .gltf2_blender_gather_object_channels import gather_sampled_object_channel
 
 
 def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
@@ -44,7 +44,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
 
     for bone in bones_to_be_animated:
         for p in ["location", "rotation_quaternion", "scale"]:
-            channel = gather_bone_channel(
+            channel = gather_sampled_bone_channel(
                 armature_uuid,
                 bone,
                 p,
@@ -61,7 +61,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
     else:
         armature_channels = __gather_armature_object_channel(bpy.data.actions[blender_action_name], export_settings)
     for channel in armature_channels:
-        armature_channel = gather_bake_object_channel(
+        armature_channel = gather_sampled_object_channel(
             armature_uuid,
             channel,
             blender_action_name,
@@ -84,7 +84,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
 
     return channels
 
-def gather_bone_channel(
+def gather_sampled_bone_channel(
         armature_uuid: str,
         bone: str,
         channel: str,

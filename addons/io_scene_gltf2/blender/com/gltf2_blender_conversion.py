@@ -80,6 +80,13 @@ def get_component_type(attribute_component_type):
         "BOOLEAN": gltf2_io_constants.ComponentType.Float
     }.get(attribute_component_type)
 
+def get_channel_from_target(target):
+    return {
+        "rotation": "rotation_quaternion",
+        "translation": "location",
+        "scale": "scale"
+    }.get(target)
+
 def get_data_type(attribute_component_type):
     return {
         "INT8": gltf2_io_constants.DataType.Scalar,
