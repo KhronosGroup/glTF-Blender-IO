@@ -143,7 +143,5 @@ def gather_bone_sampled_keyframes(
             # Keep at least 2 keyframes if data are not changing
             return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
 
-    #TODOANIM we are here for bone armature only. If used for objects too, be sure to update here
-
 def fcurve_is_constant(keyframes):
     return all([j < 0.0001 for j in np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])
