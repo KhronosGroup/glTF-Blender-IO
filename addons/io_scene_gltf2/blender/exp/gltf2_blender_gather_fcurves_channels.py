@@ -31,7 +31,7 @@ def gather_animation_fcurves_channels(
         export_settings
         ):
 
-    channels_to_perform, to_be_sampled = __get_channel_groups(obj_uuid, blender_action, export_settings)
+    channels_to_perform, to_be_sampled = get_channel_groups(obj_uuid, blender_action, export_settings)
 
     channels = []
     for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
@@ -44,7 +44,7 @@ def gather_animation_fcurves_channels(
     return channels, to_be_sampled
 
 
-def __get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_settings):
+def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_settings):
     targets = {}
 
 
@@ -129,8 +129,6 @@ def __get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export
     #    - check that there is no normal + delta transforms
     #    - check that each group can be exported not sampled
     #    - be sure that shapekeys curves are correctly sorted
-    #    - identify channels that are not animated #TODOANIM not needed?
-    #    - identify bones that are not animated #TODOANIM not needed?
 
     for obj, target_data in targets.items():
         properties = target_data['properties'].keys()
@@ -279,11 +277,6 @@ def __needs_baking(obj_uuid: str,
         return lst[1:] == lst[:-1]
 
     # Note: channels has some None items only for SK if some SK are not animated
-
-    # Sampling is forced
-    if export_settings['gltf_force_sampling']:
-        return True
-
     # Sampling due to unsupported interpolation
     interpolation = [c for c in channels if c is not None][0].keyframe_points[0].interpolation
     if interpolation not in ["BEZIER", "LINEAR", "CONSTANT"]:

@@ -12,20 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import typing
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from .gltf2_blender_gather_object_channel_target import gather_object_sampled_channel_target
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from .gltf2_blender_gather_object_sampler import gather_object_sampled_animation_sampler
-
+from .gltf2_blender_gather_fcurves_channels import get_channel_groups
+from io_scene_gltf2.blender.com.gltf2_blender_conversion import get_target, get_channel_from_target
 
 #TODOANIM cached?
 def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-    # TODOANIM : need to implement that (with not sampled code)
     list_of_animated_channels = []
+    if object_uuid != blender_action_name:
+        # Not bake situation
+        channels_animated, to_be_sampled = get_channel_groups(object_uuid, bpy.data.actions[blender_action_name], export_settings)
+        for chan in [chan for chan in channels_animated.values() if chan['bone'] is None]:
+            for prop in chan['properties'].keys():
+                list_of_animated_channels.append(get_channel_from_target(get_target(prop)))
+
+        for _, _, chan_prop, _ in [chan for chan in to_be_sampled if chan[1] == "OBJECT"]:
+            list_of_animated_channels.append(chan_prop)
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gather_sampled_object_channel(
