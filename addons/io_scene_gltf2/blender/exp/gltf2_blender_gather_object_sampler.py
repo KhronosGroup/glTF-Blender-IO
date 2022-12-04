@@ -25,7 +25,7 @@ import mathutils
 import bpy
 
 @cached
-def gather_object_bake_animation_sampler(
+def gather_object_sampled_animation_sampler(
         obj_uuid: str,
         channel: str,
         action_name: str,
