@@ -52,31 +52,12 @@ def gather_animations(  obj_uuid: int,
     # When object is not animated at all (no SK)
     # We can create an animation for this object
     if len(blender_actions) == 0:
-        # No TRS animation are found for this object.
-        # But we may need to bake
-        # (Only when force sampling is ON)
-        # If force sampling is OFF, can lead to inconsistent export anyway
-        if export_settings['gltf_bake_animation'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
-            # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
-            # (skinned meshes TRS must be ignored, says glTF specification)
-            if export_settings['vtree'].nodes[obj_uuid].skin is None:
-                animation = gather_action_object_sampled(obj_uuid, None, export_settings)
+        animation = __bake_animation(obj_uuid, export_settings)
+        if animation is not None:
+            animations.append(animation)
 
-                if animation is not None and animation.channels:
-                    __link_samplers(animation, export_settings)
-                    animations.append(animation)
-        elif export_settings['gltf_bake_animation'] is True and blender_object.type == "ARMATURE":
-            # We need to bake all bones. Because some bone can have some constraints linking to
-            # some other armature bones, for example
 
-            # if there is no animation in file => no need to bake
-            if len(bpy.data.actions) > 0:
-                animation = gather_action_armature_sampled(obj_uuid, None, export_settings)
-
-                __link_samplers(animation, export_settings)
-                if animation is not None:
-                    animations.append(animation)
-
+####### Keep current situation and prepare export
     current_action = None
     current_world_matrix = None
     if blender_object.animation_data and blender_object.animation_data.action:
@@ -105,6 +86,8 @@ def gather_animations(  obj_uuid: int,
         blender_object.animation_data.use_nla = False
 
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, False)
+
+######## Export
 
     # Export all collected actions.
     for blender_action, track_name, on_type in blender_actions:
@@ -196,6 +179,9 @@ def gather_animations(  obj_uuid: int,
                         tracks[track_name] = []
                     tracks[track_name].append(offset + len(animations)-1) # Store index of animation in animations
 
+
+####### Restoring current situation
+
     # Restore action status
     # TODO: do this in a finally
     if blender_object.animation_data:
@@ -220,7 +206,35 @@ def gather_animations(  obj_uuid: int,
 
     return animations, tracks
 
+def __bake_animation(obj_uuid: str, export_settings):
 
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+    # No TRS animation are found for this object.
+    # But we may need to bake
+    # (Only when force sampling is ON)
+    # If force sampling is OFF, can lead to inconsistent export anyway
+    if export_settings['gltf_bake_animation'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
+        # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
+        # (skinned meshes TRS must be ignored, says glTF specification)
+        if export_settings['vtree'].nodes[obj_uuid].skin is None:
+            animation = gather_action_object_sampled(obj_uuid, None, export_settings)
+
+            if animation is not None and animation.channels:
+                __link_samplers(animation, export_settings)
+                return animation
+    elif export_settings['gltf_bake_animation'] is True and blender_object.type == "ARMATURE":
+        # We need to bake all bones. Because some bone can have some constraints linking to
+        # some other armature bones, for example
+
+        # if there is no animation in file => no need to bake
+        if len(bpy.data.actions) > 0:
+            animation = gather_action_armature_sampled(obj_uuid, None, export_settings)
+
+            __link_samplers(animation, export_settings)
+            if animation is not None:
+                return animation
+    return None
 
 def __link_samplers(animation: gltf2_io.Animation, export_settings):
     """
