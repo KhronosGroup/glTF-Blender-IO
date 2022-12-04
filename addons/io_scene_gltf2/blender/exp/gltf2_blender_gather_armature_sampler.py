@@ -26,7 +26,7 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 @cached
-def gather_bone_bake_animation_sampler(
+def gather_bone_sampled_animation_sampler(
         armature_uuid: str,
         bone: str,
         channel: str,

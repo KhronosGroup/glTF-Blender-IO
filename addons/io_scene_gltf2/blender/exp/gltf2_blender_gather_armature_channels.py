@@ -16,7 +16,7 @@ import bpy
 import typing
 from io_scene_gltf2.io.com import gltf2_io
 from .gltf2_blender_gather_armature_channel_target import gather_armature_sampled_channel_target
-from .gltf2_blender_gather_armature_sampler import gather_bone_bake_animation_sampler
+from .gltf2_blender_gather_armature_sampler import gather_bone_sampled_animation_sampler
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
 from .gltf2_blender_gather_armature_keyframes import get_bone_matrix
@@ -131,7 +131,7 @@ def __gather_target(armature_uuid: str,
         armature_uuid, bone, channel, export_settings)
 
 def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_animated, export_settings):
-    return gather_bone_bake_animation_sampler(
+    return gather_bone_sampled_animation_sampler(
         armature_uuid,
         bone,
         channel,
