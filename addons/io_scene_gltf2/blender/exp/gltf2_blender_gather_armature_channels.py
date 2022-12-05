@@ -48,8 +48,6 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
         for _, _, chan_prop, chan_bone in [chan for chan in to_be_sampled if chan[1] == "BONE"]:
             list_of_animated_bone_channels.append((chan_bone, chan_prop))
 
-    print(list_of_animated_bone_channels)
-
     for bone in bones_to_be_animated:
         for p in ["location", "rotation_quaternion", "scale"]:
             channel = gather_sampled_bone_channel(
