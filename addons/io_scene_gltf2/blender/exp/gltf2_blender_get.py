@@ -255,14 +255,14 @@ def get_factor_from_socket(socket, kind):
     if node is not None:
         x1, x2 = None, None
         if kind == 'RGB':
-            if node.type == 'MIX_RGB' and node.blend_type == 'MULTIPLY':
+            if node.type in 'MIX' and node.data_type == "RGBA" and node.blend_type == 'MULTIPLY':
                 # TODO: handle factor in inputs[0]?
-                x1 = get_const_from_socket(node.inputs[1], kind)
-                x2 = get_const_from_socket(node.inputs[2], kind)
+                x1 = get_const_from_socket(node.inputs[6], kind)
+                x2 = get_const_from_socket(node.inputs[7], kind)
         if kind == 'VALUE':
             if node.type == 'MATH' and node.operation == 'MULTIPLY':
                 x1 = get_const_from_socket(node.inputs[0], kind)
-                x2 = get_const_from_socket(node.inputs[1], kind)
+                x2 = get_const_from_socket(node.inputs[1], kind)               
         if x1 is not None and x2 is None: return x1
         if x2 is not None and x1 is None: return x2
 
