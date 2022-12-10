@@ -128,16 +128,17 @@ def specular_glossiness(mh, location, specular_socket, roughness_socket):
     # Mix in spec/gloss factor
     if spec_factor != [1, 1, 1] or gloss_factor != 1:
         if spec_factor != [1, 1, 1]:
-            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node = mh.node_tree.nodes.new('ShaderNodeMix')
+            node.data_type = 'RGBA'
             node.label = 'Specular Factor'
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
             mh.node_tree.links.new(specular_socket, node.outputs[0])
             # Inputs
-            node.inputs['Fac'].default_value = 1.0
-            specular_socket = node.inputs['Color1']
-            node.inputs['Color2'].default_value = spec_factor + [1]
+            node.inputs['Factor'].default_value = 1.0
+            specular_socket = node.inputs[6]
+            node.inputs[7].default_value = spec_factor + [1]
 
         if gloss_factor != 1:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
