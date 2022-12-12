@@ -93,7 +93,7 @@ def from_socket(start_socket: NodeTreeSearchResult,
                 group_output_node = [node for node in linked_node.node_tree.nodes if node.type == "GROUP_OUTPUT"][0]
                 socket =  [sock for sock in group_output_node.inputs if sock.name == link.from_socket.name][0]
                 group_path.append(linked_node)
-                linked_results = __search_from_socket(socket, shader_node_filter, search_path + [link], group_path)
+                linked_results = __search_from_socket(socket, shader_node_filter, search_path + [link], group_path.copy())
                 if linked_results:
                     # add the link to the current path
                     search_path.append(link)
@@ -114,7 +114,7 @@ def from_socket(start_socket: NodeTreeSearchResult,
                 results.append(NodeTreeSearchResult(linked_node, search_path + [link], group_path))
             # traverse into inputs of the node
             for input_socket in linked_node.inputs:
-                linked_results = __search_from_socket(input_socket, shader_node_filter, search_path + [link], group_path)
+                linked_results = __search_from_socket(input_socket, shader_node_filter, search_path + [link], group_path.copy())
                 if linked_results:
                     # add the link to the current path
                     search_path.append(link)
