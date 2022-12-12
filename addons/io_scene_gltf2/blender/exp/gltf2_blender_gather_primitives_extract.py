@@ -578,18 +578,18 @@ class PrimitiveCreator:
         elif attr['blender_domain'] == "CORNER":
             colors = colors.reshape(-1, 4)
             data_dots = colors[self.dots['vertex_index']]
-            if self.export_settings['gltf_loose_edges']:
+            if self.export_settings['gltf_loose_edges'] and attr['blender_domain'] == "POINT":
                 data_dots_edges = colors[self.dots_edges['vertex_index']]
-            if self.export_settings['gltf_loose_points']:
+            if self.export_settings['gltf_loose_points'] and attr['blender_domain'] == "POINT":
                 data_dots_points = colors[self.dots_points['vertex_index']]
 
         del colors
 
         for i in range(4):
             self.dots[attr['gltf_attribute_name'] + str(i)] = data_dots[:, i]
-            if self.export_settings['gltf_loose_edges']:
+            if self.export_settings['gltf_loose_edges'] and attr['blender_domain'] == "POINT":
                 self.dots_edges[attr['gltf_attribute_name'] + str(i)] = data_dots_edges[:, i]
-            if self.export_settings['gltf_loose_points']:
+            if self.export_settings['gltf_loose_points'] and attr['blender_domain'] == "POINT":
                 self.dots_points[attr['gltf_attribute_name'] + str(i)] = data_dots_points[:, i]
 
     def __get_layer_attribute(self, attr):
