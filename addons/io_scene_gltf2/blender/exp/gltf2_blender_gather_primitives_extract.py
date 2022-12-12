@@ -574,7 +574,7 @@ class PrimitiveCreator:
                 data_dots_edges = colors[self.dots_edges['vertex_index']]
             if self.export_settings['gltf_loose_points']:
                 data_dots_points = colors[self.dots_points['vertex_index']]
-            
+
         elif attr['blender_domain'] == "CORNER":
             colors = colors.reshape(-1, 4)
             data_dots = colors[self.dots['vertex_index']]
