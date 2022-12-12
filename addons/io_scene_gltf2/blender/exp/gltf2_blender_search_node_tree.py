@@ -162,7 +162,8 @@ def get_material_nodes(node_tree: bpy.types.NodeTree, group_path, type):
     for node in [n for n in node_tree.nodes if isinstance(n, type) and not n.mute]:
         nodes.append((node, group_path.copy()))
 
-    for node in [n for n in node_tree.nodes if n.type == "GROUP" and not n.mute and n.node_tree.name != get_gltf_old_group_node_name()]: # Do not enter the olf glTF node group
+    # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
+    for node in [n for n in node_tree.nodes if n.type == "GROUP" and n.node_tree is not None and not n.mute and n.node_tree.name != get_gltf_old_group_node_name()]: # Do not enter the olf glTF node group
         new_group_path = group_path.copy()
         new_group_path.append(node)
         nodes.extend(get_material_nodes(node.node_tree, new_group_path, type))
@@ -180,7 +181,8 @@ def get_socket_from_gltf_material_node(blender_material: bpy.types.Material, nam
     gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
     if blender_material.node_tree and blender_material.use_nodes:
         nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeGroup)
-        nodes = [n for n in nodes if n[0].node_tree.name.lower().startswith(get_gltf_old_group_node_name()) or n[0].node_tree.name.lower() in gltf_node_group_names]
+        # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
+        nodes = [n for n in nodes if n[0].node_tree is not None and ( n[0].node_tree.name.lower().startswith(get_gltf_old_group_node_name()) or n[0].node_tree.name.lower() in gltf_node_group_names)]
         inputs = sum([[(input, node[1]) for input in node[0].inputs if input.name == name] for node in nodes], [])
         if inputs:
             return NodeSocket(inputs[0][0], inputs[0][1])

@@ -140,10 +140,10 @@ def __gather_occlusion_strength(primary_socket, export_settings):
     # Look for a MixRGB node that mixes with pure white in front of
     # primary_socket. The mix factor gives the occlusion strength.
     node = previous_node(primary_socket)
-    if node and node.type == 'MIX' and node.blend_type == 'MIX':
-        fac = get_const_from_socket(NodeSocket(node.node.inputs['Fac'], node.group_path), kind='VALUE')
-        col1 = get_const_from_socket(NodeSocket(node.node.inputs['Color1'], node.group_path), kind='RGB')
-        col2 = get_const_from_socket(NodeSocket(node.node.inputs['Color2'], node.group_path), kind='RGB')
+    if node and node.node.type == 'MIX' and node.node.blend_type == 'MIX':
+        fac = get_const_from_socket(NodeSocket(node.node.inputs['Factor'], node.group_path), kind='VALUE')
+        col1 = get_const_from_socket(NodeSocket(node.node.inputs[6], node.group_path), kind='RGB')
+        col2 = get_const_from_socket(NodeSocket(node.node.inputs[7], node.group_path), kind='RGB')
         if fac is not None:
             if col1 == [1.0, 1.0, 1.0] and col2 is None:
                 return fac
