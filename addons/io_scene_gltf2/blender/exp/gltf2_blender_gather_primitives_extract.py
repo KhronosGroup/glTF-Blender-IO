@@ -584,7 +584,7 @@ class PrimitiveCreator:
                 data_dots_points = colors[self.dots_points['vertex_index']]
 
         del colors
-
+        # colors are already linear, no need to switch color space
         for i in range(4):
             self.dots[attr['gltf_attribute_name'] + str(i)] = data_dots[:, i]
             if self.export_settings['gltf_loose_edges'] and attr['blender_domain'] == "POINT":
