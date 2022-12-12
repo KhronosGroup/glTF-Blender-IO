@@ -15,6 +15,11 @@ If your importer extension supports custom glTF extensions, add them in the `__i
         self.extensions = [Extension(name="TEST_extension1", extension={}, required=True), Extension(name="TEST_extension2", extension={}, required=False)]
 ```
 
+If you want to use this file as a base of your addon, make sure to make it properly installable as Blender addon by either:
+
+- Rename from `__init__.py` to another name
+- Create a zip file of the directory that includes `__init__.py`
+
 Next, define functions that contain the data of the extension you would like to include. Write those functions for each type you want to include extensions for. Currently implemented are:
 
 ```
@@ -44,4 +49,5 @@ gather_import_animation_channel_after_hook(self, gltf_animation, gltf_node, path
 gather_import_animation_weight_before_hook(self, gltf_node, blender_animation, gltf)
 gather_import_animation_weight_after_hook(self, gltf_node, blender_animation, gltf)
 gather_import_decode_primitive(self, gltf_mesh, gltf_primitive, skin_idx, gltf)
+gather_import_gltf_before_hook(self, gltf)
 ```

@@ -37,28 +37,11 @@ def gather_channels_baked(obj_uuid, frame_range, export_settings):
     if len(bpy.data.actions) == 0:
         return None
 
-    blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
-
     if frame_range is None:
         start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
         end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
     else:
-        if blender_obj.animation_data and blender_obj.animation_data.action:
-            # Coming from object parented to bone, and object is also animated. So using range action
-            start_frame, end_frame = blender_obj.animation_data.action.frame_range[0], blender_obj.animation_data.action.frame_range[1]
-        else:
-            # Coming from object parented to bone, and object is not animated. So using range from armature
-            start_frame, end_frame = frame_range
-
-    # use action if exists, else obj_uuid
-    # When an object need some forced baked, there are 2 situtations:
-    # - Non animated object, but there are some selection, so we need to bake
-    # - Object parented to bone. So we need to bake, because of inverse transforms on non default TRS armatures
-    # In this last case, there are 2 situations :
-    # - Object is also animated, so use the action name as key for caching
-    # - Object is not animated, so use obj_uuid as key for caching, like for non animated object (case 1)
-
-    key_action = blender_obj.animation_data.action.name if blender_obj.animation_data and blender_obj.animation_data.action else obj_uuid
+        start_frame, end_frame = frame_range
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gather_animation_channel(
@@ -70,7 +53,7 @@ def gather_channels_baked(obj_uuid, frame_range, export_settings):
             start_frame,
             end_frame,
             False,
-            key_action, # Use obj uuid as action name for caching (or action name if case of object parented to bone and animated)
+            obj_uuid, # Use obj uuid as action name for caching
             None,
             False #If Object is not animated, don't keep animation for this channel
             )
@@ -177,21 +160,6 @@ def gather_animation_channels(obj_uuid: int,
                 True)
             if channel is not None:
                 channels.append(channel)
-
-        # When An Object is parented to bone, and rest pose is used (not current frame)
-        # If parenting is not done with same TRS than rest pose, this can lead to inconsistencies
-        # So we need to bake object animation too, to be sure that correct TRS animation are used
-        # Here, we want add these channels to same action that the armature
-        if export_settings['gltf_selected'] is False and export_settings['gltf_current_frame'] is False:
-
-            children_obj_parent_to_bones = []
-            for bone_uuid in bones_uuid:
-                children_obj_parent_to_bones.extend([child for child in export_settings['vtree'].nodes[bone_uuid].children if export_settings['vtree'].nodes[child].blender_type not in [VExportNode.BONE, VExportNode.ARMATURE]])
-            for child_uuid in children_obj_parent_to_bones:
-
-                channels_baked = gather_channels_baked(child_uuid, (bake_range_start, bake_range_end), export_settings)
-                if channels_baked is not None:
-                    channels.extend(channels_baked)
 
     else:
         done_paths = []

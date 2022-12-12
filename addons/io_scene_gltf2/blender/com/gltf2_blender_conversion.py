@@ -16,6 +16,9 @@ from math import sin, cos
 import numpy as np
 from io_scene_gltf2.io.com import gltf2_io_constants
 
+PBR_WATTS_TO_LUMENS = 683
+# Industry convention, biological peak at 555nm, scientific standard as part of SI candela definition.
+
 def texture_transform_blender_to_gltf(mapping_transform):
     """
     Converts the offset/rotation/scale from a Mapping node applied in Blender's

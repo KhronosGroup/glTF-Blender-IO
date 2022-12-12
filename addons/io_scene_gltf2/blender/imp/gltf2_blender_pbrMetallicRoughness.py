@@ -327,16 +327,17 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     # Otherwise, use a multiply node for it
     else:
         if emissive_factor != [1, 1, 1]:
-            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node = mh.node_tree.nodes.new('ShaderNodeMix')
             node.label = 'Emissive Factor'
+            node.data_type = 'RGBA'
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
             mh.node_tree.links.new(color_socket, node.outputs[0])
             # Inputs
-            node.inputs['Fac'].default_value = 1.0
-            color_socket = node.inputs['Color1']
-            node.inputs['Color2'].default_value = emissive_factor + [1]
+            node.inputs['Factor'].default_value = 1.0
+            color_socket = node.inputs[6]
+            node.inputs[7].default_value = emissive_factor + [1]
 
             x -= 200
 
@@ -392,16 +393,17 @@ def base_color(
     needs_alpha_factor = base_color_factor[3] != 1.0 and alpha_socket is not None
     if needs_color_factor or needs_alpha_factor:
         if needs_color_factor:
-            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node = mh.node_tree.nodes.new('ShaderNodeMix')
             node.label = 'Color Factor'
+            node.data_type = "RGBA"
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
             mh.node_tree.links.new(color_socket, node.outputs[0])
             # Inputs
-            node.inputs['Fac'].default_value = 1.0
-            color_socket = node.inputs['Color1']
-            node.inputs['Color2'].default_value = base_color_factor[:3] + [1]
+            node.inputs['Factor'].default_value = 1.0
+            color_socket = node.inputs[6]
+            node.inputs[7].default_value = base_color_factor[:3] + [1]
 
         if needs_alpha_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
@@ -424,7 +426,7 @@ def base_color(
 
     # Mix texture and vertex color together
     if base_color_texture is not None and mh.vertex_color:
-        node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+        node = mh.node_tree.nodes.new('ShaderNodeMix')
         node.label = 'Mix Vertex Color'
         node.location = x - 140, y
         node.blend_type = 'MULTIPLY'
@@ -451,7 +453,7 @@ def base_color(
     # Vertex Color
     if mh.vertex_color:
         node = mh.node_tree.nodes.new('ShaderNodeVertexColor')
-        node.layer_name = 'Col'
+        # Do not set the layer name, so rendered one will be used (At import => The first one)
         node.location = x - 250, y - 240
         # Outputs
         mh.node_tree.links.new(vcolor_color_socket, node.outputs['Color'])
@@ -586,16 +588,17 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
     if strength is None: strength = 1.0
     if strength != 1.0:
         # Mix with white
-        node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+        node = mh.node_tree.nodes.new('ShaderNodeMix')
         node.label = 'Occlusion Strength'
+        node.data_type = 'RGBA'
         node.location = x - 140, y
         node.blend_type = 'MIX'
         # Outputs
         mh.node_tree.links.new(occlusion_socket, node.outputs[0])
         # Inputs
-        node.inputs['Fac'].default_value = strength
-        node.inputs['Color1'].default_value = [1, 1, 1, 1]
-        occlusion_socket = node.inputs['Color2']
+        node.inputs['Factor'].default_value = strength
+        node.inputs[6].default_value = [1, 1, 1, 1]
+        occlusion_socket = node.inputs[7]
 
         x -= 200
 
