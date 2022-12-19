@@ -30,6 +30,7 @@ def gather_animation_fcurves_sampler(
         obj_uuid: str,
         channel_group: typing.Tuple[bpy.types.FCurve],
         bone: typing.Optional[str],
+        custom_range: typing.Optional[set],
         export_settings
         ) -> gltf2_io.AnimationSampler:
 
@@ -39,6 +40,7 @@ def gather_animation_fcurves_sampler(
         obj_uuid,
         channel_group,
         bone,
+        custom_range,
         export_settings)
 
     if keyframes is None:
@@ -66,10 +68,11 @@ def __gather_keyframes(
         obj_uuid :str,
         channel_group: typing.Tuple[bpy.types.FCurve],
         bone: typing.Optional[str],
+        custom_range: typing.Optional[set],
         export_settings
         ):
 
-    return gather_fcurve_keyframes(obj_uuid, channel_group, bone, export_settings)
+    return gather_fcurve_keyframes(obj_uuid, channel_group, bone, custom_range, export_settings)
 
 def __convert_keyframes(
         obj_uuid: str,

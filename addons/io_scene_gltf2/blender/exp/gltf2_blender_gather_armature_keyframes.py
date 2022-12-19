@@ -12,71 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
 import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import bonecache
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from .gltf2_blender_gather_keyframes import Keyframe
+from .gltf2_blender_gather_animation_sampling_cache import get_bone_matrix
 import numpy as np
 
-
-# TODOANIM : Warning : If you change some parameter here, need to be changed in cache system
-@bonecache 
-def get_bone_matrix(
-        armature_uuid: str,
-        bone: str,
-        channel,
-        action_name,
-        range_start: int, #TODOANIM
-        range_end: int,   #TODOANIM
-        current_frame: int,
-        step: int,
-        export_settings
-    ): 
-
-    data = {}
-
-    # Always using bake_range, because some bones may need to be baked,
-    # even if user didn't request it
-
-    start_frame = range_start
-    end_frame = range_end
-
-
-    frame = start_frame
-    while frame <= end_frame:
-        data[frame] = {}
-        bpy.context.scene.frame_set(int(frame))
-        bones = export_settings['vtree'].get_all_bones(armature_uuid)
-
-        for bone_uuid in bones:
-            blender_bone = export_settings['vtree'].nodes[bone_uuid].blender_bone
-
-            if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
-                blender_bone_parent = export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_bone
-                rest_mat = blender_bone_parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local
-                matrix = rest_mat.inverted_safe() @ blender_bone_parent.matrix.inverted_safe() @ blender_bone.matrix
-            else:
-                if blender_bone.parent is None:
-                    matrix = blender_bone.bone.matrix_local.inverted_safe() @ blender_bone.matrix
-                else:
-                    # Bone has a parent, but in export, after filter, is at root of armature
-                    matrix = blender_bone.matrix.copy()
-
-            data[frame][blender_bone.name] = matrix
-
-        # TODOANIM need to have a way to cache/bake anything needed
-
-        # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
-        drivers_to_manage = get_sk_drivers(armature_uuid, export_settings)
-        for dr_obj_uuid, dr_fcurves in drivers_to_manage:
-            vals = get_sk_driver_values(dr_obj_uuid, frame, dr_fcurves, export_settings)
-
-        frame += step
-
-    return data
 
 @cached
 def gather_bone_sampled_keyframes(
@@ -88,14 +29,13 @@ def gather_bone_sampled_keyframes(
         export_settings
         ) -> typing.List[Keyframe]:
 
-    #TODOANIM manage frame range!!!
-    start_frame = 1 #TODOANIM
-    end_frame = 50  #TODOANIM
+    start_frame = export_settings['ranges'][armature_uuid][action_name]['start']
+    end_frame  = export_settings['ranges'][armature_uuid][action_name]['end']
 
     keyframes = []
 
     frame = start_frame
-    step = export_settings['gltf_frame_step'] #TODOANIM
+    step = export_settings['gltf_frame_step'] #TODOANIM to be tested correctly
 
     while frame <= end_frame:
         key = Keyframe(None, frame, channel) #TODOANIM first parameter not needed ... cf refactor of class Keyframe?
@@ -105,8 +45,6 @@ def gather_bone_sampled_keyframes(
             bone,
             channel,
             action_name,
-            start_frame, #TODOANIM : manage in export_settings to avoid passing as parameter ?
-            end_frame,   #TODOANIM : manage in export_settings to avoid passing as parameter ?
             frame,
             step,
             export_settings

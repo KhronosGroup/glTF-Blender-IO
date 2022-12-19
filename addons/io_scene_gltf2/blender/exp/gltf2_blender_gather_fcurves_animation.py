@@ -22,8 +22,6 @@ def gather_animation_fcurves(
         export_settings
         ):
 
-    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
-    
     name = __gather_name(blender_action, export_settings)
 
     channels, to_be_sampled = __gather_channels_fcurves(obj_uuid, blender_action, export_settings)

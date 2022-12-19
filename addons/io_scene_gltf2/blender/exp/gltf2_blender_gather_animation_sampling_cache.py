@@ -14,16 +14,15 @@
 
 import mathutils
 import bpy
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import objectcache
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import objectcache, bonecache
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
 
-# TODOANIM : Warning : If you change some parameter here, need to be changed in cache system
+# Warning : If you change some parameter here, need to be changed in cache system
 @objectcache
 def get_object_cache_data(path: str,
                       blender_obj_uuid: str,
                       action_name: str,
-                      bake_range_start: int, #TODOANIM
-                      bake_range_end: int,   #TODOANIM
                       current_frame: int,
                       step: int,
                       export_settings,
@@ -32,20 +31,15 @@ def get_object_cache_data(path: str,
 
     data = {}
 
-    # TODOANIM : bake_range_start & bake_range_end are no more needed here
-    # Because we bake, we don't know exactly the frame range,
-    # So using min / max of all actions
-
-    start_frame = bake_range_start
-    end_frame = bake_range_end
+    min_, max_ = get_range()
 
     if only_gather_provided:
         obj_uuids = [blender_obj_uuid]
     else:
         obj_uuids = [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]
 
-    frame = start_frame
-    while frame <= end_frame:
+    frame = min_
+    while frame <= max_:
         bpy.context.scene.frame_set(int(frame))
 
         for obj_uuid in obj_uuids:
@@ -107,3 +101,69 @@ def get_object_cache_data(path: str,
                 data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
         frame += step
     return data
+
+# Warning : If you change some parameter here, need to be changed in cache system
+@bonecache 
+def get_bone_matrix(
+        armature_uuid: str,
+        bone: str,
+        channel,
+        action_name,
+        current_frame: int,
+        step: int,
+        export_settings
+    ): 
+
+    data = {}
+
+    # Always using bake_range, because some bones may need to be baked,
+    # even if user didn't request it
+
+    min_, max_ = get_range(export_settings)
+
+
+    frame = min_
+    while frame <= max_:
+        data[frame] = {}
+        bpy.context.scene.frame_set(int(frame))
+        bones = export_settings['vtree'].get_all_bones(armature_uuid)
+
+        for bone_uuid in bones:
+            blender_bone = export_settings['vtree'].nodes[bone_uuid].blender_bone
+
+            if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
+                blender_bone_parent = export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_bone
+                rest_mat = blender_bone_parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local
+                matrix = rest_mat.inverted_safe() @ blender_bone_parent.matrix.inverted_safe() @ blender_bone.matrix
+            else:
+                if blender_bone.parent is None:
+                    matrix = blender_bone.bone.matrix_local.inverted_safe() @ blender_bone.matrix
+                else:
+                    # Bone has a parent, but in export, after filter, is at root of armature
+                    matrix = blender_bone.matrix.copy()
+
+            data[frame][blender_bone.name] = matrix
+
+        # TODOANIM need to have a way to cache/bake anything needed
+
+        # If some drivers must be evaluated, do it here, to avoid to have to change frame by frame later
+        drivers_to_manage = get_sk_drivers(armature_uuid, export_settings)
+        for dr_obj_uuid, dr_channels in drivers_to_manage:
+            vals = get_sk_driver_values(dr_obj_uuid, frame, dr_channels, export_settings)
+
+        frame += step
+
+    return data
+
+#TODOANIM calculate a more accurate list of ranges ?
+def get_range(export_settings):
+    min_ = None
+    max_ = None
+    for obj in export_settings['ranges'].keys():
+        for anim in export_settings['ranges'][obj].keys():
+            if min_ is None or min_ > export_settings['ranges'][obj][anim]['start']:
+                min_ = export_settings['ranges'][obj][anim]['start']
+            if max_ is None or max_ < export_settings['ranges'][obj][anim]['end']:
+                max_ = export_settings['ranges'][obj][anim]['end']
+
+    return min_, max_

@@ -18,5 +18,8 @@ from .gltf2_blender_gather_action import gather_actions_animations
 
 def gather_animations(export_settings):
 
+    # Reinit stored data
+    export_settings['ranges'] = {}
+
     if export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
         return gather_actions_animations(export_settings)

@@ -33,10 +33,14 @@ def gather_animation_fcurves_channels(
 
     channels_to_perform, to_be_sampled = get_channel_groups(obj_uuid, blender_action, export_settings)
 
+    custom_range = None
+    if blender_action.use_frame_range:
+        custom_range = (blender_action.frame_start, blender_action.frame_end)
+
     channels = []
     for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
         for channel_group in chan['properties'].values():
-            channel = __gather_animation_fcurve_channel(chan['obj_uuid'], channel_group, chan['bone'], export_settings)
+            channel = __gather_animation_fcurve_channel(chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
             if channel is not None:
                 channels.append(channel)
         
@@ -223,12 +227,13 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
 def __gather_animation_fcurve_channel(obj_uuid: str,
                                channel_group: typing.Tuple[bpy.types.FCurve],
                                bone: typing.Optional[str],
+                               custom_range: typing.Optional[set],
                                export_settings
                                ) -> typing.Union[gltf2_io.AnimationChannel, None]:
 
     __target= __gather_target(obj_uuid, channel_group, bone, export_settings)
     if __target.path is not None:
-        sampler = __gather_sampler(obj_uuid, channel_group, bone, export_settings)
+        sampler = __gather_sampler(obj_uuid, channel_group, bone, custom_range, export_settings)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
@@ -260,9 +265,10 @@ def __gather_target(obj_uuid: str,
 def __gather_sampler(obj_uuid: str,
                     channel_group: typing.Tuple[bpy.types.FCurve],
                     bone: typing.Optional[str],
+                    custom_range: typing.Optional[set],
                     export_settings) -> gltf2_io.AnimationSampler:
     
-    return gather_animation_fcurves_sampler(obj_uuid, channel_group, bone, export_settings)
+    return gather_animation_fcurves_sampler(obj_uuid, channel_group, bone, custom_range, export_settings)
 
 def __needs_baking(obj_uuid: str,
                  channels: typing.Tuple[bpy.types.FCurve],

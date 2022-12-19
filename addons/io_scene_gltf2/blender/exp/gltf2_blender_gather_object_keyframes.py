@@ -28,14 +28,13 @@ def gather_object_sampled_keyframes(
         export_settings
         ):
 
-    #TODOANIM manage frame range!!!
-    start_frame = 1 #TODOANIM
-    end_frame = 50  #TODOANIM
+    start_frame = export_settings['ranges'][obj_uuid][action_name]['start']
+    end_frame  = export_settings['ranges'][obj_uuid][action_name]['end']
 
     keyframes = []
 
     frame = start_frame
-    step = export_settings['gltf_frame_step'] #TODOANIM
+    step = export_settings['gltf_frame_step'] #TODOANIM to be tested correctly
 
     while frame <= end_frame:
         key = Keyframe(None, frame, channel)
@@ -44,8 +43,6 @@ def gather_object_sampled_keyframes(
             'matrix',
             obj_uuid,
             action_name,
-            start_frame, #TODOANIM
-            end_frame,   #TODOANIM
             frame,
             step,
             export_settings)

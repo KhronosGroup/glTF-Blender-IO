@@ -24,6 +24,7 @@ def gather_fcurve_keyframes(
         obj_uuid: str,
         channel_group: typing.Tuple[bpy.types.FCurve],
         bone: typing.Optional[str],
+        custom_range: typing.Optional[set],
         export_settings):
 
     keyframes = []
@@ -35,6 +36,15 @@ def gather_fcurve_keyframes(
     frames = [keyframe.co[0] for keyframe in [c for c in channel_group if c is not None][0].keyframe_points]
     # some weird files have duplicate frame at same time, removed them
     frames = sorted(set(frames))
+
+    if export_settings['gltf_negative_frames'] == "CROP":
+        frames = [f for f in frames if f >= 0]
+
+    if export_settings['gltf_frame_range'] is True:
+        frames = [f for f in frames if f >= bpy.context.scene.frame_start and f <= bpy.context.scene.frame_end]
+
+    if custom_range is not None:
+        frames = [f for f in frames if f >= custom_range[0] and f <= custom_range[1]]
 
     for i, frame in enumerate(frames):
         key = Keyframe(channel_group, frame, None)

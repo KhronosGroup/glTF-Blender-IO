@@ -97,11 +97,9 @@ def objectcache(func):
         # 0 : path
         # 1 : object_uuid
         # 2 : action_name
-        # 3 : bake_range_start
-        # 4 : bake_range_end
-        # 5 : frame
-        # 6 : step
-        # 7 : export_settings
+        # 3 : frame
+        # 4 : step
+        # 5 : export_settings
         # only_gather_provided : only_gather_provided
 
         cache_key_args = args
@@ -115,16 +113,16 @@ def objectcache(func):
             result = func(*args)
             func.__objectcache = result
             # Here are the key used: result[obj_uuid][action_name][path][frame]
-            return result[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[5]]
+            return result[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[3]]
         # object is in cache, but not this action
         # We need to keep other actions
         elif cache_key_args[2] not in func.__objectcache[cache_key_args[1]].keys():
             result = func(*args, only_gather_provided=True)
             func.__objectcache[cache_key_args[1]][cache_key_args[2]] = result[cache_key_args[1]][cache_key_args[2]]
-            return result[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[5]]
+            return result[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[3]]
         # all is already cached
         else:
-            return func.__objectcache[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[5]]
+            return func.__objectcache[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[3]]
     return wrapper_objectcache
 
 def bonecache(func):
@@ -143,11 +141,9 @@ def bonecache(func):
         # 1 : bone
         # 2 : channel
         # 3 : action_name
-        # 4 : range_start
-        # 5 : range_end
-        # 6 : current_frame
-        # 7 : step
-        # 8 : export_settings
+        # 4 : current_frame
+        # 5 : step
+        # 6 : export_settings
 
         armature = args[-1]['vtree'].nodes[args[0]].blender_object
 
@@ -163,9 +159,9 @@ def bonecache(func):
             func.__bonecache = result
             func.__current_action_name = cache_key_args[3]
             func.__current_armature_uuid = cache_key_args[0]
-            return result[cache_key_args[6]][pose_bone.name]
+            return result[cache_key_args[4]][pose_bone.name]
         else:
-            return func.__bonecache[cache_key_args[6]][pose_bone.name]
+            return func.__bonecache[cache_key_args[4]][pose_bone.name]
     return wrapper_bonecache
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons

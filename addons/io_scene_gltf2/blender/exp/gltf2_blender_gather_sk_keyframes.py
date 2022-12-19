@@ -22,14 +22,13 @@ def gather_sk_sampled_keyframes(obj_uuid,
         action_name,
         export_settings):
 
-    #TODOANIM manage frame range!!!
-    start_frame = 1 #TODOANIM
-    end_frame = 50  #TODOANIM
+    start_frame = export_settings['ranges'][obj_uuid][action_name]['start']
+    end_frame  = export_settings['ranges'][obj_uuid][action_name]['end']
 
     keyframes = []
 
     frame = start_frame
-    step = export_settings['gltf_frame_step'] #TODOANIM
+    step = export_settings['gltf_frame_step'] #TODOANIM to be tested correctly
     blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
     while frame <= end_frame:
         key = Keyframe([None] * (len(blender_obj.data.shape_keys.key_blocks)-1), frame, 'value')
@@ -37,8 +36,6 @@ def gather_sk_sampled_keyframes(obj_uuid,
             'sk',
             obj_uuid,
             action_name,
-            start_frame, #TODOANIM
-            end_frame,   #TODOANIM
             frame,
             step,
             export_settings

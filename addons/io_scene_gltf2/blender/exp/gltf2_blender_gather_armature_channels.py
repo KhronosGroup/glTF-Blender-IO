@@ -23,12 +23,12 @@ from .gltf2_blender_gather_armature_keyframes import get_bone_matrix
 from .gltf2_blender_gather_object_channels import gather_sampled_object_channel
 from .gltf2_blender_gather_fcurves_channels import get_channel_groups
 from io_scene_gltf2.blender.com.gltf2_blender_conversion import get_target, get_channel_from_target
+from .gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
 
 
 def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-    #TODOANIM use_frame_range? Managed here or at upper level
     #TODOANIM : check if there is really some animation on the action must be done before
 
     # Then bake all bones
@@ -80,11 +80,15 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
     
 
     # Retrieve channels for drivers, if needed
-    #TODOANIM need to be done on bake weights anim
+    drivers_to_manage = get_sk_drivers(armature_uuid, export_settings)
+    for obj_driver_uuid, fcurves in drivers_to_manage:
+        pass   
+        # if channel is not None:
+        #     channels.append(channel)
 
     # resetting driver caches
-    gltf2_blender_gather_drivers.get_sk_driver_values.reset_cache()
-    gltf2_blender_gather_drivers.get_sk_drivers.reset_cache()
+    get_sk_driver_values.reset_cache()
+    get_sk_drivers.reset_cache()
     # resetting bone caches
     get_bone_matrix.reset_cache() #TODOANIM when we will have a cache system
 

@@ -473,21 +473,21 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Negative Frames',
         items=(('SLIDE', 'Slide',
         'Slide animation to start at frame 0'),
-        ('CUT', 'Cut',
+        ('CROP', 'Crop',
         'Keep only frames above frame 0'),
         ),
-        description='Negative Frames are slided or cut',
+        description='Negative Frames are slided or cropped',
         default='SLIDE'
     )
 
     export_bake_animation: BoolProperty(
-        name='Bake animations',
+        name='Bake All Objects Animations',
         description=(
             "Force exporting animation on every objects. "
             "Can be usefull when using constraints or driver. "
             "Also useful when exporting only selection"
         ),
-        default=True
+        default=False
     )
 
     export_anim_single_armature: BoolProperty(

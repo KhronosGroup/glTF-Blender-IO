@@ -28,9 +28,11 @@ from .gltf2_blender_gather_object_action_sampled import gather_action_object_sam
 from .gltf2_blender_gather_sk_action_sampled import gather_action_sk_sampled
 from .gltf2_blender_gather_object_channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
-
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 
 def gather_actions_animations(export_settings):
+
+    prepare_actions_range(export_settings)
 
     animations = []
     merged_tracks = {}
@@ -118,6 +120,52 @@ def gather_actions_animations(export_settings):
     return new_animations
 
 
+def prepare_actions_range(export_settings):
+
+    vtree = export_settings['vtree']
+    for obj_uuid in vtree.get_all_objects():
+
+        # Do not manage not exported objects
+        if vtree.nodes[obj_uuid].node is None:
+            continue
+
+        if obj_uuid not in export_settings['ranges']:
+            export_settings['ranges'][obj_uuid] = {}
+
+        blender_actions = __get_blender_actions(obj_uuid, export_settings)
+        for blender_action, _ , type_ in blender_actions:
+
+            start_frame = int(blender_action.frame_range[0])
+            end_frame = int(blender_action.frame_range[1])
+
+            export_settings['ranges'][obj_uuid][blender_action.name] = {}
+
+            # If some negative frame and crop -> set start at 0
+            if start_frame < 0 and export_settings['gltf_negative_frames'] == "CROP":
+                start_frame = 0
+
+            if export_settings['gltf_frame_range'] is True:
+                start_frame = max(bpy.context.scene.frame_start, start_frame)
+                end_frame = min(bpy.context.scene.frame_end, end_frame)
+
+            export_settings['ranges'][obj_uuid][blender_action.name]['start'] = start_frame
+            export_settings['ranges'][obj_uuid][blender_action.name]['end'] = end_frame
+
+            #TODOANIM if start and end are negative & crop --> No export of this action
+
+            if type_ == "SHAPEKEY" and export_settings['gltf_bake_animation']:
+                export_settings['ranges'][obj_uuid][obj_uuid] = {}
+                export_settings['ranges'][obj_uuid][obj_uuid]['start'] = bpy.context.scene.frame_start
+                export_settings['ranges'][obj_uuid][obj_uuid]['end'] = bpy.context.scene.frame_end
+
+        if len(blender_actions) == 0 and export_settings['gltf_bake_animation']:
+            # No animation on this object
+            # In case of baking animation, we will use max range of export or scene frame range ??? #TODOANIM
+            # Will be calculated later if max range. Can be set here if scene frame range
+            export_settings['ranges'][obj_uuid][obj_uuid] = {}
+            export_settings['ranges'][obj_uuid][obj_uuid]['start'] = bpy.context.scene.frame_start
+            export_settings['ranges'][obj_uuid][obj_uuid]['end'] = bpy.context.scene.frame_end
+
 def gather_action_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],
                         offset: int,
@@ -134,7 +182,7 @@ def gather_action_animations(  obj_uuid: int,
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
-    blender_actions = __get_blender_actions(blender_object, export_settings)
+    blender_actions = __get_blender_actions(obj_uuid, export_settings)
 
     # When object is not animated at all (no SK)
     # We can create an animation for this object
@@ -295,6 +343,10 @@ def gather_action_animations(  obj_uuid: int,
 
 def __bake_animation(obj_uuid: str, export_settings):
 
+    # if there is no animation in file => no need to bake
+    if len(bpy.data.actions) == 0:
+        return None
+
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     # No TRS animation are found for this object.
@@ -314,21 +366,22 @@ def __bake_animation(obj_uuid: str, export_settings):
         # We need to bake all bones. Because some bone can have some constraints linking to
         # some other armature bones, for example
 
-        # if there is no animation in file => no need to bake
-        if len(bpy.data.actions) > 0:
-            animation = gather_action_armature_sampled(obj_uuid, None, export_settings)
+        animation = gather_action_armature_sampled(obj_uuid, None, export_settings)
 
-            link_samplers(animation, export_settings)
-            if animation is not None:
-                return animation
+        link_samplers(animation, export_settings)
+        if animation is not None:
+            return animation
     return None
 
-def __get_blender_actions(blender_object: bpy.types.Object,
+@cached
+def __get_blender_actions(obj_uuid: str,
                             export_settings
                           ) -> typing.List[typing.Tuple[bpy.types.Action, str, str]]:
     blender_actions = []
     blender_tracks = {}
     action_on_type = {}
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
 
@@ -352,7 +405,7 @@ def __get_blender_actions(blender_object: bpy.types.Object,
                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                     action_on_type[strip.action.name] = "OBJECT"
 
-    # TODOANIM : for caching, actions linked to SK must be after actions about TRS
+    # For caching, actions linked to SK must be after actions about TRS
     if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
