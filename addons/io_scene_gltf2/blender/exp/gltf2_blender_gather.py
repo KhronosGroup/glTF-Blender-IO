@@ -18,7 +18,6 @@ from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ..com.gltf2_blender_extras import generate_extras
-from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 from .gltf2_blender_gather_object_keyframes import get_object_cache_data
@@ -38,7 +37,7 @@ def gather_gltf2(export_settings):
     scenes_to_export = bpy.data.scenes if export_settings['gltf_active_scene'] is False else [scene for scene in bpy.data.scenes if scene.name == store_user_scene.name]
     for blender_scene in scenes_to_export:
         scenes.append(__gather_scene(blender_scene, export_settings))
-        if export_settings[gltf2_blender_export_keys.ANIMATIONS]:
+        if export_settings['gltf_animations']:
             # resetting object cache
             get_object_cache_data.reset_cache()
             animations += gather_animations(export_settings)
@@ -91,6 +90,6 @@ def __gather_scene(blender_scene, export_settings):
 
 
 def __gather_extras(blender_object, export_settings):
-    if export_settings[gltf2_blender_export_keys.EXTRAS]:
+    if export_settings['gltf_extras']:
         return generate_extras(blender_object)
     return None

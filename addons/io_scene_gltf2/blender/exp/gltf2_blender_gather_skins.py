@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import mathutils
-from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -21,7 +20,6 @@ from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 
 
@@ -64,7 +62,7 @@ def gather_skin(armature_uuid, export_settings):
 
 
 def __filter_skin(blender_armature_object, export_settings):
-    if not export_settings[gltf2_blender_export_keys.SKINS]:
+    if not export_settings['gltf_skins']:
         return False
     if blender_armature_object.type != 'ARMATURE' or len(blender_armature_object.pose.bones) == 0:
         return False
@@ -84,7 +82,7 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
     blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
 
     axis_basis_change = mathutils.Matrix.Identity(4)
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         axis_basis_change = mathutils.Matrix(
             ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 

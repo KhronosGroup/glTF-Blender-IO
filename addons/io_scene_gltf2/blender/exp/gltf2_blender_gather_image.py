@@ -16,13 +16,12 @@ import bpy
 import typing
 import os
 
-from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_image_data
 from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage, FillImage, StoreImage, StoreData
+from io_scene_gltf2.blender.exp.gltf2_blender_image import Channel, ExportImage, FillImage
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
@@ -85,7 +84,7 @@ def __gather_original_uri(original_uri, export_settings):
     try:
         rel_path = os.path.relpath(
             path_to_image,
-            start=export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
+            start=export_settings['gltf_filedirectory'],
         )
     except ValueError:
         # eg. because no relative path between C:\ and D:\ on Windows
@@ -113,7 +112,7 @@ def __filter_image(sockets, export_settings):
 
 @cached
 def __gather_buffer_view(image_data, mime_type, name, export_settings):
-    if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
+    if export_settings['gltf_format'] != 'GLTF_SEPARATE':
         data, factor = image_data.encode(mime_type)
         return gltf2_io_binary_data.BinaryData(data=data), factor
     return None, None
@@ -180,7 +179,7 @@ def __gather_name(export_image, export_settings):
 
 @cached
 def __gather_uri(image_data, mime_type, name, export_settings):
-    if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_SEPARATE':
+    if export_settings['gltf_format'] == 'GLTF_SEPARATE':
         # as usual we just store the data in place instead of already resolving the references
         data, factor = image_data.encode(mime_type=mime_type)
         return gltf2_io_image_data.ImageData(

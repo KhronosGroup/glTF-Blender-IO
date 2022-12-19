@@ -18,7 +18,7 @@ import bpy
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_unlit
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info, gltf2_blender_export_keys
+from io_scene_gltf2.blender.exp import gltf2_blender_gather_texture_info
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_pbr_metallic_roughness
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_get
@@ -190,7 +190,7 @@ def __get_new_material_texture_shared(base, node):
                         __get_new_material_texture_shared(base[i], node[i])
 
 def __filter_material(blender_material, export_settings):
-    return export_settings[gltf2_blender_export_keys.MATERIALS]
+    return export_settings['gltf_materials']
 
 
 def __gather_alpha_cutoff(blender_material, export_settings):

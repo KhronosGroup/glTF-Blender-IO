@@ -14,8 +14,7 @@
 
 import bpy
 from typing import Optional, Dict, List, Any, Tuple
-from .gltf2_blender_export_keys import MORPH
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached_by_key
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
 from ..com.gltf2_blender_extras import generate_extras
@@ -124,7 +123,7 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     if export_settings['gltf_extras']:
         extras = generate_extras(blender_mesh) or {}
 
-    if export_settings[MORPH] and blender_mesh.shape_keys:
+    if export_settings['gltf_morph'] and blender_mesh.shape_keys:
         morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
         if morph_max > 0:
             target_names = []
@@ -168,7 +167,7 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
                      modifiers: Optional[bpy.types.ObjectModifiers],
                      export_settings
                      ) -> Optional[List[float]]:
-    if not export_settings[MORPH] or not blender_mesh.shape_keys:
+    if not export_settings['gltf_morph'] or not blender_mesh.shape_keys:
         return None
 
     morph_max = len(blender_mesh.shape_keys.key_blocks) - 1

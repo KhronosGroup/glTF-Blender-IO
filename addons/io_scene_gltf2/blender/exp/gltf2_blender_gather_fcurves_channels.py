@@ -15,7 +15,7 @@
 import bpy
 import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes, get_delta_modes, is_location, is_rotation, is_scale
+from ..com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes
 from io_scene_gltf2.io.com import gltf2_io_debug
 from io_scene_gltf2.blender.exp import gltf2_blender_get
 from io_scene_gltf2.blender.com.gltf2_blender_conversion import get_target, get_channel_from_target

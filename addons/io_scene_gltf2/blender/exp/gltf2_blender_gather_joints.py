@@ -14,10 +14,8 @@
 
 from mathutils import Matrix, Quaternion, Vector
 
-from . import gltf2_blender_export_keys
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
@@ -27,7 +25,7 @@ from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
 # TODO these 3 functions move to shared file
 def __convert_swizzle_location(loc, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Vector((loc[0], loc[2], -loc[1]))
     else:
         return Vector((loc[0], loc[1], loc[2]))
@@ -39,7 +37,7 @@ def __convert_swizzle_rotation(rot, export_settings):
 
     'w' is still at first position.
     """
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
     else:
         return Quaternion((rot[0], rot[1], rot[2], rot[3]))
@@ -47,7 +45,7 @@ def __convert_swizzle_rotation(rot, export_settings):
 
 def __convert_swizzle_scale(scale, export_settings):
     """Convert a scale from Blender coordinate system to glTF coordinate system."""
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Vector((scale[0], scale[2], scale[1]))
     else:
         return Vector((scale[0], scale[1], scale[2]))

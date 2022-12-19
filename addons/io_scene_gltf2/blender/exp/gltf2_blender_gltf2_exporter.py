@@ -22,7 +22,6 @@ from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
 from io_scene_gltf2.io.exp import gltf2_io_buffer
 from io_scene_gltf2.io.exp import gltf2_io_image_data
-from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
@@ -37,7 +36,7 @@ class GlTF2Exporter:
         self.export_settings = export_settings
         self.__finalized = False
 
-        copyright = export_settings[gltf2_blender_export_keys.COPYRIGHT] or None
+        copyright = export_settings['gltf_copyright'] or None
         asset = gltf2_io.Asset(
             copyright=copyright,
             extensions=None,
@@ -157,7 +156,7 @@ class GlTF2Exporter:
         """
         Write all images.
         """
-        output_path = self.export_settings[gltf2_blender_export_keys.TEXTURE_DIRECTORY]
+        output_path = self.export_settings['gltf_texturedirectory']
 
         if self.__images:
             os.makedirs(output_path, exist_ok=True)
@@ -241,11 +240,11 @@ class GlTF2Exporter:
 
         self.__images[name] = image
 
-        texture_dir = self.export_settings[gltf2_blender_export_keys.TEXTURE_DIRECTORY]
+        texture_dir = self.export_settings['gltf_texturedirectory']
         abs_path = os.path.join(texture_dir, name + image.file_extension)
         rel_path = os.path.relpath(
             abs_path,
-            start=self.export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
+            start=self.export_settings['gltf_filedirectory'],
         )
         return _path_to_uri(rel_path)
 

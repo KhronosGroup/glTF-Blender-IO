@@ -14,8 +14,7 @@
 
 import bpy
 import numpy as np
-from .gltf2_blender_gather_image import StoreImage, StoreData
-from .gltf2_blender_image import TmpImageGuard, make_temp_image_copy
+from .gltf2_blender_image import TmpImageGuard, make_temp_image_copy, StoreImage
 
 def specular_calculation(stored):
 

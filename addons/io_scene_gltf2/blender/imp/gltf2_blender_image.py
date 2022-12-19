@@ -14,10 +14,8 @@
 
 import bpy
 import os
-import tempfile
-from os.path import dirname, join, isfile, basename, normpath
+from os.path import dirname, join, basename, normpath
 import urllib.parse
-import re
 
 from ...io.imp.gltf2_io_binary import BinaryData
 from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions

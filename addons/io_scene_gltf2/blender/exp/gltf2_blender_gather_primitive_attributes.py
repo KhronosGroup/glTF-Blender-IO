@@ -14,7 +14,6 @@
 
 import numpy as np
 
-from . import gltf2_blender_export_keys
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.io.com import gltf2_io_debug
@@ -74,7 +73,7 @@ def array_to_accessor(array, component_type, data_type, include_max_and_min=Fals
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
 
-    if not export_settings[gltf2_blender_export_keys.SKINS]:
+    if not export_settings['gltf_skins']:
         return attributes
 
     # Retrieve max set index

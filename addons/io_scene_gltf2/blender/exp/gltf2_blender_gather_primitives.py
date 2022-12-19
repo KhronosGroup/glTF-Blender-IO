@@ -16,8 +16,6 @@ import bpy
 from typing import List, Optional, Tuple
 import numpy as np
 
-from .gltf2_blender_export_keys import NORMALS, MORPH_NORMAL, TANGENTS, MORPH_TANGENT, MORPH
-
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives_extract
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
@@ -178,7 +176,7 @@ def __gather_attributes(blender_primitive, blender_mesh, modifiers, export_setti
 
 
 def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings):
-    if export_settings[MORPH]:
+    if export_settings['gltf_morph']:
         targets = []
         if blender_mesh.shape_keys is not None:
             morph_index = 0
@@ -203,8 +201,8 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                         include_max_and_min=True,
                     )
 
-                    if export_settings[NORMALS] \
-                            and export_settings[MORPH_NORMAL] \
+                    if export_settings['gltf_normals'] \
+                            and export_settings['gltf_morph_normal'] \
                             and blender_primitive["attributes"].get(target_normal_id) is not None:
 
                         internal_target_normal = blender_primitive["attributes"][target_normal_id]["data"]
@@ -214,8 +212,8 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                             data_type=gltf2_io_constants.DataType.Vec3,
                         )
 
-                    if export_settings[TANGENTS] \
-                            and export_settings[MORPH_TANGENT] \
+                    if export_settings['gltf_tangents'] \
+                            and export_settings['gltf_morph_tangent'] \
                             and blender_primitive["attributes"].get(target_tangent_id) is not None:
                         internal_target_tangent = blender_primitive["attributes"][target_tangent_id]["data"]
                         target['TANGENT'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
