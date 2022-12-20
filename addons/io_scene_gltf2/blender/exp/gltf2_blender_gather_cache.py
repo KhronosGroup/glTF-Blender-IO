@@ -117,7 +117,9 @@ def datacache(func):
         # We need to keep other actions
         elif cache_key_args[3] not in func.__cache[cache_key_args[1]].keys():
             result = func(*args, only_gather_provided=True)
-            func.__cache[cache_key_args[1]][cache_key_args[3]] = result[cache_key_args[1]][cache_key_args[3]]
+            # The result can contains multiples animations, in case this is an armature with drivers
+            # Need to create all newly retrieved animations
+            func.__cache.update(result)
             # Here are the key used: result[obj_uuid][action_name][path][bone][frame]
             return result[cache_key_args[1]][cache_key_args[3]][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
         # all is already cached
