@@ -115,7 +115,6 @@ def datacache(func):
         if cache_key_args[1] not in func.__cache.keys():
             result = func(*args)
             func.__cache = result
-            print(result)
             # Here are the key used: result[obj_uuid][action_name][path][bone][frame]
             return result[cache_key_args[1]][cache_key_args[3]][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
         # object is in cache, but not this action
