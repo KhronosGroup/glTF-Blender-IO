@@ -216,6 +216,7 @@ def gather_action_animations(  obj_uuid: int,
 
 ####### Keep current situation and prepare export
     current_action = None
+    current_sk_action = None
     current_world_matrix = None
     if blender_object.animation_data and blender_object.animation_data.action:
         # There is an active action. Storing it, to be able to restore after switching all actions during export
@@ -223,6 +224,13 @@ def gather_action_animations(  obj_uuid: int,
     elif len(blender_actions) != 0 and blender_object.animation_data is not None and blender_object.animation_data.action is None:
         # No current action set, storing world matrix of object
         current_world_matrix = blender_object.matrix_world.copy()
+
+    if blender_object.type == "MESH" \
+            and blender_object.data is not None \
+            and blender_object.data.shape_keys is not None \
+            and blender_object.data.shape_keys.animation_data is not None \
+            and blender_object.data.shape_keys.animation_data.action is not None:
+        current_sk_action = blender_object.data.shape_keys.animation_data.action
 
     # Remove any solo (starred) NLA track. Restored after export
     solo_track = None
@@ -265,7 +273,13 @@ def gather_action_animations(  obj_uuid: int,
                     print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
                     continue
 
-        # No need to set active shapekeys animations, this is needed for bone baking
+        if on_type == "SHAPEKEY":
+            if blender_object.data.shape_keys.animation_data.action is None \
+                    or (blender_object.data.shape_keys.animation_data.action.name != blender_action.name):
+                if blender_object.data.shape_keys.animation_data.is_property_readonly('action'):
+                    blender_object.data.shape_keys.animation_data.use_tweak_mode = False
+
+                blender_object.data.shape_keys.animation_data.action = blender_action
 
         if export_settings['gltf_force_sampling'] is True:
             if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
@@ -355,6 +369,12 @@ def gather_action_animations(  obj_uuid: int,
             solo_track.is_solo = True
         blender_object.animation_data.use_tweak_mode = restore_tweak_mode
         blender_object.animation_data.use_nla = current_use_nla
+
+    if blender_object.type == "MESH" \
+            and blender_object.data is not None \
+            and blender_object.data.shape_keys is not None \
+            and blender_object.data.shape_keys.animation_data is not None:
+        blender_object.data.shape_keys.animation_data.action = current_sk_action
 
     if current_world_matrix is not None:
         blender_object.matrix_world = current_world_matrix
