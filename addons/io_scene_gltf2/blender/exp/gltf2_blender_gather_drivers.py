@@ -16,8 +16,6 @@
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import skdriverdiscovercache
 from io_scene_gltf2.blender.com.gltf2_blender_data_path import get_target_object_path
 
-#TODOANIM : not sure we need to return channels here
-
 @skdriverdiscovercache
 def get_sk_drivers(blender_armature_uuid, export_settings):
 

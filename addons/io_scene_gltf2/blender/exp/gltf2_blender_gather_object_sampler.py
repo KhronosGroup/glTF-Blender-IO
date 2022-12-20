@@ -55,7 +55,7 @@ def gather_object_sampled_animation_sampler(
         output=output
     )
 
-    #TODOANIM add hook
+    #TODOEXTENSIONANIM
 
     return sampler
 

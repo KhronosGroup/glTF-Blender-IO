@@ -36,7 +36,7 @@ def gather_fcurve_channel_target(
             path=__gather_path(channels, export_settings)
         )
 
-        #TODOANIM EXTENSION
+        #TODOEXTENSIONANIM
 
     return animation_channel_target
 

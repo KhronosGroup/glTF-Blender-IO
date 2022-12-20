@@ -38,7 +38,7 @@ def gather_sk_sampled_channels(
     if channel is not None:
         channels.append(channel)
 
-    #TODOANIM add hooks
+    #TODOEXTENSIONANIM
 
     return channels if len(channels) > 0 else None
 
@@ -64,7 +64,7 @@ def gather_sampled_sk_channel(
             target=__target
         )
 
-        #TODOANIM add hooks
+        #TODOEXTENSIONANIM
 
         return animation_channel
     return None

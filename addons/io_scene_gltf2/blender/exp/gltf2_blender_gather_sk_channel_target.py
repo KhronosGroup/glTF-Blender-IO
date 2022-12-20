@@ -28,7 +28,7 @@ def gather_sk_sampled_channel_target(
         path='weights'
         )
 
-    #TODOANIM add hooks
+    #TODOEXTENSIONANIM
 
     return animation_channel_target
 

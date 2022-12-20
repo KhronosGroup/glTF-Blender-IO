@@ -58,7 +58,7 @@ def gather_animation_fcurves_sampler(
         output=output
     )
 
-    #TODOANIM extension
+    #TODOEXTENSIONANIM
 
     return sampler   
 

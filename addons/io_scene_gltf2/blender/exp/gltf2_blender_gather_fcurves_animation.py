@@ -37,7 +37,7 @@ def gather_animation_fcurves(
     if not animation.channels:
         return None, to_be_sampled
 
-    #TODOANIM add hook
+    #TODOEXTENSIONANIM
     return animation, to_be_sampled
 
 def __gather_name(blender_action: bpy.types.Action,

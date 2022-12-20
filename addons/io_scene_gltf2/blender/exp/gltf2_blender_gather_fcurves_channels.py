@@ -247,7 +247,7 @@ def __gather_animation_fcurve_channel(obj_uuid: str,
             target=__target
         )
 
-        #TODOANIM EXTENSION
+        #TODOEXTENSIONANIM
 
         return animation_channel
     return None

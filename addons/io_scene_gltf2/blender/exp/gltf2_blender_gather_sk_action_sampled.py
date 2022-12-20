@@ -35,7 +35,7 @@ def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[b
     if not animation.channels:
         return None
 
-    #TODOANIM add hook
+    #TODOEXTENSIONANIM
 
     return animation
 
