@@ -29,6 +29,7 @@ from .gltf2_blender_gather_sk_action_sampled import gather_action_sk_sampled
 from .gltf2_blender_gather_object_channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from io_scene_gltf2.blender.exp.gltf2_blender_gather_drivers import get_sk_drivers
 
 def gather_actions_animations(export_settings):
 
@@ -158,6 +159,16 @@ def prepare_actions_range(export_settings):
                 export_settings['ranges'][obj_uuid][obj_uuid]['start'] = bpy.context.scene.frame_start
                 export_settings['ranges'][obj_uuid][obj_uuid]['end'] = bpy.context.scene.frame_end
 
+            if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.ARMATURE and export_settings['gltf_morph_anim'] is True:
+                obj_drivers = get_sk_drivers(obj_uuid, export_settings)
+                for obj_dr in obj_drivers:
+                    if obj_dr not in export_settings['ranges']:
+                        export_settings['ranges'][obj_dr] = {}
+                    export_settings['ranges'][obj_dr][obj_uuid + "_" + blender_action.name] = {}
+                    export_settings['ranges'][obj_dr][obj_uuid + "_" + blender_action.name]['start'] = start_frame
+                    export_settings['ranges'][obj_dr][obj_uuid + "_" + blender_action.name]['end'] = end_frame
+
+
         if len(blender_actions) == 0 and export_settings['gltf_bake_animation']:
             # No animation on this object
             # In case of baking animation, we will use max range of export or scene frame range ??? #TODOANIM
@@ -165,6 +176,16 @@ def prepare_actions_range(export_settings):
             export_settings['ranges'][obj_uuid][obj_uuid] = {}
             export_settings['ranges'][obj_uuid][obj_uuid]['start'] = bpy.context.scene.frame_start
             export_settings['ranges'][obj_uuid][obj_uuid]['end'] = bpy.context.scene.frame_end
+
+            # For baking drivers
+            if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.ARMATURE and export_settings['gltf_morph_anim'] is True:
+                obj_drivers = get_sk_drivers(obj_uuid, export_settings)
+                for obj_dr in obj_drivers:
+                    if obj_dr not in export_settings['ranges']:
+                        export_settings['ranges'][obj_dr] = {}
+                    export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid] = {}
+                    export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid]['start'] = bpy.context.scene.frame_start
+                    export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid]['end'] = bpy.context.scene.frame_end
 
 def gather_action_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],

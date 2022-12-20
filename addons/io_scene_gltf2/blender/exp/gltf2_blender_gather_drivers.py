@@ -23,7 +23,7 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
 
     # If no SK are exported --> No driver animation to export
     if export_settings['gltf_morph_anim'] is False:
-        return tuple([])
+        return []
 
     drivers = []
 
@@ -80,7 +80,6 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
             # Do not take into account this driver if corresponding SK is disabled
             if child.data.shape_keys.key_blocks[sk_name].mute is True:
                 continue
-            idx = shapekeys_idx[sk_name]
             idx_channel_mapping.append((shapekeys_idx[sk_name], sk_c))
         existing_idx = dict(idx_channel_mapping)
         for i in range(0, cpt_sk):
@@ -91,6 +90,6 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
 
         # Checks there are some driver on SK, and that there is not only invalid drivers
         if len(all_sorted_channels) > 0 and not all([i is None for i in all_sorted_channels]):
-            drivers.append((child_uuid, tuple(all_sorted_channels)))
+            drivers.append(child_uuid)
 
-    return tuple(drivers)
+    return drivers

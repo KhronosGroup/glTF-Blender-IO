@@ -49,7 +49,9 @@ def get_cache_data(path: str,
 
             # if this object is not animated, do not skip :
             # We need this object too in case of bake
-            # TODOANIM : only when bake is enabled. If not, no need to keep not animated objects?
+            if export_settings['gltf_bake_animation'] is False:
+                if not (blender_obj.animation_data and blender_obj.animation_data.action):
+                    continue
 
             # calculate local matrix
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
@@ -84,7 +86,6 @@ def get_cache_data(path: str,
             else:
                 # case of baking object.
                 # There is no animation, so use uuid of object as key
-                # TODOANIM : only when bake is enabled. If not, no need to keep not animated objects?
                 if obj_uuid not in data[obj_uuid].keys():
                     data[obj_uuid][obj_uuid] = {}
                     data[obj_uuid][obj_uuid]['matrix'] = {}
@@ -120,6 +121,8 @@ def get_cache_data(path: str,
                             data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name] = {}
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name][frame] = matrix
                     else:
+                        # case of baking object.
+                        # There is no animation, so use uuid of object as key
                         if blender_bone.name not in data[obj_uuid][obj_uuid]['bone'].keys():
                             data[obj_uuid][obj_uuid]['bone'][blender_bone.name] = {}
                         data[obj_uuid][obj_uuid]['bone'][blender_bone.name][frame] = matrix
@@ -138,10 +141,28 @@ def get_cache_data(path: str,
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'] = {}
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None] = {}
                 data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
+            # TODOANIM : bake SK animations?
 
-
+            # caching driver sk meshes
             # This will avoid to have to do it again when exporting SK animation
-            # TODOANIM drivers
+            if blender_obj.type == "ARMATURE":
+                sk_drivers = get_sk_drivers(obj_uuid, export_settings)
+                for dr_obj in sk_drivers:
+                    driver_object = export_settings['vtree'].nodes[dr_obj].blender_object
+                    if dr_obj not in data.keys():
+                        data[dr_obj] = {}
+                    if blender_obj.animation_data and blender_obj.animation_data.action:
+                        if obj_uuid + "_" + blender_obj.animation_data.action.name not in data[dr_obj]: # Using uuid of armature + armature animation name as animation name
+                            data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name] = {}
+                            data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'] = {}
+                            data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'][None] = {}
+                        data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in driver_object.data.shape_keys.key_blocks][1:]
+                    else:
+                        if obj_uuid + "_" + obj_uuid not in data[dr_obj]:
+                            data[dr_obj][obj_uuid + "_" + obj_uuid] = {}
+                            data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'] = {}
+                            data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None] = {}
+                        data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in driver_object.data.shape_keys.key_blocks][1:]
 
         frame += step
     return data

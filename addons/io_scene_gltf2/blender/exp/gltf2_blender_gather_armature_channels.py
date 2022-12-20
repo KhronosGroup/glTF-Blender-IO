@@ -23,6 +23,7 @@ from .gltf2_blender_gather_object_channels import gather_sampled_object_channel
 from .gltf2_blender_gather_fcurves_channels import get_channel_groups
 from io_scene_gltf2.blender.com.gltf2_blender_conversion import get_target, get_channel_from_target
 from .gltf2_blender_gather_drivers import get_sk_drivers
+from .gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 
 
 def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
@@ -80,10 +81,10 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
 
     # Retrieve channels for drivers, if needed
     drivers_to_manage = get_sk_drivers(armature_uuid, export_settings)
-    for obj_driver_uuid, fcurves in drivers_to_manage:
-        pass   
-        # if channel is not None:
-        #     channels.append(channel)
+    for obj_driver_uuid in drivers_to_manage:
+        channel = gather_sampled_sk_channel(obj_driver_uuid, armature_uuid + "_" + blender_action_name, export_settings)
+        if channel is not None:
+            channels.append(channel)
 
     # resetting driver caches
     get_sk_drivers.reset_cache()
