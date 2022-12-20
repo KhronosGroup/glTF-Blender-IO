@@ -15,7 +15,7 @@
 import typing
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from .gltf2_blender_gather_keyframes import Keyframe
-from .gltf2_blender_gather_animation_sampling_cache import get_bone_matrix
+from .gltf2_blender_gather_animation_sampling_cache import get_cache_data
 import numpy as np
 
 
@@ -40,15 +40,15 @@ def gather_bone_sampled_keyframes(
     while frame <= end_frame:
         key = Keyframe(None, frame, channel) #TODOANIM first parameter not needed ... cf refactor of class Keyframe?
 
-        mat = get_bone_matrix(
+        mat = get_cache_data(
+            'bone',
             armature_uuid,
             bone,
-            channel,
             action_name,
             frame,
             step,
-            export_settings
-        )
+            export_settings)
+
         trans, rot, scale = mat.decompose()
 
         key.value = {

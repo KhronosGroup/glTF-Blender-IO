@@ -16,7 +16,7 @@ import bpy
 import mathutils
 from .gltf2_blender_gather_keyframes import Keyframe
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from .gltf2_blender_gather_animation_sampling_cache import get_object_cache_data
+from .gltf2_blender_gather_animation_sampling_cache import get_cache_data
 import numpy as np
 
 @cached
@@ -39,9 +39,10 @@ def gather_object_sampled_keyframes(
     while frame <= end_frame:
         key = Keyframe(None, frame, channel)
 
-        mat = get_object_cache_data(
+        mat = get_cache_data(
             'matrix',
             obj_uuid,
+            None,
             action_name,
             frame,
             step,

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from .gltf2_blender_gather_animation_sampling_cache import get_object_cache_data
+from .gltf2_blender_gather_animation_sampling_cache import get_cache_data
 from .gltf2_blender_gather_keyframes import Keyframe
 import numpy as np
 
@@ -32,9 +32,10 @@ def gather_sk_sampled_keyframes(obj_uuid,
     blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
     while frame <= end_frame:
         key = Keyframe([None] * (len(blender_obj.data.shape_keys.key_blocks)-1), frame, 'value')
-        key.value_total = get_object_cache_data(
+        key.value_total = get_cache_data(
             'sk',
             obj_uuid,
+            None,
             action_name,
             frame,
             step,

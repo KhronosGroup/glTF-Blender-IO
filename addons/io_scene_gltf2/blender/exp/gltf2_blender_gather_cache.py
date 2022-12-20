@@ -84,10 +84,12 @@ def cached(func):
 # Refactoring objectcache / bonecache to have a generic cache system
 # To be able to cache any path (thinking about KHR_animation_pointer)
 
-def objectcache(func):
+def datacache(func):
 
     def reset_cache_objectcache():
-        func.__objectcache = {}
+        func.__cache = {}
+        func.__current_action_name = None
+        func.__current_object_uuid = None
 
     func.reset_cache = reset_cache_objectcache
 
@@ -96,73 +98,38 @@ def objectcache(func):
 
         # 0 : path
         # 1 : object_uuid
-        # 2 : action_name
-        # 3 : frame
-        # 4 : step
-        # 5 : export_settings
+        # 2 : bone (can be, of course, None for path other than 'bone')
+        # 3 : action_name
+        # 4 : current_frame
+        # 5 : step
+        # 6 : export_settings
         # only_gather_provided : only_gather_provided
 
         cache_key_args = args
         cache_key_args = args[:-1]
 
-        if not hasattr(func, "__objectcache"):
+        if not hasattr(func, "__cache"):
             func.reset_cache()
 
         # object is not cached yet
-        if cache_key_args[1] not in func.__objectcache.keys():
+        if cache_key_args[1] not in func.__cache.keys():
             result = func(*args)
-            func.__objectcache = result
-            # Here are the key used: result[obj_uuid][action_name][path][frame]
-            return result[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[3]]
+            func.__cache = result
+            print(result)
+            # Here are the key used: result[obj_uuid][action_name][path][bone][frame]
+            return result[cache_key_args[1]][cache_key_args[3]][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
         # object is in cache, but not this action
         # We need to keep other actions
-        elif cache_key_args[2] not in func.__objectcache[cache_key_args[1]].keys():
+        elif cache_key_args[3] not in func.__cache[cache_key_args[1]].keys():
             result = func(*args, only_gather_provided=True)
-            func.__objectcache[cache_key_args[1]][cache_key_args[2]] = result[cache_key_args[1]][cache_key_args[2]]
-            return result[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[3]]
+            func.__cache[cache_key_args[1]][cache_key_args[3]] = result[cache_key_args[1]][cache_key_args[3]]
+            # Here are the key used: result[obj_uuid][action_name][path][bone][frame]
+            return result[cache_key_args[1]][cache_key_args[3]][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
         # all is already cached
         else:
-            return func.__objectcache[cache_key_args[1]][cache_key_args[2]][cache_key_args[0]][cache_key_args[3]]
+            # Here are the key used: result[obj_uuid][action_name][path][bone][frame]
+            return func.__cache[cache_key_args[1]][cache_key_args[3]][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
     return wrapper_objectcache
-
-def bonecache(func):
-
-    def reset_cache_bonecache():
-        func.__current_action_name = None
-        func.__current_armature_uuid = None
-        func.__bonecache = {}
-
-    func.reset_cache = reset_cache_bonecache
-
-    @functools.wraps(func)
-    def wrapper_bonecache(*args, **kwargs):
-
-        # 0 : armature_uuid
-        # 1 : bone
-        # 2 : channel
-        # 3 : action_name
-        # 4 : current_frame
-        # 5 : step
-        # 6 : export_settings
-
-        armature = args[-1]['vtree'].nodes[args[0]].blender_object
-
-        cache_key_args = args
-        cache_key_args = args[:-1]
-
-        pose_bone = armature.pose.bones[cache_key_args[1]]
-
-        if not hasattr(func, "__current_action_name"):
-            func.reset_cache()
-        if cache_key_args[3] != func.__current_action_name or cache_key_args[0] != func.__current_armature_uuid:
-            result = func(*args)
-            func.__bonecache = result
-            func.__current_action_name = cache_key_args[3]
-            func.__current_armature_uuid = cache_key_args[0]
-            return result[cache_key_args[4]][pose_bone.name]
-        else:
-            return func.__bonecache[cache_key_args[4]][pose_bone.name]
-    return wrapper_bonecache
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
 call_or_fetch = cached
@@ -179,6 +146,9 @@ def skdriverdiscovercache(func):
     @functools.wraps(func)
     def wrapper_skdriverdiscover(*args, **kwargs):
 
+        # 0 : armature_uuid
+        # 1 : export_settings
+
         cache_key_args = args
         cache_key_args = args[:-1]
 
@@ -193,30 +163,3 @@ def skdriverdiscovercache(func):
         else:
             return func.__skdriverdiscover[cache_key_args[0]]
     return wrapper_skdriverdiscover
-
-def skdrivervalues(func):
-
-    def reset_cache_skdrivervalues():
-        func.__skdrivervalues = {}
-
-    func.reset_cache = reset_cache_skdrivervalues
-
-    @functools.wraps(func)
-    def wrapper_skdrivervalues(*args, **kwargs):
-        if not hasattr(func, "__skdrivervalues") or func.__skdrivervalues is None:
-            func.reset_cache()
-
-        armature = args[-1]['vtree'].nodes[args[0]].blender_object
-
-        cache_key_args = args
-        cache_key_args = args[:-1]
-
-        if armature.name not in func.__skdrivervalues.keys():
-            func.__skdrivervalues[armature.name] = {}
-        if cache_key_args[1] not in func.__skdrivervalues[armature.name]:
-            vals = func(*args)
-            func.__skdrivervalues[armature.name][cache_key_args[1]] = vals
-            return vals
-        else:
-            return func.__skdrivervalues[armature.name][cache_key_args[1]]
-    return wrapper_skdrivervalues

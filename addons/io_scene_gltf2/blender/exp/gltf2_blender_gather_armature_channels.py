@@ -19,11 +19,10 @@ from .gltf2_blender_gather_armature_channel_target import gather_armature_sample
 from .gltf2_blender_gather_armature_sampler import gather_bone_sampled_animation_sampler
 from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_drivers
-from .gltf2_blender_gather_armature_keyframes import get_bone_matrix
 from .gltf2_blender_gather_object_channels import gather_sampled_object_channel
 from .gltf2_blender_gather_fcurves_channels import get_channel_groups
 from io_scene_gltf2.blender.com.gltf2_blender_conversion import get_target, get_channel_from_target
-from .gltf2_blender_gather_drivers import get_sk_drivers, get_sk_driver_values
+from .gltf2_blender_gather_drivers import get_sk_drivers
 
 
 def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
@@ -87,10 +86,9 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
         #     channels.append(channel)
 
     # resetting driver caches
-    get_sk_driver_values.reset_cache()
     get_sk_drivers.reset_cache()
     # resetting bone caches
-    get_bone_matrix.reset_cache() #TODOANIM when we will have a cache system
+    # get_bone_matrix.reset_cache() #TODOANIM when we will have a cache system / refactoring of cache reseting
 
     return channels
 
