@@ -171,7 +171,6 @@ def get_cache_data(path: str,
 def get_range(export_settings):
     min_ = None
     max_ = None
-    print(export_settings['ranges'])
     for obj in export_settings['ranges'].keys():
         for anim in export_settings['ranges'][obj].keys():
             if min_ is None or min_ > export_settings['ranges'][obj][anim]['start']:
