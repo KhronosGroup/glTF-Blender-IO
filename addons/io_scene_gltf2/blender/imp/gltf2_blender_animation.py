@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from .gltf2_blender_animation_node import BlenderNodeAnim
 from .gltf2_blender_animation_weight import BlenderWeightAnim
 from .gltf2_blender_animation_utils import simulate_stash, restore_animation_on_object
 from .gltf2_blender_vnode import VNode
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
-import bpy
 
 class BlenderAnimation():
     """Dispatch Animation to node or morph weights animation."""

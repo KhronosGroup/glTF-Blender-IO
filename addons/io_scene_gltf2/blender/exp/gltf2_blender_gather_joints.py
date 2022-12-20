@@ -12,14 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mathutils import Matrix, Quaternion, Vector
-
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from mathutils import Quaternion, Vector
+from ...io.com import gltf2_io
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
-
+from .gltf2_blender_gather_cache import cached
+from . import gltf2_blender_gather_tree
 
 
 # TODO these 3 functions move to shared file

@@ -14,12 +14,12 @@
 
 import bpy
 from mathutils import Vector, Matrix
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
 from .gltf2_blender_light import BlenderLight
 from .gltf2_blender_vnode import VNode
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 class BlenderNode():
     """Blender Node."""

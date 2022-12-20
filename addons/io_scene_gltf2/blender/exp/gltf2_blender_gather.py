@@ -14,14 +14,14 @@
 
 import bpy
 
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_nodes
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from ...io.com import gltf2_io
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
-from .gltf2_blender_gather_object_keyframes import get_cache_data
-from .gltf2_blender_gather_animations import gather_animations
+from .gltf2_blender_gather_cache import cached
+from . import gltf2_blender_gather_nodes
+from . import gltf2_blender_gather_tree
+from .animation.sampled.object.gltf2_blender_gather_object_keyframes import get_cache_data
+from .animation.gltf2_blender_gather_animations import gather_animations
 
 
 def gather_gltf2(export_settings):

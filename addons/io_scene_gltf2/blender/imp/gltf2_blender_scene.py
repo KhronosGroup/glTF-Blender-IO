@@ -18,7 +18,7 @@ from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_animation import BlenderAnimation
 from .gltf2_blender_vnode import VNode, compute_vnodes
 from ..com.gltf2_blender_extras import set_extras
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderScene():

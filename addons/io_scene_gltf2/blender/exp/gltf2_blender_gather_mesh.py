@@ -14,13 +14,12 @@
 
 import bpy
 from typing import Optional, Dict, List, Any, Tuple
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached_by_key
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives
+from ...io.com import gltf2_io
+from ...io.com.gltf2_io_debug import print_console
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
-from io_scene_gltf2.io.com.gltf2_io_debug import print_console
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-
+from . import gltf2_blender_gather_primitives
+from .gltf2_blender_gather_cache import cached_by_key
 
 def get_mesh_cache_key(blender_mesh,
                 blender_object,

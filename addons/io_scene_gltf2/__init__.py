@@ -127,7 +127,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     # TODO: refactor to avoid boilerplate
 
     def __init__(self):
-        from io_scene_gltf2.io.com import gltf2_io_draco_compression_extension
+        from .io.com import gltf2_io_draco_compression_extension
         self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
 
     bl_options = {'PRESET'}
@@ -1112,7 +1112,7 @@ class GLTF_PT_export_data_compression(bpy.types.Panel):
     bl_options = {'DEFAULT_CLOSED'}
 
     def __init__(self):
-        from io_scene_gltf2.io.com import gltf2_io_draco_compression_extension
+        from .io.com import gltf2_io_draco_compression_extension
         self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists(quiet=True)
 
     @classmethod
@@ -1608,7 +1608,7 @@ classes = (
 
 
 def register():
-    import io_scene_gltf2.blender.com.gltf2_blender_ui as blender_ui
+    from .blender.com import gltf2_blender_ui as blender_ui
     for c in classes:
         bpy.utils.register_class(c)
     # bpy.utils.register_module(__name__)
@@ -1625,7 +1625,7 @@ def register():
 
 
 def unregister():
-    import io_scene_gltf2.blender.com.gltf2_blender_ui as blender_ui
+    from .blender.com import gltf2_blender_ui as blender_ui
     blender_ui.unregister()
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
         blender_ui.variant_unregister()

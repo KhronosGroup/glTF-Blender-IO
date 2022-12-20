@@ -14,9 +14,8 @@
 
 import bpy
 from mathutils import Vector, Quaternion, Matrix
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from .gltf2_blender_scene import BlenderScene
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
-
 
 class BlenderGlTF():
     """Main glTF import class."""

@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import functools
-from io_scene_gltf2.blender.exp import gltf2_blender_get
-
 
 def cached_by_key(key):
     """

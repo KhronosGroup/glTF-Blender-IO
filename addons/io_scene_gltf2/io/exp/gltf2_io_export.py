@@ -18,7 +18,7 @@
 
 import json
 import struct
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 
 #
 # Globals

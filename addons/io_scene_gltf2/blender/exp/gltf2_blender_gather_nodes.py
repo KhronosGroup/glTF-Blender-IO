@@ -16,19 +16,18 @@ import math
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
-from io_scene_gltf2.blender.com import gltf2_blender_math
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
+from ...io.com import gltf2_io
+from ...io.com import gltf2_io_extensions
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com import gltf2_io_extensions
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
-
+from ..com import gltf2_blender_math
+from . import gltf2_blender_gather_tree
+from . import gltf2_blender_gather_skins
+from . import gltf2_blender_gather_cameras
+from . import gltf2_blender_gather_mesh
+from . import gltf2_blender_gather_joints
+from . import gltf2_blender_gather_lights
+from .gltf2_blender_gather_tree import VExportNode
 
 def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object

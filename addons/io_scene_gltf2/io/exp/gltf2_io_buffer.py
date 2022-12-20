@@ -14,8 +14,8 @@
 
 import base64
 
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.exp import gltf2_io_binary_data
+from ...io.com import gltf2_io
+from ...io.exp import gltf2_io_binary_data
 
 
 class Buffer:

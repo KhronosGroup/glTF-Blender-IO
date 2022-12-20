@@ -15,14 +15,13 @@
 import bpy
 import uuid
 import numpy as np
-
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from mathutils import Quaternion, Matrix
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.imp.gltf2_io_binary import BinaryData
-from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
+from ...io.com import gltf2_io
+from ...io.imp.gltf2_io_binary import BinaryData
+from ...io.com import gltf2_io_constants
+from ...io.exp import gltf2_io_binary_data
+from . import gltf2_blender_gather_accessors
 
 class VExportNode:
 

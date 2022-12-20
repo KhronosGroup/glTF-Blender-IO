@@ -14,7 +14,6 @@
 
 from ...io.com.gltf2_io import TextureInfo
 from .gltf2_blender_texture import texture
-import numpy as np
 
 def sheen(  mh,
             location_sheenColor,

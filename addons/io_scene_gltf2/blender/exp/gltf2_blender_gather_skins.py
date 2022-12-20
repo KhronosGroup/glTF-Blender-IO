@@ -13,15 +13,13 @@
 # limitations under the License.
 
 import mathutils
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
-
+from ...io.com import gltf2_io, gltf2_io_constants
+from ...io.exp import gltf2_io_binary_data
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
+from . import gltf2_blender_gather_accessors
+from . import gltf2_blender_gather_joints
+from .gltf2_blender_gather_tree import VExportNode
+from .gltf2_blender_gather_cache import cached
 
 @cached
 def gather_skin(armature_uuid, export_settings):

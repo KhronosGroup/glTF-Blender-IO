@@ -15,20 +15,15 @@
 import bpy
 from typing import List, Optional, Tuple
 import numpy as np
-
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached, cached_by_key
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitives_extract
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_primitive_attributes
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_materials_variants
-
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.io.com import gltf2_io_extensions
-from io_scene_gltf2.io.com.gltf2_io_debug import print_console
-
+from ...io.com import gltf2_io, gltf2_io_constants, gltf2_io_extensions
+from ...io.com.gltf2_io_debug import print_console
+from ...io.exp import gltf2_io_binary_data
+from .gltf2_blender_gather_cache import cached, cached_by_key
+from . import gltf2_blender_gather_primitives_extract
+from . import gltf2_blender_gather_accessors
+from . import gltf2_blender_gather_primitive_attributes
+from .material import gltf2_blender_gather_materials
+from .material.extensions import gltf2_blender_gather_materials_variants
 
 @cached
 def get_primitive_cache_key(

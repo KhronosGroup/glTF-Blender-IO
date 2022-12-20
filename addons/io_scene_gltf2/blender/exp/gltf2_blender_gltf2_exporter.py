@@ -17,12 +17,9 @@ import urllib.parse
 from typing import List
 
 from ... import get_version_string
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com import gltf2_io_extensions
-from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from io_scene_gltf2.io.exp import gltf2_io_buffer
-from io_scene_gltf2.io.exp import gltf2_io_image_data
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from ...io.com import gltf2_io, gltf2_io_extensions
+from ...io.exp import gltf2_io_binary_data, gltf2_io_buffer, gltf2_io_image_data
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 class GlTF2Exporter:

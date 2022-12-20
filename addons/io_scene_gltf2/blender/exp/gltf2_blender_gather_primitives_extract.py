@@ -14,13 +14,10 @@
 
 import numpy as np
 from mathutils import Vector
-
 from ...io.com.gltf2_io_debug import print_console
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
-from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.blender.com import gltf2_blender_conversion
-from io_scene_gltf2.blender.com import gltf2_blender_default
-
+from ...io.com import gltf2_io_constants
+from ..com import gltf2_blender_conversion, gltf2_blender_default
+from . import gltf2_blender_gather_skins
 
 def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
     """Extract primitives from a mesh."""
