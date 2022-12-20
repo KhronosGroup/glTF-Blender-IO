@@ -390,7 +390,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_frame_range: BoolProperty(
         name='Limit to Playback Range',
         description='Clips animations to selected playback range',
-        default=True
+        default=False
     )
 
     export_frame_step: IntProperty(
