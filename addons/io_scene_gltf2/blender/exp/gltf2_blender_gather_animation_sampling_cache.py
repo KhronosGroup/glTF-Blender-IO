@@ -50,8 +50,7 @@ def get_cache_data(path: str,
             # if this object is not animated, do not skip :
             # We need this object too in case of bake
             if export_settings['gltf_bake_animation'] is False:
-                if not (blender_obj.animation_data and blender_obj.animation_data.action):
-                    continue
+                pass #TODOANIM detect correclty if an object is animated by any ways (TRS / sk / bones / drivers)
 
             # calculate local matrix
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
