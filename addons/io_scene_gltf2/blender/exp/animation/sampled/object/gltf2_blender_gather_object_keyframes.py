@@ -57,6 +57,10 @@ def gather_object_sampled_keyframes(
         keyframes.append(key)
         frame += step
 
+    if len(keyframes) == 0:
+        # For example, option CROP negative frames, but all are negatives
+        return None
+
     if not export_settings['gltf_optimize_animation']:
         return keyframes
 

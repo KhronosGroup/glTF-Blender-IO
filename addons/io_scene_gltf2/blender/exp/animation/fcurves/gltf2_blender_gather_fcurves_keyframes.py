@@ -46,6 +46,9 @@ def gather_fcurve_keyframes(
     if custom_range is not None:
         frames = [f for f in frames if f >= custom_range[0] and f <= custom_range[1]]
 
+    if len(frames) == 0:
+        return None
+
     for i, frame in enumerate(frames):
         key = Keyframe(channel_group, frame, None)
         key.value = [c.evaluate(frame) for c in channel_group if c is not None]

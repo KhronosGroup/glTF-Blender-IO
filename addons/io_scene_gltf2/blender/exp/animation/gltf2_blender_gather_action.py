@@ -168,8 +168,6 @@ def prepare_actions_range(export_settings):
                     else:
                         __add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
 
-            #TODOANIM if start and end are negative & crop --> No export of this action
-
             if type_ == "SHAPEKEY" and export_settings['gltf_bake_animation']:
                 export_settings['ranges'][obj_uuid][obj_uuid] = {}
                 export_settings['ranges'][obj_uuid][obj_uuid]['start'] = bpy.context.scene.frame_start
