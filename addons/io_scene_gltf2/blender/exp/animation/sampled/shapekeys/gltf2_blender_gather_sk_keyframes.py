@@ -29,7 +29,7 @@ def gather_sk_sampled_keyframes(obj_uuid,
     keyframes = []
 
     frame = start_frame
-    step = export_settings['gltf_frame_step'] #TODOANIM to be tested correctly
+    step = export_settings['gltf_frame_step']
     blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
     while frame <= end_frame:
         key = Keyframe([None] * (len(blender_obj.data.shape_keys.key_blocks)-1), frame, 'value')

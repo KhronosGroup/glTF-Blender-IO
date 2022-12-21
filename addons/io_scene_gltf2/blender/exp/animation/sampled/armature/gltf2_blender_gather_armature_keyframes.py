@@ -34,7 +34,7 @@ def gather_bone_sampled_keyframes(
     keyframes = []
 
     frame = start_frame
-    step = export_settings['gltf_frame_step'] #TODOANIM to be tested correctly
+    step = export_settings['gltf_frame_step']
 
     while frame <= end_frame:
         key = Keyframe(None, frame, channel)
