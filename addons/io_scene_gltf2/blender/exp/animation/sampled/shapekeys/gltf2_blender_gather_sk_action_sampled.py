@@ -17,7 +17,6 @@ import typing
 from ......io.com import gltf2_io
 from .gltf2_blender_gather_sk_channels import gather_sk_sampled_channels
 
-#TODOANIM : if we don't bake SK, no need to have optional blender_action here. To check if we need to bake SK (drivers?)
 def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
 
     # If no animation in file, no need to bake

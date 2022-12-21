@@ -76,7 +76,8 @@ def get_cache_data(path: str,
             if obj_uuid not in data.keys():
                 data[obj_uuid] = {}
 
-            if blender_obj.animation_data and blender_obj.animation_data.action:
+            if blender_obj.animation_data and blender_obj.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                 if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
                     data[obj_uuid][blender_obj.animation_data.action.name] = {}
                     data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
@@ -94,7 +95,8 @@ def get_cache_data(path: str,
             # Store data for all bones, if object is an armature
             if blender_obj.type == "ARMATURE":
                 bones = export_settings['vtree'].get_all_bones(obj_uuid)
-                if blender_obj.animation_data and blender_obj.animation_data.action:
+                if blender_obj.animation_data and blender_obj.animation_data.action \
+                        and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                     if 'bone' not in data[obj_uuid][blender_obj.animation_data.action.name].keys():
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'] = {}
                 else:
@@ -115,7 +117,8 @@ def get_cache_data(path: str,
                             # Bone has a parent, but in export, after filter, is at root of armature
                             matrix = blender_bone.matrix.copy()
 
-                    if blender_obj.animation_data and blender_obj.animation_data.action:
+                    if blender_obj.animation_data and blender_obj.animation_data.action \
+                            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                         if blender_bone.name not in data[obj_uuid][blender_obj.animation_data.action.name]['bone'].keys():
                             data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name] = {}
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name][frame] = matrix
@@ -133,15 +136,26 @@ def get_cache_data(path: str,
             and blender_obj.data is not None \
             and blender_obj.data.shape_keys is not None \
             and blender_obj.data.shape_keys.animation_data is not None \
-            and blender_obj.data.shape_keys.animation_data.action is not None:
+            and blender_obj.data.shape_keys.animation_data.action is not None \
+            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                 
                 if blender_obj.data.shape_keys.animation_data.action.name not in data[obj_uuid].keys():
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name] = {}
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'] = {}
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None] = {}
                 data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
-            # TODOANIM : bake SK animations?
-
+            elif export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
+                    and blender_obj.data is not None \
+                    and blender_obj.data.shape_keys is not None:
+                if obj_uuid not in data[obj_uuid].keys():
+                    data[obj_uuid][obj_uuid] = {}
+                    data[obj_uuid][obj_uuid]['sk'] = {}
+                    data[obj_uuid][obj_uuid]['sk'][None] = {}
+                elif 'sk' not in data[obj_uuid][obj_uuid].keys():
+                    data[obj_uuid][obj_uuid]['sk'] = {}
+                    data[obj_uuid][obj_uuid]['sk'][None] = {}
+                data[obj_uuid][obj_uuid]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
+            
             # caching driver sk meshes
             # This will avoid to have to do it again when exporting SK animation
             if blender_obj.type == "ARMATURE":
@@ -150,7 +164,8 @@ def get_cache_data(path: str,
                     driver_object = export_settings['vtree'].nodes[dr_obj].blender_object
                     if dr_obj not in data.keys():
                         data[dr_obj] = {}
-                    if blender_obj.animation_data and blender_obj.animation_data.action:
+                    if blender_obj.animation_data and blender_obj.animation_data.action \
+                            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                         if obj_uuid + "_" + blender_obj.animation_data.action.name not in data[dr_obj]: # Using uuid of armature + armature animation name as animation name
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name] = {}
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'] = {}
