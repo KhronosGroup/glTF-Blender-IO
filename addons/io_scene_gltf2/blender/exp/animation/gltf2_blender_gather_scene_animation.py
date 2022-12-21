@@ -14,6 +14,7 @@
 
 import bpy
 from ....io.com import gltf2_io
+from ..gltf2_blender_gather_tree import VExportNode
 from .gltf2_blender_gather_drivers import get_sk_drivers
 from .sampled.armature.gltf2_blender_gather_armature_channels import gather_armature_sampled_channels
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels
@@ -64,10 +65,19 @@ def gather_scene_animation(export_settings):
             if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
                     and blender_object.data is not None \
                     and blender_object.data.shape_keys is not None:
-                    # TODOANIM: should not bake if already implicated in a driver
-                channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, export_settings)
-                if channels is not None:
-                    total_channels.extend(channels)
+                    
+                # We must ignore sk for meshes that are driven by armature parent
+                ignore_sk = False
+                if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None \
+                        and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
+                    obj_drivers = get_sk_drivers(export_settings['vtree'].nodes[obj_uuid].parent_uuid, export_settings)
+                    if obj_uuid in obj_drivers:
+                        ignore_sk = True
+
+                if ignore_sk is False:
+                    channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, export_settings)
+                    if channels is not None:
+                        total_channels.extend(channels)
         else:
                 channels = gather_armature_sampled_channels(obj_uuid, obj_uuid, export_settings)
                 if channels is not None:

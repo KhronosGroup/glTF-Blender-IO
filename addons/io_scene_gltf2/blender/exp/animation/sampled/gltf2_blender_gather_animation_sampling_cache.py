@@ -50,6 +50,7 @@ def get_cache_data(path: str,
             # if this object is not animated, do not skip :
             # We need this object too in case of bake
             if export_settings['gltf_bake_animation'] is False:
+                # TODOANIM : must be kept also for other than ACTIONS & ACTIVE_ACTIONS mode
                 pass #TODOANIM detect correclty if an object is animated by any ways (TRS / sk / bones / drivers)
 
             # calculate local matrix
