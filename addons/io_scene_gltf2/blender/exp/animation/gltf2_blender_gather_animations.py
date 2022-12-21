@@ -24,3 +24,4 @@ def gather_animations(export_settings):
 
     if export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
         return gather_actions_animations(export_settings)
+    # TODOANIM mode Track / mode Scene

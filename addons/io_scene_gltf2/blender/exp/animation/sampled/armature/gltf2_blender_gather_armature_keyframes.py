@@ -37,7 +37,7 @@ def gather_bone_sampled_keyframes(
     step = export_settings['gltf_frame_step'] #TODOANIM to be tested correctly
 
     while frame <= end_frame:
-        key = Keyframe(None, frame, channel) #TODOANIM first parameter not needed ... cf refactor of class Keyframe?
+        key = Keyframe(None, frame, channel)
 
         mat = get_cache_data(
             'bone',

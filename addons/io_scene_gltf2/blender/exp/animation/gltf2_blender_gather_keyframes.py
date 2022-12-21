@@ -17,7 +17,6 @@ import bpy
 import mathutils
 from ...com import gltf2_blender_math
 
-#TODOANIM refactoring Keyframe class?
 class Keyframe:
     def __init__(self, channels: typing.Tuple[bpy.types.FCurve], frame: float, bake_channel: typing.Union[str, None]):
         self.seconds = frame / bpy.context.scene.render.fps
