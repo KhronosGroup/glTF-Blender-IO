@@ -29,7 +29,7 @@ from .sampled.shapekeys.gltf2_blender_gather_sk_action_sampled import gather_act
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from .gltf2_blender_gather_drivers import get_sk_drivers
-from .gltf2_blender_gather_animation_utils import reset_bone_matrix, link_samplers
+from .gltf2_blender_gather_animation_utils import reset_bone_matrix, link_samplers, add_slide_data
 
 def gather_actions_animations(export_settings):
 
@@ -161,14 +161,14 @@ def prepare_actions_range(export_settings):
                             track_slide.update({track:start_frame})
                     else:
                         if start_frame < 0:
-                            __add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
+                            add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
                 else:
                     if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
                         if None not in track_slide.keys() or (None in track_slide.keys() and start_frame < track_slide[None]):
                             track_slide.update({None:start_frame})
                     else:
                         if start_frame < 0:
-                            __add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
+                            add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
 
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 if track is not None:
@@ -176,13 +176,13 @@ def prepare_actions_range(export_settings):
                         if track not in track_slide.keys() or (track in track_slide.keys() and start_frame < track_slide[track]):
                             track_slide.update({track:start_frame})
                     else:
-                        __add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
+                        add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
                 else:
                     if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
                         if None not in track_slide.keys() or (None in track_slide.keys() and start_frame < track_slide[None]):
                             track_slide.update({None:start_frame})
                     else:
-                        __add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
+                        add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
 
             if type_ == "SHAPEKEY" and export_settings['gltf_bake_animation']:
                 export_settings['ranges'][obj_uuid][obj_uuid] = {}
@@ -232,21 +232,9 @@ def prepare_actions_range(export_settings):
             for blender_action, track, type_ in blender_actions:
                 if track in track_slide.keys():
                     if export_settings['gltf_negative_frames'] == "SLIDE" and track_slide[track] < 0:
-                        __add_slide_data(track_slide[track], obj_uuid, blender_action.name, export_settings)
+                        add_slide_data(track_slide[track], obj_uuid, blender_action.name, export_settings)
                     elif export_settings['gltf_anim_slide_to_zero'] is True:
-                        __add_slide_data(track_slide[track], obj_uuid, blender_action.name, export_settings)
-
-def __add_slide_data(start_frame, obj_uuid: int, blender_action_name: str, export_settings):
-
-    if obj_uuid not in export_settings['action_slide'].keys():
-        export_settings['action_slide'][obj_uuid] = {}
-    export_settings['action_slide'][obj_uuid][blender_action_name] = start_frame
-    # Add slide info for driver sk too
-    obj_drivers = get_sk_drivers(obj_uuid, export_settings)
-    for obj_dr in obj_drivers:
-        if obj_dr not in export_settings['action_slide'].keys():
-            export_settings['action_slide'][obj_dr] = {}
-        export_settings['action_slide'][obj_dr][obj_uuid + "_" + blender_action_name] = start_frame
+                        add_slide_data(track_slide[track], obj_uuid, blender_action.name, export_settings)
 
 def gather_action_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],

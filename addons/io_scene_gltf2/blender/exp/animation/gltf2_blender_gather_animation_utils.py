@@ -15,7 +15,7 @@
 import typing
 from mathutils import Matrix
 from ....io.com import gltf2_io
-
+from .gltf2_blender_gather_drivers import get_sk_drivers
 
 def link_samplers(animation: gltf2_io.Animation, export_settings):
     """
@@ -58,3 +58,16 @@ def reset_bone_matrix(blender_object, export_settings) -> None:
     # Resetting bones TRS to avoid to keep not keyed value on a future action set
     for bone in blender_object.pose.bones:
         bone.matrix_basis = Matrix()
+
+
+def add_slide_data(start_frame, obj_uuid: int, blender_action_name: str, export_settings):
+
+    if obj_uuid not in export_settings['action_slide'].keys():
+        export_settings['action_slide'][obj_uuid] = {}
+    export_settings['action_slide'][obj_uuid][blender_action_name] = start_frame
+    # Add slide info for driver sk too
+    obj_drivers = get_sk_drivers(obj_uuid, export_settings)
+    for obj_dr in obj_drivers:
+        if obj_dr not in export_settings['action_slide'].keys():
+            export_settings['action_slide'][obj_dr] = {}
+        export_settings['action_slide'][obj_dr][obj_uuid + "_" + blender_action_name] = start_frame

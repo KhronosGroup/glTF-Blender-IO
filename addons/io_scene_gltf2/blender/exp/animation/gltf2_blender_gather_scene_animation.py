@@ -19,7 +19,7 @@ from .gltf2_blender_gather_drivers import get_sk_drivers
 from .sampled.armature.gltf2_blender_gather_armature_channels import gather_armature_sampled_channels
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sk_sampled_channels
-from .gltf2_blender_gather_animation_utils import link_samplers
+from .gltf2_blender_gather_animation_utils import link_samplers, add_slide_data
 
 def gather_scene_animation(export_settings):
 
@@ -32,7 +32,10 @@ def gather_scene_animation(export_settings):
     start_frame = bpy.context.scene.frame_start
     end_frame = bpy.context.scene.frame_end
 
-    # TODOANIM limits range all options
+    # The following options has no impact:
+        # - We force sampling & baking
+        # - Export_frame_range --> Because this is the case for SCENE mode, because we bake all scene frame range
+        # - CROP or SLIDE --> Scene don't have negative frames
 
     # This mode will bake all objects like there are in the scene
     vtree = export_settings['vtree']
@@ -55,6 +58,11 @@ def gather_scene_animation(export_settings):
                 export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid] = {}
                 export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid]['start'] = start_frame
                 export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid]['end'] = end_frame
+
+        if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
+            add_slide_data(start_frame, obj_uuid, obj_uuid, export_settings)
+
+        # Perform baking animation export
 
         if blender_object.type != "ARMATURE":
             # We have to check if this is a skinned mesh, because we don't have to force animation baking on this case
