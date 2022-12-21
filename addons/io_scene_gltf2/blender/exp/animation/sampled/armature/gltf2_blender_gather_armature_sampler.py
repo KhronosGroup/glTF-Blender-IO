@@ -50,7 +50,7 @@ def gather_bone_sampled_animation_sampler(
         return None
 
     # Now we are raw input/output, we need to convert to glTF data
-    input, output = __convert_keyframes(armature_uuid, bone, channel, keyframes, export_settings)
+    input, output = __convert_keyframes(armature_uuid, bone, channel, keyframes, action_name, export_settings)
 
     sampler = gltf2_io.AnimationSampler(
         extensions=None,
@@ -95,7 +95,13 @@ def __gather_keyframes(
 
     return keyframes
 
-def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, export_settings):
+def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_name, export_settings):
+
+    if export_settings['gltf_negative_frames'] == "SLIDE":
+        if armature_uuid in export_settings['action_slide'].keys() and action_name in export_settings['action_slide'][armature_uuid].keys():
+            for k in keyframes:
+                k.frame += -export_settings['action_slide'][armature_uuid][action_name]
+                k.seconds = k.frame / bpy.context.scene.render.fps
 
     times = [k.seconds for k in keyframes]
     input =  gather_accessor(

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 from ......io.com import gltf2_io, gltf2_io_constants
 from ......io.exp import gltf2_io_binary_data
 from .....com.gltf2_blender_math import mathutils_to_gltf
@@ -34,7 +35,7 @@ def gather_sk_sampled_animation_sampler(
         return None
 
     # Now we are raw input/output, we need to convert to glTF data
-    input, output = __convert_keyframes(obj_uuid, keyframes, export_settings)
+    input, output = __convert_keyframes(obj_uuid, keyframes, action_name, export_settings)
 
     sampler = gltf2_io.AnimationSampler(
         extensions=None,
@@ -65,7 +66,14 @@ def __gather_keyframes(
 
     return keyframes
 
-def __convert_keyframes(obj_uuid, keyframes, export_settings):
+def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
+
+    if export_settings['gltf_negative_frames'] == "SLIDE":
+        if obj_uuid in export_settings['action_slide'].keys() and action_name in export_settings['action_slide'][obj_uuid].keys():
+            for k in keyframes:
+                k.frame += -export_settings['action_slide'][obj_uuid][action_name]
+                k.seconds = k.frame / bpy.context.scene.render.fps
+
     times = [k.seconds for k in keyframes]
     input = gather_accessor(
         gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float),

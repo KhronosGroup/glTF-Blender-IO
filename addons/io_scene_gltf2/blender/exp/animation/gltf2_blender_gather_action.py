@@ -123,6 +123,8 @@ def gather_actions_animations(export_settings):
 
 def prepare_actions_range(export_settings):
 
+    track_slide = {}
+
     vtree = export_settings['vtree']
     for obj_uuid in vtree.get_all_objects():
 
@@ -134,7 +136,7 @@ def prepare_actions_range(export_settings):
             export_settings['ranges'][obj_uuid] = {}
 
         blender_actions = __get_blender_actions(obj_uuid, export_settings)
-        for blender_action, _ , type_ in blender_actions:
+        for blender_action, track, type_ in blender_actions:
 
             start_frame = int(blender_action.frame_range[0])
             end_frame = int(blender_action.frame_range[1])
@@ -151,6 +153,20 @@ def prepare_actions_range(export_settings):
 
             export_settings['ranges'][obj_uuid][blender_action.name]['start'] = start_frame
             export_settings['ranges'][obj_uuid][blender_action.name]['end'] = end_frame
+
+            if export_settings['gltf_negative_frames'] == "SLIDE":
+                if track is not None:
+                    if not (track.startswith("NlaTrack") or track.startswith("[Action Stash]")):
+                        if track not in track_slide.keys() or (track in track_slide.keys() and start_frame < track_slide[track]):
+                            track_slide.update({track:start_frame})
+                    else:
+                        __add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
+                else:
+                    if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
+                        if None not in track_slide.keys() or (None in track_slide.keys() and start_frame < track_slide[None]):
+                            track_slide.update({None:start_frame})
+                    else:
+                        __add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
 
             #TODOANIM if start and end are negative & crop --> No export of this action
 
@@ -187,6 +203,31 @@ def prepare_actions_range(export_settings):
                     export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid] = {}
                     export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid]['start'] = bpy.context.scene.frame_start
                     export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid]['end'] = bpy.context.scene.frame_end
+
+    if export_settings['gltf_negative_frames'] == "SLIDE" and len([a for a in track_slide.values() if a < 0]) > 0:
+        # Need to store animation slides
+        for obj_uuid in vtree.get_all_objects():
+
+            # Do not manage not exported objects
+            if vtree.nodes[obj_uuid].node is None:
+                continue
+
+            blender_actions = __get_blender_actions(obj_uuid, export_settings)
+            for blender_action, track, type_ in blender_actions:
+                if track in track_slide.keys() and track_slide[track] < 0:
+                    __add_slide_data(track_slide[track], obj_uuid, blender_action.name, export_settings)
+
+def __add_slide_data(start_frame, obj_uuid: int, blender_action_name: str, export_settings):
+    if start_frame < 0:
+        if obj_uuid not in export_settings['action_slide'].keys():
+            export_settings['action_slide'][obj_uuid] = {}
+        export_settings['action_slide'][obj_uuid][blender_action_name] = start_frame
+        # Add slide info for driver sk too
+        obj_drivers = get_sk_drivers(obj_uuid, export_settings)
+        for obj_dr in obj_drivers:
+            if obj_dr not in export_settings['action_slide'].keys():
+                export_settings['action_slide'][obj_dr] = {}
+            export_settings['action_slide'][obj_dr][obj_uuid + "_" + blender_action_name] = start_frame
 
 def gather_action_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],
