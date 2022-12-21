@@ -186,7 +186,7 @@ def prepare_actions_range(export_settings):
 
         if len(blender_actions) == 0 and export_settings['gltf_bake_animation']:
             # No animation on this object
-            # In case of baking animation, we will use max range of export or scene frame range ??? #TODOANIM
+            # In case of baking animation, we will use scene frame range
             # Will be calculated later if max range. Can be set here if scene frame range
             export_settings['ranges'][obj_uuid][obj_uuid] = {}
             export_settings['ranges'][obj_uuid][obj_uuid]['start'] = bpy.context.scene.frame_start
