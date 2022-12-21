@@ -27,8 +27,6 @@ from .gltf2_blender_gather_armature_sampler import gather_bone_sampled_animation
 def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-    #TODOANIM : check if there is really some animation on the action must be done before
-
     # Then bake all bones
     bones_to_be_animated = []
     bones_uuid = export_settings["vtree"].get_all_bones(armature_uuid)
