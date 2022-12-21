@@ -480,6 +480,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default='SLIDE'
     )
 
+    export_anim_slide_to_zero: BoolProperty(
+        name='Set all glTF Animation starting at 0',
+        description=(
+            "Set all glTF animation starting at 0.0s. "
+            "Can be usefull for looping animations"
+        ),
+        default=False
+    )
+
     export_bake_animation: BoolProperty(
         name='Bake All Objects Animations',
         description=(
@@ -717,6 +726,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
             export_settings['gltf_bake_animation'] = self.export_bake_animation
             export_settings['gltf_negative_frames'] = self.export_negative_frame
+            export_settings['gltf_anim_slide_to_zero'] = self.export_anim_slide_to_zero
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_force_sampling'] = False
@@ -1213,6 +1223,7 @@ class GLTF_PT_export_animation_ranges(bpy.types.Panel):
 
         layout.prop(operator, 'export_current_frame')
         layout.prop(operator, 'export_frame_range')
+        layout.prop(operator, 'export_anim_slide_to_zero')
         layout.prop(operator, 'export_negative_frame')
 
 class GLTF_PT_export_animation_armature(bpy.types.Panel):
