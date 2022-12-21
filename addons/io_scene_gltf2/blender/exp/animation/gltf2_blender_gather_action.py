@@ -398,6 +398,8 @@ def gather_action_animations(  obj_uuid: int,
                         else:
                             animation.channels.extend(channels)
 
+        # TODOANIM: baking: if there are only TRS anim, we need to bake SK
+
         if animation is not None:
             link_samplers(animation, export_settings)
             animations.append(animation)
@@ -463,6 +465,9 @@ def __bake_animation(obj_uuid: str, export_settings):
 
             if animation is not None and animation.channels:
                 link_samplers(animation, export_settings)
+
+        # TODOANIM bake sk
+
                 return animation
     elif export_settings['gltf_bake_animation'] is True and blender_object.type == "ARMATURE":
         # We need to bake all bones. Because some bone can have some constraints linking to
