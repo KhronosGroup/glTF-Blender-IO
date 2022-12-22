@@ -132,6 +132,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     bl_options = {'PRESET'}
 
+    # Don't use export_ prefix here, I don't want it to be saved with other export settings
+    gltf_export_id: StringProperty(
+        name='Identifier',
+        description=(
+            'Identifier of caller (in case of addon calling this exporter. '
+            'Can be useful in case of Extension added by other addons'
+        ),
+        default=''
+    )
+
     export_format: EnumProperty(
         name='Format',
         items=(('GLB', 'glTF Binary (.glb)',
@@ -579,7 +589,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings = {}
 
         export_settings['timestamp'] = datetime.datetime.now()
-
+        export_settings['gltf_export_id'] = self.gltf_export_id
         export_settings['gltf_filepath'] = self.filepath
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
         export_settings['gltf_texturedirectory'] = os.path.join(
