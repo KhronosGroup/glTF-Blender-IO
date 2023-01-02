@@ -14,6 +14,7 @@
 
 import bpy
 from ....io.com import gltf2_io
+from ...com.gltf2_blender_extras import generate_extras
 from ..gltf2_blender_gather_tree import VExportNode
 from .gltf2_blender_gather_drivers import get_sk_drivers
 from .sampled.armature.gltf2_blender_gather_armature_channels import gather_armature_sampled_channels
@@ -95,7 +96,7 @@ def gather_scene_animation(export_settings):
         animation = gltf2_io.Animation(
             channels=total_channels,
             extensions=None,
-            extras=None,
+            extras=__gather_extras(bpy.context.scene, export_settings),
             name=bpy.context.scene.name,
             samplers=[]
         )
@@ -104,3 +105,7 @@ def gather_scene_animation(export_settings):
 
     return None
     
+def __gather_extras(blender_scene, export_settings):
+    if export_settings['gltf_extras']:
+        return generate_extras(blender_scene)
+    return None

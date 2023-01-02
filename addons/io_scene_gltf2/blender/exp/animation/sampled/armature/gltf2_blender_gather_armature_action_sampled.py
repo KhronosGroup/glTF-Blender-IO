@@ -65,8 +65,7 @@ def __gather_channels(armature_uuid, blender_action_name, export_settings) -> ty
     return gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)
 
 
-def __gather_extras(blender_action: bpy.types.Action, export_settings) -> typing.Any:
-
+def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_action)
+        return generate_extras(blender_action) if blender_action else None
     return None

@@ -14,6 +14,7 @@
 
 import bpy
 from .....io.com import gltf2_io
+from ....com.gltf2_blender_extras import generate_extras
 from .gltf2_blender_gather_fcurves_channels import gather_animation_fcurves_channels
 
 def gather_animation_fcurves(
@@ -29,7 +30,7 @@ def gather_animation_fcurves(
     animation = gltf2_io.Animation(
         channels=channels,
         extensions=None,
-        extras=None,
+        extras=__gather_extras(blender_action, export_settings),
         name=name,
         samplers=[]
     )
@@ -50,3 +51,8 @@ def __gather_channels_fcurves(
         blender_action: bpy.types.Action, 
         export_settings):
     return gather_animation_fcurves_channels(obj_uuid, blender_action, export_settings)
+
+def __gather_extras(blender_action, export_settings):
+    if export_settings['gltf_extras']:
+        return generate_extras(blender_action)
+    return None

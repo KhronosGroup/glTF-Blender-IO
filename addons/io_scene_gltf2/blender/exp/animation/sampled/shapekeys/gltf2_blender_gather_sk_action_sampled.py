@@ -15,6 +15,7 @@
 import bpy
 import typing
 from ......io.com import gltf2_io
+from .....com.gltf2_blender_extras import generate_extras
 from .gltf2_blender_gather_sk_channels import gather_sk_sampled_channels
 
 def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
@@ -26,7 +27,7 @@ def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[b
     animation = gltf2_io.Animation(
         channels=__gather_channels(object_uuid, blender_action.name if blender_action else object_uuid, export_settings),
         extensions=None,
-        extras=None,
+        extras=__gather_extras(blender_action, export_settings),
         name=__gather_name(object_uuid, blender_action, export_settings),
         samplers=[]
     )
@@ -43,3 +44,8 @@ def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Ac
     
 def __gather_channels(object_uuid: str, blender_action_name: str, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_sk_sampled_channels(object_uuid, blender_action_name, export_settings)
+
+def __gather_extras(blender_action, export_settings):
+    if export_settings['gltf_extras']:
+        return generate_extras(blender_action) if blender_action else None
+    return None

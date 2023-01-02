@@ -19,6 +19,7 @@ from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....io.com.gltf2_io_debug import print_console
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...com.gltf2_blender_data_path import is_bone_anim_channel
+from ...com.gltf2_blender_extras import generate_extras
 from ..gltf2_blender_gather_cache import cached
 from ..gltf2_blender_gather_tree import VExportNode
 from .fcurves.gltf2_blender_gather_fcurves_animation import gather_animation_fcurves
@@ -359,7 +360,7 @@ def gather_action_animations(  obj_uuid: int,
                     animation = gltf2_io.Animation(
                         channels=[channel],
                         extensions=None,
-                        extras=None,
+                        extras=__gather_extras(blender_action, export_settings),
                         name=blender_action.name,
                         samplers=[]
                     )
@@ -629,3 +630,8 @@ def __is_armature_action(blender_action) -> bool:
         if is_bone_anim_channel(fcurve.data_path):
             return True
     return False
+
+def __gather_extras(blender_action, export_settings):
+    if export_settings['gltf_extras']:
+        return generate_extras(blender_action)
+    return None
