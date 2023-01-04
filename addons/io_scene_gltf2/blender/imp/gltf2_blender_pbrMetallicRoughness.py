@@ -333,7 +333,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(color_socket, node.outputs[0])
+            mh.node_tree.links.new(color_socket, node.outputs[2])
             # Inputs
             node.inputs['Factor'].default_value = 1.0
             color_socket = node.inputs[6]

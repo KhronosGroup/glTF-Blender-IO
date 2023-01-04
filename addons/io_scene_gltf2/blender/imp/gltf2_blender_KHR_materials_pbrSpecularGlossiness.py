@@ -134,7 +134,7 @@ def specular_glossiness(mh, location, specular_socket, roughness_socket):
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(specular_socket, node.outputs[0])
+            mh.node_tree.links.new(specular_socket, node.outputs[2])
             # Inputs
             node.inputs['Factor'].default_value = 1.0
             specular_socket = node.inputs[6]

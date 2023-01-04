@@ -52,11 +52,20 @@ def get_node_socket(blender_material, type, name):
     :return: a blender NodeSocket for a given type
     """
     nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
-    nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
+    nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[__get_output_socket(node)])]
     inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
     if inputs:
         return inputs[0]
     return None
+
+# This should not be usefull for now (on 3.4.1), as we are using check_if_is_linked_to_active_output
+# only on shader nodes, so we shouldn't have some MIX node between shader node and output node
+# But in case we need it in the future, let's keep it
+def __get_output_socket(node):
+    if node.type == "MIX" and node.data_type == "RGBA":
+        return 2
+    else:
+        return 0
 
 
 def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
@@ -124,7 +133,7 @@ def check_if_is_linked_to_active_output(shader_socket):
             return True
 
         if len(link.to_node.outputs) > 0: # ignore non active output, not having output sockets
-            ret = check_if_is_linked_to_active_output(link.to_node.outputs[0]) # recursive until find an output material node
+            ret = check_if_is_linked_to_active_output(link.to_node.outputs[__get_output_socket(link.to_node)]) # recursive until find an output material node
             if ret is True:
                 return True
 
