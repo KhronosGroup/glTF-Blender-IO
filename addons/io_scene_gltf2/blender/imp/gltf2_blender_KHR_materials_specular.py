@@ -352,7 +352,7 @@ def original_specular(  mh,
                 node.location = x_specularcolor - 140, y_specularcolor
                 node.blend_type = 'MULTIPLY'
                 # Outputs
-                mh.node_tree.links.new(original_specularcolor_socket, node.outputs[0])
+                mh.node_tree.links.new(original_specularcolor_socket, node.outputs[2])
                 # Inputs
                 node.inputs['Factor'].default_value = 1.0
                 original_specularcolor_socket = node.inputs[6]
