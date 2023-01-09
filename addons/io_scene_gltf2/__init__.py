@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 5, 9),
+    "version": (3, 5, 12),
     'blender': (3, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -131,6 +131,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
 
     bl_options = {'PRESET'}
+
+    # Don't use export_ prefix here, I don't want it to be saved with other export settings
+    gltf_export_id: StringProperty(
+        name='Identifier',
+        description=(
+            'Identifier of caller (in case of add-on calling this exporter). '
+            'Can be useful in case of Extension added by other add-ons'
+        ),
+        default=''
+    )
 
     export_format: EnumProperty(
         name='Format',
@@ -656,7 +666,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings = {}
 
         export_settings['timestamp'] = datetime.datetime.now()
-
+        export_settings['gltf_export_id'] = self.gltf_export_id
         export_settings['gltf_filepath'] = self.filepath
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
         export_settings['gltf_texturedirectory'] = os.path.join(
