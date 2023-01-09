@@ -267,7 +267,7 @@ def get_factor_from_socket(socket, kind):
     if node.node is not None:
         x1, x2 = None, None
         if kind == 'RGB':
-            if node.node.type in 'MIX' and node.node.data_type == "RGBA" and node.node.blend_type == 'MULTIPLY':
+            if node.node.type == 'MIX' and node.node.data_type == "RGBA" and node.node.blend_type == 'MULTIPLY':
                 # TODO: handle factor in inputs[0]?
                 x1 = get_const_from_socket(NodeSocket(node.node.inputs[6], node.group_path), kind)
                 x2 = get_const_from_socket(NodeSocket(node.node.inputs[7], node.group_path), kind)
