@@ -378,7 +378,7 @@ Data will be exported using the ``KHR_materials_volume`` extension.
 - For volume to be exported, some *transmission* must be set on Principled BSDF node.
 - Color of Volume Absorption node is used as glTF attenuation color. No texture is allowed for this property.
 - Density of Volume Absorption node is used as inverse of glTF attenuation distance.
-- Thickess can be plugged into the Thickess socket of custom group node ``glTF Material Output``.
+- Thickness can be plugged into the Thickness socket of custom group node ``glTF Material Output``.
 - If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
