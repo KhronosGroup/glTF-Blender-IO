@@ -346,16 +346,17 @@ def original_specular(  mh,
             specular_color_factor = list(specular_color_factor) + [1.0]
             if specular_color_factor != [1.0, 1.0, 1.0, 1.0]:
                 # Mix specularColorFactor
-                node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+                node = mh.node_tree.nodes.new('ShaderNodeMix')
                 node.label = 'SpecularColor Factor'
+                node.data_type = 'RGBA'
                 node.location = x_specularcolor - 140, y_specularcolor
                 node.blend_type = 'MULTIPLY'
                 # Outputs
-                mh.node_tree.links.new(original_specularcolor_socket, node.outputs[0])
+                mh.node_tree.links.new(original_specularcolor_socket, node.outputs[2])
                 # Inputs
-                node.inputs['Fac'].default_value = 1.0
-                original_specularcolor_socket = node.inputs['Color1']
-                node.inputs['Color2'].default_value = specular_color_factor
+                node.inputs['Factor'].default_value = 1.0
+                original_specularcolor_socket = node.inputs[6]
+                node.inputs[7].default_value = specular_color_factor
                 x_specularcolor -= 200
             
             texture(

@@ -5,7 +5,7 @@ glTF 2.0
 
 .. reference::
 
-   :Category:  Import-Export
+   :Category: Import-Export
    :Menu:      :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
 
 
@@ -341,6 +341,12 @@ can be used to blur the transmission, like frosted glass.
    In particular, transmissive materials may not be visible behind other transmissive materials.
    These limitations affect physically-based transmission, but not alpha-blended non-transmissive materials.
 
+.. note::
+
+   If you want to enable refraction on your model, ``KHR_materials_transmission`` must also
+   be used in addtion with ``KHR_materials_volume``. See the dedicated *Volume* part of
+   the documentation.
+
 .. warning::
 
    Transmission is complex for real-time rendering engines to implement,
@@ -372,7 +378,7 @@ Data will be exported using the ``KHR_materials_volume`` extension.
 - For volume to be exported, some *transmission* must be set on Principled BSDF node.
 - Color of Volume Absorption node is used as glTF attenuation color. No texture is allowed for this property.
 - Density of Volume Absorption node is used as inverse of glTF attenuation distance.
-- Thickess can be plugged into the Thickess socket of custom group node ``glTF Material Output``.
+- Thickness can be plugged into the Thickness socket of custom group node ``glTF Material Output``.
 - If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
