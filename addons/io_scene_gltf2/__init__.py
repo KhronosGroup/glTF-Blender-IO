@@ -897,7 +897,8 @@ class GLTF_PT_export_geometry_material(bpy.types.Panel):
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
-        col.prop(operator, 'export_jpeg_quality')
+        if operator.export_image_format in ["AUTO", "JPEG"]:
+            col.prop(operator, 'export_jpeg_quality')
 
 class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
