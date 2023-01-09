@@ -53,7 +53,7 @@ def sheen(  mh,
             node.location = x_sheenColor - 140, y_sheenColor
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(sheenColor_socket, node.outputs[0])
+            mh.node_tree.links.new(sheenColor_socket, node.outputs[2])
             # Inputs
             node.inputs['Factor'].default_value = 1.0
             sheenColor_socket = node.inputs[6]
