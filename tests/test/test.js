@@ -1141,6 +1141,37 @@ describe('Exporter', function() {
 
               });
 
+              it('exports mesh instances', function() {
+                let gltfPath = path.resolve(outDirPath, '25_mesh_instances.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const original = asset.nodes.find(node => node.name === 'original');
+                const original_instance = asset.nodes.find(node => node.name === 'original_instance');
+                const with_object_material = asset.nodes.find(node => node.name === 'with_object_material');
+                const with_object_material_other = asset.nodes.find(node => node.name === 'with_object_material_other');
+                const modifier_1 = asset.nodes.find(node => node.name === 'modifier_1');
+                const modifier_2 = asset.nodes.find(node => node.name === 'modifier_2');
+                const skined_1 = asset.nodes.find(node => node.name === 'skined_1');
+                const skined_2 = asset.nodes.find(node => node.name === 'skined_2');
+
+                assert.strictEqual(original.mesh, original_instance.mesh);
+                assert.strictEqual(original.mesh, original_instance.mesh);
+                assert.notEqual(original.mesh, with_object_material.mesh);
+                assert.notEqual(original.mesh, with_object_material_other.mesh);
+                assert.notEqual(with_object_material.mesh, with_object_material_other.mesh);
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].indices, asset.meshes[with_object_material.mesh].primitives[0].indices)
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['POSITION'], asset.meshes[with_object_material.mesh].primitives[0].attributes['POSITION'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['TEXCOORD_0'], asset.meshes[with_object_material.mesh].primitives[0].attributes['TEXCOORD_0'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['NORMAL'], asset.meshes[with_object_material.mesh].primitives[0].attributes['NORMAL'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].indices, asset.meshes[with_object_material_other.mesh].primitives[0].indices)
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['POSITION'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['POSITION'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['TEXCOORD_0'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['TEXCOORD_0'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['NORMAL'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['NORMAL'])
+                assert.strictEqual(original.mesh, modifier_1.mesh);
+                assert.strictEqual(original.mesh, modifier_2.mesh);
+                assert.notEqual(original.mesh, skined_1.mesh);
+                assert.notEqual(original.mesh, skined_2.mesh);
+
+              });
 
               it('exports mesh instances apply modifier', function() {
                 let gltfPath = path.resolve(outDirPath, '25_mesh_instances_apply_modifier.gltf');
@@ -2105,6 +2136,30 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.ok(!("specularColorTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));            
 
             }); 
+
+            it('roundtrips factors', function() {
+                let dir = '22_factors';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat = asset.materials[0];
+                const pbr = mat.pbrMetallicRoughness;
+
+                assert.equalEpsilonArray(mat.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.1, 0.2, 0.3]);
+                assert.equalEpsilon(mat.extensions['KHR_materials_sheen']["sheenRoughnessFactor"], 0.5);
+                assert.equalEpsilonArray(pbr.baseColorFactor, [0.5, 0.6, 0.7, 0.123]);
+                assert.equalEpsilon(mat.extensions['KHR_materials_clearcoat']["clearcoatFactor"], 0.234);
+                assert.equalEpsilon(mat.extensions['KHR_materials_clearcoat']["clearcoatRoughnessFactor"], 0.345);
+                assert.equalEpsilon(mat.extensions['KHR_materials_transmission']["transmissionFactor"], 0.36);
+                assert.equalEpsilonArray(mat.emissiveFactor, [0.4, 0.5, 0.6]);
+                assert.equalEpsilon(pbr.metallicFactor, 0.2);
+                assert.equalEpsilon(pbr.roughnessFactor, 0.3);
+                assert.equalEpsilon(mat.extensions['KHR_materials_volume']["thicknessFactor"], 0.9);
+                assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
+                assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
+
+              });
         });
     });
 });
