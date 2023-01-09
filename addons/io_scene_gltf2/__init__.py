@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 5, 11),
+    "version": (3, 5, 12),
     'blender': (3, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -136,8 +136,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     gltf_export_id: StringProperty(
         name='Identifier',
         description=(
-            'Identifier of caller (in case of addon calling this exporter. '
-            'Can be useful in case of Extension added by other addons'
+            'Identifier of caller (in case of add-on calling this exporter). '
+            'Can be useful in case of Extension added by other add-ons'
         ),
         default=''
     )
