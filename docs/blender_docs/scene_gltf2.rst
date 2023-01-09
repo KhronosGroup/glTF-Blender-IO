@@ -5,7 +5,7 @@ glTF 2.0
 
 .. reference::
 
-   :Category:  Import-Export
+   :Category: Import-Export
    :Menu:      :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
 
 
@@ -56,7 +56,8 @@ with the following channels of information:
 - Normal Map (tangent space, +Y up)
 - Emissive
 
-Some additional material properties or types of materials can be expressed using glTF extensions. The complete is can be found in _Extensions_ part of this documentation.
+Some additional material properties or types of materials can be expressed using glTF extensions.
+The complete list can be found in _Extensions_ part of this documentation.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -72,7 +73,7 @@ The glTF material system is different from Blender's own materials. When a glTF 
 the add-on will construct a set of Blender nodes to replicate each glTF material as closely as possible.
 
 The importer supports Metal/Rough PBR (core glTF), Spec/Gloss PBR (``KHR_materials_pbrSpecularGlossiness``)
-and some extension materials. The complete is can be found in _Extensions_ part of this documentation.
+and some extension materials. The complete list can be found in _Extensions_ part of this documentation.
 
 .. tip::
 
@@ -256,7 +257,7 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
 Sheen
 ^^^^^
 
-When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF 
+When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
 extension will be included in the export. The Sheen Color will be exported from Color socket of Vevlet node.
 Sheen Roughness will be exported from Sigma socket.
 
@@ -266,14 +267,16 @@ If a Sheen Rougness Texture is used, glTF requires the values be written to the 
 
 .. tip::
 
-   Velvet BSDF node is only available on Cycles render engine. 
+   Velvet BSDF node is only available on Cycles render engine.
    You may have to temporary switch to Cycles to add this node, and get back to Eevee.
 
 .. note::
 
-   Because the node tree is adding 2 Shaders (Principled and Sheen), the resulting shader is not fully energy conservative.
+   Because the node tree is adding 2 Shaders (Principled and Sheen),
+   the resulting shader is not fully energy conservative.
    You may find some difference between Blender render, and glTF render.
-   Sheen models are not fully compatible between Blender and glTF. This trick about adding Velvet Shader is the most accurate 
+   Sheen models are not fully compatible between Blender and glTF.
+   This trick about adding Velvet Shader is the most accurate
    approximation (better that using Sheen Principled sockets).
 
 
@@ -286,7 +289,8 @@ included in the export.
 
 .. note::
 
-   Specular models are not fully compatible between Blender and glTF. By default, Blender data are converted to glTF at export, 
+   Specular models are not fully compatible between Blender and glTF.
+   By default, Blender data are converted to glTF at export,
    with a possible loss of information.
    Some conversion are also performed at import, will a possible loss of information too.
 
@@ -295,17 +299,19 @@ At import, a custom node group is created, to store original Specular data, not 
 
 .. figure:: /images/addons_import-export_scene-gltf2_material_specular-custom-node.png
 
-At export, by default, Specular data are converted from Principled BSDF node. 
+At export, by default, Specular data are converted from Principled BSDF node.
 
-You can export original Specular data, enabling the option at export. If enabled, Principled Specular data are ignored,
-only data from custom node are used.
+You can export original Specular data, enabling the option at export.
+If enabled, Principled Specular data are ignored, only data from custom node are used.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material_specular-export-option.png
 
 
 .. tip::
-   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu: 
+   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
    Add > Output > glTF Material Output
+
+     .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
 
 Transmission
 ^^^^^^^^^^^^
@@ -335,6 +341,12 @@ can be used to blur the transmission, like frosted glass.
    In particular, transmissive materials may not be visible behind other transmissive materials.
    These limitations affect physically-based transmission, but not alpha-blended non-transmissive materials.
 
+.. note::
+
+   If you want to enable refraction on your model, ``KHR_materials_transmission`` must also
+   be used in addtion with ``KHR_materials_volume``. See the dedicated *Volume* part of
+   the documentation.
+
 .. warning::
 
    Transmission is complex for real-time rendering engines to implement,
@@ -345,7 +357,8 @@ IOR
 
 At import, there are two different situation:
 
-- if ``KHR_materials_ior`` is not set, IOR value of Principled BSDF node is set to 1.5, that is the glTF default value of IOR.
+- if ``KHR_materials_ior`` is not set, IOR value of Principled BSDF node is set to 1.5,
+  that is the glTF default value of IOR.
 - If set, the ``KHR_materials_ior`` is used to set the IOR value of Principled BSDF.
 
 At export, IOR is included in the export only if one of these extensions are also used:
@@ -365,7 +378,7 @@ Data will be exported using the ``KHR_materials_volume`` extension.
 - For volume to be exported, some *transmission* must be set on Principled BSDF node.
 - Color of Volume Absorption node is used as glTF attenuation color. No texture is allowed for this property.
 - Density of Volume Absorption node is used as inverse of glTF attenuation distance.
-- Thickess can be plugged into the Thickess socket of custom group node ``glTF Material Output``.
+- Thickness can be plugged into the Thickness socket of custom group node ``glTF Material Output``.
 - If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
@@ -377,12 +390,15 @@ glTF Variants
 
    For a full Variants experience, you have to enable UI in Add-on preferences
 
+     .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-variant.png
+
 There are two location to manage glTF Variants in Blender
 
 - In 3D View, on ``glTF Variants`` tab
 - For advanced settings, in Mesh Material Properties (see Advanced glTF Variant checks)
 
-The main concept to understand for using Variants, is that each material slot will be used as equivalent of a glTF primitive.
+The main concept to understand for using Variants,
+is that each material slot will be used as equivalent of a glTF primitive.
 
 glTF Variants switching
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -398,11 +414,14 @@ You can switch to default materials (when no Variant are used), by clicking on *
 glTF Variants creation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You can add a new Variant by clicking the ``+`` at right of the Variant list. Then you can change the name by double-clicking.
+You can add a new Variant by clicking the ``+`` at right of the Variant list.
+Then you can change the name by double-clicking.
 
-After changing Materials in Material Slots, you can assign current materials to the active Variant using *Assign to Variant*.
+After changing Materials in Material Slots, you can assign current materials to the active Variant using
+*Assign to Variant*.
 
-You can also set default materials using *Assign as Original*. These materials will be exported as default material in glTF. 
+You can also set default materials using *Assign as Original*.
+These materials will be exported as default material in glTF.
 This are materials that will be displayed by any viewer that don't manage ``KHR_materials_variants`` extension.
 
 Advanced glTF Variant checks
@@ -412,7 +431,7 @@ If you want to check primitive by primitive, what are Variants used, you can go 
 
 .. figure:: /images/addons_import-export_scene-gltf2_material_variants-detail.png
 
-The *glTF Material Variants* tab refers to the active material Slot and Material used by this slot. 
+The *glTF Material Variants* tab refers to the active material Slot and Material used by this slot.
 You can see every Variants that are using this material for the given Slot/Primitive.
 
 You can also assign material to Variants from this tab, but recommandation is to perform it from 3D View tab.
@@ -492,6 +511,11 @@ Factors
 Any Image Texture nodes may optionally be multiplied with a constant color or scalar.
 These will be written as factors in the glTF file, which are numbers that are multiplied
 with the specified image textures. These are not common.
+
+- Use Math node (multiply) for scalar factors. Use second value as factor
+- Use MixRGB (multiply) for color factors. Set Fac to 1, and use Color2 as factors
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-factors.png
 
 
 Example

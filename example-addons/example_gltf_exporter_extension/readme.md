@@ -10,6 +10,11 @@ class glTF2ExportUserExtension:
         self.Extension = Extension
 ```
 
+If you want to use this file as a base of your addon, make sure to make it properly installable as Blender addon by either:
+
+- Rename from `__init__.py` to another name
+- Create a zip file of the directory that includes `__init__.py`
+
 Next, define functions that contain the data of the extension you would like to include. Write those functions for each type you want to include extensions for. Currently implemented are:
 
 ```
@@ -41,5 +46,7 @@ pre_gather_actions_hook(self, blender_object, export_settings)
 pre_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings)
 post_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings)
 animation_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop
-_filter_tag_hook(self, tree, export_settings)
+gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
+gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
+gather_tree_filter_tag_hook(self, tree, export_settings)
 ```
