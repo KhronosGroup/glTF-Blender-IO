@@ -84,12 +84,13 @@ def pbr_specular_glossiness(mh):
     )
 
     if mh.pymat.occlusion_texture is not None:
-        node = make_settings_node(mh)
-        node.location = (610, -1060)
+        if mh.settings_node is None:
+            mh.settings_node = make_settings_node(mh)
+            mh.settings_node.location = (610, -1060)
         occlusion(
             mh,
             location=(510, -970),
-            occlusion_socket=node.inputs['Occlusion'],
+            occlusion_socket=mh.settings_node.inputs['Occlusion'],
         )
 
 
@@ -134,7 +135,7 @@ def specular_glossiness(mh, location, specular_socket, roughness_socket):
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(specular_socket, node.outputs[0])
+            mh.node_tree.links.new(specular_socket, node.outputs[2])
             # Inputs
             node.inputs['Factor'].default_value = 1.0
             specular_socket = node.inputs[6]
