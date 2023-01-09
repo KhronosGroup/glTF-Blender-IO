@@ -399,7 +399,7 @@ def base_color(
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(color_socket, node.outputs[0])
+            mh.node_tree.links.new(color_socket, node.outputs[2])
             # Inputs
             node.inputs['Factor'].default_value = 1.0
             color_socket = node.inputs[6]
@@ -428,14 +428,15 @@ def base_color(
     if base_color_texture is not None and mh.vertex_color:
         node = mh.node_tree.nodes.new('ShaderNodeMix')
         node.label = 'Mix Vertex Color'
+        node.data_type = 'RGBA'
         node.location = x - 140, y
         node.blend_type = 'MULTIPLY'
         # Outputs
-        mh.node_tree.links.new(color_socket, node.outputs[0])
+        mh.node_tree.links.new(color_socket, node.outputs[2])
         # Inputs
-        node.inputs['Fac'].default_value = 1.0
-        texture_color_socket = node.inputs['Color1']
-        vcolor_color_socket = node.inputs['Color2']
+        node.inputs['Factor'].default_value = 1.0
+        texture_color_socket = node.inputs[6]
+        vcolor_color_socket = node.inputs[7]
 
         if alpha_socket is not None:
             node = mh.node_tree.nodes.new('ShaderNodeMath')

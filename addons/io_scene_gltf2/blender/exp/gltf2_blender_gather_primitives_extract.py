@@ -577,11 +577,7 @@ class PrimitiveCreator:
 
         elif attr['blender_domain'] == "CORNER":
             colors = colors.reshape(-1, 4)
-            data_dots = colors[self.dots['vertex_index']]
-            if self.export_settings['gltf_loose_edges'] and attr['blender_domain'] == "POINT":
-                data_dots_edges = colors[self.dots_edges['vertex_index']]
-            if self.export_settings['gltf_loose_points'] and attr['blender_domain'] == "POINT":
-                data_dots_points = colors[self.dots_points['vertex_index']]
+            data_dots = colors
 
         del colors
         # colors are already linear, no need to switch color space
