@@ -138,6 +138,7 @@ def __gather_skins(blender_primitive, export_settings):
     # Normalize weights so they sum to 1
     weight_total = weight_total.reshape(-1, 1)
     for s in range(0, max_bone_set_index+1):
+        weight_id = 'WEIGHTS_' + str(s)
         weight_arrs[s] /= weight_total
 
         weight = array_to_accessor(
@@ -158,7 +159,7 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
         "POSITION": True
     }
 
-    if (attribute.startswith("_COLOR") or attribute.startswith("COLOR_")) and blender_primitive["attributes"][attribute]['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
+    if (attribute.startswith("_") or attribute.startswith("COLOR_")) and blender_primitive["attributes"][attribute]['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
         # Byte Color vertex color, need to normalize
 
         data['data'] *= 65535

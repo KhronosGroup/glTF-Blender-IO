@@ -46,7 +46,7 @@ class VExportNode:
     def __init__(self):
         self.children = []
         self.blender_type = None
-        self.world_matrix = None
+        self.matrix_world = None
         self.parent_type = None
 
         self.blender_object = None
@@ -72,9 +72,6 @@ class VExportNode:
 
     def add_child(self, uuid):
         self.children.append(uuid)
-
-    def set_world_matrix(self, matrix):
-        self.world_matrix = matrix
 
     def set_blender_data(self, blender_object, blender_bone):
         self.blender_object = blender_object
@@ -187,6 +184,13 @@ class VExportTree:
             # Matrix World of object is expressed based on collection instance objects are
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
+
+            # If object is parented to bone, and Rest pose is used, we need to keep the world matrix
+            # Of the rest pose, not the current world matrix
+            if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_current_frame'] is False:
+                blender_bone = self.nodes[parent_uuid].blender_bone
+                node.matrix_world = (blender_bone.matrix @ blender_bone.bone.matrix_local.inverted_safe()).inverted_safe() @ node.matrix_world
+
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 if self.export_settings[gltf2_blender_export_keys.YUP]:
                     correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
@@ -312,6 +316,7 @@ class VExportTree:
         self.filter_tag()
         export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
+        self.remove_filtered_nodes()
 
 
     def recursive_filter_tag(self, uuid, parent_keep_tag):
@@ -415,17 +420,20 @@ class VExportTree:
             if all([c.hide_render for c in self.nodes[uuid].blender_object.users_collection]):
                 return False
 
-        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
-            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
-            if not found:
-                return False
-
-        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITHOUT_NESTED]:
+        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION] and not self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
             found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.objects)
             if not found:
                 return False
 
+        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION] and self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
+            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
+            if not found:
+                return False
+
         return True
+
+    def remove_filtered_nodes(self):
+        self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True}
 
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
@@ -435,67 +443,77 @@ class VExportTree:
             del n.armature_needed
 
     def add_neutral_bones(self):
-        for n in [n for n in self.nodes.values() if n.armature is not None and n.blender_type == VExportNode.OBJECT and hasattr(self.nodes[n.armature], "need_neutral_bone")]: #all skin meshes objects where neutral bone is needed
-            # First add a new node
+        added_armatures = []
+        for n in [n for n in self.nodes.values() if \
+                n.armature is not None and \
+                n.armature in self.nodes and \
+                n.blender_type == VExportNode.OBJECT and \
+                hasattr(self.nodes[n.armature], "need_neutral_bone")]: #all skin meshes objects where neutral bone is needed
 
-            axis_basis_change = Matrix.Identity(4)
-            if self.export_settings[gltf2_blender_export_keys.YUP]:
-                axis_basis_change = Matrix(((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+            if n.armature not in added_armatures:
 
-            trans, rot, sca = axis_basis_change.decompose()
-            translation, rotation, scale = (None, None, None)
-            if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
-                translation = [trans[0], trans[1], trans[2]]
-            if rot[0] != 1.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 0.0:
-                rotation = [rot[1], rot[2], rot[3], rot[0]]
-            if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
-                scale = [sca[0], sca[1], sca[2]]
-            neutral_bone = gltf2_io.Node(
-                            camera=None,
-                            children=None,
-                            extensions=None,
-                            extras=None,
-                            matrix=None,
-                            mesh=None,
-                            name='neutral_bone',
-                            rotation=rotation,
-                            scale=scale,
-                            skin=None,
-                            translation=translation,
-                            weights=None
-                        )
-            # Add it to child list of armature
-            self.nodes[n.armature].node.children.append(neutral_bone)
-            # Add it to joint list
-            n.node.skin.joints.append(neutral_bone)
+                added_armatures.append(n.armature) # Make sure to not insert 2 times the neural bone
 
-            # Need to add an InverseBindMatrix
-            array = BinaryData.decode_accessor_internal(n.node.skin.inverse_bind_matrices)
+                # First add a new node
+                axis_basis_change = Matrix.Identity(4)
+                if self.export_settings[gltf2_blender_export_keys.YUP]:
+                    axis_basis_change = Matrix(((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
-            axis_basis_change = Matrix.Identity(4)
-            if self.export_settings[gltf2_blender_export_keys.YUP]:
-                axis_basis_change = Matrix(
-                    ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+                trans, rot, sca = axis_basis_change.decompose()
+                translation, rotation, scale = (None, None, None)
+                if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
+                    translation = [trans[0], trans[1], trans[2]]
+                if rot[0] != 1.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 0.0:
+                    rotation = [rot[1], rot[2], rot[3], rot[0]]
+                if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
+                    scale = [sca[0], sca[1], sca[2]]
+                neutral_bone = gltf2_io.Node(
+                                camera=None,
+                                children=None,
+                                extensions=None,
+                                extras=None,
+                                matrix=None,
+                                mesh=None,
+                                name='neutral_bone',
+                                rotation=rotation,
+                                scale=scale,
+                                skin=None,
+                                translation=translation,
+                                weights=None
+                            )
+                # Add it to child list of armature
+                self.nodes[n.armature].node.children.append(neutral_bone)
 
-            inverse_bind_matrix = (
-                axis_basis_change @ self.nodes[n.armature].matrix_world_armature).inverted_safe()
+                # Add it to joint list
+                n.node.skin.joints.append(neutral_bone)
 
-            matrix = []
-            for column in range(0, 4):
-                for row in range(0, 4):
-                        matrix.append(inverse_bind_matrix[row][column])
+                # Need to add an InverseBindMatrix
+                array = BinaryData.decode_accessor_internal(n.node.skin.inverse_bind_matrices)
 
-            array = np.append(array, np.array([matrix]), axis=0)
-            binary_data = gltf2_io_binary_data.BinaryData.from_list(array.flatten(), gltf2_io_constants.ComponentType.Float)
-            n.node.skin.inverse_bind_matrices = gltf2_blender_gather_accessors.gather_accessor(
-                binary_data,
-                gltf2_io_constants.ComponentType.Float,
-                len(array.flatten()) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Mat4),
-                None,
-                None,
-                gltf2_io_constants.DataType.Mat4,
-                self.export_settings
-            )
+                axis_basis_change = Matrix.Identity(4)
+                if self.export_settings[gltf2_blender_export_keys.YUP]:
+                    axis_basis_change = Matrix(
+                        ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+
+                inverse_bind_matrix = (
+                    axis_basis_change @ self.nodes[n.armature].matrix_world_armature).inverted_safe()
+
+                matrix = []
+                for column in range(0, 4):
+                    for row in range(0, 4):
+                            matrix.append(inverse_bind_matrix[row][column])
+
+                array = np.append(array, np.array([matrix]), axis=0)
+                binary_data = gltf2_io_binary_data.BinaryData.from_list(array.flatten(), gltf2_io_constants.ComponentType.Float)
+                n.node.skin.inverse_bind_matrices = gltf2_blender_gather_accessors.gather_accessor(
+                    binary_data,
+                    gltf2_io_constants.ComponentType.Float,
+                    len(array.flatten()) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Mat4),
+                    None,
+                    None,
+                    gltf2_io_constants.DataType.Mat4,
+                    self.export_settings
+                )
     def get_unused_skins(self):
         from .gltf2_blender_gather_skins import gather_skin
         skins = []

@@ -30,15 +30,18 @@ from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
 from . import gltf2_blender_export_keys
 
 
-def gather_channels_baked(obj_uuid, export_settings):
+def gather_channels_baked(obj_uuid, frame_range, export_settings):
     channels = []
 
     # If no animation in file, no need to bake
     if len(bpy.data.actions) == 0:
         return None
 
-    start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
-    end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+    if frame_range is None:
+        start_frame = min([v[0] for v in [a.frame_range for a in bpy.data.actions]])
+        end_frame = max([v[1] for v in [a.frame_range for a in bpy.data.actions]])
+    else:
+        start_frame, end_frame = frame_range
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gather_animation_channel(
@@ -157,21 +160,6 @@ def gather_animation_channels(obj_uuid: int,
                 True)
             if channel is not None:
                 channels.append(channel)
-
-        # When An Object is parented to bone, and rest pose is used (not current frame)
-        # If parenting is not done with same TRS than rest pose, this can lead to inconsistencies
-        # So we need to bake object animation too, to be sure that correct TRS animation are used
-        # Here, we want add these channels to same action that the armature
-        if export_settings['gltf_selected'] is False and export_settings['gltf_current_frame'] is False:
-
-            children_obj_parent_to_bones = []
-            for bone_uuid in bones_uuid:
-                children_obj_parent_to_bones.extend([child for child in export_settings['vtree'].nodes[bone_uuid].children if export_settings['vtree'].nodes[child].blender_type not in [VExportNode.BONE, VExportNode.ARMATURE]])
-            for child_uuid in children_obj_parent_to_bones:
-
-                channels_baked = gather_channels_baked(child_uuid, export_settings)
-                if channels_baked is not None:
-                    channels.extend(channels_baked)
 
     else:
         done_paths = []
@@ -545,7 +533,8 @@ def __gather_armature_object_channel_groups(blender_action: bpy.types.Action, bl
 
         # Detect that armature is not multiple keyed for euler and quaternion
         # Keep only the current rotation mode used by bone
-        rotation, delta, rotation_modes = get_rotation_modes(target_property)
+        rotation, rotation_modes = get_rotation_modes(target_property)
+        delta = get_delta_modes(target_property)
 
         # Delta rotation management
         if delta is False:

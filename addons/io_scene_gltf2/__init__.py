@@ -15,8 +15,8 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 4, 23),
-    'blender': (3, 3, 0),
+    "version": (3, 5, 13),
+    'blender': (3, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
@@ -109,7 +109,21 @@ def on_export_format_changed(self, context):
     )
 
 
-class ExportGLTF2_Base:
+class ConvertGLTF2_Base:
+    """Base class containing options that should be exposed during both import and export."""
+
+    convert_lighting_mode: EnumProperty(
+        name='Lighting Mode',
+        items=(
+            ('SPEC', 'Standard', 'Physically-based glTF lighting units (cd, lx, nt)'),
+            ('COMPAT', 'Unitless', 'Non-physical, unitless lighting. Useful when exposure controls are not available'),
+            ('RAW', 'Raw (Deprecated)', 'Blender lighting strengths with no conversion'),
+        ),
+        description='Optional backwards compatibility for non-standard render engines. Applies to lights',# TODO: and emissive materials',
+        default='SPEC'
+    )
+
+class ExportGLTF2_Base(ConvertGLTF2_Base):
     # TODO: refactor to avoid boilerplate
 
     def __init__(self):
@@ -117,6 +131,16 @@ class ExportGLTF2_Base:
         self.is_draco_available = gltf2_io_draco_compression_extension.dll_exists()
 
     bl_options = {'PRESET'}
+
+    # Don't use export_ prefix here, I don't want it to be saved with other export settings
+    gltf_export_id: StringProperty(
+        name='Identifier',
+        description=(
+            'Identifier of caller (in case of add-on calling this exporter). '
+            'Can be useful in case of Extension added by other add-ons'
+        ),
+        default=''
+    )
 
     export_format: EnumProperty(
         name='Format',
@@ -331,12 +355,12 @@ class ExportGLTF2_Base:
     )
 
     use_active_collection_with_nested: BoolProperty(
-        name='Active Collection and nested Collections',
-        description='Export objects in the active collection and nested collections only',
-        default=False
+        name='Include Nested Collections',
+        description='Include active collection and nested collections',
+        default=True
     )
 
-    use_active_collection_without_nested: BoolProperty(
+    use_active_collection: BoolProperty(
         name='Active Collection',
         description='Export objects in the active collection only',
         default=False        
@@ -539,7 +563,7 @@ class ExportGLTF2_Base:
             'use_visible',
             'use_renderable',
             'use_active_collection_with_nested',
-            'use_active_collection_without_nested'
+            'use_active_collection',
             'use_mesh_edges',
             'use_mesh_vertices',
             'use_active_scene',
@@ -565,7 +589,7 @@ class ExportGLTF2_Base:
         export_settings = {}
 
         export_settings['timestamp'] = datetime.datetime.now()
-
+        export_settings['gltf_export_id'] = self.gltf_export_id
         export_settings['gltf_filepath'] = self.filepath
         export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
         export_settings['gltf_texturedirectory'] = os.path.join(
@@ -603,8 +627,12 @@ class ExportGLTF2_Base:
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
-        export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested
-        export_settings['gltf_active_collection_without_nested'] = self.use_active_collection_without_nested
+        
+        export_settings['gltf_active_collection'] = self.use_active_collection
+        if self.use_active_collection:
+            export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested
+        else:
+            export_settings['gltf_active_collection_with_nested'] = False
         export_settings['gltf_active_scene'] = self.use_active_scene
 
         export_settings['gltf_selected'] = self.use_selection
@@ -650,6 +678,7 @@ class ExportGLTF2_Base:
             export_settings['gltf_morph_tangent'] = False
 
         export_settings['gltf_lights'] = self.export_lights
+        export_settings['gltf_lighting_mode'] = self.convert_lighting_mode
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -746,8 +775,9 @@ class GLTF_PT_export_include(bpy.types.Panel):
         col.prop(operator, 'use_selection')
         col.prop(operator, 'use_visible')
         col.prop(operator, 'use_renderable')
-        col.prop(operator, 'use_active_collection_without_nested')
-        col.prop(operator, 'use_active_collection_with_nested')
+        col.prop(operator, 'use_active_collection')
+        if operator.use_active_collection:
+            col.prop(operator, 'use_active_collection_with_nested')
         col.prop(operator, 'use_active_scene')
 
         col = layout.column(heading = "Data", align = True)
@@ -784,7 +814,7 @@ class GLTF_PT_export_transform(bpy.types.Panel):
 class GLTF_PT_export_geometry(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Geometry"
+    bl_label = "Data"
     bl_parent_id = "FILE_PT_operator"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -882,6 +912,28 @@ class GLTF_PT_export_geometry_original_pbr(bpy.types.Panel):
 
         layout.prop(operator, 'export_original_specular')
 
+class GLTF_PT_export_geometry_lighting(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Lighting"
+    bl_parent_id = "GLTF_PT_export_geometry"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.prop(operator, 'convert_lighting_mode')
 
 class GLTF_PT_export_geometry_compression(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1112,7 +1164,7 @@ def menu_func_export(self, context):
     self.layout.operator(ExportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
-class ImportGLTF2(Operator, ImportHelper):
+class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     """Load a glTF 2.0 file"""
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
@@ -1195,6 +1247,7 @@ class ImportGLTF2(Operator, ImportHelper):
         layout.prop(self, 'import_shading')
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
+        layout.prop(self, 'convert_lighting_mode')
 
     def invoke(self, context, event):
         import sys
@@ -1326,6 +1379,7 @@ classes = (
     GLTF_PT_export_geometry_mesh,
     GLTF_PT_export_geometry_material,
     GLTF_PT_export_geometry_original_pbr,
+    GLTF_PT_export_geometry_lighting,
     GLTF_PT_export_geometry_compression,
     GLTF_PT_export_animation,
     GLTF_PT_export_animation_export,

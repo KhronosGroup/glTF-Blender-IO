@@ -14,8 +14,8 @@ bl_info = {
 }
 
 # glTF extensions are named following a convention with known prefixes.
-# See: https://github.com/KhronosGroup/glTF/tree/master/extensions#about-gltf-extensions
-# also: https://github.com/KhronosGroup/glTF/blob/master/extensions/Prefixes.md
+# See: https://github.com/KhronosGroup/glTF/tree/main/extensions#about-gltf-extensions
+# also: https://github.com/KhronosGroup/glTF/blob/main/extensions/Prefixes.md
 glTF_extension_name = "EXT_example_extension"
 
 # Support for an extension is "required" if a typical glTF viewer cannot be expected

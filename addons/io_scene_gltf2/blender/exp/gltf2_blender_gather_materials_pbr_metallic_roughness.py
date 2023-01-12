@@ -82,6 +82,9 @@ def __gather_base_color_factor(blender_material, export_settings):
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0
 
+    # Need to clamp between 0.0 and 1.0: Blender color can be outside this range
+    rgb = [max(min(c, 1.0), 0.0) for c in rgb]
+
     rgba = [*rgb, alpha]
 
     if rgba == [1, 1, 1, 1]: return None

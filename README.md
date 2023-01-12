@@ -8,15 +8,14 @@ Documentation
 
 | Blender Version | Documentation |
 |---------|---------------------|
-| 3.3    | https://docs.blender.org/manual/en/3.3/addons/import_export/scene_gltf2.html  |
+| 3.4    | https://docs.blender.org/manual/en/3.4/addons/import_export/scene_gltf2.html  |
 | dev     | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
-* 3.3 is the current stable release. Check the `blender-v3.3-release` branch.
-* 2.80 - 3.2 are previous stable releases.
-* 3.3 is the current Blender LTS release. Check the `blender-v3.3-release` branch.
-* 3.4 will be the next release. 
-* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become Blender 3.4.
+* 3.4 is the current stable release. Check the `blender-v3.4-release` branch.
+* 2.80 - 3.3 are previous stable releases.
+* 3.3.2 is the current Blender LTS release. Check the `blender-v3.3-release` branch (and `3.3.2` tag)
+* main branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become Blender 3.5.
 
 ### Legacy 2.79 Support
 
@@ -71,7 +70,7 @@ Several companies, individuals, and glTF community members contribute to Blender
 
 These quality-assurance checks improve the reliability of Blender glTF I/O.  
 
-[![CI](https://github.com/KhronosGroup/glTF-Blender-IO/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/KhronosGroup/glTF-Blender-IO/actions?query=workflow%3ACI)
+[![CI](https://github.com/KhronosGroup/glTF-Blender-IO/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/KhronosGroup/glTF-Blender-IO/actions?query=workflow%3ACI)
 
 Running the Tests Locally
 -------------------------
@@ -81,6 +80,13 @@ To run the tests locally, your system should have a `blender` executable in the 
 The latest version of [Yarn](https://yarnpkg.com/en/) should also be installed.
 
 Then, in the `tests` folder of this repository, run `yarn install`, followed by `yarn run test`.
+
+Main branch
+-----------
+
+The main branch was renamed on 2023 January, 12th.
+If you need to update your local repository, you can use the [following documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/renaming-a-branch#updating-a-local-clone-after-a-branch-name-changes)
+
 
 Some Technical documentation
 ----------------------------
