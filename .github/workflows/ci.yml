@@ -36,7 +36,7 @@ jobs:
           exit 1
         fi
         echo "Found: $BLENDER_URL"
-        echo "name=blender-url::$BLENDER_URL" >> $GITHUB_OUTPUT
+        echo "blender-url=$BLENDER_URL" >> $GITHUB_OUTPUT
 
     # Loads a cached build of Blender if available. If not available, this step
     # enqueues the /opt/blender directory to be cached after tests pass.
