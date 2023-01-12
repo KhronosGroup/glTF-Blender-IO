@@ -548,7 +548,7 @@ This allows the file format to hold details that were not considered universal a
 Not all glTF readers support all extensions, but some are fairly common.
 
 Certain Blender features can only be exported to glTF via these extensions.
-The following `glTF 2.0 extensions <https://github.com/KhronosGroup/glTF/tree/master/extensions>`__
+The following `glTF 2.0 extensions <https://github.com/KhronosGroup/glTF/tree/main/extensions>`__
 are supported directly by this add-on:
 
 
@@ -591,8 +591,8 @@ Third-party glTF Extensions
 
 It is possible for Python developers to add Blender support for additional glTF extensions by writing their
 own third-party add-on, without modifying this glTF add-on. For more information, `see the example on GitHub
-<https://github.com/KhronosGroup/glTF-Blender-IO/tree/master/example-addons/>`__ and if needed,
-`register an extension prefix <https://github.com/KhronosGroup/glTF/blob/master/extensions/Prefixes.md>`__.
+<https://github.com/KhronosGroup/glTF-Blender-IO/tree/main/example-addons/>`__ and if needed,
+`register an extension prefix <https://github.com/KhronosGroup/glTF/blob/main/extensions/Prefixes.md>`__.
 
 
 Custom Properties
