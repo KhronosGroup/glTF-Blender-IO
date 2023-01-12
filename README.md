@@ -15,7 +15,7 @@ Notes:
 * 3.4 is the current stable release. Check the `blender-v3.4-release` branch.
 * 2.80 - 3.3 are previous stable releases.
 * 3.3.2 is the current Blender LTS release. Check the `blender-v3.3-release` branch (and `3.3.2` tag)
-* master branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become Blender 3.5.
+* main branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become Blender 3.5.
 
 ### Legacy 2.79 Support
 
@@ -70,7 +70,7 @@ Several companies, individuals, and glTF community members contribute to Blender
 
 These quality-assurance checks improve the reliability of Blender glTF I/O.  
 
-[![CI](https://github.com/KhronosGroup/glTF-Blender-IO/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/KhronosGroup/glTF-Blender-IO/actions?query=workflow%3ACI)
+[![CI](https://github.com/KhronosGroup/glTF-Blender-IO/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/KhronosGroup/glTF-Blender-IO/actions?query=workflow%3ACI)
 
 Running the Tests Locally
 -------------------------
