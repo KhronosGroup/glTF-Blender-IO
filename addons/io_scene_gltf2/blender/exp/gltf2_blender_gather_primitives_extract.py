@@ -20,7 +20,6 @@ from ...io.com.gltf2_io_debug import print_console
 from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
 from io_scene_gltf2.io.com import gltf2_io_constants
 from io_scene_gltf2.blender.com import gltf2_blender_conversion
-from io_scene_gltf2.blender.com import gltf2_blender_default
 
 
 def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
@@ -150,10 +149,6 @@ class PrimitiveCreator:
         # Manage attributes + COLOR_0
         for blender_attribute_index, blender_attribute in enumerate(self.blender_mesh.attributes):
 
-            # Excluse special attributes (used internally by Blender)
-            if blender_attribute.name in gltf2_blender_default.SPECIAL_ATTRIBUTES:
-                continue
-
             attr = {}
             attr['blender_attribute_index'] = blender_attribute_index
             attr['blender_name'] = blender_attribute.name
@@ -180,10 +175,15 @@ class PrimitiveCreator:
                 attr['get'] = self.get_function()
 
             else:
-                attr['gltf_attribute_name'] = '_' + blender_attribute.name.upper()
-                attr['get'] = self.get_function()
+                # Custom attributes
+                # Keep only attributes that starts with _
+                # As Blender create lots of attributes that are internal / not needed are as duplicated of standard glTF accessors (position, uv, material_index...)
                 if self.export_settings['gltf_attributes'] is False:
                     continue
+                if not blender_attribute.name.startswith("_"):
+                    continue
+                attr['gltf_attribute_name'] = blender_attribute.name.upper()
+                attr['get'] = self.get_function()
 
             self.blender_attributes.append(attr)
 
