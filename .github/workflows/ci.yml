@@ -21,7 +21,7 @@ jobs:
 
     steps:
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     # Finds latest Blender build, and outputs the hosted build's download URL.
     - name: Find latest Blender build
@@ -36,12 +36,12 @@ jobs:
           exit 1
         fi
         echo "Found: $BLENDER_URL"
-        echo "::set-output name=blender-url::$BLENDER_URL"
+        echo "name=blender-url::$BLENDER_URL" >> $GITHUB_OUTPUT
 
     # Loads a cached build of Blender if available. If not available, this step
     # enqueues the /opt/blender directory to be cached after tests pass.
     - id: blender_cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       env:
         cache-name: cache-blender
       with:
@@ -74,7 +74,7 @@ jobs:
         OUT_PREFIX=$GITHUB_WORKSPACE/tests/out yarn test-bail --reporter-options reportDir=out/mochawesome
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: test-output
         path: tests/out/mochawesome
