@@ -81,6 +81,13 @@ The latest version of [Yarn](https://yarnpkg.com/en/) should also be installed.
 
 Then, in the `tests` folder of this repository, run `yarn install`, followed by `yarn run test`.
 
+Main branch
+-----------
+
+The main branch was renamed on 2023 January, 12th.
+If you need to update your local repository, you can use the [following documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/renaming-a-branch#updating-a-local-clone-after-a-branch-name-changes)
+
+
 Some Technical documentation
 ----------------------------
 
