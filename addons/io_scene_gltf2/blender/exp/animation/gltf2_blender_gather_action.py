@@ -30,7 +30,7 @@ from .sampled.shapekeys.gltf2_blender_gather_sk_action_sampled import gather_act
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from .gltf2_blender_gather_drivers import get_sk_drivers
-from .gltf2_blender_gather_animation_utils import reset_bone_matrix, link_samplers, add_slide_data
+from .gltf2_blender_gather_animation_utils import reset_bone_matrix, link_samplers, add_slide_data, merge_tracks_perform
 
 def gather_actions_animations(export_settings):
 
@@ -59,65 +59,7 @@ def gather_actions_animations(export_settings):
         for idx, animation in enumerate(animations):
             merged_tracks[merged_tracks_name].append(idx)
 
-
-    to_delete_idx = []
-    for merged_anim_track in merged_tracks.keys():
-        if len(merged_tracks[merged_anim_track]) < 2:
-
-            # There is only 1 animation in the track
-            # If name of the track is not a default name, use this name for action
-            if len(merged_tracks[merged_anim_track]) != 0:
-                animations[merged_tracks[merged_anim_track][0]].name = merged_anim_track
-
-            continue
-
-        base_animation_idx = None
-        offset_sampler = 0
-
-        for idx, anim_idx in enumerate(merged_tracks[merged_anim_track]):
-            if idx == 0:
-                base_animation_idx = anim_idx
-                animations[anim_idx].name = merged_anim_track
-                already_animated = []
-                for channel in animations[anim_idx].channels:
-                    already_animated.append((channel.target.node, channel.target.path))
-                continue
-
-            to_delete_idx.append(anim_idx)
-
-            # Merging extensions
-            # Provide a hook to handle extension merging since there is no way to know author intent
-            export_user_extensions('merge_animation_extensions_hook', export_settings, animations[anim_idx], animations[base_animation_idx])
-
-            # Merging extras
-            # Warning, some values can be overwritten if present in multiple merged animations
-            if animations[anim_idx].extras is not None:
-                for k in animations[anim_idx].extras.keys():
-                    if animations[base_animation_idx].extras is None:
-                        animations[base_animation_idx].extras = {}
-                    animations[base_animation_idx].extras[k] = animations[anim_idx].extras[k]
-
-            offset_sampler = len(animations[base_animation_idx].samplers)
-            for sampler in animations[anim_idx].samplers:
-                animations[base_animation_idx].samplers.append(sampler)
-
-            for channel in animations[anim_idx].channels:
-                if (channel.target.node, channel.target.path) in already_animated:
-                    print_console("WARNING", "Some strips have same channel animation ({}), on node {} !".format(channel.target.path, channel.target.node.name))
-                    continue
-                animations[base_animation_idx].channels.append(channel)
-                animations[base_animation_idx].channels[-1].sampler = animations[base_animation_idx].channels[-1].sampler + offset_sampler
-                already_animated.append((channel.target.node, channel.target.path))
-
-    new_animations = []
-    if len(to_delete_idx) != 0:
-        for idx, animation in enumerate(animations):
-            if idx in to_delete_idx:
-                continue
-            new_animations.append(animation)
-    else:
-        new_animations = animations
-
+    new_animations = merge_tracks_perform(merged_tracks, animations, export_settings)
 
     return new_animations
 
