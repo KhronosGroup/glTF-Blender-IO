@@ -18,14 +18,14 @@ from ......io.com import gltf2_io
 from .....com.gltf2_blender_extras import generate_extras
 from .gltf2_blender_gather_object_channels import gather_object_sampled_channels
 
-def gather_action_object_sampled(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
+def gather_action_object_sampled(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
 
     # If no animation in file, no need to bake
     if len(bpy.data.actions) == 0:
         return None
 
     animation = gltf2_io.Animation(
-        channels=__gather_channels(object_uuid, blender_action.name if blender_action else object_uuid, export_settings),
+        channels=__gather_channels(object_uuid, blender_action.name if blender_action else cache_key, export_settings),
         extensions=None,
         extras=__gather_extras(blender_action, export_settings),
         name=__gather_name(object_uuid, blender_action, export_settings),

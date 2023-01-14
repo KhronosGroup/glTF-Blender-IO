@@ -25,7 +25,7 @@ from .gltf2_blender_gather_armature_channels import gather_armature_sampled_chan
 
 
 
-def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
+def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
 
     blender_object = export_settings['vtree'].nodes[armature_uuid].blender_object
 
@@ -33,7 +33,7 @@ def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Op
 
     try:
         animation = gltf2_io.Animation(
-            channels=__gather_channels(armature_uuid, blender_action.name if blender_action else armature_uuid, export_settings),
+            channels=__gather_channels(armature_uuid, blender_action.name if blender_action else cache_key, export_settings),
             extensions=None,
             extras=__gather_extras(blender_action, export_settings),
             name=name,

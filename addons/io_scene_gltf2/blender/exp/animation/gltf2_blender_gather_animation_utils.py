@@ -12,11 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import typing
 from mathutils import Matrix
 from ....io.com import gltf2_io
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....io.com.gltf2_io_debug import print_console
+from ..gltf2_blender_gather_tree import VExportNode
+from .sampled.armature.gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
+from .sampled.object.gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
+from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from .gltf2_blender_gather_drivers import get_sk_drivers
 
 def link_samplers(animation: gltf2_io.Animation, export_settings):
@@ -134,3 +139,67 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
         new_animations = animations
 
     return new_animations
+
+def bake_animation(obj_uuid: str, animation_key: str, export_settings):
+
+    # if there is no animation in file => no need to bake
+    if len(bpy.data.actions) == 0:
+        return None
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+    # No TRS animation are found for this object.
+    # But we may need to bake
+    # (Only when force sampling is ON)
+    # If force sampling is OFF, can lead to inconsistent export anyway
+    if (export_settings['gltf_bake_animation'] is True \
+            or export_settings['gltf_animation_mode'] == "NLA_TRACKS") \
+            and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
+        animation = None
+        # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
+        # (skinned meshes TRS must be ignored, says glTF specification)
+        if export_settings['vtree'].nodes[obj_uuid].skin is None:
+            animation = gather_action_object_sampled(obj_uuid, None, animation_key, export_settings)
+
+
+        # Need to bake sk only if not linked to a driver sk by parent armature
+        # In case of NLA track export, no baking of SK #TODOANIM
+        if export_settings['gltf_morph_anim'] \
+                and blender_object.type == "MESH" \
+                and blender_object.data is not None \
+                and blender_object.data.shape_keys is not None:
+
+            ignore_sk = False
+            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None \
+                    and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
+                obj_drivers = get_sk_drivers(export_settings['vtree'].nodes[obj_uuid].parent_uuid, export_settings)
+                if obj_uuid in obj_drivers:
+                    ignore_sk = True
+
+            if ignore_sk is False:
+                channel = gather_sampled_sk_channel(obj_uuid, animation_key, export_settings)
+                if channel is not None:
+                    if animation is None:
+                        animation = gltf2_io.Animation(
+                                channels=[channel],
+                                extensions=None, # as other animations
+                                extras=None, # Because there is no animation to get extras from
+                                name=blender_object.name, # Use object name as animation name
+                                samplers=[]
+                            )
+                    else:
+                        animation.channels.append(channel)
+
+        if animation is not None and animation.channels:
+            link_samplers(animation, export_settings)
+            return animation
+
+    elif export_settings['gltf_bake_animation'] is True and blender_object.type == "ARMATURE":
+        # We need to bake all bones. Because some bone can have some constraints linking to
+        # some other armature bones, for example
+
+        animation = gather_action_armature_sampled(obj_uuid, None, animation_key, export_settings)
+        link_samplers(animation, export_settings)
+        if animation is not None:
+            return animation
+    return None

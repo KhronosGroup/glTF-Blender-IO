@@ -82,12 +82,10 @@ def cached(func):
 
 def datacache(func):
 
-    def reset_cache_objectcache():
+    def reset_all_cache():
         func.__cache = {}
-        func.__current_action_name = None
-        func.__current_object_uuid = None
 
-    func.reset_cache = reset_cache_objectcache
+    func.reset_cache = reset_all_cache
 
     @functools.wraps(func)
     def wrapper_objectcache(*args, **kwargs):

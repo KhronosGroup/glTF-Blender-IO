@@ -34,9 +34,8 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
 
     # List of really animated bones is needed for optimization decision
     list_of_animated_bone_channels = []
-    if armature_uuid != blender_action_name:
+    if armature_uuid != blender_action_name and blender_action_name in bpy.data.actions:
         # Not bake situation
-        # TODANIM in case we come here with track/scene mode --> no check bpy.data.actions
         channels_animated, to_be_sampled = get_channel_groups(armature_uuid, bpy.data.actions[blender_action_name], export_settings)
         for chan in [chan for chan in channels_animated.values() if chan['bone'] is not None]:
             for prop in chan['properties'].keys():

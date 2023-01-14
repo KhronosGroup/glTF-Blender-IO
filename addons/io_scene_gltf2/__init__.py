@@ -728,6 +728,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 export_settings['gltf_def_bones'] = False
                 export_settings['gltf_bake_animation'] = False
             export_settings['gltf_animation_mode'] = self.export_animation_mode
+            if export_settings['gltf_animation_mode'] == "NLA_TRACKS":
+                export_settings['gltf_force_sampling'] = True
+
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature

@@ -30,7 +30,7 @@ from .sampled.shapekeys.gltf2_blender_gather_sk_action_sampled import gather_act
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from .gltf2_blender_gather_drivers import get_sk_drivers
-from .gltf2_blender_gather_animation_utils import reset_bone_matrix, link_samplers, add_slide_data, merge_tracks_perform
+from .gltf2_blender_gather_animation_utils import reset_bone_matrix, link_samplers, add_slide_data, merge_tracks_perform, bake_animation
 
 def gather_actions_animations(export_settings):
 
@@ -199,8 +199,9 @@ def gather_action_animations(  obj_uuid: int,
 
     # When object is not animated at all (no SK)
     # We can create an animation for this object
+    # TODOANIM : should we update tracks too?
     if len(blender_actions) == 0:
-        animation = __bake_animation(obj_uuid, export_settings)
+        animation = bake_animation(obj_uuid, obj_uuid, export_settings)
         if animation is not None:
             animations.append(animation)
 
@@ -274,11 +275,11 @@ def gather_action_animations(  obj_uuid: int,
 
         if export_settings['gltf_force_sampling'] is True:
             if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
-                animation = gather_action_armature_sampled(obj_uuid, blender_action, export_settings)
+                animation = gather_action_armature_sampled(obj_uuid, blender_action, None, export_settings)
             elif on_type == "OBJECT":
-                animation = gather_action_object_sampled(obj_uuid, blender_action, export_settings)
+                animation = gather_action_object_sampled(obj_uuid, blender_action, None, export_settings)
             else:
-                animation = gather_action_sk_sampled(obj_uuid, blender_action, export_settings)
+                animation = gather_action_sk_sampled(obj_uuid, blender_action, None, export_settings)
         else:
             # Not sampled
             # This returns 
@@ -409,68 +410,6 @@ def gather_action_animations(  obj_uuid: int,
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, True)
 
     return animations, tracks
-
-def __bake_animation(obj_uuid: str, export_settings):
-
-    # if there is no animation in file => no need to bake
-    if len(bpy.data.actions) == 0:
-        return None
-
-    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
-
-    # No TRS animation are found for this object.
-    # But we may need to bake
-    # (Only when force sampling is ON)
-    # If force sampling is OFF, can lead to inconsistent export anyway
-    if export_settings['gltf_bake_animation'] is True and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
-        animation = None
-        # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
-        # (skinned meshes TRS must be ignored, says glTF specification)
-        if export_settings['vtree'].nodes[obj_uuid].skin is None:
-            animation = gather_action_object_sampled(obj_uuid, None, export_settings)
-
-
-        # Need to bake sk only if not linked to a driver sk by parent armature
-        if export_settings['gltf_morph_anim'] \
-                and blender_object.type == "MESH" \
-                and blender_object.data is not None \
-                and blender_object.data.shape_keys is not None:
-
-            ignore_sk = False
-            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None \
-                    and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
-                obj_drivers = get_sk_drivers(export_settings['vtree'].nodes[obj_uuid].parent_uuid, export_settings)
-                if obj_uuid in obj_drivers:
-                    ignore_sk = True
-
-            if ignore_sk is False:
-                channel = gather_sampled_sk_channel(obj_uuid, obj_uuid, export_settings)
-                if channel is not None:
-                    if animation is None:
-                        animation = gltf2_io.Animation(
-                                channels=[channel],
-                                extensions=None, # as other animations
-                                extras=None, # Because there is no animation to get extras from
-                                name=blender_object.name, # Use object name as animation name
-                                samplers=[]
-                            )
-                    else:
-                        animation.channels.append(channel)
-
-        if animation is not None and animation.channels:
-            link_samplers(animation, export_settings)
-            return animation
-
-    elif export_settings['gltf_bake_animation'] is True and blender_object.type == "ARMATURE":
-        # We need to bake all bones. Because some bone can have some constraints linking to
-        # some other armature bones, for example
-
-        animation = gather_action_armature_sampled(obj_uuid, None, export_settings)
-
-        link_samplers(animation, export_settings)
-        if animation is not None:
-            return animation
-    return None
 
 @cached
 def __get_blender_actions(obj_uuid: str,

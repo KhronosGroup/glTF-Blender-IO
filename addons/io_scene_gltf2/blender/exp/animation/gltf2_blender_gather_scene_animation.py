@@ -22,7 +22,7 @@ from .sampled.object.gltf2_blender_gather_object_channels import gather_object_s
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sk_sampled_channels
 from .gltf2_blender_gather_animation_utils import link_samplers, add_slide_data
 
-def gather_scene_animation(export_settings):
+def gather_scene_animations(export_settings):
 
     # if there is no animation in file => no need to bake
     if len(bpy.data.actions) == 0:

@@ -84,6 +84,13 @@ def get_cache_data(path: str,
                     data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
                     data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None] = {}
                 data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None][frame] = mat
+            elif blender_obj.animation_data \
+                    and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[obj_uuid].keys():
+                    data[obj_uuid][action_name] = {}
+                    data[obj_uuid][action_name]['matrix'] = {}
+                    data[obj_uuid][action_name]['matrix'][None] = {}
+                data[obj_uuid][action_name]['matrix'][None][frame] = mat
             else:
                 # case of baking object.
                 # There is no animation, so use uuid of object as key
@@ -100,6 +107,10 @@ def get_cache_data(path: str,
                         and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                     if 'bone' not in data[obj_uuid][blender_obj.animation_data.action.name].keys():
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'] = {}
+                elif blender_obj.animation_data and blender_obj.animation_data.action \
+                        and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                    if 'bone' not in data[obj_uuid][action_name].keys():
+                        data[obj_uuid][action_name]['bone'] = {}
                 else:
                     if 'bone' not in data[obj_uuid][obj_uuid].keys():
                         data[obj_uuid][obj_uuid]['bone'] = {}
@@ -123,6 +134,10 @@ def get_cache_data(path: str,
                         if blender_bone.name not in data[obj_uuid][blender_obj.animation_data.action.name]['bone'].keys():
                             data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name] = {}
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name][frame] = matrix
+                    elif blender_obj.animation_data and blender_obj.animation_data.action \
+                            and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                        if blender_bone.name not in data[obj_uuid][action_name]['bone'].keys():
+                            data[obj_uuid][action_name]['bone'][blender_bone.name] = {}
                     else:
                         # case of baking object.
                         # There is no animation, so use uuid of object as key
@@ -145,6 +160,21 @@ def get_cache_data(path: str,
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'] = {}
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None] = {}
                 data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
+            
+            elif export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
+            and blender_obj.data is not None \
+            and blender_obj.data.shape_keys is not None \
+            and blender_obj.data.shape_keys.animation_data is not None \
+            and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                
+                if action_name not in data[obj_uuid].keys():
+                    data[obj_uuid][action_name] = {}
+                    data[obj_uuid][action_name]['sk'] = {}
+                    data[obj_uuid][action_name]['sk'][None] = {}
+                data[obj_uuid][action_name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
+            
+
+
             elif export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
                     and blender_obj.data is not None \
                     and blender_obj.data.shape_keys is not None:
@@ -172,6 +202,13 @@ def get_cache_data(path: str,
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'] = {}
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'][None] = {}
                         data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in driver_object.data.shape_keys.key_blocks][1:]
+                    if blender_obj.animation_data \
+                            and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                        if obj_uuid + "_" + action_name not in data[dr_obj]:
+                            data[dr_obj][obj_uuid + "_" + action_name] = {}
+                            data[dr_obj][obj_uuid + "_" + action_name]['sk'] = {}
+                            data[dr_obj][obj_uuid + "_" + action_name]['sk'][None] = {}
+                        data[dr_obj][obj_uuid + "_" + action_name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in driver_object.data.shape_keys.key_blocks][1:]
                     else:
                         if obj_uuid + "_" + obj_uuid not in data[dr_obj]:
                             data[dr_obj][obj_uuid + "_" + obj_uuid] = {}
