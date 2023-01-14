@@ -70,19 +70,18 @@ def gather_track_animations(  obj_uuid: int,
     if blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
-            and blender_object.data.shape_keys.animation_data is not None \
-            and blender_object.data.shape_keys.animation_data.action is not None:
+            and blender_object.data.shape_keys.animation_data is not None:
         current_sk_action = blender_object.data.shape_keys.animation_data.action
         current_use_nla_sk = blender_object.data.shape_keys.animation_data.use_nla
 
     # TODOEXTENSIONANIM
 
     ####### Prepare export for obj
-    blender_object.animation_data.action = None
-    blender_object.animation_data.use_nla = True
-    # Remove any solo (starred) NLA track. Restored after export
     solo_track = None
     if blender_object.animation_data:
+        blender_object.animation_data.action = None
+        blender_object.animation_data.use_nla = True
+    # Remove any solo (starred) NLA track. Restored after export
         for track in blender_object.animation_data.nla_tracks:
             if track.is_solo:
                 solo_track = track

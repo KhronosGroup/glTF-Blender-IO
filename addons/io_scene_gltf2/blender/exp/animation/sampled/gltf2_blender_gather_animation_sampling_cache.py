@@ -84,8 +84,7 @@ def get_cache_data(path: str,
                     data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
                     data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None] = {}
                 data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None][frame] = mat
-            elif blender_obj.animation_data \
-                    and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                 if action_name not in data[obj_uuid].keys():
                     data[obj_uuid][action_name] = {}
                     data[obj_uuid][action_name]['matrix'] = {}
@@ -107,7 +106,7 @@ def get_cache_data(path: str,
                         and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                     if 'bone' not in data[obj_uuid][blender_obj.animation_data.action.name].keys():
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'] = {}
-                elif blender_obj.animation_data and blender_obj.animation_data.action \
+                elif blender_obj.animation_data \
                         and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                     if 'bone' not in data[obj_uuid][action_name].keys():
                         data[obj_uuid][action_name]['bone'] = {}
@@ -134,7 +133,7 @@ def get_cache_data(path: str,
                         if blender_bone.name not in data[obj_uuid][blender_obj.animation_data.action.name]['bone'].keys():
                             data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name] = {}
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name][frame] = matrix
-                    elif blender_obj.animation_data and blender_obj.animation_data.action \
+                    elif blender_obj.animation_data \
                             and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                         if blender_bone.name not in data[obj_uuid][action_name]['bone'].keys():
                             data[obj_uuid][action_name]['bone'][blender_bone.name] = {}
@@ -169,6 +168,9 @@ def get_cache_data(path: str,
                 
                 if action_name not in data[obj_uuid].keys():
                     data[obj_uuid][action_name] = {}
+                    data[obj_uuid][action_name]['sk'] = {}
+                    data[obj_uuid][action_name]['sk'][None] = {}
+                if 'sk' not in data[obj_uuid][action_name].keys():
                     data[obj_uuid][action_name]['sk'] = {}
                     data[obj_uuid][action_name]['sk'][None] = {}
                 data[obj_uuid][action_name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
