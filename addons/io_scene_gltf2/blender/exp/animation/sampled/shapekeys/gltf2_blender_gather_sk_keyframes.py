@@ -50,6 +50,10 @@ def gather_sk_sampled_keyframes(obj_uuid,
         # For example, option CROP negative frames, but all are negatives
         return None
 
+    # In case SK has only basis
+    if any([len(k.value) == 0 for k in keyframes]):
+        return None
+
     if not export_settings['gltf_optimize_animation']:
         return keyframes
     
