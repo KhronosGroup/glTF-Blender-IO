@@ -194,7 +194,9 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings):
             link_samplers(animation, export_settings)
             return animation
 
-    elif export_settings['gltf_bake_animation'] is True and blender_object.type == "ARMATURE":
+    elif (export_settings['gltf_bake_animation'] is True \
+            or export_settings['gltf_animation_mode'] == "NLA_TRACKS") \
+            and blender_object.type == "ARMATURE":
         # We need to bake all bones. Because some bone can have some constraints linking to
         # some other armature bones, for example
 

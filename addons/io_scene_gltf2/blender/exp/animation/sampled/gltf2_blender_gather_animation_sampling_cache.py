@@ -137,6 +137,7 @@ def get_cache_data(path: str,
                             and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                         if blender_bone.name not in data[obj_uuid][action_name]['bone'].keys():
                             data[obj_uuid][action_name]['bone'][blender_bone.name] = {}
+                        data[obj_uuid][action_name]['bone'][blender_bone.name][frame] = matrix
                     else:
                         # case of baking object.
                         # There is no animation, so use uuid of object as key
