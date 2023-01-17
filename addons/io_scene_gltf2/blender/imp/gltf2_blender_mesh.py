@@ -620,7 +620,7 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     # Try to guess which polys should be flat based on the fact that all the
     # loop normals for a flat poly are = the poly's normal.
 
-    poly_smooths = np.empty(num_polys, dtype=np.bool)
+    poly_smooths = np.empty(num_polys, dtype=bool)
 
     poly_normals = np.empty(num_polys * 3, dtype=np.float32)
     mesh.polygons.foreach_get('normal', poly_normals)
