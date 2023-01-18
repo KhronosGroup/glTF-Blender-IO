@@ -114,7 +114,7 @@ def __filter_image(sockets, export_settings):
 @cached
 def __gather_buffer_view(image_data, mime_type, name, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] != 'GLTF_SEPARATE':
-        data, factor = image_data.encode(mime_type)
+        data, factor = image_data.encode(mime_type, export_settings)
         return gltf2_io_binary_data.BinaryData(data=data), factor
     return None, None
 
@@ -182,7 +182,7 @@ def __gather_name(export_image, export_settings):
 def __gather_uri(image_data, mime_type, name, export_settings):
     if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_SEPARATE':
         # as usual we just store the data in place instead of already resolving the references
-        data, factor = image_data.encode(mime_type=mime_type)
+        data, factor = image_data.encode(mime_type, export_settings)
         return gltf2_io_image_data.ImageData(
             data=data,
             mime_type=mime_type,
