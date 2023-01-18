@@ -15,11 +15,3 @@
 BLENDER_IOR = 1.45
 BLENDER_SPECULAR = 0.5
 BLENDER_SPECULAR_TINT = 0.0
-
-
-SPECIAL_ATTRIBUTES = {
-    ".select_vert",
-    ".select_edge",
-    ".select_poly",
-    "material_index"
-    }
