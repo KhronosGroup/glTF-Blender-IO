@@ -20,6 +20,8 @@ from ...io.imp.gltf2_io_binary import BinaryData
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
 from ...io.com.gltf2_io_debug import print_console
+from ...io.com.gltf2_io_constants import DataType, ComponentType
+from ...blender.com.gltf2_blender_conversion import get_attribute_type
 from .gltf2_io_draco_compression_extension import decode_primitive
 from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_default_material
@@ -86,6 +88,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     num_uvs = 0
     num_cols = 0
     num_joint_sets = 0
+    attributes = set({})
     for prim in pymesh.primitives:
         if 'POSITION' not in prim.attributes:
             continue
@@ -108,6 +111,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         i = 0
         while i < COLOR_MAX and ('COLOR_%d' % i) in prim.attributes: i += 1
         num_cols = max(i, num_cols)
+
+        attributes.update(set([k for k in prim.attributes if k.startswith('_')]))
 
     num_shapekeys = sum(sk_name is not None for sk_name in pymesh.shapekey_names)
 
@@ -140,6 +145,13 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         np.empty(dtype=np.float32, shape=(0,3))  # coordinate for each vert for each shapekey
         for _ in range(num_shapekeys)
     ]
+    attribute_data = []
+    for attr in attributes:
+        attribute_data.append(
+            np.empty(
+                dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type), 
+                shape=(0, DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type)))
+                )
 
     for prim in pymesh.primitives:
         prim.num_faces = 0
@@ -240,6 +252,16 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                 else:
                     cols = np.ones((len(indices), 4), dtype=np.float32)
                 loop_cols[col_i] = np.concatenate((loop_cols[col_i], cols))
+
+        for idx, attr in enumerate(attributes):
+            if attr in prim.attributes:
+                attr_data = BinaryData.decode_accessor(gltf, prim.attributes[attr], cache=True)
+            else:
+                attr_data = np.zeros(
+                    (len(indices), DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type)),
+                     dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type)
+                )
+            attribute_data[idx] = np.concatenate((attribute_data[idx], attr_data))
 
     # Accessors are cached in case they are shared between primitives; clear
     # the cache now that all prims are done.
@@ -433,6 +455,23 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
         mesh.polygons.foreach_set('material_index', material_indices)
 
+    # Custom Attributes
+    for idx, attr in enumerate(attributes):
+
+        blender_attribute_data_type = get_attribute_type(
+            gltf.data.accessors[prim.attributes[attr]].component_type,
+            gltf.data.accessors[prim.attributes[attr]].type
+        )
+
+        blender_attribute = mesh.attributes.new(attr, blender_attribute_data_type, 'POINT')
+        if DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) == 1:
+            blender_attribute.data.foreach_set('value', attribute_data[idx].flatten())
+        elif DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) > 1:
+            if blender_attribute_data_type in ["BYTE_COLOR", "FLOAT_COLOR"]:
+                blender_attribute.data.foreach_set('color', attribute_data[idx].flatten())
+            else:
+                blender_attribute.data.foreach_set('vector', attribute_data[idx].flatten())
+
     # ----
     # Normals
 
@@ -620,7 +659,7 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     # Try to guess which polys should be flat based on the fact that all the
     # loop normals for a flat poly are = the poly's normal.
 
-    poly_smooths = np.empty(num_polys, dtype=np.bool)
+    poly_smooths = np.empty(num_polys, dtype=bool)
 
     poly_normals = np.empty(num_polys * 3, dtype=np.float32)
     mesh.polygons.foreach_get('normal', poly_normals)

@@ -116,3 +116,24 @@ def get_numpy_type(attribute_component_type):
         "FLOAT": np.float32,
         "BOOLEAN": np.float32
     }.get(attribute_component_type)
+
+def get_attribute_type(component_type, data_type):
+    if gltf2_io_constants.DataType.num_elements(data_type) == 1:
+        return {
+            gltf2_io_constants.ComponentType.Float: "FLOAT"
+        }[component_type]
+    elif gltf2_io_constants.DataType.num_elements(data_type) == 2:
+        return {
+            gltf2_io_constants.ComponentType.Float: "FLOAT2"
+        }[component_type]
+    elif gltf2_io_constants.DataType.num_elements(data_type) == 3:
+        return {
+            gltf2_io_constants.ComponentType.Float: "FLOAT_VECTOR"
+        }[component_type]
+    elif gltf2_io_constants.DataType.num_elements(data_type) == 4:
+        return {
+            gltf2_io_constants.ComponentType.Float: "FLOAT_COLOR",
+            gltf2_io_constants.ComponentType.UnsignedShort: "BYTE_COLOR"
+        }[component_type]
+    else:
+        pass

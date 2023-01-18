@@ -136,7 +136,7 @@ class ExportImage:
             len(set(fill.image.name for fill in self.fills.values())) == 1
         )
 
-    def encode(self, mime_type: Optional[str]) -> Tuple[bytes, bool]:
+    def encode(self, mime_type: Optional[str], export_settings) -> Tuple[bytes, bool]:
         self.file_format = {
             "image/jpeg": "JPEG",
             "image/png": "PNG"
@@ -144,19 +144,19 @@ class ExportImage:
 
         # Happy path = we can just use an existing Blender image
         if self.__on_happy_path():
-            return self.__encode_happy(), None
+            return self.__encode_happy(export_settings), None
 
         # Unhappy path = we need to create the image self.fills describes or self.stores describes
         if self.numpy_calc is None:
-            return self.__encode_unhappy(), None
+            return self.__encode_unhappy(export_settings), None
         else:
             pixels, width, height, factor = self.numpy_calc(self.stored)
-            return self.__encode_from_numpy_array(pixels, (width, height)), factor
+            return self.__encode_from_numpy_array(pixels, (width, height), export_settings), factor
 
-    def __encode_happy(self) -> bytes:
-        return self.__encode_from_image(self.blender_image())
+    def __encode_happy(self, export_settings) -> bytes:
+        return self.__encode_from_image(self.blender_image(), export_settings)
 
-    def __encode_unhappy(self) -> bytes:
+    def __encode_unhappy(self, export_settings) -> bytes:
         # We need to assemble the image out of channels.
         # Do it with numpy and image.pixels.
 
@@ -170,7 +170,7 @@ class ExportImage:
         if not images:
             # No ImageFills; use a 1x1 white pixel
             pixels = np.array([1.0, 1.0, 1.0, 1.0], np.float32)
-            return self.__encode_from_numpy_array(pixels, (1, 1))
+            return self.__encode_from_numpy_array(pixels, (1, 1), export_settings)
 
         width = max(image.size[0] for image in images)
         height = max(image.size[1] for image in images)
@@ -196,9 +196,9 @@ class ExportImage:
 
         tmp_buf = None  # GC this
 
-        return self.__encode_from_numpy_array(out_buf, (width, height))
+        return self.__encode_from_numpy_array(out_buf, (width, height), export_settings)
 
-    def __encode_from_numpy_array(self, pixels: np.ndarray, dim: Tuple[int, int]) -> bytes:
+    def __encode_from_numpy_array(self, pixels: np.ndarray, dim: Tuple[int, int], export_settings) -> bytes:
         with TmpImageGuard() as guard:
             guard.image = bpy.data.images.new(
                 "##gltf-export:tmp-image##",
@@ -210,9 +210,9 @@ class ExportImage:
 
             tmp_image.pixels.foreach_set(pixels)
 
-            return _encode_temp_image(tmp_image, self.file_format)
+            return _encode_temp_image(tmp_image, self.file_format, export_settings)
 
-    def __encode_from_image(self, image: bpy.types.Image) -> bytes:
+    def __encode_from_image(self, image: bpy.types.Image, export_settings) -> bytes:
         # See if there is an existing file we can use.
         data = None
         if image.source == 'FILE' and not image.is_dirty:
@@ -236,17 +236,21 @@ class ExportImage:
         with TmpImageGuard() as guard:
             make_temp_image_copy(guard, src_image=image)
             tmp_image = guard.image
-            return _encode_temp_image(tmp_image, self.file_format)
+            return _encode_temp_image(tmp_image, self.file_format, export_settings)
 
 
-def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str) -> bytes:
+def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_settings) -> bytes:
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpfilename = tmpdirname + '/img'
         tmp_image.filepath_raw = tmpfilename
 
         tmp_image.file_format = file_format
 
-        tmp_image.save()
+        # if image is jpeg, use quality export settings
+        if file_format == "JPEG":
+            tmp_image.save(quality=export_settings['gltf_jpeg_quality'])
+        else:
+            tmp_image.save()
 
         with open(tmpfilename, "rb") as f:
             return f.read()
