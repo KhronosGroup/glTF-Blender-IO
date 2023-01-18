@@ -28,6 +28,7 @@ try:
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
 
+    bpy.context.preferences.addons['io_scene_gltf2'].preferences.animation_ui = True
     bpy.ops.import_scene.gltf(filepath=argv[0])
 
     bpy.context.scene.frame_start = 0
@@ -43,7 +44,6 @@ try:
     output_dir = os.path.join(path_parts[0], argv[1])
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    bpy.context.preferences.addons['io_scene_gltf2'].preferences.animation_ui = True
     if '--use-variants' in argv:
         bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
     if '--no-sample-anim' in argv:

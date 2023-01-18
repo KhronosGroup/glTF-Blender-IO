@@ -40,7 +40,6 @@ try:
         'filepath': os.path.join(output_dir, path_parts[1]),
     }
     bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
-    bpy.context.preferences.addons['io_scene_gltf2'].preferences.animation_ui = True
     bpy.ops.export_scene.gltf(**args)
 except Exception as err:
     print(err, file=sys.stderr)
