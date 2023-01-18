@@ -49,4 +49,5 @@ animation_switch_loop_hook(self, blender_object, post, export_settings) # post =
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
 gather_tree_filter_tag_hook(self, tree, export_settings)
+gather_attribute_keep(self, keep_attribute, export_settings)
 ```
