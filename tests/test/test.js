@@ -967,6 +967,8 @@ describe('Exporter', function() {
 
                 const primitive = asset.meshes[asset.nodes.filter(m => m.name === 'Cube_attributes')[0].mesh].primitives[0];
 
+                assert.ok(!("_KO" in primitive.attributes));
+
                 const _vertex_float = asset.accessors[primitive.attributes._VERTEX_FLOAT];
                 const _vertex_float_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_FLOAT, bufferCache);
                 assert.strictEqual(_vertex_float.count, 24);
