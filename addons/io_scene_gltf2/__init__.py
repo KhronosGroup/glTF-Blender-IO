@@ -318,7 +318,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_attributes: BoolProperty(
         name='Attributes',
-        description='Export Attributes',
+        description='Export Attributes (when starting with underscore)',
         default=False
     )
 
