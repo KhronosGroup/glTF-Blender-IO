@@ -82,11 +82,6 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
         if channel is not None:
             channels.append(channel)
 
-    # resetting driver caches
-    # get_sk_drivers.reset_cache()
-    # resetting bone caches
-    # get_bone_matrix.reset_cache() #TODOCACHEANIM when we will have a cache system / refactoring of cache reseting
-
     return channels
 
 def gather_sampled_bone_channel(
