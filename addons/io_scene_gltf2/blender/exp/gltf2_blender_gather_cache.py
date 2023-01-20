@@ -78,8 +78,6 @@ def default_key(*args, **kwargs):
 def cached(func):
     return cached_by_key(key=default_key)(func)
 
-# TODOCACHEANIM resetting cache must be refactored and implemented
-
 def datacache(func):
 
     def reset_all_cache():

@@ -39,7 +39,7 @@ def gather_gltf2(export_settings):
         scenes.append(__gather_scene(blender_scene, export_settings))
         if export_settings['gltf_animations']:
             # resetting object cache
-            # get_cache_data.reset_cache() #TODOCACHEANIM reset cache refactoring
+            get_cache_data.reset_cache()
             animations += gather_animations(export_settings)
         if bpy.context.scene.name == store_user_scene.name:
             active_scene = len(scenes) -1
