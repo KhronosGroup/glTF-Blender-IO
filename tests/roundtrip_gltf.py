@@ -28,7 +28,6 @@ try:
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
 
-    bpy.context.preferences.addons['io_scene_gltf2'].preferences.animation_ui = True
     bpy.ops.import_scene.gltf(filepath=argv[0])
 
     bpy.context.scene.frame_start = 0

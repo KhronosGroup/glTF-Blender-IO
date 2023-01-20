@@ -44,14 +44,16 @@ class BlenderAnimation():
         for (obj, action) in gltf.needs_stash:
             simulate_stash(obj, track_name, action)
 
-        # TODOANIM if UI is not enable, the property is not available
+        import_user_extensions('gather_import_animation_after_hook', gltf, anim_idx, track_name)
+
+        if 'gltf2_animation_tracks' not in bpy.data.scenes[0]:
+            return 
+
         if track_name not in [track.name for track in bpy.data.scenes[0].gltf2_animation_tracks]:
             new_ = bpy.data.scenes[0].gltf2_animation_tracks.add()
             new_.name = track_name
         # reverse order, as animation are created in reverse order (because of NLA adding tracks are reverted)
         bpy.data.scenes[0].gltf2_animation_tracks.move(len(bpy.data.scenes[0].gltf2_animation_tracks)-1, 0)
-
-        import_user_extensions('gather_import_animation_after_hook', gltf, anim_idx, track_name)
 
     @staticmethod
     def restore_animation(gltf, animation_name):
