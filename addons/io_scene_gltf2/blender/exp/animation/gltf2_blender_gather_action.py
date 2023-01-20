@@ -199,7 +199,6 @@ def gather_action_animations(  obj_uuid: int,
 
     # When object is not animated at all (no SK)
     # We can create an animation for this object
-    # TODOANIM : should we update tracks too?
     if len(blender_actions) == 0:
         animation = bake_animation(obj_uuid, obj_uuid, export_settings)
         if animation is not None:
