@@ -28,7 +28,7 @@ def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[b
         channels=__gather_channels(object_uuid, blender_action.name if blender_action else cache_key, export_settings),
         extensions=None,
         extras=__gather_extras(blender_action, export_settings),
-        name=__gather_name(object_uuid, blender_action, export_settings),
+        name=__gather_name(object_uuid, blender_action, cache_key, export_settings),
         samplers=[]
     )
 
@@ -39,8 +39,13 @@ def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[b
 
     return animation
 
-def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], export_settings):
-    return blender_action.name if blender_action else export_settings['vtree'].nodes[object_uuid].blender_object.name
+def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
+    if blender_action:
+        return blender_action.name
+    elif object_uuid == cache_key:
+        return export_settings['vtree'].nodes[object_uuid].blender_object.name
+    else:
+        return cache_key
     
 def __gather_channels(object_uuid: str, blender_action_name: str, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_sk_sampled_channels(object_uuid, blender_action_name, export_settings)

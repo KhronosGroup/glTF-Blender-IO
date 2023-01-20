@@ -58,10 +58,9 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
 
     # Retrieve animation on armature object itself, if any
     # If armature is baked (no animation of armature), need to use all channels
-    if blender_action_name == armature_uuid:
+    if blender_action_name == armature_uuid or export_settings['gltf_animation_mode'] in ["SCENE", "NLA_TRACKS"]:
         armature_channels = ["location", "rotation_quaternion", "scale"]
     else:
-        # TODANIM in case we come here with track/scene mode --> no check bpy.data.actions
         armature_channels = __gather_armature_object_channel(bpy.data.actions[blender_action_name], export_settings)
     for channel in armature_channels:
         armature_channel = gather_sampled_object_channel(

@@ -29,7 +29,7 @@ def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Op
 
     blender_object = export_settings['vtree'].nodes[armature_uuid].blender_object
 
-    name = __gather_name(blender_action, armature_uuid, export_settings)
+    name = __gather_name(blender_action, armature_uuid, cache_key, export_settings)
 
     try:
         animation = gltf2_io.Animation(
@@ -55,11 +55,16 @@ def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Op
     return animation
 
 def __gather_name(blender_action: bpy.types.Action,
-                  armature_uuid: str,  
+                  armature_uuid: str,
+                  cache_key: str,
                   export_settings
                   ) -> str:
-    return blender_action.name if blender_action else export_settings['vtree'].nodes[armature_uuid].blender_object.name
-
+    if blender_action:
+        return blender_action.name
+    elif armature_uuid == cache_key:
+        return export_settings['vtree'].nodes[armature_uuid].blender_object.name
+    else:
+        return cache_key
 
 def __gather_channels(armature_uuid, blender_action_name, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)
