@@ -116,7 +116,7 @@ def gather_track_animations(  obj_uuid: int,
         reset_bone_matrix(blender_object, export_settings)
 
         ##### Export animation
-        animation = bake_animation(obj_uuid, track_name, export_settings)
+        animation = bake_animation(obj_uuid, track_name, export_settings, mode=on_type)
         get_cache_data.reset_cache()
         if animation is not None:
             animations.append(animation)

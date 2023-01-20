@@ -140,7 +140,7 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
 
     return new_animations
 
-def bake_animation(obj_uuid: str, animation_key: str, export_settings):
+def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None):
 
     # if there is no animation in file => no need to bake
     if len(bpy.data.actions) == 0:
@@ -159,11 +159,12 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings):
         # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
         # (skinned meshes TRS must be ignored, says glTF specification)
         if export_settings['vtree'].nodes[obj_uuid].skin is None:
-            animation = gather_action_object_sampled(obj_uuid, None, animation_key, export_settings)
+            if mode is None or mode == "OBJECT":
+                animation = gather_action_object_sampled(obj_uuid, None, animation_key, export_settings)
 
 
         # Need to bake sk only if not linked to a driver sk by parent armature
-        # In case of NLA track export, no baking of SK #TODOANIM
+        # In case of NLA track export, no baking of SK
         if export_settings['gltf_morph_anim'] \
                 and blender_object.type == "MESH" \
                 and blender_object.data is not None \
@@ -175,6 +176,9 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings):
                 obj_drivers = get_sk_drivers(export_settings['vtree'].nodes[obj_uuid].parent_uuid, export_settings)
                 if obj_uuid in obj_drivers:
                     ignore_sk = True
+
+            if mode == "OBJECT":
+                ignore_sk = True
 
             if ignore_sk is False:
                 channel = gather_sampled_sk_channel(obj_uuid, animation_key, export_settings)
@@ -196,7 +200,8 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings):
 
     elif (export_settings['gltf_bake_animation'] is True \
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS") \
-            and blender_object.type == "ARMATURE":
+            and blender_object.type == "ARMATURE" \
+            and mode is None or mode == "OBJECT":
         # We need to bake all bones. Because some bone can have some constraints linking to
         # some other armature bones, for example
 
