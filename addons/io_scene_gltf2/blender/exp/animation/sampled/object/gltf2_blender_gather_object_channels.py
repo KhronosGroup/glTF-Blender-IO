@@ -22,7 +22,6 @@ from ...fcurves.gltf2_blender_gather_fcurves_channels import get_channel_groups
 from .gltf2_blender_gather_object_sampler import gather_object_sampled_animation_sampler
 from .gltf2_blender_gather_object_channel_target import gather_object_sampled_channel_target
 
-#TODOANIM cached?
 def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
