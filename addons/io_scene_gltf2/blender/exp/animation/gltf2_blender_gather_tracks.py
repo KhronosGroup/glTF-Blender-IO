@@ -87,7 +87,18 @@ def gather_track_animations(  obj_uuid: int,
                 solo_track = track
                 track.is_solo = False
                 break
-    #TODOANIM for sk?
+
+    solo_track_sk = None
+    if blender_object.type == "MESH" \
+            and blender_object.data is not None \
+            and blender_object.data.shape_keys is not None \
+            and blender_object.data.shape_keys.animation_data is not None:
+    # Remove any solo (starred) NLA track. Restored after export
+        for track in blender_object.data.shape_keys.animation_data.nla_tracks:
+            if track.is_solo:
+                solo_track_sk = track
+                track.is_solo = False
+                break        
 
     # Mute all channels
     for track_group in [b[0] for b in blender_tracks if b[2] == "OBJECT"]:
@@ -144,6 +155,8 @@ def gather_track_animations(  obj_uuid: int,
         blender_object.data.shape_keys.animation_data.action = current_sk_action
     if solo_track is not None:
         solo_track.is_solo = True
+    if solo_track_sk is not None:
+        solo_track_sk.is_solo = True
     if blender_object.animation_data:
         blender_object.animation_data.use_nla = current_use_nla
         blender_object.animation_data.use_tweak_mode = restore_tweak_mode
