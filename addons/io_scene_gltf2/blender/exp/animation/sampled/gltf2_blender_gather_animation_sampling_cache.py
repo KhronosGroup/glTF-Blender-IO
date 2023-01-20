@@ -47,11 +47,7 @@ def get_cache_data(path: str,
         for obj_uuid in obj_uuids:
             blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
 
-            # if this object is not animated, do not skip :
-            # We need this object too in case of bake
-            if export_settings['gltf_bake_animation'] is False:
-                # TODOANIM : must be kept also for other than ACTIONS & ACTIVE_ACTIONS mode
-                pass #TODOANIM detect correclty if an object is animated by any ways (TRS / sk / bones / drivers)
+            # TODO: we may want to avoid looping on all objects, but an accurate filter must be found
 
             # calculate local matrix
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
@@ -222,7 +218,7 @@ def get_cache_data(path: str,
         frame += step
     return data
 
-#TODOANIM calculate a more accurate list of ranges ?
+# For perf, we may be more precise, and get a list of ranges to be exported that include all needed frames
 def get_range(export_settings):
     min_ = None
     max_ = None
