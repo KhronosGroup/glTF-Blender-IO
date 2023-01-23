@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ...io.com.gltf2_io_path import uri_to_path
 from ..com.gltf2_io import gltf_from_dict
 from ..com.gltf2_io_debug import Log
 import logging
 import json
 import struct
 import base64
-from os.path import dirname, join, isfile, normpath
-from urllib.parse import unquote
+from os.path import dirname, join, isfile
 
 
 # Raise this error to have the importer report an error message.
@@ -197,15 +197,10 @@ class glTFImporter():
                 data = uri[idx + len(sep):]
                 return memoryview(base64.b64decode(data))
 
-        path = join(dirname(self.filename), self.uri_to_path(uri))
+        path = join(dirname(self.filename), uri_to_path(uri))
         try:
             with open(path, 'rb') as f_:
                 return memoryview(f_.read())
         except Exception:
             self.log.error("Couldn't read file: " + path)
             return None
-
-    def uri_to_path(self, uri):
-        uri = uri.replace('\\', '/') # Some files come with \\ as dir separator
-        uri = unquote(uri)
-        return normpath(uri)
