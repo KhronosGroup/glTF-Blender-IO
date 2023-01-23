@@ -22,6 +22,6 @@ def uri_to_path(uri):
     return normpath(uri)
 
 def path_to_uri(path):
-    path.replace(sep, '/')
     path = normpath(path)
+    path = path.replace(sep, '/')
     return quote(path)
