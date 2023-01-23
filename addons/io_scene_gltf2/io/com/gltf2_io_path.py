@@ -14,6 +14,7 @@
 
 from urllib.parse import unquote, quote
 from os.path import normpath
+from os import sep
 
 def uri_to_path(uri):
     uri = uri.replace('\\', '/') # Some files come with \\ as dir separator
@@ -21,5 +22,6 @@ def uri_to_path(uri):
     return normpath(uri)
 
 def path_to_uri(path):
+    path.replace(sep, '/')
     path = normpath(path)
     return quote(path)
