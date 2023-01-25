@@ -30,6 +30,9 @@ def transmission(mh, location, transmission_socket):
     if transmission_factor == 0:
         return
 
+    # Activate screen refraction (for Eevee)
+    mh.mat.use_screen_refraction = True
+
     tex_info = ext.get('transmissionTexture')
     if tex_info is not None:
         tex_info = TextureInfo.from_dict(tex_info)
