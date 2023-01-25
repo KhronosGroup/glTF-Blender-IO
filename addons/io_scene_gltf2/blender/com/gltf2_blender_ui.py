@@ -464,54 +464,6 @@ class SCENE_UL_gltf2_animation_track(bpy.types.UIList):
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
 
-class SCENE_OT_gltf2_animation_retrieve(bpy.types.Operator):
-    """Retrieve glTF animations"""
-    bl_idname = "scene.gltf2_animation_retrieve"
-    bl_label = "Retrieve glTF animation"
-    bl_options = {'REGISTER'}
-
-    @classmethod
-    def poll(self, context):
-        return True
-
-    def execute(self, context):
-        bpy.data.scenes[0].gltf2_animation_applied = -1
-        bpy.data.scenes[0].gltf2_animation_tracks.clear()
-
-        current_active_object = context.active_object
-
-        tracks = []
-        for obj in bpy.context.scene.objects:
-            if not obj.animation_data:
-                continue
-            for track in obj.animation_data.nla_tracks:
-                if track.name.startswith("NlaTrack") or track.name.startswith("[Action Stash]"):
-                    continue
-                if track.name in tracks:
-                    continue
-
-                tracks.append(track.name)
-
-        for obj in [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]:
-            if not (obj.data and obj.data.shape_keys and obj.data.shape_keys.animation_data):
-                continue
-            for track in obj.data.shape_keys.animation_data.nla_tracks:
-                if track.name.startswith("NlaTrack") or track.name.startswith("[Action Stash]"):
-                    continue
-                if track.name in tracks:
-                    continue
-                
-                tracks.append(track.name)
-
-        for track in tracks:
-            new_ = bpy.data.scenes[0].gltf2_animation_tracks.add()
-            new_.name = track
-
-        # restore active_object
-        bpy.context.view_layer.objects.active = current_active_object
-
-        return {'FINISHED'}
-
 
 class SCENE_OT_gltf2_animation_apply(bpy.types.Operator):
     """Apply glTF animations"""
@@ -563,9 +515,6 @@ class SCENE_PT_gltf2_animation(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row()
-
-        row.operator("scene.gltf2_animation_retrieve", text="Update Animation List")
         row = layout.row()
 
         if len(bpy.data.scenes[0].gltf2_animation_tracks) > 0:
@@ -634,7 +583,6 @@ def anim_ui_register():
     bpy.utils.register_class(SCENE_OT_gltf2_animation_apply)
     bpy.utils.register_class(gltf2_animation_NLATrackNames)
     bpy.utils.register_class(SCENE_UL_gltf2_animation_track)
-    bpy.utils.register_class(SCENE_OT_gltf2_animation_retrieve)
     bpy.types.Scene.gltf2_animation_tracks = bpy.props.CollectionProperty(type=gltf2_animation_NLATrackNames)
     bpy.types.Scene.gltf2_animation_active = bpy.props.IntProperty()
     bpy.types.Scene.gltf2_animation_applied = bpy.props.IntProperty()
@@ -649,7 +597,6 @@ def anim_ui_unregister():
     del bpy.types.Scene.gltf2_animation_applied
     del bpy.types.Object.gltf2_animation_rest
     del bpy.types.Object.gltf2_animation_weight_rest
-    bpy.utils.unregister_class(SCENE_OT_gltf2_animation_retrieve)
     bpy.utils.unregister_class(SCENE_UL_gltf2_animation_track)
     bpy.utils.unregister_class(gltf2_animation_NLATrackNames)
     bpy.utils.unregister_class(SCENE_OT_gltf2_animation_apply)
