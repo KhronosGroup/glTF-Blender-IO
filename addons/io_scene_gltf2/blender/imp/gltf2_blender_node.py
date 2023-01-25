@@ -121,7 +121,7 @@ class BlenderNode():
 
         # Store Rest matrix of object
         # Can't use directly matrix_world because not refreshed yet
-        if 'gltf2_animation_rest' in obj:
+        if hasattr(obj, 'gltf2_animation_rest'):
             obj.gltf2_animation_rest = Matrix.LocRotScale(obj.location, obj.rotation_quaternion, obj.scale)
         
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
@@ -264,7 +264,7 @@ class BlenderNode():
                 kb.value = weight
 
                 # Store default weight
-                if 'gltf2_animation_weight_rest' in obj:
+                if hasattr(obj, 'gltf2_animation_weight_rest'):
                     w = obj.gltf2_animation_weight_rest.add()
                     w.val = weight
 
