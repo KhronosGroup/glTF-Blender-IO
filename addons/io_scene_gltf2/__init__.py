@@ -553,6 +553,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    export_anim_scene_split_object: BoolProperty(
+        name='Split Animation by Object',
+        description=(
+            "Export Scene as seen in Viewport, "
+            "But split animation by Object"
+        ),
+        default=True
+    )
+
     export_skins: BoolProperty(
         name='Skinning',
         description='Export skinning (armature) data',
@@ -739,6 +748,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_animation_mode'] = self.export_animation_mode
             if export_settings['gltf_animation_mode'] == "NLA_TRACKS":
                 export_settings['gltf_force_sampling'] = True
+            if export_settings['gltf_animation_mode'] == "SCENE":
+                export_settings['gltf_anim_scene_split_object'] = self.export_anim_scene_split_object
+            else:
+                export_settings['gltf_anim_scene_split_object'] = False
 
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
@@ -1219,6 +1232,8 @@ class GLTF_PT_export_animation(bpy.types.Panel):
         row = layout.row()
         row.active = operator.export_force_sampling
         row.prop(operator, 'export_bake_animation')
+        if operator.export_animation_mode == "SCENE":
+            layout.prop(operator, 'export_anim_scene_split_object')
 
 
 class GLTF_PT_export_animation_ranges(bpy.types.Panel):

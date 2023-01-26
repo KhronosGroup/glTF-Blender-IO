@@ -29,6 +29,7 @@ def gather_scene_animations(export_settings):
         return []
 
     total_channels = []
+    animations = []
 
     start_frame = bpy.context.scene.frame_start
     end_frame = bpy.context.scene.frame_end
@@ -92,18 +93,33 @@ def gather_scene_animations(export_settings):
                 if channels is not None:
                     total_channels.extend(channels)
 
-    if len(total_channels) > 0:
-        animation = gltf2_io.Animation(
-            channels=total_channels,
-            extensions=None,
-            extras=__gather_extras(bpy.context.scene, export_settings),
-            name=bpy.context.scene.name,
-            samplers=[]
-        )
-        link_samplers(animation, export_settings)
-        return [animation]
+        if export_settings['gltf_anim_scene_split_object'] is True:
+            if len(total_channels) > 0:
+                animation = gltf2_io.Animation(
+                    channels=total_channels,
+                    extensions=None,
+                    extras=__gather_extras(blender_object, export_settings),
+                    name=blender_object.name,
+                    samplers=[]
+                )
+                link_samplers(animation, export_settings)
+                animations.append(animation)
 
-    return []
+            total_channels = []
+
+    if export_settings['gltf_anim_scene_split_object'] is False:
+        if len(total_channels) > 0:
+            animation = gltf2_io.Animation(
+                channels=total_channels,
+                extensions=None,
+                extras=__gather_extras(bpy.context.scene, export_settings),
+                name=bpy.context.scene.name,
+                samplers=[]
+            )
+            link_samplers(animation, export_settings)
+            animations.append(animation)
+
+    return animations
     
 def __gather_extras(blender_scene, export_settings):
     if export_settings['gltf_extras']:
