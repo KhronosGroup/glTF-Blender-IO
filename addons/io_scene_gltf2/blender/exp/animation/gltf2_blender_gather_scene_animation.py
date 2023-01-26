@@ -26,7 +26,7 @@ def gather_scene_animations(export_settings):
 
     # if there is no animation in file => no need to bake
     if len(bpy.data.actions) == 0:
-        return None
+        return []
 
     total_channels = []
 
@@ -103,7 +103,7 @@ def gather_scene_animations(export_settings):
         link_samplers(animation, export_settings)
         return [animation]
 
-    return None
+    return []
     
 def __gather_extras(blender_scene, export_settings):
     if export_settings['gltf_extras']:
