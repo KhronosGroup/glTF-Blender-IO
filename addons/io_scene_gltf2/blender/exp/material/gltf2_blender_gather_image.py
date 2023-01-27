@@ -17,6 +17,7 @@ import typing
 import os
 
 from ....io.com import gltf2_io
+from ....io.com.gltf2_io_path import path_to_uri
 from ....io.exp import gltf2_io_binary_data, gltf2_io_image_data
 from ....io.com import gltf2_io_debug
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -71,12 +72,6 @@ def gather_image(
 
 def __gather_original_uri(original_uri, export_settings):
 
-    def _path_to_uri(path):
-        import urllib
-        path = os.path.normpath(path)
-        path = path.replace(os.sep, '/')
-        return urllib.parse.quote(path)
-
     path_to_image = bpy.path.abspath(original_uri)
     if not os.path.exists(path_to_image): return None
     try:
@@ -87,7 +82,7 @@ def __gather_original_uri(original_uri, export_settings):
     except ValueError:
         # eg. because no relative path between C:\ and D:\ on Windows
         return None
-    return _path_to_uri(rel_path)
+    return path_to_uri(rel_path)
 
 
 @cached

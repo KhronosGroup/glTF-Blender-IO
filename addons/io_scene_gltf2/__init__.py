@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 5, 17),
+    "version": (3, 5, 20),
     'blender': (3, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -673,6 +673,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         import os
         import datetime
         from .blender.exp import gltf2_blender_export
+        from .io.com.gltf2_io_path import path_to_uri
 
         if self.will_save_settings:
             self.save_settings(context)
@@ -795,7 +796,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
-            os.path.splitext(os.path.basename(self.filepath))[0] + '.bin'
+            path_to_uri(os.path.splitext(os.path.basename(self.filepath))[0] + '.bin')
         )
 
         user_extensions = []
