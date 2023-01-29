@@ -250,7 +250,7 @@ class VExportTree:
 
         # Object parented to bone
         if blender_bone is not None:
-            for child_object in [c for c in blender_children[blender_object] if c.parent_bone is not None and c.parent_bone == blender_bone.name]:
+            for child_object in [c for c in blender_children[blender_object] if c.parent_type == "BONE" and c.parent_bone is not None and c.parent_bone == blender_bone.name]:
                 self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, blender_children)
 
         # Duplis
