@@ -15,6 +15,7 @@
 import bpy
 import typing
 from ....io.com import gltf2_io
+from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..gltf2_blender_gather_cache import cached
 from ..gltf2_blender_gather_tree import VExportNode
 from .gltf2_blender_gather_animation_utils import merge_tracks_perform, bake_animation, add_slide_data, reset_bone_matrix
@@ -45,7 +46,6 @@ def gather_track_animations(  obj_uuid: int,
                         tracks: typing.Dict[str, typing.List[int]],
                         offset: int,
                         export_settings) -> typing.Tuple[typing.List[gltf2_io.Animation], typing.Dict[str, typing.List[int]]]:
-    #TODOEXTENSIONANIM in this function
 
     animations = []
 
@@ -73,8 +73,6 @@ def gather_track_animations(  obj_uuid: int,
             and blender_object.data.shape_keys.animation_data is not None:
         current_sk_action = blender_object.data.shape_keys.animation_data.action
         current_use_nla_sk = blender_object.data.shape_keys.animation_data.use_nla
-
-    # TODOEXTENSIONANIM
 
     ####### Prepare export for obj
     solo_track = None
@@ -109,6 +107,8 @@ def gather_track_animations(  obj_uuid: int,
             blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = True
 
 
+    export_user_extensions('animation_track_switch_loop_hook', export_settings, blender_object, False)
+
     ######## Export
 
     # Export all collected actions.
@@ -118,11 +118,15 @@ def gather_track_animations(  obj_uuid: int,
         if on_type == "OBJECT":
             # Enable tracks
             for track in bl_tracks:
+                export_user_extensions('pre_animation_track_switch_hook', export_settings, blender_object, track, track_name, on_type)
                 blender_object.animation_data.nla_tracks[track.idx].mute = False
+                export_user_extensions('post_animation_track_switch_hook', export_settings, blender_object, track, track_name, on_type)
         else:
             # Enable tracks
             for track in bl_tracks:
+                export_user_extensions('pre_animation_track_switch_hook', export_settings, blender_object, track, track_name, on_type)
                 blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = False            
+                export_user_extensions('post_animation_track_switch_hook', export_settings, blender_object, track, track_name, on_type)
 
         reset_bone_matrix(blender_object, export_settings)
 
@@ -174,16 +178,38 @@ def gather_track_animations(  obj_uuid: int,
 
     blender_object.matrix_world = current_world_matrix
 
+    export_user_extensions('animation_track_switch_loop_hook', export_settings, blender_object, True)
+
     return animations, tracks
 
 @cached
 def __get_blender_tracks(obj_uuid: str, export_settings):
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    export_user_extensions('pre_gather_tracks_hook', export_settings, blender_object)
+
     tracks, names, types = __get_nla_tracks_obj(obj_uuid, export_settings)
     tracks_sk, names_sk, types_sk = __get_nla_tracks_sk(obj_uuid, export_settings)
 
     tracks.extend(tracks_sk)
     names.extend(names_sk)
     types.extend(types_sk)
+
+    # Use a class to get parameters, to be able to modify them
+    class GatherTrackHookParameters:
+        def __init__(self, blender_tracks, blender_tracks_name, track_on_type):
+            self.blender_tracks = blender_tracks
+            self.blender_tracks_name = blender_tracks_name
+            self.track_on_type = track_on_type
+
+    gathertrackhookparams = GatherTrackHookParameters(tracks, names, types)
+
+    export_user_extensions('gather_tracks_hook', export_settings, blender_object, gathertrackhookparams)
+
+    # Get params back from hooks
+    tracks = gathertrackhookparams.blender_tracks
+    names = gathertrackhookparams.blender_tracks_name
+    types = gathertrackhookparams.track_on_type
 
     return list(zip(tracks, names, types))
 

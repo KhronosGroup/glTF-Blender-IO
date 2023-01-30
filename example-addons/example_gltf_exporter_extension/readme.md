@@ -42,14 +42,20 @@ vtree_before_filter_hook(self, vtree, export_settings)
 vtree_after_filter_hook(self, vtree, export_settings)
 pre_gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings)
 gather_actions_hook(self, blender_object, params, export_settings) # params = blender_actions, blender_tracks, action_on_type
-pre_gather_actions_hook(self, blender_object, export_settings)
-pre_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings)
-post_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings)
-animation_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop
+gather_tracks_hook(self, blender_object, params, export_settings) # params = blender_tracks, blender_tracks_names, track_on_type
+pre_gather_actions_hook(self, blender_object, export_settings) # For action mode
+pre_gather_tracks_hook(self, blender_object, export_settings) # For track mode
+pre_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings) # For action mode
+post_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings)  # For action mode
+pre_animation_track_switch_hook(self, blender_object, tracks, track_name, on_type, export_settings) # For track mode
+post_animation_track_switch_hook(self, blender_object, tracks, track_name, on_type, export_settings)  # For track mode
+animation_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for action mode
+animation_track_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for track mode
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
 gather_tree_filter_tag_hook(self, tree, export_settings)
 gather_attribute_keep(self, keep_attribute, export_settings)
 gather_animation_bone_sampled_channel_target_hook #TODOEXTENSIONANIM
 gather_animation_object_sampled_channel_target_hook #TODOEXTENSIONANIM
+
 ```
