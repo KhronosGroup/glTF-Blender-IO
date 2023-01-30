@@ -33,7 +33,7 @@ def get_cache_data(path: str,
 
     data = {}
 
-    min_, max_ = get_range(export_settings)
+    min_, max_ = get_range(blender_obj_uuid, action_name, export_settings)
 
     if only_gather_provided:
         obj_uuids = [blender_obj_uuid]
@@ -219,14 +219,16 @@ def get_cache_data(path: str,
     return data
 
 # For perf, we may be more precise, and get a list of ranges to be exported that include all needed frames
-def get_range(export_settings):
-    min_ = None
-    max_ = None
-    for obj in export_settings['ranges'].keys():
-        for anim in export_settings['ranges'][obj].keys():
-            if min_ is None or min_ > export_settings['ranges'][obj][anim]['start']:
-                min_ = export_settings['ranges'][obj][anim]['start']
-            if max_ is None or max_ < export_settings['ranges'][obj][anim]['end']:
-                max_ = export_settings['ranges'][obj][anim]['end']
-
+def get_range(obj_uuid, key, export_settings):
+    if export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+        return export_settings['ranges'][obj_uuid][key]['start'], export_settings['ranges'][obj_uuid][key]['end']
+    else:
+        min_ = None
+        max_ = None
+        for obj in export_settings['ranges'].keys():
+            for anim in export_settings['ranges'][obj].keys():
+                if min_ is None or min_ > export_settings['ranges'][obj][anim]['start']:
+                    min_ = export_settings['ranges'][obj][anim]['start']
+                if max_ is None or max_ < export_settings['ranges'][obj][anim]['end']:
+                    max_ = export_settings['ranges'][obj][anim]['end']
     return min_, max_

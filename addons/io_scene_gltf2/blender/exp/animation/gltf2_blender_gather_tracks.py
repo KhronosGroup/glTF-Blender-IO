@@ -292,15 +292,39 @@ def prepare_tracks_range(obj_uuid, tracks, track_name, export_settings):
     
     track_slide = {}
 
-    vtree = export_settings['vtree']
-    
-    #TODOANIM do not use bpy.context.scene.frame_start, but using tracks start/end
-    #TODOANIM manage track_slide
+    for idx, btrack in enumerate(tracks):
+        frame_start = btrack.frame_start if idx == 0 else min(frame_start, btrack.frame_start)
+        frame_end = btrack.frame_end if idx == 0 else max(frame_end, btrack.frame_end)
+
+    # If some negative frame and crop -> set start at 0
+    if frame_start < 0 and export_settings['gltf_negative_frames'] == "CROP":
+        frame_start = 0
+
+    if export_settings['gltf_frame_range'] is True:
+        frame_start = max(bpy.context.scene.frame_start, frame_start)
+        frame_end = min(bpy.context.scene.frame_end, frame_end)
 
     export_settings['ranges'][obj_uuid] = {}
     export_settings['ranges'][obj_uuid][track_name] = {}
-    export_settings['ranges'][obj_uuid][track_name]['start'] = bpy.context.scene.frame_start
-    export_settings['ranges'][obj_uuid][track_name]['end'] = bpy.context.scene.frame_end
+    export_settings['ranges'][obj_uuid][track_name]['start'] = int(frame_start)
+    export_settings['ranges'][obj_uuid][track_name]['end'] = int(frame_end)
+
+    if export_settings['gltf_negative_frames'] == "SLIDE":
+        if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
+            if track_name not in track_slide.keys() or (track_name in track_slide.keys() and frame_start < track_slide[track_name]):
+                track_slide.update({track_name:frame_start})
+        else:
+            if frame_start < 0:
+                add_slide_data(frame_start, obj_uuid, track_name, export_settings)
+
+
+    if export_settings['gltf_anim_slide_to_zero'] is True and frame_start > 0:
+        if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
+            if track_name not in track_slide.keys() or (track_name in track_slide.keys() and frame_start < track_slide[track_name]):
+                track_slide.update({track_name:frame_start})
+        else:
+            add_slide_data(frame_start, obj_uuid, track_name, export_settings)
+
 
     # For drivers
     if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.ARMATURE and export_settings['gltf_morph_anim'] is True:
@@ -309,18 +333,15 @@ def prepare_tracks_range(obj_uuid, tracks, track_name, export_settings):
             if obj_dr not in export_settings['ranges']:
                 export_settings['ranges'][obj_dr] = {}
             export_settings['ranges'][obj_dr][obj_uuid + "_" + track_name] = {}
-            export_settings['ranges'][obj_dr][obj_uuid + "_" + track_name]['start'] = bpy.context.scene.frame_start
-            export_settings['ranges'][obj_dr][obj_uuid + "_" + track_name]['end'] = bpy.context.scene.frame_end
-
+            export_settings['ranges'][obj_dr][obj_uuid + "_" + track_name]['start'] = frame_start
+            export_settings['ranges'][obj_dr][obj_uuid + "_" + track_name]['end'] = frame_end
 
     if (export_settings['gltf_negative_frames'] == "SLIDE" \
             or export_settings['gltf_anim_slide_to_zero'] is True) \
             and len(track_slide) > 0:
 
-        blender_tracks = __get_blender_tracks(obj_uuid, export_settings)
-        for blender_track, track, type_ in blender_tracks:
-            if track in track_slide.keys():
-                if export_settings['gltf_negative_frames'] == "SLIDE" and track_slide[track] < 0:
-                    add_slide_data(track_slide[track], obj_uuid, track_name, export_settings)
-                elif export_settings['gltf_anim_slide_to_zero'] is True:
-                    add_slide_data(track_slide[track], obj_uuid, track_name, export_settings)
+        if track_name in track_slide.keys():
+            if export_settings['gltf_negative_frames'] == "SLIDE" and track_slide[track_name] < 0:
+                add_slide_data(track_slide[track_name], obj_uuid, track_name, export_settings)
+            elif export_settings['gltf_anim_slide_to_zero'] is True:
+                add_slide_data(track_slide[track_name], obj_uuid, track_name, export_settings)

@@ -67,17 +67,17 @@ def reset_bone_matrix(blender_object, export_settings) -> None:
         bone.matrix_basis = Matrix()
 
 
-def add_slide_data(start_frame, obj_uuid: int, blender_action_name: str, export_settings):
+def add_slide_data(start_frame, obj_uuid: int, key: str, export_settings):
 
-    if obj_uuid not in export_settings['action_slide'].keys():
-        export_settings['action_slide'][obj_uuid] = {}
-    export_settings['action_slide'][obj_uuid][blender_action_name] = start_frame
+    if obj_uuid not in export_settings['slide'].keys():
+        export_settings['slide'][obj_uuid] = {}
+    export_settings['slide'][obj_uuid][key] = start_frame
     # Add slide info for driver sk too
     obj_drivers = get_sk_drivers(obj_uuid, export_settings)
     for obj_dr in obj_drivers:
-        if obj_dr not in export_settings['action_slide'].keys():
-            export_settings['action_slide'][obj_dr] = {}
-        export_settings['action_slide'][obj_dr][obj_uuid + "_" + blender_action_name] = start_frame
+        if obj_dr not in export_settings['slide'].keys():
+            export_settings['slide'][obj_dr] = {}
+        export_settings['slide'][obj_dr][obj_uuid + "_" + key] = start_frame
 
 def merge_tracks_perform(merged_tracks, animations, export_settings):
     to_delete_idx = []

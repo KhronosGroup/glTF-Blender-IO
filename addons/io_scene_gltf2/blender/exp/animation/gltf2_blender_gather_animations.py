@@ -22,7 +22,7 @@ def gather_animations(export_settings):
 
     # Reinit stored data
     export_settings['ranges'] = {}
-    export_settings['action_slide'] = {}
+    export_settings['slide'] = {}
 
     if export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
         return gather_actions_animations(export_settings)
