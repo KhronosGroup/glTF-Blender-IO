@@ -15,7 +15,6 @@
 import bpy
 import typing
 from ....io.com import gltf2_io
-from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....io.com.gltf2_io_debug import print_console
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...com.gltf2_blender_data_path import is_bone_anim_channel
@@ -269,8 +268,9 @@ def gather_action_animations(  obj_uuid: int,
                     or (blender_object.data.shape_keys.animation_data.action.name != blender_action.name):
                 if blender_object.data.shape_keys.animation_data.is_property_readonly('action'):
                     blender_object.data.shape_keys.animation_data.use_tweak_mode = False
-
+                export_user_extensions('pre_animation_switch_hook', export_settings, blender_object, blender_action, track_name, on_type)
                 blender_object.data.shape_keys.animation_data.action = blender_action
+                export_user_extensions('post_animation_switch_hook', export_settings, blender_object, blender_action, track_name, on_type)
 
         if export_settings['gltf_force_sampling'] is True:
             if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
