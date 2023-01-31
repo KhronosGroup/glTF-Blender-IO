@@ -38,7 +38,7 @@ def sheen(  mh,
     sheenRoughnessFactor = ext.get('sheenRoughnessFactor', 0.0)
     tex_info_roughness = ext.get('sheenRoughnessTexture')
     if tex_info_roughness is not None:
-        tex_info_roughness = TextureInfo.from_dict(tex_info_roughness)    
+        tex_info_roughness = TextureInfo.from_dict(tex_info_roughness)
 
     if tex_info_color is None:
         sheenColorFactor.extend([1.0])

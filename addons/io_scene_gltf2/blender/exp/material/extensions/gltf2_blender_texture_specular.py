@@ -19,7 +19,7 @@ from .gltf2_blender_image import TmpImageGuard, make_temp_image_copy, StoreImage
 def specular_calculation(stored):
 
     # See https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
-    
+
     # Find all Blender images used
     images = []
     for fill in stored.values():
@@ -39,7 +39,7 @@ def specular_calculation(stored):
 
     for identifier, image in [(ident, store.image) for (ident, store) in stored.items() if isinstance(store, StoreImage)]:
         tmp_buf = np.empty(width * height * 4, np.float32)
-        
+
         if image.size[0] == width and image.size[1] == height:
             image.pixels.foreach_get(tmp_buf)
         else:
@@ -85,7 +85,7 @@ def specular_calculation(stored):
         # TODOExt Manage all 0
         return c / stack3(l)
 
-    
+
     f0_from_ior = ((ior - 1)/(ior + 1))**2
     tint_strength = (1 - stack3(buffers['specular_tint'])) + normalize(buffers['base_color']) * stack3(buffers['specular_tint'])
     out_buf = (1 - stack3(buffers['transmission'])) * (1 / f0_from_ior) * 0.08 * stack3(buffers['specular']) * tint_strength + stack3(buffers['transmission']) * tint_strength
@@ -100,5 +100,5 @@ def specular_calculation(stored):
 
     out_buf = np.dstack((out_buf, np.ones((width, height)))) # Set alpha (glTF specular) to 1
     out_buf = np.reshape(out_buf, (width * height * 4))
-    
+
     return np.float32(out_buf), width, height, [float(f) for f in factor] if factor else None

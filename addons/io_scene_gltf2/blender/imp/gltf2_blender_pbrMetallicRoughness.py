@@ -99,7 +99,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
 
 
     if mh.pymat.extensions and 'KHR_materials_sheen':
-        pass #TOTOEXT     
+        pass #TOTOEXT
 
     locs = calc_locations(mh)
 

@@ -195,7 +195,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
         return __get_image_data_specular(sockets, results, export_settings)
     else:
         return __get_image_data_mapping(sockets, results, export_settings)
-    
+
 def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
     """
     Simple mapping

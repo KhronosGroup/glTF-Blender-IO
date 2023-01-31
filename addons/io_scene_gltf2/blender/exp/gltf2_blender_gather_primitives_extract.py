@@ -160,7 +160,7 @@ class PrimitiveCreator:
             attr['blender_domain'] = blender_attribute.domain
             attr['blender_data_type'] = blender_attribute.data_type
 
-            # For now, we don't export edge data, because I need to find how to 
+            # For now, we don't export edge data, because I need to find how to
             # get from edge data to dots data
             if attr['blender_domain'] == "EDGE":
                 continue
@@ -394,7 +394,7 @@ class PrimitiveCreator:
                     attr['set'](attr)
                 else: # Regular case
                     self.__set_regular_attribute(attr)
-                
+
             if self.skin:
                 joints = [[] for _ in range(self.num_joint_sets)]
                 weights = [[] for _ in range(self.num_joint_sets)]
@@ -566,7 +566,7 @@ class PrimitiveCreator:
                 self.__get_normal_attribute(attr)
             elif attr['gltf_attribute_name'] == "TANGENT":
                 self.__get_tangent_attribute(attr)
-            
+
         return getting_function
 
 

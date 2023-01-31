@@ -21,7 +21,7 @@ def create_gltf_ao_group(operator, group_name):
 
     # create a new group
     gltf_ao_group = bpy.data.node_groups.new(group_name, "ShaderNodeTree")
-    
+
     return gltf_ao_group
 
 class NODE_OT_GLTF_SETTINGS(bpy.types.Operator):
@@ -154,8 +154,8 @@ class SCENE_OT_gltf2_variant_remove(bpy.types.Operator):
             if len(remove_idx_data) > 0:
                 for idx_data in remove_idx_data:
                     mesh.gltf2_variant_mesh_data.remove(idx_data)
-                
-        return {'FINISHED'}    
+
+        return {'FINISHED'}
 
 
 # Operator to display a variant

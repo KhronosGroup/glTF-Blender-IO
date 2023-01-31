@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 5, 20),
+    "version": (3, 5, 21),
     'blender': (3, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -371,7 +371,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     use_active_collection: BoolProperty(
         name='Active Collection',
         description='Export objects in the active collection only',
-        default=False        
+        default=False
     )
 
     use_active_scene: BoolProperty(
@@ -723,7 +723,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
-        
+
         export_settings['gltf_active_collection'] = self.use_active_collection
         if self.use_active_collection:
             export_settings['gltf_active_collection_with_nested'] = self.use_active_collection_with_nested

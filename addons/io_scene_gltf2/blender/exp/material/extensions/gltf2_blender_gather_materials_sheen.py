@@ -44,7 +44,7 @@ def export_sheen(blender_material, export_settings):
             fac = [1.0, 1.0, 1.0] # Default is 0.0/0.0/0.0, so we need to set it to 1 if no factor
         if fac is not None and fac != [0.0, 0.0, 0.0]:
             sheen_extension['sheenColorFactor'] = fac
-        
+
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(sheenColor_socket):
             original_sheenColor_texture, original_sheenColor_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
@@ -68,7 +68,7 @@ def export_sheen(blender_material, export_settings):
             fac = 1.0 # Default is 0.0 so we need to set it to 1.0 if no factor
         if fac is not None and fac != 0.0:
             sheen_extension['sheenRoughnessFactor'] = fac
-        
+
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(sheenRoughness_socket):
             original_sheenRoughness_texture, original_sheenRoughness_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
@@ -79,5 +79,5 @@ def export_sheen(blender_material, export_settings):
             sheen_extension['sheenRoughnessTexture'] = original_sheenRoughness_texture
             if original_sheenRoughness_use_active_uvmap:
                 use_actives_uvmaps.append("sheenRoughnessTexture")
-    
+
     return Extension('KHR_materials_sheen', sheen_extension, False), use_actives_uvmaps
