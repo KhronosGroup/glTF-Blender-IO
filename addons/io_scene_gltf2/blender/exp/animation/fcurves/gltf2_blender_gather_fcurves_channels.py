@@ -14,6 +14,7 @@
 
 import bpy
 import typing
+from .....io.exp.gltf2_io_user_extensions import export_user_extensions
 from .....io.com import gltf2_io_debug
 from .....io.com import gltf2_io
 from ....exp.gltf2_blender_gather_cache import cached
@@ -247,7 +248,9 @@ def __gather_animation_fcurve_channel(obj_uuid: str,
             target=__target
         )
 
-        #TODOEXTENSIONANIM
+        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+        export_user_extensions('animation_gather_fcurve_channel_target', export_settings, blender_object, bone)
+
 
         return animation_channel
     return None

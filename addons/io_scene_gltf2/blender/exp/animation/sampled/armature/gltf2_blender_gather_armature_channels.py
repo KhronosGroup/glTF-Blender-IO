@@ -114,6 +114,7 @@ def gather_sampled_bone_channel(
                                channel,
                                export_settings['vtree'].nodes[armature_uuid].blender_object,
                                bone,
+                               action_name,
                                node_channel_is_animated
                                )
 

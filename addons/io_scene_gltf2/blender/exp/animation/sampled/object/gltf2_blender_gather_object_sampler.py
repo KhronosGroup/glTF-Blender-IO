@@ -17,6 +17,7 @@ import mathutils
 from ......io.com import gltf2_io
 from ......io.com import gltf2_io_constants
 from ......io.exp import gltf2_io_binary_data
+from ......io.exp.gltf2_io_user_extensions import export_user_extensions
 from .....com.gltf2_blender_data_path import get_target_object_path
 from .....com import gltf2_blender_math
 from ....gltf2_blender_gather_tree import VExportNode
@@ -55,7 +56,8 @@ def gather_object_sampled_animation_sampler(
         output=output
     )
 
-    #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    export_user_extensions('animation_gather_object_sampler', export_settings, blender_object, action_name)
 
     return sampler
 

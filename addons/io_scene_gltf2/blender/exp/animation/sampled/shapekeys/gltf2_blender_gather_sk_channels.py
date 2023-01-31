@@ -36,7 +36,8 @@ def gather_sk_sampled_channels(
     if channel is not None:
         channels.append(channel)
 
-    #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
+    export_user_extensions('animation_gather_sk_channels', export_settings, blender_object, blender_action_name)
 
     return channels if len(channels) > 0 else None
 
@@ -62,7 +63,8 @@ def gather_sampled_sk_channel(
             target=__target
         )
 
-        #TODOEXTENSIONANIM
+        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+        export_user_extensions('animation_gather_sk_channel', export_settings, blender_object, action_name)
 
         return animation_channel
     return None

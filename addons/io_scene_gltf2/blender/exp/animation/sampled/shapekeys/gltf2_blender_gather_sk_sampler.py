@@ -15,6 +15,7 @@
 import bpy
 from ......io.com import gltf2_io, gltf2_io_constants
 from ......io.exp import gltf2_io_binary_data
+from ......io.exp.gltf2_io_user_extensions import export_user_extensions
 from .....com.gltf2_blender_math import mathutils_to_gltf
 from ....gltf2_blender_gather_accessors import gather_accessor
 from .gltf2_blender_gather_sk_keyframes import gather_sk_sampled_keyframes
@@ -45,7 +46,8 @@ def gather_sk_sampled_animation_sampler(
         output=output
     )
 
-    #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    export_user_extensions('animation_gather_sk_channels', export_settings, blender_object, action_name)
 
     return sampler
 

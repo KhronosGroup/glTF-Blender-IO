@@ -35,7 +35,8 @@ def gather_fcurve_channel_target(
             path=__gather_path(channels, export_settings)
         )
 
-        #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    export_user_extensions('animation_gather_fcurve_channel_target', export_settings, blender_object, bone)
 
     return animation_channel_target
 

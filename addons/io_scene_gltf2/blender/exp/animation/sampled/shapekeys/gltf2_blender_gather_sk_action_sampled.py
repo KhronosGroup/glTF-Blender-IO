@@ -14,6 +14,7 @@
 
 import bpy
 import typing
+from ......io.exp.gltf2_io_user_extensions import export_user_extensions
 from ......io.com import gltf2_io
 from .....com.gltf2_blender_extras import generate_extras
 from .gltf2_blender_gather_sk_channels import gather_sk_sampled_channels
@@ -35,7 +36,8 @@ def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[b
     if not animation.channels:
         return None
 
-    #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
+    export_user_extensions('animation_action_sk_sampled', export_settings, blender_object, blender_action, cache_key)
 
     return animation
 

@@ -47,7 +47,9 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, e
         if channel is not None:
             channels.append(channel)
 
-    #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
+    export_user_extensions('animation_gather_object_channel', export_settings, blender_object, blender_action_name)
+
 
     return channels if len(channels) > 0 else None
 
@@ -75,7 +77,7 @@ def gather_sampled_object_channel(
             target=__target
         )
 
-        export_user_extensions('gather_animation_channel_hook', #TODOEXTENSIONANIM
+        export_user_extensions('gather_animation_channel_hook',
                                export_settings,
                                animation_channel,
                                channel,

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from ......io.com import gltf2_io
+from ......io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....gltf2_blender_gather_cache import cached
 
 @cached
@@ -28,7 +29,8 @@ def gather_sk_sampled_channel_target(
         path='weights'
         )
 
-    #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    export_user_extensions('animation_action_sk_sampled_target', export_settings, blender_object)
 
     return animation_channel_target
 

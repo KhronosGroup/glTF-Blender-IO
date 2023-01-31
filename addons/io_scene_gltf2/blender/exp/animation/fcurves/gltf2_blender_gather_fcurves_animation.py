@@ -14,6 +14,7 @@
 
 import bpy
 from .....io.com import gltf2_io
+from .....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....com.gltf2_blender_extras import generate_extras
 from .gltf2_blender_gather_fcurves_channels import gather_animation_fcurves_channels
 
@@ -38,7 +39,9 @@ def gather_animation_fcurves(
     if not animation.channels:
         return None, to_be_sampled
 
-    #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    export_user_extensions('animation_gather_fcurve', export_settings, blender_object, blender_action)
+
     return animation, to_be_sampled
 
 def __gather_name(blender_action: bpy.types.Action,

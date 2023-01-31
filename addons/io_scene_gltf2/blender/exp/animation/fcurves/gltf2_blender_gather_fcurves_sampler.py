@@ -18,6 +18,7 @@ import mathutils
 from .....io.com import gltf2_io
 from .....io.com import gltf2_io_constants
 from .....io.exp import gltf2_io_binary_data
+from .....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....com.gltf2_blender_data_path import get_target_property_name
 from ....com import gltf2_blender_math
 from ...gltf2_blender_gather_cache import cached
@@ -58,7 +59,8 @@ def gather_animation_fcurves_sampler(
         output=output
     )
 
-    #TODOEXTENSIONANIM
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    export_user_extensions('animation_gather_fcurve_channel_sampler', export_settings, blender_object, bone)
 
     return sampler   
 
