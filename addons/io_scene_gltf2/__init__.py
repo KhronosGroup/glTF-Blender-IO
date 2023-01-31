@@ -110,6 +110,8 @@ def on_export_format_changed(self, context):
 
     # Also change the filter
     sfile.params.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
+    # Force update of file list, has update the filter does not update the real file list
+    bpy.ops.file.refresh()
 
 
 class ConvertGLTF2_Base:
