@@ -328,7 +328,7 @@ def __gather_trans_rot_scale(vnode, export_settings):
         if export_settings['vtree'].nodes[vnode.parent_uuid].skin is None:
             trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
         else:
-            # But ... if parent has skin, the parent TRS are not taken into account, so don't get local from parent, but from armature 
+            # But ... if parent has skin, the parent TRS are not taken into account, so don't get local from parent, but from armature
             # It also depens if skined mesh is parented to armature or not
             if export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
                 trans, rot, sca = (export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].armature].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()

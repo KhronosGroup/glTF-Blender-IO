@@ -99,7 +99,7 @@ def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, e
         if all([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
             return False
     elif filter_type == "NONE":
-        # No check 
+        # No check
         pass
 
     return True

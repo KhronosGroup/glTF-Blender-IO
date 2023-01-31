@@ -108,4 +108,3 @@ def _placeholder_image(name, path):
     image.filepath = path
     image.source = 'FILE'
     return image
-

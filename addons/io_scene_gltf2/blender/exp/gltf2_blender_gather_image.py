@@ -198,7 +198,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
         return __get_image_data_specular(sockets, results, export_settings)
     else:
         return __get_image_data_mapping(sockets, results, export_settings)
-    
+
 def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
     """
     Simple mapping
@@ -277,7 +277,7 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
 def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
     """
     calculating Specular Texture, settings needed data
-    """   
+    """
     from io_scene_gltf2.blender.exp.gltf2_blender_texture_specular import specular_calculation
     composed_image = ExportImage()
     composed_image.set_calc(specular_calculation)

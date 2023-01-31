@@ -45,7 +45,7 @@ def export_original_specular(blender_material, export_settings):
         fac = gltf2_blender_get.get_factor_from_socket(original_specular_socket, kind='VALUE')
         if fac is not None and fac != 1.0:
             specular_extension['specularFactor'] = fac
-        
+
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(original_specular_socket):
             original_specular_texture, original_specular_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
@@ -78,7 +78,7 @@ def export_original_specular(blender_material, export_settings):
             specular_extension['specularColorTexture'] = original_specularcolor_texture
             if original_specularcolor_use_active_uvmap:
                 use_actives_uvmaps.append("specularColorTexture")
-    
+
     return Extension('KHR_materials_specular', specular_extension, False), use_actives_uvmaps
 
 def export_specular(blender_material, export_settings):
@@ -128,7 +128,7 @@ def export_specular(blender_material, export_settings):
                 l = luminance(c)
                 if l == 0:
                     return np.array(c)
-                return np.array([c[0] / l, c[1] / l, c[2] / l])            
+                return np.array([c[0] / l, c[1] / l, c[2] / l])
 
             f0_from_ior = ((ior - 1)/(ior + 1))**2
             if f0_from_ior == 0:
@@ -162,8 +162,8 @@ def export_specular(blender_material, export_settings):
                     primary_socket = transmission_socket
 
         specularColorTexture, use_active_uvmap, specularColorFactor = gltf2_blender_gather_texture_info.gather_texture_info(
-            primary_socket, 
-            sockets, 
+            primary_socket,
+            sockets,
             export_settings,
             filter_type='ANY')
         if specularColorTexture is None:
@@ -177,7 +177,7 @@ def export_specular(blender_material, export_settings):
 
         if specularColorFactor is not None:
             specular_extension['specularColorFactor'] = specularColorFactor
-            
+
 
     specular_extension = Extension('KHR_materials_specular', specular_extension, False) if specular_ext_enabled else None
     return specular_extension, use_actives_uvmaps
