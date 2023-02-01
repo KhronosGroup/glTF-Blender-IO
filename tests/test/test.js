@@ -638,6 +638,19 @@ describe('Exporter', function() {
                 assert.equalEpsilon(transform.offset[1], 0.2272593289624576);
             });
 
+            it('export mirror wrapping', function() {
+                let gltfPath = path.resolve(outDirPath, '09_tex_wrapping_mirror.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const materials = asset.materials;
+                assert.deepStrictEqual(materials.length, 2);
+                assert.deepStrictEqual(asset.samplers.length, 1);
+
+                const samp = asset.samplers[0];
+                assert.deepStrictEqual(samp.wrapS, 33648);  // MIRRORED_REPEAT
+                assert.deepStrictEqual(samp.wrapT, 33648);  // MIRRORED_REPEAT
+            });
+
             it('exports custom normals', function() {
                 let gltfPath = path.resolve(outDirPath, '10_custom_normals.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
@@ -801,7 +814,7 @@ describe('Exporter', function() {
 
                 const mat_volume = asset.materials.find(mat => mat.name === 'Volume');
                 assert.ok("KHR_materials_volume" in mat_volume.extensions);
-                
+
                 const mat_thickness_zero = asset.materials.find(mat => mat.name === 'ThicknessZero');
                 assert.ok(!("KHR_materials_volume" in mat_thickness_zero.extensions));
 
@@ -816,7 +829,7 @@ describe('Exporter', function() {
 
                 const ior_2_no_transmission = asset.materials.find(mat => mat.name === 'ior_2_no_transmission');
                 assert.strictEqual(ior_2_no_transmission.extensions, undefined);
-                
+
                 const ior_2 = asset.materials.find(mat => mat.name === 'ior_2');
                 assert.ok("KHR_materials_ior" in ior_2.extensions);
 
@@ -834,7 +847,7 @@ describe('Exporter', function() {
 
                 const variant_blue_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Blue");
                 const variant_red_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Red");
-                
+
 
                 const mat_blue_index = asset.materials.findIndex(mat => mat.name === "Blue");
                 const mat_green_index = asset.materials.findIndex(mat => mat.name === "Green");
@@ -993,7 +1006,7 @@ describe('Exporter', function() {
                 const _vertex_vector_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_VECTOR, bufferCache);
                 assert.strictEqual(_vertex_vector.count, 24);
                 const expected_vertex_vector = [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 6.0, 7.0, 8.0, 6.0, 7.0, 8.0,
-                                                 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 
+                                                 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0,
                                                  18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0];
                 assert.deepStrictEqual(_vertex_vector_data, expected_vertex_vector);
 
@@ -1708,7 +1721,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
                 const transmissionFactor = asset.materials.filter(m => m.name === "transmissionFactor")[0];
                 assert.equalEpsilon(transmissionFactor.extensions["KHR_materials_transmission"]["transmissionFactor"], 0.8);
-                
+
                 const transmissionTexture = asset.materials.filter(m => m.name === "transmissionTexture")[0];
                 assert.equalEpsilon(transmissionTexture.extensions["KHR_materials_transmission"]["transmissionFactor"], 1.0);
                 assert.ok(transmissionTexture.extensions["KHR_materials_transmission"]["transmissionTexture"]["index"] <= 1);
@@ -1812,7 +1825,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
                 const ior_2_no_transmission = asset.materials.find(mat => mat.name === 'ior_2_no_transmission');
                 assert.strictEqual(ior_2_no_transmission.extensions, undefined);
-                
+
                 const ior_2 = asset.materials.find(mat => mat.name === 'ior_2');
                 assert.ok("KHR_materials_ior" in ior_2.extensions);
 
@@ -1820,7 +1833,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.ok("KHR_materials_ior" in ior_145.extensions);
 
                 const ior_15 = asset.materials.find(mat => mat.name === 'ior_1.5');
-                assert.ok(!("KHR_materials_ior" in ior_15.extensions));              
+                assert.ok(!("KHR_materials_ior" in ior_15.extensions));
 
             });
 
@@ -1832,7 +1845,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
                 const variant_blue_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Blue");
                 const variant_red_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Red");
-                
+
 
                 const mat_blue_index = asset.materials.findIndex(mat => mat.name === "Blue");
                 const mat_green_index = asset.materials.findIndex(mat => mat.name === "Green");
@@ -1970,10 +1983,10 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.ok("specularTexture" in mat_SpecTex.extensions['KHR_materials_specular']);
                 assert.ok(!("specularColorTexture" in mat_SpecTex.extensions['KHR_materials_specular']));
 
-    
+
                 assert.equalEpsilon(mat_SpecTexFac.extensions['KHR_materials_specular']['specularFactor'], 0.75);
                 assert.ok("specularTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']);
-                assert.ok(!("specularColorTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']));                
+                assert.ok(!("specularColorTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']));
 
                 if ('specularFactor' in mat_SpecColorTex.extensions['KHR_materials_specular']) {
                     assert.equalEpsilon(mat_SpecColorTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
@@ -2058,7 +2071,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.ok(!("specularTexture" in mat_SpecTex.extensions['KHR_materials_specular']));
                 assert.ok(!("specularColorTexture" in mat_SpecTex.extensions['KHR_materials_specular']));
 
-    
+
                 if ('specularFactor' in mat_SpecTexFac.extensions['KHR_materials_specular']) {
                     assert.equalEpsilon(mat_SpecTexFac.extensions['KHR_materials_specular']['specularFactor'], 1.0);
                 } else {
@@ -2084,9 +2097,9 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 }
                 assert.equalEpsilonArray(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularColorFactor'], [0.0, 0.0, 0.0]);
                 assert.ok(!("specularTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
-                assert.ok(!("specularColorTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));            
+                assert.ok(!("specularColorTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
 
-            }); 
+            });
 
             it('roundtrips factors', function() {
                 let dir = '22_factors';
