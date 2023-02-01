@@ -80,11 +80,13 @@ def texture(
         wrap_s = TextureWrap.Repeat
     if wrap_t is None:
         wrap_t = TextureWrap.Repeat
-    # If wrapping is REPEATxREPEAT or CLAMPxCLAMP, just set tex_img.extension
-    if (wrap_s, wrap_t) == (TextureWrap.Repeat, TextureWrap.Repeat):
+    # If wrapping is the same in both directions, just set tex_img.extension
+    if wrap_s == wrap_t == TextureWrap.Repeat:
         tex_img.extension = 'REPEAT'
-    elif (wrap_s, wrap_t) == (TextureWrap.ClampToEdge, TextureWrap.ClampToEdge):
+    elif wrap_s == wrap_t == TextureWrap.ClampToEdge:
         tex_img.extension = 'EXTEND'
+    elif wrap_s == wrap_t == TextureWrap.MirroredRepeat:
+        tex_img.extension = 'MIRROR'
     else:
         # Otherwise separate the UV components and use math nodes to compute
         # the wrapped UV coordinates
