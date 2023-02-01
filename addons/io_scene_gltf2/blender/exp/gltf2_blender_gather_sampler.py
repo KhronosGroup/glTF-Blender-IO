@@ -103,6 +103,9 @@ def __gather_wrap(blender_shader_node, export_settings):
         wrap_s = TextureWrap.Repeat
     wrap_t = wrap_s
 
+    # Starting Blender 3.5, MIRROR is now an extension of image node
+    # So this manual uv wrapping trick is no more usefull
+    # Keeping it for now, for compatibility
     # Take manual wrapping into account
     result = detect_manual_uv_wrapping(blender_shader_node)
     if result:
