@@ -606,7 +606,7 @@ Unlike glTF extensions, custom properties (extras) have no defined namespace,
 and may be used for any user-specific or application-specific purposes.
 
 
-Animation
+Animations
 =========
 
 A glTF animation changes the transforms of objects or pose bones, or the values of shape keys.
@@ -897,7 +897,7 @@ Sampling Rate
 Always Sample Animations
    Apply sampling to all animations.
 Group by NLA Track
-   Whether to export NLA strip animations. (See `Animation`_ )
+   Whether to export NLA strip animations. (See `Animations`_ )
 Optimize Animation Size
    Reduce exported file-size by removing duplicate keyframes.
 Export all Armature Actions
