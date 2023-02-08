@@ -829,7 +829,7 @@ Tangents
 Vertex Colors
    Export Color Attributes with meshes.
 Attributes
-   Export Attributes with meshes.
+   Export Attributes with meshes, when the name starts with underscore.
 Loose Edges
    Export loose edges as lines, using the material from the first material slot.
 Loose Points
