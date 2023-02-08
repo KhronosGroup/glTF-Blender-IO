@@ -744,6 +744,11 @@ Import
 
 Pack Images
    Pack all images into the blend-file.
+Merge Vertices
+   The glTF format requires discontinuous normals, UVs, and other vertex attributes to be stored as separate vertices,
+   as required for rendering on typical graphics hardware.
+   This option attempts to combine co-located vertices where possible.
+   Currently cannot combine verts with different normals.
 Shading
    How normals are computed during import.
 Guess Original Bind Pose
@@ -753,6 +758,11 @@ Bone Direction
    Changes the heuristic the importer uses to decide where to place bone tips.
    Note that the Fortune setting may cause inaccuracies in models that use non-uniform scaling.
    Otherwise this is purely aesthetic.
+Lighting Mode
+   Optional backwards compatibility for non-standard render engines. Applies to lights.
+   Standard: Physically-based glTF lighting units (cd, lx, nt).
+   Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
+   Raw: Raw (Deprecated)', 'Blender lighting strengths with no conversion
 
 
 Export
@@ -760,8 +770,12 @@ Export
 
 Format
    See: `File Format Variations`_.
+Keep Original
+   For glTF Separate file format only. Keep original textures files if possible.
+   Warning: if you use more than one texture, where pbr standard requires only one,
+   only one texture will be used.This can lead to unexpected results
 Textures
-   Folder to place texture files in. Relative to the gltf-file.
+   For glTF Separate file format only. Folder to place texture files in. Relative to the gltf-file.
 Copyright
    Legal rights and conditions for the model.
 Remember Export Settings
@@ -780,6 +794,9 @@ Renderable Objects
    Export renderable objects only.
 Active Collection
    Export objects from active collection only.
+Include Nested Collections
+   Only when Active Collection is On.
+   When On, export recursively objects on nested active collections.
 Active Scene
    Export active scene only.
 Custom Properties
@@ -797,8 +814,8 @@ Y Up
    Export using glTF convention, +Y up.
 
 
-Geometry
-^^^^^^^^
+Data - Mesh
+^^^^^^^^^^^
 
 Apply Modifiers
    Export objects using the evaluated mesh, meaning the resulting mesh after all
@@ -811,10 +828,16 @@ Tangents
    Export vertex tangents with meshes.
 Vertex Colors
    Export Color Attributes with meshes.
+Attributes
+   Export Attributes with meshes.
 Loose Edges
    Export loose edges as lines, using the material from the first material slot.
 Loose Points
    Export loose points as glTF points, using the material from the first material slot.
+
+Data - Material
+^^^^^^^^^^^^^^^
+
 Materials
    Export full materials, only placeholders (all primitives but without materials),
    or does not export materials. (In that last case, primitive are merged, lossing material slot information).
@@ -822,6 +845,16 @@ Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
    If None is chosen, materials are exported without textures.
+JPEG Quality
+   When exporting jpeg files, the quality of the exported file.
+Export Original PBR Specular
+   When On, specular data are exported from glTF Material Output node,
+   Instead of using sockets from Principled BSDF Node.
+Lighting Mode
+   Optional backwards compatibility for non-standard render engines. Applies to lights.
+   Standard: Physically-based glTF lighting units (cd, lx, nt).
+   Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
+   Raw: Raw (Deprecated)', 'Blender lighting strengths with no conversion
 
 
 Compression
@@ -864,11 +897,17 @@ Sampling Rate
 Always Sample Animations
    Apply sampling to all animations.
 Group by NLA Track
-   Whether to export NLA strip animations.
+   Whether to export NLA strip animations. (See `Animation`_ )
 Optimize Animation Size
    Reduce exported file-size by removing duplicate keyframes.
+Export all Armature Actions
+   Export all actions, bound to a single armature.
+   Warning: Option does not support exports including multiple armatures.
 Export Deformation Bones Only
    Export deformation bones only.
+Reset pose bones between actions
+   Reset pose bones between each action exported.
+   This is needed when some bones are not keyed on some animations.
 
 
 Shape Keys
@@ -889,6 +928,9 @@ Export skinning (armature) data.
 
 Include All Bone Influences
    Allow more than 4 joint vertex influences. Models may appear incorrectly in many viewers.
+Export Deformation Bones Only
+   Export Deformation bones only, not other bones.
+   Animation for deformation bones are baked.
 
 
 Contributing
