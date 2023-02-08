@@ -762,7 +762,7 @@ Lighting Mode
    Optional backwards compatibility for non-standard render engines. Applies to lights.
    Standard: Physically-based glTF lighting units (cd, lx, nt).
    Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
-   Raw: Raw (Deprecated)', 'Blender lighting strengths with no conversion
+   Raw (Deprecated): Blender lighting strengths with no conversion
 
 
 Export
@@ -854,7 +854,7 @@ Lighting Mode
    Optional backwards compatibility for non-standard render engines. Applies to lights.
    Standard: Physically-based glTF lighting units (cd, lx, nt).
    Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
-   Raw: Raw (Deprecated)', 'Blender lighting strengths with no conversion
+   Raw (Deprecated): Blender lighting strengths with no conversion
 
 
 Compression
