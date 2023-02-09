@@ -320,7 +320,10 @@ class GlTF2Exporter:
             return image
 
         # extensions
-        if isinstance(node, gltf2_io_extensions.Extension):
+        # I don't know why, but after reloading script, this condition failed
+        # So using name comparison, instead of isinstance
+        #if isinstance(node, gltf2_io_extensions.Extension):
+        if type(node).name == gltf2_io_extensions.Extension.name:
             extension = self.__traverse(node.extension)
             self.__append_unique_and_get_index(self.__gltf.extensions_used, node.name)
             if node.required:
