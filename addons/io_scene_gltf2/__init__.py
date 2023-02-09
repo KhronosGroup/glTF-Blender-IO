@@ -298,7 +298,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         'Do not export materials, but write multiple primitive groups per mesh, keeping material slot information'),
         ('NONE', 'No export',
         'Do not export materials, and combine mesh primitive groups, losing material slot information')),
-        description='Export materials ',
+        description='Export materials',
         default='EXPORT'
     )
 
@@ -452,7 +452,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_optimize_animation_size: BoolProperty(
         name='Optimize Animation Size',
         description=(
-            "Reduce exported file-size by removing duplicate keyframes"
+            "Reduce exported file size by removing duplicate keyframes "
             "(can cause problems with stepped animation)"
         ),
         default=False
