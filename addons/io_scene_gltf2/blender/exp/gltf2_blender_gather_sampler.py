@@ -97,10 +97,16 @@ def __gather_wrap(blender_shader_node, export_settings):
     elif blender_shader_node.extension == 'CLIP':
         # Not possible in glTF, but ClampToEdge is closest
         wrap_s = TextureWrap.ClampToEdge
+    elif blender_shader_node.extension == 'MIRROR':
+        wrap_s = TextureWrap.MirroredRepeat
     else:
         wrap_s = TextureWrap.Repeat
     wrap_t = wrap_s
 
+    # Starting Blender 3.5, MIRROR is now an extension of image node
+    # So this manual uv wrapping trick is no more usefull for MIRROR x MIRROR
+    # But still works for old files
+    # Still needed for heterogen heterogeneous sampler, like MIRROR x REPEAT, for example
     # Take manual wrapping into account
     result = detect_manual_uv_wrapping(blender_shader_node)
     if result:

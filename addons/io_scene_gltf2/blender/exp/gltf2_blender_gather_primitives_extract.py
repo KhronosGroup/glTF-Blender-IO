@@ -15,6 +15,7 @@
 import numpy as np
 from mathutils import Vector
 from ...io.com.gltf2_io_debug import print_console
+from ...io.com.gltf2_io_constants import NORMALS_ROUNDING_DIGIT
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...io.com import gltf2_io_constants
 from ..com import gltf2_blender_conversion
@@ -707,10 +708,13 @@ class PrimitiveCreator:
 
         self.normals = self.normals.reshape(len(self.blender_mesh.loops), 3)
 
+        self.normals = np.round(self.normals, NORMALS_ROUNDING_DIGIT)
+
         self.morph_normals = []
         for key_block in key_blocks:
             ns = np.array(key_block.normals_split_get(), dtype=np.float32)
             ns = ns.reshape(len(self.blender_mesh.loops), 3)
+            ns = np.round(ns, NORMALS_ROUNDING_DIGIT)
             self.morph_normals.append(ns)
 
         # Transform for skinning

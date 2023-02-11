@@ -180,8 +180,8 @@ class VExportTree:
             # If object is parented to bone, and Rest pose is used, we need to keep the world matrix
             # Of the rest pose, not the current world matrix
             if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_current_frame'] is False:
-                blender_bone = self.nodes[parent_uuid].blender_bone
-                node.matrix_world = (blender_bone.matrix @ blender_bone.bone.matrix_local.inverted_safe()).inverted_safe() @ node.matrix_world
+                _blender_bone = self.nodes[parent_uuid].blender_bone
+                node.matrix_world = (_blender_bone.matrix @ _blender_bone.bone.matrix_local.inverted_safe()).inverted_safe() @ node.matrix_world
 
             if node.blender_type == VExportNode.CAMERA and self.export_settings['gltf_cameras']:
                 if self.export_settings['gltf_yup']:
