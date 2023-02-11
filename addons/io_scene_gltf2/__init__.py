@@ -108,6 +108,11 @@ def on_export_format_changed(self, context):
         self.export_format,
     )
 
+    # Also change the filter
+    sfile.params.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
+    # Force update of file list, has update the filter does not update the real file list
+    bpy.ops.file.refresh()
+
 
 class ConvertGLTF2_Base:
     """Base class containing options that should be exposed during both import and export."""
@@ -157,7 +162,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             'Output format and embedding options. Binary is most efficient, '
             'but JSON (embedded or separate) may be easier to edit later'
         ),
-        default='GLB',
+        default='GLB', #Warning => If you change the default, need to change the default filter too
         update=on_export_format_changed,
     )
 
@@ -1169,7 +1174,7 @@ class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
 
     filename_ext = ''
 
-    filter_glob: StringProperty(default='*.glb;*.gltf', options={'HIDDEN'})
+    filter_glob: StringProperty(default='*.glb', options={'HIDDEN'})
 
 
 def menu_func_export(self, context):
