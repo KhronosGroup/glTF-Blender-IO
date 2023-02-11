@@ -322,7 +322,7 @@ class GlTF2Exporter:
         # extensions
         # I don't know why, but after reloading script, this condition failed
         # So using name comparison, instead of isinstance
-        #if isinstance(node, gltf2_io_extensions.Extension):
+        # if isinstance(node, gltf2_io_extensions.Extension):
         if isinstance(node, gltf2_io_extensions.Extension) \
                 or (node and hasattr(type(node), "extension")):
             extension = self.__traverse(node.extension)
