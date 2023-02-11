@@ -17,6 +17,8 @@ from typing import List, Dict, Any
 
 class Extension:
     """Container for extensions. Allows to specify requiredness"""
+    extension = True
+
     def __init__(self, name: str, extension: Dict[str, Any], required: bool = True):
         self.name = name
         self.extension = extension
