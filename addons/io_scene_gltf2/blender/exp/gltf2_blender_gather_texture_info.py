@@ -99,7 +99,7 @@ def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, e
         if all([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
             return False
     elif filter_type == "NONE":
-        # No check 
+        # No check
         pass
 
     return True
@@ -180,7 +180,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
         node_tree = node.id_data
         for mesh in bpy.data.meshes:
             for material in mesh.materials:
-                if material.node_tree == node_tree:
+                if material and material.node_tree == node_tree:
                     i = mesh.uv_layers.find(node.uv_map)
                     if i >= 0:
                         texcoord_idx = i

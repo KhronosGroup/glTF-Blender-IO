@@ -262,7 +262,7 @@ def get_factor_from_socket(socket, kind):
         if kind == 'VALUE':
             if node.type == 'MATH' and node.operation == 'MULTIPLY':
                 x1 = get_const_from_socket(node.inputs[0], kind)
-                x2 = get_const_from_socket(node.inputs[1], kind)               
+                x2 = get_const_from_socket(node.inputs[1], kind)
         if x1 is not None and x2 is None: return x1
         if x2 is not None and x1 is None: return x2
 

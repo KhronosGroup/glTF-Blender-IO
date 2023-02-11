@@ -17,6 +17,7 @@ import urllib.parse
 from typing import List
 
 from ... import get_version_string
+from io_scene_gltf2.io.com.gltf2_io_path import path_to_uri
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.io.com import gltf2_io_extensions
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -247,7 +248,7 @@ class GlTF2Exporter:
             abs_path,
             start=self.export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
         )
-        return _path_to_uri(rel_path)
+        return path_to_uri(rel_path)
 
     @classmethod
     def __get_key_path(cls, d: dict, keypath: List[str], default):
@@ -319,7 +320,11 @@ class GlTF2Exporter:
             return image
 
         # extensions
-        if isinstance(node, gltf2_io_extensions.Extension):
+        # I don't know why, but after reloading script, this condition failed
+        # So using name comparison, instead of isinstance
+        # if isinstance(node, gltf2_io_extensions.Extension):
+        if isinstance(node, gltf2_io_extensions.Extension) \
+                or (node and hasattr(type(node), "extension")):
             extension = self.__traverse(node.extension)
             self.__append_unique_and_get_index(self.__gltf.extensions_used, node.name)
             if node.required:
@@ -336,8 +341,3 @@ class GlTF2Exporter:
 
         # do nothing for any type that does not match a glTF schema (primitives)
         return node
-
-def _path_to_uri(path):
-    path = os.path.normpath(path)
-    path = path.replace(os.sep, '/')
-    return urllib.parse.quote(path)

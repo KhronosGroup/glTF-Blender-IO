@@ -17,6 +17,7 @@ import typing
 import os
 
 from . import gltf2_blender_export_keys
+from io_scene_gltf2.io.com.gltf2_io_path import path_to_uri
 from io_scene_gltf2.io.com import gltf2_io
 from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
 from io_scene_gltf2.io.exp import gltf2_io_binary_data
@@ -74,12 +75,6 @@ def gather_image(
 
 def __gather_original_uri(original_uri, export_settings):
 
-    def _path_to_uri(path):
-        import urllib
-        path = os.path.normpath(path)
-        path = path.replace(os.sep, '/')
-        return urllib.parse.quote(path)
-
     path_to_image = bpy.path.abspath(original_uri)
     if not os.path.exists(path_to_image): return None
     try:
@@ -90,7 +85,7 @@ def __gather_original_uri(original_uri, export_settings):
     except ValueError:
         # eg. because no relative path between C:\ and D:\ on Windows
         return None
-    return _path_to_uri(rel_path)
+    return path_to_uri(rel_path)
 
 
 @cached
@@ -203,7 +198,7 @@ def __get_image_data(sockets, export_settings) -> ExportImage:
         return __get_image_data_specular(sockets, results, export_settings)
     else:
         return __get_image_data_mapping(sockets, results, export_settings)
-    
+
 def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
     """
     Simple mapping
@@ -282,7 +277,7 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
 def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
     """
     calculating Specular Texture, settings needed data
-    """   
+    """
     from io_scene_gltf2.blender.exp.gltf2_blender_texture_specular import specular_calculation
     composed_image = ExportImage()
     composed_image.set_calc(specular_calculation)

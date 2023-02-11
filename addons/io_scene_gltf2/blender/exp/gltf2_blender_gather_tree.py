@@ -192,8 +192,8 @@ class VExportTree:
             # If object is parented to bone, and Rest pose is used, we need to keep the world matrix
             # Of the rest pose, not the current world matrix
             if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_current_frame'] is False:
-                blender_bone = self.nodes[parent_uuid].blender_bone
-                node.matrix_world = (blender_bone.matrix @ blender_bone.bone.matrix_local.inverted_safe()).inverted_safe() @ node.matrix_world
+                _blender_bone = self.nodes[parent_uuid].blender_bone
+                node.matrix_world = (_blender_bone.matrix @ _blender_bone.bone.matrix_local.inverted_safe()).inverted_safe() @ node.matrix_world
 
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 if self.export_settings[gltf2_blender_export_keys.YUP]:
@@ -264,7 +264,7 @@ class VExportTree:
 
         # Object parented to bone
         if blender_bone is not None:
-            for child_object in [c for c in blender_children[blender_object] if c.parent_bone is not None and c.parent_bone == blender_bone.name]:
+            for child_object in [c for c in blender_children[blender_object] if c.parent_type == "BONE" and c.parent_bone is not None and c.parent_bone == blender_bone.name]:
                 self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, blender_children)
 
         # Duplis

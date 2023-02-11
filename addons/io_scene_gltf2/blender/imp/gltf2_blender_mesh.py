@@ -149,7 +149,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for attr in attributes:
         attribute_data.append(
             np.empty(
-                dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type), 
+                dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type),
                 shape=(0, DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type)))
                 )
 
@@ -437,7 +437,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
                 for mapping in prim.extensions['KHR_materials_variants']['mappings']:
                     # Store, for each variant, the material link to this primitive
-                    
+
                     variant_primitive = mesh.gltf2_variant_mesh_data.add()
                     variant_primitive.material_slot_index = material_index
                     if 'material' not in mapping.keys():

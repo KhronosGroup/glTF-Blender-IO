@@ -20,9 +20,9 @@ from .gltf2_blender_image import BlenderImage
 from ..exp.gltf2_blender_image import TmpImageGuard, make_temp_image_copy
 
 
-def specular(mh, location_specular, 
-                 location_specular_tint, 
-                 specular_socket, 
+def specular(mh, location_specular,
+                 location_specular_tint,
+                 specular_socket,
                  specular_tint_socket,
                  original_specular_socket,
                  original_specularcolor_socket,
@@ -99,9 +99,9 @@ def specular(mh, location_specular,
     # Before creating converted textures,
     # Also plug non converted data into glTF PBR Non Converted Extensions node
     original_specular(  mh,
-                        specular_factor, 
-                        tex_specular_info, 
-                        specular_color_factor, 
+                        specular_factor,
+                        tex_specular_info,
+                        specular_color_factor,
                         tex_specular_color_info,
                         original_specular_socket,
                         original_specularcolor_socket,
@@ -109,7 +109,7 @@ def specular(mh, location_specular,
                         location_original_specularcolor
                         )
 
-    
+
     if not use_texture:
 
         def luminance(c):
@@ -124,7 +124,11 @@ def specular(mh, location_specular,
 
         f0_from_ior = ((ior - 1)/(ior + 1))**2
         lum_specular_color = luminance(specular_color_factor)
-        blender_specular = ((lum_specular_color - transmission_factor) / (1 - transmission_factor)) * (1 / 0.08) * f0_from_ior
+        if transmission_factor != 1.0:
+            blender_specular = ((lum_specular_color - transmission_factor) / (1 - transmission_factor)) * (1 / 0.08) * f0_from_ior
+        else:
+            # Avoid division by 0
+            blender_specular = 1.0
         if not all([i == 0 for i in normalize(base_color) - 1]):
             blender_specular_tint = luminance((normalize(specular_color_factor) - 1) / (normalize(base_color) - 1))
             if blender_specular_tint < 0 or blender_specular_tint > 1:
@@ -172,14 +176,14 @@ def specular(mh, location_specular,
             specular_image_name: 'spec'
         }
         images = [(name, bpy.data.images[name]) for name in [base_color_image_name, transmission_image_name, specularcolor_image_name, specular_image_name] if name is not None]
-        
+
         width = max(image[1].size[0] for image in images)
         height = max(image[1].size[1] for image in images)
 
         buffers = {}
         for name, image in images:
             tmp_buf = np.empty(width * height * 4, np.float32)
-            
+
             if image.size[0] == width and image.size[1] == height:
                 image.pixels.foreach_get(tmp_buf)
             else:
@@ -224,7 +228,11 @@ def specular(mh, location_specular,
 
         f0_from_ior = ((ior - 1)/(ior + 1))**2
         lum_specular_color = stack3(luminance(buffers['speccolor']))
-        blender_specular = ((lum_specular_color - buffers['transmission']) / (1 - buffers['transmission'])) * (1 / 0.08) * f0_from_ior
+        if transmission_factor != 1.0:
+            blender_specular = ((lum_specular_color - buffers['transmission']) / (1 - buffers['transmission'])) * (1 / 0.08) * f0_from_ior
+        else:
+            # Avoid division by 0
+            blender_specular = np.full((width, height, 3), 1.0)
         if not np.all(normalize(buffers['basecolor']) - 1 == 0.0):
             blender_specular_tint = luminance((normalize(buffers['speccolor']) - 1) / (normalize(buffers['basecolor']) - 1))
             np.nan_to_num(blender_specular_tint, copy=False)
@@ -268,7 +276,7 @@ def specular(mh, location_specular,
                 color_socket=specular_socket,
                 forced_image=blender_image_spec
             )
-    
+
         if blender_specular_tint_tex_not_needed == True:
             lum = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
             specular_tint_socket.default_value = lum(blender_specular_tint[0][0])
@@ -278,7 +286,7 @@ def specular(mh, location_specular,
             blender_image_tint = bpy.data.images.new('Specular Tint', width, height)
             blender_image_tint.pixels.foreach_set(np.float32(blender_specular_tint))
             blender_image_tint.pack()
-    
+
             # Create Textures in Blender
             tex_info = tex_specular_color_info
             if tex_info is None:
@@ -300,8 +308,8 @@ def specular(mh, location_specular,
 
 def original_specular(  mh,
                         specular_factor,
-                        tex_specular_info, 
-                        specular_color_factor, 
+                        tex_specular_info,
+                        specular_color_factor,
                         tex_specular_color_info,
                         original_specular_socket,
                         original_specularcolor_socket,
@@ -358,7 +366,7 @@ def original_specular(  mh,
                 original_specularcolor_socket = node.inputs[6]
                 node.inputs[7].default_value = specular_color_factor
                 x_specularcolor -= 200
-            
+
             texture(
                 mh,
                 tex_info=tex_specular_color_info,

@@ -14,11 +14,9 @@
 
 import bpy
 import os
-import tempfile
-from os.path import dirname, join, isfile, basename, normpath
-import urllib.parse
-import re
+from os.path import dirname, join, basename
 
+from ...io.com.gltf2_io_path import uri_to_path
 from ...io.imp.gltf2_io_binary import BinaryData
 from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
@@ -58,7 +56,7 @@ def create_from_file(gltf, img_idx):
 
     img = gltf.data.images[img_idx]
 
-    path = join(dirname(gltf.filename), _uri_to_path(img.uri))
+    path = join(dirname(gltf.filename), uri_to_path(img.uri))
     path = os.path.abspath(path)
     if bpy.data.is_saved and bpy.context.preferences.filepaths.use_relative_paths:
         try:
@@ -110,7 +108,3 @@ def _placeholder_image(name, path):
     image.filepath = path
     image.source = 'FILE'
     return image
-
-def _uri_to_path(uri):
-    uri = urllib.parse.unquote(uri)
-    return normpath(uri)

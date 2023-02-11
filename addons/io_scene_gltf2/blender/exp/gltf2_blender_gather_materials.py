@@ -272,7 +272,7 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     sheen_extension, use_actives_uvmap_sheen = export_sheen(blender_material, export_settings)
     if sheen_extension:
         extensions["KHR_materials_sheen"] = sheen_extension
-        actives_uvmaps.extend(use_actives_uvmap_sheen)   
+        actives_uvmaps.extend(use_actives_uvmap_sheen)
 
     # KHR_materials_ior
     # Keep this extension at the end, because we export it only if some others are exported
