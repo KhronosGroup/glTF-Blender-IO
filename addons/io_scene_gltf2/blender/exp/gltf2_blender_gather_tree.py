@@ -177,9 +177,9 @@ class VExportTree:
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
 
-            # If object is parented to bone, and Rest pose is used, we need to keep the world matrix
-            # Of the rest pose, not the current world matrix
-            if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_current_frame'] is False:
+            # If object is parented to bone, and Rest pose is used for Armature, we need to keep the world matrix transformed relative
+            # Of the bone rest pose, not the current world matrix
+            if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_rest_position_armature'] is True:
                 _blender_bone = self.nodes[parent_uuid].blender_bone
                 node.matrix_world = (_blender_bone.matrix @ _blender_bone.bone.matrix_local.inverted_safe()).inverted_safe() @ node.matrix_world
 
