@@ -261,7 +261,7 @@ When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``K
 extension will be included in the export. The Sheen Color will be exported from Color socket of Vevlet node.
 Sheen Roughness will be exported from Sigma socket.
 
-If a Sheen Rougness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
+If a Sheen Roughness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-sheen.png
 
@@ -344,7 +344,7 @@ can be used to blur the transmission, like frosted glass.
 .. note::
 
    If you want to enable refraction on your model, ``KHR_materials_transmission`` must also
-   be used in addtion with ``KHR_materials_volume``. See the dedicated *Volume* part of
+   be used in addition with ``KHR_materials_volume``. See the dedicated *Volume* part of
    the documentation.
 
 .. warning::
@@ -434,7 +434,7 @@ If you want to check primitive by primitive, what are Variants used, you can go 
 The *glTF Material Variants* tab refers to the active material Slot and Material used by this slot.
 You can see every Variants that are using this material for the given Slot/Primitive.
 
-You can also assign material to Variants from this tab, but recommandation is to perform it from 3D View tab.
+You can also assign material to Variants from this tab, but recommendation is to perform it from 3D View tab.
 
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -607,7 +607,7 @@ and may be used for any user-specific or application-specific purposes.
 
 
 Animations
-=========
+==========
 
 A glTF animation changes the transforms of objects or pose bones, or the values of shape keys.
 One animation can affect multiple objects, and there can be multiple animations in a glTF file.
