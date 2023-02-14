@@ -92,6 +92,11 @@ class VExportTree:
 
         self.tree_troncated = False
 
+        self.axis_basis_change = Matrix.Identity(4)
+        if self.export_settings[gltf2_blender_export_keys.YUP]:
+            self.axis_basis_change = Matrix(
+                ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
+
     def add_node(self, node):
         self.nodes[node.uuid] = node
 
@@ -179,11 +184,14 @@ class VExportTree:
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
 
-            # If object is parented to bone, and Rest pose is used, we need to keep the world matrix
-            # Of the rest pose, not the current world matrix
+            # If object is parented to bone, and Rest pose is used, we need to keep the world matrix relative to rest pose,
+            # not the current world matrix (relation to pose)
             if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_current_frame'] is False:
                 _blender_bone = self.nodes[parent_uuid].blender_bone
-                node.matrix_world = (_blender_bone.matrix @ _blender_bone.bone.matrix_local.inverted_safe()).inverted_safe() @ node.matrix_world
+                _pose = self.nodes[self.nodes[parent_uuid].armature].matrix_world @ _blender_bone.matrix @ self.axis_basis_change
+                _rest = self.nodes[self.nodes[parent_uuid].armature].matrix_world @ _blender_bone.bone.matrix_local @ self.axis_basis_change
+                _delta = _pose.inverted_safe() @ node.matrix_world
+                node.matrix_world = _rest @ _delta
 
             if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
                 if self.export_settings[gltf2_blender_export_keys.YUP]:
@@ -204,11 +212,7 @@ class VExportTree:
             else:
                 # Use edit bone for TRS --> REST pose will be used
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.bone.matrix_local
-            axis_basis_change = Matrix.Identity(4)
-            if self.export_settings[gltf2_blender_export_keys.YUP]:
-                axis_basis_change = Matrix(
-                    ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-            node.matrix_world = node.matrix_world @ axis_basis_change
+            node.matrix_world = node.matrix_world @ self.axis_basis_change
 
         # Force empty ?
         # For duplis, if instancer is not display, we should create an empty
@@ -443,11 +447,7 @@ class VExportTree:
                 added_armatures.append(n.armature) # Make sure to not insert 2 times the neural bone
 
                 # First add a new node
-                axis_basis_change = Matrix.Identity(4)
-                if self.export_settings[gltf2_blender_export_keys.YUP]:
-                    axis_basis_change = Matrix(((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-
-                trans, rot, sca = axis_basis_change.decompose()
+                trans, rot, sca = self.axis_basis_change.decompose()
                 translation, rotation, scale = (None, None, None)
                 if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
                     translation = [trans[0], trans[1], trans[2]]
@@ -478,13 +478,8 @@ class VExportTree:
                 # Need to add an InverseBindMatrix
                 array = BinaryData.decode_accessor_internal(n.node.skin.inverse_bind_matrices)
 
-                axis_basis_change = Matrix.Identity(4)
-                if self.export_settings[gltf2_blender_export_keys.YUP]:
-                    axis_basis_change = Matrix(
-                        ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
-
                 inverse_bind_matrix = (
-                    axis_basis_change @ self.nodes[n.armature].matrix_world_armature).inverted_safe()
+                    self.axis_basis_change @ self.nodes[n.armature].matrix_world_armature).inverted_safe()
 
                 matrix = []
                 for column in range(0, 4):
