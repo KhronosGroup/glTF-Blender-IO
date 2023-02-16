@@ -174,7 +174,7 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
         if keyframe.out_tangent is not None:
             # we can directly transform the tangent as it currently is represented by a control point
             out_tangent = gltf2_blender_math.transform(keyframe.out_tangent, target_datapath, transform, False)
-            
+
             # the tangent in glTF is relative to the keyframe value and uses seconds
             if not isinstance(value, list):
                 out_tangent = fps * (out_tangent - value)

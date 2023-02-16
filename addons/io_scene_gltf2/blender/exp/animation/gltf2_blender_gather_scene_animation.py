@@ -75,7 +75,7 @@ def gather_scene_animations(export_settings):
             if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
                     and blender_object.data is not None \
                     and blender_object.data.shape_keys is not None:
-                    
+
                 # We must ignore sk for meshes that are driven by armature parent
                 ignore_sk = False
                 if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None \
@@ -120,7 +120,7 @@ def gather_scene_animations(export_settings):
             animations.append(animation)
 
     return animations
-    
+
 def __gather_extras(blender_scene, export_settings):
     if export_settings['gltf_extras']:
         return generate_extras(blender_scene)

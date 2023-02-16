@@ -47,7 +47,7 @@ class BlenderAnimation():
         import_user_extensions('gather_import_animation_after_hook', gltf, anim_idx, track_name)
 
         if hasattr(bpy.data.scenes[0], 'gltf2_animation_tracks') is False:
-            return 
+            return
 
         if track_name not in [track.name for track in bpy.data.scenes[0].gltf2_animation_tracks]:
             new_ = bpy.data.scenes[0].gltf2_animation_tracks.add()

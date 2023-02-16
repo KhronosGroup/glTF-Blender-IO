@@ -150,19 +150,19 @@ def get_cache_data(path: str,
             and blender_obj.data.shape_keys.animation_data is not None \
             and blender_obj.data.shape_keys.animation_data.action is not None \
             and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-                
+
                 if blender_obj.data.shape_keys.animation_data.action.name not in data[obj_uuid].keys():
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name] = {}
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'] = {}
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None] = {}
                 data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
-            
+
             elif export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
             and blender_obj.data is not None \
             and blender_obj.data.shape_keys is not None \
             and blender_obj.data.shape_keys.animation_data is not None \
             and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-                
+
                 if action_name not in data[obj_uuid].keys():
                     data[obj_uuid][action_name] = {}
                     data[obj_uuid][action_name]['sk'] = {}
@@ -171,7 +171,7 @@ def get_cache_data(path: str,
                     data[obj_uuid][action_name]['sk'] = {}
                     data[obj_uuid][action_name]['sk'][None] = {}
                 data[obj_uuid][action_name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
-            
+
 
 
             elif export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
@@ -185,7 +185,7 @@ def get_cache_data(path: str,
                     data[obj_uuid][obj_uuid]['sk'] = {}
                     data[obj_uuid][obj_uuid]['sk'][None] = {}
                 data[obj_uuid][obj_uuid]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
-            
+
             # caching driver sk meshes
             # This will avoid to have to do it again when exporting SK animation
             if blender_obj.type == "ARMATURE":

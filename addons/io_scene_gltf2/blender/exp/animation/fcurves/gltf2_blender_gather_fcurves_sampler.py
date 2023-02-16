@@ -62,9 +62,9 @@ def gather_animation_fcurves_sampler(
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
     export_user_extensions('animation_gather_fcurve_channel_sampler', export_settings, blender_object, bone)
 
-    return sampler   
+    return sampler
 
-    
+
 @cached
 def __gather_keyframes(
         obj_uuid :str,

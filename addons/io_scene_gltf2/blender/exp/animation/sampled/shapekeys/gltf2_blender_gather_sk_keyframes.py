@@ -56,11 +56,10 @@ def gather_sk_sampled_keyframes(obj_uuid,
 
     if not export_settings['gltf_optimize_animation']:
         return keyframes
-    
+
     # For sk, if all values are the same, we keep only first and last
     cst = fcurve_is_constant(keyframes)
     return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
 
 def fcurve_is_constant(keyframes):
     return all([j < 0.0001 for j in np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])
-    

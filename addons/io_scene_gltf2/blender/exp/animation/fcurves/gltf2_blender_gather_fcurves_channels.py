@@ -44,7 +44,7 @@ def gather_animation_fcurves_channels(
             channel = __gather_animation_fcurve_channel(chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
             if channel is not None:
                 channels.append(channel)
-        
+
 
     return channels, to_be_sampled
 
@@ -119,7 +119,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         target_data['type'] = type_
         target_data['obj_uuid'] = obj_uuid
         target_data['bone'] = target.name if type_ == "BONE" else None
-            
+
         target_properties = target_data.get('properties', {})
         channels = target_properties.get(target_property, [])
         channels.append(fcurve)
@@ -172,7 +172,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
     to_be_sampled = list(set(to_be_sampled))
 
     return targets, to_be_sampled
-    
+
 
 def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender_object: bpy.types.Object):
     # if this is shapekey animation, we need to sort in same order than shapekeys
@@ -270,7 +270,7 @@ def __gather_sampler(obj_uuid: str,
                     bone: typing.Optional[str],
                     custom_range: typing.Optional[set],
                     export_settings) -> gltf2_io.AnimationSampler:
-    
+
     return gather_animation_fcurves_sampler(obj_uuid, channel_group, bone, custom_range, export_settings)
 
 def __needs_baking(obj_uuid: str,

@@ -57,7 +57,7 @@ def export_volume(blender_material, export_settings):
     if isinstance(thicknesss_socket, bpy.types.NodeSocket) and not thicknesss_socket.is_linked:
         val = thicknesss_socket.default_value
         if val == 0.0:
-            # If no thickness, no volume extension export 
+            # If no thickness, no volume extension export
             return None, None
         volume_extension['thicknessFactor'] = val
     elif gltf2_blender_get.has_image_node_from_socket(thicknesss_socket):

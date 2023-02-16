@@ -50,8 +50,8 @@ def __gather_name(blender_action: bpy.types.Action,
     return blender_action.name
 
 def __gather_channels_fcurves(
-        obj_uuid: str, 
-        blender_action: bpy.types.Action, 
+        obj_uuid: str,
+        blender_action: bpy.types.Action,
         export_settings):
     return gather_animation_fcurves_channels(obj_uuid, blender_action, export_settings)
 

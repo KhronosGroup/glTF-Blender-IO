@@ -48,7 +48,7 @@ def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Ac
         return export_settings['vtree'].nodes[object_uuid].blender_object.name
     else:
         return cache_key
-    
+
 def __gather_channels(object_uuid: str, blender_action_name: str, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_sk_sampled_channels(object_uuid, blender_action_name, export_settings)
 

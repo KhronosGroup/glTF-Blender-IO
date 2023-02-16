@@ -123,7 +123,7 @@ class BlenderNode():
         # Can't use directly matrix_world because not refreshed yet
         if hasattr(obj, 'gltf2_animation_rest'):
             obj.gltf2_animation_rest = Matrix.LocRotScale(obj.location, obj.rotation_quaternion, obj.scale)
-        
+
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
         return obj

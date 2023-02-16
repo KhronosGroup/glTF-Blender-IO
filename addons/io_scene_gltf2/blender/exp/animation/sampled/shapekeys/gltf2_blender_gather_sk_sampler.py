@@ -25,7 +25,7 @@ def gather_sk_sampled_animation_sampler(
         action_name,
         export_settings
         ):
-    
+
     keyframes = __gather_keyframes(
         obj_uuid,
         action_name,

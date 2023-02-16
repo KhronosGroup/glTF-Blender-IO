@@ -73,7 +73,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
 
         if armature_channel is not None:
             channels.append(armature_channel)
-    
+
 
     # Retrieve channels for drivers, if needed
     drivers_to_manage = get_sk_drivers(armature_uuid, export_settings)
@@ -121,7 +121,7 @@ def gather_sampled_bone_channel(
         return animation_channel
     return None
 
-    
+
 def __gather_target(armature_uuid: str,
                     bone: str,
                     channel: str,

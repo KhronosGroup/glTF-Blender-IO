@@ -91,7 +91,7 @@ def gather_sampled_object_channel(
 
 def __gather_target(
         obj_uuid: str,
-        channel: str, 
+        channel: str,
         export_settings
         ):
 

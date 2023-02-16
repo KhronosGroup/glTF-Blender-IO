@@ -22,7 +22,7 @@ def gather_sk_sampled_channels(
         object_uuid: str,
         blender_action_name: str,
         export_settings):
-    
+
     # Only 1 channel when exporting shape keys
 
     channels = []

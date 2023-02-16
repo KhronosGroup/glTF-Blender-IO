@@ -281,7 +281,7 @@ def gather_action_animations(  obj_uuid: int,
                 animation = gather_action_sk_sampled(obj_uuid, blender_action, None, export_settings)
         else:
             # Not sampled
-            # This returns 
+            # This returns
             #  - animation on fcurves
             #  - fcurve that cannot be handled not sampled, to be sampled
             # to_be_sampled is : (object_uuid , type , prop, optional(bone.name) )
@@ -363,7 +363,7 @@ def gather_action_animations(  obj_uuid: int,
                                 )
                         else:
                             animation.channels.append(channel)
-                
+
 
         if animation is not None:
             link_samplers(animation, export_settings)
