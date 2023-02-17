@@ -17,14 +17,13 @@ import bpy
 import sys
 import traceback
 
-from io_scene_gltf2.blender.com import gltf2_blender_json
-from io_scene_gltf2.blender.exp import gltf2_blender_export_keys
-from io_scene_gltf2.blender.exp import gltf2_blender_gather
-from io_scene_gltf2.blender.exp.gltf2_blender_gltf2_exporter import GlTF2Exporter
-from io_scene_gltf2.io.com.gltf2_io_debug import print_console, print_newline
-from io_scene_gltf2.io.exp import gltf2_io_export
-from io_scene_gltf2.io.exp import gltf2_io_draco_compression_extension
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
+from ...io.com.gltf2_io_debug import print_console, print_newline
+from ...io.exp import gltf2_io_export
+from ...io.exp import gltf2_io_draco_compression_extension
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
+from ..com import gltf2_blender_json
+from . import gltf2_blender_gather
+from .gltf2_blender_gltf2_exporter import GlTF2Exporter
 
 
 def save(context, export_settings):
@@ -93,14 +92,14 @@ def __gather_gltf(exporter, export_settings):
 
 def __create_buffer(exporter, export_settings):
     buffer = bytes()
-    if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLB':
-        buffer = exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY], is_glb=True)
+    if export_settings['gltf_format'] == 'GLB':
+        buffer = exporter.finalize_buffer(export_settings['gltf_filedirectory'], is_glb=True)
     else:
-        if export_settings[gltf2_blender_export_keys.FORMAT] == 'GLTF_EMBEDDED':
-            exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY])
+        if export_settings['gltf_format'] == 'GLTF_EMBEDDED':
+            exporter.finalize_buffer(export_settings['gltf_filedirectory'])
         else:
-            exporter.finalize_buffer(export_settings[gltf2_blender_export_keys.FILE_DIRECTORY],
-                                     export_settings[gltf2_blender_export_keys.BINARY_FILENAME])
+            exporter.finalize_buffer(export_settings['gltf_filedirectory'],
+                                     export_settings['gltf_binaryfilename'])
 
     return buffer
 

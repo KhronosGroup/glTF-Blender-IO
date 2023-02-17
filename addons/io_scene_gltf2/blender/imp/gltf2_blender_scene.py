@@ -18,7 +18,7 @@ from .gltf2_blender_node import BlenderNode
 from .gltf2_blender_animation import BlenderAnimation
 from .gltf2_blender_vnode import VNode, compute_vnodes
 from ..com.gltf2_blender_extras import set_extras
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 class BlenderScene():
@@ -87,6 +87,9 @@ class BlenderScene():
             if animation_options.restore_first_anim:
                 anim_name = gltf.data.animations[0].track_name
                 BlenderAnimation.restore_animation(gltf, anim_name)
+
+                if hasattr(bpy.data.scenes[0], "gltf2_animation_applied"):
+                    bpy.data.scenes[0].gltf2_animation_applied = bpy.data.scenes[0].gltf2_animation_tracks.find(gltf.data.animations[0].track_name)
 
     @staticmethod
     def select_imported_objects(gltf):

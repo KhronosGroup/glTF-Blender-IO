@@ -13,16 +13,11 @@
 # limitations under the License.
 
 import bpy
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
-from io_scene_gltf2.blender.exp.gltf2_blender_search_node_tree import (
-    previous_node,
-    previous_socket,
-    get_const_from_socket,
-    NodeSocket
-)
+from ...io.com import gltf2_io
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
+from ...io.com.gltf2_io_constants import TextureFilter, TextureWrap
+from .gltf2_blender_gather_cache import cached
+from .material.gltf2_blender_search_node_tree import previous_node, previous_socket, get_const_from_socket, NodeSocket
 
 
 @cached
@@ -113,10 +108,16 @@ def __gather_wrap(blender_shader_node, group_path, export_settings):
     elif blender_shader_node.extension == 'CLIP':
         # Not possible in glTF, but ClampToEdge is closest
         wrap_s = TextureWrap.ClampToEdge
+    elif blender_shader_node.extension == 'MIRROR':
+        wrap_s = TextureWrap.MirroredRepeat
     else:
         wrap_s = TextureWrap.Repeat
     wrap_t = wrap_s
 
+    # Starting Blender 3.5, MIRROR is now an extension of image node
+    # So this manual uv wrapping trick is no more usefull for MIRROR x MIRROR
+    # But still works for old files
+    # Still needed for heterogen heterogeneous sampler, like MIRROR x REPEAT, for example
     # Take manual wrapping into account
     result = detect_manual_uv_wrapping(blender_shader_node, group_path)
     if result:
