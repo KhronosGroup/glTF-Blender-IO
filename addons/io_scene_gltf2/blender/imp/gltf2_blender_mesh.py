@@ -15,17 +15,12 @@
 import bpy
 from mathutils import Matrix
 import numpy as np
-
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
+from ...io.com.gltf2_io_debug import print_console
 from ...io.imp.gltf2_io_binary import BinaryData
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
-from ...io.com.gltf2_io_debug import print_console
-from ...io.com.gltf2_io_constants import DataType, ComponentType
-from ...blender.com.gltf2_blender_conversion import get_attribute_type
 from .gltf2_io_draco_compression_extension import decode_primitive
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
-from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_default_material
-
 
 class BlenderMesh():
     """Blender Mesh."""
@@ -149,7 +144,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for attr in attributes:
         attribute_data.append(
             np.empty(
-                dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type), 
+                dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type),
                 shape=(0, DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type)))
                 )
 
@@ -437,7 +432,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
                 for mapping in prim.extensions['KHR_materials_variants']['mappings']:
                     # Store, for each variant, the material link to this primitive
-                    
+
                     variant_primitive = mesh.gltf2_variant_mesh_data.add()
                     variant_primitive.material_slot_index = material_index
                     if 'material' not in mapping.keys():

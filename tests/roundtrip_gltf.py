@@ -30,6 +30,8 @@ try:
 
     bpy.ops.import_scene.gltf(filepath=argv[0])
 
+    bpy.context.scene.frame_start = 0
+
     extension = '.gltf'
     export_format = 'GLTF_SEPARATE'
     if '--glb' in argv:
