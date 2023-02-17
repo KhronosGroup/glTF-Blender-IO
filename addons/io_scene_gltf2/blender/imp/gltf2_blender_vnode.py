@@ -15,7 +15,6 @@
 import bpy
 from mathutils import Vector, Quaternion, Matrix
 from ...io.imp.gltf2_io_binary import BinaryData
-
 from ..com.gltf2_blender_math import scale_rot_swap_matrix, nearby_signed_perm_matrix
 
 def compute_vnodes(gltf):

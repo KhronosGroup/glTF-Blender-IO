@@ -14,7 +14,7 @@
 
 import typing
 import array
-from io_scene_gltf2.io.com import gltf2_io_constants
+from ...io.com import gltf2_io_constants
 
 
 class BinaryData:

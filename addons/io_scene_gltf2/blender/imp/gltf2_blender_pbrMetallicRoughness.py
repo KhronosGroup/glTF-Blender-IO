@@ -14,6 +14,7 @@
 
 from re import M
 import bpy
+from ...io.com.gltf2_io_constants import GLTF_IOR
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
 from .gltf2_blender_texture import texture
@@ -24,7 +25,6 @@ from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_specular import specular
 from .gltf2_blender_KHR_materials_sheen import sheen
-from ...io.com.gltf2_io_constants import GLTF_IOR
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
@@ -99,7 +99,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
 
 
     if mh.pymat.extensions and 'KHR_materials_sheen':
-        pass #TOTOEXT     
+        pass #TOTOEXT
 
     locs = calc_locations(mh)
 
