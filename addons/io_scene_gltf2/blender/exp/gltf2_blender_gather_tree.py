@@ -15,15 +15,13 @@
 import bpy
 import uuid
 import numpy as np
-
-from . import gltf2_blender_export_keys
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
 from mathutils import Quaternion, Matrix
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.imp.gltf2_io_binary import BinaryData
-from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.io.exp import gltf2_io_binary_data
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_accessors
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
+from ...io.com import gltf2_io
+from ...io.imp.gltf2_io_binary import BinaryData
+from ...io.com import gltf2_io_constants
+from ...io.exp import gltf2_io_binary_data
+from . import gltf2_blender_gather_accessors
 
 class VExportNode:
 
@@ -93,7 +91,7 @@ class VExportTree:
         self.tree_troncated = False
 
         self.axis_basis_change = Matrix.Identity(4)
-        if self.export_settings[gltf2_blender_export_keys.YUP]:
+        if self.export_settings['gltf_yup']:
             self.axis_basis_change = Matrix(
                 ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
@@ -189,9 +187,9 @@ class VExportTree:
             # So real world matrix is collection world_matrix @ "world_matrix" of object
             node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
 
-            # If object is parented to bone, and Rest pose is used, we need to keep the world matrix relative to rest pose,
+            # If object is parented to bone, and Rest pose is used for Armature, we need to keep the world matrix transformed relative relative to rest pose,
             # not the current world matrix (relation to pose)
-            if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_current_frame'] is False:
+            if parent_uuid and self.nodes[parent_uuid].blender_type == VExportNode.BONE and self.export_settings['gltf_rest_position_armature'] is True:
                 _blender_bone = self.nodes[parent_uuid].blender_bone
                 _pose = self.nodes[self.nodes[parent_uuid].armature].matrix_world @ _blender_bone.matrix @ self.axis_basis_change
                 _rest = self.nodes[self.nodes[parent_uuid].armature].matrix_world @ _blender_bone.bone.matrix_local @ self.axis_basis_change
@@ -200,20 +198,20 @@ class VExportTree:
                 node.matrix_world = _rest @ _delta
                 new_delta = True
 
-            if node.blender_type == VExportNode.CAMERA and self.export_settings[gltf2_blender_export_keys.CAMERAS]:
-                if self.export_settings[gltf2_blender_export_keys.YUP]:
+            if node.blender_type == VExportNode.CAMERA and self.export_settings['gltf_cameras']:
+                if self.export_settings['gltf_yup']:
                     correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 else:
                     correction = Matrix.Identity(4).to_quaternion()
                 node.matrix_world @= correction.to_matrix().to_4x4()
-            elif node.blender_type == VExportNode.LIGHT and self.export_settings[gltf2_blender_export_keys.LIGHTS]:
-                if self.export_settings[gltf2_blender_export_keys.YUP]:
+            elif node.blender_type == VExportNode.LIGHT and self.export_settings['gltf_lights']:
+                if self.export_settings['gltf_yup']:
                     correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
                 else:
                     correction = Matrix.Identity(4).to_quaternion()
                 node.matrix_world @= correction.to_matrix().to_4x4()
         elif node.blender_type == VExportNode.BONE:
-            if self.export_settings['gltf_current_frame'] is True:
+            if self.export_settings['gltf_rest_position_armature'] is False:
                 # Use pose bone for TRS
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
             else:
@@ -381,12 +379,12 @@ class VExportTree:
     def node_filter_not_inheritable_is_kept(self, uuid):
         # Export Camera or not
         if self.nodes[uuid].blender_type == VExportNode.CAMERA:
-            if self.export_settings[gltf2_blender_export_keys.CAMERAS] is False:
+            if self.export_settings['gltf_cameras'] is False:
                 return False
 
         # Export Lamp or not
         if self.nodes[uuid].blender_type == VExportNode.LIGHT:
-            if self.export_settings[gltf2_blender_export_keys.LIGHTS] is False:
+            if self.export_settings['gltf_lights'] is False:
                 return False
 
         # Export deform bones only
@@ -401,10 +399,10 @@ class VExportTree:
 
     def node_filter_inheritable_is_kept(self, uuid):
 
-        if self.export_settings[gltf2_blender_export_keys.SELECTED] and self.nodes[uuid].blender_object.select_get() is False:
+        if self.export_settings['gltf_selected'] and self.nodes[uuid].blender_object.select_get() is False:
             return False
 
-        if self.export_settings[gltf2_blender_export_keys.VISIBLE]:
+        if self.export_settings['gltf_visible']:
             # The eye in outliner (object)
             if self.nodes[uuid].blender_object.visible_get() is False:
                 return False
@@ -418,7 +416,7 @@ class VExportTree:
                 return False
 
         # The camera in outliner (object)
-        if self.export_settings[gltf2_blender_export_keys.RENDERABLE]:
+        if self.export_settings['gltf_renderable']:
             if self.nodes[uuid].blender_object.hide_render is True:
                 return False
 
@@ -426,12 +424,12 @@ class VExportTree:
             if all([c.hide_render for c in self.nodes[uuid].blender_object.users_collection]):
                 return False
 
-        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION] and not self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
+        if self.export_settings['gltf_active_collection'] and not self.export_settings['gltf_active_collection_with_nested']:
             found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.objects)
             if not found:
                 return False
 
-        if self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION] and self.export_settings[gltf2_blender_export_keys.ACTIVE_COLLECTION_WITH_NESTED]:
+        if self.export_settings['gltf_active_collection'] and self.export_settings['gltf_active_collection_with_nested']:
             found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
             if not found:
                 return False
@@ -536,3 +534,13 @@ class VExportTree:
                         break
 
             # If not found, keep current material as default
+
+    def break_bone_hierarchy(self):
+        # Can be usefull when matrix is not decomposable
+        for arma in self.get_all_node_of_type(VExportNode.ARMATURE):
+            bones = self.get_all_bones(arma)
+            for bone in bones:
+                if self.nodes[bone].parent_uuid is not None and self.nodes[bone].parent_uuid != arma:
+                    self.nodes[self.nodes[bone].parent_uuid].children.remove(bone)
+                    self.nodes[bone].parent_uuid = arma
+                    self.nodes[arma].children.append(bone)

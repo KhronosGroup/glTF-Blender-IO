@@ -18,7 +18,7 @@ from os.path import dirname, join, basename
 
 from ...io.com.gltf2_io_path import uri_to_path
 from ...io.imp.gltf2_io_binary import BinaryData
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 
 
 # Note that Image is not a glTF2.0 object

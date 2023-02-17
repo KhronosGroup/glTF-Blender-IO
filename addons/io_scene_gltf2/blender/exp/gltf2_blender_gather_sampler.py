@@ -13,11 +13,11 @@
 # limitations under the License.
 
 import bpy
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
-from io_scene_gltf2.blender.exp.gltf2_blender_get import (
+from ...io.com import gltf2_io
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
+from ...io.com.gltf2_io_constants import TextureFilter, TextureWrap
+from .gltf2_blender_gather_cache import cached
+from .gltf2_blender_get import (
     previous_node,
     previous_socket,
     get_const_from_socket,

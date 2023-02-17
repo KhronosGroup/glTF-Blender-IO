@@ -1166,9 +1166,79 @@ describe('Exporter', function() {
                 assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
 
+              it('exports SK / SK anim', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '28_shapekeys_anim.gltf');
+                const asset_1 = JSON.parse(fs.readFileSync(gltfPath_1));
+                var anim_mesh = asset_1.meshes[asset_1.nodes.filter(m => m.name === 'AnimCube')[0].mesh];
+                var driven_mesh = asset_1.meshes[asset_1.nodes.filter(m => m.name === 'DrivenCube')[0].mesh];
+
+                assert.ok('weights' in anim_mesh);
+                assert.ok('weights' in driven_mesh);
+
+                assert.ok('targetNames' in anim_mesh['extras']);
+                assert.ok('targetNames' in driven_mesh['extras']);
+
+                assert.ok('targets' in anim_mesh.primitives[0]);
+                assert.ok('targets' in driven_mesh.primitives[0]);
+
+                assert.strictEqual(asset_1.animations[0].channels[0].target.path, 'weights');
+                assert.strictEqual(asset_1.animations[1].channels[3].target.path, 'weights');
+
+                let gltfPath_2 = path.resolve(outDirPath, '28_shapekeys_no_sk_anim_export.gltf');
+                const asset_2 = JSON.parse(fs.readFileSync(gltfPath_2));
+                anim_mesh = asset_2.meshes[asset_2.nodes.filter(m => m.name === 'AnimCube')[0].mesh];
+                driven_mesh = asset_2.meshes[asset_2.nodes.filter(m => m.name === 'DrivenCube')[0].mesh];
+
+                assert.ok('weights' in anim_mesh);
+                assert.ok('weights' in driven_mesh);
+
+                assert.ok('targetNames' in anim_mesh['extras']);
+                assert.ok('targetNames' in driven_mesh['extras']);
+
+                assert.ok('targets' in anim_mesh.primitives[0]);
+                assert.ok('targets' in driven_mesh.primitives[0]);
+
+                assert.strictEqual(asset_2.animations.length, 1);
+                assert.strictEqual(asset_2.animations[0].channels.length, 3);
+
+                let gltfPath_3 = path.resolve(outDirPath, '28_shapekeys_no_sk_export.gltf');
+                const asset_3 = JSON.parse(fs.readFileSync(gltfPath_3));
+                anim_mesh = asset_3.meshes[asset_3.nodes.filter(m => m.name === 'AnimCube')[0].mesh];
+                driven_mesh = asset_3.meshes[asset_3.nodes.filter(m => m.name === 'DrivenCube')[0].mesh];
+
+                assert.ok(!('weights' in anim_mesh));
+                assert.ok(!('weights' in driven_mesh));
+
+                if("extras" in anim_mesh) {
+                    assert.ok(!('targetNames' in anim_mesh['extras']));
+                }
+                if("extras" in driven_mesh) {
+                    assert.ok(!('targetNames' in driven_mesh['extras']));
+                }
+
+                assert.ok(!('targets' in anim_mesh.primitives[0]));
+                assert.ok(!('targets' in driven_mesh.primitives[0]));
+
+                assert.strictEqual(asset_2.animations.length, 1);
+                assert.strictEqual(asset_2.animations[0].channels.length, 3);
+
               });
 
+    
+              it('exports using armature rest pose', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+                var cube = asset.nodes.filter(m => m.name === 'Bone')[0]
+                assert.ok('rotation' in cube);
+
+                let gltfPath_2 = path.resolve(outDirPath, '29_armature_use_rest_pose.gltf');
+                asset = JSON.parse(fs.readFileSync(gltfPath_2));
+                cube = asset.nodes.filter(m => m.name === 'Bone')[0]
+                assert.ok(!('rotation' in cube));
+              });
+    
         });
+});
     });
 });
 

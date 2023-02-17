@@ -15,10 +15,9 @@
 import bpy
 from math import pi
 
-from ..com.gltf2_blender_extras import set_extras
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ..com.gltf2_blender_conversion import PBR_WATTS_TO_LUMENS
-
+from ..com.gltf2_blender_extras import set_extras
 
 class BlenderLight():
     """Blender Light."""
