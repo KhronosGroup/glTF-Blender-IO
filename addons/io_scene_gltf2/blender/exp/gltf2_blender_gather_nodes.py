@@ -16,23 +16,19 @@ import math
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
-from . import gltf2_blender_export_keys
-from io_scene_gltf2.blender.com import gltf2_blender_math
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
+from ...io.com import gltf2_io
+from ...io.com import gltf2_io_extensions
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 from ..com.gltf2_blender_default import LIGHTS
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com import gltf2_io_extensions
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-from io_scene_gltf2.io.com.gltf2_io_debug import print_console
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
-
+from ..com import gltf2_blender_math
+from . import gltf2_blender_gather_tree
+from . import gltf2_blender_gather_skins
+from . import gltf2_blender_gather_cameras
+from . import gltf2_blender_gather_mesh
+from . import gltf2_blender_gather_joints
+from . import gltf2_blender_gather_lights
+from .gltf2_blender_gather_tree import VExportNode
 
 def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
@@ -160,7 +156,7 @@ def __gather_extensions(vnode, export_settings):
             blender_lamp = vnode.data
     elif export_settings["gltf_lights"] and blender_object is not None and (blender_object.type == "LAMP" or blender_object.type == "LIGHT"):
         blender_lamp = blender_object.data
-    
+
     if blender_lamp is not None:
         light = gltf2_blender_gather_lights.gather_lights_punctual(
             blender_lamp,
@@ -230,7 +226,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
             modifiers = None
 
 
-        if export_settings[gltf2_blender_export_keys.APPLY]:
+        if export_settings['gltf_apply']:
             if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
                 blender_mesh = blender_object.data
                 skip_filter = False
@@ -239,7 +235,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 materials = tuple(ms.material for ms in blender_object.material_slots)
             else:
                 armature_modifiers = {}
-                if export_settings[gltf2_blender_export_keys.SKINS]:
+                if export_settings['gltf_skins']:
                     # temporarily disable Armature modifiers if exporting skins
                     for idx, modifier in enumerate(blender_object.modifiers):
                         if modifier.type == 'ARMATURE':
@@ -253,7 +249,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                     blender_mesh[prop] = blender_object.data[prop]
                 skip_filter = True
 
-                if export_settings[gltf2_blender_export_keys.SKINS]:
+                if export_settings['gltf_skins']:
                     # restore Armature modifiers
                     for idx, show_viewport in armature_modifiers.items():
                         blender_object.modifiers[idx].show_viewport = show_viewport
@@ -266,7 +262,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
             blender_mesh = blender_object.data
             skip_filter = False
             # If no skin are exported, no need to have vertex group, this will create a cache miss
-            if not export_settings[gltf2_blender_export_keys.SKINS]:
+            if not export_settings['gltf_skins']:
                 vertex_groups = None
                 modifiers = None
             else:
@@ -283,7 +279,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
         # Because mesh data will be transforms to skeleton space,
         # we can't instantiate multiple object at different location, skined by same armature
         uuid_for_skined_data = None
-        if export_settings[gltf2_blender_export_keys.SKINS]:
+        if export_settings['gltf_skins']:
             for idx, modifier in enumerate(blender_object.modifiers):
                 if modifier.type == 'ARMATURE':
                     uuid_for_skined_data = vnode.uuid
@@ -297,7 +293,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                                                    None,
                                                    export_settings)
 
-    if export_settings[gltf2_blender_export_keys.APPLY] and modifiers is not None:
+    if export_settings['gltf_apply'] and modifiers is not None:
         blender_mesh_owner.to_mesh_clear()
 
     return result
@@ -309,7 +305,7 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
     try:
         # Convert to a mesh
         try:
-            if export_settings[gltf2_blender_export_keys.APPLY]:
+            if export_settings['gltf_apply']:
                 depsgraph = bpy.context.evaluated_depsgraph_get()
                 blender_mesh_owner = blender_object.evaluated_get(depsgraph)
                 blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
@@ -439,7 +435,7 @@ def __gather_weights(blender_object, export_settings):
 
 def __convert_swizzle_location(loc, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Vector((loc[0], loc[2], -loc[1]))
     else:
         return Vector((loc[0], loc[1], loc[2]))
@@ -451,7 +447,7 @@ def __convert_swizzle_rotation(rot, export_settings):
 
     'w' is still at first position.
     """
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
     else:
         return Quaternion((rot[0], rot[1], rot[2], rot[3]))
@@ -459,7 +455,7 @@ def __convert_swizzle_rotation(rot, export_settings):
 
 def __convert_swizzle_scale(scale, export_settings):
     """Convert a scale from Blender coordinate system to glTF coordinate system."""
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Vector((scale[0], scale[2], scale[1]))
     else:
         return Vector((scale[0], scale[1], scale[2]))

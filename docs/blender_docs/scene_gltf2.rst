@@ -641,14 +641,26 @@ To play the whole animation, you need to enable Solo (star icon) for all its tra
    There is currently no way to see the non-animated pose of a model that had animations.
 
 
+You can also use the animation switcher that can be found in DopeSheet editor.
+
+.. note::
+
+   You have to enable UI in Add-on preferences for seeing the animation switcher
+
+     .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-animation.png
+
+
+You can switch all animation imported. It automatically enables Solo (star icon) for all needed tracks.
+It also reset non animated object to Rest transformation.
+
+
 Export
 ------
 
-You can export animations by creating actions. How glTF animations are made from actions is controlled by
-the :menuselection:`Animation --> Group by NLA Track` export option.
+You can export animations using different ways. How glTF animations are made from actions / NLA is controlled by
+the :menuselection:`Animation --> Mode` export option.
 
-
-.. rubric:: Group by NLA Track on (default)
+.. rubric:: Actions (default)
 
 An action will be exported if it is the active action on an object, or it is stashed to an NLA track
 (e.g. with the *Stash* or *Push Down* buttons in the :doc:`Action Editor </editors/dope_sheet/action>`).
@@ -664,15 +676,31 @@ of the same glTF animation and will play together.
 
 The importer organizes actions so they will be exported correctly with this mode.
 
+This mode is usefull if you are exporting for game engine, with an animation library of a character.
+Each action must be on its own NLA track.
 
-.. rubric:: Group by NLA Track off
+
+.. rubric:: Active Actions merged
 
 In this mode, the NLA organization is not used, and only one animation is exported using
 the active actions on all objects.
 
+.. rubric:: NLA Tracks
+
+In this mode, each NLA Track will be export as an independant glTF animation.
+This mode is usefull if you are using Strip modifiers, or if you get multiple action on a same Track.
+
+If you rename two tracks on two different objects to the same name, they will become part
+of the same glTF animation and will play together.
+
+.. rubric:: Scene
+
+Using _Scene_ option, animations will be exported as you can see them in viewport.
+You can choose to export a single glTF animation, or each object separatly.
+
 .. note::
 
-   For both modes, remember only certain types of animation are supported:
+   Remember only certain types of animation are supported:
 
    - Object transform (location, rotation, scale)
    - Pose bones
@@ -684,6 +712,10 @@ the active actions on all objects.
 
    In order to sample shape key animations controlled by drivers using bone transformations,
    they must be on a mesh object that is a direct child of the bones' armature.
+
+.. note::
+
+   Only _Actions_ and _Active Actions merged_ mode can handle not sampled animations.
 
 
 File Format Variations
@@ -850,6 +882,38 @@ JPEG Quality
 Export Original PBR Specular
    When On, specular data are exported from glTF Material Output node,
    Instead of using sockets from Principled BSDF Node.
+
+Data - Shape Keys
+^^^^^^^^^^^^^^^^^
+Export shape keys (morph targets).
+
+Shape Key Normals
+   Export vertex normals with shape keys (morph targets).
+Shape Key Tangents
+   Export vertex tangents with shape keys (morph targets).
+
+Data - Armature
+^^^^^^^^^^^^^^^
+
+Use Rest Position Armature
+   Export Armatures using rest position as joint rest pose. When Off, the current frame pose is used as rest pose.
+Export Deformation Bones only
+   Export Deformation bones only, not other bones.
+   Animation for deformation bones are baked.
+Flatten Bone Hierarchy
+   Usefull in case of non decomposible TRS matrix.
+
+Data - Skinning
+^^^^^^^^^^^^^^^
+
+Export skinning data
+
+Include All Bone Influences
+   Allow more than 4 joint vertex influences. Models may appear incorrectly in many viewers.
+
+Data - Lighting
+^^^^^^^^^^^^^^^
+
 Lighting Mode
    Optional backwards compatibility for non-standard render engines. Applies to lights.
    Standard: Physically-based glTF lighting units (cd, lx, nt).
@@ -857,8 +921,8 @@ Lighting Mode
    Raw (Deprecated): Blender lighting strengths with no conversion
 
 
-Compression
-"""""""""""
+Data - Compression
+^^^^^^^^^^^^^^^^^^
 
 Compress meshes using Google Draco.
 
@@ -879,59 +943,54 @@ Generic
 Animation
 ^^^^^^^^^
 
-Use Current Frame
-   Export the scene in the current animation frame.
-   For rigs, when off, rest pose is used as default pose for joints in glTF file.
-   When on, the current frame is used as default pose for joints in glTF file.
+Animation mode
+   Animation mode used for export (See `Animations`_ )
+Shape Keys Animations
+   Export Shape Keys Animation. Need Shape Keys to be exported (See `Data - Shape Keys`_)
+Bake All Objects Animations
+   Usefull when some objects are constrained without being animated themselves.
 
 
-Animation
-"""""""""
+Animation - Rest & Ranges
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Exports active actions and NLA tracks as glTF animations.
-
+Use Current Frame as Object Rest Transformations
+   Export the scene in the current animation frame. When off, frame 0 is used as rest transformation for objects.
 Limit to Playback Range
    Clips animations to selected playback range.
-Sampling Rate
-   How often to evaluate animated values (in frames).
-Always Sample Animations
-   Apply sampling to all animations.
-Group by NLA Track
-   Whether to export NLA strip animations. (See `Animations`_ )
-Optimize Animation Size
-   Reduce exported file-size by removing duplicate keyframes.
+Set all glTF Animation starting at 0
+   Set all glTF Animation starting at 0. Can be usefull for looping animation
+Negative Frames
+   When some frames are in negative range, slide or crop the animation.
+
+Animation - Armature
+^^^^^^^^^^^^^^^^^^^^
+
 Export all Armature Actions
    Export all actions, bound to a single armature.
    Warning: Option does not support exports including multiple armatures.
-Export Deformation Bones Only
-   Export deformation bones only.
 Reset pose bones between actions
    Reset pose bones between each action exported.
    This is needed when some bones are not keyed on some animations.
 
 
-Shape Keys
-""""""""""
+Animation - Sampling
+^^^^^^^^^^^^^^^^^^^^
 
-Export shape keys (morph targets).
+Apply sampling to all animations. Do not sample animation can lead to wrong animation export.
 
-Shape Key Normals
-   Export vertex normals with shape keys (morph targets).
-Shape Key Tangents
-   Export vertex tangents with shape keys (morph targets).
+Sampling Rate
+   How often to evaluate animated values (in frames).
 
+Animation - Optimize
+^^^^^^^^^^^^^^^^^^^^
 
-Skinning
-""""""""
-
-Export skinning (armature) data.
-
-Include All Bone Influences
-   Allow more than 4 joint vertex influences. Models may appear incorrectly in many viewers.
-Export Deformation Bones Only
-   Export Deformation bones only, not other bones.
-   Animation for deformation bones are baked.
-
+Optimize Animation Size
+   Reduce exported file size by removing duplicate keyframes when all identical.
+Force keeping channel for armature / bones
+   if all keyframes are identical in a rig, force keeping the minimal animation.
+Force keeping channel for objects
+   if all keyframes are identical for object transformations, force keeping the minimal animation
 
 Contributing
 ============

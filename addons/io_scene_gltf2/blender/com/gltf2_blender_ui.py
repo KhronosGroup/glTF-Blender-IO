@@ -445,6 +445,86 @@ class SCENE_OT_gltf2_remove_material_variant(bpy.types.Operator):
         return {'FINISHED'}
 
 
+################ glTF Animation ###########################################
+
+
+class gltf2_animation_NLATrackNames(bpy.types.PropertyGroup):
+    name : bpy.props.StringProperty(name="NLA Track Name")
+
+class SCENE_UL_gltf2_animation_track(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            row = layout.row()
+            icon = 'SOLO_ON' if index == bpy.data.scenes[0].gltf2_animation_applied else 'SOLO_OFF'
+            row.prop(item, "name", text="", emboss=False)
+            op = row.operator("scene.gltf2_animation_apply", text='', icon=icon)
+            op.index = index
+
+        elif self.layout_type in {'GRID'}:
+            layout.alignment = 'CENTER'
+
+
+class SCENE_OT_gltf2_animation_apply(bpy.types.Operator):
+    """Apply glTF animations"""
+    bl_idname = "scene.gltf2_animation_apply"
+    bl_label = "Apply glTF animation"
+    bl_options = {'REGISTER'}
+
+    index: bpy.props.IntProperty()
+
+    @classmethod
+    def poll(self, context):
+        return True
+
+    def execute(self, context):
+
+        track_name = bpy.data.scenes[0].gltf2_animation_tracks[self.index].name
+
+        # remove all actions from objects
+        for obj in bpy.context.scene.objects:
+            if obj.animation_data:
+                obj.animation_data.action = None
+                obj.matrix_world = obj.gltf2_animation_rest
+
+                for track in [track for track in obj.animation_data.nla_tracks \
+                        if track.name == track_name and len(track.strips) > 0 and track.strips[0].action is not None]:
+                    obj.animation_data.action = track.strips[0].action
+
+            if obj.type == "MESH" and obj.data and obj.data.shape_keys and obj.data.shape_keys.animation_data:
+                obj.data.shape_keys.animation_data.action = None
+                for idx, data in enumerate(obj.gltf2_animation_weight_rest):
+                    obj.data.shape_keys.key_blocks[idx+1].value = data.val 
+
+                for track in [track for track in obj.data.shape_keys.animation_data.nla_tracks \
+                        if track.name == track_name and len(track.strips) > 0 and track.strips[0].action is not None]:
+                    obj.data.shape_keys.animation_data.action = track.strips[0].action
+
+        bpy.data.scenes[0].gltf2_animation_applied = self.index
+        return {'FINISHED'}
+
+class SCENE_PT_gltf2_animation(bpy.types.Panel):
+    bl_label = "glTF Animations"
+    bl_space_type = 'DOPESHEET_EDITOR'
+    bl_region_type = 'UI'
+    bl_category = "glTF"
+
+    @classmethod
+    def poll(self, context):
+        return bpy.context.preferences.addons['io_scene_gltf2'].preferences.animation_ui is True
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row()
+
+        if len(bpy.data.scenes[0].gltf2_animation_tracks) > 0:
+            row.template_list("SCENE_UL_gltf2_animation_track", "", bpy.data.scenes[0], "gltf2_animation_tracks", bpy.data.scenes[0], "gltf2_animation_active")
+        else:
+            row.label(text="No glTF Animation")
+
+class GLTF2_weight(bpy.types.PropertyGroup):
+    val : bpy.props.FloatProperty(name="weight")
+
 ###############################################################################
 
 def register():
@@ -496,3 +576,28 @@ def variant_unregister():
     bpy.utils.unregister_class(gltf2_KHR_materials_variants_primitive)
     bpy.utils.unregister_class(gltf2_KHR_materials_variants_variant)
     bpy.utils.unregister_class(gltf2_KHR_materials_variant_pointer)
+
+
+def anim_ui_register():
+    bpy.utils.register_class(GLTF2_weight)
+    bpy.utils.register_class(SCENE_OT_gltf2_animation_apply)
+    bpy.utils.register_class(gltf2_animation_NLATrackNames)
+    bpy.utils.register_class(SCENE_UL_gltf2_animation_track)
+    bpy.types.Scene.gltf2_animation_tracks = bpy.props.CollectionProperty(type=gltf2_animation_NLATrackNames)
+    bpy.types.Scene.gltf2_animation_active = bpy.props.IntProperty()
+    bpy.types.Scene.gltf2_animation_applied = bpy.props.IntProperty()
+    bpy.types.Object.gltf2_animation_rest = bpy.props.FloatVectorProperty(name="Rest", size=[4, 4], subtype="MATRIX")
+    bpy.types.Object.gltf2_animation_weight_rest = bpy.props.CollectionProperty(type=GLTF2_weight)
+    bpy.utils.register_class(SCENE_PT_gltf2_animation)
+
+def anim_ui_unregister():
+    bpy.utils.unregister_class(SCENE_PT_gltf2_animation)
+    del bpy.types.Scene.gltf2_animation_active
+    del bpy.types.Scene.gltf2_animation_tracks
+    del bpy.types.Scene.gltf2_animation_applied
+    del bpy.types.Object.gltf2_animation_rest
+    del bpy.types.Object.gltf2_animation_weight_rest
+    bpy.utils.unregister_class(SCENE_UL_gltf2_animation_track)
+    bpy.utils.unregister_class(gltf2_animation_NLATrackNames)
+    bpy.utils.unregister_class(SCENE_OT_gltf2_animation_apply)
+    bpy.utils.unregister_class(GLTF2_weight)

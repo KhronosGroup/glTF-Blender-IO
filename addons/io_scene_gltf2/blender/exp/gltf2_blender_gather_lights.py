@@ -15,17 +15,14 @@
 import bpy
 import math
 from typing import Optional, List, Dict, Any
-
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
+from ...io.com import gltf2_io_lights_punctual
+from ...io.com import gltf2_io_debug
 from ..com.gltf2_blender_extras import generate_extras
 from ..com.gltf2_blender_conversion import PBR_WATTS_TO_LUMENS
 from ..com.gltf2_blender_default import LIGHTS
-
-from io_scene_gltf2.io.com import gltf2_io_lights_punctual
-from io_scene_gltf2.io.com import gltf2_io_debug
-
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_light_spots
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
+from .gltf2_blender_gather_cache import cached
+from . import gltf2_blender_gather_light_spots
+from .material import gltf2_blender_search_node_tree
 
 
 @cached

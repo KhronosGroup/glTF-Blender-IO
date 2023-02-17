@@ -15,17 +15,12 @@
 import bpy
 from mathutils import Matrix
 import numpy as np
-
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
+from ...io.com.gltf2_io_debug import print_console
 from ...io.imp.gltf2_io_binary import BinaryData
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_material import BlenderMaterial
-from ...io.com.gltf2_io_debug import print_console
-from ...io.com.gltf2_io_constants import DataType, ComponentType
-from ...blender.com.gltf2_blender_conversion import get_attribute_type
 from .gltf2_io_draco_compression_extension import decode_primitive
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
-from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_default_material
-
 
 class BlenderMesh():
     """Blender Mesh."""
