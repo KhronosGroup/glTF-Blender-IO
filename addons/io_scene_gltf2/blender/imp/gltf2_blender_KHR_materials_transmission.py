@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from ...io.com.gltf2_io import TextureInfo, MaterialNormalTextureInfoClass
+from ...io.com.gltf2_io import TextureInfo
 from .gltf2_blender_texture import texture
 
 
@@ -29,6 +29,9 @@ def transmission(mh, location, transmission_socket):
     # Default value is 0, so no transmission
     if transmission_factor == 0:
         return
+
+    # Activate screen refraction (for Eevee)
+    mh.mat.use_screen_refraction = True
 
     tex_info = ext.get('transmissionTexture')
     if tex_info is not None:
