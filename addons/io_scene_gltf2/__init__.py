@@ -283,7 +283,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_draco_generic_quantization: IntProperty(
         name='Generic quantization bits',
-        description='Quantization bits for generic coordinate values like weights or joints (0 = no quantization)',
+        description='Quantization bits for generic values like weights or joints (0 = no quantization)',
         default=12,
         min=0,
         max=30
