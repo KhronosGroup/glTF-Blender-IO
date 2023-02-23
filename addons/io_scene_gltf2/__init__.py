@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 6, 3),
+    "version": (3, 6, 4),
     'blender': (3, 5, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -601,7 +601,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Shape Key Animations',
         description='Export shape keys animations (morph targets)',
         default=True
-    )    
+    )
 
     export_lights: BoolProperty(
         name='Punctual Lights',

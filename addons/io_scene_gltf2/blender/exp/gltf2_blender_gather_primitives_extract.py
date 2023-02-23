@@ -868,7 +868,7 @@ class PrimitiveCreator:
         # Morph tangent are after these 3 others, so, they are already calculated
         self.normals = self.attributes[attr['gltf_attribute_name_normal']]["data"]
         self.morph_normals = self.attributes[attr['gltf_attribute_name_morph_normal']]["data"]
-        self.tangent = self.attributes[attr['gltf_attribute_name_tangent']]["data"]
+        self.tangents = self.attributes[attr['gltf_attribute_name_tangent']]["data"]
 
         self.__calc_morph_tangents()
         self.attributes[attr['gltf_attribute_name']] = {}
@@ -876,18 +876,18 @@ class PrimitiveCreator:
 
     def __calc_morph_tangents(self):
         # TODO: check if this works
-        self.morph_tangent_deltas = np.empty((len(self.normals), 3), dtype=np.float32)
+        self.morph_tangents = np.empty((len(self.normals), 3), dtype=np.float32)
 
         for i in range(len(self.normals)):
             n = Vector(self.normals[i])
-            morph_n = n + Vector(self.morph_normal_deltas[i])  # convert back to non-delta
+            morph_n = n + Vector(self.morph_normals[i])  # convert back to non-delta
             t = Vector(self.tangents[i, :3])
 
             rotation = morph_n.rotation_difference(n)
 
             t_morph = Vector(t)
             t_morph.rotate(rotation)
-            self.morph_tangent_deltas[i] = t_morph - t  # back to delta
+            self.morph_tangents[i] = t_morph - t  # back to delta
 
     def __set_regular_attribute(self, attr):
             res = np.empty((len(self.prim_dots), attr['len']), dtype=attr['type'])
