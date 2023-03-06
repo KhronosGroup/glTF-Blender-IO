@@ -65,8 +65,9 @@ animation_gather_fcurve_channel_sampler(self, blender_object, bone_name, export_
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
 gather_tree_filter_tag_hook(self, tree, export_settings)
-gather_attribute_keep(self, keep_attribute, export_settings)
 gather_animation_bone_sampled_channel_target_hook(self, blender_object, bone, channel, export_settings)
 gather_animation_object_sampled_channel_target_hook(self, blender_object, channel)
+gather_attribute_keep(self, keep_attribute, export_settings)
+gather_attribute_change(self, attribute, data, is_normalized_byte_color, export_settings)
 
 ```
