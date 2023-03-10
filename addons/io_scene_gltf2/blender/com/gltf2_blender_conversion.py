@@ -146,3 +146,10 @@ def get_attribute_type(component_type, data_type):
         }[component_type]
     else:
         pass
+
+def get_gltf_interpolation(interpolation):
+        return {
+        "BEZIER": "CUBICSPLINE",
+        "LINEAR": "LINEAR",
+        "CONSTANT": "STEP"
+    }.get(interpolation, "LINEAR")

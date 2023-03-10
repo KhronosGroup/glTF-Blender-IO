@@ -288,7 +288,7 @@ def gather_action_animations(  obj_uuid: int,
             animation, to_be_sampled = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
             for (obj_uuid, type_, prop, bone) in to_be_sampled:
                 if type_ == "BONE":
-                    channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, export_settings)
+                    channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, "LINEAR", export_settings)
                 elif type_ == "OBJECT":
                     channel = gather_sampled_object_channel(obj_uuid, prop, blender_action.name, True, export_settings)
                 elif type_ == "SK":

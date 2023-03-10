@@ -32,6 +32,7 @@ def gather_bone_sampled_animation_sampler(
         channel: str,
         action_name: str,
         node_channel_is_animated: bool,
+        node_channel_interpolation: str,
         export_settings
         ):
 
@@ -56,7 +57,7 @@ def gather_bone_sampled_animation_sampler(
         extensions=None,
         extras=None,
         input=input,
-        interpolation=__gather_interpolation(export_settings),
+        interpolation=__gather_interpolation(node_channel_is_animated, node_channel_interpolation, export_settings),
         output=output
     )
 
@@ -205,6 +206,9 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
 
     return input, output
 
-def __gather_interpolation(export_settings):
-    # TODO: check if the bone was animated with CONSTANT
-    return 'LINEAR'
+def __gather_interpolation(node_channel_is_animated, node_channel_interpolation, export_settings):
+
+    # keep STEP as STEP, other become LINEAR
+    return {
+        "STEP": "STEP"
+    }.get(node_channel_interpolation, "LINEAR")

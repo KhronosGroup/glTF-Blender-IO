@@ -16,6 +16,7 @@ import bpy
 import typing
 from ......io.com import gltf2_io
 from ......io.exp.gltf2_io_user_extensions import export_user_extensions
+from ......blender.com.gltf2_blender_conversion import get_gltf_interpolation
 from .....com.gltf2_blender_conversion import get_target, get_channel_from_target
 from ...fcurves.gltf2_blender_gather_fcurves_channels import get_channel_groups
 from ...gltf2_blender_gather_drivers import get_sk_drivers
@@ -33,16 +34,27 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
     bones_to_be_animated = [export_settings["vtree"].nodes[b].blender_bone.name for b in bones_uuid]
 
     # List of really animated bones is needed for optimization decision
-    list_of_animated_bone_channels = []
+    list_of_animated_bone_channels = {}
     if armature_uuid != blender_action_name and blender_action_name in bpy.data.actions:
         # Not bake situation
         channels_animated, to_be_sampled = get_channel_groups(armature_uuid, bpy.data.actions[blender_action_name], export_settings)
         for chan in [chan for chan in channels_animated.values() if chan['bone'] is not None]:
             for prop in chan['properties'].keys():
-                list_of_animated_bone_channels.append((chan['bone'], get_channel_from_target(get_target(prop))))
+                list_of_animated_bone_channels[
+                        (
+                            chan['bone'],
+                            get_channel_from_target(get_target(prop))
+                        )
+                    ] = get_gltf_interpolation(chan['properties'][prop][0].keyframe_points[0].interpolation) # Could be exported without sampling : keep interpolation
 
         for _, _, chan_prop, chan_bone in [chan for chan in to_be_sampled if chan[1] == "BONE"]:
-            list_of_animated_bone_channels.append((chan_bone, chan_prop))
+            list_of_animated_bone_channels[
+                    (
+                        chan_bone,
+                        chan_prop,
+                    )
+                ] = "LINEAR" # if forced to be sampled, keep LINEAR interpolation
+
 
     for bone in bones_to_be_animated:
         for p in ["location", "rotation_quaternion", "scale"]:
@@ -51,7 +63,8 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
                 bone,
                 p,
                 blender_action_name,
-                (bone, p) in list_of_animated_bone_channels,
+                (bone, p) in list_of_animated_bone_channels.keys(),
+                list_of_animated_bone_channels[(bone, p)] if (bone, p) in list_of_animated_bone_channels.keys() else "LINEAR",
                 export_settings)
             if channel is not None:
                 channels.append(channel)
@@ -90,12 +103,13 @@ def gather_sampled_bone_channel(
         channel: str,
         action_name: str,
         node_channel_is_animated: bool,
+        node_channel_interpolation: str,
         export_settings
         ):
 
     __target= __gather_target(armature_uuid, bone, channel, export_settings)
     if __target.path is not None:
-        sampler = __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_animated, export_settings)
+        sampler = __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_animated, node_channel_interpolation, export_settings)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
@@ -131,13 +145,14 @@ def __gather_target(armature_uuid: str,
     return gather_armature_sampled_channel_target(
         armature_uuid, bone, channel, export_settings)
 
-def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_animated, export_settings):
+def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_animated, node_channel_interpolation, export_settings):
     return gather_bone_sampled_animation_sampler(
         armature_uuid,
         bone,
         channel,
         action_name,
         node_channel_is_animated,
+        node_channel_interpolation,
         export_settings
         )
 
