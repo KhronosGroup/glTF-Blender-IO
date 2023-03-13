@@ -17,6 +17,7 @@ import typing
 from ....io.com import gltf2_io
 from ....io.com.gltf2_io_debug import print_console
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
+from ....blender.com.gltf2_blender_conversion import get_gltf_interpolation
 from ...com.gltf2_blender_data_path import is_bone_anim_channel
 from ...com.gltf2_blender_extras import generate_extras
 from ..gltf2_blender_gather_cache import cached
@@ -288,9 +289,9 @@ def gather_action_animations(  obj_uuid: int,
             animation, to_be_sampled = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
             for (obj_uuid, type_, prop, bone) in to_be_sampled:
                 if type_ == "BONE":
-                    channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, "LINEAR", export_settings)
+                    channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, get_gltf_interpolation("LINEAR"), export_settings)
                 elif type_ == "OBJECT":
-                    channel = gather_sampled_object_channel(obj_uuid, prop, blender_action.name, True, export_settings)
+                    channel = gather_sampled_object_channel(obj_uuid, prop, blender_action.name, True, get_gltf_interpolation("LINEAR"), export_settings)
                 elif type_ == "SK":
                     channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, export_settings)
                 else:

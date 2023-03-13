@@ -31,6 +31,7 @@ def gather_object_sampled_animation_sampler(
         channel: str,
         action_name: str,
         node_channel_is_animated: bool,
+        node_channel_interpolation: str,
         export_settings
         ):
 
@@ -52,7 +53,7 @@ def gather_object_sampled_animation_sampler(
         extensions=None,
         extras=None,
         input=input,
-        interpolation=__gather_interpolation(export_settings),
+        interpolation=__gather_interpolation(node_channel_is_animated, node_channel_interpolation,export_settings),
         output=output
     )
 
@@ -147,6 +148,12 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
 
     return input, output
 
-def __gather_interpolation(export_settings):
-    # TODO: check if the object was animated with CONSTANT
-    return 'LINEAR'
+def __gather_interpolation(
+        node_channel_is_animated: bool,
+        node_channel_interpolation: str,
+        export_settings):
+
+    # keep STEP as STEP, other become LINEAR
+    return {
+        "STEP": "STEP"
+    }.get(node_channel_interpolation, "LINEAR")

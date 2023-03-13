@@ -1166,6 +1166,8 @@ describe('Exporter', function() {
                 assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
 
+              });
+
               it('exports SK / SK anim', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '28_shapekeys_anim.gltf');
                 const asset_1 = JSON.parse(fs.readFileSync(gltfPath_1));
@@ -1224,7 +1226,7 @@ describe('Exporter', function() {
 
               });
 
-    
+
               it('exports using armature rest pose', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
@@ -1236,9 +1238,57 @@ describe('Exporter', function() {
                 cube = asset.nodes.filter(m => m.name === 'Bone')[0]
                 assert.ok(!('rotation' in cube));
               });
-    
+
+              it('exports interpolation when sampled', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                const anim_cube = asset.animations.filter(a => a.name === 'CubeAction')[0];
+
+                const cube_translation_channel = anim_cube.channels.filter(a => a.target.path === "translation")[0];
+                const cube_rotation_channel = anim_cube.channels.filter(a => a.target.path === "rotation")[0];
+                const cube_scale_channel = anim_cube.channels.filter(a => a.target.path === "scale")[0];
+
+                const cube_translation_sampler = anim_cube.samplers[cube_translation_channel.sampler];
+                const cube_rotation_sampler = anim_cube.samplers[cube_rotation_channel.sampler];
+                const cube_scale_sampler = anim_cube.samplers[cube_scale_channel.sampler];
+
+                assert.strictEqual(cube_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(cube_rotation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(cube_scale_sampler.interpolation, "LINEAR");
+
+
+                const anim_armature = asset.animations.filter(a => a.name === 'ArmatureAction')[0];
+                const bone_node = asset.nodes.filter(a => a.name === "Bone")[0];
+                const armature_node = asset.nodes.filter(a => a.name === "Armature")[0];
+
+                const bone_translation_channel = anim_armature.channels.filter(a => asset.nodes[a.target.node].name === bone_node.name).filter(a => a.target.path === "translation")[0];
+                const bone_rotation_channel = anim_armature.channels.filter(a => asset.nodes[a.target.node].name === bone_node.name).filter(a => a.target.path === "rotation")[0];
+                const bone_scale_channel = anim_armature.channels.filter(a => asset.nodes[a.target.node].name === bone_node.name).filter(a => a.target.path === "scale")[0];
+
+                const bone_translation_sampler = anim_armature.samplers[bone_translation_channel.sampler];
+                const bone_rotation_sampler = anim_armature.samplers[bone_rotation_channel.sampler];
+                const bone_scale_sampler = anim_armature.samplers[bone_scale_channel.sampler];
+
+                assert.strictEqual(bone_translation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(bone_rotation_sampler.interpolation, "STEP");
+                assert.strictEqual(bone_scale_sampler.interpolation, "LINEAR");
+
+                const arma_translation_channel = anim_armature.channels.filter(a => asset.nodes[a.target.node].name === armature_node.name).filter(a => a.target.path === "translation")[0];
+                const arma_rotation_channel = anim_armature.channels.filter(a => asset.nodes[a.target.node].name === armature_node.name).filter(a => a.target.path === "rotation")[0];
+                const arma_scale_channel = anim_armature.channels.filter(a => asset.nodes[a.target.node].name === armature_node.name).filter(a => a.target.path === "scale")[0];
+
+                const arma_translation_sampler = anim_armature.samplers[arma_translation_channel.sampler];
+                const arma_rotation_sampler = anim_armature.samplers[arma_rotation_channel.sampler];
+                const arma_scale_sampler = anim_armature.samplers[arma_scale_channel.sampler];
+
+                assert.strictEqual(arma_translation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(arma_rotation_sampler.interpolation, "STEP");
+                assert.strictEqual(arma_scale_sampler.interpolation, "LINEAR");
+
+
+              });
         });
-});
     });
 });
 
