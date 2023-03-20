@@ -53,7 +53,7 @@ def gather_object_sampled_animation_sampler(
         extensions=None,
         extras=None,
         input=input,
-        interpolation=__gather_interpolation(node_channel_is_animated, node_channel_interpolation,export_settings),
+        interpolation=__gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings),
         output=output
     )
 
@@ -151,9 +151,14 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
 def __gather_interpolation(
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
+        keyframes,
         export_settings):
 
-    # keep STEP as STEP, other become LINEAR
-    return {
-        "STEP": "STEP"
-    }.get(node_channel_interpolation, "LINEAR")
+    if len(keyframes) != 2:
+        # keep STEP as STEP, other become LINEAR
+        return {
+            "STEP": "STEP"
+        }.get(node_channel_interpolation, "LINEAR")
+    else:
+        # If we only have 2 keyframes, set interpolation to STEP
+        return "STEP"

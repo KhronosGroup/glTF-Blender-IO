@@ -1257,7 +1257,6 @@ describe('Exporter', function() {
                 assert.strictEqual(cube_rotation_sampler.interpolation, "LINEAR");
                 assert.strictEqual(cube_scale_sampler.interpolation, "LINEAR");
 
-
                 const anim_armature = asset.animations.filter(a => a.name === 'ArmatureAction')[0];
                 const bone_node = asset.nodes.filter(a => a.name === "Bone")[0];
                 const armature_node = asset.nodes.filter(a => a.name === "Armature")[0];
@@ -1286,6 +1285,47 @@ describe('Exporter', function() {
                 assert.strictEqual(arma_rotation_sampler.interpolation, "STEP");
                 assert.strictEqual(arma_scale_sampler.interpolation, "LINEAR");
 
+                const anim_suzanne = asset.animations.filter(a => a.name === 'SuzanneAction')[0];
+
+                const suzanne_translation_channel = anim_suzanne.channels.filter(a => a.target.path === "translation")[0];
+                const suzanne_rotation_channel = anim_suzanne.channels.filter(a => a.target.path === "rotation")[0];
+                const suzanne_scale_channel = anim_suzanne.channels.filter(a => a.target.path === "scale")[0];
+
+                const suzanne_translation_sampler = anim_suzanne.samplers[suzanne_translation_channel.sampler];
+                const suzanne_rotation_sampler = anim_suzanne.samplers[suzanne_rotation_channel.sampler];
+                const suzanne_scale_sampler = anim_suzanne.samplers[suzanne_scale_channel.sampler];
+
+                assert.strictEqual(suzanne_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(suzanne_rotation_sampler.interpolation, "STEP");
+                assert.strictEqual(suzanne_scale_sampler.interpolation, "STEP");
+
+                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
+                const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
+
+                const bone2_translation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "translation")[0];
+                const bone2_rotation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "rotation")[0];
+                const bone2_scale_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "scale")[0];
+
+                const bone2_translation_sampler = anim_armature2.samplers[bone2_translation_channel.sampler];
+                const bone2_rotation_sampler = anim_armature2.samplers[bone2_rotation_channel.sampler];
+                const bone2_scale_sampler = anim_armature2.samplers[bone2_scale_channel.sampler];
+
+                assert.strictEqual(bone2_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(bone2_rotation_sampler.interpolation, "STEP");
+                assert.strictEqual(bone2_scale_sampler.interpolation, "STEP");
+
+                const arma2_translation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "translation")[0];
+                const arma2_rotation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "rotation")[0];
+                const arma2_scale_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "scale")[0];
+
+                const arma2_translation_sampler = anim_armature2.samplers[arma2_translation_channel.sampler];
+                const arma2_rotation_sampler = anim_armature2.samplers[arma2_rotation_channel.sampler];
+                const arma2_scale_sampler = anim_armature2.samplers[arma2_scale_channel.sampler];
+
+                assert.strictEqual(arma2_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(arma2_rotation_sampler.interpolation, "STEP");
+                assert.strictEqual(arma2_scale_sampler.interpolation, "STEP");
 
               });
         });
