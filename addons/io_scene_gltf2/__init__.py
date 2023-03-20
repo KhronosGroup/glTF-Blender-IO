@@ -468,17 +468,19 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_optimize_animation_size: BoolProperty(
         name='Optimize Animation Size',
         description=(
-            "Reduce exported file size by removing duplicate keyframes "
-            "(can cause problems with stepped animation)"
+            "Reduce exported file size by removing duplicate keyframes"
         ),
         default=True
     )
 
     export_optimize_animation_keep_anim_armature: BoolProperty(
-        name='Force keeping channel for armature / bones',
+        name='Force keeping channels for armature / bones',
         description=(
             "if all keyframes are identical in a rig "
-            "force keeping the minimal animation"
+            "force keeping the minimal animation. "
+            "When off, all possible channels for the armature "
+            "and bones will be exported, even if empty "
+            "(minimal animation, 2 keyframes)"
         ),
         default=True
     )
