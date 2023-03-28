@@ -474,12 +474,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_optimize_animation_keep_anim_armature: BoolProperty(
-        name='Force keeping channels for armature / bones',
+        name='Force keeping channels for bones',
         description=(
             "if all keyframes are identical in a rig "
             "force keeping the minimal animation. "
-            "When off, all possible channels for the armature "
-            "and bones will be exported, even if empty "
+            "When off, all possible channels for "
+            "the bones will be exported, even if empty "
             "(minimal animation, 2 keyframes)"
         ),
         default=True
@@ -1360,11 +1360,9 @@ class GLTF_PT_export_animation_optimize(bpy.types.Panel):
         layout.prop(operator, 'export_optimize_animation_size')
 
         row = layout.row()
-        row.active = operator.export_optimize_animation_size
         row.prop(operator, 'export_optimize_animation_keep_anim_armature')
 
         row = layout.row()
-        row.active = operator.export_optimize_animation_size
         row.prop(operator, 'export_optimize_animation_keep_anim_object')
 
 

@@ -78,10 +78,6 @@ def __gather_keyframes(
         export_settings
     )
 
-    if keyframes is None:
-        # After check, no need to animation this node
-        return None
-
     return keyframes
 
 def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str, export_settings):
@@ -160,5 +156,12 @@ def __gather_interpolation(
             "STEP": "STEP"
         }.get(node_channel_interpolation, "LINEAR")
     else:
-        # If we only have 2 keyframes, set interpolation to STEP
-        return "STEP"
+        # If we only have 2 keyframes, set interpolation to STEP if baked
+        if node_channel_is_animated is False:
+            # baked => We have first and last keyframe
+            return "STEP"
+        else:
+            if keyframes[0].value == keyframes[1].value:
+                return "STEP"
+            else:
+                return "LINEAR"

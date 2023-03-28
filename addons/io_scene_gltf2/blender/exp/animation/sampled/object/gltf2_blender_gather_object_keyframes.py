@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+from ....gltf2_blender_gather_tree import VExportNode
 from ....gltf2_blender_gather_cache import cached
 from ...gltf2_blender_gather_keyframes import Keyframe
 from ..gltf2_blender_gather_animation_sampling_cache import get_cache_data
@@ -62,20 +63,33 @@ def gather_object_sampled_keyframes(
         return None
 
     if not export_settings['gltf_optimize_animation']:
-        return keyframes
-
-    # For objects, if all values are the same, we keep only first and last
-    cst = fcurve_is_constant(keyframes)
-    if node_channel_is_animated is True:
-        return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
-    else:
-        # baked object
-        # Not keeping if not changing property if user decided to not keep
-        if export_settings['gltf_optimize_animation_keep_object'] is False:
-            return None if cst is True else keyframes
+        # For objects, if all values are the same, keeping only if changing values, or if user want to keep data
+        if node_channel_is_animated is True:
+            return keyframes # Always keeping
         else:
-            # Keep at least 2 keyframes if data are not changing
+            # baked object
+            if export_settings['gltf_optimize_animation_keep_object'] is False:
+                 # Not keeping if not changing property
+                cst = fcurve_is_constant(keyframes)
+                return None if cst is True else keyframes
+            else:
+                # Keep data, as requested by user. We keep all samples, as user don't want to optimize
+                return keyframes
+
+    else:
+
+        # For objects, if all values are the same, we keep only first and last
+        cst = fcurve_is_constant(keyframes)
+        if node_channel_is_animated is True:
             return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
+        else:
+            # baked object
+            # Not keeping if not changing property if user decided to not keep
+            if export_settings['gltf_optimize_animation_keep_object'] is False:
+                return None if cst is True else keyframes
+            else:
+                # Keep at least 2 keyframes if data are not changing
+                return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
 
 def fcurve_is_constant(keyframes):
     return all([j < 0.0001 for j in np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])
