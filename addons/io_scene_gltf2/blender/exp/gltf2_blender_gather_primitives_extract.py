@@ -96,7 +96,7 @@ class PrimitiveCreator:
         # Check if we have to export skin
         self.armature = None
         self.skin = None
-        if self.blender_vertex_groups and self.export_settings['gltf_skins']:
+        if self.export_settings['gltf_skins']:
             if self.modifiers is not None:
                 modifiers_dict = {m.type: m for m in self.modifiers}
                 if "ARMATURE" in modifiers_dict:
