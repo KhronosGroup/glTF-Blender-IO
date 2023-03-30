@@ -1130,7 +1130,10 @@ describe('Exporter', function() {
 
                 assert.strictEqual(asset.materials.length, 2);
                 assert.strictEqual(asset.meshes.length, 2);
-                    it('exports correct no SK when modifier', function() {
+
+              });
+
+              it('exports correct no SK when modifier', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '27_apply_modifier_with_shapekeys.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
