@@ -1152,11 +1152,9 @@ describe('Exporter', function() {
 
               });
 
-
               it('exports factor', function() {
                 let gltfPath = path.resolve(outDirPath, '01_factors.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
-
                 const mat = asset.materials[0];
                 const pbr = mat.pbrMetallicRoughness;
 
@@ -1172,6 +1170,8 @@ describe('Exporter', function() {
                 assert.equalEpsilon(mat.extensions['KHR_materials_volume']["thicknessFactor"], 0.9);
                 assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
+
+              });
 
               it('exports SK / SK anim', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '28_shapekeys_anim.gltf');
@@ -1242,11 +1242,9 @@ describe('Exporter', function() {
                 asset = JSON.parse(fs.readFileSync(gltfPath_2));
                 cube = asset.nodes.filter(m => m.name === 'Bone')[0]
                 assert.ok(!('rotation' in cube));
+
               });
-
-        });
-});
-
+            });
         });
     });
 });

@@ -200,10 +200,9 @@ def __gather_mesh(vnode, blender_object, export_settings):
         materials = tuple(mat for mat in blender_mesh.materials)
         if len(materials) == 1 and materials[0] is None:
             materials = tuple(ms.material for ms in vnode.original_object.material_slots)
+
         uuid_for_skined_data = None
-        vertex_groups = None
         modifiers = None
-        skip_filter = True
 
         if blender_mesh is None:
             return None
@@ -217,11 +216,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
         # Be sure that object is valid (no NaN for example)
         blender_object.data.validate()
 
-        # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
-        vertex_groups = blender_object.vertex_groups
         modifiers = blender_object.modifiers
-        if len(vertex_groups) == 0:
-            vertex_groups = None
         if len(modifiers) == 0:
             modifiers = None
 
@@ -229,7 +224,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
         if export_settings['gltf_apply']:
             if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
                 blender_mesh = blender_object.data
-                skip_filter = False
                 # Keep materials from object, as no modifiers are applied, so no risk that
                 # modifiers changed them
                 materials = tuple(ms.material for ms in blender_object.material_slots)
@@ -247,7 +241,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
                 for prop in blender_object.data.keys():
                     blender_mesh[prop] = blender_object.data[prop]
-                skip_filter = True
 
                 if export_settings['gltf_skins']:
                     # restore Armature modifiers
@@ -258,17 +251,14 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 materials = tuple(mat for mat in blender_mesh.materials)
                 if len(materials) == 1 and materials[0] is None:
                     materials = tuple(ms.material for ms in blender_object.material_slots)
+
         else:
             blender_mesh = blender_object.data
-            skip_filter = False
-            # If no skin are exported, no need to have vertex group, this will create a cache miss
             if not export_settings['gltf_skins']:
-                vertex_groups = None
                 modifiers = None
             else:
                 # Check if there is an armature modidier
                 if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
-                    vertex_groups = None # Not needed if no armature, avoid a cache miss
                     modifiers = None
 
             # Keep materials from object, as no modifiers are applied, so no risk that
@@ -286,9 +276,8 @@ def __gather_mesh(vnode, blender_object, export_settings):
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                    uuid_for_skined_data,
-                                                   vertex_groups,
+                                                   blender_object.vertex_groups if blender_object else None,
                                                    modifiers,
-                                                   skip_filter,
                                                    materials,
                                                    None,
                                                    export_settings)
@@ -324,17 +313,14 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
         needs_to_mesh_clear = True
 
-        skip_filter = True
         materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
-        vertex_groups = None
         modifiers = None
         blender_object_for_skined_data = None
 
         result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                        blender_object_for_skined_data,
-                                                       vertex_groups,
+                                                       blender_object.vertex_groups,
                                                        modifiers,
-                                                       skip_filter,
                                                        materials,
                                                        blender_object.data,
                                                        export_settings)
@@ -406,8 +392,7 @@ def gather_skin(vnode, export_settings):
         return None
 
     # no skin needed when the modifier is linked without having a vertex group
-    vertex_groups = blender_object.vertex_groups
-    if len(vertex_groups) == 0:
+    if len(blender_object.vertex_groups) == 0:
         return None
 
     # check if any vertices in the mesh are part of a vertex group
