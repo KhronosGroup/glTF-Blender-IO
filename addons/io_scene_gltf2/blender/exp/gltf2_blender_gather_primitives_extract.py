@@ -709,6 +709,8 @@ class PrimitiveCreator:
         self.normals = self.normals.reshape(len(self.blender_mesh.loops), 3)
 
         self.normals = np.round(self.normals, NORMALS_ROUNDING_DIGIT)
+        # Force normalization of normals in case some normals are not (why ?)
+        PrimitiveCreator.normalize_vecs(self.normals)
 
         self.morph_normals = []
         for key_block in key_blocks:
