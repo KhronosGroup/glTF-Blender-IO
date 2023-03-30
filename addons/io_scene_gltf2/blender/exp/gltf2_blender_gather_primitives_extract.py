@@ -208,15 +208,6 @@ class PrimitiveCreator:
         attr['skip_getting_to_dots'] = True
         self.blender_attributes.append(attr)
 
-        # Manage uvs TEX_COORD_x
-        for tex_coord_i in range(self.tex_coord_max):
-            attr = {}
-            attr['blender_data_type'] = 'FLOAT2'
-            attr['blender_domain'] = 'CORNER'
-            attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
-            attr['get'] = self.get_function()
-            self.blender_attributes.append(attr)
-
         # Manage NORMALS
         if self.use_normals:
             attr = {}
@@ -224,6 +215,15 @@ class PrimitiveCreator:
             attr['blender_domain'] = 'CORNER'
             attr['gltf_attribute_name'] = 'NORMAL'
             attr['gltf_attribute_name_morph'] = 'MORPH_NORMAL_'
+            attr['get'] = self.get_function()
+            self.blender_attributes.append(attr)
+
+        # Manage uvs TEX_COORD_x
+        for tex_coord_i in range(self.tex_coord_max):
+            attr = {}
+            attr['blender_data_type'] = 'FLOAT2'
+            attr['blender_domain'] = 'CORNER'
+            attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
             attr['get'] = self.get_function()
             self.blender_attributes.append(attr)
 
@@ -279,6 +279,13 @@ class PrimitiveCreator:
         for attr in self.blender_attributes:
             attr['len'] = gltf2_blender_conversion.get_data_length(attr['blender_data_type'])
             attr['type'] = gltf2_blender_conversion.get_numpy_type(attr['blender_data_type'])
+
+
+        # Now we have all attribtues, we can change order if we want
+        # Note that the glTF specification doesn't say anything about order
+        # Attributes are defined only by name
+        # But if user want it in a particular order, he can use this hook to perform it
+        export_user_extensions('gather_attributes_change', self.export_settings, self.blender_attributes)
 
     def create_dots_data_structure(self):
         # Now that we get all attributes that are going to be exported, create numpy array that will store them

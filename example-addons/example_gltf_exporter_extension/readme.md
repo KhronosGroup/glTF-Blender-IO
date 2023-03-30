@@ -69,4 +69,5 @@ gather_animation_bone_sampled_channel_target_hook(self, blender_object, bone, ch
 gather_animation_object_sampled_channel_target_hook(self, blender_object, channel)
 gather_attribute_keep(self, keep_attribute, export_settings)
 gather_attribute_change(self, attribute, data, is_normalized_byte_color, export_settings)
+gather_attributes_change(self, attributes, export_settings)
 ```
