@@ -148,5 +148,5 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
     return input, output
 
 def __gather_interpolation(export_settings):
-    # TODO: check if the bone was animated with CONSTANT
+    # TODO: check if the object was animated with CONSTANT
     return 'LINEAR'

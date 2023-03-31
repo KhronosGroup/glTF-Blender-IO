@@ -96,7 +96,7 @@ class PrimitiveCreator:
         # Check if we have to export skin
         self.armature = None
         self.skin = None
-        if self.blender_vertex_groups and self.export_settings['gltf_skins']:
+        if self.export_settings['gltf_skins']:
             if self.modifiers is not None:
                 modifiers_dict = {m.type: m for m in self.modifiers}
                 if "ARMATURE" in modifiers_dict:
@@ -208,15 +208,6 @@ class PrimitiveCreator:
         attr['skip_getting_to_dots'] = True
         self.blender_attributes.append(attr)
 
-        # Manage uvs TEX_COORD_x
-        for tex_coord_i in range(self.tex_coord_max):
-            attr = {}
-            attr['blender_data_type'] = 'FLOAT2'
-            attr['blender_domain'] = 'CORNER'
-            attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
-            attr['get'] = self.get_function()
-            self.blender_attributes.append(attr)
-
         # Manage NORMALS
         if self.use_normals:
             attr = {}
@@ -224,6 +215,15 @@ class PrimitiveCreator:
             attr['blender_domain'] = 'CORNER'
             attr['gltf_attribute_name'] = 'NORMAL'
             attr['gltf_attribute_name_morph'] = 'MORPH_NORMAL_'
+            attr['get'] = self.get_function()
+            self.blender_attributes.append(attr)
+
+        # Manage uvs TEX_COORD_x
+        for tex_coord_i in range(self.tex_coord_max):
+            attr = {}
+            attr['blender_data_type'] = 'FLOAT2'
+            attr['blender_domain'] = 'CORNER'
+            attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
             attr['get'] = self.get_function()
             self.blender_attributes.append(attr)
 
@@ -279,6 +279,13 @@ class PrimitiveCreator:
         for attr in self.blender_attributes:
             attr['len'] = gltf2_blender_conversion.get_data_length(attr['blender_data_type'])
             attr['type'] = gltf2_blender_conversion.get_numpy_type(attr['blender_data_type'])
+
+
+        # Now we have all attribtues, we can change order if we want
+        # Note that the glTF specification doesn't say anything about order
+        # Attributes are defined only by name
+        # But if user want it in a particular order, he can use this hook to perform it
+        export_user_extensions('gather_attributes_change', self.export_settings, self.blender_attributes)
 
     def create_dots_data_structure(self):
         # Now that we get all attributes that are going to be exported, create numpy array that will store them
@@ -709,6 +716,8 @@ class PrimitiveCreator:
         self.normals = self.normals.reshape(len(self.blender_mesh.loops), 3)
 
         self.normals = np.round(self.normals, NORMALS_ROUNDING_DIGIT)
+        # Force normalization of normals in case some normals are not (why ?)
+        PrimitiveCreator.normalize_vecs(self.normals)
 
         self.morph_normals = []
         for key_block in key_blocks:
@@ -868,7 +877,7 @@ class PrimitiveCreator:
         # Morph tangent are after these 3 others, so, they are already calculated
         self.normals = self.attributes[attr['gltf_attribute_name_normal']]["data"]
         self.morph_normals = self.attributes[attr['gltf_attribute_name_morph_normal']]["data"]
-        self.tangent = self.attributes[attr['gltf_attribute_name_tangent']]["data"]
+        self.tangents = self.attributes[attr['gltf_attribute_name_tangent']]["data"]
 
         self.__calc_morph_tangents()
         self.attributes[attr['gltf_attribute_name']] = {}
@@ -876,18 +885,18 @@ class PrimitiveCreator:
 
     def __calc_morph_tangents(self):
         # TODO: check if this works
-        self.morph_tangent_deltas = np.empty((len(self.normals), 3), dtype=np.float32)
+        self.morph_tangents = np.empty((len(self.normals), 3), dtype=np.float32)
 
         for i in range(len(self.normals)):
             n = Vector(self.normals[i])
-            morph_n = n + Vector(self.morph_normal_deltas[i])  # convert back to non-delta
+            morph_n = n + Vector(self.morph_normals[i])  # convert back to non-delta
             t = Vector(self.tangents[i, :3])
 
             rotation = morph_n.rotation_difference(n)
 
             t_morph = Vector(t)
             t_morph.rotate(rotation)
-            self.morph_tangent_deltas[i] = t_morph - t  # back to delta
+            self.morph_tangents[i] = t_morph - t  # back to delta
 
     def __set_regular_attribute(self, attr):
             res = np.empty((len(self.prim_dots), attr['len']), dtype=attr['type'])
