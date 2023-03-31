@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (3, 6, 2),
+    "version": (3, 6, 10),
     'blender': (3, 5, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -283,7 +283,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_draco_generic_quantization: IntProperty(
         name='Generic quantization bits',
-        description='Quantization bits for generic coordinate values like weights or joints (0 = no quantization)',
+        description='Quantization bits for generic values like weights or joints (0 = no quantization)',
         default=12,
         min=0,
         max=30
@@ -601,7 +601,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Shape Key Animations',
         description='Export shape keys animations (morph targets)',
         default=True
-    )    
+    )
 
     export_lights: BoolProperty(
         name='Punctual Lights',

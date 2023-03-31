@@ -1146,10 +1146,73 @@ describe('Exporter', function() {
 
               });
 
+              it('exports mesh instances', function() {
+                let gltfPath = path.resolve(outDirPath, '25_mesh_instances.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const original = asset.nodes.find(node => node.name === 'original');
+                const original_instance = asset.nodes.find(node => node.name === 'original_instance');
+                const with_object_material = asset.nodes.find(node => node.name === 'with_object_material');
+                const with_object_material_other = asset.nodes.find(node => node.name === 'with_object_material_other');
+                const modifier_1 = asset.nodes.find(node => node.name === 'modifier_1');
+                const modifier_2 = asset.nodes.find(node => node.name === 'modifier_2');
+                const skined_1 = asset.nodes.find(node => node.name === 'skined_1');
+                const skined_2 = asset.nodes.find(node => node.name === 'skined_2');
+
+                assert.strictEqual(original.mesh, original_instance.mesh);
+                assert.strictEqual(original.mesh, original_instance.mesh);
+                assert.notEqual(original.mesh, with_object_material.mesh);
+                assert.notEqual(original.mesh, with_object_material_other.mesh);
+                assert.notEqual(with_object_material.mesh, with_object_material_other.mesh);
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].indices, asset.meshes[with_object_material.mesh].primitives[0].indices)
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['POSITION'], asset.meshes[with_object_material.mesh].primitives[0].attributes['POSITION'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['TEXCOORD_0'], asset.meshes[with_object_material.mesh].primitives[0].attributes['TEXCOORD_0'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['NORMAL'], asset.meshes[with_object_material.mesh].primitives[0].attributes['NORMAL'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].indices, asset.meshes[with_object_material_other.mesh].primitives[0].indices)
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['POSITION'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['POSITION'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['TEXCOORD_0'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['TEXCOORD_0'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['NORMAL'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['NORMAL'])
+                assert.strictEqual(original.mesh, modifier_1.mesh);
+                assert.strictEqual(original.mesh, modifier_2.mesh);
+                assert.notEqual(original.mesh, skined_1.mesh);
+                assert.notEqual(original.mesh, skined_2.mesh);
+
+              });
+
+              it('exports mesh instances apply modifier', function() {
+                let gltfPath = path.resolve(outDirPath, '25_mesh_instances_apply_modifier.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const original = asset.nodes.find(node => node.name === 'original');
+                const original_instance = asset.nodes.find(node => node.name === 'original_instance');
+                const with_object_material = asset.nodes.find(node => node.name === 'with_object_material');
+                const with_object_material_other = asset.nodes.find(node => node.name === 'with_object_material_other');
+                const modifier_1 = asset.nodes.find(node => node.name === 'modifier_1');
+                const modifier_2 = asset.nodes.find(node => node.name === 'modifier_2');
+                const skined_1 = asset.nodes.find(node => node.name === 'skined_1');
+                const skined_2 = asset.nodes.find(node => node.name === 'skined_2');
+
+                assert.strictEqual(original.mesh, original_instance.mesh);
+                assert.strictEqual(original.mesh, original_instance.mesh);
+                assert.notEqual(original.mesh, with_object_material.mesh);
+                assert.notEqual(original.mesh, with_object_material_other.mesh);
+                assert.notEqual(with_object_material.mesh, with_object_material_other.mesh);
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].indices, asset.meshes[with_object_material.mesh].primitives[0].indices)
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['POSITION'], asset.meshes[with_object_material.mesh].primitives[0].attributes['POSITION'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['TEXCOORD_0'], asset.meshes[with_object_material.mesh].primitives[0].attributes['TEXCOORD_0'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['NORMAL'], asset.meshes[with_object_material.mesh].primitives[0].attributes['NORMAL'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].indices, asset.meshes[with_object_material_other.mesh].primitives[0].indices)
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['POSITION'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['POSITION'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['TEXCOORD_0'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['TEXCOORD_0'])
+                assert.strictEqual(asset.meshes[original.mesh].primitives[0].attributes['NORMAL'], asset.meshes[with_object_material_other.mesh].primitives[0].attributes['NORMAL'])
+                assert.notEqual(original.mesh, modifier_1.mesh);
+                assert.notEqual(original.mesh, modifier_2.mesh);
+                assert.notEqual(original.mesh, skined_1.mesh);
+                assert.notEqual(original.mesh, skined_2.mesh);
+
+                });
+
               it('exports factor', function() {
                 let gltfPath = path.resolve(outDirPath, '01_factors.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
-
                 const mat = asset.materials[0];
                 const pbr = mat.pbrMetallicRoughness;
 
@@ -1165,6 +1228,8 @@ describe('Exporter', function() {
                 assert.equalEpsilon(mat.extensions['KHR_materials_volume']["thicknessFactor"], 0.9);
                 assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
+
+              });
 
               it('exports SK / SK anim', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '28_shapekeys_anim.gltf');
@@ -1224,7 +1289,7 @@ describe('Exporter', function() {
 
               });
 
-    
+
               it('exports using armature rest pose', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
@@ -1235,10 +1300,9 @@ describe('Exporter', function() {
                 asset = JSON.parse(fs.readFileSync(gltfPath_2));
                 cube = asset.nodes.filter(m => m.name === 'Bone')[0]
                 assert.ok(!('rotation' in cube));
+
               });
-    
         });
-});
     });
 });
 
