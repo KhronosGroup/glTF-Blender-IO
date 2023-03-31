@@ -15,17 +15,14 @@
 import bpy
 from mathutils import Matrix
 import numpy as np
-
-from ...io.imp.gltf2_io_binary import BinaryData
-from ..com.gltf2_blender_extras import set_extras
-from .gltf2_blender_material import BlenderMaterial
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ...io.com.gltf2_io_debug import print_console
+from ...io.imp.gltf2_io_binary import BinaryData
 from ...io.com.gltf2_io_constants import DataType, ComponentType
 from ...blender.com.gltf2_blender_conversion import get_attribute_type
+from ..com.gltf2_blender_extras import set_extras
+from .gltf2_blender_material import BlenderMaterial
 from .gltf2_io_draco_compression_extension import decode_primitive
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
-from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_default_material
-
 
 class BlenderMesh():
     """Blender Mesh."""
@@ -149,7 +146,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for attr in attributes:
         attribute_data.append(
             np.empty(
-                dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type), 
+                dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type),
                 shape=(0, DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type)))
                 )
 
@@ -437,7 +434,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
                 for mapping in prim.extensions['KHR_materials_variants']['mappings']:
                     # Store, for each variant, the material link to this primitive
-                    
+
                     variant_primitive = mesh.gltf2_variant_mesh_data.add()
                     variant_primitive.material_slot_index = material_index
                     if 'material' not in mapping.keys():
@@ -610,7 +607,22 @@ def skin_into_bind_pose(gltf, skin_idx, vert_joints, vert_weights, locs, vert_no
         for i in range(4):
             skinning_mats += ws[:, i].reshape(len(ws), 1, 1) * joint_mats[js[:, i]]
             weight_sums += ws[:, i]
-    # Normalize weights to one; necessary for old files / quantized weights
+
+    # Some invalid files have 0 weight sum.
+    # To avoid to have this vertices at 0.0 / 0.0 / 0.0
+    # We set all weight ( aka 1.0 ) to the first bone
+    zeros_indices = np.where(weight_sums == 0)[0]
+    if zeros_indices.shape[0] > 0:
+        print_console('ERROR', 'File is invalid: Some vertices are not assigned to bone(s) ')
+        vert_weights[0][:, 0][zeros_indices] = 1.0 # Assign to first bone with all weight
+
+        # Reprocess IBM for these vertices
+        skinning_mats[zeros_indices] = np.zeros((4, 4), dtype=np.float32)
+        for js, ws in zip(vert_joints, vert_weights):
+            for i in range(4):
+                skinning_mats[zeros_indices] += ws[:, i][zeros_indices].reshape(len(ws[zeros_indices]), 1, 1) * joint_mats[js[:, i][zeros_indices]]
+                weight_sums[zeros_indices] += ws[:, i][zeros_indices]
+
     skinning_mats /= weight_sums.reshape(num_verts, 1, 1)
 
     skinning_mats_3x3 = skinning_mats[:, :3, :3]

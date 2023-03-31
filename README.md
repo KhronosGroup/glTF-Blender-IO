@@ -1,4 +1,4 @@
-[![Blender](misc/Blender_logo.png)](http://www.blender.org/) [![glTF](misc/glTF_logo.png)](https://www.khronos.org/gltf/)  
+[![Blender](misc/Blender_logo.png)](http://www.blender.org/) [![glTF](misc/glTF_logo.png)](https://www.khronos.org/gltf/)
 
 Blender glTF 2.0 Importer and Exporter
 ======================================
@@ -8,14 +8,14 @@ Documentation
 
 | Blender Version | Documentation |
 |---------|---------------------|
-| 3.4    | https://docs.blender.org/manual/en/3.4/addons/import_export/scene_gltf2.html  |
+| 3.5    | https://docs.blender.org/manual/en/3.5/addons/import_export/scene_gltf2.html  |
 | dev     | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
-* 3.4 is the current stable release. Check the `blender-v3.4-release` branch.
-* 2.80 - 3.3 are previous stable releases.
-* 3.3.2 is the current Blender LTS release. Check the `blender-v3.3-release` branch (and `3.3.2` tag)
-* main branch of this addon is mirrored in [Blender Addons master](https://developer.blender.org/diffusion/BA/browse/master/io_scene_gltf2/), that will become Blender 3.5.
+* 3.5 is the current stable release. Check the `blender-v3.5-release` branch.
+* 2.80 - 3.4 are previous stable releases.
+* 3.3.x is the current Blender LTS release. Check the `blender-v3.3-release` branch (and `3.3.x` tag)
+* main branch of this addon is mirrored in [Blender Addons main](https://projects.blender.org/blender/blender-addons/src/branch/main/io_scene_gltf2), that will become Blender 3.6.
 
 ### Legacy 2.79 Support
 
@@ -31,22 +31,22 @@ Developed by [UX3D](https://www.ux3d.io/), Scurest and [Julien Duroure](http://j
 Introduction
 ------------
 
-Official Khronos Group Blender [glTF](https://www.khronos.org/gltf/) 2.0 importer and exporter.  
+Official Khronos Group Blender [glTF](https://www.khronos.org/gltf/) 2.0 importer and exporter.
 
 This project contains all features from the [previous exporter](https://github.com/KhronosGroup/glTF-Blender-Exporter), and all future development will happen on this repository. In addition, this repository contains a Blender importer, with common Python code shared between exporter and importer for round-trip workflows. New features are included or under development, but usage and menu functionality remain the same.
 
-The shared codebase is organized into common (Blender-independent) and Blender-specific packages:  
+The shared codebase is organized into common (Blender-independent) and Blender-specific packages:
 
-![Packages](docs/packages.png)  
-Package organisation  
+![Packages](docs/packages.png)
+Package organisation
 
 This structure allows common code to be reused by third-party Python packages working with the glTF 2.0 format.
 
-![Process](docs/io_process.png)  
+![Process](docs/io_process.png)
 Import & export process
 
-The main importer and exporter interface is the Python glTF scene representation.  
-Blender scene data is first extracted and converted into this scene description. This glTF scene description is exported to the final JSON glTF file. Any compression of mesh, animation, or texture data happens here.  
+The main importer and exporter interface is the Python glTF scene representation.
+Blender scene data is first extracted and converted into this scene description. This glTF scene description is exported to the final JSON glTF file. Any compression of mesh, animation, or texture data happens here.
 For import, glTF data is parsed and written into the Python glTF scene description. Any decompression is executed in this step. Using the imported glTF scene tree, the Blender internal scene representation is generated from this information.
 
 Installation
@@ -66,9 +66,9 @@ Continuous Integration Tests
 Several companies, individuals, and glTF community members contribute to Blender glTF I/O. Functionality is added and bugs are fixed regularly. Because hobbyists and professionals using Blender glTF I/O rely on its stability for their daily work, continuous integration tests are enabled. After each commit or pull request, the following tests are run:
 
 -	Export Blender scene and validate using the [glTF validator](https://github.com/KhronosGroup/glTF-Validator/)
--	Round trip import-export and comparison of glTF validator results  
+-	Round trip import-export and comparison of glTF validator results
 
-These quality-assurance checks improve the reliability of Blender glTF I/O.  
+These quality-assurance checks improve the reliability of Blender glTF I/O.
 
 [![CI](https://github.com/KhronosGroup/glTF-Blender-IO/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/KhronosGroup/glTF-Blender-IO/actions?query=workflow%3ACI)
 

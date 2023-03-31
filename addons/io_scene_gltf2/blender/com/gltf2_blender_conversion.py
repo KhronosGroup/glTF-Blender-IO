@@ -14,7 +14,7 @@
 
 from math import sin, cos
 import numpy as np
-from io_scene_gltf2.io.com import gltf2_io_constants
+from ...io.com import gltf2_io_constants
 
 PBR_WATTS_TO_LUMENS = 683
 # Industry convention, biological peak at 555nm, scientific standard as part of SI candela definition.
@@ -57,13 +57,15 @@ def get_target(property):
     return {
         "delta_location": "translation",
         "delta_rotation_euler": "rotation",
+        "delta_rotation_quaternion": "rotation",
+        "delta_scale": "scale",
         "location": "translation",
         "rotation_axis_angle": "rotation",
         "rotation_euler": "rotation",
         "rotation_quaternion": "rotation",
         "scale": "scale",
         "value": "weights"
-    }.get(property)
+    }.get(property, None)
 
 def get_component_type(attribute_component_type):
     return {
@@ -77,6 +79,13 @@ def get_component_type(attribute_component_type):
         "FLOAT": gltf2_io_constants.ComponentType.Float,
         "BOOLEAN": gltf2_io_constants.ComponentType.Float
     }.get(attribute_component_type)
+
+def get_channel_from_target(target):
+    return {
+        "rotation": "rotation_quaternion",
+        "translation": "location",
+        "scale": "scale"
+    }.get(target)
 
 def get_data_type(attribute_component_type):
     return {

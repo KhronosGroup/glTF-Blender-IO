@@ -17,6 +17,8 @@ from typing import List, Dict, Any
 
 class Extension:
     """Container for extensions. Allows to specify requiredness"""
+    extension = True # class method used to check Extension class at traversal (after reloading script, isinstance is not working)
+
     def __init__(self, name: str, extension: Dict[str, Any], required: bool = True):
         self.name = name
         self.extension = extension

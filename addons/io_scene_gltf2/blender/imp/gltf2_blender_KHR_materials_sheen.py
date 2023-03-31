@@ -14,10 +14,6 @@
 
 from ...io.com.gltf2_io import TextureInfo
 from .gltf2_blender_texture import texture
-from .gltf2_blender_image import BlenderImage
-from ..exp.gltf2_blender_image import TmpImageGuard
-import numpy as np
-import bpy
 
 def sheen(  mh,
             location_sheenColor,
@@ -42,7 +38,7 @@ def sheen(  mh,
     sheenRoughnessFactor = ext.get('sheenRoughnessFactor', 0.0)
     tex_info_roughness = ext.get('sheenRoughnessTexture')
     if tex_info_roughness is not None:
-        tex_info_roughness = TextureInfo.from_dict(tex_info_roughness)    
+        tex_info_roughness = TextureInfo.from_dict(tex_info_roughness)
 
     if tex_info_color is None:
         sheenColorFactor.extend([1.0])

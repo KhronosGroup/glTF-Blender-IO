@@ -13,13 +13,13 @@
 # limitations under the License.
 
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ..com.gltf2_blender_extras import set_extras
 from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
 from .gltf2_blender_light import BlenderLight
 from .gltf2_blender_vnode import VNode
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
 
 class BlenderNode():
     """Blender Node."""
@@ -118,6 +118,11 @@ class BlenderNode():
                 # Nodes with a bone parent need to be translated
                 # backwards from the tip to the root
                 obj.location += Vector((0, -parent_vnode.bone_length, 0))
+
+        # Store Rest matrix of object
+        # Can't use directly matrix_world because not refreshed yet
+        if hasattr(obj, 'gltf2_animation_rest'):
+            obj.gltf2_animation_rest = Matrix.LocRotScale(obj.location, obj.rotation_quaternion, obj.scale)
 
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
@@ -257,6 +262,11 @@ class BlenderNode():
                 if weight < kb.slider_min: kb.slider_min = weight
                 if weight > kb.slider_max: kb.slider_max = weight
                 kb.value = weight
+
+                # Store default weight
+                if hasattr(obj, 'gltf2_animation_weight_rest'):
+                    w = obj.gltf2_animation_weight_rest.add()
+                    w.val = weight
 
     @staticmethod
     def setup_skinning(gltf, pynode, obj):

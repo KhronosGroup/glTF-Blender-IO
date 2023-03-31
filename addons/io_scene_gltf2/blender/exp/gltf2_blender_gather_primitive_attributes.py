@@ -14,12 +14,9 @@
 
 import numpy as np
 
-from . import gltf2_blender_export_keys
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com import gltf2_io_constants
-from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.io.exp import gltf2_io_binary_data
-
+from ...io.com import gltf2_io, gltf2_io_constants, gltf2_io_debug
+from ...io.exp import gltf2_io_binary_data
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 
 
 def gather_primitive_attributes(blender_primitive, export_settings):
@@ -74,7 +71,7 @@ def array_to_accessor(array, component_type, data_type, include_max_and_min=Fals
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
 
-    if not export_settings[gltf2_blender_export_keys.SKINS]:
+    if not export_settings['gltf_skins']:
         return attributes
 
     # Retrieve max set index
@@ -166,6 +163,8 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
         data['data'] += 0.5  # bias for rounding
         data['data'] = data['data'].astype(np.uint16)
 
+        export_user_extensions('gather_attribute_change', export_settings, attribute, data, True)
+
         return { attribute : gltf2_io.Accessor(
                 buffer_view=gltf2_io_binary_data.BinaryData(data['data'].tobytes(), gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
                 byte_offset=None,
@@ -186,6 +185,9 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
         return __gather_skins(blender_primitive, export_settings)
 
     else:
+
+        export_user_extensions('gather_attribute_change', export_settings, attribute, data, False)
+
         return {
             attribute: array_to_accessor(
                 data['data'],
