@@ -190,6 +190,8 @@ class BlenderGlTF():
                     # Try to use name from extras.targetNames
                     try:
                         shapekey_name = str(mesh.extras['targetNames'][sk])
+                        if shapekey_name == "": # Issue when shapekey name is empty
+                            shapekey_name = None
                     except Exception:
                         pass
 
