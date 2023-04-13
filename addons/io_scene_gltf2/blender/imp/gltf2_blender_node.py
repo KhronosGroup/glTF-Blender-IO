@@ -95,7 +95,7 @@ class BlenderNode():
         # Set extras (if came from a glTF node)
         if isinstance(vnode_id, int):
             pynode = gltf.data.nodes[vnode_id]
-            set_extras(obj, pynode.extras)
+            set_extras(obj, pynode.extras, gltf.import_settings)
 
         # Set transform
         trans, rot, scale = vnode.trs()
@@ -178,7 +178,7 @@ class BlenderNode():
 
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]
-                set_extras(editbone, pynode.extras)
+                set_extras(editbone, pynode.extras, gltf.import_settings)
 
         # Set all bone parents
         for id in bone_ids:
@@ -207,7 +207,7 @@ class BlenderNode():
 
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]
-                set_extras(pose_bone, pynode.extras)
+                set_extras(pose_bone, pynode.extras, gltf.import_settings)
 
     @staticmethod
     def create_mesh_object(gltf, vnode):

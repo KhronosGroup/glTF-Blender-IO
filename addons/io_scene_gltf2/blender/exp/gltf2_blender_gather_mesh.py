@@ -113,7 +113,7 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     extras = {}
 
     if export_settings['gltf_extras']:
-        extras = generate_extras(blender_mesh) or {}
+        extras = generate_extras(blender_mesh, export_settings) or {}
 
     if export_settings['gltf_morph'] and blender_mesh.shape_keys:
         morph_max = len(blender_mesh.shape_keys.key_blocks) - 1

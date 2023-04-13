@@ -164,3 +164,6 @@ GLTF_IOR = 1.5
 
 # Rounding digit used for normal rounding
 NORMALS_ROUNDING_DIGIT = 4
+
+# List of custom properties to not import/export
+BLENDER_CUSTOM_PROP_BLACK_LIST = ['cycles', 'cycles_visibility', 'cycles_curves', 'glTF2ExportSettings']

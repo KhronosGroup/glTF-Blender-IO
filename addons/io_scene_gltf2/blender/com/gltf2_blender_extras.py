@@ -17,11 +17,7 @@ import bpy
 from .gltf2_blender_json import is_json_convertible
 
 
-# Custom properties, which are in most cases present and should not be imported/exported.
-BLACK_LIST = ['cycles', 'cycles_visibility', 'cycles_curves', 'glTF2ExportSettings']
-
-
-def generate_extras(blender_element):
+def generate_extras(blender_element, export_settings):
     """Filter and create a custom property, which is stored in the glTF extra field."""
     if not blender_element:
         return None
@@ -29,7 +25,7 @@ def generate_extras(blender_element):
     extras = {}
 
     for custom_property in blender_element.keys():
-        if custom_property in BLACK_LIST:
+        if custom_property in export_settings['blender_custom_prop_black_list']:
             continue
 
         value = __to_json_compatible(blender_element[custom_property])
@@ -76,13 +72,13 @@ def __to_json_compatible(value):
     return None
 
 
-def set_extras(blender_element, extras, exclude=[]):
+def set_extras(blender_element, extras, import_settings, exclude=[]):
     """Copy extras onto a Blender object."""
     if not extras or not isinstance(extras, dict):
         return
 
     for custom_property, value in extras.items():
-        if custom_property in BLACK_LIST:
+        if custom_property in import_settings['blender_custom_prop_black_list']:
             continue
         if custom_property in exclude:
             continue

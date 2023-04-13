@@ -43,7 +43,7 @@ class BlenderLight():
 
         # TODO range
 
-        set_extras(light, pylight.get('extras'))
+        set_extras(light, pylight.get('extras'), gltf.import_settings)
 
         return light
 

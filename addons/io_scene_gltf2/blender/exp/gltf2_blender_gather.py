@@ -91,5 +91,5 @@ def __gather_scene(blender_scene, export_settings):
 
 def __gather_extras(blender_object, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_object)
+        return generate_extras(blender_object, export_settings)
     return None

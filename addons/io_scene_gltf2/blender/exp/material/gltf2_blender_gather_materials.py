@@ -286,7 +286,7 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
 
 def __gather_extras(blender_material, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_material)
+        return generate_extras(blender_material, export_settings)
     return None
 
 

@@ -57,5 +57,5 @@ def __gather_channels_fcurves(
 
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_action)
+        return generate_extras(blender_action, export_settings)
     return None
