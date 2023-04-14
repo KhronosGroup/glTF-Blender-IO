@@ -223,6 +223,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False,
     )
 
+    export_minify_json: BoolProperty(
+        name='Minify JSON',
+        description='Export minified JSON',
+        default=False,
+    )
+
     export_texcoords: BoolProperty(
         name='UVs',
         description='Export UVs (texture coordinates) with meshes',
@@ -697,6 +703,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             self.export_texture_dir,
         )
         export_settings['gltf_keep_original_textures'] = self.export_keep_originals
+        export_settings['gltf_minify_json'] = self.export_minify_json
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
@@ -861,6 +868,7 @@ class GLTF_PT_export_main(bpy.types.Panel):
         layout.prop(operator, 'export_format')
         if operator.export_format == 'GLTF_SEPARATE':
             layout.prop(operator, 'export_keep_originals')
+            layout.prop(operator, 'export_minify_json')
             if operator.export_keep_originals is False:
                 layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
 
