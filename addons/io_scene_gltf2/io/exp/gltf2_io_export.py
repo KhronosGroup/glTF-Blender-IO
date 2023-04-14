@@ -72,7 +72,7 @@ def save_gltf(gltf, export_settings, encoder, glb_buffer):
 
     gltf_ordered = OrderedDict(sorted(gltf.items(), key=lambda item: sort_order.index(item[0])))
 
-    if export_settings['gltf_minify_json'] == True:
+    if export_settings['gltf_minify_json']:
         gltf_encoded = json.dumps(gltf_ordered, separators=gltf_format.separators, cls=encoder, allow_nan=False)
     else:
         gltf_encoded = json.dumps(gltf_ordered, indent=gltf_format.indent, separators=gltf_format.separators, cls=encoder, allow_nan=False)
