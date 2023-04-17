@@ -96,7 +96,7 @@ class PrimitiveCreator:
         # Check if we have to export skin
         self.armature = None
         self.skin = None
-        if self.blender_vertex_groups and self.export_settings['gltf_skins']:
+        if self.export_settings['gltf_skins']:
             if self.modifiers is not None:
                 modifiers_dict = {m.type: m for m in self.modifiers}
                 if "ARMATURE" in modifiers_dict:
@@ -208,15 +208,6 @@ class PrimitiveCreator:
         attr['skip_getting_to_dots'] = True
         self.blender_attributes.append(attr)
 
-        # Manage uvs TEX_COORD_x
-        for tex_coord_i in range(self.tex_coord_max):
-            attr = {}
-            attr['blender_data_type'] = 'FLOAT2'
-            attr['blender_domain'] = 'CORNER'
-            attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
-            attr['get'] = self.get_function()
-            self.blender_attributes.append(attr)
-
         # Manage NORMALS
         if self.use_normals:
             attr = {}
@@ -224,6 +215,15 @@ class PrimitiveCreator:
             attr['blender_domain'] = 'CORNER'
             attr['gltf_attribute_name'] = 'NORMAL'
             attr['gltf_attribute_name_morph'] = 'MORPH_NORMAL_'
+            attr['get'] = self.get_function()
+            self.blender_attributes.append(attr)
+
+        # Manage uvs TEX_COORD_x
+        for tex_coord_i in range(self.tex_coord_max):
+            attr = {}
+            attr['blender_data_type'] = 'FLOAT2'
+            attr['blender_domain'] = 'CORNER'
+            attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
             attr['get'] = self.get_function()
             self.blender_attributes.append(attr)
 
@@ -279,6 +279,13 @@ class PrimitiveCreator:
         for attr in self.blender_attributes:
             attr['len'] = gltf2_blender_conversion.get_data_length(attr['blender_data_type'])
             attr['type'] = gltf2_blender_conversion.get_numpy_type(attr['blender_data_type'])
+
+
+        # Now we have all attribtues, we can change order if we want
+        # Note that the glTF specification doesn't say anything about order
+        # Attributes are defined only by name
+        # But if user want it in a particular order, he can use this hook to perform it
+        export_user_extensions('gather_attributes_change', self.export_settings, self.blender_attributes)
 
     def create_dots_data_structure(self):
         # Now that we get all attributes that are going to be exported, create numpy array that will store them
@@ -709,6 +716,8 @@ class PrimitiveCreator:
         self.normals = self.normals.reshape(len(self.blender_mesh.loops), 3)
 
         self.normals = np.round(self.normals, NORMALS_ROUNDING_DIGIT)
+        # Force normalization of normals in case some normals are not (why ?)
+        PrimitiveCreator.normalize_vecs(self.normals)
 
         self.morph_normals = []
         for key_block in key_blocks:
