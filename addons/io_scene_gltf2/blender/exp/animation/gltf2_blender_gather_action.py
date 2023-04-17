@@ -81,6 +81,7 @@ def prepare_actions_range(export_settings):
         blender_actions = __get_blender_actions(obj_uuid, export_settings)
         for blender_action, track, type_ in blender_actions:
 
+            # What about frame_range bug for single keyframe animations ? 107030
             start_frame = int(blender_action.frame_range[0])
             end_frame = int(blender_action.frame_range[1])
 
