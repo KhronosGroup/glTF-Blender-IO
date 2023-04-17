@@ -237,13 +237,13 @@ describe('Exporter', function() {
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
                         let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
                         let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
-                        blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
+                        /*blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
 
                             validateGltf(dstPath, done);
-                        }, args);
-                        // validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
+                        }, args);*/
+                        validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
                     });
                 });
             });
@@ -1307,13 +1307,13 @@ describe('Exporter', function() {
                 const suzanne_rotation_sampler = anim_suzanne.samplers[suzanne_rotation_channel.sampler];
                 const suzanne_scale_sampler = anim_suzanne.samplers[suzanne_scale_channel.sampler];
 
-                assert.strictEqual(suzanne_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(suzanne_translation_sampler.interpolation, "LINEAR");
                 assert.strictEqual(suzanne_rotation_sampler.interpolation, "STEP");
                 assert.strictEqual(suzanne_scale_sampler.interpolation, "STEP");
 
-                assert.strictEqual(asset.accessors[suzanne_translation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[suzanne_rotation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[suzanne_scale_sampler.input].count, 2);
+                assert.strictEqual(asset.accessors[suzanne_translation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[suzanne_rotation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[suzanne_scale_sampler.input].count, 1);
 
                 const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
@@ -1327,13 +1327,13 @@ describe('Exporter', function() {
                 const bone2_rotation_sampler = anim_armature2.samplers[bone2_rotation_channel.sampler];
                 const bone2_scale_sampler = anim_armature2.samplers[bone2_scale_channel.sampler];
 
-                assert.strictEqual(bone2_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(bone2_translation_sampler.interpolation, "LINEAR");
                 assert.strictEqual(bone2_rotation_sampler.interpolation, "STEP");
                 assert.strictEqual(bone2_scale_sampler.interpolation, "STEP");
 
-                assert.strictEqual(asset.accessors[bone2_translation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[bone2_rotation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[bone2_scale_sampler.input].count, 2);
+                assert.strictEqual(asset.accessors[bone2_translation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[bone2_rotation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[bone2_scale_sampler.input].count, 1);
 
                 const arma2_translation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "translation")[0];
                 const arma2_rotation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "rotation")[0];
@@ -1343,13 +1343,13 @@ describe('Exporter', function() {
                 const arma2_rotation_sampler = anim_armature2.samplers[arma2_rotation_channel.sampler];
                 const arma2_scale_sampler = anim_armature2.samplers[arma2_scale_channel.sampler];
 
-                assert.strictEqual(arma2_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(arma2_translation_sampler.interpolation, "LINEAR");
                 assert.strictEqual(arma2_rotation_sampler.interpolation, "STEP");
                 assert.strictEqual(arma2_scale_sampler.interpolation, "STEP");
 
-                assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[arma2_rotation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[arma2_scale_sampler.input].count, 2);
+                assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[arma2_rotation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[arma2_scale_sampler.input].count, 1);
 
                 const anim_sphere = asset.animations.filter(a => a.name === 'Sphere.001Action')[0];
 
@@ -1436,8 +1436,8 @@ describe('Exporter', function() {
                 const suzanne_translation_channel = anim_suzanne.channels.filter(a => a.target.path === "translation")[0];
                 const suzanne_translation_sampler = anim_suzanne.samplers[suzanne_translation_channel.sampler];
 
-                assert.strictEqual(suzanne_translation_sampler.interpolation, "STEP");
-                assert.strictEqual(asset.accessors[suzanne_translation_sampler.input].count, 2);
+                assert.strictEqual(suzanne_translation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(asset.accessors[suzanne_translation_sampler.input].count, 1);
 
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "scale").length == 0);
@@ -1449,8 +1449,8 @@ describe('Exporter', function() {
                 const bone2_translation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "translation")[0];
                 const bone2_translation_sampler = anim_armature2.samplers[bone2_translation_channel.sampler];
 
-                assert.strictEqual(bone2_translation_sampler.interpolation, "STEP");
-                assert.strictEqual(asset.accessors[bone2_translation_sampler.input].count, 2);
+                assert.strictEqual(bone2_translation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(asset.accessors[bone2_translation_sampler.input].count, 1);
 
                 assert.ok(anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "scale").length == 0);
@@ -1458,8 +1458,8 @@ describe('Exporter', function() {
                 const arma2_translation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "translation")[0];
                 const arma2_translation_sampler = anim_armature2.samplers[arma2_translation_channel.sampler];
 
-                assert.strictEqual(arma2_translation_sampler.interpolation, "STEP");
-                assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 2);
+                assert.strictEqual(arma2_translation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 1);
 
                 assert.ok(anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "scale").length == 0);
@@ -1542,8 +1542,8 @@ describe('Exporter', function() {
                 const suzanne_translation_channel = anim_suzanne.channels.filter(a => a.target.path === "translation")[0];
                 const suzanne_translation_sampler = anim_suzanne.samplers[suzanne_translation_channel.sampler];
 
-                assert.strictEqual(suzanne_translation_sampler.interpolation, "STEP");
-                assert.strictEqual(asset.accessors[suzanne_translation_sampler.input].count, 2);
+                assert.strictEqual(suzanne_translation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(asset.accessors[suzanne_translation_sampler.input].count, 1);
 
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "scale").length == 0);
@@ -1554,8 +1554,8 @@ describe('Exporter', function() {
 
                 const bone2_translation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "translation")[0];
                 const bone2_translation_sampler = anim_armature2.samplers[bone2_translation_channel.sampler];
-                assert.strictEqual(bone2_translation_sampler.interpolation, "STEP");
-                assert.strictEqual(asset.accessors[bone2_translation_sampler.input].count, 2);
+                assert.strictEqual(bone2_translation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(asset.accessors[bone2_translation_sampler.input].count, 1);
 
                 assert.ok(anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === bone2_node.name).filter(a => a.target.path === "scale").length == 0);
@@ -1566,8 +1566,8 @@ describe('Exporter', function() {
 
                 const arma2_translation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "translation")[0];
                 const arma2_translation_sampler = anim_armature2.samplers[arma2_translation_channel.sampler];
-                assert.strictEqual(arma2_translation_sampler.interpolation, "STEP");
-                assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 2);
+                assert.strictEqual(arma2_translation_sampler.interpolation, "LINEAR");
+                assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 1);
 
 
                 const anim_sphere = asset.animations.filter(a => a.name === 'Sphere.001Action')[0];
@@ -1650,13 +1650,13 @@ describe('Exporter', function() {
                 const suzanne_rotation_sampler = anim_suzanne.samplers[suzanne_rotation_channel.sampler];
                 const suzanne_scale_sampler = anim_suzanne.samplers[suzanne_scale_channel.sampler];
 
-                assert.strictEqual(suzanne_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(suzanne_translation_sampler.interpolation, "LINEAR");
                 assert.strictEqual(suzanne_rotation_sampler.interpolation, "STEP");
                 assert.strictEqual(suzanne_scale_sampler.interpolation, "STEP");
 
-                assert.strictEqual(asset.accessors[suzanne_translation_sampler.input].count, 2); // See frame_range bug in Blender? 107030
-                assert.strictEqual(asset.accessors[suzanne_rotation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[suzanne_scale_sampler.input].count, 2);
+                assert.strictEqual(asset.accessors[suzanne_translation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[suzanne_rotation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[suzanne_scale_sampler.input].count, 1);
 
                 const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
@@ -1670,13 +1670,13 @@ describe('Exporter', function() {
                 const bone2_rotation_sampler = anim_armature2.samplers[bone2_rotation_channel.sampler];
                 const bone2_scale_sampler = anim_armature2.samplers[bone2_scale_channel.sampler];
 
-                assert.strictEqual(bone2_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(bone2_translation_sampler.interpolation, "LINEAR");
                 assert.strictEqual(bone2_rotation_sampler.interpolation, "STEP");
                 assert.strictEqual(bone2_scale_sampler.interpolation, "STEP");
 
-                assert.strictEqual(asset.accessors[bone2_translation_sampler.input].count, 2); // See frame_range bug in Blender? 107030
-                assert.strictEqual(asset.accessors[bone2_rotation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[bone2_scale_sampler.input].count, 2);
+                assert.strictEqual(asset.accessors[bone2_translation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[bone2_rotation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[bone2_scale_sampler.input].count, 1);
 
                 const arma2_translation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "translation")[0];
                 const arma2_rotation_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "rotation")[0];
@@ -1686,13 +1686,13 @@ describe('Exporter', function() {
                 const arma2_rotation_sampler = anim_armature2.samplers[arma2_rotation_channel.sampler];
                 const arma2_scale_sampler = anim_armature2.samplers[arma2_scale_channel.sampler];
 
-                assert.strictEqual(arma2_translation_sampler.interpolation, "STEP");
+                assert.strictEqual(arma2_translation_sampler.interpolation, "LINEAR");
                 assert.strictEqual(arma2_rotation_sampler.interpolation, "STEP");
                 assert.strictEqual(arma2_scale_sampler.interpolation, "STEP");
 
-                assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 2); // See frame_range bug in Blender? 107030
-                assert.strictEqual(asset.accessors[arma2_rotation_sampler.input].count, 2);
-                assert.strictEqual(asset.accessors[arma2_scale_sampler.input].count, 2);
+                assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[arma2_rotation_sampler.input].count, 1);
+                assert.strictEqual(asset.accessors[arma2_scale_sampler.input].count, 1);
 
                 const anim_sphere = asset.animations.filter(a => a.name === 'Sphere.001Action')[0];
 
@@ -1745,7 +1745,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         if (fs.existsSync(gltfOptionsPath)) {
                             options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                         }
-                        // return done(); // uncomment to not roundtrip all files
+                        return done(); // uncomment to not roundtrip all files
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);

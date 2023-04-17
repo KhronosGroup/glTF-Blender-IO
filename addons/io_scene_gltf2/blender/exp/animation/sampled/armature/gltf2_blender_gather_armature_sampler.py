@@ -208,11 +208,16 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
 
 def __gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings):
 
-    if len(keyframes) != 2:
+    if len(keyframes) > 2:
         # keep STEP as STEP, other become LINEAR
         return {
             "STEP": "STEP"
         }.get(node_channel_interpolation, "LINEAR")
+    elif len(keyframes) == 1:
+        if node_channel_is_animated is False:
+            return "STEP"
+        else:
+            return node_channel_interpolation
     else:
         # If we only have 2 keyframes, set interpolation to STEP if baked
         if node_channel_is_animated is False:

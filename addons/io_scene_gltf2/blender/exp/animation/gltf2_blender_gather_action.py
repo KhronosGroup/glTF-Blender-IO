@@ -85,6 +85,14 @@ def prepare_actions_range(export_settings):
             start_frame = int(blender_action.frame_range[0])
             end_frame = int(blender_action.frame_range[1])
 
+            if end_frame - start_frame == 1:
+                # To workaround Blender bug 107030, check manually
+                try: # Avoid crash in case of strange/buggy fcurves
+                    start_frame = int(min([c.range()[0] for c in blender_action.fcurves]))
+                    end_frame = int(max([c.range()[1] for c in blender_action.fcurves]))
+                except:
+                    pass
+
             export_settings['ranges'][obj_uuid][blender_action.name] = {}
 
             # If some negative frame and crop -> set start at 0
