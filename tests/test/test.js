@@ -237,13 +237,13 @@ describe('Exporter', function() {
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
                         let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
                         let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
-                        /*blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
+                        blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
 
                             validateGltf(dstPath, done);
-                        }, args); */
-                        validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
+                        }, args);
+                        // validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
                     });
                 });
             });
@@ -1745,7 +1745,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         if (fs.existsSync(gltfOptionsPath)) {
                             options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                         }
-                        return done(); // uncomment to not roundtrip all files
+                        // return done(); // uncomment to not roundtrip all files
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
