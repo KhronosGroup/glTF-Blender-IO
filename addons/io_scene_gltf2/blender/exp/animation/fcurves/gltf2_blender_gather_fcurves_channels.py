@@ -154,7 +154,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         # Check if the property can be exported without sampling
         new_properties = {}
         for prop in target_data['properties'].keys():
-            if __needs_baking(obj_uuid, target_data['properties'][prop], export_settings) is True:
+            if needs_baking(obj_uuid, target_data['properties'][prop], export_settings) is True:
                 to_be_sampled.append((obj_uuid, target_data['type'], get_channel_from_target(get_target(prop)), target_data['bone'])) # bone can be None if not a bone :)
             else:
                 new_properties[prop] = target_data['properties'][prop]
@@ -273,7 +273,7 @@ def __gather_sampler(obj_uuid: str,
 
     return gather_animation_fcurves_sampler(obj_uuid, channel_group, bone, custom_range, export_settings)
 
-def __needs_baking(obj_uuid: str,
+def needs_baking(obj_uuid: str,
                  channels: typing.Tuple[bpy.types.FCurve],
                  export_settings
                  ) -> bool:

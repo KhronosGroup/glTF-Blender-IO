@@ -215,7 +215,9 @@ class ExportImage:
     def __encode_from_image(self, image: bpy.types.Image, export_settings) -> bytes:
         # See if there is an existing file we can use.
         data = None
-        if image.source == 'FILE' and not image.is_dirty:
+        # Sequence image can't be exported, but it avoid to crash to check that default image exists
+        # Else, it can crash when trying to access a non existing image
+        if image.source in ['FILE', 'SEQUENCE'] and not image.is_dirty:
             if image.packed_file is not None:
                 data = image.packed_file.data
             else:
