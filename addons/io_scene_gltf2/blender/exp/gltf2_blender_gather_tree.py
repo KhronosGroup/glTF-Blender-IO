@@ -236,8 +236,8 @@ class VExportTree:
 
         ###### Manage children ######
 
-        # standard children
-        if blender_bone is None and blender_object.is_instancer is False:
+        # standard children (of object, or of instance collection)
+        if blender_bone is None:
             for child_object in blender_children[blender_object]:
                 if child_object.parent_bone:
                     # Object parented to bones

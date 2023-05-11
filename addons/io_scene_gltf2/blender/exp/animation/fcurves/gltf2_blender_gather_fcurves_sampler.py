@@ -17,6 +17,7 @@ import typing
 import mathutils
 from .....io.com import gltf2_io
 from .....io.com import gltf2_io_constants
+from .....blender.com.gltf2_blender_conversion import get_gltf_interpolation
 from .....io.exp import gltf2_io_binary_data
 from .....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....com.gltf2_blender_data_path import get_target_property_name
@@ -216,8 +217,4 @@ def __gather_interpolation(
     blender_keyframe = [c for c in channel_group if c is not None][0].keyframe_points[0]
 
     # Select the interpolation method.
-    return {
-        "BEZIER": "CUBICSPLINE",
-        "LINEAR": "LINEAR",
-        "CONSTANT": "STEP"
-    }[blender_keyframe.interpolation]
+    return get_gltf_interpolation(blender_keyframe.interpolation)

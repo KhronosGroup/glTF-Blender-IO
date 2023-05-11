@@ -17,6 +17,7 @@ import typing
 from ....io.com import gltf2_io
 from ....io.com.gltf2_io_debug import print_console
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
+from ....blender.com.gltf2_blender_conversion import get_gltf_interpolation
 from ...com.gltf2_blender_data_path import is_bone_anim_channel
 from ...com.gltf2_blender_extras import generate_extras
 from ..gltf2_blender_gather_cache import cached
@@ -80,8 +81,17 @@ def prepare_actions_range(export_settings):
         blender_actions = __get_blender_actions(obj_uuid, export_settings)
         for blender_action, track, type_ in blender_actions:
 
+            # What about frame_range bug for single keyframe animations ? 107030
             start_frame = int(blender_action.frame_range[0])
             end_frame = int(blender_action.frame_range[1])
+
+            if end_frame - start_frame == 1:
+                # To workaround Blender bug 107030, check manually
+                try: # Avoid crash in case of strange/buggy fcurves
+                    start_frame = int(min([c.range()[0] for c in blender_action.fcurves]))
+                    end_frame = int(max([c.range()[1] for c in blender_action.fcurves]))
+                except:
+                    pass
 
             export_settings['ranges'][obj_uuid][blender_action.name] = {}
 
@@ -288,9 +298,9 @@ def gather_action_animations(  obj_uuid: int,
             animation, to_be_sampled = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
             for (obj_uuid, type_, prop, bone) in to_be_sampled:
                 if type_ == "BONE":
-                    channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, export_settings)
+                    channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, get_gltf_interpolation("LINEAR"), export_settings)
                 elif type_ == "OBJECT":
-                    channel = gather_sampled_object_channel(obj_uuid, prop, blender_action.name, True, export_settings)
+                    channel = gather_sampled_object_channel(obj_uuid, prop, blender_action.name, True, get_gltf_interpolation("LINEAR"), export_settings)
                 elif type_ == "SK":
                     channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, export_settings)
                 else:

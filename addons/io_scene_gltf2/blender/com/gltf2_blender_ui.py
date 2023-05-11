@@ -32,10 +32,13 @@ class NODE_OT_GLTF_SETTINGS(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         space = context.space_data
-        return space.type == "NODE_EDITOR" \
-            and context.object and context.object.active_material \
-            and context.object.active_material.use_nodes is True \
+        return (
+            space is not None
+            and space.type == "NODE_EDITOR"
+            and context.object and context.object.active_material
+            and context.object.active_material.use_nodes is True
             and bpy.context.preferences.addons['io_scene_gltf2'].preferences.settings_node_ui is True
+        )
 
     def execute(self, context):
         gltf_settings_node_name = get_gltf_node_name()
@@ -494,7 +497,7 @@ class SCENE_OT_gltf2_animation_apply(bpy.types.Operator):
             if obj.type == "MESH" and obj.data and obj.data.shape_keys and obj.data.shape_keys.animation_data:
                 obj.data.shape_keys.animation_data.action = None
                 for idx, data in enumerate(obj.gltf2_animation_weight_rest):
-                    obj.data.shape_keys.key_blocks[idx+1].value = data.val 
+                    obj.data.shape_keys.key_blocks[idx+1].value = data.val
 
                 for track in [track for track in obj.data.shape_keys.animation_data.nla_tracks \
                         if track.name == track_name and len(track.strips) > 0 and track.strips[0].action is not None]:
