@@ -31,6 +31,7 @@ def gather_object_sampled_animation_sampler(
         channel: str,
         action_name: str,
         node_channel_is_animated: bool,
+        node_channel_interpolation: str,
         export_settings
         ):
 
@@ -52,7 +53,7 @@ def gather_object_sampled_animation_sampler(
         extensions=None,
         extras=None,
         input=input,
-        interpolation=__gather_interpolation(export_settings),
+        interpolation=__gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings),
         output=output
     )
 
@@ -76,10 +77,6 @@ def __gather_keyframes(
         node_channel_is_animated,
         export_settings
     )
-
-    if keyframes is None:
-        # After check, no need to animation this node
-        return None
 
     return keyframes
 
@@ -147,6 +144,29 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
 
     return input, output
 
-def __gather_interpolation(export_settings):
-    # TODO: check if the object was animated with CONSTANT
-    return 'LINEAR'
+def __gather_interpolation(
+        node_channel_is_animated: bool,
+        node_channel_interpolation: str,
+        keyframes,
+        export_settings):
+
+    if len(keyframes) > 2:
+        # keep STEP as STEP, other become LINEAR
+        return {
+            "STEP": "STEP"
+        }.get(node_channel_interpolation, "LINEAR")
+    elif len(keyframes) == 1:
+        if node_channel_is_animated is False:
+            return "STEP"
+        else:
+            return node_channel_interpolation
+    else:
+        # If we only have 2 keyframes, set interpolation to STEP if baked
+        if node_channel_is_animated is False:
+            # baked => We have first and last keyframe
+            return "STEP"
+        else:
+            if keyframes[0].value == keyframes[1].value:
+                return "STEP"
+            else:
+                return "LINEAR"
