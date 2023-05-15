@@ -872,7 +872,7 @@ Data - Material
 
 Materials
    Export full materials, only placeholders (all primitives but without materials),
-   or does not export materials. (In that last case, primitive are merged, lossing material slot information).
+   or does not export materials. (In that last case, primitive ares merged, lossing material slot information).
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
