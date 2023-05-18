@@ -110,7 +110,7 @@ def on_export_format_changed(self, context):
 
     # Also change the filter
     sfile.params.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
-    # Force update of file list, has update the filter does not update the real file list
+    # Force update of file list, because update the filter does not update the real file list
     bpy.ops.file.refresh()
 
 
@@ -639,6 +639,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 for (k, v) in settings.items():
                     setattr(self, k, v)
                 self.will_save_settings = True
+
+                # Update filter if user saved settings
+                if hasattr(self, 'export_format'):
+                    self.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
 
             except (AttributeError, TypeError):
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
