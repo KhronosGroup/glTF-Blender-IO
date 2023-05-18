@@ -57,7 +57,7 @@ with the following channels of information:
 - Emissive
 
 Some additional material properties or types of materials can be expressed using glTF extensions.
-The complete list can be found in _Extensions_ part of this documentation.
+The complete list can be found in `Extensions`_ part of this documentation.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
@@ -73,7 +73,7 @@ The glTF material system is different from Blender's own materials. When a glTF 
 the add-on will construct a set of Blender nodes to replicate each glTF material as closely as possible.
 
 The importer supports Metal/Rough PBR (core glTF), Spec/Gloss PBR (``KHR_materials_pbrSpecularGlossiness``)
-and some extension materials. The complete list can be found in _Extensions_ part of this documentation.
+and some extension materials. The complete list can be found in `Extensions`_ part of this documentation.
 
 .. tip::
 
@@ -258,7 +258,7 @@ Sheen
 ^^^^^
 
 When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
-extension will be included in the export. The Sheen Color will be exported from Color socket of Vevlet node.
+extension will be included in the export. The Sheen Color will be exported from Color socket of Velvet node.
 Sheen Roughness will be exported from Sigma socket.
 
 If a Sheen Roughness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
@@ -569,7 +569,6 @@ are supported directly by this add-on:
 - ``KHR_mesh_quantization``
 
 
-
 .. rubric:: Export
 
 - ``KHR_draco_mesh_compression``
@@ -660,7 +659,8 @@ Export
 You can export animations using different ways. How glTF animations are made from actions / NLA is controlled by
 the :menuselection:`Animation --> Mode` export option.
 
-.. rubric:: Actions (default)
+Actions (default)
+^^^^^^^^^^^^^^^^^
 
 An action will be exported if it is the active action on an object, or it is stashed to an NLA track
 (e.g. with the *Stash* or *Push Down* buttons in the :doc:`Action Editor </editors/dope_sheet/action>`).
@@ -676,27 +676,30 @@ of the same glTF animation and will play together.
 
 The importer organizes actions so they will be exported correctly with this mode.
 
-This mode is usefull if you are exporting for game engine, with an animation library of a character.
+This mode is useful if you are exporting for game engine, with an animation library of a character.
 Each action must be on its own NLA track.
 
 
-.. rubric:: Active Actions merged
+Active Actions merged
+^^^^^^^^^^^^^^^^^^^^^
 
 In this mode, the NLA organization is not used, and only one animation is exported using
 the active actions on all objects.
 
-.. rubric:: NLA Tracks
+NLA Tracks
+^^^^^^^^^^
 
-In this mode, each NLA Track will be export as an independant glTF animation.
-This mode is usefull if you are using Strip modifiers, or if you get multiple action on a same Track.
+In this mode, each NLA Track will be export as an independent glTF animation.
+This mode is useful if you are using Strip modifiers, or if you get multiple action on a same Track.
 
 If you rename two tracks on two different objects to the same name, they will become part
 of the same glTF animation and will play together.
 
-.. rubric:: Scene
+Scene
+^^^^^
 
-Using _Scene_ option, animations will be exported as you can see them in viewport.
-You can choose to export a single glTF animation, or each object separatly.
+Using `Scene`_ option, animations will be exported as you can see them in viewport.
+You can choose to export a single glTF animation, or each object separately.
 
 .. note::
 
@@ -715,7 +718,7 @@ You can choose to export a single glTF animation, or each object separatly.
 
 .. note::
 
-   Only _Actions_ and _Active Actions merged_ mode can handle not sampled animations.
+   Only `Actions (default)`_ and `Active Actions merged`_ mode can handle not sampled animations.
 
 
 File Format Variations
@@ -804,8 +807,8 @@ Format
    See: `File Format Variations`_.
 Keep Original
    For glTF Separate file format only. Keep original textures files if possible.
-   Warning: if you use more than one texture, where pbr standard requires only one,
-   only one texture will be used.This can lead to unexpected results
+   Warning: if you use more than one texture, where PBR standard requires only one,
+   only one texture will be used. This can lead to unexpected results
 Textures
    For glTF Separate file format only. Folder to place texture files in. Relative to the gltf-file.
 Copyright
@@ -872,7 +875,7 @@ Data - Material
 
 Materials
    Export full materials, only placeholders (all primitives but without materials),
-   or does not export materials. (In that last case, primitive ares merged, lossing material slot information).
+   or does not export materials. (In that last case, primitives are merged, losing material slot information).
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
@@ -885,6 +888,7 @@ Export Original PBR Specular
 
 Data - Shape Keys
 ^^^^^^^^^^^^^^^^^
+
 Export shape keys (morph targets).
 
 Shape Key Normals
@@ -901,7 +905,7 @@ Export Deformation Bones only
    Export Deformation bones only, not other bones.
    Animation for deformation bones are baked.
 Flatten Bone Hierarchy
-   Usefull in case of non decomposible TRS matrix.
+   Useful in case of non-decomposable TRS matrix.
 
 Data - Skinning
 ^^^^^^^^^^^^^^^
@@ -948,7 +952,7 @@ Animation mode
 Shape Keys Animations
    Export Shape Keys Animation. Need Shape Keys to be exported (See `Data - Shape Keys`_)
 Bake All Objects Animations
-   Usefull when some objects are constrained without being animated themselves.
+   Useful when some objects are constrained without being animated themselves.
 
 
 Animation - Rest & Ranges
@@ -959,7 +963,7 @@ Use Current Frame as Object Rest Transformations
 Limit to Playback Range
    Clips animations to selected playback range.
 Set all glTF Animation starting at 0
-   Set all glTF Animation starting at 0. Can be usefull for looping animation
+   Set all glTF Animation starting at 0. Can be useful for looping animation
 Negative Frames
    When some frames are in negative range, slide or crop the animation.
 
