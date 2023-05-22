@@ -517,7 +517,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_bake_animation: BoolProperty(
         name='Bake All Objects Animations',
         description=(
-            "Force exporting animation on every objects. "
+            "Force exporting animation on every object. "
             "Can be useful when using constraints or driver. "
             "Also useful when exporting only selection"
         ),
@@ -546,7 +546,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Use Current Frame as Object Rest Transformations',
         description=(
             'Export the scene in the current animation frame. '
-            'When off, frame O is used as rest transformations for objects'
+            'When off, frame 0 is used as rest transformations for objects'
         ),
         default=False
     )
@@ -554,7 +554,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_rest_position_armature: BoolProperty(
         name='Use Rest Position Armature',
         description=(
-            "Export armatures using rest position as joins rest pose. "
+            "Export armatures using rest position as joints' rest pose. "
             "When off, current frame pose is used as rest pose"
         ),
         default=True
