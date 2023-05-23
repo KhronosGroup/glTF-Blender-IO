@@ -612,6 +612,19 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    # This parameter is only here for backward compatibility, as this option is removed in 3.6
+    # This option does nothing, and is not displayed in UI
+    # What you are looking for is probably "export_animation_mode"
+    export_nla_strips: BoolProperty(
+        name='Group by NLA Track',
+        description=(
+            "When on, multiple actions become part of the same glTF animation if "
+            "they're pushed onto NLA tracks with the same name. "
+            "When off, all the currently assigned actions become one glTF animation"
+        ),
+        default=True
+    )
+
     will_save_settings: BoolProperty(
         name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
