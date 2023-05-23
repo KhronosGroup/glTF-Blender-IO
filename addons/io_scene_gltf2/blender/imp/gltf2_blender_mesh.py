@@ -266,10 +266,10 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
     if gltf.import_settings['merge_vertices']:
         vert_locs, vert_normals, vert_joints, vert_weights, \
-        sk_vert_locs, loop_vidxs, edge_vidxs = \
+        sk_vert_locs, loop_vidxs, edge_vidxs, attribute_data = \
             merge_duplicate_verts(
                 vert_locs, vert_normals, vert_joints, vert_weights, \
-                sk_vert_locs, loop_vidxs, edge_vidxs\
+                sk_vert_locs, loop_vidxs, edge_vidxs, attribute_data\
             )
 
     # ---------------
@@ -711,7 +711,7 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     mesh.polygons.foreach_set('use_smooth', poly_smooths)
 
 
-def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs):
+def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs, attribute_data):
     # This function attempts to invert the splitting done when exporting to
     # glTF. Welds together verts with the same per-vert data (but possibly
     # different per-loop data).
@@ -766,10 +766,16 @@ def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk
         dots['sk%dy' % i] = locs[:, 1]
         dots['sk%dz' % i] = locs[:, 2]
 
-    unique_dots, inv_indices = np.unique(dots, return_inverse=True)
+    unique_dots, unique_ind, inv_indices = np.unique(dots, return_index=True, return_inverse=True)
 
     loop_vidxs = inv_indices[loop_vidxs]
     edge_vidxs = inv_indices[edge_vidxs]
+
+    # We don't split vertices only because of custom attribute
+    # If 2 vertices have same data (pos, normals, etc...) except custom attribute, we
+    # keep 1 custom attribute, arbitrary
+    for idx, i in enumerate(attribute_data):
+        attribute_data[idx] = attribute_data[idx][unique_ind]
 
     vert_locs = np.empty((len(unique_dots), 3), dtype=np.float32)
     vert_locs[:, 0] = unique_dots['x']
@@ -797,4 +803,4 @@ def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk
         sk_vert_locs[i][:, 1] = unique_dots['sk%dy' % i]
         sk_vert_locs[i][:, 2] = unique_dots['sk%dz' % i]
 
-    return vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs
+    return vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs, attribute_data
