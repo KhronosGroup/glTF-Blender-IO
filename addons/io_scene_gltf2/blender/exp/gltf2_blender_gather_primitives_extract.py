@@ -14,6 +14,7 @@
 
 import numpy as np
 from mathutils import Vector
+from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.com.gltf2_io_debug import print_console
 from ...io.com.gltf2_io_constants import NORMALS_ROUNDING_DIGIT
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -121,12 +122,9 @@ class PrimitiveCreator:
                     self.armature = None
 
         self.key_blocks = []
+        # List of SK that are going to be exported, actually
         if self.blender_mesh.shape_keys and self.export_settings['gltf_morph']:
-            self.key_blocks = [
-                key_block
-                for key_block in self.blender_mesh.shape_keys.key_blocks
-                if not (key_block == key_block.relative_key or key_block.mute)
-            ]
+            self.key_blocks = get_sk_exported(self.blender_mesh.shape_keys.key_blocks)
 
         # Fetch vert positions and bone data (joint,weights)
 
