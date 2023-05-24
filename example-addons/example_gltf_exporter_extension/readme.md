@@ -32,6 +32,7 @@ gather_material_pbr_metallic_roughness_hook(self, gltf2_material, blender_materi
 gather_material_unlit_hook(self, gltf2_material, blender_material, export_settings)
 gather_mesh_hook(self, gltf2_mesh, blender_mesh, blender_object, vertex_groups, modifiers, materials, export_settings)
 gather_node_hook(self, gltf2_node, blender_object, export_settings)
+gather_node_name_hook(self, gltf_name, blender_object, export_settings)
 gather_sampler_hook(self, gltf2_sampler, blender_shader_node, export_settings)
 gather_scene_hook(self, gltf2_scene, blender_scene, export_settings)
 gather_skin_hook(self, gltf2_skin, blender_object, export_settings)
