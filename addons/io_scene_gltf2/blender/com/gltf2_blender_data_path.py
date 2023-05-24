@@ -52,3 +52,13 @@ def get_delta_modes(target_property: str) -> str:
 
 def is_bone_anim_channel(data_path: str) -> bool:
     return data_path[:10] == "pose.bones"
+
+def get_sk_exported(key_blocks):
+    return [
+            key_block
+            for key_block in key_blocks
+            if not skip_sk(key_block)
+        ]
+
+def skip_sk(k):
+    return k == k.relative_key or k.mute

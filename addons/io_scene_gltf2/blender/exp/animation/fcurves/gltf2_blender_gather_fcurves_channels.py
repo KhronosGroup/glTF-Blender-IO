@@ -15,6 +15,7 @@
 import bpy
 import typing
 from .....io.exp.gltf2_io_user_extensions import export_user_extensions
+from .....blender.com.gltf2_blender_data_path import skip_sk
 from .....io.com import gltf2_io_debug
 from .....io.com import gltf2_io
 from ....exp.gltf2_blender_gather_cache import cached
@@ -85,7 +86,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
                 type_ = "BONE"
                 if blender_object.type == "MESH" and object_path.startswith("key_blocks"):
                     shape_key = blender_object.data.shape_keys.path_resolve(object_path)
-                    if shape_key.mute is True:
+                    if skip_sk(shape_key):
                         continue
                     target = blender_object.data.shape_keys
                     type_ = "SK"
@@ -95,7 +96,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
                 if blender_object.type == "MESH":
                     try:
                         shape_key = blender_object.data.shape_keys.path_resolve(object_path)
-                        if shape_key.mute is True:
+                        if skip_sk(shape_key):
                             continue
                         target = blender_object.data.shape_keys
                         type_ = "SK"
@@ -190,9 +191,7 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
             shapekeys_idx = {}
             cpt_sk = 0
             for sk in blender_object.data.shape_keys.key_blocks:
-                if sk == sk.relative_key:
-                    continue
-                if sk.mute is True:
+                if skip_sk(sk):
                     continue
                 shapekeys_idx[sk.name] = cpt_sk
                 cpt_sk += 1
