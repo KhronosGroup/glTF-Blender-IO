@@ -334,7 +334,7 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
 def __gather_name(blender_object, export_settings):
 
-    new_name = gltf_hook_name.name if blender_object else "GN Instance"
+    new_name = blender_object.name if blender_object else "GN Instance"
 
     class GltfHookName:
         def __init__(self, name):
