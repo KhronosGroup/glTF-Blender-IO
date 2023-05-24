@@ -15,6 +15,7 @@
 import bpy
 from typing import Optional, Dict, List, Any, Tuple
 from ...io.com import gltf2_io
+from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.com.gltf2_io_debug import print_console
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
@@ -118,12 +119,7 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     if export_settings['gltf_morph'] and blender_mesh.shape_keys:
         morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
         if morph_max > 0:
-            target_names = []
-            for blender_shape_key in blender_mesh.shape_keys.key_blocks:
-                if blender_shape_key != blender_shape_key.relative_key:
-                    if blender_shape_key.mute is False:
-                        target_names.append(blender_shape_key.name)
-            extras['targetNames'] = target_names
+            extras['targetNames'] = [k.name for k in get_sk_exported(blender_mesh.shape_keys.key_blocks)]
 
     if extras:
         return extras
@@ -166,11 +162,4 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
     if morph_max <= 0:
         return None
 
-    weights = []
-
-    for blender_shape_key in blender_mesh.shape_keys.key_blocks:
-        if blender_shape_key != blender_shape_key.relative_key:
-            if blender_shape_key.mute is False:
-                weights.append(blender_shape_key.value)
-
-    return weights
+    return [k.value for k in get_sk_exported(blender_mesh.shape_keys.key_blocks)]

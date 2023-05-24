@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ....blender.com.gltf2_blender_data_path import get_sk_exported, skip_sk
 from ...com.gltf2_blender_data_path import get_target_object_path
 from ..gltf2_blender_gather_cache import skdriverdiscovercache
 
@@ -52,11 +53,7 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
 
         shapekeys_idx = {}
         cpt_sk = 0
-        for sk in child.data.shape_keys.key_blocks:
-            if sk == sk.relative_key:
-                continue
-            if sk.mute is True:
-                continue
+        for sk in get_sk_exported(child.data.shape_keys.key_blocks):
             shapekeys_idx[sk.name] = cpt_sk
             cpt_sk += 1
 
@@ -74,8 +71,7 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
                 sk_name = child.data.shape_keys.path_resolve(get_target_object_path(sk_c.data_path)).name
             except:
                 continue
-            # Do not take into account this driver if corresponding SK is disabled
-            if child.data.shape_keys.key_blocks[sk_name].mute is True:
+            if skip_sk(child.data.shape_keys.key_blocks[sk_name]):
                 continue
             idx_channel_mapping.append((shapekeys_idx[sk_name], sk_c))
         existing_idx = dict(idx_channel_mapping)

@@ -309,7 +309,14 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
 
 def __gather_name(blender_object, export_settings):
-    return blender_object.name
+
+    class GltfHookName:
+        def __init__(self, name):
+            self.name = name
+    gltf_hook_name = GltfHookName(blender_object.name)
+
+    export_user_extensions('gather_node_name_hook', export_settings, gltf_hook_name, blender_object)
+    return gltf_hook_name.name
 
 def __gather_trans_rot_scale(vnode, export_settings):
     if vnode.parent_uuid is None:

@@ -15,6 +15,7 @@
 import mathutils
 import bpy
 import typing
+from .....blender.com.gltf2_blender_data_path import get_sk_exported
 from ...gltf2_blender_gather_cache import datacache
 from ...gltf2_blender_gather_tree import VExportNode
 from ..gltf2_blender_gather_drivers import get_sk_drivers
@@ -155,7 +156,7 @@ def get_cache_data(path: str,
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name] = {}
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'] = {}
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None] = {}
-                data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
+                data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None][frame] = [k.value for k in get_sk_exported(blender_obj.data.shape_keys.key_blocks)]
 
             elif export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
             and blender_obj.data is not None \
@@ -170,7 +171,7 @@ def get_cache_data(path: str,
                 if 'sk' not in data[obj_uuid][action_name].keys():
                     data[obj_uuid][action_name]['sk'] = {}
                     data[obj_uuid][action_name]['sk'][None] = {}
-                data[obj_uuid][action_name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
+                data[obj_uuid][action_name]['sk'][None][frame] = [k.value for k in get_sk_exported(blender_obj.data.shape_keys.key_blocks)]
 
 
 
@@ -184,7 +185,7 @@ def get_cache_data(path: str,
                 elif 'sk' not in data[obj_uuid][obj_uuid].keys():
                     data[obj_uuid][obj_uuid]['sk'] = {}
                     data[obj_uuid][obj_uuid]['sk'][None] = {}
-                data[obj_uuid][obj_uuid]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in blender_obj.data.shape_keys.key_blocks][1:]
+                data[obj_uuid][obj_uuid]['sk'][None][frame] = [k.value for k in get_sk_exported(blender_obj.data.shape_keys.key_blocks)]
 
             # caching driver sk meshes
             # This will avoid to have to do it again when exporting SK animation
@@ -200,20 +201,20 @@ def get_cache_data(path: str,
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name] = {}
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'] = {}
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'][None] = {}
-                        data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in driver_object.data.shape_keys.key_blocks][1:]
+                        data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'][None][frame] = [k.value for k in get_sk_exported(driver_object.data.shape_keys.key_blocks)]
                     if blender_obj.animation_data \
                             and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                         if obj_uuid + "_" + action_name not in data[dr_obj]:
                             data[dr_obj][obj_uuid + "_" + action_name] = {}
                             data[dr_obj][obj_uuid + "_" + action_name]['sk'] = {}
                             data[dr_obj][obj_uuid + "_" + action_name]['sk'][None] = {}
-                        data[dr_obj][obj_uuid + "_" + action_name]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in driver_object.data.shape_keys.key_blocks][1:]
+                        data[dr_obj][obj_uuid + "_" + action_name]['sk'][None][frame] = [k.value for k in get_sk_exported(driver_object.data.shape_keys.key_blocks)]
                     else:
                         if obj_uuid + "_" + obj_uuid not in data[dr_obj]:
                             data[dr_obj][obj_uuid + "_" + obj_uuid] = {}
                             data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'] = {}
                             data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None] = {}
-                        data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None][frame] = [k.value if k.mute is False else 0.0 for k in driver_object.data.shape_keys.key_blocks][1:]
+                        data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None][frame] = [k.value for k in get_sk_exported(driver_object.data.shape_keys.key_blocks)]
 
         frame += step
     return data
