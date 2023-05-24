@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 from ...io.com import gltf2_io, gltf2_io_constants, gltf2_io_extensions
 from ...io.com.gltf2_io_debug import print_console
+from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.exp import gltf2_io_binary_data
 from .gltf2_blender_gather_cache import cached, cached_by_key
 from . import gltf2_blender_gather_primitives_extract
@@ -197,12 +198,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
         targets = []
         if blender_mesh.shape_keys is not None:
             morph_index = 0
-            for blender_shape_key in blender_mesh.shape_keys.key_blocks:
-                if blender_shape_key == blender_shape_key.relative_key:
-                    continue
-
-                if blender_shape_key.mute is True:
-                    continue
+            for blender_shape_key in get_sk_exported(blender_mesh.shape_keys.key_blocks):
 
                 target_position_id = 'MORPH_POSITION_' + str(morph_index)
                 target_normal_id = 'MORPH_NORMAL_' + str(morph_index)
