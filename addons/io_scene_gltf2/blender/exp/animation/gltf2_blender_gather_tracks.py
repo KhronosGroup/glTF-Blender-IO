@@ -18,7 +18,7 @@ from ....io.com import gltf2_io
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..gltf2_blender_gather_cache import cached
 from ..gltf2_blender_gather_tree import VExportNode
-from .gltf2_blender_gather_animation_utils import merge_tracks_perform, bake_animation, add_slide_data, reset_bone_matrix
+from .gltf2_blender_gather_animation_utils import merge_tracks_perform, bake_animation, add_slide_data, reset_bone_matrix, reset_sk_data
 from .gltf2_blender_gather_drivers import get_sk_drivers
 from .sampled.gltf2_blender_gather_animation_sampling_cache import get_cache_data
 
@@ -102,7 +102,7 @@ def gather_track_animations(  obj_uuid: int,
     for track_group in [b[0] for b in blender_tracks if b[2] == "OBJECT"]:
         for track in track_group:
             blender_object.animation_data.nla_tracks[track.idx].mute = True
-    for track_group in [b[0] for b in blender_tracks if b[2] == "SHAPEKEYS"]:
+    for track_group in [b[0] for b in blender_tracks if b[2] == "SHAPEKEY"]:
         for track in track_group:
             blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = True
 
@@ -129,6 +129,8 @@ def gather_track_animations(  obj_uuid: int,
                 export_user_extensions('post_animation_track_switch_hook', export_settings, blender_object, track, track_name, on_type)
 
         reset_bone_matrix(blender_object, export_settings)
+        if on_type == "SHAPEKEY":
+            reset_sk_data(blender_object, blender_tracks, export_settings)
 
         ##### Export animation
         animation = bake_animation(obj_uuid, track_name, export_settings, mode=on_type)
@@ -172,7 +174,7 @@ def gather_track_animations(  obj_uuid: int,
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
         blender_object.data.shape_keys.animation_data.use_nla = current_use_nla_sk
-        for track_group in [b[0] for b in blender_tracks if b[2] == "SHAPEKEYS"]:
+        for track_group in [b[0] for b in blender_tracks if b[2] == "SHAPEKEY"]:
             for track in track_group:
                 blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = True
 
@@ -311,7 +313,7 @@ def __get_nla_tracks_sk(obj_uuid: str, export_settings):
     exported_tracks.append(current_exported_tracks)
 
     track_names = [obj.data.shape_keys.animation_data.nla_tracks[tracks_group[0].idx].name for tracks_group in exported_tracks]
-    on_types = ['SHAPEKEYS'] * len(track_names)
+    on_types = ['SHAPEKEY'] * len(track_names)
     return exported_tracks, track_names, on_types
 
 def prepare_tracks_range(obj_uuid, tracks, track_name, export_settings):
