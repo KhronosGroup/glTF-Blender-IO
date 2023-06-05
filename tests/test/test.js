@@ -1289,7 +1289,61 @@ describe('Exporter', function() {
 
               });
 
+              it('exports using sk reset', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sk_reset.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
 
+                const obj1 = asset.animations.filter(a => a.name === 'Obj1')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+                const obj2 = asset.animations.filter(a => a.name === 'Obj2')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+                const obj2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+
+                const anim1 = asset.animations.filter(a => a.name === 'Obj1')[0].samplers[obj1].output;
+                const anim2 = asset.animations.filter(a => a.name === 'Obj2')[0].samplers[obj2].output;
+                const anim2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].samplers[obj2_2].output;
+
+                let bufferCache = {};
+                const outputData1 = getAccessorData(gltfPath, asset, anim1, bufferCache);
+                const outputData2 = getAccessorData(gltfPath, asset, anim2, bufferCache);
+                const outputData2_2 = getAccessorData(gltfPath, asset, anim2_2, bufferCache);
+
+                assert.equal(outputData1[0], 0.5);
+                assert.equal(outputData1[1], 0.0);
+
+                assert.equal(outputData2[0], 0.5); // no reset for already active action
+                assert.equal(outputData2[1], 0.0);
+
+                assert.equal(outputData2_2[0], 0.0);
+                assert.equal(outputData2_2[1], 0.0);
+
+              });
+
+              it('exports using sk no reset', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sk_no_reset.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const obj1 = asset.animations.filter(a => a.name === 'Obj1')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+                const obj2 = asset.animations.filter(a => a.name === 'Obj2')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+                const obj2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+
+                const anim1 = asset.animations.filter(a => a.name === 'Obj1')[0].samplers[obj1].output;
+                const anim2 = asset.animations.filter(a => a.name === 'Obj2')[0].samplers[obj2].output;
+                const anim2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].samplers[obj2].output;
+
+                let bufferCache = {};
+                const outputData1 = getAccessorData(gltfPath, asset, anim1, bufferCache);
+                const outputData2 = getAccessorData(gltfPath, asset, anim2, bufferCache);
+                const outputData2_2 = getAccessorData(gltfPath, asset, anim2_2, bufferCache);
+
+                assert.equal(outputData1[0], 0.5);
+                assert.equal(outputData1[1], 0.0);
+
+                assert.equal(outputData2[0], 0.5);
+                assert.equal(outputData2[1], 0.0);
+
+                assert.equal(outputData2_2[0], 0.0);
+                assert.equal(outputData2_2[1], 1.0);
+
+              });
 
               it('exports using armature rest pose', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');

@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 0, 2),
+    "version": (4, 0, 3),
     'blender': (3, 5, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -605,6 +605,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    export_morph_reset_sk_data: BoolProperty(
+        name='Reset shape keys between actions',
+        description=(
+            "Reset shape keys between each action exported. "
+            "This is needed when some SK channels are not keyed on some animations"
+        ),
+        default=True
+    )
+
     export_lights: BoolProperty(
         name='Punctual Lights',
         description='Export directional, point, and spot lights. '
@@ -784,6 +793,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_optimize_animation_keep_object'] = self.export_optimize_animation_keep_anim_object
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
+            export_settings['gltf_export_reset_sk_data'] = self.export_morph_reset_sk_data
             export_settings['gltf_bake_animation'] = self.export_bake_animation
             export_settings['gltf_negative_frames'] = self.export_negative_frame
             export_settings['gltf_anim_slide_to_zero'] = self.export_anim_slide_to_zero
@@ -796,6 +806,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_optimize_animation_keep_object'] = False
             export_settings['gltf_export_anim_single_armature'] = False
             export_settings['gltf_export_reset_pose_bones'] = False
+            export_settings['gltf_export_reset_sk_data'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -1252,9 +1263,6 @@ class GLTF_PT_export_animation(bpy.types.Panel):
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
 
         row = layout.row()
-        row.active = operator.export_morph is True
-        row.prop(operator, 'export_morph_animation')
-        row = layout.row()
         row.active = operator.export_force_sampling and operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS']
         row.prop(operator, 'export_bake_animation')
         if operator.export_animation_mode == "SCENE":
@@ -1347,6 +1355,39 @@ class GLTF_PT_export_animation_armature(bpy.types.Panel):
 
         layout.prop(operator, 'export_anim_single_armature')
         layout.prop(operator, 'export_reset_pose_bones')
+
+class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Shapekeys Animation"
+    bl_parent_id = "GLTF_PT_export_animation"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        self.layout.active = operator.export_animations and operator.export_morph
+        self.layout.prop(operator, "export_morph_animation", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_animations
+
+        layout.prop(operator, 'export_morph_reset_sk_data')
+
 
 class GLTF_PT_export_animation_sampling(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1703,6 +1744,7 @@ classes = (
     GLTF_PT_export_animation_notes,
     GLTF_PT_export_animation_ranges,
     GLTF_PT_export_animation_armature,
+    GLTF_PT_export_animation_shapekeys,
     GLTF_PT_export_animation_sampling,
     GLTF_PT_export_animation_optimize,
     GLTF_PT_export_user_extensions,
