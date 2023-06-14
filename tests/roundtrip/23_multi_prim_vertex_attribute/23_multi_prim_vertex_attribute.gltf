@@ -198,7 +198,8 @@
             {
               "POSITION": 6
             }
-          ]
+          ],
+          "material": 0
         },
         {
           "attributes": {
@@ -210,7 +211,8 @@
             {
               "POSITION": 6
             }
-          ]
+          ],
+          "material": 1
         }
       ]
     }
@@ -227,5 +229,36 @@
         0
       ]
     }
-  ]
+  ],
+  "scene" : 0,
+  "materials":[
+		{
+			"doubleSided":true,
+			"name":"Material",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.8,
+					0.8,
+					0.8,
+					1
+				],
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		},
+    {
+			"doubleSided":true,
+			"name":"Material.001",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.8,
+					0.8,
+					0.8,
+					1
+				],
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		}
+	]
 }

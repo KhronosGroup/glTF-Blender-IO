@@ -2798,9 +2798,9 @@ describe('Importer / Exporter (Roundtrip)', function () {
                 assert.strictEqual(asset.meshes.length, 1);
                 assert.strictEqual(asset.meshes[0].primitives.length, 2);
                 const primitive1 = asset.meshes[0].primitives[0];
-                assert.strictEqual(asset.accessors[primitive1.attributes._PRESSURE].count, 4);
+                assert.strictEqual(asset.accessors[primitive1.attributes['_PRESSURE']].count, 4);
                 const primitive2 = asset.meshes[0].primitives[1];
-                assert.strictEqual(asset.accessors[primitive2.attributes._PRESSURE].count, 4);
+                assert.strictEqual(asset.accessors[primitive2.attributes['_PRESSURE']].count, 4);
             });
         });
     });
