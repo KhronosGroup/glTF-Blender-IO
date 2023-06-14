@@ -2788,6 +2788,21 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
 
               });
+
+            it('roundtrips multi prim vertex attribute', function () {
+                let dir = '23_vertex_attribute';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 1);
+                assert.strictEqual(asset.meshes[0].primitives.length, 2);
+                const primitive1 = asset.meshes[0].primitives[0];
+                assert.strictEqual(asset.accessors[primitive1.attributes._PRESSURE].count, 4);
+                const primitive2 = asset.meshes[0].primitives[1];
+                assert.strictEqual(asset.accessors[primitive2.attributes._PRESSURE].count, 4);
+
+            });
         });
     });
 });
