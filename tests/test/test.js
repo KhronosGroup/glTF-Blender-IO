@@ -36,7 +36,7 @@ const validator_info_keys = [
     'maxInfluences'
 ];
 
-function blenderFileToGltf(blenderVersion, blenderPath, outDirName, done, options='') {
+function blenderFileToGltf(blenderVersion, blenderPath, outDirName, done, options = '') {
     const { exec } = require('child_process');
     const cmd = `${blenderVersion} -b --addons io_scene_gltf2 -noaudio ${blenderPath} --python export_gltf.py -- ${outDirName} ${options}`;
     var prc = exec(cmd, (error, stdout, stderr) => {
@@ -50,7 +50,7 @@ function blenderFileToGltf(blenderVersion, blenderPath, outDirName, done, option
     });
 }
 
-function blenderRoundtripGltf(blenderVersion, gltfPath, outDirName, done, options='') {
+function blenderRoundtripGltf(blenderVersion, gltfPath, outDirName, done, options = '') {
     const { exec } = require('child_process');
     const cmd = `${blenderVersion} -b --addons io_scene_gltf2 -noaudio --python roundtrip_gltf.py -- ${gltfPath} ${outDirName} ${options}`;
     var prc = exec(cmd, (error, stdout, stderr) => {
@@ -101,7 +101,7 @@ function validateGltf(gltfPath, done) {
 var assert = require('assert');
 
 // This tests floating-point numbers for equality, ignoring roundoff errors.
-assert.equalEpsilon = function(actual, expected) {
+assert.equalEpsilon = function (actual, expected) {
     if (typeof actual !== 'number') {
         throw new Error("Expected " + actual + " to be a number.");
     }
@@ -112,7 +112,7 @@ assert.equalEpsilon = function(actual, expected) {
     }
 };
 
-assert.equalEpsilonArray = function(actual, expected) {
+assert.equalEpsilonArray = function (actual, expected) {
     const length = expected.length;
     assert.strictEqual(actual.length, length);
 
@@ -143,26 +143,26 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
 
     let componentSize;
     switch (accessor.componentType) {
-    case 5126:  // FLOAT
-        componentSize = 4;
-        break;
-    default:
-        throw new Error("Untested accessor componentType " + accessor.componentType);
+        case 5126:  // FLOAT
+            componentSize = 4;
+            break;
+        default:
+            throw new Error("Untested accessor componentType " + accessor.componentType);
     }
 
     let numElements;
     switch (accessor.type) {
-    case 'SCALAR':
-        numElements = 1;
-        break;
-    case 'VEC2':
-        numElements = 2;
-        break;
-    case 'VEC3':
-        numElements = 3;
-        break;
-    default:
-        throw new Error("Untested accessor type " + accessor.type);
+        case 'SCALAR':
+            numElements = 1;
+            break;
+        case 'VEC2':
+            numElements = 2;
+            break;
+        case 'VEC3':
+            numElements = 3;
+            break;
+        default:
+            throw new Error("Untested accessor type " + accessor.type);
     }
 
     const count = accessor.count;
@@ -207,31 +207,31 @@ function buildVectorHash(accessorData) {
     return vectorHashTable;
 }
 
-describe('General', function() {
-    describe('gltf_validator', function() {
-        it('should verify a simple glTF file without errors', function(done) {
+describe('General', function () {
+    describe('gltf_validator', function () {
+        it('should verify a simple glTF file without errors', function (done) {
             validateGltf('gltf/Box.gltf', done);
         });
-        it('should verify a simple glTF binary file without errors', function(done) {
+        it('should verify a simple glTF binary file without errors', function (done) {
             validateGltf('gltf/Box.glb', done);
         });
     });
 });
 
-describe('Exporter', function() {
+describe('Exporter', function () {
     let blenderSampleScenes = fs.readdirSync('scenes').filter(f => f.endsWith('.blend')).map(f => f.substring(0, f.length - 6));
 
-    blenderVersions.forEach(function(blenderVersion) {
+    blenderVersions.forEach(function (blenderVersion) {
         let variants = [
             ['', ''],
             ['_glb', '--glb']
         ];
 
-        variants.forEach(function(variant) {
+        variants.forEach(function (variant) {
             const args = variant[1];
-            describe(blenderVersion + '_export' + variant[0], function() {
+            describe(blenderVersion + '_export' + variant[0], function () {
                 blenderSampleScenes.forEach((scene) => {
-                    it(scene, function(done) {
+                    it(scene, function (done) {
                         let outDirName = 'out' + blenderVersion + variant[0];
                         let blenderPath = `scenes/${scene}.blend`;
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
@@ -249,11 +249,11 @@ describe('Exporter', function() {
             });
         });
 
-        describe(blenderVersion + '_export_results', function() {
+        describe(blenderVersion + '_export_results', function () {
             let outDirName = 'out' + blenderVersion;
             let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
 
-            it('can export a base color', function() {
+            it('can export a base color', function () {
                 let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -265,7 +265,7 @@ describe('Exporter', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_baseColor.png')));
             });
 
-            it('can export a normal map', function() {
+            it('can export a normal map', function () {
                 let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -277,7 +277,7 @@ describe('Exporter', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
             });
 
-            it('can export an emissive map from the Emission node', function() {
+            it('can export an emissive map from the Emission node', function () {
                 let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -290,7 +290,7 @@ describe('Exporter', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
             });
 
-            it('can export an emissive map from the Principled BSDF node', function() {
+            it('can export an emissive map from the Principled BSDF node', function () {
                 let gltfPath = path.resolve(outDirPath, '01_principled_material_280.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -303,7 +303,7 @@ describe('Exporter', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
             });
 
-            it('can create instances of a mesh with different materials', function() {
+            it('can create instances of a mesh with different materials', function () {
                 let gltfPath = path.resolve(outDirPath, '02_material_instancing.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -346,7 +346,7 @@ describe('Exporter', function() {
                 assert.strictEqual(cubeBluePrimitive.attributes.NORMAL, cubeRedPrimitive.attributes.NORMAL);
             });
 
-            it('exports UNSIGNED_SHORT when count is 65535', function() {
+            it('exports UNSIGNED_SHORT when count is 65535', function () {
                 let gltfPath = path.resolve(outDirPath, '01_vertex_count_16bit.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -363,7 +363,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[primitive.indices].componentType, 5123);
             });
 
-            it('exports UNSIGNED_INT when count is 65536', function() {
+            it('exports UNSIGNED_INT when count is 65536', function () {
                 let gltfPath = path.resolve(outDirPath, '01_vertex_count_32bit.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -386,7 +386,7 @@ describe('Exporter', function() {
             //  Metallic: Black square in lower-left on white background, grayscale image
             // When the texture is present, expect the factor to be undefined, and vice-versa
 
-            it('produces a Roughness texture', function() {
+            it('produces a Roughness texture', function () {
                 // Expect magenta (inverted green) square
                 let resultName = path.resolve(outDirPath, '08_img_rough.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_g_.png');
@@ -394,7 +394,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the Roughness texture', function() {
+            it('references the Roughness texture', function () {
                 let gltfPath = path.resolve(outDirPath, '08_only_rough.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -409,7 +409,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_img_rough.png');
             });
 
-            it('produces a Metallic texture', function() {
+            it('produces a Metallic texture', function () {
                 // Expect yellow (inverted blue) square
                 let resultName = path.resolve(outDirPath, '08_img_metal.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-__b.png');
@@ -417,7 +417,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the Metallic texture', function() {
+            it('references the Metallic texture', function () {
                 let gltfPath = path.resolve(outDirPath, '08_only_metal.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -432,7 +432,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_img_metal.png');
             });
 
-            it('combines two images into a RoughnessMetallic texture', function() {
+            it('combines two images into a RoughnessMetallic texture', function () {
                 // Expect magenta (inverted green) and yellow (inverted blue) squares
                 let resultName = path.resolve(outDirPath, '08_metallic-08_roughness.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_gb.png');
@@ -440,7 +440,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the RoughnessMetallic texture', function() {
+            it('references the RoughnessMetallic texture', function () {
                 let gltfPath = path.resolve(outDirPath, '08_combine_roughMetal.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -455,7 +455,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_metallic-08_roughness.png');
             });
 
-            it('produces an Occlusion texture', function() {
+            it('produces an Occlusion texture', function () {
                 // Expect upper-left black square.  This is a special case because when R/M are not
                 // present, occlusion may take all channels.  This test now "expects" the
                 // grayscale PNG to be preserved exactly.
@@ -465,7 +465,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the Occlusion texture', function() {
+            it('references the Occlusion texture', function () {
                 let gltfPath = path.resolve(outDirPath, '08_only_occlusion.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -480,7 +480,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_img_occlusion.png');
             });
 
-            it('combines two images into an OcclusionRoughness texture', function() {
+            it('combines two images into an OcclusionRoughness texture', function () {
                 // Expect cyan (inverted red) and magenta (inverted green) squares
                 let resultName = path.resolve(outDirPath, '08_occlusion-08_roughness.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rg_.png');
@@ -488,7 +488,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the OcclusionRoughness texture', function() {
+            it('references the OcclusionRoughness texture', function () {
                 let gltfPath = path.resolve(outDirPath, '08_combine_occlusionRough.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -503,7 +503,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_occlusion-08_roughness.png');
             });
 
-            it('combines two images into an OcclusionMetallic texture', function() {
+            it('combines two images into an OcclusionMetallic texture', function () {
                 // Expect cyan (inverted red) and yellow (inverted blue) squares
                 let resultName = path.resolve(outDirPath, '08_occlusion-08_metallic.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-r_b.png');
@@ -511,7 +511,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the OcclusionMetallic texture', function() {
+            it('references the OcclusionMetallic texture', function () {
                 let gltfPath = path.resolve(outDirPath, '08_combine_occlusionMetal.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -526,7 +526,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_occlusion-08_metallic.png');
             });
 
-            it('combines three images into an OcclusionRoughnessMetallic texture', function() {
+            it('combines three images into an OcclusionRoughnessMetallic texture', function () {
                 // Expect cyan (inverted red), magenta (inverted green), and yellow (inverted blue) squares
                 let resultName = path.resolve(outDirPath, '08_occlusion-08_roughness-08_metallic.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rgb.png');
@@ -534,7 +534,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the OcclusionRoughnessMetallic texture', function() {
+            it('references the OcclusionRoughnessMetallic texture', function () {
                 let gltfPath = path.resolve(outDirPath, '08_combine_orm.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -549,7 +549,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_occlusion-08_roughness-08_metallic.png');
             });
 
-            it('can share a normal map and a Clearcoat normal map', function() {
+            it('can share a normal map and a Clearcoat normal map', function () {
                 let gltfPath = path.resolve(outDirPath, '08_clearcoat.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -572,7 +572,7 @@ describe('Exporter', function() {
                 assert.strictEqual(source1, source2);
             });
 
-            it('combines two images into a Clearcoat strength and roughness texture', function() {
+            it('combines two images into a Clearcoat strength and roughness texture', function () {
                 // Expect cyan (inverted red) and magenta (inverted green) squares
                 let resultName = path.resolve(outDirPath, '08_cc_strength-08_cc_roughness.png');
                 let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rg_.png');
@@ -580,7 +580,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the Clearcoat texture', function() {
+            it('references the Clearcoat texture', function () {
                 let gltfPath = path.resolve(outDirPath, '08_combine_clearcoat.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -596,7 +596,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.images[0].uri, '08_cc_strength-08_cc_roughness.png');
             });
 
-            it('exports texture transform from mapping type point', function() {
+            it('exports texture transform from mapping type point', function () {
                 let gltfPath = path.resolve(outDirPath, '09_tex_transform_from_point.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -610,7 +610,7 @@ describe('Exporter', function() {
                 assert.equalEpsilon(transform.offset[1], -2.2977774791709993);
             });
 
-            it('exports texture transform from mapping type texture', function() {
+            it('exports texture transform from mapping type texture', function () {
                 let gltfPath = path.resolve(outDirPath, '09_tex_transform_from_texture.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -624,7 +624,7 @@ describe('Exporter', function() {
                 assert.equalEpsilon(transform.offset[1], -2.54482482508252);
             });
 
-            it('exports texture transform from mapping type vector', function() {
+            it('exports texture transform from mapping type vector', function () {
                 let gltfPath = path.resolve(outDirPath, '09_tex_transform_from_vector.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -638,7 +638,7 @@ describe('Exporter', function() {
                 assert.equalEpsilon(transform.offset[1], 0.2272593289624576);
             });
 
-            it('export mirror wrapping', function() {
+            it('export mirror wrapping', function () {
                 let gltfPath = path.resolve(outDirPath, '09_tex_wrapping_mirror.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -651,7 +651,7 @@ describe('Exporter', function() {
                 assert.deepStrictEqual(samp.wrapT, 33648);  // MIRRORED_REPEAT
             });
 
-            it('exports custom normals', function() {
+            it('exports custom normals', function () {
                 let gltfPath = path.resolve(outDirPath, '10_custom_normals.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 assert.strictEqual(asset.meshes.length, 2);
@@ -714,7 +714,7 @@ describe('Exporter', function() {
                 assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
             });
 
-            it('exports custom normals with Apply Modifiers', function() {
+            it('exports custom normals with Apply Modifiers', function () {
                 let gltfPath = path.resolve(outDirPath, '10_custom_normals_with_modifier.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 assert.strictEqual(asset.meshes.length, 1);
@@ -739,7 +739,7 @@ describe('Exporter', function() {
                 }
             });
 
-            it('exports loose edges/points', function() {
+            it('exports loose edges/points', function () {
                 let gltfPath = path.resolve(outDirPath, '11_loose_geometry.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 assert.strictEqual(asset.meshes.length, 1);
@@ -754,7 +754,7 @@ describe('Exporter', function() {
                 assert.strictEqual(point_prims.length, 1);
             });
 
-            it('exports custom range sampled', function() {
+            it('exports custom range sampled', function () {
                 let gltfPath = path.resolve(outDirPath, '12_anim_range_sampled.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const ranged = asset.animations.filter(a => a.name === 'Ranged')[0];
@@ -767,7 +767,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].input].count, asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].output].count);
             });
 
-            it('exports custom range not sampled', function() {
+            it('exports custom range not sampled', function () {
                 let gltfPath = path.resolve(outDirPath, '12_anim_range_not_sampled.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const ranged = asset.animations.filter(a => a.name === 'Ranged')[0];
@@ -780,7 +780,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].input].count * 3, asset.accessors[no_ranged.samplers[no_ranged.channels[0].sampler].output].count);
             });
 
-            it('exports custom range with driver', function() {
+            it('exports custom range with driver', function () {
                 let gltfPath = path.resolve(outDirPath, '12_anim_range_driver.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const anim = asset.animations.filter(a => a.name === 'ArmatureAction')[0];
@@ -790,9 +790,9 @@ describe('Exporter', function() {
                 assert.strictEqual(anim.samplers[anim.channels[0].sampler].input, anim.samplers[anim.channels[1].sampler].input);
                 assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].input].count, asset.accessors[anim.samplers[anim.channels[0].sampler].output].count);
                 assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].output].count, asset.accessors[anim.samplers[anim.channels[1].sampler].output].count);
-              });
+            });
 
-              it('exports transmission', function() {
+            it('exports transmission', function () {
                 let gltfPath = path.resolve(outDirPath, '14_transmission.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const mat_no_transmission = asset.materials.find(mat => mat.name === 'NoTransmission');
@@ -803,9 +803,9 @@ describe('Exporter', function() {
                 const transmission = mat_transmission.extensions.KHR_materials_transmission;
                 assert.equalEpsilon(transmission.transmissionFactor, 0.2);
 
-              });
+            });
 
-              it('exports volume', function() {
+            it('exports volume', function () {
                 let gltfPath = path.resolve(outDirPath, '16_volume.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -818,9 +818,9 @@ describe('Exporter', function() {
                 const mat_thickness_zero = asset.materials.find(mat => mat.name === 'ThicknessZero');
                 assert.ok(!("KHR_materials_volume" in mat_thickness_zero.extensions));
 
-              });
+            });
 
-              it('exports IOR', function() {
+            it('exports IOR', function () {
                 let gltfPath = path.resolve(outDirPath, '17_ior.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -839,9 +839,9 @@ describe('Exporter', function() {
                 const ior_15 = asset.materials.find(mat => mat.name === 'ior_1.5');
                 assert.ok(!("KHR_materials_ior" in ior_15.extensions));
 
-              });
+            });
 
-              it('exports Variants', function() {
+            it('exports Variants', function () {
                 let gltfPath = path.resolve(outDirPath, '18_variants.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -861,7 +861,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.extensions['KHR_materials_variants']['variants'].length, 2);
 
                 assert.strictEqual(prim_blue.extensions['KHR_materials_variants']['mappings'].length, 2);
-                prim_blue.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                prim_blue.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
                     assert.strictEqual(mapping.variants.length, 1);
                 });
                 const map_1 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_red_index);
@@ -870,7 +870,7 @@ describe('Exporter', function() {
                 assert.strictEqual(map_2.variants[0], variant_blue_index);
 
                 assert.strictEqual(prim_green.extensions['KHR_materials_variants']['mappings'].length, 2);
-                prim_green.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                prim_green.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
                     assert.strictEqual(mapping.variants.length, 1);
                 });
                 const map_3 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_orange_index);
@@ -879,16 +879,16 @@ describe('Exporter', function() {
                 assert.strictEqual(map_4.variants[0], variant_blue_index);
 
                 assert.strictEqual(prim_white.extensions['KHR_materials_variants']['mappings'].length, 1);
-                prim_white.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                prim_white.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
                     assert.strictEqual(mapping.variants.length, 2);
                 });
                 const map_5 = prim_white.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_white_index);
                 assert.ok(variant_red_index in map_5.variants);
                 assert.ok(variant_blue_index in map_5.variants);
 
-              });
+            });
 
-              it('exports Specular', function() {
+            it('exports Specular', function () {
                 let gltfPath = path.resolve(outDirPath, '20_specular.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -961,18 +961,18 @@ describe('Exporter', function() {
                 assert.ok("specularColorTexture" in mat_TextTrans.extensions['KHR_materials_specular']);
                 assert.equalEpsilonArray(mat_TextTrans.extensions['KHR_materials_specular']["specularColorFactor"], [1.4296006782732589, 1.72086059270931, 1.648045597824881]);
 
-              });
+            });
 
-              it('exports Collections', function() {
+            it('exports Collections', function () {
                 let gltfPath = path.resolve(outDirPath, '21_scene.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
                 assert.strictEqual(asset.nodes.length, 47);
                 assert.strictEqual(asset.scenes[0].nodes.length, 9);
                 assert.strictEqual(asset.meshes.length, 6);
-              });
+            });
 
-              it('exports Attributes', function() {
+            it('exports Attributes', function () {
                 let gltfPath = path.resolve(outDirPath, '22_vertex_colors_and_attributes.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -1006,15 +1006,15 @@ describe('Exporter', function() {
                 const _vertex_vector_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_VECTOR, bufferCache);
                 assert.strictEqual(_vertex_vector.count, 24);
                 const expected_vertex_vector = [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 6.0, 7.0, 8.0, 6.0, 7.0, 8.0,
-                                                 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0,
-                                                 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0];
+                    9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0,
+                    18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0];
                 assert.deepStrictEqual(_vertex_vector_data, expected_vertex_vector);
 
                 const _vertex_2dvector = asset.accessors[primitive.attributes._VERTEX_2DVECTOR];
                 const _vertex_2dvector_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_2DVECTOR, bufferCache);
                 assert.strictEqual(_vertex_2dvector.count, 24);
                 const expected_vertex_2dvector = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 2.0, 3.0, 2.0, 3.0, 4.0, 5.0, 4.0, 5.0, 4.0, 5.0, 6.0, 7.0, 6.0, 7.0, 6.0, 7.0,
-                                                  8.0, 9.0, 8.0, 9.0, 8.0, 9.0, 10.0, 11.0, 10.0, 11.0, 10.0, 11.0, 12.0, 13.0, 12.0, 13.0, 12.0, 13.0, 14.0, 15.0, 14.0, 15.0, 14.0, 15.0];
+                    8.0, 9.0, 8.0, 9.0, 8.0, 9.0, 10.0, 11.0, 10.0, 11.0, 10.0, 11.0, 12.0, 13.0, 12.0, 13.0, 12.0, 13.0, 14.0, 15.0, 14.0, 15.0, 14.0, 15.0];
                 assert.deepStrictEqual(_vertex_2dvector_data, expected_vertex_2dvector);
 
                 const _vertex_boolean = asset.accessors[primitive.attributes._VERTEX_BOOLEAN];
@@ -1108,9 +1108,9 @@ describe('Exporter', function() {
                 const expected_mix_p3_vertex_float_data = [1.1];
                 assert.equalEpsilonArray(mix_p3_vertex_float_data, expected_mix_p3_vertex_float_data);
 
-              });
+            });
 
-              it('exports Active Collection', function() {
+            it('exports Active Collection', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '23_use_active_collection_without_nested.gltf');
                 const asset_1 = JSON.parse(fs.readFileSync(gltfPath_1));
                 assert.strictEqual(asset_1.nodes.length, 1);
@@ -1122,15 +1122,15 @@ describe('Exporter', function() {
                 let gltfPath_3 = path.resolve(outDirPath, '23_use_active_collection_nested.gltf');
                 const asset_3 = JSON.parse(fs.readFileSync(gltfPath_3));
                 assert.strictEqual(asset_3.nodes.length, 2);
-              });
+            });
 
-              it('exports correct no SK when modifier', function() {
+            it('exports correct no SK when modifier', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '27_apply_modifier_with_shapekeys.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
                 const modifier_mesh = asset.meshes[asset.nodes.filter(m => m.name === 'modifier')[0].mesh];
                 assert.ok(!('weights' in modifier_mesh));
-                if("extras" in modifier_mesh) {
+                if ("extras" in modifier_mesh) {
                     assert.ok(!('targetNames' in modifier_mesh['extras']));
                 }
                 const primitive_modifier_mesh = modifier_mesh.primitives[0];
@@ -1138,15 +1138,15 @@ describe('Exporter', function() {
 
                 const no_modifier_mesh = asset.meshes[asset.nodes.filter(m => m.name === 'no_modifier')[0].mesh];
                 assert.ok('weights' in no_modifier_mesh);
-                if("extras" in no_modifier_mesh) {
+                if ("extras" in no_modifier_mesh) {
                     assert.ok('targetNames' in no_modifier_mesh['extras']);
                 }
                 const primitive_no_modifier_mesh = no_modifier_mesh.primitives[0];
                 assert.ok('targets' in primitive_no_modifier_mesh);
 
-              });
+            });
 
-              it('exports mesh instances', function() {
+            it('exports mesh instances', function () {
                 let gltfPath = path.resolve(outDirPath, '25_mesh_instances.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const original = asset.nodes.find(node => node.name === 'original');
@@ -1176,9 +1176,9 @@ describe('Exporter', function() {
                 assert.notEqual(original.mesh, skined_1.mesh);
                 assert.notEqual(original.mesh, skined_2.mesh);
 
-              });
+            });
 
-              it('exports mesh instances apply modifier', function() {
+            it('exports mesh instances apply modifier', function () {
                 let gltfPath = path.resolve(outDirPath, '25_mesh_instances_apply_modifier.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const original = asset.nodes.find(node => node.name === 'original');
@@ -1208,9 +1208,9 @@ describe('Exporter', function() {
                 assert.notEqual(original.mesh, skined_1.mesh);
                 assert.notEqual(original.mesh, skined_2.mesh);
 
-                });
+            });
 
-              it('exports factor', function() {
+            it('exports factor', function () {
                 let gltfPath = path.resolve(outDirPath, '01_factors.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const mat = asset.materials[0];
@@ -1229,9 +1229,9 @@ describe('Exporter', function() {
                 assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
 
-              });
+            });
 
-              it('exports SK / SK anim', function() {
+            it('exports SK / SK anim', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '28_shapekeys_anim.gltf');
                 const asset_1 = JSON.parse(fs.readFileSync(gltfPath_1));
                 var anim_mesh = asset_1.meshes[asset_1.nodes.filter(m => m.name === 'AnimCube')[0].mesh];
@@ -1274,10 +1274,10 @@ describe('Exporter', function() {
                 assert.ok(!('weights' in anim_mesh));
                 assert.ok(!('weights' in driven_mesh));
 
-                if("extras" in anim_mesh) {
+                if ("extras" in anim_mesh) {
                     assert.ok(!('targetNames' in anim_mesh['extras']));
                 }
-                if("extras" in driven_mesh) {
+                if ("extras" in driven_mesh) {
                     assert.ok(!('targetNames' in driven_mesh['extras']));
                 }
 
@@ -1287,9 +1287,9 @@ describe('Exporter', function() {
                 assert.strictEqual(asset_2.animations.length, 1);
                 assert.strictEqual(asset_2.animations[0].channels.length, 3);
 
-              });
+            });
 
-              it('exports using sk reset', function() {
+            it('exports using sk reset', function () {
                 let gltfPath = path.resolve(outDirPath, '28_sk_reset.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -1315,9 +1315,9 @@ describe('Exporter', function() {
                 assert.equal(outputData2_2[0], 0.0);
                 assert.equal(outputData2_2[1], 0.0);
 
-              });
+            });
 
-              it('exports using sk no reset', function() {
+            it('exports using sk no reset', function () {
                 let gltfPath = path.resolve(outDirPath, '28_sk_no_reset.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -1343,9 +1343,9 @@ describe('Exporter', function() {
                 assert.equal(outputData2_2[0], 0.0);
                 assert.equal(outputData2_2[1], 1.0);
 
-              });
+            });
 
-              it('exports using armature rest pose', function() {
+            it('exports using armature rest pose', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
                 var cube = asset.nodes.filter(m => m.name === 'Bone')[0]
@@ -1355,9 +1355,9 @@ describe('Exporter', function() {
                 asset = JSON.parse(fs.readFileSync(gltfPath_2));
                 cube = asset.nodes.filter(m => m.name === 'Bone')[0]
                 assert.ok(!('rotation' in cube));
-              });
+            });
 
-              it('exports interpolation when sampled, optimized, with keep', function() {
+            it('exports interpolation when sampled, optimized, with keep', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -1433,7 +1433,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[suzanne_rotation_sampler.input].count, 1);
                 assert.strictEqual(asset.accessors[suzanne_scale_sampler.input].count, 1);
 
-                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const anim_armature2 = asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
                 const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
 
@@ -1488,10 +1488,10 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[sphere_scale_sampler.input].count, 2);
 
 
-              });
+            });
 
 
-              it('exports interpolation when sampled, optimized, no keep', function() {
+            it('exports interpolation when sampled, optimized, no keep', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled_no_keep.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -1560,7 +1560,7 @@ describe('Exporter', function() {
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "scale").length == 0);
 
-                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const anim_armature2 = asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
                 const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
 
@@ -1594,10 +1594,10 @@ describe('Exporter', function() {
                 assert.ok(anim_sphere.channels.filter(a => a.target.path === "scale").length == 0);
 
 
-              });
+            });
 
 
-              it('exports interpolation when sampled, no optimization, no keeping', function() {
+            it('exports interpolation when sampled, no optimization, no keeping', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled_no_optimize.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -1666,7 +1666,7 @@ describe('Exporter', function() {
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "scale").length == 0);
 
-                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const anim_armature2 = asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
                 const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
 
@@ -1698,9 +1698,9 @@ describe('Exporter', function() {
                 assert.ok(anim_sphere.channels.filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_sphere.channels.filter(a => a.target.path === "scale").length == 0);
 
-              });
+            });
 
-              it('exports interpolation when sampled, not optimized, but keep', function() {
+            it('exports interpolation when sampled, not optimized, but keep', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled_no_optimize_but_keep.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -1776,7 +1776,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[suzanne_rotation_sampler.input].count, 1);
                 assert.strictEqual(asset.accessors[suzanne_scale_sampler.input].count, 1);
 
-                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const anim_armature2 = asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
                 const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
 
@@ -1831,27 +1831,27 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[sphere_rotation_sampler.input].count, 6);
 
 
-              });
+            });
         });
     });
 });
 
-describe('Importer / Exporter (Roundtrip)', function() {
-    blenderVersions.forEach(function(blenderVersion) {
+describe('Importer / Exporter (Roundtrip)', function () {
+    blenderVersions.forEach(function (blenderVersion) {
         let variants = [
             ['', ''],
             ['_glb', '--glb']
         ];
 
-        variants.forEach(function(variant) {
+        variants.forEach(function (variant) {
             const args = variant[1];
-            describe(blenderVersion + '_roundtrip' + variant[0], function() {
+            describe(blenderVersion + '_roundtrip' + variant[0], function () {
                 let dirs = fs.readdirSync('roundtrip');
                 dirs.forEach((dir) => {
                     if (!fs.statSync('roundtrip/' + dir).isDirectory())
                         return;
 
-                    it(dir, function(done) {
+                    it(dir, function (done) {
                         let outDirName = 'out' + blenderVersion + variant[0];
                         let gltfSrcPath = `roundtrip/${dir}/${dir}.gltf`;
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
@@ -1876,7 +1876,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                     if (error)
                                         return done(error);
 
-                                    let reduceKeys = function(raw, allowed) {
+                                    let reduceKeys = function (raw, allowed) {
                                         return Object.keys(raw)
                                             .filter(key => allowed.includes(key))
                                             .reduce((obj, key) => {
@@ -1908,10 +1908,10 @@ describe('Importer / Exporter (Roundtrip)', function() {
             });
         });
 
-        describe(blenderVersion + '_roundtrip_results', function() {
+        describe(blenderVersion + '_roundtrip_results', function () {
             let outDirName = 'out' + blenderVersion;
 
-            it('roundtrips alpha blend mode', function() {
+            it('roundtrips alpha blend mode', function () {
                 let dir = '01_alpha_blend';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -1928,7 +1928,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(blendedMaterials[0].alphaMode, 'BLEND');
             });
 
-            it('roundtrips alpha mask mode', function() {
+            it('roundtrips alpha mask mode', function () {
                 let dir = '01_alpha_mask';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -1939,7 +1939,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(asset.materials[0].alphaCutoff, 0.42);
             });
 
-            it('roundtrips the doubleSided flag', function() {
+            it('roundtrips the doubleSided flag', function () {
                 let dir = '01_single_vs_double_sided';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -1956,7 +1956,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(doubleSidedMaterials[0].doubleSided, true);
             });
 
-            it('roundtrips a morph target animation', function() {
+            it('roundtrips a morph target animation', function () {
                 let dir = '01_morphed_cube';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -1987,7 +1987,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilonArray(outputData, expectedOutputData);
             });
 
-            it('roundtrips a base color', function() {
+            it('roundtrips a base color', function () {
                 let dir = '01_principled_material';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2001,7 +2001,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_baseColor.png')));
             });
 
-            it('roundtrips a normal map', function() {
+            it('roundtrips a normal map', function () {
                 let dir = '01_principled_material';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2015,7 +2015,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
             });
 
-            it('roundtrips an emissive map', function() {
+            it('roundtrips an emissive map', function () {
                 let dir = '01_principled_material';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2030,14 +2030,14 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
             });
 
-            it('roundtrips an OcclusionRoughnessMetallic texture', function() {
+            it('roundtrips an OcclusionRoughnessMetallic texture', function () {
                 let dir = '08_combine_orm';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
 
                 assert(fs.existsSync(path.resolve(outDirPath, '08_tiny-box-rgb.png')));
             });
 
-            it('references the OcclusionRoughnessMetallic texture', function() {
+            it('references the OcclusionRoughnessMetallic texture', function () {
                 let dir = '08_combine_orm';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2052,7 +2052,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
             });
 
-            it ('roundtrips occlusion strength', function() {
+            it('roundtrips occlusion strength', function () {
                 let dir = '13_occlusion_strength';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2062,7 +2062,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(asset.materials[0].occlusionTexture.strength, 0.25);
             })
 
-            it('roundtrips two different UV maps for the same texture', function() {
+            it('roundtrips two different UV maps for the same texture', function () {
                 let dir = '12_orm_two_uvmaps';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2078,7 +2078,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord || 0, 0);
             });
 
-            it('roundtrips baseColorFactor, etc. when used with textures', function() {
+            it('roundtrips baseColorFactor, etc. when used with textures', function () {
                 let dir = '11_factors_and_textures';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2102,7 +2102,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(pbr.roughnessFactor, 0.75);
             });
 
-            it('roundtrips unlit base colors', function() {
+            it('roundtrips unlit base colors', function () {
                 let dir = '01_unlit';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2125,7 +2125,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[3], 0.5);
             });
 
-            it('roundtrips all texture transforms', function() {
+            it('roundtrips all texture transforms', function () {
                 let dir = '09_texture_transform';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2169,7 +2169,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(emissiveTransform.scale[1], 9);
             });
 
-            it('roundtrips UNSIGNED_SHORT when count is 65535', function() {
+            it('roundtrips UNSIGNED_SHORT when count is 65535', function () {
                 let dir = '01_vertex_count_16bit';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2188,7 +2188,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.accessors[primitive.indices].componentType, 5123);
             });
 
-            it('roundtrips UNSIGNED_INT when count is 65536', function() {
+            it('roundtrips UNSIGNED_INT when count is 65536', function () {
                 let dir = '01_vertex_count_32bit';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2207,7 +2207,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.accessors[primitive.indices].componentType, 5125);
             });
 
-            it('roundtrips some custom normals', function() {
+            it('roundtrips some custom normals', function () {
                 let dir = '10_custom_normals';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2271,7 +2271,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
             });
 
-            it('roundtrips animation names', function() {
+            it('roundtrips animation names', function () {
                 let dir = '07_nla-anim';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2282,7 +2282,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.deepStrictEqual(animNames.sort(), expectedAnimNames.sort());
             });
 
-            it('roundtrips texture wrap modes', function() {
+            it('roundtrips texture wrap modes', function () {
                 let dir = '13_texture_wrapping';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2304,7 +2304,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.deepStrictEqual(samp2.wrapT, 33071);  // CLAMP_TO_EDGE
             });
 
-            it('roundtrips emissive/emissive_strength', function() {
+            it('roundtrips emissive/emissive_strength', function () {
                 let dir = '14_emission_strength';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2373,7 +2373,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             });
 
-            it('roundtrips transmission', function() {
+            it('roundtrips transmission', function () {
                 let dir = '15_transmission';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2396,7 +2396,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             });
 
-            it('roundtrips volume', function() {
+            it('roundtrips volume', function () {
                 let dir = '16_volume';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2478,7 +2478,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             });
 
-            it('roundtrips ior', function() {
+            it('roundtrips ior', function () {
                 let dir = '17_ior';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2501,7 +2501,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             });
 
-            it('roundtrips Variants', function() {
+            it('roundtrips Variants', function () {
                 let dir = '18_variants';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2523,7 +2523,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.extensions['KHR_materials_variants']['variants'].length, 2);
 
                 assert.strictEqual(prim_blue.extensions['KHR_materials_variants']['mappings'].length, 2);
-                prim_blue.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                prim_blue.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
                     assert.strictEqual(mapping.variants.length, 1);
                 });
                 const map_1 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_red_index);
@@ -2532,7 +2532,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(map_2.variants[0], variant_blue_index);
 
                 assert.strictEqual(prim_green.extensions['KHR_materials_variants']['mappings'].length, 2);
-                prim_green.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                prim_green.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
                     assert.strictEqual(mapping.variants.length, 1);
                 });
                 const map_3 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_orange_index);
@@ -2541,7 +2541,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(map_4.variants[0], variant_blue_index);
 
                 assert.strictEqual(prim_white.extensions['KHR_materials_variants']['mappings'].length, 1);
-                prim_white.extensions['KHR_materials_variants']['mappings'].forEach(function(mapping) {
+                prim_white.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
                     assert.strictEqual(mapping.variants.length, 2);
                 });
                 const map_5 = prim_white.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_white_index);
@@ -2550,7 +2550,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             });
 
-            it('roundtrips Sheen', function() {
+            it('roundtrips Sheen', function () {
 
                 let dir = '19_sheen';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
@@ -2593,7 +2593,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             });
 
-            it('roundtrips Specular Original', function() {
+            it('roundtrips Specular Original', function () {
 
                 let dir = '20_specular_original';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
@@ -2676,7 +2676,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             });
 
-            it('roundtrips Specular Converted', function() {
+            it('roundtrips Specular Converted', function () {
 
                 let dir = '20_specular';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
@@ -2765,7 +2765,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
             });
 
-            it('roundtrips factors', function() {
+            it('roundtrips factors', function () {
                 let dir = '22_factors';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2787,10 +2787,10 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
 
-              });
+            });
 
             it('roundtrips multi prim vertex attribute', function () {
-                let dir = '23_vertex_attribute';
+                let dir = '23_multi_prim_vertex_attribute';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
@@ -2801,7 +2801,6 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.accessors[primitive1.attributes._PRESSURE].count, 4);
                 const primitive2 = asset.meshes[0].primitives[1];
                 assert.strictEqual(asset.accessors[primitive2.attributes._PRESSURE].count, 4);
-
             });
         });
     });
