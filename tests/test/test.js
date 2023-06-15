@@ -394,7 +394,7 @@ describe('Exporter', function() {
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
 
-            it('references the Roughness texture', function () {
+            it('references the Roughness texture', function() {
                 let gltfPath = path.resolve(outDirPath, '08_only_rough.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
