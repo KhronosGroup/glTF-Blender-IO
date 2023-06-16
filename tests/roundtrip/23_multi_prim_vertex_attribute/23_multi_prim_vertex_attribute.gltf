@@ -1,0 +1,264 @@
+{
+  "accessors": [
+    {
+      "bufferView": 0,
+      "byteOffset": 0,
+      "count": 12,
+      "componentType": 5125,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        3
+      ]
+    },
+    {
+      "bufferView": 1,
+      "byteOffset": 0,
+      "count": 6,
+      "componentType": 5125,
+      "type": "SCALAR",
+      "min": [
+        4
+      ],
+      "max": [
+        7
+      ]
+    },
+    {
+      "bufferView": 2,
+      "byteOffset": 0,
+      "count": 8,
+      "componentType": 5126,
+      "type": "VEC3",
+      "min": [
+        -1.25,
+        -0.4000000059604645,
+        -1.25
+      ],
+      "max": [
+        1.25,
+        1,
+        1.25
+      ]
+    },
+    {
+      "bufferView": 3,
+      "byteOffset": 0,
+      "count": 8,
+      "componentType": 5126,
+      "type": "SCALAR",
+      "name": "pressure"
+    },
+    {
+      "count": 2,
+      "componentType": 5126,
+      "type": "SCALAR",
+      "min": [
+        0
+      ],
+      "max": [
+        1
+      ],
+      "sparse": {
+        "count": 1,
+        "indices": {
+          "bufferView": 4,
+          "byteOffset": 0,
+          "componentType": 5125
+        },
+        "values": {
+          "bufferView": 5,
+          "byteOffset": 0
+        }
+      }
+    },
+    {
+      "bufferView": 6,
+      "byteOffset": 0,
+      "count": 2,
+      "componentType": 5126,
+      "type": "SCALAR",
+      "min": [
+        0.0416666679084301
+      ],
+      "max": [
+        0.0833333358168602
+      ]
+    },
+    {
+      "bufferView": 7,
+      "byteOffset": 0,
+      "count": 8,
+      "componentType": 5126,
+      "type": "VEC3",
+      "min": [
+        0,
+        -0.3333333432674408,
+        0
+      ],
+      "max": [
+        0,
+        1,
+        0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "channels": [
+        {
+          "sampler": 0,
+          "target": {
+            "node": 0,
+            "path": "weights"
+          }
+        }
+      ],
+      "samplers": [
+        {
+          "input": 5,
+          "interpolation": "LINEAR",
+          "output": 4
+        }
+      ]
+    }
+  ],
+  "asset": {
+    "generator": "gltfgen v0.7.0",
+    "version": "2.0"
+  },
+  "buffers": [
+    {
+      "uri": "23_multi_prim_vertex_attribute.bin",
+      "byteLength": 312
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 48,
+      "byteOffset": 0,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 24,
+      "byteOffset": 48,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteLength": 96,
+      "byteOffset": 72,
+      "byteStride": 12,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 32,
+      "byteOffset": 168,
+      "byteStride": 4,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4,
+      "byteOffset": 200
+    },
+    {
+      "buffer": 0,
+      "byteLength": 4,
+      "byteOffset": 204
+    },
+    {
+      "buffer": 0,
+      "byteLength": 8,
+      "byteOffset": 208
+    },
+    {
+      "buffer": 0,
+      "byteLength": 96,
+      "byteOffset": 216,
+      "byteStride": 12,
+      "target": 34962
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "_PRESSURE": 3,
+            "POSITION": 2
+          },
+          "indices": 0,
+          "targets": [
+            {
+              "POSITION": 6
+            }
+          ],
+          "material": 0
+        },
+        {
+          "attributes": {
+            "_PRESSURE": 3,
+            "POSITION": 2
+          },
+          "indices": 1,
+          "targets": [
+            {
+              "POSITION": 6
+            }
+          ],
+          "material": 1
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "tet_and_tri"
+    }
+  ],
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene" : 0,
+  "materials":[
+		{
+			"doubleSided":true,
+			"name":"Material",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.8,
+					0.8,
+					0.8,
+					1
+				],
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		},
+    {
+			"doubleSided":true,
+			"name":"Material.001",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.8,
+					0.8,
+					0.8,
+					1
+				],
+				"metallicFactor":0,
+				"roughnessFactor":0.5
+			}
+		}
+	]
+}
