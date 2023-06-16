@@ -308,10 +308,11 @@ If enabled, Principled Specular data are ignored, only data from custom node are
 
 
 .. tip::
+
    If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
    Add > Output > glTF Material Output
 
-     .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
+   .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
 
 Transmission
 ^^^^^^^^^^^^
