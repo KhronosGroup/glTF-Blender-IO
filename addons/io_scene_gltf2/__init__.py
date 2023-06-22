@@ -1715,12 +1715,19 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         update=gltf_animation_ui_update
     )
 
+    gltf_pack_path_ui: bpy.props.StringProperty(
+        name="glTFpack file path",
+        description="Path to gltfpack binary",
+        subtype='FILE_PATH'
+    )
+
     def draw(self, context):
         layout = self.layout
         row = layout.row()
         row.prop(self, "settings_node_ui", text="Shader Editor Add-ons")
         row.prop(self, "KHR_materials_variants_ui", text="Material Variants")
         row.prop(self, "animation_ui", text="Animation UI")
+        row.prop(self, "gltf_pack_path_ui", text="Path to gltfpack")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
