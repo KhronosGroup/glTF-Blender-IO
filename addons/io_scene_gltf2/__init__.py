@@ -13,12 +13,12 @@
 # limitations under the License.
 
 bl_info = {
-    'name': 'glTF 2.0 format',
+    'name': 'glTF 2.0 format 2',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
     "version": (4, 0, 4),
     'blender': (3, 5, 0),
     'location': 'File > Import-Export',
-    'description': 'Import-Export as glTF 2.0',
+    'description': 'Import-Export as glTF 2.0 (with gltfpack)',
     'warning': '',
     'doc_url': "{BLENDER_MANUAL_URL}/addons/import_export/scene_gltf2.html",
     'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",
@@ -58,6 +58,7 @@ from bpy.props import (StringProperty,
                        BoolProperty,
                        EnumProperty,
                        IntProperty,
+                       FloatProperty,
                        CollectionProperty)
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
@@ -146,6 +147,103 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         ),
         default=''
     )
+
+    # gltfpack properties
+    export_use_gltfpack: BoolProperty(
+        name='Use gltfpack',
+        description='Use gltfpack to simplify the mesh and/or compress its textures',
+        default=False,
+    )
+
+    export_tc: BoolProperty(
+        name='KTX2 compression',
+        description='Convert all textures to KTX2 with BasisU supercompression',
+        default=True,
+    )
+
+    export_tq: IntProperty(
+        name='Texture encoding quality',
+        description='Texture encoding quality',
+        default=8,
+        min=1,
+        max=10,
+    )
+
+    export_si: FloatProperty(
+        name='Mesh simplification ratio',
+        description='Simplify meshes targeting triangle count ratio',
+        default=1.0,
+        min=0.0,
+        max=1.0,
+    )
+
+    export_sa: BoolProperty(
+        name='Aggressive mesh simplification',
+        description='Aggressively simplify to the target ratio disregarding quality',
+        default=False,
+    )
+
+    export_slb: BoolProperty(
+        name='Lock mesh border vertices',
+        description='Lock border vertices during simplification to avoid gaps on connected meshes',
+        default=False,
+    )
+
+    export_vp: IntProperty(
+        name='Position quantization',
+        description='Use N-bit quantization for positions',
+        default=14,
+        min=1,
+        max=16,
+    )
+
+    export_vt: IntProperty(
+        name='Texture coordinate quantization',
+        description='Use N-bit quantization for texture coordinates',
+        default=12,
+        min=1,
+        max=16,
+    )
+    
+    export_vn: IntProperty(
+        name='Normal/tangent quantization',
+        description='Use N-bit quantization for normals and tangents',
+        default=8,
+        min=1,
+        max=16,
+    )
+    
+    export_vc: IntProperty(
+        name='Vertex color quantization',
+        description='Use N-bit quantization for colors',
+        default=8,
+        min=1,
+        max=16,
+    )
+    
+    export_vpi: EnumProperty(
+        name='Vertex position attributes',
+        description='Type to use for vertex position attributes',
+        items=(('Integer', 'Integer', 'Use integer attributes for positions'),
+                ('Normalized', 'Normalized', 'Use normalized attributes for positions'),
+                ('Floating-point', 'Floating-point', 'Use floating-point attributes for positions')),
+        default='Integer',
+    )
+    
+    export_noq: BoolProperty(
+        name='Disable quantization',
+        description='Disable quantization; produces much larger glTF files with no extensions',
+        default=False,
+    )
+
+    # TODO: some stuff in Textures
+
+    # TODO: Animations
+
+    # TODO: Scene
+
+    # TODO: some stuff in Miscellaneous
+
 
     export_format: EnumProperty(
         name='Format',
@@ -829,6 +927,25 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_lights'] = self.export_lights
         export_settings['gltf_lighting_mode'] = self.export_import_convert_lighting_mode
 
+        # gltfpack stuff
+        export_settings['gltf_use_gltfpack'] = self.export_use_gltfpack
+
+        export_settings['gltf_gltfpack_tc'] = self.export_tc
+        export_settings['gltf_gltfpack_tq'] = self.export_tq
+
+        export_settings['gltf_gltfpack_si'] = self.export_si
+        export_settings['gltf_gltfpack_sa'] = self.export_sa
+        export_settings['gltf_gltfpack_slb'] = self.export_slb
+
+        export_settings['gltf_gltfpack_vp'] = self.export_vp
+        export_settings['gltf_gltfpack_vt'] = self.export_vt
+        export_settings['gltf_gltfpack_vn'] = self.export_vn
+        export_settings['gltf_gltfpack_vc'] = self.export_vc
+
+        export_settings['gltf_gltfpack_vpi'] = self.export_vpi
+
+        export_settings['gltf_gltfpack_noq'] = self.export_noq
+
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
             path_to_uri(os.path.splitext(os.path.basename(self.filepath))[0] + '.bin')
@@ -896,6 +1013,51 @@ class GLTF_PT_export_main(bpy.types.Panel):
 
         layout.prop(operator, 'export_copyright')
         layout.prop(operator, 'will_save_settings')
+
+
+class GLTF_PT_export_gltfpack(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "gltfpack"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+ 
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+ 
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        col = layout.column(heading = "gltfpack", align = True)
+        col.prop(operator, 'export_use_gltfpack')
+    
+        col = layout.column(heading = "Textures", align = True)
+        col.prop(operator, 'export_tc')
+        col.prop(operator, 'export_tq')
+        col = layout.column(heading = "Simplification", align = True)
+        col.prop(operator, 'export_si')
+        col.prop(operator, 'export_sa')
+        col.prop(operator, 'export_slb')
+        col = layout.column(heading = "Vertices", align = True)
+        col.prop(operator, 'export_vp')
+        col.prop(operator, 'export_vt')
+        col.prop(operator, 'export_vn')
+        col.prop(operator, 'export_vc')
+        col = layout.column(heading = "Vertex positions", align = True)
+        col.prop(operator, 'export_vpi')
+        #col = layout.column(heading = "Animations", align = True)
+        #col = layout.column(heading = "Scene", align = True)
+        col = layout.column(heading = "Miscellaneous", align = True)
+        col.prop(operator, 'export_noq')
 
 
 class GLTF_PT_export_include(bpy.types.Panel):
@@ -1736,6 +1898,7 @@ def menu_func_import(self, context):
 classes = (
     ExportGLTF2,
     GLTF_PT_export_main,
+    GLTF_PT_export_gltfpack,
     GLTF_PT_export_include,
     GLTF_PT_export_transform,
     GLTF_PT_export_data,
