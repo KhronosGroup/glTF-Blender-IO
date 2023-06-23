@@ -13,9 +13,9 @@
 # limitations under the License.
 
 bl_info = {
-    'name': 'glTF 2.0 format 2',
-    'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 0, 4),
+    'name': 'glTF 2.0 format with gltfpack',
+    'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, Jaker, deccer, and many external contributors',
+    "version": (4, 0, 5),
     'blender': (3, 5, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0 (with gltfpack)',
@@ -929,22 +929,22 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         # gltfpack stuff
         export_settings['gltf_use_gltfpack'] = self.export_use_gltfpack
+        if self.export_use_gltfpack:
+            export_settings['gltf_gltfpack_tc'] = self.export_tc
+            export_settings['gltf_gltfpack_tq'] = self.export_tq
 
-        export_settings['gltf_gltfpack_tc'] = self.export_tc
-        export_settings['gltf_gltfpack_tq'] = self.export_tq
+            export_settings['gltf_gltfpack_si'] = self.export_si
+            export_settings['gltf_gltfpack_sa'] = self.export_sa
+            export_settings['gltf_gltfpack_slb'] = self.export_slb
 
-        export_settings['gltf_gltfpack_si'] = self.export_si
-        export_settings['gltf_gltfpack_sa'] = self.export_sa
-        export_settings['gltf_gltfpack_slb'] = self.export_slb
+            export_settings['gltf_gltfpack_vp'] = self.export_vp
+            export_settings['gltf_gltfpack_vt'] = self.export_vt
+            export_settings['gltf_gltfpack_vn'] = self.export_vn
+            export_settings['gltf_gltfpack_vc'] = self.export_vc
 
-        export_settings['gltf_gltfpack_vp'] = self.export_vp
-        export_settings['gltf_gltfpack_vt'] = self.export_vt
-        export_settings['gltf_gltfpack_vn'] = self.export_vn
-        export_settings['gltf_gltfpack_vc'] = self.export_vc
+            export_settings['gltf_gltfpack_vpi'] = self.export_vpi
 
-        export_settings['gltf_gltfpack_vpi'] = self.export_vpi
-
-        export_settings['gltf_gltfpack_noq'] = self.export_noq
+            export_settings['gltf_gltfpack_noq'] = self.export_noq
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1861,15 +1861,15 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
     settings_node_ui : bpy.props.BoolProperty(
-            default= False,
-            description="Displays glTF Material Output node in Shader Editor (Menu Add > Output)"
-            )
+        default= False,
+        description="Displays glTF Material Output node in Shader Editor (Menu Add > Output)"
+    )
 
     KHR_materials_variants_ui : bpy.props.BoolProperty(
         default= False,
         description="Displays glTF UI to manage material variants",
         update=gltf_variant_ui_update
-        )
+    )
 
     animation_ui: bpy.props.BoolProperty(
         default=False,
@@ -1877,7 +1877,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         update=gltf_animation_ui_update
     )
 
-    gltf_pack_path_ui: bpy.props.StringProperty(
+    gltfpack_path_ui: bpy.props.StringProperty(
         name="glTFpack file path",
         description="Path to gltfpack binary",
         subtype='FILE_PATH'
@@ -1889,7 +1889,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "settings_node_ui", text="Shader Editor Add-ons")
         row.prop(self, "KHR_materials_variants_ui", text="Material Variants")
         row.prop(self, "animation_ui", text="Animation UI")
-        row.prop(self, "gltf_pack_path_ui", text="Path to gltfpack")
+        row.prop(self, "gltfpack_path_ui", text="Path to gltfpack")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')

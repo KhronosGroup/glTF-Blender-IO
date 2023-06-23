@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import subprocess
 import time
 
 import bpy
@@ -141,6 +143,24 @@ def __should_include_json_value(key, value):
 def __is_empty_collection(value):
     return (isinstance(value, dict) or isinstance(value, list)) and len(value) == 0
 
+def __postprocess_with_gltfpack(export_settings):
+
+    gltfpack_path = bpy.context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui
+    gltfpack_file_path = os.path.join(gltfpack_path, "gltfpack")
+
+    gltf_file_path = export_settings['gltf_filepath']
+    gltf_file_base = os.path.splitext(os.path.basename(gltf_file_path))[0]
+    gltf_file_extension = os.path.splitext(os.path.basename(gltf_file_path))[1]
+    gltf_file_directory = os.path.dirname(gltf_file_path)
+    gltf_input_file_path = gltf_file_path
+    gltf_output_file_path = os.path.join(gltf_file_directory, gltf_file_base + '_gltfpacked') + gltf_file_extension
+
+    options = ""
+    if (export_settings['gltf_gltfpack_tc']):
+        options += "-tc"
+
+    output = subprocess.run([gltfpack_file_path, options, "-i", gltf_input_file_path, "-o", gltf_output_file_path])
+
 
 def __write_file(json, buffer, export_settings):
     try:
@@ -149,6 +169,9 @@ def __write_file(json, buffer, export_settings):
             export_settings,
             gltf2_blender_json.BlenderJSONEncoder,
             buffer)
+        if (export_settings['gltf_use_gltfpack'] == True):
+            __postprocess_with_gltfpack(export_settings)
+        
     except AssertionError as e:
         _, _, tb = sys.exc_info()
         traceback.print_tb(tb)  # Fixed format
