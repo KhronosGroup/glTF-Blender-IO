@@ -156,10 +156,37 @@ def __postprocess_with_gltfpack(export_settings):
     gltf_output_file_path = os.path.join(gltf_file_directory, gltf_file_base + '_gltfpacked') + gltf_file_extension
 
     options = ""
-    if (export_settings['gltf_gltfpack_tc']):
-        options += "-tc"
 
-    output = subprocess.run([gltfpack_file_path, options, "-i", gltf_input_file_path, "-o", gltf_output_file_path])
+    if (export_settings['gltf_gltfpack_tc']):
+        options += " -tc"
+    
+    options += f" -tq {export_settings['gltf_gltfpack_tq']}"
+
+    options += f" -si {export_settings['gltf_gltfpack_si']}"
+
+    if (export_settings['gltf_gltfpack_sa']):
+        options += " -sa"
+
+    if (export_settings['gltf_gltfpack_slb']):
+        options += " -slb"
+
+    options += f" -vp {export_settings['gltf_gltfpack_vp']}"
+    options += f" -vt {export_settings['gltf_gltfpack_vt']}"
+    options += f" -vn {export_settings['gltf_gltfpack_vn']}"
+    options += f" -vc {export_settings['gltf_gltfpack_vc']}"
+    
+    match export_settings['gltf_gltfpack_vpi']:
+        case "Integer":
+            options += " -vpi"
+        case "Normalized":
+            options += " -vpn"
+        case "Floating-point":
+            options += " -vpf"
+
+    if (export_settings['gltf_gltfpack_noq']):
+        options += " -noq"
+
+    output = subprocess.run(gltfpack_file_path + options + " -i \"" + gltf_input_file_path + "\" -o \"" + gltf_output_file_path + "\"")
 
 
 def __write_file(json, buffer, export_settings):
