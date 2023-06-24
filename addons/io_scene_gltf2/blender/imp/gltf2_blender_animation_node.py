@@ -36,8 +36,19 @@ class BlenderNodeAnim():
 
         for channel_idx in node.animations[anim_idx]:
             channel = animation.channels[channel_idx]
-            if channel.target.path not in ['translation', 'rotation', 'scale']:
+            if channel.target.path not in ['translation', 'rotation', 'scale', 'pointer']:
                 continue
+
+            if channel.target.path == "pointer" and channel.target.extensions is None:
+                continue
+
+            if channel.target.path == "pointer" and ("KHR_animation_pointer" not in channel.target.extensions or "pointer" not in channel.target.extensions["KHR_animation_pointer"]):
+                continue
+
+            if channel.target.path == "pointer":
+                pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                if not(len(pointer_tab) >= 4 and pointer_tab[1] == "nodes" and pointer_tab[3] in ["translation", "rotation", "scale"]):
+                    continue
 
             BlenderNodeAnim.do_channel(gltf, anim_idx, node_idx, channel)
 
@@ -46,6 +57,9 @@ class BlenderNodeAnim():
         animation = gltf.data.animations[anim_idx]
         vnode = gltf.vnodes[node_idx]
         path = channel.target.path
+
+        if path == "pointer":
+            path = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")[3]
 
         import_user_extensions('gather_import_animation_channel_before_hook', gltf, animation, vnode, path, channel)
 

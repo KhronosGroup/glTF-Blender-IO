@@ -136,6 +136,12 @@ class BlenderGlTF():
             # Weight animation management
             node.weight_animation = False
 
+        # Meshes initialization
+        if gltf.data.meshes:
+            for mesh in gltf.data.meshes:
+                mesh.blender_name = {}  # caches Blender mesh name
+                mesh.weight_animation_on_mesh = None # For KHR_animation_pointer, weights on mesh
+
         # Dispatch animation
         if gltf.data.animations:
             for node in gltf.data.nodes:
@@ -151,19 +157,48 @@ class BlenderGlTF():
 
                 for channel_idx, channel in enumerate(anim.channels):
                     if channel.target.node is None:
-                        continue
+                        # Manage KHR_animation_pointer for node TRS and weights
 
-                    if anim_idx not in gltf.data.nodes[channel.target.node].animations.keys():
-                        gltf.data.nodes[channel.target.node].animations[anim_idx] = []
-                    gltf.data.nodes[channel.target.node].animations[anim_idx].append(channel_idx)
-                    # Manage node with animation on weights, that are animated in meshes in Blender (ShapeKeys)
-                    if channel.target.path == "weights":
-                        gltf.data.nodes[channel.target.node].weight_animation = True
+                        if channel.target.path != "pointer":
+                            continue
 
-        # Meshes
-        if gltf.data.meshes:
-            for mesh in gltf.data.meshes:
-                mesh.blender_name = {}  # caches Blender mesh name
+                        if channel.target.extensions is None:
+                            continue
+
+                        if "KHR_animation_pointer" not in channel.target.extensions and "pointer" not in channel.target.extensions["KHR_animation_pointer"]:
+                            continue
+
+                        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+
+
+                        ### Nodes and Meshes
+                        if len(pointer_tab) >= 4 and pointer_tab[1] == "nodes" and pointer_tab[3] in ["translation", "rotation", "scale", "weights"]:
+                            if anim_idx not in gltf.data.nodes[int(pointer_tab[2])].animations.keys():
+                                gltf.data.nodes[int(pointer_tab[2])].animations[anim_idx] = []
+                            gltf.data.nodes[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
+                            if pointer_tab[3] == "weights":
+                                gltf.data.nodes[int(pointer_tab[2])].weight_animation = True
+                        elif len(pointer_tab) >= 4 and pointer_tab[1] == "meshes" and pointer_tab[3] == "weights":
+                            gltf.data.meshes[int(pointer_tab[2])].weight_animation_on_mesh = (anim_idx, channel_idx)
+
+                    # Core glTF animations
+                    else:
+                        if anim_idx not in gltf.data.nodes[channel.target.node].animations.keys():
+                            gltf.data.nodes[channel.target.node].animations[anim_idx] = []
+                        gltf.data.nodes[channel.target.node].animations[anim_idx].append(channel_idx)
+                        # Manage node with animation on weights, that are animated in meshes in Blender (ShapeKeys)
+                        if channel.target.path == "weights":
+                            gltf.data.nodes[channel.target.node].weight_animation = True
+
+        # For KHR_animation_pointer, weight on meshes
+        # We broadcast mesh weight animations to corresponding nodes
+        for node in gltf.data.nodes:
+            if node.mesh is not None and gltf.data.meshes[node.mesh].weight_animation_on_mesh is not None:
+                anim_idx, channel_idx = gltf.data.meshes[node.mesh].weight_animation_on_mesh
+                if anim_idx not in node.animations.keys():
+                    node.animations[anim_idx] = []
+                node.animations[anim_idx].append(channel_idx)
+                node.weight_animation = True
 
         # Calculate names for each mesh's shapekeys
         for mesh in gltf.data.meshes or []:
