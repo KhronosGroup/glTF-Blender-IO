@@ -140,7 +140,47 @@ class BlenderGlTF():
         if gltf.data.meshes:
             for mesh in gltf.data.meshes:
                 mesh.blender_name = {}  # caches Blender mesh name
-                mesh.weight_animation_on_mesh = None # For KHR_animation_pointer, weights on mesh
+
+        if gltf.data.extensions_used is not None and "KHR_animation_pointer" in gltf.data.extensions_used:
+            # Meshes initialization
+            if gltf.data.meshes:
+                for mesh in gltf.data.meshes:
+                    mesh.blender_name = {}  # caches Blender mesh name
+                    mesh.weight_animation_on_mesh = None # For KHR_animation_pointer, weights on mesh
+
+            for cam in gltf.data.cameras if gltf.data.cameras is not None else []:
+                cam.animations = {}
+
+            for mat in gltf.data.materials if gltf.data.materials is not None else []:
+                mat.animations = {}
+                if mat.normal_texture is not None:
+                    mat.normal_texture.animations = {}
+                if mat.occlusion_texture is not None:
+                    mat.occlusion_texture.animations = {}
+                if mat.pbr_metallic_roughness is not None:
+                    mat.pbr_metallic_roughness.animations = {}
+                    if mat.pbr_metallic_roughness.base_color_texture is not None \
+                            and mat.pbr_metallic_roughness.base_color_texture.extensions is not None \
+                            and "KHR_texture_transform" in mat.pbr_metallic_roughness.base_color_texture.extensions:
+                        mat.pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"] = {}
+
+                for ext in [
+                        "KHR_materials_emissive_strength",
+                        #"KHR_materials_iridescence",
+                        "KHR_materials_volume",
+                        "KHR_materials_ior",
+                        "KHR_materials_transmission"
+                        ]:
+                    if mat.extensions is not None and ext in mat.extensions:
+                        mat.extensions[ext]["animations"] = {}
+
+            for light in gltf.data.extensions["KHR_lights_punctual"]["lights"] \
+                if gltf.data.extensions is not None and "KHR_lights_punctual" in gltf.data.extensions \
+                    and "lights" in gltf.data.extensions["KHR_lights_punctual"] else []:
+                light["animations"] = {}
+                if "spot" in light:
+                    light["spot"]["animations"] = {}
+
 
         # Dispatch animation
         if gltf.data.animations:
@@ -158,28 +198,7 @@ class BlenderGlTF():
                 for channel_idx, channel in enumerate(anim.channels):
                     if channel.target.node is None:
                         # Manage KHR_animation_pointer for node TRS and weights
-
-                        if channel.target.path != "pointer":
-                            continue
-
-                        if channel.target.extensions is None:
-                            continue
-
-                        if "KHR_animation_pointer" not in channel.target.extensions and "pointer" not in channel.target.extensions["KHR_animation_pointer"]:
-                            continue
-
-                        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
-
-
-                        ### Nodes and Meshes
-                        if len(pointer_tab) >= 4 and pointer_tab[1] == "nodes" and pointer_tab[3] in ["translation", "rotation", "scale", "weights"]:
-                            if anim_idx not in gltf.data.nodes[int(pointer_tab[2])].animations.keys():
-                                gltf.data.nodes[int(pointer_tab[2])].animations[anim_idx] = []
-                            gltf.data.nodes[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
-                            if pointer_tab[3] == "weights":
-                                gltf.data.nodes[int(pointer_tab[2])].weight_animation = True
-                        elif len(pointer_tab) >= 4 and pointer_tab[1] == "meshes" and pointer_tab[3] == "weights":
-                            gltf.data.meshes[int(pointer_tab[2])].weight_animation_on_mesh = (anim_idx, channel_idx)
+                        BlenderGlTF.dispatch_animation_pointer(gltf, anim, anim_idx, channel, channel_idx)
 
                     # Core glTF animations
                     else:
@@ -192,13 +211,14 @@ class BlenderGlTF():
 
         # For KHR_animation_pointer, weight on meshes
         # We broadcast mesh weight animations to corresponding nodes
-        for node in gltf.data.nodes:
-            if node.mesh is not None and gltf.data.meshes[node.mesh].weight_animation_on_mesh is not None:
-                anim_idx, channel_idx = gltf.data.meshes[node.mesh].weight_animation_on_mesh
-                if anim_idx not in node.animations.keys():
-                    node.animations[anim_idx] = []
-                node.animations[anim_idx].append(channel_idx)
-                node.weight_animation = True
+        if gltf.data.extensions_used is not None and "KHR_animation_pointer" in gltf.data.extensions_used:
+            for node in gltf.data.nodes:
+                if node.mesh is not None and gltf.data.meshes[node.mesh].weight_animation_on_mesh is not None:
+                    anim_idx, channel_idx = gltf.data.meshes[node.mesh].weight_animation_on_mesh
+                    if anim_idx not in node.animations.keys():
+                        node.animations[anim_idx] = []
+                    node.animations[anim_idx].append(channel_idx)
+                    node.weight_animation = True
 
         # Calculate names for each mesh's shapekeys
         for mesh in gltf.data.meshes or []:
@@ -249,6 +269,50 @@ class BlenderGlTF():
 
         # Manage KHR_materials_variants
         BlenderGlTF.manage_material_variants(gltf)
+
+    @staticmethod
+    def dispatch_animation_pointer(gltf, anim, anim_idx, channel, channel_idx):
+        if channel.target.path != "pointer":
+            return
+
+        if channel.target.extensions is None:
+            return
+
+        if "KHR_animation_pointer" not in channel.target.extensions and "pointer" not in channel.target.extensions["KHR_animation_pointer"]:
+            return
+
+        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+
+
+        ### Nodes and Meshes
+        if len(pointer_tab) >= 4 and pointer_tab[1] == "nodes" and pointer_tab[3] in ["translation", "rotation", "scale", "weights"]:
+            if anim_idx not in gltf.data.nodes[int(pointer_tab[2])].animations.keys():
+                gltf.data.nodes[int(pointer_tab[2])].animations[anim_idx] = []
+            gltf.data.nodes[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
+            if pointer_tab[3] == "weights":
+                gltf.data.nodes[int(pointer_tab[2])].weight_animation = True
+        elif len(pointer_tab) >= 4 and pointer_tab[1] == "meshes" and pointer_tab[3] == "weights":
+            gltf.data.meshes[int(pointer_tab[2])].weight_animation_on_mesh = (anim_idx, channel_idx)
+
+        ### Camera
+        if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
+            pointer_tab[3] in ["perspective"] and \
+            pointer_tab[4] in ["yfov", "znear", "zfar"]:
+
+            if anim_idx not in gltf.data.cameras[int(pointer_tab[2])].animations.keys():
+                gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx] = []
+            gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
+            pointer_tab[3] in ["orthographic"] and \
+            pointer_tab[4] in ["ymag", "xmag"]:
+
+            if anim_idx not in gltf.data.cameras[int(pointer_tab[2])].animations.keys():
+                gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx] = []
+            gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
+
+        ### Light
+
 
 
     @staticmethod
