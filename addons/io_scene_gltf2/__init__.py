@@ -155,13 +155,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False,
     )
 
-    export_tc: BoolProperty(
+    export_gltfpack_tc: BoolProperty(
         name='KTX2 compression',
         description='Convert all textures to KTX2 with BasisU supercompression',
         default=True,
     )
 
-    export_tq: IntProperty(
+    export_gltfpack_tq: IntProperty(
         name='Texture encoding quality',
         description='Texture encoding quality',
         default=8,
@@ -169,7 +169,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         max=10,
     )
 
-    export_si: FloatProperty(
+    export_gltfpack_si: FloatProperty(
         name='Mesh simplification ratio',
         description='Simplify meshes targeting triangle count ratio',
         default=1.0,
@@ -177,19 +177,19 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         max=1.0,
     )
 
-    export_sa: BoolProperty(
+    export_gltfpack_sa: BoolProperty(
         name='Aggressive mesh simplification',
         description='Aggressively simplify to the target ratio disregarding quality',
         default=False,
     )
 
-    export_slb: BoolProperty(
+    export_gltfpack_slb: BoolProperty(
         name='Lock mesh border vertices',
         description='Lock border vertices during simplification to avoid gaps on connected meshes',
         default=False,
     )
 
-    export_vp: IntProperty(
+    export_gltfpack_vp: IntProperty(
         name='Position quantization',
         description='Use N-bit quantization for positions',
         default=14,
@@ -197,7 +197,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         max=16,
     )
 
-    export_vt: IntProperty(
+    export_gltfpack_vt: IntProperty(
         name='Texture coordinate quantization',
         description='Use N-bit quantization for texture coordinates',
         default=12,
@@ -205,7 +205,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         max=16,
     )
     
-    export_vn: IntProperty(
+    export_gltfpack_vn: IntProperty(
         name='Normal/tangent quantization',
         description='Use N-bit quantization for normals and tangents',
         default=8,
@@ -213,7 +213,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         max=16,
     )
     
-    export_vc: IntProperty(
+    export_gltfpack_vc: IntProperty(
         name='Vertex color quantization',
         description='Use N-bit quantization for colors',
         default=8,
@@ -221,7 +221,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         max=16,
     )
     
-    export_vpi: EnumProperty(
+    export_gltfpack_vpi: EnumProperty(
         name='Vertex position attributes',
         description='Type to use for vertex position attributes',
         items=(('Integer', 'Integer', 'Use integer attributes for positions'),
@@ -230,7 +230,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default='Integer',
     )
     
-    export_noq: BoolProperty(
+    export_gltfpack_noq: BoolProperty(
         name='Disable quantization',
         description='Disable quantization; produces much larger glTF files with no extensions',
         default=False,
@@ -1041,23 +1041,23 @@ class GLTF_PT_export_gltfpack(bpy.types.Panel):
         col.prop(operator, 'export_use_gltfpack')
     
         col = layout.column(heading = "Textures", align = True)
-        col.prop(operator, 'export_tc')
-        col.prop(operator, 'export_tq')
+        col.prop(operator, 'export_gltfpack_tc')
+        col.prop(operator, 'export_gltfpack_tq')
         col = layout.column(heading = "Simplification", align = True)
-        col.prop(operator, 'export_si')
-        col.prop(operator, 'export_sa')
-        col.prop(operator, 'export_slb')
+        col.prop(operator, 'export_gltfpack_si')
+        col.prop(operator, 'export_gltfpack_sa')
+        col.prop(operator, 'export_gltfpack_slb')
         col = layout.column(heading = "Vertices", align = True)
-        col.prop(operator, 'export_vp')
-        col.prop(operator, 'export_vt')
-        col.prop(operator, 'export_vn')
-        col.prop(operator, 'export_vc')
+        col.prop(operator, 'export_gltfpack_vp')
+        col.prop(operator, 'export_gltfpack_vt')
+        col.prop(operator, 'export_gltfpack_vn')
+        col.prop(operator, 'export_gltfpack_vc')
         col = layout.column(heading = "Vertex positions", align = True)
-        col.prop(operator, 'export_vpi')
+        col.prop(operator, 'export_gltfpack_vpi')
         #col = layout.column(heading = "Animations", align = True)
         #col = layout.column(heading = "Scene", align = True)
         col = layout.column(heading = "Miscellaneous", align = True)
-        col.prop(operator, 'export_noq')
+        col.prop(operator, 'export_gltfpack_noq')
 
 
 class GLTF_PT_export_include(bpy.types.Panel):
