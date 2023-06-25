@@ -150,19 +150,19 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     # gltfpack properties
     export_use_gltfpack: BoolProperty(
-        name='Use gltfpack',
+        name='Use Gltfpack',
         description='Use gltfpack to simplify the mesh and/or compress its textures',
         default=False,
     )
 
     export_gltfpack_tc: BoolProperty(
-        name='KTX2 compression',
+        name='KTX2 Compression',
         description='Convert all textures to KTX2 with BasisU supercompression',
         default=True,
     )
 
     export_gltfpack_tq: IntProperty(
-        name='Texture encoding quality',
+        name='Texture Encoding Quality',
         description='Texture encoding quality',
         default=8,
         min=1,
@@ -170,7 +170,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_gltfpack_si: FloatProperty(
-        name='Mesh simplification ratio',
+        name='Mesh Simplification Ratio',
         description='Simplify meshes targeting triangle count ratio',
         default=1.0,
         min=0.0,
@@ -178,19 +178,19 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_gltfpack_sa: BoolProperty(
-        name='Aggressive mesh simplification',
+        name='Aggressive Mesh Simplification',
         description='Aggressively simplify to the target ratio disregarding quality',
         default=False,
     )
 
     export_gltfpack_slb: BoolProperty(
-        name='Lock mesh border vertices',
+        name='Lock Mesh Border Vertices',
         description='Lock border vertices during simplification to avoid gaps on connected meshes',
         default=False,
     )
 
     export_gltfpack_vp: IntProperty(
-        name='Position quantization',
+        name='Position Quantization',
         description='Use N-bit quantization for positions',
         default=14,
         min=1,
@@ -198,7 +198,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_gltfpack_vt: IntProperty(
-        name='Texture coordinate quantization',
+        name='Texture Coordinate Quantization',
         description='Use N-bit quantization for texture coordinates',
         default=12,
         min=1,
@@ -206,7 +206,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
     
     export_gltfpack_vn: IntProperty(
-        name='Normal/tangent quantization',
+        name='Normal/Tangent Quantization',
         description='Use N-bit quantization for normals and tangents',
         default=8,
         min=1,
@@ -214,7 +214,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
     
     export_gltfpack_vc: IntProperty(
-        name='Vertex color quantization',
+        name='Vertex Color Quantization',
         description='Use N-bit quantization for colors',
         default=8,
         min=1,
@@ -222,18 +222,18 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
     
     export_gltfpack_vpi: EnumProperty(
-        name='Vertex position attributes',
+        name='Vertex Position Attributes',
         description='Type to use for vertex position attributes',
         items=(('Integer', 'Integer', 'Use integer attributes for positions'),
                 ('Normalized', 'Normalized', 'Use normalized attributes for positions'),
                 ('Floating-point', 'Floating-point', 'Use floating-point attributes for positions')),
-        default='Integer',
+        default='Floating-point',
     )
     
     export_gltfpack_noq: BoolProperty(
-        name='Disable quantization',
+        name='Disable Quantization',
         description='Disable quantization; produces much larger glTF files with no extensions',
-        default=False,
+        default=True,
     )
 
     # TODO: some stuff in Textures
@@ -243,7 +243,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     # TODO: Scene
 
     # TODO: some stuff in Miscellaneous
-
 
     export_format: EnumProperty(
         name='Format',
