@@ -13,12 +13,12 @@
 # limitations under the License.
 
 bl_info = {
-    'name': 'glTF 2.0 format with gltfpack',
-    'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, Jaker, deccer, and many external contributors',
+    'name': 'glTF 2.0 format',
+    'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
     "version": (4, 0, 5),
     'blender': (3, 5, 0),
     'location': 'File > Import-Export',
-    'description': 'Import-Export as glTF 2.0 (with gltfpack)',
+    'description': 'Import-Export as glTF 2.0',
     'warning': '',
     'doc_url': "{BLENDER_MANUAL_URL}/addons/import_export/scene_gltf2.html",
     'tracker_url': "https://github.com/KhronosGroup/glTF-Blender-IO/issues/",
