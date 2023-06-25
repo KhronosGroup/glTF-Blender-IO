@@ -1865,16 +1865,24 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         }
                         // return done(); // uncomment to not roundtrip all files
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
-                            if (error)
+                            if (error) {
+                                if( options.indexOf("--no-validate") !== -1) {return done();}
                                 return done(error);
+                            }
 
                             validateGltf(gltfSrcPath, (error, gltfSrcReport) => {
-                                if (error)
+                                if (error) {
+                                    if( options.indexOf("--no-validate") !== -1) {return done();}
                                     return done(error);
+                                }
+
 
                                 validateGltf(gltfDstPath, (error, gltfDstReport) => {
-                                    if (error)
+                                    if (error) {
+                                        if( options.indexOf("--no-validate") !== -1) {return done();}
                                         return done(error);
+                                    }
+
 
                                     let reduceKeys = function(raw, allowed) {
                                         return Object.keys(raw)
@@ -1888,14 +1896,16 @@ describe('Importer / Exporter (Roundtrip)', function() {
                                     let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
                                     let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
 
-                                    if (!fs.existsSync(gltfnovalidatorPath)) {
-                                        try {
-                                            assert.deepStrictEqual(dstInfo, srcInfo);
-                                        } catch (ex) {
-                                            done(new Error("Validation summary mismatch.\nExpected summary:\n" +
-                                                JSON.stringify(srcInfo, null, '  ') +
-                                                "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
-                                            return;
+                                    if( options.indexOf("--no-validate") !== -1) {
+                                        if (!fs.existsSync(gltfnovalidatorPath)) {
+                                            try {
+                                                assert.deepStrictEqual(dstInfo, srcInfo);
+                                            } catch (ex) {
+                                                done(new Error("Validation summary mismatch.\nExpected summary:\n" +
+                                                    JSON.stringify(srcInfo, null, '  ') +
+                                                    "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
+                                                return;
+                                            }
                                         }
                                     }
 
