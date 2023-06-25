@@ -930,21 +930,21 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # gltfpack stuff
         export_settings['gltf_use_gltfpack'] = self.export_use_gltfpack
         if self.export_use_gltfpack:
-            export_settings['gltf_gltfpack_tc'] = self.export_tc
-            export_settings['gltf_gltfpack_tq'] = self.export_tq
+            export_settings['gltf_gltfpack_tc'] = self.export_gltfpack_tc
+            export_settings['gltf_gltfpack_tq'] = self.export_gltfpack_tq
 
-            export_settings['gltf_gltfpack_si'] = self.export_si
-            export_settings['gltf_gltfpack_sa'] = self.export_sa
-            export_settings['gltf_gltfpack_slb'] = self.export_slb
+            export_settings['gltf_gltfpack_si'] = self.export_gltfpack_si
+            export_settings['gltf_gltfpack_sa'] = self.export_gltfpack_sa
+            export_settings['gltf_gltfpack_slb'] = self.export_gltfpack_slb
 
-            export_settings['gltf_gltfpack_vp'] = self.export_vp
-            export_settings['gltf_gltfpack_vt'] = self.export_vt
-            export_settings['gltf_gltfpack_vn'] = self.export_vn
-            export_settings['gltf_gltfpack_vc'] = self.export_vc
+            export_settings['gltf_gltfpack_vp'] = self.export_gltfpack_vp
+            export_settings['gltf_gltfpack_vt'] = self.export_gltfpack_vt
+            export_settings['gltf_gltfpack_vn'] = self.export_gltfpack_vn
+            export_settings['gltf_gltfpack_vc'] = self.export_gltfpack_vc
 
-            export_settings['gltf_gltfpack_vpi'] = self.export_vpi
+            export_settings['gltf_gltfpack_vpi'] = self.export_gltfpack_vpi
 
-            export_settings['gltf_gltfpack_noq'] = self.export_noq
+            export_settings['gltf_gltfpack_noq'] = self.export_gltfpack_noq
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
