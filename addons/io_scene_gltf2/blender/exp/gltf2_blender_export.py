@@ -152,8 +152,12 @@ def __postprocess_with_gltfpack(export_settings):
     gltf_file_base = os.path.splitext(os.path.basename(gltf_file_path))[0]
     gltf_file_extension = os.path.splitext(os.path.basename(gltf_file_path))[1]
     gltf_file_directory = os.path.dirname(gltf_file_path)
+    gltf_output_file_directory = os.path.join(gltf_file_directory, "gltfpacked")
+    if (os.path.exists(gltf_output_file_directory) is False):
+        os.makedirs(gltf_output_file_directory)
+
     gltf_input_file_path = gltf_file_path
-    gltf_output_file_path = os.path.join(gltf_file_directory, gltf_file_base + '_gltfpacked') + gltf_file_extension
+    gltf_output_file_path = os.path.join(gltf_output_file_directory, gltf_file_base + gltf_file_extension)
 
     options = ""
 
