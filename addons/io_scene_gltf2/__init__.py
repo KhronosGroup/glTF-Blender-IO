@@ -1879,6 +1879,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     )
 
     gltfpack_path_ui: bpy.props.StringProperty(
+        default="",
         name="glTFpack file path",
         description="Path to gltfpack binary",
         subtype='FILE_PATH'
