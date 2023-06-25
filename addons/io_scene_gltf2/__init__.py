@@ -1030,6 +1030,7 @@ class GLTF_PT_export_gltfpack(bpy.types.Panel):
         return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
 
     def draw(self, context):
+        
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
@@ -1926,7 +1927,10 @@ classes = (
 
 def register():
     from .blender.com import gltf2_blender_ui as blender_ui
+
     for c in classes:
+        if (hasattr(c, "bl_label") is True and c.bl_label == GLTF_PT_export_gltfpack.bl_label):
+            continue
         bpy.utils.register_class(c)
     # bpy.utils.register_module(__name__)
 
@@ -1935,6 +1939,8 @@ def register():
         blender_ui.variant_register()
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.animation_ui is True:
         blender_ui.anim_ui_register()
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui is not False:
+        bpy.utils.register_class(GLTF_PT_export_gltfpack)
 
     # add to the export / import menu
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
