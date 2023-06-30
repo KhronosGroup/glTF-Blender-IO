@@ -16,11 +16,12 @@ import bpy
 from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from .gltf2_blender_animation_node import BlenderNodeAnim
 from .gltf2_blender_animation_weight import BlenderWeightAnim
+from .gltf2_blender_animation_pointer import BlenderPointerAnim
 from .gltf2_blender_animation_utils import simulate_stash, restore_animation_on_object
 from .gltf2_blender_vnode import VNode
 
 class BlenderAnimation():
-    """Dispatch Animation to node or morph weights animation."""
+    """Dispatch Animation to node or morph weights animation, or via KHR_animation_pointer"""
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("%s should not be instantiated" % cls)
 
@@ -38,6 +39,16 @@ class BlenderAnimation():
             if isinstance(vnode_id, int):
                 BlenderNodeAnim.anim(gltf, anim_idx, vnode_id)
             BlenderWeightAnim.anim(gltf, anim_idx, vnode_id)
+
+        for cam_idx, cam in enumerate(gltf.data.cameras):
+            if len(cam.animations) == 0:
+                continue
+            BlenderPointerAnim.anim(gltf, anim_idx, cam, cam_idx, 'CAMERA')
+
+        for light_idx, light in enumerate(gltf.data.extensions["KHR_lights_punctual"]["lights"]):
+            if len(light["animations"]) == 0:
+                continue
+            BlenderPointerAnim.anim(gltf, anim_idx, light, light_idx, 'LIGHT')
 
         # Push all actions onto NLA tracks with this animation's name
         track_name = gltf.data.animations[anim_idx].track_name
@@ -70,3 +81,10 @@ class BlenderAnimation():
             restore_animation_on_object(obj, animation_name)
             if obj.data and hasattr(obj.data, 'shape_keys'):
                 restore_animation_on_object(obj.data.shape_keys, animation_name)
+
+        for cam in gltf.data.cameras:
+            restore_animation_on_object(cam.blender_object_data, animation_name)
+
+        if "KHR_lights_punctual" in gltf.data.extensions:
+            for light in gltf.data.extensions['KHR_lights_punctual']['lights']:
+                restore_animation_on_object(light['blender_object_data'], animation_name)

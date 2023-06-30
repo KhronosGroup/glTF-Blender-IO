@@ -192,6 +192,7 @@ class BlenderGlTF():
                 # Pick pair-wise unique name for each animation to use as a name
                 # for its NLA tracks.
                 desired_name = anim.name or "Anim_%d" % anim_idx
+                #TODOPointer : for camera and light, we need to split TRS anim and data/pointer anim names
                 anim.track_name = BlenderGlTF.find_unused_name(track_names, desired_name)
                 track_names.add(anim.track_name)
 
@@ -312,8 +313,103 @@ class BlenderGlTF():
             gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
 
         ### Light
+        if len(pointer_tab) == 6 and pointer_tab[1] == "extensions" and \
+            pointer_tab[2] == "KHR_lights_punctual" and \
+            pointer_tab[3] == "lights" and \
+            pointer_tab[5] in ["intensity", "color", "range"]:
 
+            if anim_idx not in gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"].keys():
+                gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx] = []
+            gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx].append(channel_idx)
 
+        if len(pointer_tab) == 7 and pointer_tab[1] == "extensions" and \
+            pointer_tab[2] == "KHR_lights_punctual" and \
+            pointer_tab[3] == "lights" and \
+            pointer_tab[5] == "spot" and \
+            pointer_tab[6] in ["outerConeAngle", "innerConeAngle"]:
+
+            if anim_idx not in gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"].keys():
+                gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx] = []
+            gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx].append(channel_idx)
+
+        #### Materials
+        if len(pointer_tab) == 4 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] in ["emissiveFactor", "alphaCutoff"]:
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].animations.keys():
+                gltf.data.materials[int(pointer_tab[2])].animations[anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "normalTexture" and \
+            pointer_tab[4] == "scale":
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].normal_texture.animations.keys():
+                gltf.data.materials[int(pointer_tab[2])].normal_texture.animations[anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].normal_texture.animations[anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "occlusionTexture" and \
+            pointer_tab[4] == "strength":
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations.keys():
+                gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations[anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations[anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "pbrMetallicRoughness" and \
+            pointer_tab[4] in ["baseColorFactor", "roughnessFactor", "metallicFactor"]:
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.animations.keys():
+                gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.animations[anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.animations[anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 8 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "pbrMetallicRoughness" and \
+            pointer_tab[4] == "baseColorFactor" and \
+            pointer_tab[5] == "extensions" and \
+            pointer_tab[6] == "KHR_texture_transform" and \
+            pointer_tab[7] in ["scale", "offset"]:
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_emissive_strength" and \
+            pointer_tab[5] == "emissiveStrength":
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_emissive_strength"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_emissive_strength"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_emissive_strength"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_volume" and \
+            pointer_tab[5] in ["thicknessFactor", "attenuationDistance", "attenuationColor"]:
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_volume"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_volume"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_volume"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_ior" and \
+            pointer_tab[5] == "ior":
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_ior"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_ior"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_ior"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_transmission" and \
+            pointer_tab[5] == "transmissionFactor":
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"][anim_idx].append(channel_idx)
 
     @staticmethod
     def find_unused_name(haystack, desired_name):

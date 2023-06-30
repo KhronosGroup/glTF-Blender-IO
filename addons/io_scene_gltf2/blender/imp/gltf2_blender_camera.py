@@ -58,4 +58,6 @@ class BlenderCamera():
                 # Infinite projection
                 cam.clip_end = 1e12  # some big number
 
+        pycamera.blender_object_data = cam # Needed in case of KHR_animation_pointer
+
         return cam

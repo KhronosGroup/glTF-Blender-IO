@@ -31,6 +31,7 @@ def simulate_stash(obj, track_name, action, start_frame=None):
     new_track.mute = True
 
 def restore_animation_on_object(obj, anim_name):
+    """ here, obj can be an object, shapekeys, camera or light data """
     if not getattr(obj, 'animation_data', None):
         return
 
