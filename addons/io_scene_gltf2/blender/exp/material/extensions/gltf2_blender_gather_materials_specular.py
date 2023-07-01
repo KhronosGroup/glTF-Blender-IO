@@ -87,11 +87,11 @@ def export_specular(blender_material, export_settings):
     specular_extension = {}
     specular_ext_enabled = False
 
-    specular_socket = gltf2_blender_get.get_socket(blender_material, 'Specular')
-    specular_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Specular Tint')
-    base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
-    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
-    ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
+    specular_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Specular')
+    specular_tint_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Specular Tint')
+    base_color_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Base Color')
+    transmission_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Transmission')
+    ior_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'IOR')
 
     if base_color_socket is None:
         return None, None

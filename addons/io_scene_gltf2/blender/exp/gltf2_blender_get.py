@@ -43,14 +43,14 @@ def get_object_from_datapath(blender_object, data_path: str):
     return prop
 
 
-def get_node_socket(blender_material, type, name):
+def get_node_socket(blender_material_nodetree, type, name):
     """
     For a given material input name, retrieve the corresponding node tree socket for a given node type.
 
     :param blender_material: a blender material for which to get the socket
     :return: a blender NodeSocket for a given type
     """
-    nodes = [n for n in blender_material.node_tree.nodes if isinstance(n, type) and not n.mute]
+    nodes = [n for n in blender_material_nodetree.nodes if isinstance(n, type) and not n.mute]
     nodes = [node for node in nodes if check_if_is_linked_to_active_output(node.outputs[0])]
     inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
     if inputs:
@@ -58,7 +58,7 @@ def get_node_socket(blender_material, type, name):
     return None
 
 
-def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
+def get_socket(blender_material_nodetree: bpy.types.Material, use_nodes: bool, name: str, volume=False):
     """
     For a given material input name, retrieve the corresponding node tree socket.
 
@@ -66,13 +66,13 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
     :param name: the name of the socket
     :return: a blender NodeSocket
     """
-    if blender_material.node_tree and blender_material.use_nodes:
+    if blender_material_nodetree and use_nodes:
         #i = [input for input in blender_material.node_tree.inputs]
         #o = [output for output in blender_material.node_tree.outputs]
         if name == "Emissive":
             # Check for a dedicated Emission node first, it must supersede the newer built-in one
             # because the newer one is always present in all Principled BSDF materials.
-            emissive_socket = get_node_socket(blender_material, bpy.types.ShaderNodeEmission, "Color")
+            emissive_socket = get_node_socket(blender_material_nodetree, bpy.types.ShaderNodeEmission, "Color")
             if emissive_socket:
                 return emissive_socket
             # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission socket.
@@ -82,16 +82,16 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
             type = bpy.types.ShaderNodeBackground
             name = "Color"
         elif name == "sheenColor":
-            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfVelvet, "Color")
+            return get_node_socket(blender_material_nodetree, bpy.types.ShaderNodeBsdfVelvet, "Color")
         elif name == "sheenRoughness":
-            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfVelvet, "Sigma")
+            return get_node_socket(blender_material_nodetree, bpy.types.ShaderNodeBsdfVelvet, "Sigma")
         else:
             if volume is False:
                 type = bpy.types.ShaderNodeBsdfPrincipled
             else:
                 type = bpy.types.ShaderNodeVolumeAbsorption
 
-        return get_node_socket(blender_material, type, name)
+        return get_node_socket(blender_material_nodetree, type, name)
 
     return None
 

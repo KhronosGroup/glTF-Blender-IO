@@ -15,6 +15,7 @@
 import bpy
 from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
+from ..exp.gltf2_blender_get import get_socket #TODO move to COM
 from .gltf2_blender_animation_utils import make_fcurve
 from .gltf2_blender_light import BlenderLight
 
@@ -48,7 +49,17 @@ class BlenderPointerAnim():
 
         import_user_extensions('gather_import_animation_pointer_channel_before_hook', gltf, animation, channel)
 
-        action = BlenderPointerAnim.get_or_create_action(gltf, asset, asset_idx, animation.track_name, asset_type)
+        # For some asset_type, we need to check what is the real id_root
+        if asset_type == "MATERIAL":
+            if len(pointer_tab) == 4 and pointer_tab[1] == "materials" and \
+                    pointer_tab[3] == "alphaCutoff":
+                id_root = "MATERIAL"
+            else:
+                id_root = "NODETREE"
+        else:
+            id_root = asset_type
+
+        action = BlenderPointerAnim.get_or_create_action(gltf, asset, asset_idx, animation.track_name, id_root)
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
@@ -118,9 +129,22 @@ class BlenderPointerAnim():
         if len(pointer_tab) == 4 and pointer_tab[1] == "materials" and \
             pointer_tab[3] in ["emissiveFactor", "alphaCutoff"]:
 
-            pass
-            # blender_path = ""
-            # num_components =
+            if pointer_tab[3] == "emissiveFactor":
+                emissive_socket = get_socket(asset.blender_nodetree, True, "Emissive")
+                if emissive_socket.is_linked:
+                    # We need to find the correct node value to animate (An Emissive Factor node)
+                    mix_node = emissive_socket.links[0].from_node
+                    if mix_node.type == "MIX":
+                        blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
+                        num_components = 3
+                    else:
+                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+                else:
+                    blender_path = emissive_socket.path_from_id() + ".default_value"
+                    num_components = 3
+            elif pointer_tab[3] == "alphaCutoff":
+                blender_path = "alpha_threshold"
+                num_components = 1
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "normalTexture" and \
@@ -227,6 +251,16 @@ class BlenderPointerAnim():
             action = gltf.action_cache.get(data_name)
             id_root = "LIGHT"
             stash = asset['blender_object_data']
+        elif asset_type == "MATERIAL":
+            data_name = "material_" + asset.name or "Material%d" % asset_idx
+            action = gltf.action_cache.get(data_name)
+            id_root = "MATERIAL"
+            stash = asset.blender_mat
+        elif asset_type == "NODETREE":
+            data_name = "nodetree_" + asset.name or "Nodetree%d" % asset_idx
+            action = gltf.action_cache.get(data_name)
+            id_root = "NODETREE"
+            stash = asset.blender_nodetree
 
         if not action:
             name = anim_name + "_" + data_name

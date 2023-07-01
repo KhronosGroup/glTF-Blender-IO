@@ -315,6 +315,20 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     if color_socket is None:
         return
 
+    # We need to check if emissive factor is animated via KHR_animation_pointer
+    # Because if not, we can use direct socket or mix node, depending if there is a texture or not, or if factor is grayscale
+    # If there is an animation, we need to force creation of a mix node
+    need_mix_node = False
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.animations) > 0:
+            for anim_idx in mh.pymat.animations.keys():
+                for channel_idx in mh.pymat.animations[anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 4 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "emissiveFactor":
+                        need_mix_node = True
+
     if mh.pymat.emissive_texture is None:
         color_socket.default_value = emissive_factor + [1]
         strength_socket.default_value = strength
@@ -323,11 +337,41 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     # Put grayscale emissive factors into the Emission Strength
     e0, e1, e2 = emissive_factor
     if strength_socket and e0 == e1 == e2:
-        strength_socket.default_value = e0 * strength
+        if need_mix_node is False:
+            strength_socket.default_value = e0 * strength
+        else:
+            node = mh.node_tree.nodes.new('ShaderNodeMix')
+            node.label = 'Emissive Factor'
+            node.data_type = 'RGBA'
+            node.location = x - 140, y
+            node.blend_type = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(color_socket, node.outputs[2])
+            # Inputs
+            node.inputs['Factor'].default_value = 1.0
+            color_socket = node.inputs[6]
+            node.inputs[7].default_value = emissive_factor + [1]
+
+            x -= 200
 
     # Otherwise, use a multiply node for it
     else:
         if emissive_factor != [1, 1, 1]:
+            node = mh.node_tree.nodes.new('ShaderNodeMix')
+            node.label = 'Emissive Factor'
+            node.data_type = 'RGBA'
+            node.location = x - 140, y
+            node.blend_type = 'MULTIPLY'
+            # Outputs
+            mh.node_tree.links.new(color_socket, node.outputs[2])
+            # Inputs
+            node.inputs['Factor'].default_value = 1.0
+            color_socket = node.inputs[6]
+            node.inputs[7].default_value = emissive_factor + [1]
+
+            x -= 200
+
+        elif need_mix_node is True:
             node = mh.node_tree.nodes.new('ShaderNodeMix')
             node.label = 'Emissive Factor'
             node.data_type = 'RGBA'

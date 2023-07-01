@@ -24,7 +24,7 @@ def detect_shadeless_material(blender_material, export_settings):
     if not blender_material.use_nodes: return None
 
     # Old Background node detection (unlikely to happen)
-    bg_socket = gltf2_blender_get.get_socket(blender_material, "Background")
+    bg_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Background")
     if bg_socket is not None:
         return {'rgb_socket': bg_socket}
 

@@ -21,8 +21,8 @@ from ...material import gltf2_blender_gather_texture_info
 def export_sheen(blender_material, export_settings):
     sheen_extension = {}
 
-    sheenColor_socket = gltf2_blender_get.get_socket(blender_material, "sheenColor")
-    sheenRoughness_socket = gltf2_blender_get.get_socket(blender_material, "sheenRoughness")
+    sheenColor_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "sheenColor")
+    sheenRoughness_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "sheenRoughness")
 
     if sheenColor_socket is None or sheenRoughness_socket is None:
         return None, None

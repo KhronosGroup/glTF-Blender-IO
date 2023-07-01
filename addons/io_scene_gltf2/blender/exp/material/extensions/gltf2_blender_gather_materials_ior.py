@@ -17,7 +17,7 @@ from .....io.com.gltf2_io_constants import GLTF_IOR
 from ....exp import gltf2_blender_get
 
 def export_ior(blender_material, extensions, export_settings):
-    ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
+    ior_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'IOR')
 
     if not ior_socket:
         return None

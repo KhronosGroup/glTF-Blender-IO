@@ -18,7 +18,7 @@ from ....exp import gltf2_blender_get
 from ...material import gltf2_blender_gather_texture_info
 
 def export_emission_factor(blender_material, export_settings):
-    emissive_socket = gltf2_blender_get.get_socket(blender_material, "Emissive")
+    emissive_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Emissive")
     if emissive_socket is None:
         emissive_socket = gltf2_blender_get.get_socket_old(blender_material, "EmissiveFactor")
     if isinstance(emissive_socket, bpy.types.NodeSocket):
@@ -59,7 +59,7 @@ def export_emission_factor(blender_material, export_settings):
     return None
 
 def export_emission_texture(blender_material, export_settings):
-    emissive = gltf2_blender_get.get_socket(blender_material, "Emissive")
+    emissive = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Emissive")
     if emissive is None:
         emissive = gltf2_blender_get.get_socket_old(blender_material, "Emissive")
     emissive_texture, use_actives_uvmap_emissive, _ = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
