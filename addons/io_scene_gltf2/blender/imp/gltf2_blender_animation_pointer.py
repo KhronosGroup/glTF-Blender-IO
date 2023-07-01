@@ -100,7 +100,7 @@ class BlenderPointerAnim():
                     else:
                         values[idx] = [BlenderLight.calc_energy_directional(gltf, i[0])]
 
-            #TODOPointer range, not implemented
+            #TODO range, not implemented (even not in static import)
 
         if len(pointer_tab) == 7 and pointer_tab[1] == "extensions" and \
             pointer_tab[2] == "KHR_lights_punctual" and \
@@ -108,9 +108,11 @@ class BlenderPointerAnim():
             pointer_tab[5] == "spot" and \
             pointer_tab[6] in ["outerConeAngle", "innerConeAngle"]:
 
-            pass
-            # blender_path = ""
-            # num_components =
+            if pointer_tab[6] == "outerConeAngle":
+                blender_path = "spot_size"
+                num_components = 1
+
+            # TODOPointer innerConeAngle, need to calculate, and before, check if innerConeAngle are animated of not
 
         #### Materials
         if len(pointer_tab) == 4 and pointer_tab[1] == "materials" and \

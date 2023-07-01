@@ -110,12 +110,12 @@ class BlenderLight():
 
         # Angles
         if 'spot' in pylight.keys() and 'outerConeAngle' in pylight['spot']:
-            spot.spot_size = pylight['spot']['outerConeAngle'] * 2
+            spot.spot_size = BlenderLight.calc_spot_cone_outer(gltf, pylight['spot']['outerConeAngle'])
         else:
             spot.spot_size = pi / 2
 
         if 'spot' in pylight.keys() and 'innerConeAngle' in pylight['spot']:
-            spot.spot_blend = 1 - ( pylight['spot']['innerConeAngle'] / pylight['spot']['outerConeAngle'] )
+            spot.spot_blend = BlenderLight.calc_spot_cone_inner(gltf, pylight['spot']['outerConeAngle'], pylight['spot']['innerConeAngle'])
         else:
             spot.spot_blend = 1.0
 
@@ -123,3 +123,11 @@ class BlenderLight():
             spot.energy = BlenderLight.calc_energy_pointlike(gltf, pylight['intensity'])
 
         return spot
+
+    @staticmethod
+    def calc_spot_cone_outer(gltf, outercone):
+        return outercone * 2
+
+    @staticmethod
+    def calc_spot_cone_inner(gltf, outercone, innercone):
+        return 1 - ( innercone / outercone )
