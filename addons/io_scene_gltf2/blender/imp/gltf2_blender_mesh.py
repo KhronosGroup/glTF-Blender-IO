@@ -652,7 +652,8 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     num_polys = len(mesh.polygons)
 
     if gltf.import_settings['import_shading'] == "FLAT":
-        # Polys are flat by default; don't have to do anything
+        # Polys are smooth by default, setting to flat
+        mesh.shade_flat()
         return
 
     if gltf.import_settings['import_shading'] == "SMOOTH":
