@@ -227,7 +227,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         items=(('Integer', 'Integer', 'Use integer attributes for positions'),
                 ('Normalized', 'Normalized', 'Use normalized attributes for positions'),
                 ('Floating-point', 'Floating-point', 'Use floating-point attributes for positions')),
-        default='Floating-point',
+        default='Integer',
     )
     
     export_gltfpack_noq: BoolProperty(

@@ -163,12 +163,14 @@ def __postprocess_with_gltfpack(export_settings):
 
     if (export_settings['gltf_gltfpack_tc']):
         options.append("-tc")
-    
-    options.append("-tq")
-    options.append(f"{export_settings['gltf_gltfpack_tq']}")
 
-    options.append("-si")
-    options.append(f"{export_settings['gltf_gltfpack_si']}")
+        if (export_settings['gltf_gltfpack_tq']):
+            options.append("-tq")
+            options.append(f"{export_settings['gltf_gltfpack_tq']}")
+
+    if (export_settings['gltf_gltfpack_si'] != 1.0):
+        options.append("-si")
+        options.append(f"{export_settings['gltf_gltfpack_si']}")
 
     if (export_settings['gltf_gltfpack_sa']):
         options.append("-sa")
@@ -176,25 +178,25 @@ def __postprocess_with_gltfpack(export_settings):
     if (export_settings['gltf_gltfpack_slb']):
         options.append("-slb")
 
-    options.append("-vp")
-    options.append(f"{export_settings['gltf_gltfpack_vp']}")
-    options.append("-vt")
-    options.append(f"{export_settings['gltf_gltfpack_vt']}")
-    options.append("-vn")
-    options.append(f"{export_settings['gltf_gltfpack_vn']}")
-    options.append("-vc")
-    options.append(f"{export_settings['gltf_gltfpack_vc']}")
-    
-    match export_settings['gltf_gltfpack_vpi']:
-        case "Integer":
-            options.append("-vpi")
-        case "Normalized":
-            options.append("-vpn")
-        case "Floating-point":
-            options.append("-vpf")
-
     if (export_settings['gltf_gltfpack_noq']):
         options.append("-noq")
+    else:
+        options.append("-vp")
+        options.append(f"{export_settings['gltf_gltfpack_vp']}")
+        options.append("-vt")
+        options.append(f"{export_settings['gltf_gltfpack_vt']}")
+        options.append("-vn")
+        options.append(f"{export_settings['gltf_gltfpack_vn']}")
+        options.append("-vc")
+        options.append(f"{export_settings['gltf_gltfpack_vc']}")
+        
+        match export_settings['gltf_gltfpack_vpi']:
+            case "Integer":
+                options.append("-vpi")
+            case "Normalized":
+                options.append("-vpn")
+            case "Floating-point":
+                options.append("-vpf")        
 
     parameters = []
     parameters.append("-i")
