@@ -317,7 +317,6 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
 
     # We need to check if emissive factor is animated via KHR_animation_pointer
     # Because if not, we can use direct socket or mix node, depending if there is a texture or not, or if factor is grayscale
-    # If there is an animation, we need to force creation of a mix node
     need_mix_node = False
     if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
         if len(mh.pymat.animations) > 0:
@@ -552,9 +551,32 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
         roughness_socket.default_value = rough_factor
         return
 
-    if metal_factor != 1.0 or rough_factor != 1.0:
+
+    need_metal_factor = metal_factor != 1.0
+    need_rough_factor = rough_factor != 1.0
+
+    # We need to check if factor is animated via KHR_animation_pointer
+    # Because if not, we can use direct socket or mix node, depending if there is a texture or not
+    # If there is an animation, we need to force creation of a mix node and math node, for metal or rough
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.animations) > 0:
+            for anim_idx in mh.pymat.animations.keys():
+                for channel_idx in mh.pymat.animations[anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "pbrMetallicRoughness" and \
+                            pointer_tab[4]  == "roughnessFactor":
+                        need_rough_factor = True
+                    if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "pbrMetallicRoughness" and \
+                            pointer_tab[4]  == "metallicFactor":
+                        need_metal_factor = True
+
+
+    if need_metal_factor or need_rough_factor:
         # Mix metal factor
-        if metal_factor != 1.0:
+        if need_metal_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
             node.label = 'Metallic Factor'
             node.location = x - 140, y
@@ -566,7 +588,7 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
             node.inputs[1].default_value = metal_factor
 
         # Mix rough factor
-        if rough_factor != 1.0:
+        if need_rough_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
             node.label = 'Roughness Factor'
             node.location = x - 140, y - 200

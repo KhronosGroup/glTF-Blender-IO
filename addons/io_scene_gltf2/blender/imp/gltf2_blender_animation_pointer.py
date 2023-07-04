@@ -182,6 +182,34 @@ class BlenderPointerAnim():
                     blender_path = base_color_socket.path_from_id() + ".default_value"
                     num_components = 3 # Do not use alpha here, will be managed later
 
+            if pointer_tab[4] == "roughnessFactor":
+                roughness_socket = get_socket(asset.blender_nodetree, True, "Roughness")
+                if roughness_socket.is_linked:
+                    # We need to find the correct node value to animate (An Mix Factor node)
+                    mix_node = roughness_socket.links[0].from_node
+                    if mix_node.type == "MATH":
+                        blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                        num_components = 1
+                    else:
+                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+                else:
+                    blender_path = roughness_socket.path_from_id() + ".default_value"
+                    num_components = 1
+
+            if pointer_tab[4] == "metallicFactor":
+                metallic_socket = get_socket(asset.blender_nodetree, True, "Metallic")
+                if metallic_socket.is_linked:
+                    # We need to find the correct node value to animate (An Mix Factor node)
+                    mix_node = metallic_socket.links[0].from_node
+                    if mix_node.type == "MATH":
+                        blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                        num_components = 1
+                    else:
+                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+                else:
+                    blender_path = metallic_socket.path_from_id() + ".default_value"
+                    num_components = 1
+
         if len(pointer_tab) == 8 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "pbrMetallicRoughness" and \
             pointer_tab[4] == "baseColorFactor" and \
@@ -259,7 +287,7 @@ class BlenderPointerAnim():
                 # We need to find the correct node value to animate (An Mix Factor node)
                 mix_node = alpha_socket.links[0].from_node
                 if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
+                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
                 else:
                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
             else:
