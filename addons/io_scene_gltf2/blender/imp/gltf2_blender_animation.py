@@ -53,9 +53,11 @@ class BlenderAnimation():
                     BlenderPointerAnim.anim(gltf, anim_idx, light, light_idx, 'LIGHT')
 
             for mat_idx, mat in enumerate(gltf.data.materials if gltf.data.materials else []):
-                if len(mat.animations) == 0:
-                    continue
-                BlenderPointerAnim.anim(gltf, anim_idx, mat, mat_idx, 'MATERIAL')
+                if len(mat.animations) != 0:
+                    BlenderPointerAnim.anim(gltf, anim_idx, mat, mat_idx, 'MATERIAL')
+                if len(mat.pbr_metallic_roughness.animations) != 0:
+                    BlenderPointerAnim.anim(gltf, anim_idx, mat.pbr_metallic_roughness, mat_idx, 'MATERIAL_PBR', name=mat.name)
+
 
         # Push all actions onto NLA tracks with this animation's name
         track_name = gltf.data.animations[anim_idx].track_name

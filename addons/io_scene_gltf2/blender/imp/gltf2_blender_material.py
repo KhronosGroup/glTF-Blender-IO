@@ -58,6 +58,9 @@ class BlenderMaterial():
             pbr_specular_glossiness(mh)
         else:
             pbr_metallic_roughness(mh)
+            pymaterial.pbr_metallic_roughness.blender_nodetree = mat.node_tree #Used in case of for KHR_animation_pointer
+            pymaterial.pbr_metallic_roughness.blender_mat = mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
+
 
         # Manage KHR_materials_variants
         # We need to store link between material idx in glTF and Blender Material id

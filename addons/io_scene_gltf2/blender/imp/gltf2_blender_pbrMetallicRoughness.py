@@ -436,6 +436,22 @@ def base_color(
     # Mix in base color factor
     needs_color_factor = base_color_factor[:3] != [1, 1, 1]
     needs_alpha_factor = base_color_factor[3] != 1.0 and alpha_socket is not None
+
+    # We need to check if base color factor is animated via KHR_animation_pointer
+    # Because if not, we can use direct socket or mix node, depending if there is a texture or not
+    # If there is an animation, we need to force creation of a mix node and math node, for color and alpha
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.animations) > 0:
+            for anim_idx in mh.pymat.animations.keys():
+                for channel_idx in mh.pymat.animations[anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "pbrMetallicRoughness" and \
+                            pointer_tab[4]  == "baseColorFactor":
+                        needs_color_factor = True
+                        needs_alpha_factor = True if alpha_socket is not None else False
+
     if needs_color_factor or needs_alpha_factor:
         if needs_color_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMix')

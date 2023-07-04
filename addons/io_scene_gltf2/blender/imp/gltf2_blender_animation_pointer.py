@@ -26,7 +26,7 @@ class BlenderPointerAnim():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def anim(gltf, anim_idx, asset, asset_idx, asset_type):
+    def anim(gltf, anim_idx, asset, asset_idx, asset_type, name=None):
         animation = gltf.data.animations[anim_idx]
 
         if asset_type in ["LIGHT"]:
@@ -40,10 +40,10 @@ class BlenderPointerAnim():
 
         for channel_idx in tab[anim_idx]:
             channel = animation.channels[channel_idx]
-            BlenderPointerAnim.do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type)
+            BlenderPointerAnim.do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type, name=name)
 
     @staticmethod
-    def do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type):
+    def do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type, name=None):
         animation = gltf.data.animations[anim_idx]
         pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
 
@@ -56,10 +56,12 @@ class BlenderPointerAnim():
                 id_root = "MATERIAL"
             else:
                 id_root = "NODETREE"
+        elif asset_type == "MATERIAL_PBR":
+            id_root = "NODETREE"
         else:
             id_root = asset_type
 
-        action = BlenderPointerAnim.get_or_create_action(gltf, asset, asset_idx, animation.track_name, id_root)
+        action = BlenderPointerAnim.get_or_create_action(gltf, asset, asset_idx, animation.track_name, id_root, name=name)
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
@@ -166,9 +168,19 @@ class BlenderPointerAnim():
             pointer_tab[3] == "pbrMetallicRoughness" and \
             pointer_tab[4] in ["baseColorFactor", "roughnessFactor", "metallicFactor"]:
 
-            pass
-            # blender_path = ""
-            # num_components =
+            if pointer_tab[4] == "baseColorFactor":
+                base_color_socket = get_socket(asset.blender_nodetree, True, "Base Color")
+                if base_color_socket.is_linked:
+                    # We need to find the correct node value to animate (An Mix Factor node)
+                    mix_node = base_color_socket.links[0].from_node
+                    if mix_node.type == "MIX":
+                        blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
+                        num_components = 3 # Do not use alpha here, will be managed later
+                    else:
+                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+                else:
+                    blender_path = base_color_socket.path_from_id() + ".default_value"
+                    num_components = 3 # Do not use alpha here, will be managed later
 
         if len(pointer_tab) == 8 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "pbrMetallicRoughness" and \
@@ -237,8 +249,34 @@ class BlenderPointerAnim():
                 interpolation=animation.samplers[channel.sampler].interpolation,
             )
 
+        # For baseColorFactor, we also need to add keyframes to alpha socket
+        if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "pbrMetallicRoughness" and \
+                pointer_tab[4] == "baseColorFactor":
+
+            alpha_socket = get_socket(asset.blender_nodetree, True, "Alpha")
+            if alpha_socket.is_linked:
+                # We need to find the correct node value to animate (An Mix Factor node)
+                mix_node = alpha_socket.links[0].from_node
+                if mix_node.type == "MATH":
+                    blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
+                else:
+                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = alpha_socket.path_from_id() + ".default_value"
+
+            coords[1::2] = (vals[3] for vals in values)
+            make_fcurve(
+                action,
+                coords,
+                data_path=blender_path,
+                index=0,
+                group_name=group_name,
+                interpolation=animation.samplers[channel.sampler].interpolation,
+            )
+
     @staticmethod
-    def get_or_create_action(gltf, asset, asset_idx, anim_name, asset_type):
+    def get_or_create_action(gltf, asset, asset_idx, anim_name, asset_type, name=None):
 
         action = None
         if asset_type == "CAMERA":
@@ -257,7 +295,8 @@ class BlenderPointerAnim():
             id_root = "MATERIAL"
             stash = asset.blender_mat
         elif asset_type == "NODETREE":
-            data_name = "nodetree_" + asset.name or "Nodetree%d" % asset_idx
+            name_ = name if name is not None else asset.name
+            data_name = "nodetree_" + name_ or "Nodetree%d" % asset_idx
             action = gltf.action_cache.get(data_name)
             id_root = "NODETREE"
             stash = asset.blender_nodetree
