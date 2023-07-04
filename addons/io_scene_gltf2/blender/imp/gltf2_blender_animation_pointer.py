@@ -152,9 +152,15 @@ class BlenderPointerAnim():
             pointer_tab[3] == "normalTexture" and \
             pointer_tab[4] == "scale":
 
-            pass
-            # blender_path = ""
-            # num_components =
+            print("ok1")
+
+            normal_socket = get_socket(asset.blender_nodetree, True, "Normal")
+            if normal_socket.is_linked:
+                normal_node = normal_socket.links[0].from_node
+                if normal_node.type == "NORMAL_MAP":
+                    blender_path = normal_node.inputs[0].path_from_id() + ".default_value"
+                    num_components = 1
+                    print("ok2")
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "occlusionTexture" and \

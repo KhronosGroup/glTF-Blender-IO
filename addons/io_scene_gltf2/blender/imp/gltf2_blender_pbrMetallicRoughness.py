@@ -651,6 +651,9 @@ def normal(mh: MaterialHelper, location, normal_socket):
 
     x -= 200
 
+    tex_info.blender_nodetree = mh.mat.node_tree #Used in case of for KHR_animation_pointer
+    tex_info.blender_mat = mh.mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
+
     texture(
         mh,
         tex_info=tex_info,

@@ -55,7 +55,9 @@ class BlenderAnimation():
             for mat_idx, mat in enumerate(gltf.data.materials if gltf.data.materials else []):
                 if len(mat.animations) != 0:
                     BlenderPointerAnim.anim(gltf, anim_idx, mat, mat_idx, 'MATERIAL')
-                if len(mat.pbr_metallic_roughness.animations) != 0:
+                if mat.normal_texture is not None and len(mat.normal_texture.animations) != 0:
+                    BlenderPointerAnim.anim(gltf, anim_idx, mat.normal_texture, mat_idx, 'MATERIAL_PBR', name=mat.name)
+                if mat.pbr_metallic_roughness is not None and len(mat.pbr_metallic_roughness.animations) != 0:
                     BlenderPointerAnim.anim(gltf, anim_idx, mat.pbr_metallic_roughness, mat_idx, 'MATERIAL_PBR', name=mat.name)
 
 
