@@ -15,7 +15,7 @@
 import bpy
 from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
-from ..exp.gltf2_blender_get import get_socket #TODO move to COM
+from ..exp.gltf2_blender_get import get_socket, get_socket_old #TODO move to COM
 from .gltf2_blender_animation_utils import make_fcurve
 from .gltf2_blender_light import BlenderLight
 
@@ -163,9 +163,20 @@ class BlenderPointerAnim():
             pointer_tab[3] == "occlusionTexture" and \
             pointer_tab[4] == "strength":
 
-            pass
-            # blender_path = ""
-            # num_components =
+            occlusion_socket = get_socket(asset.blender_nodetree, True, "Occlusion")
+            if occlusion_socket is None:
+                occlusion_socket = get_socket_old(asset.blender_mat, "Occlusion")
+            if occlusion_socket.is_linked:
+                mix_node = occlusion_socket.links[0].from_node
+                if mix_node.type == "MATH":
+                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                    num_components = 1
+                else:
+                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = occlusion_socket.path_from_id() + ".default_value"
+                num_components = 1
+
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "pbrMetallicRoughness" and \

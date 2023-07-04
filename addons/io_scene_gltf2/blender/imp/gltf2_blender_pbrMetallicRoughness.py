@@ -440,9 +440,9 @@ def base_color(
     # Because if not, we can use direct socket or mix node, depending if there is a texture or not
     # If there is an animation, we need to force creation of a mix node and math node, for color and alpha
     if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
-        if len(mh.pymat.animations) > 0:
-            for anim_idx in mh.pymat.animations.keys():
-                for channel_idx in mh.pymat.animations[anim_idx]:
+        if len(mh.pymat.pbr_metallic_roughness.animations) > 0:
+            for anim_idx in mh.pymat.pbr_metallic_roughness.animations.keys():
+                for channel_idx in mh.pymat.pbr_metallic_roughness.animations[anim_idx]:
                     channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
                     pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
                     if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
@@ -559,10 +559,10 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
     # Because if not, we can use direct socket or mix node, depending if there is a texture or not
     # If there is an animation, we need to force creation of a mix node and math node, for metal or rough
     if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
-        if len(mh.pymat.animations) > 0:
-            for anim_idx in mh.pymat.animations.keys():
-                for channel_idx in mh.pymat.animations[anim_idx]:
-                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+        if len(mh.pymat.pbr_metallic_roughness.animations) > 0:
+            for anim_idx in mh.pymat.pbr_metallic_roughness.animations.keys():
+                for channel_idx in mh.pymat.pbr_metallic_roughness.animations[anim_idx]:
+                    channel = mh.gltf.data.pbr_metallic_roughness.animations[anim_idx].channels[channel_idx]
                     pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
                     if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
                             pointer_tab[3] == "pbrMetallicRoughness" and \
@@ -673,19 +673,35 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
 
     strength = mh.pymat.occlusion_texture.strength
     if strength is None: strength = 1.0
-    if strength != 1.0:
-        # Mix with white
-        node = mh.node_tree.nodes.new('ShaderNodeMix')
+
+    strength_needed = strength != 1.0
+
+    # We need to check if occlusion strength is animated via KHR_animation_pointer
+    # Because if not, we can use direct socket or mix node, depending if there is a texture or not
+    # If there is an animation, we need to force creation of a mix node and math node, for strength
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.occlusion_texture.animations) > 0:
+            for anim_idx in mh.pymat.occlusion_texture.animations.keys():
+                for channel_idx in mh.pymat.occlusion_texture.animations[anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "occlusionTexture" and \
+                            pointer_tab[4] == "strength":
+                        strength_needed = True
+
+    if strength_needed:
+        # Math node
+        node = mh.node_tree.nodes.new('ShaderNodeMath')
         node.label = 'Occlusion Strength'
-        node.data_type = 'RGBA'
         node.location = x - 140, y
-        node.blend_type = 'MIX'
+        node.operation = 'MULTIPLY'
         # Outputs
         mh.node_tree.links.new(occlusion_socket, node.outputs[0])
         # Inputs
-        node.inputs['Factor'].default_value = strength
-        node.inputs[6].default_value = [1, 1, 1, 1]
-        occlusion_socket = node.inputs[7]
+        occlusion_socket = node.inputs[0]
+        node.inputs[1].default_value = strength
+
 
         x -= 200
 
@@ -698,6 +714,9 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
     color_socket = node.inputs[0]
 
     x -= 200
+
+    mh.pymat.occlusion_texture.blender_nodetree = mh.mat.node_tree #Used in case of for KHR_animation_pointer
+    mh.pymat.occlusion_texture.blender_mat = mh.mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
 
     texture(
         mh,

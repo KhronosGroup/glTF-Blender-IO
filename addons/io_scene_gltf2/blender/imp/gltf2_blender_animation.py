@@ -57,6 +57,8 @@ class BlenderAnimation():
                     BlenderPointerAnim.anim(gltf, anim_idx, mat, mat_idx, 'MATERIAL')
                 if mat.normal_texture is not None and len(mat.normal_texture.animations) != 0:
                     BlenderPointerAnim.anim(gltf, anim_idx, mat.normal_texture, mat_idx, 'MATERIAL_PBR', name=mat.name)
+                if mat.occlusion_texture is not None and len(mat.occlusion_texture.animations) != 0:
+                    BlenderPointerAnim.anim(gltf, anim_idx, mat.occlusion_texture, mat_idx, 'MATERIAL_PBR', name=mat.name)
                 if mat.pbr_metallic_roughness is not None and len(mat.pbr_metallic_roughness.animations) != 0:
                     BlenderPointerAnim.anim(gltf, anim_idx, mat.pbr_metallic_roughness, mat_idx, 'MATERIAL_PBR', name=mat.name)
 
