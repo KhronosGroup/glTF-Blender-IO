@@ -16,6 +16,10 @@ import bpy
 from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
 from ..exp.gltf2_blender_get import get_socket, get_socket_old #TODO move to COM
+from ..exp.material.gltf2_blender_gather_texture_info import get_tex_from_socket #TODO move to COM
+from ..exp.gltf2_blender_gather_sampler import detect_manual_uv_wrapping #TODO move to COM
+from ..exp.gltf2_blender_get import previous_node #TODO move to COM
+from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
 from .gltf2_blender_animation_utils import make_fcurve
 from .gltf2_blender_light import BlenderLight
 
@@ -29,7 +33,7 @@ class BlenderPointerAnim():
     def anim(gltf, anim_idx, asset, asset_idx, asset_type, name=None):
         animation = gltf.data.animations[anim_idx]
 
-        if asset_type in ["LIGHT"]:
+        if asset_type in ["LIGHT", "TEX_TRANSFORM"]:
             if anim_idx not in asset['animations'].keys():
                 return
             tab = asset['animations']
@@ -224,16 +228,81 @@ class BlenderPointerAnim():
                     blender_path = metallic_socket.path_from_id() + ".default_value"
                     num_components = 1
 
-        if len(pointer_tab) == 8 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "pbrMetallicRoughness" and \
-            pointer_tab[4] == "baseColorFactor" and \
-            pointer_tab[5] == "extensions" and \
-            pointer_tab[6] == "KHR_texture_transform" and \
-            pointer_tab[7] in ["scale", "offset"]:
+        if len(pointer_tab) >= 7 and pointer_tab[1] == "materials" and \
+            pointer_tab[-3] == "extensions" and \
+            pointer_tab[-2] == "KHR_texture_transform" and \
+            pointer_tab[-1] in ["scale", "offset", "rotation"]:
 
-            pass
-            # blender_path = ""
-            # num_components =
+            socket = None
+            if pointer_tab[-4] == "baseColorTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Base Color")
+            elif pointer_tab[-4] == "emissiveTexture":
+                socket = get_socket(asset.blender_nodetree, True, "Emissive")
+            elif pointer_tab[-4] == "normalTexture":
+                socket = get_socket(asset.blender_nodetree, True, "Normal")
+            elif pointer_tab[-4] == "occlusionTexture":
+                socket = get_socket(asset.blender_nodetree, True, "Occlusion")
+                if socket is None:
+                    socket = get_socket_old(asset.blender_mat, "Occlusion")
+            elif pointer_tab[-4] == "metallicRoughnessTexture":
+                socket = get_socket(asset.blender_nodetree, True, "Roughness")
+            else:
+                print("Some Texture are not managed for KHR_animation_pointer / KHR_texture_transform")
+
+            tex = get_tex_from_socket(socket) if socket is not None else None
+            tex_node = tex.shader_node if tex is not None else None
+            if tex_node is not None:
+                result = detect_manual_uv_wrapping(tex_node)
+                if result:
+                    mapping_node = previous_node(result['next_socket'])
+                else:
+                    mapping_node = previous_node(tex_node.inputs['Vector'])
+            else:
+                mapping_node = None
+
+            if mapping_node is not None:
+                if pointer_tab[-1] == "offset":
+                    blender_path = mapping_node.inputs[1].path_from_id() + ".default_value"
+                    num_components = 2
+                elif pointer_tab[-1] == "rotation":
+                    blender_path = mapping_node.inputs[2].path_from_id() + ".default_value"
+                    num_components = 2
+                elif pointer_tab[-1] == "scale":
+                    blender_path = mapping_node.inputs[3].path_from_id() + ".default_value"
+                    num_components = 2
+
+
+            if pointer_tab[-1] == "rotation":
+                pass # No conversion needed
+            elif pointer_tab[-1] == "scale":
+                pass # No conversion needed
+            elif pointer_tab[-1] == "offset":
+                # This need scale and rotation
+                if 'rotation' in asset['multiple_channels'].keys():
+                    animation_rotation = gltf.data.animations[asset['multiple_channels']['rotation'][0]]
+                    channel_rotation = animation_rotation.channels[asset['multiple_channels']['rotation'][1]]
+                    keys_rotation = BinaryData.get_data_from_accessor(gltf, animation_rotation.samplers[channel_rotation.sampler].input)
+                    values_rotation = BinaryData.get_data_from_accessor(gltf, animation_rotation.samplers[channel_rotation.sampler].output)
+                else:
+                    keys_rotation = keys.copy()
+                    values_rotation = [asset.get('rotation', 0.0)] * len(keys)
+
+                if 'scale' in asset['multiple_channels'].keys():
+                    animation_scale = gltf.data.animations[asset['multiple_channels']['scale'][0]]
+                    channel_scale = animation_scale.channels[asset['multiple_channels']['scale'][1]]
+                    keys_scale = BinaryData.get_data_from_accessor(gltf, animation_scale.samplers[channel_scale.sampler].input)
+                    values_scale = BinaryData.get_data_from_accessor(gltf, animation_scale.samplers[channel_scale.sampler].output)
+                else:
+                    keys_scale = keys.copy()
+                    values_scale = [asset.get('scale', [1.0, 1.0])] * len(keys)
+
+                # We will manage it only if keys are the same... TODO ?
+                if keys == keys_rotation == keys_scale:
+                    old_values = values.copy()
+                    for idx, i in enumerate(old_values):
+                        values[idx] = texture_transform_gltf_to_blender({'rotation': values_rotation[idx], 'scale': values_scale[idx], 'offset': i}).get('offset')
+
+
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "extensions" and \
@@ -342,6 +411,12 @@ class BlenderPointerAnim():
             action = gltf.action_cache.get(data_name)
             id_root = "NODETREE"
             stash = asset.blender_nodetree
+        elif asset_type == "TEX_TRANSFORM":
+            name_ = name if name is not None else asset.name
+            data_name = "nodetree_" + name_ or "Nodetree%d" % asset_idx
+            action = gltf.action_cache.get(data_name)
+            id_root = "NODETREE"
+            stash = asset['blender_nodetree']
 
         if not action:
             name = anim_name + "_" + data_name

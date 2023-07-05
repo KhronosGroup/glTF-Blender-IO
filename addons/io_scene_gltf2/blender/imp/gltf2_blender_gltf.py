@@ -157,12 +157,10 @@ class BlenderGlTF():
                     mat.normal_texture.animations = {}
                 if mat.occlusion_texture is not None:
                     mat.occlusion_texture.animations = {}
+                if mat.emissive_texture is not None:
+                    mat.emissive_texture.animations = {}
                 if mat.pbr_metallic_roughness is not None:
                     mat.pbr_metallic_roughness.animations = {}
-                    if mat.pbr_metallic_roughness.base_color_texture is not None \
-                            and mat.pbr_metallic_roughness.base_color_texture.extensions is not None \
-                            and "KHR_texture_transform" in mat.pbr_metallic_roughness.base_color_texture.extensions:
-                        mat.pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"] = {}
 
                 for ext in [
                         "KHR_materials_emissive_strength",
@@ -173,6 +171,19 @@ class BlenderGlTF():
                         ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         mat.extensions[ext]["animations"] = {}
+
+                texs = [
+                    mat.emissive_texture,
+                    mat.normal_texture,
+                    mat.occlusion_texture,
+                    mat.pbr_metallic_roughness.base_color_texture if mat.pbr_metallic_roughness is not None else None,
+                    mat.pbr_metallic_roughness.metallic_roughness_texture if mat.pbr_metallic_roughness is not None else None,
+                ]
+
+                for tex in [t for t in texs if t is not None]:
+                    if tex.extensions is not None and "KHR_texture_transform" in tex.extensions:
+                        tex.extensions["KHR_texture_transform"]["animations"] = {}
+
 
             for light in gltf.data.extensions["KHR_lights_punctual"]["lights"] \
                 if gltf.data.extensions is not None and "KHR_lights_punctual" in gltf.data.extensions \
@@ -340,6 +351,17 @@ class BlenderGlTF():
                 gltf.data.materials[int(pointer_tab[2])].animations[anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
 
+        if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "emissiveTexture" and \
+            pointer_tab[4] == "extensions" and \
+            pointer_tab[5] == "KHR_texture_transform" and \
+            pointer_tab[6] in ["scale", "offset"]:
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
+
+
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "normalTexture" and \
             pointer_tab[4] == "scale":
@@ -348,6 +370,17 @@ class BlenderGlTF():
                 gltf.data.materials[int(pointer_tab[2])].normal_texture.animations[anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].normal_texture.animations[anim_idx].append(channel_idx)
 
+        if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "normalTexture" and \
+            pointer_tab[4] == "extensions" and \
+            pointer_tab[5] == "KHR_texture_transform" and \
+            pointer_tab[6] in ["scale", "offset"]:
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].normal_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].normal_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].normal_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
+
+
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "occlusionTexture" and \
             pointer_tab[4] == "strength":
@@ -355,6 +388,16 @@ class BlenderGlTF():
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations.keys():
                 gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations[anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations[anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "occlusionTexture" and \
+            pointer_tab[4] == "extensions" and \
+            pointer_tab[5] == "KHR_texture_transform" and \
+            pointer_tab[6] in ["scale", "offset"]:
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "pbrMetallicRoughness" and \
@@ -366,7 +409,7 @@ class BlenderGlTF():
 
         if len(pointer_tab) == 8 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "pbrMetallicRoughness" and \
-            pointer_tab[4] == "baseColorFactor" and \
+            pointer_tab[4] == "baseColorTexture" and \
             pointer_tab[5] == "extensions" and \
             pointer_tab[6] == "KHR_texture_transform" and \
             pointer_tab[7] in ["scale", "offset"]:
@@ -374,6 +417,17 @@ class BlenderGlTF():
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 8 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "pbrMetallicRoughness" and \
+            pointer_tab[4] == "metallicRoughnessTexture" and \
+            pointer_tab[5] == "extensions" and \
+            pointer_tab[6] == "KHR_texture_transform" and \
+            pointer_tab[7] in ["scale", "offset"]:
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "extensions" and \

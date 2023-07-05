@@ -63,6 +63,18 @@ class BlenderAnimation():
                     BlenderPointerAnim.anim(gltf, anim_idx, mat.pbr_metallic_roughness, mat_idx, 'MATERIAL_PBR', name=mat.name)
 
 
+                texs = [
+                    mat.emissive_texture,
+                    mat.normal_texture,
+                    mat.occlusion_texture,
+                    mat.pbr_metallic_roughness.base_color_texture if mat.pbr_metallic_roughness is not None else None,
+                    mat.pbr_metallic_roughness.metallic_roughness_texture if mat.pbr_metallic_roughness is not None else None,
+                ]
+
+                for tex in [t for t in texs if t is not None]:
+                    if tex.extensions is not None and "KHR_texture_transform" in tex.extensions:
+                        BlenderPointerAnim.anim(gltf, anim_idx, tex.extensions["KHR_texture_transform"], mat_idx, 'TEX_TRANSFORM', name=mat.name)
+
         # Push all actions onto NLA tracks with this animation's name
         track_name = gltf.data.animations[anim_idx].track_name
         for (obj, action) in gltf.needs_stash:
