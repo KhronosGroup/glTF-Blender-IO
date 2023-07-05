@@ -172,8 +172,8 @@ class BlenderPointerAnim():
                 occlusion_socket = get_socket_old(asset.blender_mat, "Occlusion")
             if occlusion_socket.is_linked:
                 mix_node = occlusion_socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                if mix_node.type == "MIX":
+                    blender_path = mix_node.inputs[0].path_from_id() + ".default_value"
                     num_components = 1
                 else:
                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")

@@ -691,17 +691,18 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
                         strength_needed = True
 
     if strength_needed:
-        # Math node
-        node = mh.node_tree.nodes.new('ShaderNodeMath')
+        # Mix with white
+        node = mh.node_tree.nodes.new('ShaderNodeMix')
         node.label = 'Occlusion Strength'
+        node.data_type = 'RGBA'
         node.location = x - 140, y
-        node.operation = 'MULTIPLY'
+        node.blend_type = 'MIX'
         # Outputs
-        mh.node_tree.links.new(occlusion_socket, node.outputs[0])
+        mh.node_tree.links.new(occlusion_socket, node.outputs[2])
         # Inputs
-        occlusion_socket = node.inputs[0]
-        node.inputs[1].default_value = strength
-
+        node.inputs['Factor'].default_value = strength
+        node.inputs[6].default_value = [1, 1, 1, 1]
+        occlusion_socket = node.inputs[7]
 
         x -= 200
 
