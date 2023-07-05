@@ -157,7 +157,7 @@ def texture(
                                 pointer_tab[-2] == "KHR_texture_transform" and \
                                 pointer_tab[-1] in ["scale", "offset", "rotation"]:
                             needs_tex_transform = True
-                            # Store multiple channel data, as we will need all channels to convert to blender data
+                            # Store multiple channel data, as we will need all channels to convert to blender data when animated
                             if "multiple_channels" not in tex_info.extensions['KHR_texture_transform'].keys():
                                 tex_info.extensions['KHR_texture_transform']["multiple_channels"] = {}
                             tex_info.extensions['KHR_texture_transform']["multiple_channels"][pointer_tab[-1]] = (anim_idx, channel_idx)
