@@ -44,6 +44,21 @@ class BlenderCamera():
             cam.clip_start = pycamera.orthographic.znear
             cam.clip_end = pycamera.orthographic.zfar
 
+            # Store multiple channel data, as we will need all channels to convert to blender data when animated by KHR_animation_pointer
+            if gltf.data.extensions_used is not None and "KHR_animation_pointer" in gltf.data.extensions_used:
+                if len(pycamera.animations) > 0:
+                    for anim_idx in pycamera.animations.keys():
+                        for channel_idx in pycamera.animations[anim_idx]:
+                            channel = gltf.data.animations[anim_idx].channels[channel_idx]
+                            pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                            if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
+                                    pointer_tab[3] == "orthographic" and \
+                                    pointer_tab[4] in ["xmag", "ymag"]:
+                                # Store multiple channel data, as we will need all channels to convert to blender data when animated
+                                if not hasattr(pycamera, "multiple_channels"):
+                                    pycamera.multiple_channels = {}
+                                pycamera.multiple_channels[pointer_tab[4]] = (anim_idx, channel_idx)
+
         else:
             cam.angle_y = pycamera.perspective.yfov
             cam.lens_unit = "FOV"

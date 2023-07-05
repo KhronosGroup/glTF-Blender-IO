@@ -92,8 +92,33 @@ class BlenderPointerAnim():
         if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
             pointer_tab[3] in ["orthographic"] and \
             pointer_tab[4] in ["ymag", "xmag"]:
-            # TODOPointer need to calculate, and before, check if both are animated of not
-            num_components = 1
+
+
+            if len(asset.multiple_channels) != 0:
+
+                # We need to calculate the value, based on ymag and xmag
+                xmag_animation = gltf.data.animations[asset.multiple_channels['xmag'][0]]
+                xmag_channel = xmag_animation.channels[asset.multiple_channels['xmag'][1]]
+                xmag_keys = BinaryData.get_data_from_accessor(gltf, xmag_animation.samplers[xmag_channel.sampler].input)
+                xmag_keys_values = BinaryData.get_data_from_accessor(gltf, xmag_animation.samplers[xmag_channel.sampler].output)
+
+                ymag_animation = gltf.data.animations[asset.multiple_channels['ymag'][0]]
+                ymag_channel = ymag_animation.channels[asset.multiple_channels['ymag'][1]]
+                ymag_keys = BinaryData.get_data_from_accessor(gltf, ymag_animation.samplers[ymag_channel.sampler].input)
+                ymag_keys_values = BinaryData.get_data_from_accessor(gltf, ymag_animation.samplers[ymag_channel.sampler].output)
+
+                # We will manage it only if keys are the same... TODO ?
+                if xmag_keys == ymag_keys:
+
+                    blender_path = "ortho_scale"
+                    num_components = 1
+
+                    old_values = values.copy()
+                    for idx, i in enumerate(old_values):
+                        values[idx] = max(xmag_keys_values[idx], ymag_keys_values[idx]) * 2
+
+                # Delete values, as we don't need to add keyframes again for ortho_scale (xmag + ymag channels => only 1 ortho_scale channel in blender)
+                asset.multiple_channels = {}
 
         ### Light
         if len(pointer_tab) == 6 and pointer_tab[1] == "extensions" and \
