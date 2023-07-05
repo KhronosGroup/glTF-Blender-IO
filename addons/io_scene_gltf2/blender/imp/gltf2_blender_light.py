@@ -122,6 +122,23 @@ class BlenderLight():
         if 'intensity' in pylight.keys():
             spot.energy = BlenderLight.calc_energy_pointlike(gltf, pylight['intensity'])
 
+        # Store multiple channel data, as we will need all channels to convert to blender data when animated by KHR_animation_pointer
+        if gltf.data.extensions_used is not None and "KHR_animation_pointer" in gltf.data.extensions_used:
+            if len(pylight['animations']) > 0:
+                for anim_idx in pylight['animations'].keys():
+                    for channel_idx in pylight['animations'][anim_idx]:
+                        channel = gltf.data.animations[anim_idx].channels[channel_idx]
+                        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                        if len(pointer_tab) == 7 and pointer_tab[1] == "extensions" and \
+                                pointer_tab[2] == "KHR_lights_punctual" and \
+                                pointer_tab[3] == "lights" and \
+                                pointer_tab[5] == "spot" and \
+                                pointer_tab[6] in ["innerConeAngle", "outerConeAngle"]:
+                            # Store multiple channel data, as we will need all channels to convert to blender data when animated
+                            if "multiple_channels" not in pylight.keys():
+                                pylight['multiple_channels'] = {}
+                            pylight['multiple_channels'][pointer_tab[6]] = (anim_idx, channel_idx)
+
         return spot
 
     @staticmethod

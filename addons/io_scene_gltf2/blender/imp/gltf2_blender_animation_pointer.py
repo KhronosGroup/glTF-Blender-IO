@@ -163,7 +163,23 @@ class BlenderPointerAnim():
                 blender_path = "spot_size"
                 num_components = 1
 
-            # TODOPointer innerConeAngle, need to calculate, and before, check if innerConeAngle are animated of not
+            if pointer_tab[6] == "innerConeAngle":
+                if "outerConeAngle" in asset["multiple_channels"].keys():
+                    outer_animation = gltf.data.animations[asset['multiple_channels']['outerConeAngle'][0]]
+                    outer_channel = outer_animation.channels[asset['multiple_channels']['outerConeAngle'][1]]
+                    outer_keys = BinaryData.get_data_from_accessor(gltf, outer_animation.samplers[outer_channel.sampler].input)
+                    outer_values = BinaryData.get_data_from_accessor(gltf, outer_animation.samplers[outer_channel.sampler].output)
+                else:
+                    outer_values = [[asset['spot']['outerConeAngle']]] * len(keys)
+
+                # We will manage it only if keys are the same... TODO ?
+                if keys == outer_keys:
+                    old_values = values.copy()
+                    for idx, i in enumerate(old_values):
+                        values[idx] = [BlenderLight.calc_spot_cone_inner(gltf, outer_values[idx][0], values[idx][0])]
+                blender_path = "spot_blend"
+                num_components = 1
+
 
         #### Materials
         if len(pointer_tab) == 4 and pointer_tab[1] == "materials" and \
