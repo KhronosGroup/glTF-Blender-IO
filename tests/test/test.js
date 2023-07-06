@@ -790,9 +790,9 @@ describe('Exporter', function() {
                 assert.strictEqual(anim.samplers[anim.channels[0].sampler].input, anim.samplers[anim.channels[1].sampler].input);
                 assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].input].count, asset.accessors[anim.samplers[anim.channels[0].sampler].output].count);
                 assert.strictEqual(asset.accessors[anim.samplers[anim.channels[0].sampler].output].count, asset.accessors[anim.samplers[anim.channels[1].sampler].output].count);
-              });
+            });
 
-              it('exports transmission', function() {
+            it('exports transmission', function() {
                 let gltfPath = path.resolve(outDirPath, '14_transmission.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const mat_no_transmission = asset.materials.find(mat => mat.name === 'NoTransmission');
@@ -803,9 +803,9 @@ describe('Exporter', function() {
                 const transmission = mat_transmission.extensions.KHR_materials_transmission;
                 assert.equalEpsilon(transmission.transmissionFactor, 0.2);
 
-              });
+            });
 
-              it('exports volume', function() {
+            it('exports volume', function() {
                 let gltfPath = path.resolve(outDirPath, '16_volume.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -818,9 +818,9 @@ describe('Exporter', function() {
                 const mat_thickness_zero = asset.materials.find(mat => mat.name === 'ThicknessZero');
                 assert.ok(!("KHR_materials_volume" in mat_thickness_zero.extensions));
 
-              });
+            });
 
-              it('exports IOR', function() {
+            it('exports IOR', function() {
                 let gltfPath = path.resolve(outDirPath, '17_ior.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -839,9 +839,9 @@ describe('Exporter', function() {
                 const ior_15 = asset.materials.find(mat => mat.name === 'ior_1.5');
                 assert.ok(!("KHR_materials_ior" in ior_15.extensions));
 
-              });
+            });
 
-              it('exports Variants', function() {
+            it('exports Variants', function() {
                 let gltfPath = path.resolve(outDirPath, '18_variants.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -886,9 +886,9 @@ describe('Exporter', function() {
                 assert.ok(variant_red_index in map_5.variants);
                 assert.ok(variant_blue_index in map_5.variants);
 
-              });
+            });
 
-              it('exports Specular', function() {
+            it('exports Specular', function() {
                 let gltfPath = path.resolve(outDirPath, '20_specular.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -961,18 +961,18 @@ describe('Exporter', function() {
                 assert.ok("specularColorTexture" in mat_TextTrans.extensions['KHR_materials_specular']);
                 assert.equalEpsilonArray(mat_TextTrans.extensions['KHR_materials_specular']["specularColorFactor"], [1.4296006782732589, 1.72086059270931, 1.648045597824881]);
 
-              });
+            });
 
-              it('exports Collections', function() {
+            it('exports Collections', function() {
                 let gltfPath = path.resolve(outDirPath, '21_scene.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
                 assert.strictEqual(asset.nodes.length, 47);
                 assert.strictEqual(asset.scenes[0].nodes.length, 9);
                 assert.strictEqual(asset.meshes.length, 6);
-              });
+            });
 
-              it('manages node groups', function() {
+            it('manages node groups', function() {
                 let gltfPath = path.resolve(outDirPath, '22_node_groups.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -988,10 +988,10 @@ describe('Exporter', function() {
                 assert.ok("baseColorTexture" in mat_nested.pbrMetallicRoughness);
                 assert.ok("baseColorTexture" in mat_2groups.pbrMetallicRoughness);
 
-              });
+            });
 
 
-              it('exports Attributes', function() {
+            it('exports Attributes', function() {
                 let gltfPath = path.resolve(outDirPath, '22_vertex_colors_and_attributes.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
@@ -1025,15 +1025,15 @@ describe('Exporter', function() {
                 const _vertex_vector_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_VECTOR, bufferCache);
                 assert.strictEqual(_vertex_vector.count, 24);
                 const expected_vertex_vector = [0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 6.0, 7.0, 8.0, 6.0, 7.0, 8.0,
-                                                 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0,
-                                                 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0];
+                    9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0, 15.0, 16.0, 17.0,
+                    18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0, 21.0, 22.0, 23.0];
                 assert.deepStrictEqual(_vertex_vector_data, expected_vertex_vector);
 
                 const _vertex_2dvector = asset.accessors[primitive.attributes._VERTEX_2DVECTOR];
                 const _vertex_2dvector_data = getAccessorData(gltfPath, asset, primitive.attributes._VERTEX_2DVECTOR, bufferCache);
                 assert.strictEqual(_vertex_2dvector.count, 24);
                 const expected_vertex_2dvector = [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 2.0, 3.0, 2.0, 3.0, 2.0, 3.0, 4.0, 5.0, 4.0, 5.0, 4.0, 5.0, 6.0, 7.0, 6.0, 7.0, 6.0, 7.0,
-                                                  8.0, 9.0, 8.0, 9.0, 8.0, 9.0, 10.0, 11.0, 10.0, 11.0, 10.0, 11.0, 12.0, 13.0, 12.0, 13.0, 12.0, 13.0, 14.0, 15.0, 14.0, 15.0, 14.0, 15.0];
+                    8.0, 9.0, 8.0, 9.0, 8.0, 9.0, 10.0, 11.0, 10.0, 11.0, 10.0, 11.0, 12.0, 13.0, 12.0, 13.0, 12.0, 13.0, 14.0, 15.0, 14.0, 15.0, 14.0, 15.0];
                 assert.deepStrictEqual(_vertex_2dvector_data, expected_vertex_2dvector);
 
                 const _vertex_boolean = asset.accessors[primitive.attributes._VERTEX_BOOLEAN];
@@ -1127,9 +1127,9 @@ describe('Exporter', function() {
                 const expected_mix_p3_vertex_float_data = [1.1];
                 assert.equalEpsilonArray(mix_p3_vertex_float_data, expected_mix_p3_vertex_float_data);
 
-              });
+            });
 
-              it('exports Active Collection', function() {
+            it('exports Active Collection', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '23_use_active_collection_without_nested.gltf');
                 const asset_1 = JSON.parse(fs.readFileSync(gltfPath_1));
                 assert.strictEqual(asset_1.nodes.length, 1);
@@ -1141,15 +1141,15 @@ describe('Exporter', function() {
                 let gltfPath_3 = path.resolve(outDirPath, '23_use_active_collection_nested.gltf');
                 const asset_3 = JSON.parse(fs.readFileSync(gltfPath_3));
                 assert.strictEqual(asset_3.nodes.length, 2);
-              });
+            });
 
-              it('exports correct no SK when modifier', function() {
+            it('exports correct no SK when modifier', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '27_apply_modifier_with_shapekeys.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
                 const modifier_mesh = asset.meshes[asset.nodes.filter(m => m.name === 'modifier')[0].mesh];
                 assert.ok(!('weights' in modifier_mesh));
-                if("extras" in modifier_mesh) {
+                if ("extras" in modifier_mesh) {
                     assert.ok(!('targetNames' in modifier_mesh['extras']));
                 }
                 const primitive_modifier_mesh = modifier_mesh.primitives[0];
@@ -1157,15 +1157,15 @@ describe('Exporter', function() {
 
                 const no_modifier_mesh = asset.meshes[asset.nodes.filter(m => m.name === 'no_modifier')[0].mesh];
                 assert.ok('weights' in no_modifier_mesh);
-                if("extras" in no_modifier_mesh) {
+                if ("extras" in no_modifier_mesh) {
                     assert.ok('targetNames' in no_modifier_mesh['extras']);
                 }
                 const primitive_no_modifier_mesh = no_modifier_mesh.primitives[0];
                 assert.ok('targets' in primitive_no_modifier_mesh);
 
-              });
+            });
 
-              it('exports mesh instances', function() {
+            it('exports mesh instances', function() {
                 let gltfPath = path.resolve(outDirPath, '25_mesh_instances.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const original = asset.nodes.find(node => node.name === 'original');
@@ -1195,9 +1195,9 @@ describe('Exporter', function() {
                 assert.notEqual(original.mesh, skined_1.mesh);
                 assert.notEqual(original.mesh, skined_2.mesh);
 
-              });
+            });
 
-              it('exports mesh instances apply modifier', function() {
+            it('exports mesh instances apply modifier', function() {
                 let gltfPath = path.resolve(outDirPath, '25_mesh_instances_apply_modifier.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const original = asset.nodes.find(node => node.name === 'original');
@@ -1227,9 +1227,9 @@ describe('Exporter', function() {
                 assert.notEqual(original.mesh, skined_1.mesh);
                 assert.notEqual(original.mesh, skined_2.mesh);
 
-                });
+            });
 
-              it('exports factor', function() {
+            it('exports factor', function() {
                 let gltfPath = path.resolve(outDirPath, '01_factors.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
                 const mat = asset.materials[0];
@@ -1248,9 +1248,9 @@ describe('Exporter', function() {
                 assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
 
-              });
+            });
 
-              it('exports SK / SK anim', function() {
+            it('exports SK / SK anim', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '28_shapekeys_anim.gltf');
                 const asset_1 = JSON.parse(fs.readFileSync(gltfPath_1));
                 var anim_mesh = asset_1.meshes[asset_1.nodes.filter(m => m.name === 'AnimCube')[0].mesh];
@@ -1293,10 +1293,10 @@ describe('Exporter', function() {
                 assert.ok(!('weights' in anim_mesh));
                 assert.ok(!('weights' in driven_mesh));
 
-                if("extras" in anim_mesh) {
+                if ("extras" in anim_mesh) {
                     assert.ok(!('targetNames' in anim_mesh['extras']));
                 }
-                if("extras" in driven_mesh) {
+                if ("extras" in driven_mesh) {
                     assert.ok(!('targetNames' in driven_mesh['extras']));
                 }
 
@@ -1306,11 +1306,65 @@ describe('Exporter', function() {
                 assert.strictEqual(asset_2.animations.length, 1);
                 assert.strictEqual(asset_2.animations[0].channels.length, 3);
 
-              });
+            });
 
+            it('exports using sk reset', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sk_reset.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
 
+                const obj1 = asset.animations.filter(a => a.name === 'Obj1')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+                const obj2 = asset.animations.filter(a => a.name === 'Obj2')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+                const obj2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
 
-              it('exports using armature rest pose', function() {
+                const anim1 = asset.animations.filter(a => a.name === 'Obj1')[0].samplers[obj1].output;
+                const anim2 = asset.animations.filter(a => a.name === 'Obj2')[0].samplers[obj2].output;
+                const anim2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].samplers[obj2_2].output;
+
+                let bufferCache = {};
+                const outputData1 = getAccessorData(gltfPath, asset, anim1, bufferCache);
+                const outputData2 = getAccessorData(gltfPath, asset, anim2, bufferCache);
+                const outputData2_2 = getAccessorData(gltfPath, asset, anim2_2, bufferCache);
+
+                assert.equal(outputData1[0], 0.5);
+                assert.equal(outputData1[1], 0.0);
+
+                assert.equal(outputData2[0], 0.5); // no reset for already active action
+                assert.equal(outputData2[1], 0.0);
+
+                assert.equal(outputData2_2[0], 0.0);
+                assert.equal(outputData2_2[1], 0.0);
+
+            });
+
+            it('exports using sk no reset', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sk_no_reset.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const obj1 = asset.animations.filter(a => a.name === 'Obj1')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+                const obj2 = asset.animations.filter(a => a.name === 'Obj2')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+                const obj2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].channels.filter(a => a.target.path === "weights")[0].sampler;
+
+                const anim1 = asset.animations.filter(a => a.name === 'Obj1')[0].samplers[obj1].output;
+                const anim2 = asset.animations.filter(a => a.name === 'Obj2')[0].samplers[obj2].output;
+                const anim2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].samplers[obj2].output;
+
+                let bufferCache = {};
+                const outputData1 = getAccessorData(gltfPath, asset, anim1, bufferCache);
+                const outputData2 = getAccessorData(gltfPath, asset, anim2, bufferCache);
+                const outputData2_2 = getAccessorData(gltfPath, asset, anim2_2, bufferCache);
+
+                assert.equal(outputData1[0], 0.5);
+                assert.equal(outputData1[1], 0.0);
+
+                assert.equal(outputData2[0], 0.5);
+                assert.equal(outputData2[1], 0.0);
+
+                assert.equal(outputData2_2[0], 0.0);
+                assert.equal(outputData2_2[1], 1.0);
+
+            });
+
+            it('exports using armature rest pose', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
                 var cube = asset.nodes.filter(m => m.name === 'Bone')[0]
@@ -1320,9 +1374,9 @@ describe('Exporter', function() {
                 asset = JSON.parse(fs.readFileSync(gltfPath_2));
                 cube = asset.nodes.filter(m => m.name === 'Bone')[0]
                 assert.ok(!('rotation' in cube));
-              });
+            });
 
-              it('exports interpolation when sampled, optimized, with keep', function() {
+            it('exports interpolation when sampled, optimized, with keep', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -1398,7 +1452,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[suzanne_rotation_sampler.input].count, 1);
                 assert.strictEqual(asset.accessors[suzanne_scale_sampler.input].count, 1);
 
-                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const anim_armature2 = asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
                 const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
 
@@ -1453,10 +1507,10 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[sphere_scale_sampler.input].count, 2);
 
 
-              });
+            });
 
 
-              it('exports interpolation when sampled, optimized, no keep', function() {
+            it('exports interpolation when sampled, optimized, no keep', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled_no_keep.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -1525,7 +1579,7 @@ describe('Exporter', function() {
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "scale").length == 0);
 
-                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const anim_armature2 = asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
                 const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
 
@@ -1559,10 +1613,10 @@ describe('Exporter', function() {
                 assert.ok(anim_sphere.channels.filter(a => a.target.path === "scale").length == 0);
 
 
-              });
+            });
 
 
-              it('exports interpolation when sampled, no optimization, no keeping', function() {
+            it('exports interpolation when sampled, no optimization, no keeping', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled_no_optimize.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -1631,7 +1685,7 @@ describe('Exporter', function() {
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_suzanne.channels.filter(a => a.target.path === "scale").length == 0);
 
-                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const anim_armature2 = asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
                 const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
 
@@ -1663,9 +1717,9 @@ describe('Exporter', function() {
                 assert.ok(anim_sphere.channels.filter(a => a.target.path === "rotation").length == 0);
                 assert.ok(anim_sphere.channels.filter(a => a.target.path === "scale").length == 0);
 
-              });
+            });
 
-              it('exports interpolation when sampled, not optimized, but keep', function() {
+            it('exports interpolation when sampled, not optimized, but keep', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '31_interpolation_sampled_no_optimize_but_keep.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -1741,7 +1795,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[suzanne_rotation_sampler.input].count, 1);
                 assert.strictEqual(asset.accessors[suzanne_scale_sampler.input].count, 1);
 
-                const anim_armature2= asset.animations.filter(a => a.name === 'Armature.001Action')[0];
+                const anim_armature2 = asset.animations.filter(a => a.name === 'Armature.001Action')[0];
                 const bone2_node = asset.nodes.filter(a => a.name === "Bone.001")[0];
                 const armature2_node = asset.nodes.filter(a => a.name === "Armature.001")[0];
 
@@ -1796,7 +1850,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[sphere_rotation_sampler.input].count, 6);
 
 
-              });
+            });
         });
     });
 });
@@ -2017,7 +2071,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
             });
 
-            it ('roundtrips occlusion strength', function() {
+            it('roundtrips occlusion strength', function() {
                 let dir = '13_occlusion_strength';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
                 let gltfPath = path.resolve(outDirPath, dir + '.gltf');
@@ -2752,7 +2806,21 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
                 assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
 
-              });
+            });
+
+            it('roundtrips multi prim vertex attribute', function() {
+                let dir = '23_multi_prim_vertex_attribute';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 1);
+                assert.strictEqual(asset.meshes[0].primitives.length, 2);
+                const primitive1 = asset.meshes[0].primitives[0];
+                assert.strictEqual(asset.accessors[primitive1.attributes['_PRESSURE']].count, 12);
+                const primitive2 = asset.meshes[0].primitives[1];
+                assert.strictEqual(asset.accessors[primitive2.attributes['_PRESSURE']].count, 4);
+            });
         });
     });
 });

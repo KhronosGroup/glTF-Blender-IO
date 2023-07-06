@@ -308,10 +308,11 @@ If enabled, Principled Specular data are ignored, only data from custom node are
 
 
 .. tip::
+
    If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
    Add > Output > glTF Material Output
 
-     .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
+   .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
 
 Transmission
 ^^^^^^^^^^^^
@@ -513,7 +514,7 @@ These will be written as factors in the glTF file, which are numbers that are mu
 with the specified image textures. These are not common.
 
 - Use Math node (multiply) for scalar factors. Use second value as factor
-- Use MixRGB (multiply) for color factors. Set Fac to 1, and use Color2 as factors
+- Use Mix node (color / multiply) for color factors. Set Factor to 1, and use Color2 (B) as factors
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-factors.png
 
