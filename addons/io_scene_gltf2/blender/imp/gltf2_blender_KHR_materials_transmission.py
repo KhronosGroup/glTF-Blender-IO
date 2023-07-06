@@ -25,7 +25,6 @@ def transmission(mh, location, transmission_socket):
         mh.pymat.extensions['KHR_materials_transmission']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
         ext = mh.pymat.extensions['KHR_materials_transmission']
     except Exception:
-        print("What?????")
         return
     transmission_factor = ext.get('transmissionFactor', 0)
 
@@ -43,8 +42,6 @@ def transmission(mh, location, transmission_socket):
                             pointer_tab[4] == "KHR_materials_transmission" and \
                             pointer_tab[5] == "transmissionFactor":
                         need_transmission = True
-
-    print("Need Transmission for", mh.mat.name, need_transmission)
 
     if need_transmission is False:
         return

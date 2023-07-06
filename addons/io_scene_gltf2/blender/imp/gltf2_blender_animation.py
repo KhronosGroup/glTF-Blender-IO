@@ -75,6 +75,16 @@ class BlenderAnimation():
                     if tex.extensions is not None and "KHR_texture_transform" in tex.extensions:
                         BlenderPointerAnim.anim(gltf, anim_idx, tex.extensions["KHR_texture_transform"], mat_idx, 'TEX_TRANSFORM', name=mat.name)
 
+                if mat.extensions is not None:
+                    texs = [
+                        mat.extensions["KHR_materials_volume"].get("thicknessTexture") if "KHR_materials_volume" in mat.extensions else None,
+                        mat.extensions["KHR_materials_transmission"].get("transmissionTexture") if "KHR_materials_transmission" in mat.extensions else None
+                    ]
+
+                    for tex in [t for t in texs if t is not None]:
+                        if tex.extensions is not None and "KHR_texture_transform" in tex.extensions:
+                            BlenderPointerAnim.anim(gltf, anim_idx, tex.extensions["KHR_texture_transform"], mat_idx, 'TEX_TRANSFORM', name=mat.name)
+
                 for ext in [
                         "KHR_materials_emissive_strength",
                         #"KHR_materials_iridescence",
