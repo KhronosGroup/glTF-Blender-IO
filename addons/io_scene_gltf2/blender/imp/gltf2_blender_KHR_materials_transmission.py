@@ -21,13 +21,32 @@ from .gltf2_blender_texture import texture
 def transmission(mh, location, transmission_socket):
     x, y = location
     try:
+        mh.pymat.extensions['KHR_materials_transmission']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_transmission']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
         ext = mh.pymat.extensions['KHR_materials_transmission']
     except Exception:
+        print("What?????")
         return
     transmission_factor = ext.get('transmissionFactor', 0)
 
-    # Default value is 0, so no transmission
-    if transmission_factor == 0:
+    need_transmission = transmission_factor != 0  # Default value is 0, so no transmission
+
+    # We need transmission if animated by KHR_animation_pointer
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.extensions["KHR_materials_transmission"]["animations"]) > 0:
+            for anim_idx in mh.pymat.extensions["KHR_materials_transmission"]["animations"].keys():
+                for channel_idx in mh.pymat.extensions["KHR_materials_transmission"]["animations"][anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "extensions" and \
+                            pointer_tab[4] == "KHR_materials_transmission" and \
+                            pointer_tab[5] == "transmissionFactor":
+                        need_transmission = True
+
+    print("Need Transmission for", mh.mat.name, need_transmission)
+
+    if need_transmission is False:
         return
 
     # Activate screen refraction (for Eevee)
@@ -45,7 +64,7 @@ def transmission(mh, location, transmission_socket):
         return
 
     # Mix transmission factor
-    if transmission_factor != 1:
+    if transmission_factor != 1 or need_transmission is True:
         node = mh.node_tree.nodes.new('ShaderNodeMath')
         node.label = 'Transmission Factor'
         node.location = x - 140, y

@@ -18,6 +18,8 @@ from .gltf2_blender_texture import texture
 def volume(mh, location, volume_socket, thickness_socket):
     # implementation based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
     try:
+        mh.pymat.extensions['KHR_materials_volume']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_volume']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
         ext = mh.pymat.extensions['KHR_materials_volume']
     except Exception:
         return
@@ -60,7 +62,23 @@ def volume(mh, location, volume_socket, thickness_socket):
         return
 
     # Mix thickness factor
-    if thickness_factor != 1:
+
+    math_node_needed = thickness_factor != 1
+
+    # We also need math node if thickness factor is animated in KHR_animation_pointer
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.extensions["KHR_materials_volume"]["animations"]) > 0:
+            for anim_idx in mh.pymat.extensions["KHR_materials_volume"]["animations"].keys():
+                for channel_idx in mh.pymat.extensions["KHR_materials_volume"]["animations"][anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "extensions" and \
+                            pointer_tab[4] == "KHR_materials_volume" and \
+                            pointer_tab[5] == "thicknessFactor":
+                        math_node_needed = True
+
+    if math_node_needed is True:
         node = mh.node_tree.nodes.new('ShaderNodeMath')
         node.label = 'Thickness Factor'
         node.location = x - 140, y

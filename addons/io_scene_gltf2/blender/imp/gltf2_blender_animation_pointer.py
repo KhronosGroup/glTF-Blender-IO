@@ -33,7 +33,7 @@ class BlenderPointerAnim():
     def anim(gltf, anim_idx, asset, asset_idx, asset_type, name=None):
         animation = gltf.data.animations[anim_idx]
 
-        if asset_type in ["LIGHT", "TEX_TRANSFORM"]:
+        if asset_type in ["LIGHT", "TEX_TRANSFORM", "EXT"]:
             if anim_idx not in asset['animations'].keys():
                 return
             tab = asset['animations']
@@ -359,37 +359,68 @@ class BlenderPointerAnim():
             pointer_tab[4] == "KHR_materials_emissive_strength" and \
             pointer_tab[5] == "emissiveStrength":
 
-            pass
-            # blender_path = ""
-            # num_components =
+            socket = get_socket(asset['blender_nodetree'], True, "Emission Strength")
+            blender_path = socket.path_from_id() + ".default_value"
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "extensions" and \
             pointer_tab[4] == "KHR_materials_volume" and \
             pointer_tab[5] in ["thicknessFactor", "attenuationDistance", "attenuationColor"]:
 
-            pass
-            # blender_path = ""
-            # num_components =
+            if pointer_tab[5] == "thicknessFactor":
+                thicknesss_socket = get_socket_old(asset['blender_mat'], 'Thickness')
+                if thicknesss_socket.is_linked:
+                    mix_node = thicknesss_socket.links[0].from_node
+                    if mix_node.type == "MATH":
+                        blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                        num_components = 1
+                    else:
+                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+                else:
+                    blender_path = thicknesss_socket.path_from_id() + ".default_value"
+                    num_components = 1
+
+            if pointer_tab[5] == "attenuationDistance":
+                density_socket = get_socket(asset['blender_nodetree'], True, 'Density', volume=True)
+                blender_path = density_socket.path_from_id() + ".default_value"
+                num_components = 1
+
+                old_values = values.copy()
+                for idx, i in enumerate(old_values):
+                    values[idx] = [1.0 / old_values[idx][0]]
+
+            if pointer_tab[5] == "attenuationColor":
+                attenuation_color_socket = get_socket(asset['blender_nodetree'], True, 'Color', volume=True)
+                blender_path = attenuation_color_socket.path_from_id() + ".default_value"
+                num_components = 3
+
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "extensions" and \
             pointer_tab[4] == "KHR_materials_ior" and \
             pointer_tab[5] == "ior":
 
-            pass
-            # blender_path = ""
-            # num_components =
+            ior_socket = get_socket(asset['blender_nodetree'], True, 'IOR')
+            blender_path = ior_socket.path_from_id() + ".default_value"
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "extensions" and \
             pointer_tab[4] == "KHR_materials_transmission" and \
             pointer_tab[5] == "transmissionFactor":
 
-            pass
-            # blender_path = ""
-            # num_components =
-
+            transmission_socket = get_socket(asset['blender_nodetree'], True, 'Transmission')
+            if transmission_socket.is_linked:
+                mix_node = transmission_socket.links[0].from_node
+                if mix_node.type == "MATH":
+                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                    num_components = 1
+                else:
+                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = transmission_socket.path_from_id() + ".default_value"
+                num_components = 1
 
         if blender_path is None:
             return # Should not happen if all specification is managed
@@ -462,6 +493,12 @@ class BlenderPointerAnim():
             id_root = "NODETREE"
             stash = asset.blender_nodetree
         elif asset_type == "TEX_TRANSFORM":
+            name_ = name if name is not None else asset.name
+            data_name = "nodetree_" + name_ or "Nodetree%d" % asset_idx
+            action = gltf.action_cache.get(data_name)
+            id_root = "NODETREE"
+            stash = asset['blender_nodetree']
+        elif asset_type == "EXT":
             name_ = name if name is not None else asset.name
             data_name = "nodetree_" + name_ or "Nodetree%d" % asset_idx
             action = gltf.action_cache.get(data_name)

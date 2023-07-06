@@ -68,6 +68,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             additional_location = additional_location[0], additional_location[1] - 150
 
     need_volume_node = False
+    need_gltf_output_node = False
     if mh.pymat.extensions and 'KHR_materials_volume' in mh.pymat.extensions:
         if 'thicknessFactor' in mh.pymat.extensions['KHR_materials_volume'] \
             and mh.pymat.extensions['KHR_materials_volume']['thicknessFactor'] != 0.0:
@@ -75,12 +76,30 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             need_volume_node = True
 
             # We also need glTF Material Output Node, to set thicknessFactor and thicknessTexture
-            if mh.settings_node is None:
-                mh.settings_node = make_settings_node(mh)
-                mh.settings_node.location = additional_location
-                mh.settings_node.width = 180
-                volume_location = additional_location
-                additional_location = additional_location[0], additional_location[1] - 150
+            need_gltf_output_node = True
+
+        # We also need volume node for KHR_animation_pointer
+        if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+            if len(mh.pymat.extensions["KHR_materials_volume"]["animations"]) > 0:
+                for anim_idx in mh.pymat.extensions["KHR_materials_volume"]["animations"].keys():
+                    for channel_idx in mh.pymat.extensions["KHR_materials_volume"]["animations"][anim_idx]:
+                        channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                                pointer_tab[3] == "extensions" and \
+                                pointer_tab[4] == "KHR_materials_volume" and \
+                                pointer_tab[5] in ["thicknessFactor", "attenuationDistance", "attenuationColor"]:
+                            need_volume_node = True
+                            need_gltf_output_node = True
+
+    if need_gltf_output_node is True:
+        if mh.settings_node is None:
+            mh.settings_node = make_settings_node(mh)
+            mh.settings_node.location = additional_location
+            mh.settings_node.width = 180
+            volume_location = additional_location
+            additional_location = additional_location[0], additional_location[1] - 150
+
 
     need_velvet_node = False
     if mh.pymat.extensions and 'KHR_materials_sheen' in mh.pymat.extensions:
@@ -308,6 +327,8 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     strength = 1
     try:
         # Get strength from KHR_materials_emissive_strength if exists
+        mh.pymat.extensions['KHR_materials_emissive_strength']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_emissive_strength']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
         strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
     except Exception:
         pass

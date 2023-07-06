@@ -16,6 +16,8 @@ from ...io.com.gltf2_io_constants import GLTF_IOR
 
 def ior(mh, ior_socket):
     try:
+        mh.pymat.extensions['KHR_materials_ior']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_ior']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
         ext = mh.pymat.extensions['KHR_materials_ior']
     except Exception:
         return

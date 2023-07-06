@@ -75,6 +75,16 @@ class BlenderAnimation():
                     if tex.extensions is not None and "KHR_texture_transform" in tex.extensions:
                         BlenderPointerAnim.anim(gltf, anim_idx, tex.extensions["KHR_texture_transform"], mat_idx, 'TEX_TRANSFORM', name=mat.name)
 
+                for ext in [
+                        "KHR_materials_emissive_strength",
+                        #"KHR_materials_iridescence",
+                        "KHR_materials_volume",
+                        "KHR_materials_ior",
+                        "KHR_materials_transmission"
+                        ]:
+                    if mat.extensions is not None and ext in mat.extensions:
+                        BlenderPointerAnim.anim(gltf, anim_idx, mat.extensions[ext], mat_idx, 'EXT', name=mat.name)
+
         # Push all actions onto NLA tracks with this animation's name
         track_name = gltf.data.animations[anim_idx].track_name
         for (obj, action) in gltf.needs_stash:
