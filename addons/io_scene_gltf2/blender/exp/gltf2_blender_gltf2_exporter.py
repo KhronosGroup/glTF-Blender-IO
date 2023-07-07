@@ -281,6 +281,16 @@ class GlTF2Exporter:
                 #     for extension_name in new_value.keys():
                 #         self.__append_unique_and_get_index(self.__gltf.extensions_used, extension_name)
                 #         self.__append_unique_and_get_index(self.__gltf.extensions_required, extension_name)
+
+            if self.export_settings['gltf_trs_w_animation_pointer'] is True:
+                if type(node) == gltf2_io.AnimationChannelTarget:
+                    if node.path in ["translation", "rotation", "scale", "weights"]:
+                        if node.extensions is None:
+                            node.extensions = {}
+                        node.extensions["KHR_animation_pointer"] = {"pointer": "/nodes/" + str(node.node) + "/" + node.path}
+                    node.node = None
+                    node.path = "pointer"
+
             return node
 
         # traverse nodes of a child of root property type and add them to the glTF root

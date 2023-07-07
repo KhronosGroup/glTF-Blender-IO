@@ -621,6 +621,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_convert_animation_pointer: BoolProperty(
+        name='Convert TRS/weights to Animation Pointer',
+        description='Export TRS and weights as Animation Pointer. '
+                    'Using KHR_animation_pointer extension',
+        default=False
+    )
+
     # This parameter is only here for backward compatibility, as this option is removed in 3.6
     # This option does nothing, and is not displayed in UI
     # What you are looking for is probably "export_animation_mode"
@@ -828,6 +835,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_lights'] = self.export_lights
         export_settings['gltf_lighting_mode'] = self.export_import_convert_lighting_mode
+
+        export_settings['gltf_trs_w_animation_pointer'] = self.export_convert_animation_pointer
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1267,6 +1276,9 @@ class GLTF_PT_export_animation(bpy.types.Panel):
         row.prop(operator, 'export_bake_animation')
         if operator.export_animation_mode == "SCENE":
             layout.prop(operator, 'export_anim_scene_split_object')
+
+        row = layout.row()
+        row.prop(operator, 'export_convert_animation_pointer') # TODOPointer UI, where ?
 
 class GLTF_PT_export_animation_notes(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
