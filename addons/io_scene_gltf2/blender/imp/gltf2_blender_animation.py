@@ -128,13 +128,13 @@ class BlenderAnimation():
                 restore_animation_on_object(obj.data.shape_keys, animation_name)
 
         if gltf.data.extensions_used is not None and "KHR_animation_pointer" in gltf.data.extensions_used:
-            for cam in gltf.data.cameras:
+            for cam in gltf.data.cameras if gltf.data.cameras else []:
                 restore_animation_on_object(cam.blender_object_data, animation_name)
 
-            if "KHR_lights_punctual" in gltf.data.extensions:
+            if gltf.data.extensions and "KHR_lights_punctual" in gltf.data.extensions:
                 for light in gltf.data.extensions['KHR_lights_punctual']['lights']:
                     restore_animation_on_object(light['blender_object_data'], animation_name)
 
-            for mat in gltf.data.materials:
+            for mat in gltf.data.materials if gltf.data.materials else []:
                 restore_animation_on_object(mat.blender_nodetree, animation_name)
                 restore_animation_on_object(mat.blender_mat, animation_name)
