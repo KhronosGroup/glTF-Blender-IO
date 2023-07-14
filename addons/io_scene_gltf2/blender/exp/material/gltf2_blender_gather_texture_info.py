@@ -134,9 +134,9 @@ def __gather_occlusion_strength(primary_socket, export_settings):
     # primary_socket. The mix factor gives the occlusion strength.
     node = gltf2_blender_get.previous_node(primary_socket)
     if node and node.type == 'MIX' and node.blend_type == 'MIX':
-        fac = gltf2_blender_get.get_const_from_socket(node.inputs['Factor'], kind='VALUE')
-        col1 = gltf2_blender_get.get_const_from_socket(node.inputs[6], kind='RGB')
-        col2 = gltf2_blender_get.get_const_from_socket(node.inputs[7], kind='RGB')
+        fac, path = gltf2_blender_get.get_const_from_socket(node.inputs['Factor'], kind='VALUE')
+        col1, path_col1 = gltf2_blender_get.get_const_from_socket(node.inputs[6], kind='RGB')
+        col2, path_col2 = gltf2_blender_get.get_const_from_socket(node.inputs[7], kind='RGB')
         if fac is not None:
             if col1 == [1.0, 1.0, 1.0] and col2 is None:
                 return fac

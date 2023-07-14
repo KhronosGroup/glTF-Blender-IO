@@ -33,7 +33,7 @@ def export_clearcoat(blender_material, export_settings):
         clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
         clearcoat_enabled = clearcoat_extension['clearcoatFactor'] > 0
     elif gltf2_blender_get.has_image_node_from_socket(clearcoat_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(clearcoat_socket, kind='VALUE')
+        fac, path = gltf2_blender_get.get_factor_from_socket(clearcoat_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatFactor'] = fac if fac != None else 1.0
         has_clearcoat_texture = True
@@ -45,7 +45,7 @@ def export_clearcoat(blender_material, export_settings):
     if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
         clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
     elif gltf2_blender_get.has_image_node_from_socket(clearcoat_roughness_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
+        fac, path = gltf2_blender_get.get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatRoughnessFactor'] = fac if fac != None else 1.0
         has_clearcoat_roughness_texture = True

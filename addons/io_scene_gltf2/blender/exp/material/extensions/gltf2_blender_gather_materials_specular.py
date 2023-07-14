@@ -40,7 +40,7 @@ def export_original_specular(blender_material, export_settings):
             specular_extension['specularFactor'] = fac
     else:
         # Factor
-        fac = gltf2_blender_get.get_factor_from_socket(original_specular_socket, kind='VALUE')
+        fac, path = gltf2_blender_get.get_factor_from_socket(original_specular_socket, kind='VALUE')
         if fac is not None and fac != 1.0:
             specular_extension['specularFactor'] = fac
 
@@ -62,7 +62,7 @@ def export_original_specular(blender_material, export_settings):
             specular_extension['specularColorFactor'] = color
     else:
         # Factor
-        fac = gltf2_blender_get.get_factor_from_socket(original_specularcolor_socket, kind='RGB')
+        fac, path = gltf2_blender_get.get_factor_from_socket(original_specularcolor_socket, kind='RGB')
         if fac is not None and fac != [1.0, 1.0, 1.0]:
             specular_extension['specularColorFactor'] = fac
 

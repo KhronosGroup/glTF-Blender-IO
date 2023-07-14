@@ -64,9 +64,9 @@ def __gather_base_color_factor(blender_material, export_settings):
     alpha_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Alpha")
     if isinstance(alpha_socket, bpy.types.NodeSocket):
         if export_settings['gltf_image_format'] != "NONE":
-            alpha = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
+            alpha, path = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
         else:
-            alpha = gltf2_blender_get.get_const_from_default_value_socket(alpha_socket, kind='VALUE')
+            alpha, path = gltf2_blender_get.get_const_from_default_value_socket(alpha_socket, kind='VALUE')
 
     base_color_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes,"Base Color")
     if base_color_socket is None:
@@ -75,9 +75,16 @@ def __gather_base_color_factor(blender_material, export_settings):
         base_color_socket = gltf2_blender_get.get_socket_old(blender_material, "BaseColorFactor")
     if isinstance(base_color_socket, bpy.types.NodeSocket):
         if export_settings['gltf_image_format'] != "NONE":
-            rgb = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB')
+            rgb, path = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB')
         else:
-            rgb = gltf2_blender_get.get_const_from_default_value_socket(base_color_socket, kind='RGB')
+            rgb, path = gltf2_blender_get.get_const_from_default_value_socket(base_color_socket, kind='RGB') #TODOPointet add path
+
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 4
+            path_['path'] = "/materials/XXX/pbrMetallicRoughness/baseColorFactor"
+            export_settings['current_paths'][path] = path_
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0
@@ -127,8 +134,17 @@ def __gather_metallic_factor(blender_material, export_settings):
     if metallic_socket is None:
         metallic_socket = gltf2_blender_get.get_socket_old(blender_material, "MetallicFactor")
     if isinstance(metallic_socket, bpy.types.NodeSocket):
-        fac = gltf2_blender_get.get_factor_from_socket(metallic_socket, kind='VALUE')
+        fac, path = gltf2_blender_get.get_factor_from_socket(metallic_socket, kind='VALUE')
+
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/pbrMetallicRoughness/metallicFactor"
+            export_settings['current_paths'][path] = path_
+
         return fac if fac != 1 else None
+
     return None
 
 
@@ -166,7 +182,15 @@ def __gather_roughness_factor(blender_material, export_settings):
     if roughness_socket is None:
         roughness_socket = gltf2_blender_get.get_socket_old(blender_material, "RoughnessFactor")
     if isinstance(roughness_socket, bpy.types.NodeSocket):
-        fac = gltf2_blender_get.get_factor_from_socket(roughness_socket, kind='VALUE')
+        fac, path = gltf2_blender_get.get_factor_from_socket(roughness_socket, kind='VALUE')
+
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/pbrMetallicRoughness/roughnessFactor"
+            export_settings['current_paths'][path] = path_
+
         return fac if fac != 1 else None
     return None
 

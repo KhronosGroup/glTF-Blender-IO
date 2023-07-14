@@ -85,6 +85,8 @@ def gather_primitives(
                 i = material_idx if material_idx < len(materials) else -1
                 mat = materials[i]
             if mat is not None:
+                export_settings['current_paths'] = {} #Used for KHR_animation_pointer.
+                # Do not initialize inside the function gather_material, because of UVMap active trick that call multiple times the function
                 material = gltf2_blender_gather_materials.gather_material(
                     mat,
                     active_uvmap_idx,
@@ -271,6 +273,8 @@ def __gather_extensions(blender_mesh,
             variants.append(variant_extension)
         if len(variants) > 0:
             if i.material:
+                export_settings['current_paths'] = {} #Used for KHR_animation_pointer.
+                # Do not initialize inside the function gather_material, because of UVMap active trick that call multiple times the function
                 mat = gltf2_blender_gather_materials.gather_material(
                         i.material,
                         active_uvmap_idx,

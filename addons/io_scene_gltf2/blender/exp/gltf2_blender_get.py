@@ -246,9 +246,9 @@ def get_factor_from_socket(socket, kind):
     from a MULTIPLY node just before the socket.
     kind is either 'RGB' or 'VALUE'.
     """
-    fac = get_const_from_socket(socket, kind)
+    fac, path = get_const_from_socket(socket, kind)
     if fac is not None:
-        return fac
+        return fac, path
 
     node = previous_node(socket)
     if node is not None:
@@ -256,45 +256,45 @@ def get_factor_from_socket(socket, kind):
         if kind == 'RGB':
             if node.type == 'MIX' and node.data_type == "RGBA" and node.blend_type == 'MULTIPLY':
                 # TODO: handle factor in inputs[0]?
-                x1 = get_const_from_socket(node.inputs[6], kind)
-                x2 = get_const_from_socket(node.inputs[7], kind)
+                x1, path_x1 = get_const_from_socket(node.inputs[6], kind)
+                x2, path_x2 = get_const_from_socket(node.inputs[7], kind)
         if kind == 'VALUE':
             if node.type == 'MATH' and node.operation == 'MULTIPLY':
-                x1 = get_const_from_socket(node.inputs[0], kind)
-                x2 = get_const_from_socket(node.inputs[1], kind)
-        if x1 is not None and x2 is None: return x1
-        if x2 is not None and x1 is None: return x2
+                x1, path_x1 = get_const_from_socket(node.inputs[0], kind)
+                x2, path_x2 = get_const_from_socket(node.inputs[1], kind)
+        if x1 is not None and x2 is None: return x1, path_x1
+        if x2 is not None and x1 is None: return x2, path_x2
 
-    return None
+    return None, None
 
 def get_const_from_default_value_socket(socket, kind):
     if kind == 'RGB':
         if socket.type != 'RGBA': return None
-        return list(socket.default_value)[:3]
+        return list(socket.default_value)[:3], "node_tree." + socket.path_from_id() + ".default_value"
     if kind == 'VALUE':
         if socket.type != 'VALUE': return None
-        return socket.default_value
-    return None
+        return socket.default_value, "node_tree." + socket.path_from_id() + ".default_value"
+    return None, None
 
 
 def get_const_from_socket(socket, kind):
     if not socket.is_linked:
         if kind == 'RGB':
             if socket.type != 'RGBA': return None
-            return list(socket.default_value)[:3]
+            return list(socket.default_value)[:3], "node_tree." + socket.path_from_id() + ".default_value"
         if kind == 'VALUE':
             if socket.type != 'VALUE': return None
-            return socket.default_value
+            return socket.default_value, "node_tree." + socket.path_from_id() + ".default_value"
 
     # Handle connection to a constant RGB/Value node
     prev_node = previous_node(socket)
     if prev_node is not None:
         if kind == 'RGB' and prev_node.type == 'RGB':
-            return list(prev_node.outputs[0].default_value)[:3]
+            return list(prev_node.outputs[0].default_value)[:3], "node_tree." + prev_node.outputs[0].path_from_id() + ".default_value"
         if kind == 'VALUE' and prev_node.type == 'VALUE':
-            return prev_node.outputs[0].default_value
+            return prev_node.outputs[0].default_value, "node_tree." + prev_node.outputs[0].path_from_id() + ".default_value"
 
-    return None
+    return None, None
 
 
 def previous_socket(socket):

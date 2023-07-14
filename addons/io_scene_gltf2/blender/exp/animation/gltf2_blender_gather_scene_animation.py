@@ -20,6 +20,7 @@ from .gltf2_blender_gather_drivers import get_sk_drivers
 from .sampled.armature.gltf2_blender_gather_armature_channels import gather_armature_sampled_channels
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sk_sampled_channels
+from .sampled.material.gltf2_blender_gather_material_channels import gather_material_sampled_channels
 from .gltf2_blender_gather_animation_utils import link_samplers, add_slide_data
 
 def gather_scene_animations(export_settings):
@@ -107,6 +108,35 @@ def gather_scene_animations(export_settings):
 
             total_channels = []
 
+    # Export now KHR_animation_pointer for materials
+    for mat in export_settings['KHR_animation_pointer']['materials'].keys():
+        if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
+            continue
+
+        blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
+
+        export_settings['ranges'][id(blender_material)] = {}
+        export_settings['ranges'][id(blender_material)][id(blender_material)] = {'start': start_frame, 'end': end_frame}
+
+        channels = gather_material_sampled_channels(mat, mat, export_settings)
+        if channels is not None:
+            total_channels.extend(channels)
+
+        if export_settings['gltf_anim_scene_split_object'] is True:
+            if len(total_channels) > 0:
+                animation = gltf2_io.Animation(
+                    channels=total_channels,
+                    extensions=None,
+                    extras=__gather_extras(blender_material, export_settings),
+                    name=blender_material.name,
+                    samplers=[]
+                )
+                link_samplers(animation, export_settings)
+                animations.append(animation)
+
+            total_channels = []
+
+
     if export_settings['gltf_anim_scene_split_object'] is False:
         if len(total_channels) > 0:
             animation = gltf2_io.Animation(
@@ -121,7 +151,7 @@ def gather_scene_animations(export_settings):
 
     return animations
 
-def __gather_extras(blender_scene, export_settings):
+def __gather_extras(blender_asset, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_scene)
+        return generate_extras(blender_asset)
     return None

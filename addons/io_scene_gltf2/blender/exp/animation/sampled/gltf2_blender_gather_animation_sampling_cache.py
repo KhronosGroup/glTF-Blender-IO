@@ -216,6 +216,57 @@ def get_cache_data(path: str,
                             data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None] = {}
                         data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None][frame] = [k.value for k in get_sk_exported(driver_object.data.shape_keys.key_blocks)]
 
+        # After caching objects, caching materials, for KHR_animation_pointer
+        for mat in export_settings['KHR_animation_pointer']['materials'].keys():
+            if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
+                continue
+
+            blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
+            if mat not in data.keys():
+                data[mat] = {}
+
+            #TODOPointer : do the same for blender_material directly, not blender_material.node_tree
+
+            if blender_material.node_tree and blender_material.node_tree.animation_data and blender_material.node_tree.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                if blender_material.node_tree.animation_data.action.name not in data[mat].keys():
+                    data[mat][blender_material.node_tree.animation_data.action.name] = {}
+                    data[mat][blender_material.node_tree.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path] = {}
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = val
+                    else:
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = list(val)
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[mat].keys():
+                    data[mat][action_name] = {}
+                    data[mat][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][action_name]['value'][path] = {}
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][action_name]['value'][path][frame] = val
+                    else:
+                        data[mat][action_name]['value'][path][frame] = list(val)
+            else:
+                # case of baking object.
+                # There is no animation, so use id as key
+                if mat not in data[mat].keys():
+                    data[mat][mat] = {}
+                    data[mat][mat]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][mat]['value'][path] = {}
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][mat]['value'][path][frame] = val
+                    else:
+                        data[mat][mat]['value'][path][frame] = list(val)
+
         frame += step
     return data
 

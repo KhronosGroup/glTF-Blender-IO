@@ -29,11 +29,24 @@ def export_transmission(blender_material, export_settings):
     if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
         transmission_extension['transmissionFactor'] = transmission_socket.default_value
         transmission_enabled = transmission_extension['transmissionFactor'] > 0
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_transmission/transmissionFactor"
+        export_settings['current_paths']["node_tree." + transmission_socket.path_from_id() + ".default_value"] = path_
+
     elif gltf2_blender_get.has_image_node_from_socket(transmission_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(transmission_socket, kind='VALUE')
+        fac, path = gltf2_blender_get.get_factor_from_socket(transmission_socket, kind='VALUE')
         transmission_extension['transmissionFactor'] = fac if fac is not None else 1.0
         has_transmission_texture = True
         transmission_enabled = True
+
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_transmission/transmissionFactor"
+            export_settings['current_paths'][path] = path_
 
     if not transmission_enabled:
         return None, None

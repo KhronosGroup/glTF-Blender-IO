@@ -34,6 +34,11 @@ from .extensions.gltf2_blender_gather_materials_transmission import export_trans
 from .extensions.gltf2_blender_gather_materials_clearcoat import export_clearcoat
 from .extensions.gltf2_blender_gather_materials_ior import export_ior
 
+from ....io.com import gltf2_io_debug
+from ...com.gltf2_blender_data_path import get_target_object_path, get_target_property_name
+from ...com.gltf2_blender_conversion import get_target, get_channel_from_target
+from ..gltf2_blender_get import get_object_from_datapath
+
 
 @cached
 def get_material_cache_key(blender_material, active_uvmap_index, export_settings):
@@ -154,21 +159,17 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
 
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
+    # Now we have exported the material itself, we need to store some additional data
+    # This will be used when trying to export some KHR_animation_pointer
+
+    #TODOPointer for baseColorFactor, we need to merge color + alpha
+
+    if len(export_settings['current_paths']) > 0:
+        export_settings['KHR_animation_pointer']['materials'][id(blender_material)] = {}
+        export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['glTF_material'] = material
+
     return material
-    # material = blender_primitive['material']
-    #
-    #     if get_material_requires_texcoords(glTF, material) and not export_settings['gltf_texcoords']:
-    #         material = -1
-    #
-    #     if get_material_requires_normals(glTF, material) and not export_settings['gltf_normals']:
-    #         material = -1
-    #
-    #     # Meshes/primitives without material are allowed.
-    #     if material >= 0:
-    #         primitive.material = material
-    #     else:
-    #         print_console('WARNING', 'Material ' + internal_primitive[
-    #             'material'] + ' not found. Please assign glTF 2.0 material or enable Blinn-Phong material in export.')
 
 
 def __get_new_material_texture_shared(base, node):
@@ -411,3 +412,176 @@ def __export_unlit(blender_material, active_uvmap_index, export_settings):
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
 
     return material
+
+# #TODOPointer add cache
+# def __get_blender_actions(blender_material, export_settings):
+
+#     blender_actions = []
+#     blender_tracks = {}
+#     action_on_type = {}
+
+#     if blender_material.animation_data is not None:
+#         # Collect active action
+#         if blender_material.animation_data.action is not None:
+#             blender_actions.append(blender_material.animation_data.action)
+#             blender_tracks[blender_material.animation_data.action.name] = None
+#             action_on_type[blender_material.animation_data.action.name] = "MATERIAL"
+
+#         # Collect associated strips from NLA tracks.
+#         if export_settings['gltf_animation_mode'] == "ACTIONS":
+#             for track in blender_material.animation_data.nla_tracks:
+#                 # Multi-strip tracks do not export correctly yet (they need to be baked),
+#                 # so skip them for now and only write single-strip tracks.
+#                 non_muted_strips = [strip for strip in track.strips if strip.action is not None and strip.mute is False]
+#                 if track.strips is None or len(non_muted_strips) != 1:
+#                     continue
+#                 for strip in non_muted_strips:
+#                     blender_actions.append(strip.action)
+#                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
+#                     action_on_type[strip.action.name] = "MATERIAL"
+
+#     if blender_material.use_nodes and blender_material.node_tree.animation_data is not None:
+#         # Collect active action
+#         if blender_material.node_tree.animation_data.action is not None:
+#             blender_actions.append(blender_material.node_tree.animation_data.action)
+#             blender_tracks[blender_material.node_tree.animation_data.action.name] = None
+#             action_on_type[blender_material.node_tree.animation_data.action.name] = "NODETREE"
+
+#         # Collect associated strips from NLA tracks.
+#         if export_settings['gltf_animation_mode'] == "ACTIONS":
+#             for track in blender_material.node_tree.animation_data.nla_tracks:
+#                 # Multi-strip tracks do not export correctly yet (they need to be baked),
+#                 # so skip them for now and only write single-strip tracks.
+#                 non_muted_strips = [strip for strip in track.strips if strip.action is not None and strip.mute is False]
+#                 if track.strips is None or len(non_muted_strips) != 1:
+#                     continue
+#                 for strip in non_muted_strips:
+#                     blender_actions.append(strip.action)
+#                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
+#                     action_on_type[strip.action.name] = "NODETREE"
+
+#     # Remove duplicate actions.
+#     blender_actions = list(set(blender_actions))
+#     # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
+#     blender_actions.sort(key = lambda a: a.name.lower())
+
+#     return [(blender_action, blender_tracks[blender_action.name], action_on_type[blender_action.name]) for blender_action in blender_actions]
+
+# def gather_animation_fcurves(
+#         blender_material,
+#         blender_action: bpy.types.Action,
+#         export_settings
+#         ):
+
+#     print(">1")
+
+#     name = __gather_name(blender_action, export_settings)
+
+#     channels, to_be_sampled = __gather_channels_fcurves(blender_material, blender_action, export_settings)
+
+#     animation = gltf2_io.Animation(
+#         channels=channels,
+#         extensions=None,
+#         extras=__gather_extras_animation(blender_action, export_settings),
+#         name=name,
+#         samplers=[]
+#     )
+
+#     if not animation.channels:
+#         return None, to_be_sampled
+
+#     return animation, to_be_sampled
+
+# def __gather_extras_animation(blender_action, export_settings):
+#     if export_settings['gltf_extras']:
+#         return generate_extras(blender_action)
+#     return None
+
+# #TODOPointer to cache ?
+# def __gather_channels_fcurves(blender_material, blender_action, export_settings):
+
+#     channels_to_perform, to_be_sampled = get_channel_groups(blender_material, blender_action, "MATERIAL", export_settings)
+
+#     print(channels_to_perform)
+
+#     # custom_range = None
+#     # if blender_action.use_frame_range:
+#     #     custom_range = (blender_action.frame_start, blender_action.frame_end)
+
+#     # channels = []
+#     # for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
+#     #     for channel_group in chan['properties'].values():
+#     #         channel = __gather_animation_fcurve_channel(blender_material, channel_group, custom_range, export_settings)
+#     #         if channel is not None:
+#     #             channels.append(channel)
+
+
+#     # return channels, to_be_sampled
+
+# def get_channel_groups(asset, blender_action: bpy.types.Action, asset_type, export_settings):
+#     targets = {}
+
+
+#     to_be_sampled = [] # (asset , type , prop ) : type can be material or nodetree
+
+#     for fcurve in blender_action.fcurves:
+#         type_ = None
+#         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
+#         if len(fcurve.keyframe_points) == 0:
+#             continue
+#         try:
+#             # example of target_property for material or nodetree TODOPointer
+#             target_property = get_target_property_name(fcurve.data_path)
+#         except:
+#             gltf2_io_debug.print_console("WARNING", "Invalid animation fcurve name on action {}".format(blender_action.name))
+#             continue
+#         object_path = get_target_object_path(fcurve.data_path)
+
+#         # find the material affected by this action
+#         # material_path : blank for asset itself, nodes[...] for NODETREE
+#         if not object_path:
+#             target = asset
+#             type_ = asset_type
+#         else:
+#             target = get_object_from_datapath(asset, object_path)
+#             type_ = "NODETREE" if object_path.startswith("nodes.") else None
+
+
+#         # group channels by target object and affected property of the target
+#         target_data = targets.get(target, {})
+#         target_data['type'] = type_
+#         target_data['asset'] = asset
+
+#         target_properties = target_data.get('properties', {})
+#         channels = target_properties.get(target_property, [])
+#         channels.append(fcurve)
+#         target_properties[target_property] = channels
+#         target_data['properties'] = target_properties
+#         targets[target] = target_data
+
+
+#     # Now that all curves are extracted,
+#     #    - check that there is no normal + delta transforms
+#     #    - check that each group can be exported not sampled
+#     #    - be sure that shapekeys curves are correctly sorted
+
+#     for obj, target_data in targets.items():
+#         properties = target_data['properties'].keys()
+#         properties = [get_target(prop) for prop in properties]
+
+#         # Check if the property can be exported without sampling
+#         new_properties = {}
+#         for prop in target_data['properties'].keys():
+#             # if needs_baking(asset, target_data['properties'][prop], export_settings) is True:
+#             #     to_be_sampled.append((obj_uuid, target_data['type'], get_channel_from_target(get_target(prop)), target_data['bone'])) # bone can be None if not a bone :)
+#             # else: #TODOPointer
+#             new_properties[prop] = target_data['properties'][prop]
+
+#         target_data['properties'] = new_properties
+
+#         for prop in target_data['properties'].keys():
+#             target_data['properties'][prop] = tuple(target_data['properties'][prop])
+
+#     to_be_sampled = list(set(to_be_sampled))
+
+#     return targets, to_be_sampled

@@ -118,9 +118,9 @@ def gather_base_color_factor(info, export_settings):
     rgb, alpha = None, None
 
     if 'rgb_socket' in info:
-        rgb = gltf2_blender_get.get_factor_from_socket(info['rgb_socket'], kind='RGB')
+        rgb, path = gltf2_blender_get.get_factor_from_socket(info['rgb_socket'], kind='RGB')
     if 'alpha_socket' in info:
-        alpha = gltf2_blender_get.get_factor_from_socket(info['alpha_socket'], kind='VALUE')
+        alpha, path = gltf2_blender_get.get_factor_from_socket(info['alpha_socket'], kind='VALUE')
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0
