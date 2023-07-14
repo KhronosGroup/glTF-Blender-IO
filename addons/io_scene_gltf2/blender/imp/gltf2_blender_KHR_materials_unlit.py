@@ -52,3 +52,5 @@ def unlit(mh):
         color_socket=emission_node.inputs['Color'],
         alpha_socket=alpha_socket,
     )
+
+    #TODOPointer KHR_animation_pointer on unlit materials ?
