@@ -169,7 +169,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
 
     texture_transform = None
     if node and node.type == 'MAPPING':
-        texture_transform = gltf2_blender_get.get_texture_transform_from_mapping_node(node)
+        texture_transform = gltf2_blender_get.get_texture_transform_from_mapping_node(node, export_settings)
         node = previous_node(node.inputs['Vector'])
 
     texcoord_idx = 0

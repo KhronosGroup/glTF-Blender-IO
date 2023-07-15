@@ -115,7 +115,19 @@ def __gather_base_color_texture(blender_material, export_settings):
     if not inputs:
         return None, None, None
 
-    return gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
+    export_settings['current_texture_transform'] = {}
+    texture_info =  gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
+
+    if len(export_settings['current_texture_transform']) != 0:
+        for k in export_settings['current_texture_transform'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_texture_transform'][k]['length']
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "pbrMetallicRoughness/baseColorTexture/extensions")
+            export_settings['current_paths'][k] = path_
+
+    export_settings['current_texture_transform'] = {}
+
+    return texture_info
 
 
 def __gather_extensions(blender_material, export_settings):

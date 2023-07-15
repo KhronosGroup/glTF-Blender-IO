@@ -149,7 +149,7 @@ def find_shader_image_from_shader_socket(shader_socket, max_hops=10):
     return None
 
 
-def get_texture_transform_from_mapping_node(mapping_node):
+def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     if mapping_node.vector_type not in ["TEXTURE", "POINT", "VECTOR"]:
         gltf2_io_debug.print_console("WARNING",
             "Skipping exporting texture transform because it had type " +
@@ -215,8 +215,25 @@ def get_texture_transform_from_mapping_node(mapping_node):
     if texture_transform["rotation"] == 0:
         del(texture_transform["rotation"])
 
-    if len(texture_transform) == 0:
-        return None
+    # TODOPointer: Even if all is zero, but animated, we need to keep it
+    # if len(texture_transform) == 0:
+    #     return None
+
+    path_ = {}
+    path_['length'] = 2
+    path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
+    export_settings['current_texture_transform']["node_tree." + mapping_node.inputs['Location'].path_from_id() + ".default_value"] = path_
+
+    path_ = {}
+    path_['length'] = 2
+    path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/scale"
+    export_settings['current_texture_transform']["node_tree." + mapping_node.inputs['Scale'].path_from_id() + ".default_value"] = path_
+    path_ = {}
+    path_['length'] = 1
+    path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/rotation"
+    export_settings['current_texture_transform']["node_tree." + mapping_node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
+
+
 
     return texture_transform
 
