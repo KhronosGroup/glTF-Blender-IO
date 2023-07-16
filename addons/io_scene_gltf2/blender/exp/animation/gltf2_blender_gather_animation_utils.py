@@ -155,6 +155,19 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
     else:
         new_animations = animations
 
+    # If some strips have same channel animations, we already ignored some.
+    # But if the channels was exactly the same, we already pick index of sampler, and we have a mix of samplers, and index of samplers, in animation.samplers
+    # So get back to list of objects only
+    # This can lead to unused samplers... but keep them, as, anyway, data are not exported properly
+    for anim in new_animations:
+        new_samplers = []
+        for s in anim.samplers:
+            if type(s) == int:
+                new_samplers.append(anim.samplers[s])
+            else:
+                new_samplers.append(s)
+        anim.samplers = new_samplers
+
     return new_animations
 
 def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None):

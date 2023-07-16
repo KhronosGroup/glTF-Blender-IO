@@ -53,11 +53,11 @@ post_animation_track_switch_hook(self, blender_object, tracks, track_name, on_ty
 animation_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for action mode
 animation_track_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for track mode
 animation_gather_fcurve(self, blender_object, blender_action, export_settings)
-animation_action_object_sampled(self, animation, blender_object, blender_action, cache_key, export_settings)
+animation_action_object_sampled(self, gltf2_animation, blender_object, blender_action, cache_key, export_settings)
 gather_animation_channel_hook(self, animation_channel, channel, blender_object, node_channel_is_animated, export_settings)
 animation_gather_object_channel(self, blender_object, blender_action_name, export_settings)
 animation_gather_object_sampler(self, blender_object, action_name, export_settings)
-animation_action_sk_sampled(self, animation, blender_object, blender_action, cache_key, export_settings)
+animation_action_sk_sampled(self, gltf2_animation, blender_object, blender_action, cache_key, export_settings)
 animation_action_sk_sampled_target(self, blender_object, export_settings)
 animation_gather_sk_channels(self, blender_object, blender_action_name, export_settings)
 animation_gather_sk_channel(self, blender_object, blender_action_name, export_settings)
@@ -66,7 +66,7 @@ animation_gather_fcurve_channel_sampler(self, blender_object, bone_name, export_
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
 gather_tree_filter_tag_hook(self, tree, export_settings)
-animation_action_armature_sampled(self, animation, blender_object, blender_action, cache_key, export_settings)
+animation_action_armature_sampled(self, gltf2_animation, blender_object, blender_action, cache_key, export_settings)
 gather_animation_bone_sampled_channel_target_hook(self, blender_object, bone, channel, export_settings)
 gather_animation_object_sampled_channel_target_hook(self, blender_object, channel)
 gather_attribute_keep(self, keep_attribute, export_settings)
