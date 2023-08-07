@@ -476,7 +476,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_optimize_animation_keep_anim_armature: BoolProperty(
         name='Force keeping channels for bones',
         description=(
-            "if all keyframes are identical in a rig, "
+            "If all keyframes are identical in a rig, "
             "force keeping the minimal animation. "
             "When off, all possible channels for "
             "the bones will be exported, even if empty "
