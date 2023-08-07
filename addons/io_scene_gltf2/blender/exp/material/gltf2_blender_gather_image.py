@@ -243,7 +243,7 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
                 dst_chan = Channel.G
             elif socket.name == "Specular": # For original KHR_material_specular
                 dst_chan = Channel.A
-            elif socket.name == "Sigma": # For KHR_materials_sheen
+            elif socket.name == "Roughness" and socket.node.type == "BSDF_SHEEN": # For KHR_materials_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:

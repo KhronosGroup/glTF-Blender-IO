@@ -257,9 +257,9 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
 Sheen
 ^^^^^
 
-When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
-extension will be included in the export. The Sheen Color will be exported from Color socket of Velvet node.
-Sheen Roughness will be exported from Sigma socket.
+When the *Sheen BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
+extension will be included in the export. The Sheen Color will be exported from Color socket of Sheen node.
+Sheen Roughness will be exported from Roughness socket.
 
 If a Sheen Roughness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
 
@@ -267,7 +267,7 @@ If a Sheen Roughness Texture is used, glTF requires the values be written to the
 
 .. tip::
 
-   Velvet BSDF node is only available on Cycles render engine.
+   Sheen BSDF node is only available on Cycles render engine.
    You may have to temporary switch to Cycles to add this node, and get back to Eevee.
 
 .. note::
@@ -276,7 +276,7 @@ If a Sheen Roughness Texture is used, glTF requires the values be written to the
    the resulting shader is not fully energy conservative.
    You may find some difference between Blender render, and glTF render.
    Sheen models are not fully compatible between Blender and glTF.
-   This trick about adding Velvet Shader is the most accurate
+   This trick about adding Sheen Shader is the most accurate
    approximation (better that using Sheen Principled sockets).
 
 
