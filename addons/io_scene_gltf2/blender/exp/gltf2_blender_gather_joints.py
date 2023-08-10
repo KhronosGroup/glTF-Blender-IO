@@ -58,11 +58,13 @@ def gather_joint_vnode(vnode, export_settings):
     :return: a glTF2 node (acting as a joint)
     """
     vtree = export_settings['vtree']
-    blender_object = vtree.nodes[vnode].blender_object
     blender_bone = vtree.nodes[vnode].blender_bone
 
-
-    mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
+    #TODO add option
+    if vtree.nodes[vnode].parent_uuid is not None:
+        mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
+    else:
+        mat = vtree.nodes[vtree.nodes[vnode].armature].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
 
     trans, rot, sca = mat.decompose()
 

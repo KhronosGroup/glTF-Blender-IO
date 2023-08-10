@@ -19,6 +19,7 @@ from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 from .gltf2_blender_gather_cache import cached
 from . import gltf2_blender_gather_nodes
+from . import gltf2_blender_gather_joints
 from . import gltf2_blender_gather_tree
 from .animation.sampled.object.gltf2_blender_gather_object_keyframes import get_cache_data
 from .animation.gltf2_blender_gather_animations import gather_animations
@@ -62,6 +63,7 @@ def __gather_scene(blender_scene, export_settings):
     vtree = gltf2_blender_gather_tree.VExportTree(export_settings)
     vtree.construct(blender_scene)
     vtree.search_missing_armature() # In case armature are no parented correctly
+    vtree.bake_armature_bone_list() # Used in case we remove the armature
 
     export_user_extensions('vtree_before_filter_hook', export_settings, vtree)
 
@@ -76,12 +78,22 @@ def __gather_scene(blender_scene, export_settings):
 
     export_settings['vtree'] = vtree
 
+    #TODO add option
     for r in [vtree.nodes[r] for r in vtree.roots]:
-        node = gltf2_blender_gather_nodes.gather_node(
-            r, export_settings)
-        if node is not None:
-            scene.nodes.append(node)
-
+        if r.blender_type != gltf2_blender_gather_tree.VExportNode.BONE:
+            node = gltf2_blender_gather_nodes.gather_node(
+                r, export_settings)
+            if node is not None:
+                print(node.name)
+                scene.nodes.append(node)
+        else:
+            # We can have bone are root of scene because we remove the armature object
+            # and the armature as at root of scene
+            node = gltf2_blender_gather_joints.gather_joint_vnode(
+                r.uuid, export_settings)
+            if node is not None:
+                print(node.name)
+                scene.nodes.append(node)
     vtree.add_neutral_bones()
 
     export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)

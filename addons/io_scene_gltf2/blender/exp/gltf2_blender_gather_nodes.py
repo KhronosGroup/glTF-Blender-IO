@@ -30,6 +30,7 @@ from . import gltf2_blender_gather_lights
 from .gltf2_blender_gather_tree import VExportNode
 
 def gather_node(vnode, export_settings):
+
     blender_object = vnode.blender_object
 
     skin = gather_skin(vnode.uuid, export_settings)
@@ -38,7 +39,7 @@ def gather_node(vnode, export_settings):
 
     node = gltf2_io.Node(
         camera=__gather_camera(blender_object, export_settings),
-        children=__gather_children(vnode, blender_object, export_settings),
+        children=__gather_children(vnode, export_settings),
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
@@ -70,24 +71,36 @@ def __gather_camera(blender_object, export_settings):
     return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
 
 
-def __gather_children(vnode, blender_object, export_settings):
+def __gather_children(vnode, export_settings):
     children = []
 
     vtree = export_settings['vtree']
 
-    # Standard Children / Collection
-    for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
-        node = gather_node(c, export_settings)
-        if node is not None:
-            children.append(node)
+    if vnode.blender_object.name == "Plane":
+        print([vtree.nodes[c].blender_object.name for c in vnode.children])
 
+    # Standard Children / Collection
+    # TODO add option
+    # for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
+    #     node = gather_node(c, export_settings)
+    #     if node is not None:
+    #         children.append(node)
+    for c in [vtree.nodes[c] for c in vnode.children]:
+        if c.blender_type != gltf2_blender_gather_tree.VExportNode.BONE:
+            node = gather_node(c, export_settings)
+            if node is not None:
+                children.append(node)
+        else:
+            # We come here because armature was remove, and bone can be a child of any object
+            joint = gltf2_blender_gather_joints.gather_joint_vnode(c.uuid, export_settings)
+            children.append(joint)
+
+            #TODO : object parented to bone
 
     # Armature --> Retrieve Blender bones
     if vnode.blender_type == gltf2_blender_gather_tree.VExportNode.ARMATURE:
         root_joints = []
-
-        all_armature_children = vnode.children
-        root_bones_uuid = [c for c in all_armature_children if export_settings['vtree'].nodes[c].blender_type == VExportNode.BONE]
+        root_bones_uuid = export_settings['vtree'].get_root_bones_uuid(vnode.uuid)
         for bone_uuid in root_bones_uuid:
             joint = gltf2_blender_gather_joints.gather_joint_vnode(bone_uuid, export_settings)
             children.append(joint)
@@ -98,25 +111,14 @@ def __gather_children(vnode, blender_object, export_settings):
         for n in [vtree.nodes[i] for i in vtree.get_all_bones(vnode.uuid)]:
             direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE])
 
-
-        def find_parent_joint(joints, name):
-            for joint in joints:
-                if joint.name == name:
-                    return joint
-                parent_joint = find_parent_joint(joint.children, name)
-                if parent_joint:
-                    return parent_joint
-            return None
-
         for child in direct_bone_children: # List of object that are parented to bones
             # find parent joint
-            parent_joint = find_parent_joint(root_joints, vtree.nodes[child].blender_object.parent_bone)
+            parent_joint = __find_parent_joint(root_joints, vtree.nodes[child].blender_object.parent_bone)
             if not parent_joint:
                 continue
             child_node = gather_node(vtree.nodes[child], export_settings)
             if child_node is None:
                 continue
-            blender_bone = blender_object.pose.bones[parent_joint.name]
 
             mat = vtree.nodes[vtree.nodes[child].parent_bone_uuid].matrix_world.inverted_safe() @ vtree.nodes[child].matrix_world
             loc, rot_quat, scale = mat.decompose()
@@ -141,6 +143,15 @@ def __gather_children(vnode, blender_object, export_settings):
             parent_joint.children.append(child_node)
 
     return children
+
+def __find_parent_joint(joints, name):
+    for joint in joints:
+        if joint.name == name:
+            return joint
+        parent_joint = __find_parent_joint(joint.children, name)
+        if parent_joint:
+            return parent_joint
+    return None
 
 
 def __gather_extensions(blender_object, export_settings):
