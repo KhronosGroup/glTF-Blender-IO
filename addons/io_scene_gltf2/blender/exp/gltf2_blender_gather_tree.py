@@ -544,3 +544,13 @@ class VExportTree:
                     self.nodes[self.nodes[bone].parent_uuid].children.remove(bone)
                     self.nodes[bone].parent_uuid = arma
                     self.nodes[arma].children.append(bone)
+
+    def break_obj_hierarchy(self):
+        # Can be usefull when matrix is not decomposable
+        # TODO: if we get real collection, we probably need to adapt this code
+        # TODO: check if we need to keep parenting in case of skined object?
+        for obj in self.get_all_objects():
+            if self.nodes[obj].parent_uuid is not None:
+                self.nodes[self.nodes[obj].parent_uuid].children.remove(obj)
+                self.nodes[obj].parent_uuid = None
+                self.roots.append(obj)

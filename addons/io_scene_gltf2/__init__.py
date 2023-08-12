@@ -465,6 +465,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_hierarchy_flatten_objs: BoolProperty(
+        name='Flatten Object Hierarchy',
+        description='Flatten Object Hierarchy. Useful in case of non decomposable transformation matrix',
+        default=False
+    )
+
     export_optimize_animation_size: BoolProperty(
         name='Optimize Animation Size',
         description=(
@@ -773,6 +779,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_animations'] = self.export_animations
         export_settings['gltf_def_bones'] = self.export_def_bones
         export_settings['gltf_flatten_bones_hierarchy'] = self.export_hierarchy_flatten_bones
+        export_settings['gltf_flatten_obj_hierarchy'] = self.export_hierarchy_flatten_objs
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
@@ -976,6 +983,29 @@ class GLTF_PT_export_data(bpy.types.Panel):
 
     def draw(self, context):
         pass
+
+class GLTF_PT_export_data_scene(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Scene Graph"
+    bl_parent_id = "GLTF_PT_export_data"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+        layout.prop(operator, 'export_hierarchy_flatten_objs')
+
 
 class GLTF_PT_export_data_mesh(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1732,6 +1762,7 @@ classes = (
     GLTF_PT_export_include,
     GLTF_PT_export_transform,
     GLTF_PT_export_data,
+    GLTF_PT_export_data_scene,
     GLTF_PT_export_data_mesh,
     GLTF_PT_export_data_material,
     GLTF_PT_export_data_original_pbr,
