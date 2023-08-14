@@ -327,8 +327,9 @@ In glTF, alpha blending is intended to represent physical materials that are par
 the specified geometry, such as medical gauze wrap. Transmission is intended to represent physical materials
 that are solid but allow non-specularly-reflected light to transmit through the material, like glass.
 
-glTF does not offer a separate "Transmission Roughness", but the material's base roughness
-can be used to blur the transmission, like frosted glass.
+.. tip::
+
+   The material's base roughness can be used to blur the transmission, like frosted glass.
 
 .. tip::
 
