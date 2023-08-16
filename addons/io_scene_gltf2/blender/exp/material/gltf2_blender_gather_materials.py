@@ -340,7 +340,7 @@ def __gather_orm_texture(blender_material, export_settings):
         return None
 
     # Double-check this will past the filter in texture_info
-    info, info_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, export_settings)
+    info, info_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, (), export_settings)
     if info is None:
         return None
 

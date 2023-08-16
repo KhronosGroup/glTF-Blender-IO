@@ -25,6 +25,7 @@ from . import gltf2_blender_gather_image
 @cached
 def gather_texture(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
+        default_sockets: typing.Tuple[bpy.types.NodeSocket],
         export_settings):
     """
     Gather texture sampling information and image channels from a blender shader texture attached to a shader socket.
@@ -37,7 +38,7 @@ def gather_texture(
     if not __filter_texture(blender_shader_sockets, export_settings):
         return None, None
 
-    source, factor = __gather_source(blender_shader_sockets, export_settings)
+    source, factor = __gather_source(blender_shader_sockets, default_sockets, export_settings)
 
     texture = gltf2_io.Texture(
         extensions=__gather_extensions(blender_shader_sockets, export_settings),
@@ -88,8 +89,8 @@ def __gather_sampler(blender_shader_sockets, export_settings):
         export_settings)
 
 
-def __gather_source(blender_shader_sockets, export_settings):
-    return gltf2_blender_gather_image.gather_image(blender_shader_sockets, export_settings)
+def __gather_source(blender_shader_sockets, default_sockets, export_settings):
+    return gltf2_blender_gather_image.gather_image(blender_shader_sockets, default_sockets, export_settings)
 
 # Helpers
 
