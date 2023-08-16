@@ -39,8 +39,8 @@ def gather_texture_info(primary_socket, blender_shader_sockets, default_sockets,
 def gather_material_normal_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, (), 'NORMAL', filter_type, export_settings)
 
-def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
-    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, (), 'OCCLUSION', filter_type, export_settings)
+def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, default_sockets, export_settings, filter_type='ALL'):
+    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, default_sockets, 'OCCLUSION', filter_type, export_settings)
 
 
 @cached
