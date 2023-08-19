@@ -24,10 +24,10 @@ from . import gltf2_blender_gather_texture_info
 @cached
 def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
     if not __filter_pbr_material(blender_material, export_settings):
-        return None, None
+        return None, None, None
 
-    base_color_texture, use_active_uvmap_base_color_texture, _ = __gather_base_color_texture(blender_material, export_settings)
-    metallic_roughness_texture, use_active_uvmap_metallic_roughness_texture, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
+    base_color_texture, use_active_uvmap_base_color_texture, uvmap_attribute_name_base_color_texture, _ = __gather_base_color_texture(blender_material, export_settings)
+    metallic_roughness_texture, use_active_uvmap_metallic_roughness_texture, uvmap_attribute_name_metallic_roughness, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
 
     material = gltf2_io.MaterialPBRMetallicRoughness(
         base_color_factor=__gather_base_color_factor(blender_material, export_settings),
@@ -46,9 +46,17 @@ def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export
     if use_active_uvmap_metallic_roughness_texture is True:
         uvmap_actives.append("metallicRoughnessTexture")
 
+    # merge all UVMap attribute names infos
+    uvmap_attribute_names = {}
+    if uvmap_attribute_name_base_color_texture:
+        uvmap_attribute_names.update(uvmap_attribute_name_base_color_texture)
+    if uvmap_attribute_name_metallic_roughness:
+        uvmap_attribute_names.update(uvmap_attribute_name_metallic_roughness)
+
+
     export_user_extensions('gather_material_pbr_metallic_roughness_hook', export_settings, material, blender_material, orm_texture)
 
-    return material, uvmap_actives
+    return material, uvmap_actives, uvmap_attribute_names
 
 
 def __filter_pbr_material(blender_material, export_settings):
@@ -106,9 +114,10 @@ def __gather_base_color_texture(blender_material, export_settings):
         if socket is not None and __has_image_node_from_socket(socket)
     )
     if not inputs:
-        return None, None, None
+        return None, None, None, None
 
-    return gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
+    tex, uvmap_active, attribute_name, factor = gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
+    return tex, uvmap_active, {"baseColorTexture": attribute_name}, factor
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -142,7 +151,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not __has_image_node_from_socket(metallic_roughness):
-            return None, None, None
+            return None, None, None, None
         texture_input = (metallic_roughness,)
     elif not hasMetal:
         texture_input = (roughness_socket,)
@@ -151,12 +160,13 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     else:
         texture_input = (metallic_socket, roughness_socket)
 
-    return gltf2_blender_gather_texture_info.gather_texture_info(
+    tex, uvmap_active, attribute_name, factor = gltf2_blender_gather_texture_info.gather_texture_info(
         texture_input[0],
         orm_texture or texture_input,
         export_settings,
     )
 
+    return tex, uvmap_active, {"metallicRoughnessTexture": attribute_name}, factor
 
 def __gather_roughness_factor(blender_material, export_settings):
     if not blender_material.use_nodes:

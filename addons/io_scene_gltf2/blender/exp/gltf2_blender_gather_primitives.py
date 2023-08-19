@@ -64,36 +64,20 @@ def gather_primitives(
     """
     primitives = []
 
-    # retrieve active render UVMap
-    active_uvmap_idx = 0
-    for i in range(len(blender_mesh.uv_layers)):
-        if blender_mesh.uv_layers[i].active_render is True:
-            active_uvmap_idx = i
-            break
+    active_uvmap_idx = gltf2_blender_gather_primitives_extract.get_active_uvmap_index(blender_mesh)
 
-    blender_primitives = __gather_cache_primitives(blender_mesh, uuid_for_skined_data,
+    blender_primitives = __gather_cache_primitives(materials, blender_mesh, uuid_for_skined_data,
         vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
-        material_idx = internal_primitive['material']
-        material = None
 
-        if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
-            blender_material = None
-            mat = None
-            if materials:
-                i = material_idx if material_idx < len(materials) else -1
-                mat = materials[i]
-            if mat is not None:
-                material = gltf2_blender_gather_materials.gather_material(
-                    mat,
-                    active_uvmap_idx,
-                    export_settings
-                )
+        # We already call this function, in order to retrieve uvmap attribute, if any
+        # So here, only the cache will be used
+        material = gltf2_blender_gather_primitives_extract.get_material(internal_primitive['material'], internal_primitive, materials, active_uvmap_idx, export_settings)
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
-            extensions=__gather_extensions(blender_mesh, material_idx, active_uvmap_idx, export_settings),
+            extensions=__gather_extensions(blender_mesh, internal_primitive['material'], active_uvmap_idx, export_settings),
             extras=None,
             indices=internal_primitive['indices'],
             material=material,
@@ -107,6 +91,7 @@ def gather_primitives(
 
 @cached
 def get_primitive_cache_key(
+        materials,
         blender_mesh,
         uuid_for_skined_data,
         vertex_groups,
@@ -128,6 +113,7 @@ def get_primitive_cache_key(
 
 @cached_by_key(key=get_primitive_cache_key)
 def __gather_cache_primitives(
+        materials,
         blender_mesh: bpy.types.Mesh,
         uuid_for_skined_data,
         vertex_groups: bpy.types.VertexGroups,
@@ -140,7 +126,7 @@ def __gather_cache_primitives(
     primitives = []
 
     blender_primitives = gltf2_blender_gather_primitives_extract.extract_primitives(
-        blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
+        materials, blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
         primitive = {
@@ -148,7 +134,8 @@ def __gather_cache_primitives(
             "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
             "mode": internal_primitive.get('mode'),
             "material": internal_primitive.get('material'),
-            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
+            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
+            "uvmap_attributes_index": internal_primitive["uvmap_attributes_index"], #This will not be on final glTF dict
         }
         primitives.append(primitive)
 

@@ -47,9 +47,9 @@ def __gather_texture_info_helper(
         filter_type: str,
         export_settings):
     if not __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
-        return None, None, None
+        return None, None, None, None
 
-    tex_transform, tex_coord, use_active_uvmap = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
+    tex_transform, tex_coord, use_active_uvmap, attribute_names = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
 
     index, factor = __gather_index(blender_shader_sockets, export_settings)
 
@@ -72,11 +72,11 @@ def __gather_texture_info_helper(
         texture_info = gltf2_io.MaterialOcclusionTextureInfoClass(**fields)
 
     if texture_info.index is None:
-        return None, None, None
+        return None, None, None, None
 
     export_user_extensions('gather_texture_info_hook', export_settings, texture_info, blender_shader_sockets)
 
-    return texture_info, use_active_uvmap, factor
+    return texture_info, use_active_uvmap, attribute_names, factor
 
 
 def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
@@ -173,6 +173,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
         node = previous_node(node.inputs['Vector'])
 
     texcoord_idx = 0
+    attribute_name = None
     use_active_uvmap = True
     if node and node.type == 'UVMAP' and node.uv_map:
         # Try to gather map index.
@@ -185,8 +186,13 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
                         texcoord_idx = i
                         use_active_uvmap = False
                         break
+    elif node and node.type == 'ATTRIBUTE' \
+            and node.attribute_type == "GEOMETRY" \
+            and node.attribute_name:
+        use_active_uvmap = False
+        attribute_name = node.attribute_name
 
-    return texture_transform, texcoord_idx or None, use_active_uvmap
+    return texture_transform, texcoord_idx or None, use_active_uvmap, attribute_name
 
 # TODOExt deduplicate
 def __get_tex_from_socket(socket):
