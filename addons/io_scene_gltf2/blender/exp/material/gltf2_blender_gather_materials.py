@@ -49,9 +49,13 @@ def gather_material(blender_material, active_uvmap_index, export_settings, get_u
 
     # TODO : when user doesn't export UVMap
 
-    material, uvmap_attributes = gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, export_settings)
+    base_material, uvmap_attributes = gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, export_settings)
 
     if len(uvmap_attributes_index) > 0 and len(uvmap_attributes) > 0:
+
+        material = deepcopy(base_material)
+        __get_new_material_texture_shared(base_material, material)
+
         # WARNING Any modification here (Because we have some new textures) must also go on active_uvmaps assignation
         for tex in uvmap_attributes.keys():
             if tex == "emissiveTexture":
@@ -80,6 +84,8 @@ def gather_material(blender_material, active_uvmap_index, export_settings, get_u
                 material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
             elif tex == "sheenRoughnessTexture":
                 material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
+    else:
+        material = base_material
 
     if get_uvmap_attributes is False:
         return material
