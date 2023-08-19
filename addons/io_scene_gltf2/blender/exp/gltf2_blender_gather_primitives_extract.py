@@ -401,8 +401,6 @@ class PrimitiveCreator:
             _, uvmap_attributes = get_material(material_idx, None, self.materials, get_active_uvmap_index(self.blender_mesh), self.export_settings, get_uvmap_attributes=True)
             self.uvmap_attribute_list = list(set(uvmap_attributes.values()))
 
-            # TODO edge and point
-
             additional_fields = []
             for attr in self.uvmap_attribute_list:
                 if attr + str(0) not in self.dots.dtype.names: # In case user exports custom attributes, we may have it already
@@ -543,7 +541,8 @@ class PrimitiveCreator:
                     'attributes': self.attributes,
                     'indices': indices,
                     'mode': 1,  # LINES
-                    'material': 0
+                    'material': 0,
+                    'uvmap_attributes_index': {}
                 })
 
         if self.export_settings['gltf_loose_points']:
@@ -589,7 +588,8 @@ class PrimitiveCreator:
                 primitives.append({
                     'attributes': self.attributes,
                     'mode': 0,  # POINTS
-                    'material': 0
+                    'material': 0,
+                    'uvmap_attributes_index': {}
                 })
 
         print_console('INFO', 'Primitives created: %d' % len(primitives))

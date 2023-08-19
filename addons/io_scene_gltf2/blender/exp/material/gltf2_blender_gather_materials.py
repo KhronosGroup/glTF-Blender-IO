@@ -52,7 +52,7 @@ def gather_material(blender_material, active_uvmap_index, export_settings, get_u
     material, uvmap_attributes = gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, export_settings)
 
     if len(uvmap_attributes_index) > 0 and len(uvmap_attributes) > 0:
-        #TODO de-duplicate
+        # WARNING Any modification here (Because we have some new textures) must also go on active_uvmaps assignation
         for tex in uvmap_attributes.keys():
             if tex == "emissiveTexture":
                 material.emissive_texture.tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
@@ -176,6 +176,7 @@ def gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, e
 
     active_uvmap_index = active_uvmap_index if active_uvmap_index != 0 else None
 
+    # WARNING Any modification here (Because we have some new textures) must also go on Custom Attribute UVMap assignation
     for tex in uvmap_actives:
         if tex == "emissiveTexture":
             material.emissive_texture.tex_coord = active_uvmap_index
