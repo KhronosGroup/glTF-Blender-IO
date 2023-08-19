@@ -996,7 +996,10 @@ def get_active_uvmap_index(blender_mesh):
     return active_uvmap_idx
 
 def get_material(material_idx, internal_primitive, materials, active_uvmap_idx, export_settings, get_uvmap_attributes=False):
-    material = None
+    if get_uvmap_attributes is False:
+        material = None
+    else:
+        material = None, {}
 
     if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
         mat = None

@@ -117,7 +117,7 @@ def __gather_base_color_texture(blender_material, export_settings):
         return None, None, None, None
 
     tex, uvmap_active, attribute_name, factor = gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
-    return tex, uvmap_active, {"baseColorTexture": attribute_name}, factor
+    return tex, uvmap_active, {"baseColorTexture": attribute_name} if attribute_name else {}, factor
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -166,7 +166,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
         export_settings,
     )
 
-    return tex, uvmap_active, {"metallicRoughnessTexture": attribute_name}, factor
+    return tex, uvmap_active, {"metallicRoughnessTexture": attribute_name} if attribute_name else {}, factor
 
 def __gather_roughness_factor(blender_material, export_settings):
     if not blender_material.use_nodes:
