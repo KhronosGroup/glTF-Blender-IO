@@ -1019,7 +1019,7 @@ class GLTF_PT_export_data_mesh(bpy.types.Panel):
         col.prop(operator, 'use_mesh_vertices')
 
         col = layout.column()
-        col.prop(operator, 'export_apply')
+        col.prop(operator, 'export_shared_accessors')
 
 
 class GLTF_PT_export_data_material(bpy.types.Panel):
