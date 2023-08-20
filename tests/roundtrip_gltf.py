@@ -45,12 +45,18 @@ try:
         os.makedirs(output_dir)
     if '--use-variants' in argv:
         bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
+
+    if '--export_not_shared_accessors' in argv:
+        export_shared_accessors = False
+    else:
+        export_shared_accessors = True
+
     if '--no-sample-anim' in argv:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_force_sampling=False)
     elif '--use-original-specular' in argv:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_original_specular=True)
     elif '--export-attributes' in argv:
-        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_attributes=True)
+        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_attributes=True, export_shared_accessors=export_shared_accessors)
     else:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]))
 except Exception as err:

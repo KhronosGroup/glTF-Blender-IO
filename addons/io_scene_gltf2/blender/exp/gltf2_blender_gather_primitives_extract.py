@@ -32,7 +32,10 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     primitive_creator.create_dots_data_structure()
     primitive_creator.populate_dots_data()
     primitive_creator.primitive_split()
-    return primitive_creator.primitive_creation_shared()
+    if export_settings['gltf_shared_accessors'] is False:
+        return primitive_creator.primitive_creation_not_shared()
+    else:
+        return primitive_creator.primitive_creation_shared()
 
 class PrimitiveCreator:
     def __init__(self, blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
