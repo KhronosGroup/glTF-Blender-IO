@@ -139,18 +139,40 @@ def __gather_cache_primitives(
     """
     primitives = []
 
-    blender_primitives = gltf2_blender_gather_primitives_extract.extract_primitives(
+    blender_primitives, shared_attributes = gltf2_blender_gather_primitives_extract.extract_primitives(
         blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
 
-    for internal_primitive in blender_primitives:
-        primitive = {
-            "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
-            "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
-            "mode": internal_primitive.get('mode'),
-            "material": internal_primitive.get('material'),
-            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
-        }
-        primitives.append(primitive)
+
+    if shared_attributes is not None:
+
+        shared = {}
+        shared["attributes"] = shared_attributes
+
+        attributes = __gather_attributes(shared, blender_mesh, modifiers, export_settings)
+        targets = __gather_targets(shared, blender_mesh, modifiers, export_settings)
+
+        for internal_primitive in blender_primitives:
+
+            primitive = {
+                "attributes": attributes,
+                "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+                "mode": internal_primitive.get('mode'),
+                "material": internal_primitive.get('material'),
+                "targets": targets
+            }
+            primitives.append(primitive)
+
+    else:
+
+        for internal_primitive in blender_primitives:
+            primitive = {
+                    "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "mode": internal_primitive.get('mode'),
+                    "material": internal_primitive.get('material'),
+                    "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
+                }
+            primitives.append(primitive)
 
     return primitives
 

@@ -32,7 +32,7 @@ def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups
     primitive_creator.create_dots_data_structure()
     primitive_creator.populate_dots_data()
     primitive_creator.primitive_split()
-    return primitive_creator.primitive_creation()
+    return primitive_creator.primitive_creation_shared()
 
 class PrimitiveCreator:
     def __init__(self, blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
@@ -389,7 +389,56 @@ class PrimitiveCreator:
             for material_idx in unique_material_idxs:
                 self.prim_indices[material_idx] = loop_indices[loop_material_idxs == material_idx]
 
-    def primitive_creation(self):
+    def primitive_creation_shared(self):
+        primitives = []
+        self.dots, shared_dot_indices = np.unique(self.dots, return_inverse=True)
+
+        self.blender_idxs = self.dots['vertex_index']
+
+        self.attributes = {}
+
+        for attr in self.blender_attributes:
+            if 'set' in attr:
+                attr['set'](attr)
+            else:
+                self.__set_regular_attribute(self.dots, attr)
+
+        if self.skin:
+            joints = [[] for _ in range(self.num_joint_sets)]
+            weights = [[] for _ in range(self.num_joint_sets)]
+
+            for vi in self.blender_idxs:
+                bones = self.vert_bones[vi]
+                for j in range(0, 4 * self.num_joint_sets):
+                    if j < len(bones):
+                        joint, weight = bones[j]
+                    else:
+                        joint, weight = 0, 0.0
+                    joints[j//4].append(joint)
+                    weights[j//4].append(weight)
+
+            for i, (js, ws) in enumerate(zip(joints, weights)):
+                self.attributes['JOINTS_%d' % i] = js
+                self.attributes['WEIGHTS_%d' % i] = ws
+
+
+        for material_idx, dot_indices in self.prim_indices.items():
+            indices = shared_dot_indices[dot_indices]
+
+            primitives.append({
+                # No attribute here, as they are shared accross all primitives
+                'indices': indices,
+                'material': material_idx
+            })
+
+        #TODO edge & point
+
+
+        print_console('INFO', 'Primitives created: %d' % len(primitives))
+
+        return primitives, self.attributes
+
+    def primitive_creation_not_shared(self):
         primitives = []
 
         for material_idx, dot_indices in self.prim_indices.items():
@@ -411,7 +460,7 @@ class PrimitiveCreator:
                 if 'set' in attr:
                     attr['set'](attr)
                 else: # Regular case
-                    self.__set_regular_attribute(attr)
+                    self.__set_regular_attribute(self.prim_dots, attr)
 
             if self.skin:
                 joints = [[] for _ in range(self.num_joint_sets)]
@@ -535,7 +584,7 @@ class PrimitiveCreator:
 
         print_console('INFO', 'Primitives created: %d' % len(primitives))
 
-        return primitives
+        return primitives, None
 
 ################################## Get ##################################################
 
@@ -908,10 +957,10 @@ class PrimitiveCreator:
             t_morph.rotate(rotation)
             self.morph_tangents[i] = t_morph - t  # back to delta
 
-    def __set_regular_attribute(self, attr):
-            res = np.empty((len(self.prim_dots), attr['len']), dtype=attr['type'])
+    def __set_regular_attribute(self, dots, attr):
+            res = np.empty((len(dots), attr['len']), dtype=attr['type'])
             for i in range(attr['len']):
-                res[:, i] = self.prim_dots[attr['gltf_attribute_name'] + str(i)]
+                res[:, i] = dots[attr['gltf_attribute_name'] + str(i)]
             self.attributes[attr['gltf_attribute_name']] = {}
             self.attributes[attr['gltf_attribute_name']]["data"] = res
             if 'gltf_attribute_name' == "NORMAL":
