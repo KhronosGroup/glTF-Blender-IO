@@ -425,6 +425,9 @@ class PrimitiveCreator:
         for material_idx, dot_indices in self.prim_indices.items():
             indices = shared_dot_indices[dot_indices]
 
+            if len(indices) == 0:
+                continue
+
             primitives.append({
                 # No attribute here, as they are shared accross all primitives
                 'indices': indices,

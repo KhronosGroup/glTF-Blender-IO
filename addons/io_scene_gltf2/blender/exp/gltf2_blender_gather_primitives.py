@@ -145,11 +145,12 @@ def __gather_cache_primitives(
 
     if shared_attributes is not None:
 
-        shared = {}
-        shared["attributes"] = shared_attributes
+        if len(blender_primitives) > 0:
+            shared = {}
+            shared["attributes"] = shared_attributes
 
-        attributes = __gather_attributes(shared, blender_mesh, modifiers, export_settings)
-        targets = __gather_targets(shared, blender_mesh, modifiers, export_settings)
+            attributes = __gather_attributes(shared, blender_mesh, modifiers, export_settings)
+            targets = __gather_targets(shared, blender_mesh, modifiers, export_settings)
 
         for internal_primitive in blender_primitives:
 
