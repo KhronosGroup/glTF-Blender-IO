@@ -16,7 +16,7 @@ import bpy
 import numpy as np
 from .gltf2_blender_image import TmpImageGuard, make_temp_image_copy, StoreImage
 
-def specular_calculation(stored):
+def specular_calculation(stored, export_settings):
 
     # See https://gist.github.com/proog128/d627c692a6bbe584d66789a5a6437a33
 
@@ -25,6 +25,7 @@ def specular_calculation(stored):
     for fill in stored.values():
         if isinstance(fill, StoreImage):
             if fill.image not in images:
+                export_settings['exported_images'][fill.image.name] = 2 # 2 = partially used
                 images.append(fill.image)
 
     if not images:

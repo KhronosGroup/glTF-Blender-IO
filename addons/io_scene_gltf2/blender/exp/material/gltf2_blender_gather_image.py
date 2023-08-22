@@ -127,7 +127,7 @@ def __gather_mime_type(sockets, export_image, export_settings):
 
     if export_settings["gltf_image_format"] == "AUTO":
         if export_image.original is None: # We are going to create a new image
-            image = export_image.blender_image()
+            image = export_image.blender_image(export_settings)
         else:
             # Using original image
             image = export_image.original

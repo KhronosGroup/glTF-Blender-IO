@@ -118,12 +118,17 @@ class ExportImage:
         else:
             return False
 
-    def blender_image(self) -> Optional[bpy.types.Image]:
+    def blender_image(self, export_settings) -> Optional[bpy.types.Image]:
         """If there's an existing Blender image we can use,
         returns it. Otherwise (if channels need packing),
         returns None.
         """
         if self.__on_happy_path():
+            # Store that this image is fully exported (used to export or not not used images)
+            for fill in self.fills.values():
+                export_settings['exported_images'][fill.image.name] = 1 # Fully used
+                break
+
             for fill in self.fills.values():
                 return fill.image
         return None
@@ -144,17 +149,21 @@ class ExportImage:
 
         # Happy path = we can just use an existing Blender image
         if self.__on_happy_path():
+            # Store that this image is fully exported (used to export or not not used images)
+            for fill in self.fills.values():
+                export_settings['exported_images'][fill.image.name] = 1 # Fully used
+                break
             return self.__encode_happy(export_settings), None
 
         # Unhappy path = we need to create the image self.fills describes or self.stores describes
         if self.numpy_calc is None:
             return self.__encode_unhappy(export_settings), None
         else:
-            pixels, width, height, factor = self.numpy_calc(self.stored)
+            pixels, width, height, factor = self.numpy_calc(self.stored, export_settings)
             return self.__encode_from_numpy_array(pixels, (width, height), export_settings), factor
 
     def __encode_happy(self, export_settings) -> bytes:
-        return self.__encode_from_image(self.blender_image(), export_settings)
+        return self.__encode_from_image(self.blender_image(export_settings), export_settings)
 
     def __encode_unhappy(self, export_settings) -> bytes:
         # We need to assemble the image out of channels.
@@ -166,6 +175,7 @@ class ExportImage:
             if isinstance(fill, FillImage):
                 if fill.image not in images:
                     images.append(fill.image)
+                    export_settings['exported_images'][fill.image.name] = 2 # 2 = partially used
 
         if not images:
             # No ImageFills; use a 1x1 white pixel
