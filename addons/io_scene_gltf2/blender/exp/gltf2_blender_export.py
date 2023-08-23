@@ -89,6 +89,7 @@ def __gather_gltf(exporter, export_settings):
     for animation in animations:
         exporter.add_animation(animation)
     exporter.traverse_unused_skins(unused_skins)
+    exporter.traverse_additional_images()
 
 
 def __create_buffer(exporter, export_settings):

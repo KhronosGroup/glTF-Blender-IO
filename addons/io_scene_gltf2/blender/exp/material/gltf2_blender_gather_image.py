@@ -337,3 +337,35 @@ def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
     else:
         path = image.filepath_raw.lower()
         return path.endswith('.jpg') or path.endswith('.jpeg') or path.endswith('.jpe')
+
+def get_gltf_image_from_blender_image(blender_image_name, export_settings):
+    image_data = ExportImage.from_blender_image(bpy.data.images[blender_image_name])
+
+    name = __gather_name(image_data, export_settings)
+    mime_type = __get_mime_type_of_image(blender_image_name, export_settings)
+
+    uri, _ = __gather_uri(image_data, mime_type, name, export_settings)
+    buffer_view, _ = __gather_buffer_view(image_data, mime_type, name, export_settings)
+
+    return gltf2_io.Image(
+        buffer_view=buffer_view,
+        extensions=None,
+        extras=None,
+        mime_type=mime_type,
+        name=name,
+        uri=uri
+    )
+
+def __get_mime_type_of_image(blender_image_name, export_settings):
+    #TODO webp
+    image = bpy.data.images[blender_image_name]
+    if image.channels == 4:
+        return "image/png"
+
+    if export_settings["gltf_image_format"] == "AUTO":
+        if __is_blender_image_a_jpeg(image):
+            return "image/jpeg"
+        return "image/png"
+
+    elif export_settings["gltf_image_format"] == "JPEG":
+        return "image/jpeg"

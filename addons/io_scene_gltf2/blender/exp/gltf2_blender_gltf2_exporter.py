@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import re
 import os
 from typing import List
@@ -21,7 +22,7 @@ from ...io.com import gltf2_io, gltf2_io_extensions
 from ...io.com.gltf2_io_path import path_to_uri, uri_to_path
 from ...io.exp import gltf2_io_binary_data, gltf2_io_buffer, gltf2_io_image_data
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
-
+from .material.gltf2_blender_gather_image import get_gltf_image_from_blender_image
 
 class GlTF2Exporter:
     """
@@ -185,6 +186,12 @@ class GlTF2Exporter:
     def traverse_unused_skins(self, skins):
         for s in skins:
             self.__traverse(s)
+
+    def traverse_additional_images(self):
+        for img in bpy.data.images:
+            # TODO manage full / partial / custom via hook ...
+            if img.name not in self.export_settings['exported_images'].keys():
+                self.__traverse(get_gltf_image_from_blender_image(img.name, self.export_settings))
 
     def add_animation(self, animation: gltf2_io.Animation):
         """
