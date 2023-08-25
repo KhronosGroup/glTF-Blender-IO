@@ -304,6 +304,8 @@ def gather_action_animations(  obj_uuid: int,
                     channel = gather_sampled_object_channel(obj_uuid, prop, blender_action.name, True, get_gltf_interpolation("LINEAR"), export_settings)
                 elif type_ == "SK":
                     channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, export_settings)
+                elif type_ == "EXTRA":
+                    channel = None
                 else:
                     print("Type unknown. Should not happen")
 
