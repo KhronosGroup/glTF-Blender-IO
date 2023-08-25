@@ -40,7 +40,7 @@ def gather_animation_fcurves_channels(
         custom_range = (blender_action.frame_start, blender_action.frame_end)
 
     channels = []
-    for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
+    for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0 and chan['type'] != "EXTRA"]:
         for channel_group in chan['properties'].values():
             channel = __gather_animation_fcurve_channel(chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
             if channel is not None:
@@ -83,7 +83,10 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         else:
             try:
                 target = get_object_from_datapath(blender_object, object_path)
-                type_ = "BONE"
+                if blender_object.type == "ARMATURE" and fcurve.data_path.startswith("pose.bones["):
+                    type_ = "BONE"
+                else:
+                    type_ = "EXTRA"
                 if blender_object.type == "MESH" and object_path.startswith("key_blocks"):
                     shape_key = blender_object.data.shape_keys.path_resolve(object_path)
                     if skip_sk(shape_key):
