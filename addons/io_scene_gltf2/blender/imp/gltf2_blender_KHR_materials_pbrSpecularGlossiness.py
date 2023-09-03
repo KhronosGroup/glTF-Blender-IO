@@ -41,7 +41,7 @@ def pbr_specular_glossiness(mh):
         make_emission_socket=mh.needs_emissive(),
         make_alpha_socket=not mh.is_opaque(),
         make_volume_socket=None, # No possible to have KHR_materials_volume with specular/glossiness
-        make_velvet_socket=None # No possible to have KHR_materials_volume with specular/glossiness
+        make_sheen_socket=None # No possible to have KHR_materials_volume with specular/glossiness
     )
 
     if emission_socket:

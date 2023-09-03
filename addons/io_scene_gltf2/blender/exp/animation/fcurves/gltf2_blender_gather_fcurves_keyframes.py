@@ -210,4 +210,3 @@ def __complete_key_tangents(key: Keyframe, non_keyed_values: typing.Tuple[typing
             key.set_value_index_in(i, non_keyed_values[i])
         if key.out_tangent is not None:
             key.set_value_index_out(i, non_keyed_values[i])
-

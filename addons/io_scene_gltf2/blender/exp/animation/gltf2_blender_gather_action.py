@@ -30,7 +30,7 @@ from .sampled.shapekeys.gltf2_blender_gather_sk_action_sampled import gather_act
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from .gltf2_blender_gather_drivers import get_sk_drivers
-from .gltf2_blender_gather_animation_utils import reset_bone_matrix, link_samplers, add_slide_data, merge_tracks_perform, bake_animation
+from .gltf2_blender_gather_animation_utils import reset_bone_matrix, reset_sk_data, link_samplers, add_slide_data, merge_tracks_perform, bake_animation
 
 def gather_actions_animations(export_settings):
 
@@ -278,6 +278,7 @@ def gather_action_animations(  obj_uuid: int,
                     or (blender_object.data.shape_keys.animation_data.action.name != blender_action.name):
                 if blender_object.data.shape_keys.animation_data.is_property_readonly('action'):
                     blender_object.data.shape_keys.animation_data.use_tweak_mode = False
+                reset_sk_data(blender_object, blender_actions, export_settings)
                 export_user_extensions('pre_animation_switch_hook', export_settings, blender_object, blender_action, track_name, on_type)
                 blender_object.data.shape_keys.animation_data.action = blender_action
                 export_user_extensions('post_animation_switch_hook', export_settings, blender_object, blender_action, track_name, on_type)
@@ -411,6 +412,7 @@ def gather_action_animations(  obj_uuid: int,
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
+        reset_sk_data(blender_object, blender_actions, export_settings)
         blender_object.data.shape_keys.animation_data.action = current_sk_action
 
     if blender_object and current_world_matrix is not None:

@@ -8,15 +8,13 @@ Documentation
 
 | Blender Version | Documentation |
 |---------|---------------------|
-| 3.5    | https://docs.blender.org/manual/en/3.5/addons/import_export/scene_gltf2.html  |
 | 3.6    | https://docs.blender.org/manual/en/3.6/addons/import_export/scene_gltf2.html  |
 | dev    | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
-* 3.5 is the current stable release. Check the `blender-v3.5-release` branch.
-* 2.80 - 3.4 are previous stable releases.
-* 3.3.x is the current Blender LTS release. Check the `blender-v3.3-release` branch (and `3.3.x` tag)
-* Next release will be 3.6, check the `blender-v3.6-release` branch.
+* 3.6 is the current stable release. Check the `blender-v3.6-release` branch.
+* 2.80 - 3.5 are previous stable releases.
+* 3.6.x is the current Blender LTS release. Check the `blender-v3.6-release` branch (and `3.6.x` tag)
 * main branch of this addon is mirrored in [Blender Addons main](https://projects.blender.org/blender/blender-addons/src/branch/main/io_scene_gltf2), that will become Blender 4.0.
 
 ### Legacy 2.79 Support
