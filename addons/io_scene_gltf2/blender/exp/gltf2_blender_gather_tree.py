@@ -330,7 +330,7 @@ class VExportTree:
     def display(self, mode):
         if mode == "simple":
             for n in self.roots:
-                print("Root", self.nodes[n].blender_object.name, "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
+                print("Root", self.nodes[n].blender_object.name if self.nodes[n].blender_object else "GN instance", "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
                 self.nodes[n].recursive_display(self, mode)
 
 
