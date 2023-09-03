@@ -33,6 +33,9 @@ class VExportNode:
     COLLECTION = 6
     INSTANCE = 7 # For instances of GN
 
+    INSTANCIER = 8
+    NOT_INSTANCIER = 9
+
     # Parent type, to be set on child regarding its parent
     NO_PARENT = 54
     PARENT_OBJECT = 50
@@ -72,6 +75,8 @@ class VExportNode:
         # For mesh instance data of GN instances
         self.data = None
         self.materials = None
+
+        self.is_instancier = VExportNode.NOT_INSTANCIER
 
     def add_child(self, uuid):
         self.children.append(uuid)
@@ -301,6 +306,7 @@ class VExportTree:
                         continue
                     if len(inst.object.data.vertices) == 0:
                         continue # This is nested instances, and this mesh has no vertices, so is an instancier for other instances
+                    node.is_instancier = VExportNode.INSTANCIER
                     self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object)
 
     def get_all_objects(self):
@@ -367,7 +373,7 @@ class VExportTree:
             print("This should not happen!")
 
         for child in self.nodes[uuid].children:
-            if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
+            if self.nodes[uuid].blender_type == VExportNode.COLLECTION or self.nodes[uuid].is_instancier == VExportNode.INSTANCIER:
                 self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
             else:
                 self.recursive_filter_tag(child, parent_keep_tag)
