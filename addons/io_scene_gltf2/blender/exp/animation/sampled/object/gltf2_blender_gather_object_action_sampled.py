@@ -37,7 +37,7 @@ def gather_action_object_sampled(object_uuid: str, blender_action: typing.Option
         return None
 
     blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
-    export_user_extensions('animation_gather_object_sampled', export_settings, blender_object, blender_action)
+    export_user_extensions('animation_action_object_sampled', export_settings, animation, blender_object, blender_action, cache_key)
 
     return animation
 

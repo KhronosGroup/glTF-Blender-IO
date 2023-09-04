@@ -50,7 +50,8 @@ def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Op
 
     # To allow reuse of samplers in one animation : This will be done later, when we know all channels are here
 
-    export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object)
+    export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object) # For compatibility for older version
+    export_user_extensions('animation_action_armature_sampled', export_settings, animation, blender_object, blender_action, cache_key)
 
     return animation
 

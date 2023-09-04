@@ -24,6 +24,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-r", "--repo", required=False, help="repo path")
 ap.add_argument("-b", "--bump", required=False, action="store_true", help="bump to +1 minor version number")
 ap.add_argument("-w", "--rewrite", required=False, action="store_true", help="rewrite SPDX license identifiers")
+ap.add_argument("-o", "--rewriteold", required=False, action="store_true", help="rewrite SPDX license identifiers before 4.0")
 args = vars(ap.parse_args())
 
 root = dirname(realpath(__file__))
@@ -88,24 +89,43 @@ if args["repo"] is not None:
             if fileext != ".py":
                 continue
 
-            if args["rewrite"] is False:
+            if args["rewrite"] is False and args['rewriteold'] is False:
                 copyfile(root + "/" + file, new_dir + "/" + file)
             else:
                 start_of_file = True
                 with open(root + "/" + file, "r") as fr:
                     with open(new_dir + "/" + file, 'w') as fw:
-                        fw.write("# SPDX-License-Identifier: Apache-2.0\n")
+                        if args['rewriteold'] is True:
+                            fw.write("# SPDX-License-Identifier: Apache-2.0\n")
                         for idx, l in enumerate(fr.readlines()):
-                            if idx == 0:
-                                fw.write(l)
-                            else:
-                                if start_of_file is True and l[0] == "#":
-                                    continue
-                                elif start_of_file is True and l[0] != "#":
-                                    start_of_file = False
-                                
-                                if start_of_file is False:
+                            if args['rewrite'] is True:
+                                if idx == 0:
+                                    txt = l[12:-2] #remove Copyright word (and point at end of line)
+                                    txt = "# SPDX-FileCopyrightText: " + txt + "\n"
+                                    fw.write(txt)
+                                elif idx == 1:
                                     fw.write(l)
+                                elif idx == 2:
+                                    fw.write("# SPDX-License-Identifier: Apache-2.0\n")
+                                else:
+                                    if start_of_file is True and l[0] == "#":
+                                        continue
+                                    elif start_of_file is True and l[0] != "#":
+                                        start_of_file = False
+
+                                    if start_of_file is False:
+                                        fw.write(l)
+                            elif args['rewriteold'] is True:
+                                if idx == 0:
+                                    fw.write(l)
+                                else:
+                                    if start_of_file is True and l[0] == "#":
+                                        continue
+                                    elif start_of_file is True and l[0] != "#":
+                                        start_of_file = False
+
+                                    if start_of_file is False:
+                                        fw.write(l)
 
     # Check that files removed are also removed in blender repo
     for root, dirs, files in walk(join(args["repo"], "io_scene_gltf2")):

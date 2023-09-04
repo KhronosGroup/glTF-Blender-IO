@@ -532,7 +532,7 @@ class GLTF2_weight(bpy.types.PropertyGroup):
 
 def register():
     bpy.utils.register_class(NODE_OT_GLTF_SETTINGS)
-    bpy.types.NODE_MT_category_SH_NEW_OUTPUT.append(add_gltf_settings_to_menu)
+    bpy.types.NODE_MT_category_shader_output.append(add_gltf_settings_to_menu)
 
 def variant_register():
     bpy.utils.register_class(SCENE_OT_gltf2_display_variant)

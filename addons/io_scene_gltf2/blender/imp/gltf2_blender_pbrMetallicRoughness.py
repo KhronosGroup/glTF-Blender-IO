@@ -82,11 +82,11 @@ def pbr_metallic_roughness(mh: MaterialHelper):
                 volume_location = additional_location
                 additional_location = additional_location[0], additional_location[1] - 150
 
-    need_velvet_node = False
+    need_sheen_node = False
     if mh.pymat.extensions and 'KHR_materials_sheen' in mh.pymat.extensions:
-        need_velvet_node = True
+        need_sheen_node = True
 
-    _, _, volume_socket, velvet_node = make_output_nodes(
+    _, _, volume_socket, sheen_node = make_output_nodes(
         mh,
         location=(250, 260),
         additional_location=additional_location,
@@ -94,7 +94,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         make_emission_socket=False, # is managed by Principled shader node
         make_alpha_socket=False, # is managed by Principled shader node
         make_volume_socket=need_volume_node,
-        make_velvet_socket=need_velvet_node
+        make_sheen_socket=need_sheen_node
     )
 
 
@@ -181,13 +181,13 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         location_original_specularcolor=locs['original_specularColorTexture']
     )
 
-    if need_velvet_node:
+    if need_sheen_node:
         sheen(
             mh,
             location_sheenColor=locs['sheenColorTexture'],
             location_sheenRoughness=locs['sheenRoughnessTexture'],
-            sheenColor_socket=velvet_node.inputs[0],
-            sheenRoughness_socket=velvet_node.inputs[1]
+            sheenColor_socket=sheen_node.inputs[0],
+            sheenRoughness_socket=sheen_node.inputs[1]
         )
 
     ior(
@@ -626,7 +626,7 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
 
 # => [Add Emission] => [Mix Alpha] => [Material Output] if needed, only for SpecGlossiness
 # => [Volume] => [Add Shader] => [Material Output] if needed
-# => [Velvet] => [Add Shader] => [Material Output] if needed
+# => [Sheen] => [Add Shader] => [Material Output] if needed
 def make_output_nodes(
     mh: MaterialHelper,
     location,
@@ -635,7 +635,7 @@ def make_output_nodes(
     make_emission_socket,
     make_alpha_socket,
     make_volume_socket,
-    make_velvet_socket, # For sheen
+    make_sheen_socket,
 ):
     """
     Creates the Material Output node and connects shader_socket to it.
@@ -647,7 +647,7 @@ def make_output_nodes(
     """
     x, y = location
     emission_socket = None
-    velvet_node = None
+    sheen_node = None
     alpha_socket = None
 
     # Create an Emission node and add it to the shader.
@@ -676,22 +676,22 @@ def make_output_nodes(
             x += 380
             y += 125
 
-    # Create an Velvet node add add it to the shader
-    # Note that you can not have Emission & Velvet at the same time
-    if make_velvet_socket:
-        # Velvet
-        node = mh.node_tree.nodes.new("ShaderNodeBsdfVelvet")
+    # Create an Sheen node add add it to the shader
+    # Note that you can not have Emission & Sheen at the same time
+    if make_sheen_socket:
+        # Sheen
+        node = mh.node_tree.nodes.new("ShaderNodeBsdfSheen")
         node.location = x + 50, y + 250
         # Node
-        velvet_node = node
+        sheen_node = node
         # Outputs
-        velvet_output = node.outputs[0]
+        sheen_output = node.outputs[0]
 
         # Add
         node = mh.node_tree.nodes.new('ShaderNodeAddShader')
         node.location = x + 250, y + 160
         # Inputs
-        mh.node_tree.links.new(node.inputs[0], velvet_output)
+        mh.node_tree.links.new(node.inputs[0], sheen_output)
         mh.node_tree.links.new(node.inputs[1], shader_socket)
         # Outputs
         shader_socket = node.outputs[0]
@@ -740,7 +740,7 @@ def make_output_nodes(
         volume_socket = node.outputs[0]
 
 
-    return emission_socket, alpha_socket, volume_socket, velvet_node
+    return emission_socket, alpha_socket, volume_socket, sheen_node
 
 
 def make_settings_node(mh):

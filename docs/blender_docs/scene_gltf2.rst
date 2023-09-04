@@ -257,9 +257,9 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
 Sheen
 ^^^^^
 
-When the *Velvet BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
-extension will be included in the export. The Sheen Color will be exported from Color socket of Velvet node.
-Sheen Roughness will be exported from Sigma socket.
+When the *Sheen BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
+extension will be included in the export. The Sheen Color will be exported from Color socket of Sheen node.
+Sheen Roughness will be exported from Roughness socket.
 
 If a Sheen Roughness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
 
@@ -267,7 +267,7 @@ If a Sheen Roughness Texture is used, glTF requires the values be written to the
 
 .. tip::
 
-   Velvet BSDF node is only available on Cycles render engine.
+   Sheen BSDF node is only available on Cycles render engine.
    You may have to temporary switch to Cycles to add this node, and get back to Eevee.
 
 .. note::
@@ -276,7 +276,7 @@ If a Sheen Roughness Texture is used, glTF requires the values be written to the
    the resulting shader is not fully energy conservative.
    You may find some difference between Blender render, and glTF render.
    Sheen models are not fully compatible between Blender and glTF.
-   This trick about adding Velvet Shader is the most accurate
+   This trick about adding Sheen Shader is the most accurate
    approximation (better that using Sheen Principled sockets).
 
 
@@ -308,10 +308,11 @@ If enabled, Principled Specular data are ignored, only data from custom node are
 
 
 .. tip::
+
    If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
    Add > Output > glTF Material Output
 
-     .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
+   .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
 
 Transmission
 ^^^^^^^^^^^^
@@ -326,8 +327,9 @@ In glTF, alpha blending is intended to represent physical materials that are par
 the specified geometry, such as medical gauze wrap. Transmission is intended to represent physical materials
 that are solid but allow non-specularly-reflected light to transmit through the material, like glass.
 
-glTF does not offer a separate "Transmission Roughness", but the material's base roughness
-can be used to blur the transmission, like frosted glass.
+.. tip::
+
+   The material's base roughness can be used to blur the transmission, like frosted glass.
 
 .. tip::
 
@@ -513,7 +515,7 @@ These will be written as factors in the glTF file, which are numbers that are mu
 with the specified image textures. These are not common.
 
 - Use Math node (multiply) for scalar factors. Use second value as factor
-- Use MixRGB (multiply) for color factors. Set Fac to 1, and use Color2 as factors
+- Use Mix node (color / multiply) for color factors. Set Factor to 1, and use Color2 (B) as factors
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-factors.png
 
