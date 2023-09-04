@@ -15,6 +15,7 @@
 import bpy
 import typing
 from mathutils import Matrix
+from ....blender.com.gltf2_blender_data_path import get_sk_exported
 from ....io.com import gltf2_io
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....io.com.gltf2_io_debug import print_console
@@ -65,6 +66,22 @@ def reset_bone_matrix(blender_object, export_settings) -> None:
     # Resetting bones TRS to avoid to keep not keyed value on a future action set
     for bone in blender_object.pose.bones:
         bone.matrix_basis = Matrix()
+
+def reset_sk_data(blender_object, blender_actions, export_settings) -> None:
+    # Using NLA for SK is not so common
+    # Reset to 0.0 will happen here only if there are at least 2 tracks to export
+    if export_settings['gltf_export_reset_sk_data'] is False:
+        return
+
+    if len([i for i in blender_actions if i[2] == "SHAPEKEY"]) <= 1:
+        return
+
+    if blender_object.type != "MESH":
+        return
+
+    # Reset
+    for sk in get_sk_exported(blender_object.data.shape_keys.key_blocks):
+        sk.value = 0.0
 
 
 def add_slide_data(start_frame, obj_uuid: int, key: str, export_settings):
@@ -137,6 +154,19 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
             new_animations.append(animation)
     else:
         new_animations = animations
+
+    # If some strips have same channel animations, we already ignored some.
+    # But if the channels was exactly the same, we already pick index of sampler, and we have a mix of samplers, and index of samplers, in animation.samplers
+    # So get back to list of objects only
+    # This can lead to unused samplers... but keep them, as, anyway, data are not exported properly
+    for anim in new_animations:
+        new_samplers = []
+        for s in anim.samplers:
+            if type(s) == int:
+                new_samplers.append(anim.samplers[s])
+            else:
+                new_samplers.append(s)
+        anim.samplers = new_samplers
 
     return new_animations
 

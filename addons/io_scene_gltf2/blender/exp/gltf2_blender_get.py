@@ -82,9 +82,9 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
             type = bpy.types.ShaderNodeBackground
             name = "Color"
         elif name == "sheenColor":
-            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfVelvet, "Color")
+            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfSheen, "Color")
         elif name == "sheenRoughness":
-            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfVelvet, "Sigma")
+            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfSheen, "Roughness")
         else:
             if volume is False:
                 type = bpy.types.ShaderNodeBsdfPrincipled
