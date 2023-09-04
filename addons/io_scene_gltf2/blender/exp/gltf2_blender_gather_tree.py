@@ -304,7 +304,7 @@ class VExportTree:
                 if inst.parent == eval:
                     if not inst.is_instance:
                         continue
-                    if len(inst.object.data.vertices) == 0:
+                    if type(inst.object.data).__name__ == "Mesh" and len(inst.object.data.vertices) == 0:
                         continue # This is nested instances, and this mesh has no vertices, so is an instancier for other instances
                     node.is_instancier = VExportNode.INSTANCIER
                     self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object)
