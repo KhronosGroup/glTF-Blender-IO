@@ -141,6 +141,7 @@ def gather_base_color_texture(info, export_settings):
         unlit_texture, unlit_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             sockets[0],
             sockets,
+            (),
             export_settings,
         )
         return unlit_texture, ["unlitTexture"] if unlit_use_active_uvmap else None

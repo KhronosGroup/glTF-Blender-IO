@@ -16,7 +16,7 @@ import numpy as np
 from mathutils import Vector
 from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.com.gltf2_io_debug import print_console
-from ...io.com.gltf2_io_constants import NORMALS_ROUNDING_DIGIT
+from ...io.com.gltf2_io_constants import ROUNDING_DIGIT
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...io.com import gltf2_io_constants
 from ..com import gltf2_blender_conversion
@@ -367,9 +367,16 @@ class PrimitiveCreator:
     def primitive_split(self):
         # Calculate triangles and sort them into primitives.
 
-        self.blender_mesh.calc_loop_triangles()
-        loop_indices = np.empty(len(self.blender_mesh.loop_triangles) * 3, dtype=np.uint32)
-        self.blender_mesh.loop_triangles.foreach_get('loops', loop_indices)
+        try:
+            self.blender_mesh.calc_loop_triangles()
+            loop_indices = np.empty(len(self.blender_mesh.loop_triangles) * 3, dtype=np.uint32)
+            self.blender_mesh.loop_triangles.foreach_get('loops', loop_indices)
+        except:
+            # For some not valid meshes, we can't get loops without errors
+            # We already displayed a Warning message after validate() check, so here
+            # we can return without a new one
+            self.prim_indices = {}
+            return
 
         self.prim_indices = {}  # maps material index to TRIANGLES-style indices into dots
 
@@ -725,7 +732,7 @@ class PrimitiveCreator:
 
         self.normals = self.normals.reshape(len(self.blender_mesh.loops), 3)
 
-        self.normals = np.round(self.normals, NORMALS_ROUNDING_DIGIT)
+        self.normals = np.round(self.normals, ROUNDING_DIGIT)
         # Force normalization of normals in case some normals are not (why ?)
         PrimitiveCreator.normalize_vecs(self.normals)
 
@@ -733,7 +740,7 @@ class PrimitiveCreator:
         for key_block in key_blocks:
             ns = np.array(key_block.normals_split_get(), dtype=np.float32)
             ns = ns.reshape(len(self.blender_mesh.loops), 3)
-            ns = np.round(ns, NORMALS_ROUNDING_DIGIT)
+            ns = np.round(ns, ROUNDING_DIGIT)
             self.morph_normals.append(ns)
 
         # Transform for skinning
@@ -792,6 +799,7 @@ class PrimitiveCreator:
         self.tangents = np.empty(len(self.blender_mesh.loops) * 3, dtype=np.float32)
         self.blender_mesh.loops.foreach_get('tangent', self.tangents)
         self.tangents = self.tangents.reshape(len(self.blender_mesh.loops), 3)
+        self.tangents = np.round(self.tangents, ROUNDING_DIGIT)
 
         # Transform for skinning
         if self.armature and self.blender_object:
@@ -799,6 +807,7 @@ class PrimitiveCreator:
             tangent_transform = apply_matrix.to_quaternion().to_matrix()
             self.tangents = PrimitiveCreator.apply_mat_to_all(tangent_transform, self.tangents)
             PrimitiveCreator.normalize_vecs(self.tangents)
+            self.tangents = np.round(self.tangents, ROUNDING_DIGIT)
 
         if self.export_settings['gltf_yup']:
             PrimitiveCreator.zup2yup(self.tangents)
