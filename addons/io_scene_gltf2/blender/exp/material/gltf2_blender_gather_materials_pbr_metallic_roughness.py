@@ -108,7 +108,7 @@ def __gather_base_color_texture(blender_material, export_settings):
     if not inputs:
         return None, None, None
 
-    return gather_texture_info(inputs[0], inputs, export_settings)
+    return gather_texture_info(inputs[0], inputs, (), export_settings)
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -139,6 +139,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     hasMetal = metallic_socket is not None and image_tex_is_valid_from_socket(metallic_socket)
     hasRough = roughness_socket is not None and image_tex_is_valid_from_socket(roughness_socket)
 
+    default_sockets = ()
     if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not image_tex_is_valid_from_socket(metallic_roughness):
@@ -146,14 +147,18 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
         texture_input = (metallic_roughness,)
     elif not hasMetal:
         texture_input = (roughness_socket,)
+        default_sockets = (metallic_socket,)
     elif not hasRough:
         texture_input = (metallic_socket,)
+        default_sockets = (roughness_socket,)
     else:
         texture_input = (metallic_socket, roughness_socket)
+        default_sockets = ()
 
     return gather_texture_info(
         texture_input[0],
         orm_texture or texture_input,
+        default_sockets,
         export_settings,
     )
 

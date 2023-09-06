@@ -29,20 +29,25 @@ from . import gltf2_blender_search_node_tree
 # occlusion the primary_socket would be the occlusion socket, and
 # blender_shader_sockets would be the (O,R,M) sockets.
 
-def gather_texture_info(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
-    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'DEFAULT', filter_type, export_settings)
+# Default socket parameter is used when there is a mapping between channels, and one of the channel is not a texture
+# In that case, we will create a texture with one channel from texture, other from default socket value
+# Example: MetallicRoughness
+
+def gather_texture_info(primary_socket, blender_shader_sockets, default_sockets, export_settings, filter_type='ALL'):
+    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, default_sockets, 'DEFAULT', filter_type, export_settings)
 
 def gather_material_normal_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
-    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'NORMAL', filter_type, export_settings)
+    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, (), 'NORMAL', filter_type, export_settings)
 
-def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
-    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'OCCLUSION', filter_type, export_settings)
+def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, default_sockets, export_settings, filter_type='ALL'):
+    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, default_sockets, 'OCCLUSION', filter_type, export_settings)
 
 
 @cached
 def __gather_texture_info_helper(
         primary_socket: bpy.types.NodeSocket,
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
+        default_sockets: typing.Tuple[bpy.types.NodeSocket],
         kind: str,
         filter_type: str,
         export_settings):
@@ -51,7 +56,7 @@ def __gather_texture_info_helper(
 
     tex_transform, tex_coord, use_active_uvmap = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
 
-    index, factor = __gather_index(blender_shader_sockets, export_settings)
+    index, factor = __gather_index(blender_shader_sockets, default_sockets, export_settings)
 
     fields = {
         'extensions': __gather_extensions(tex_transform, export_settings),
@@ -146,9 +151,9 @@ def __gather_occlusion_strength(primary_socket, export_settings):
     return None
 
 
-def __gather_index(blender_shader_sockets, export_settings):
+def __gather_index(blender_shader_sockets, default_sockets, export_settings):
     # We just put the actual shader into the 'index' member
-    return gltf2_blender_gather_texture.gather_texture(blender_shader_sockets, export_settings)
+    return gltf2_blender_gather_texture.gather_texture(blender_shader_sockets, default_sockets, export_settings)
 
 
 def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
