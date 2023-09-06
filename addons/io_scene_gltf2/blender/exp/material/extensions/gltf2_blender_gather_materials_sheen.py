@@ -50,6 +50,7 @@ def export_sheen(blender_material, export_settings):
             original_sheenColor_texture, original_sheenColor_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 sheenColor_socket,
                 (sheenColor_socket,),
+                (),
                 export_settings,
             )
             sheen_extension['sheenColorTexture'] = original_sheenColor_texture
@@ -74,6 +75,7 @@ def export_sheen(blender_material, export_settings):
             original_sheenRoughness_texture, original_sheenRoughness_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 sheenRoughness_socket,
                 (sheenRoughness_socket,),
+                (),
                 export_settings,
             )
             sheen_extension['sheenRoughnessTexture'] = original_sheenRoughness_texture
