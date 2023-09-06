@@ -55,10 +55,19 @@ def is_bone_anim_channel(data_path: str) -> bool:
 
 def get_sk_exported(key_blocks):
     return [
-            key_block
-            for key_block in key_blocks
-            if not skip_sk(key_block)
+            k
+            for k in key_blocks
+            if not skip_sk(key_blocks, k)
         ]
 
-def skip_sk(k):
-    return k == k.relative_key or k.mute
+def skip_sk(key_blocks, k):
+    # Do not export:
+     # - if muted
+     # - if relative key is SK itself (this avoid exporting Basis too if user didn't change order)
+     # - the Basis (the first SK of the list)
+    return k == k.relative_key \
+        or k.mute \
+        or is_first_index(key_blocks, k) is True
+
+def is_first_index(key_blocks, k):
+    return key_blocks[0].name == k.name

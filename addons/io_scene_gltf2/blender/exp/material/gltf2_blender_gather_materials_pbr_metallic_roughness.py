@@ -18,7 +18,7 @@ import bpy
 from ....io.com import gltf2_io
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..gltf2_blender_gather_cache import cached
-from . import gltf2_blender_gather_texture_info
+from .gltf2_blender_gather_texture_info import gather_texture_info
 from .gltf2_blender_search_node_tree import \
     get_socket_from_gltf_material_node, \
     has_image_node_from_socket, \
@@ -113,7 +113,7 @@ def __gather_base_color_texture(blender_material, export_settings):
     if not inputs:
         return None, None, None
 
-    return gltf2_blender_gather_texture_info.gather_texture_info(inputs[0], inputs, export_settings)
+    return gather_texture_info(inputs[0], inputs, (), export_settings)
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -144,20 +144,27 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     hasMetal = metallic_socket.socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
     hasRough = roughness_socket.socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
+    default_sockets = ()
+    # Warning: for default socket, do not use NodeSocket object, because it will break cache
+    # Using directlty the Blender socket object
     if not hasMetal and not hasRough:
         metallic_roughness = get_socket_from_gltf_material_node(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not has_image_node_from_socket(metallic_roughness, export_settings):
             return None, None, None
     elif not hasMetal:
         texture_input = (roughness_socket,)
+        default_sockets = (metallic_socket.socket,)
     elif not hasRough:
         texture_input = (metallic_socket,)
+        default_sockets = (roughness_socket.socket,)
     else:
         texture_input = (metallic_socket, roughness_socket)
+        default_sockets = ()
 
-    return gltf2_blender_gather_texture_info.gather_texture_info(
+    return gather_texture_info(
         texture_input[0],
         orm_texture or texture_input,
+        default_sockets,
         export_settings,
     )
 

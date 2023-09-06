@@ -81,6 +81,7 @@ def export_volume(blender_material, export_settings):
         combined_texture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             thickness_socket,
             thickness_slots,
+            (),
             export_settings,
         )
         if has_thickness_texture:
