@@ -38,6 +38,11 @@ class FillWhite:
     """Fills a channel with all ones (1.0)."""
     pass
 
+class FillWith:
+    """Fills a channel with all same values"""
+    def __init__(self, value):
+        self.value = value
+
 class StoreData:
     def __init__(self, data):
         """Store numeric data (not an image channel"""
@@ -108,6 +113,9 @@ class ExportImage:
 
     def fill_white(self, dst_chan: Channel):
         self.fills[dst_chan] = FillWhite()
+
+    def fill_with(self, dst_chan, value):
+        self.fills[dst_chan] = FillWith(value)
 
     def is_filled(self, chan: Channel) -> bool:
         return chan in self.fills
@@ -193,6 +201,8 @@ class ExportImage:
             for dst_chan, fill in self.fills.items():
                 if isinstance(fill, FillImage) and fill.image == image:
                     out_buf[int(dst_chan)::4] = tmp_buf[int(fill.src_chan)::4]
+                elif isinstance(fill, FillWith):
+                    out_buf[int(dst_chan)::4] = fill.value
 
         tmp_buf = None  # GC this
 
