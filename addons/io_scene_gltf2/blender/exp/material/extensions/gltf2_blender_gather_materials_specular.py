@@ -17,7 +17,8 @@ from .....io.com.gltf2_io_extensions import Extension
 from .....io.com.gltf2_io_constants import GLTF_IOR
 from ....exp import gltf2_blender_get
 from ....com.gltf2_blender_default import BLENDER_SPECULAR, BLENDER_SPECULAR_TINT
-from ...material import gltf2_blender_gather_texture_info
+from ...material.gltf2_blender_gather_texture_info import gather_texture_info
+from ...gltf2_blender_get import image_tex_is_valid_from_socket
 
 def export_original_specular(blender_material, export_settings):
     specular_extension = {}
@@ -46,7 +47,7 @@ def export_original_specular(blender_material, export_settings):
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(original_specular_socket):
-            original_specular_texture, original_specular_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+            original_specular_texture, original_specular_use_active_uvmap, _ = gather_texture_info(
                 original_specular_socket,
                 (original_specular_socket,),
                 (),
@@ -69,7 +70,7 @@ def export_original_specular(blender_material, export_settings):
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(original_specularcolor_socket):
-            original_specularcolor_texture, original_specularcolor_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+            original_specularcolor_texture, original_specularcolor_use_active_uvmap, _ = gather_texture_info(
                 original_specularcolor_socket,
                 (original_specularcolor_socket,),
                 (),
@@ -98,12 +99,11 @@ def export_specular(blender_material, export_settings):
     if base_color_socket is None:
         return None, None
 
-    # TODOExt replace by __has_image_node_from_socket calls
-    specular_not_linked = isinstance(specular_socket, bpy.types.NodeSocket) and not specular_socket.is_linked
-    specular_tint_not_linked = isinstance(specular_tint_socket, bpy.types.NodeSocket) and not specular_tint_socket.is_linked
-    base_color_not_linked = isinstance(base_color_socket, bpy.types.NodeSocket) and not base_color_socket.is_linked
-    transmission_not_linked = isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked
-    ior_not_linked = isinstance(ior_socket, bpy.types.NodeSocket) and not ior_socket.is_linked
+    specular_not_linked = not image_tex_is_valid_from_socket(specular_socket)
+    specular_tint_not_linked = not image_tex_is_valid_from_socket(specular_tint_socket)
+    base_color_not_linked = not image_tex_is_valid_from_socket(base_color_socket)
+    transmission_not_linked = not image_tex_is_valid_from_socket(transmission_socket)
+    ior_not_linked = not image_tex_is_valid_from_socket(ior_socket)
 
     specular = specular_socket.default_value if specular_not_linked else None
     specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
@@ -161,7 +161,7 @@ def export_specular(blender_material, export_settings):
                 if base_color_not_linked:
                     primary_socket = transmission_socket
 
-        specularColorTexture, use_active_uvmap, specularColorFactor = gltf2_blender_gather_texture_info.gather_texture_info(
+        specularColorTexture, use_active_uvmap, specularColorFactor = gather_texture_info(
             primary_socket,
             sockets,
             (),

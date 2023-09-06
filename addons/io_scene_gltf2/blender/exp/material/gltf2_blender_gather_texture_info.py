@@ -18,7 +18,7 @@ from ....io.com import gltf2_io
 from ....io.com.gltf2_io_extensions import Extension
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...exp import gltf2_blender_get
-from ..gltf2_blender_get import previous_node
+from ..gltf2_blender_get import previous_node, get_tex_from_socket
 from ..gltf2_blender_gather_sampler import detect_manual_uv_wrapping
 from ..gltf2_blender_gather_cache import cached
 from . import gltf2_blender_gather_texture
@@ -87,7 +87,7 @@ def __gather_texture_info_helper(
 def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
     if primary_socket is None:
         return False
-    if __get_tex_from_socket(primary_socket) is None:
+    if get_tex_from_socket(primary_socket) is None:
         return False
     if not blender_shader_sockets:
         return False
@@ -95,12 +95,12 @@ def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, e
         return False
     if filter_type == "ALL":
         # Check that all sockets link to texture
-        if any([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
+        if any([get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
             # sockets do not lead to a texture --> discard
             return False
     elif filter_type == "ANY":
         # Check that at least one socket link to texture
-        if all([__get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
+        if all([get_tex_from_socket(socket) is None for socket in blender_shader_sockets]):
             return False
     elif filter_type == "NONE":
         # No check
@@ -163,7 +163,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
     #
     # The [UV Wrapping] is for wrap modes like MIRROR that use nodes,
     # [Mapping] is for KHR_texture_transform, and [UV Map] is for texCoord.
-    blender_shader_node = __get_tex_from_socket(primary_socket).shader_node
+    blender_shader_node = get_tex_from_socket(primary_socket).shader_node
 
     # Skip over UV wrapping stuff (it goes in the sampler)
     result = detect_manual_uv_wrapping(blender_shader_node)
@@ -193,17 +193,6 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
 
     return texture_transform, texcoord_idx or None, use_active_uvmap
 
-# TODOExt deduplicate
-def __get_tex_from_socket(socket):
-    result = gltf2_blender_search_node_tree.from_socket(
-        socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-    if not result:
-        return None
-    if result[0].shader_node.image is None:
-        return None
-    return result[0]
-
 
 def check_same_size_images(
     blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
@@ -214,7 +203,7 @@ def check_same_size_images(
 
     sizes = set()
     for socket in blender_shader_sockets:
-        tex = __get_tex_from_socket(socket)
+        tex = get_tex_from_socket(socket)
         if tex is None:
             return False
         size = tex.shader_node.image.size
