@@ -129,7 +129,8 @@ def get_numpy_type(attribute_component_type):
 def get_attribute_type(component_type, data_type):
     if gltf2_io_constants.DataType.num_elements(data_type) == 1:
         return {
-            gltf2_io_constants.ComponentType.Float: "FLOAT"
+            gltf2_io_constants.ComponentType.Float: "FLOAT",
+            gltf2_io_constants.ComponentType.UnsignedByte: "INT" # What is the best for compatibility?
         }[component_type]
     elif gltf2_io_constants.DataType.num_elements(data_type) == 2:
         return {
@@ -142,7 +143,8 @@ def get_attribute_type(component_type, data_type):
     elif gltf2_io_constants.DataType.num_elements(data_type) == 4:
         return {
             gltf2_io_constants.ComponentType.Float: "FLOAT_COLOR",
-            gltf2_io_constants.ComponentType.UnsignedShort: "BYTE_COLOR"
+            gltf2_io_constants.ComponentType.UnsignedShort: "BYTE_COLOR",
+            gltf2_io_constants.ComponentType.UnsignedByte: "BYTE_COLOR" # What is the best for compatibility?
         }[component_type]
     else:
         pass

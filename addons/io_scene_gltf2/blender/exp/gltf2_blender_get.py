@@ -314,11 +314,19 @@ def previous_node(socket):
         return prev_socket.node
     return None
 
-#TODOExt is this the same as __get_tex_from_socket from gather_image ?
-def has_image_node_from_socket(socket):
+def get_tex_from_socket(socket):
     result = gltf2_blender_search_node_tree.from_socket(
         socket,
         gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
     if not result:
-        return False
-    return True
+        return None
+    if result[0].shader_node.image is None:
+        return None
+    return result[0]
+
+def has_image_node_from_socket(socket):
+    return get_tex_from_socket(socket) is not None
+
+def image_tex_is_valid_from_socket(socket):
+    res = get_tex_from_socket(socket)
+    return res is not None and res.shader_node.image is not None and res.shader_node.image.channels != 0

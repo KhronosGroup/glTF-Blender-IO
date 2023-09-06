@@ -14,7 +14,7 @@
 
 import bpy
 import typing
-from .....blender.com.gltf2_blender_data_path import skip_sk
+from .....blender.com.gltf2_blender_data_path import get_sk_exported
 from ....com.gltf2_blender_data_path import get_target_object_path
 from ...gltf2_blender_gather_cache import cached
 from ..gltf2_blender_gather_keyframes import Keyframe
@@ -175,9 +175,7 @@ def __gather_non_keyed_values(
         if object_path:
             shapekeys_idx = {}
             cpt_sk = 0
-            for sk in blender_object.data.shape_keys.key_blocks:
-                if skip_sk(sk):
-                    continue
+            for sk in get_sk_exported(blender_object.data.shape_keys.key_blocks):
                 shapekeys_idx[cpt_sk] = sk.name
                 cpt_sk += 1
 
