@@ -162,5 +162,5 @@ GLTF_DATA_TYPE_MAT4 = "MAT4"
 
 GLTF_IOR = 1.5
 
-# Rounding digit used for normal rounding
-NORMALS_ROUNDING_DIGIT = 4
+# Rounding digit used for normal/tangent rounding
+ROUNDING_DIGIT = 4
