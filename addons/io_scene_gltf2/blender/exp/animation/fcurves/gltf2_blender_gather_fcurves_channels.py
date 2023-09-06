@@ -89,7 +89,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
                     type_ = "EXTRA"
                 if blender_object.type == "MESH" and object_path.startswith("key_blocks"):
                     shape_key = blender_object.data.shape_keys.path_resolve(object_path)
-                    if skip_sk(shape_key):
+                    if skip_sk(blender_object.data.shape_keys.key_blocks, shape_key):
                         continue
                     target = blender_object.data.shape_keys
                     type_ = "SK"
@@ -99,7 +99,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
                 if blender_object.type == "MESH":
                     try:
                         shape_key = blender_object.data.shape_keys.path_resolve(object_path)
-                        if skip_sk(shape_key):
+                        if skip_sk(blender_object.data.shape_keys.key_blocks, shape_key):
                             continue
                         target = blender_object.data.shape_keys
                         type_ = "SK"
@@ -194,7 +194,7 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
             shapekeys_idx = {}
             cpt_sk = 0
             for sk in blender_object.data.shape_keys.key_blocks:
-                if skip_sk(sk):
+                if skip_sk(blender_object.data.shape_keys.key_blocks, sk):
                     continue
                 shapekeys_idx[sk.name] = cpt_sk
                 cpt_sk += 1

@@ -389,7 +389,7 @@ describe('Exporter', function() {
             it('produces a Roughness texture', function() {
                 // Expect magenta (inverted green) square
                 let resultName = path.resolve(outDirPath, '08_img_rough.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_g_.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_g_metallic_0.1.png');
                 let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
@@ -412,7 +412,7 @@ describe('Exporter', function() {
             it('produces a Metallic texture', function() {
                 // Expect yellow (inverted blue) square
                 let resultName = path.resolve(outDirPath, '08_img_metal.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-__b.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-__b_roughness_0.2.png');
                 let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
@@ -483,7 +483,7 @@ describe('Exporter', function() {
             it('combines two images into an OcclusionRoughness texture', function() {
                 // Expect cyan (inverted red) and magenta (inverted green) squares
                 let resultName = path.resolve(outDirPath, '08_occlusion-08_roughness.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rg_.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rg_metallic_0.1.png');
                 let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });
@@ -506,7 +506,7 @@ describe('Exporter', function() {
             it('combines two images into an OcclusionMetallic texture', function() {
                 // Expect cyan (inverted red) and yellow (inverted blue) squares
                 let resultName = path.resolve(outDirPath, '08_occlusion-08_metallic.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-r_b.png');
+                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-r_b_roughness_0.2.png');
                 let testBuffer = fs.readFileSync(resultName);
                 assert(testBuffer.equals(expectedRgbBuffer));
             });

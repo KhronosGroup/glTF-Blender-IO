@@ -67,13 +67,13 @@ def gather_material(blender_material, active_uvmap_index, export_settings):
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
         return mat_unlit
 
-    orm_texture = __gather_orm_texture(blender_material, export_settings)
+    orm_texture, default_sockets = __gather_orm_texture(blender_material, export_settings)
 
     emissive_factor = __gather_emissive_factor(blender_material, export_settings)
     emissive_texture, uvmap_actives_emissive_texture = __gather_emissive_texture(blender_material, export_settings)
     extensions, uvmap_actives_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
     normal_texture, uvmap_actives_normal_texture = __gather_normal_texture(blender_material, export_settings)
-    occlusion_texture, uvmap_actives_occlusion_texture = __gather_occlusion_texture(blender_material, orm_texture, export_settings)
+    occlusion_texture, uvmap_actives_occlusion_texture = __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings)
     pbr_metallic_roughness, uvmap_actives_pbr_metallic_roughness = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
 
     if any([i>1.0 for i in emissive_factor or []]) is True:
@@ -314,7 +314,7 @@ def __gather_orm_texture(blender_material, export_settings):
     if occlusion is None or not gltf2_blender_get.has_image_node_from_socket(occlusion):
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
         if occlusion is None or not gltf2_blender_get.has_image_node_from_socket(occlusion):
-            return None
+            return None, None
 
     metallic_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Metallic")
     roughness_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Roughness")
@@ -322,38 +322,43 @@ def __gather_orm_texture(blender_material, export_settings):
     hasMetal = metallic_socket is not None and gltf2_blender_get.has_image_node_from_socket(metallic_socket)
     hasRough = roughness_socket is not None and gltf2_blender_get.has_image_node_from_socket(roughness_socket)
 
+    default_sockets = ()
     if not hasMetal and not hasRough:
         metallic_roughness = gltf2_blender_get.get_socket_old(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not gltf2_blender_get.has_image_node_from_socket(metallic_roughness):
-            return None
+            return None, default_sockets
         result = (occlusion, metallic_roughness)
     elif not hasMetal:
         result = (occlusion, roughness_socket)
+        default_sockets = (metallic_socket,)
     elif not hasRough:
         result = (occlusion, metallic_socket)
+        default_sockets = (roughness_socket,)
     else:
         result = (occlusion, roughness_socket, metallic_socket)
+        default_sockets = ()
 
     if not gltf2_blender_gather_texture_info.check_same_size_images(result):
         print_console("INFO",
             "Occlusion and metal-roughness texture will be exported separately "
             "(use same-sized images if you want them combined)")
-        return None
+        return None, ()
 
     # Double-check this will past the filter in texture_info
-    info, info_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, export_settings)
+    info, info_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, default_sockets, export_settings)
     if info is None:
-        return None
+        return None, ()
 
-    return result
+    return result, default_sockets
 
-def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
+def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings):
     occlusion = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Occlusion")
     if occlusion is None:
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
     occlusion_texture, use_active_uvmap_occlusion, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),
+        default_sockets,
         export_settings)
     return occlusion_texture, ["occlusionTexture"] if use_active_uvmap_occlusion else None
 
