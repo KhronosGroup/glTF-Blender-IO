@@ -45,7 +45,7 @@ def gather_primitive_attributes(blender_primitive, export_settings):
     return attributes
 
 
-def array_to_accessor(array, component_type, data_type, include_max_and_min=False):
+def array_to_accessor(array, component_type, data_type, include_max_and_min=False, normalized=None):
 
     amax = None
     amin = None
@@ -63,7 +63,7 @@ def array_to_accessor(array, component_type, data_type, include_max_and_min=Fals
         max=amax,
         min=amin,
         name=None,
-        normalized=None,
+        normalized=normalized,
         sparse=None,
         type=data_type,
     )
@@ -193,6 +193,7 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
                 data['data'],
                 component_type=data['component_type'],
                 data_type=data['data_type'],
-                include_max_and_min=include_max_and_mins.get(attribute, False)
+                include_max_and_min=include_max_and_mins.get(attribute, False),
+                normalized=data.get('normalized')
             )
         }

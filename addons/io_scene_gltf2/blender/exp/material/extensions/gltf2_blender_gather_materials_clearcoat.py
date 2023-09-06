@@ -66,6 +66,7 @@ def export_clearcoat(blender_material, export_settings):
             clearcoat_texture, clearcoat_texture_use_active_uvmap, uvmap_attribute_name_clearcoat, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_socket,
                 clearcoat_roughness_slots,
+                (),
                 export_settings,
             )
             clearcoat_extension['clearcoatTexture'] = clearcoat_texture
@@ -77,6 +78,7 @@ def export_clearcoat(blender_material, export_settings):
             clearcoat_roughness_texture, clearcoat_roughness_texture_use_active_uvmap, uvmap_attribute_name_clearcoat_roughness, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_roughness_socket,
                 clearcoat_roughness_slots,
+                (),
                 export_settings,
             )
             clearcoat_extension['clearcoatRoughnessTexture'] = clearcoat_roughness_texture
