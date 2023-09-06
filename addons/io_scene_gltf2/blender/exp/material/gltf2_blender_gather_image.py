@@ -22,17 +22,18 @@ from ....io.exp import gltf2_io_binary_data, gltf2_io_image_data
 from ....io.com import gltf2_io_debug
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..gltf2_blender_gather_cache import cached
-from . import gltf2_blender_search_node_tree
 from .extensions.gltf2_blender_image import Channel, ExportImage, FillImage
+from ..gltf2_blender_get import get_tex_from_socket
 
 @cached
 def gather_image(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
+        default_sockets: typing.Tuple[bpy.types.NodeSocket],
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
         return None, None
 
-    image_data = __get_image_data(blender_shader_sockets, export_settings)
+    image_data = __get_image_data(blender_shader_sockets, default_sockets, export_settings)
     if image_data.empty():
         # The export image has no data
         return None, None
@@ -184,24 +185,32 @@ def __gather_uri(image_data, mime_type, name, export_settings):
     return None, None
 
 
-def __get_image_data(sockets, export_settings) -> ExportImage:
+def __get_image_data(sockets, default_sockets, export_settings) -> ExportImage:
     # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
-    results = [__get_tex_from_socket(socket, export_settings) for socket in sockets]
+    results = [get_tex_from_socket(socket) for socket in sockets]
 
     # Check if we need a simple mapping or more complex calculation
     if any([socket.name == "Specular" and socket.node.type == "BSDF_PRINCIPLED" for socket in sockets]):
         return __get_image_data_specular(sockets, results, export_settings)
     else:
-        return __get_image_data_mapping(sockets, results, export_settings)
+        return __get_image_data_mapping(sockets, default_sockets, results, export_settings)
 
-def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
+def __get_image_data_mapping(sockets, default_sockets, results, export_settings) -> ExportImage:
     """
     Simple mapping
     Will fit for most of exported textures : RoughnessMetallic, Basecolor, normal, ...
     """
     composed_image = ExportImage()
+
+    default_metallic = None
+    default_roughness = None
+    if "Metallic" in [s.name for s in default_sockets]:
+        default_metallic = [s for s in default_sockets if s.name == "Metallic"][0].default_value
+    if "Roughness" in [s.name for s in default_sockets]:
+        default_roughness = [s for s in default_sockets if s.name == "Roughness"][0].default_value
+
     for result, socket in zip(results, sockets):
         # Assume that user know what he does, and that channels/images are already combined correctly for pbr
         # If not, we are going to keep only the first texture found
@@ -275,9 +284,15 @@ def __get_image_data_mapping(sockets, results, export_settings) -> ExportImage:
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
                 if socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
-                    composed_image.fill_white(Channel.G)
+                    if default_roughness is not None:
+                        composed_image.fill_with(Channel.G, default_roughness)
+                    else:
+                        composed_image.fill_white(Channel.G)
                 elif socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
-                    composed_image.fill_white(Channel.B)
+                    if default_metallic is not None:
+                        composed_image.fill_with(Channel.B, default_metallic)
+                    else:
+                        composed_image.fill_white(Channel.B)
             else:
                 # copy full image...eventually following sockets might overwrite things
                 composed_image = ExportImage.from_blender_image(result.shader_node.image)
@@ -304,7 +319,7 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
 
     composed_image.store_data("ior", sockets[4].default_value, type="Data")
 
-    results = [__get_tex_from_socket(socket, export_settings) for socket in sockets[:-1]] #Do not retrieve IOR --> No texture allowed
+    results = [get_tex_from_socket(socket) for socket in sockets[:-1]] #Do not retrieve IOR --> No texture allowed
 
     mapping = {
         0: "specular",
@@ -314,7 +329,7 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
     }
 
     for idx, result in enumerate(results):
-        if __get_tex_from_socket(sockets[idx], export_settings):
+        if get_tex_from_socket(sockets[idx]):
 
             composed_image.store_data(mapping[idx], result.shader_node.image, type="Image")
 
@@ -340,16 +355,6 @@ def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
             composed_image.store_data(mapping[idx], sockets[idx].default_value, type="Data")
 
     return composed_image
-
-# TODOExt deduplicate
-@cached
-def __get_tex_from_socket(blender_shader_socket: bpy.types.NodeSocket, export_settings):
-    result = gltf2_blender_search_node_tree.from_socket(
-        blender_shader_socket,
-        gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
-    if not result:
-        return None
-    return result[0]
 
 
 def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
