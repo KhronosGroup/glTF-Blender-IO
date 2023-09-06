@@ -367,9 +367,16 @@ class PrimitiveCreator:
     def primitive_split(self):
         # Calculate triangles and sort them into primitives.
 
-        self.blender_mesh.calc_loop_triangles()
-        loop_indices = np.empty(len(self.blender_mesh.loop_triangles) * 3, dtype=np.uint32)
-        self.blender_mesh.loop_triangles.foreach_get('loops', loop_indices)
+        try:
+            self.blender_mesh.calc_loop_triangles()
+            loop_indices = np.empty(len(self.blender_mesh.loop_triangles) * 3, dtype=np.uint32)
+            self.blender_mesh.loop_triangles.foreach_get('loops', loop_indices)
+        except:
+            # For some not valid meshes, we can't get loops without errors
+            # We already displayed a Warning message after validate() check, so here
+            # we can return without a new one
+            self.prim_indices = {}
+            return
 
         self.prim_indices = {}  # maps material index to TRIANGLES-style indices into dots
 
