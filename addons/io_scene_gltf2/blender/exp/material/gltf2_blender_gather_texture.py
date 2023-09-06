@@ -89,5 +89,5 @@ def __gather_sampler(blender_shader_sockets, export_settings):
         export_settings)
 
 
-def __gather_source(blender_shader_sockets, export_settings):
-    return gltf2_blender_gather_image.gather_image(blender_shader_sockets, export_settings)
+def __gather_source(blender_shader_sockets, default_sockets, export_settings):
+    return gltf2_blender_gather_image.gather_image(blender_shader_sockets, default_sockets, export_settings)
