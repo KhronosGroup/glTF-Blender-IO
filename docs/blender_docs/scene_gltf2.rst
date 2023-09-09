@@ -914,8 +914,11 @@ Data - Skinning
 
 Export skinning data
 
+Bone influences
+   How many joint verex influences will be exported. Models may appear incorrectly in many viewers with value different to 4 or 8.
+
 Include All Bone Influences
-   Allow more than 4 joint vertex influences. Models may appear incorrectly in many viewers.
+   Export all joint vertex influences. Models may appear incorrectly in many viewers.
 
 Data - Lighting
 ^^^^^^^^^^^^^^^
