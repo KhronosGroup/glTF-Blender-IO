@@ -575,9 +575,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    export_influence_nb: IntProperty(
+        name='Bone Influences',
+        description='Choose how many Bone influences to export',
+        default=4,
+        min=1
+    )
+
     export_all_influences: BoolProperty(
         name='Include All Bone Influences',
-        description='Allow >4 joint vertex influences. Models may appear incorrectly in many viewers',
+        description='Allow export of all joint vertex influences. Models may appear incorrectly in many viewers',
         default=False
     )
 
@@ -810,6 +817,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
+            export_settings['gltf_vertex_influences_nb'] = self.export_influence_nb
         else:
             export_settings['gltf_all_vertex_influences'] = False
             export_settings['gltf_def_bones'] = False
@@ -1150,6 +1158,9 @@ class GLTF_PT_export_data_skinning(bpy.types.Panel):
 
         layout.active = operator.export_skins
 
+        row = layout.row()
+        row.prop(operator, 'export_influence_nb')
+        row.active = not operator.export_all_influences
         layout.prop(operator, 'export_all_influences')
 
 
