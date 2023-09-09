@@ -42,6 +42,16 @@ compared to Blender, as such vertices are separated for export.
 Likewise, curves and other non-mesh data are not preserved,
 and must be converted to meshes prior to export.
 
+GPU Instances
+-------------
+
+When the option is enable in Exporter, instances are exported using the ``EXT_mesh_gpu_instancing`` extension.
+There are some limitations, at export:
+- Instances must be meshes, and don't have any children themselves
+- Instances must all be children of the same object.
+- This extension doesn't manage material variation. That means that the generated file may include all instances with same materials.
+- Instances detected are objects sharing the same mesh data.
+At import, instances are created by creating objects sharing the same mesh data.
 
 Materials
 =========
@@ -569,6 +579,7 @@ are supported directly by this add-on:
 - ``KHR_lights_punctual``
 - ``KHR_texture_transform``
 - ``KHR_mesh_quantization``
+- ``EXT_mesh_gpu_instancing``
 
 
 .. rubric:: Export
@@ -585,6 +596,7 @@ are supported directly by this add-on:
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
 - ``KHR_texture_transform``
+- ``EXT_mesh_gpu_instancing``
 
 
 Third-party glTF Extensions
@@ -850,6 +862,11 @@ Transform
 Y Up
    Export using glTF convention, +Y up.
 
+Data - Scene Graph
+^^^^^^^^^^^^^^^^^^
+
+GPU Instances
+   Export using ``EXT_mesh_gpu_instancing`` extensions.
 
 Data - Mesh
 ^^^^^^^^^^^
