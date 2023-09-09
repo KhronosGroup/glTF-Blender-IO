@@ -35,7 +35,7 @@ class BlenderNode():
         if bpy.app.debug_value == 101:
             gltf.log.critical("Node %d of %d (id %s)", gltf.display_current_node, len(gltf.vnodes), vnode_id)
 
-        if vnode.type == VNode.Object:
+        if vnode.type in [VNode.Object, VNode.Inst]:
             gltf_node = gltf.data.nodes[vnode_id] if isinstance(vnode_id, int) else None
             import_user_extensions('gather_import_node_before_hook', gltf, vnode, gltf_node)
             obj = BlenderNode.create_object(gltf, vnode_id)
@@ -59,6 +59,9 @@ class BlenderNode():
         vnode = gltf.vnodes[vnode_id]
 
         if vnode.mesh_node_idx is not None:
+            obj = BlenderNode.create_mesh_object(gltf, vnode)
+
+        elif vnode.type == VNode.Inst and vnode.mesh_idx is not None:
             obj = BlenderNode.create_mesh_object(gltf, vnode)
 
         elif vnode.camera_node_idx is not None:
@@ -211,7 +214,17 @@ class BlenderNode():
 
     @staticmethod
     def create_mesh_object(gltf, vnode):
-        pynode = gltf.data.nodes[vnode.mesh_node_idx]
+        if vnode.type != VNode.Inst:
+            # Regular case
+            pynode = gltf.data.nodes[vnode.mesh_node_idx]
+        else:
+            class DummyPyNode:
+                pass
+            pynode = DummyPyNode()
+            pynode.mesh = vnode.mesh_idx
+            pynode.skin = None
+            pynode.weights = None
+
         if not (0 <= pynode.mesh < len(gltf.data.meshes)):
             # Avoid traceback for invalid gltf file: invalid reference to meshes array
             # So return an empty blender object)
