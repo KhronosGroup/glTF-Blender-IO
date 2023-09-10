@@ -795,6 +795,9 @@ Bone Direction
    Changes the heuristic the importer uses to decide where to place bone tips.
    Note that the Fortune setting may cause inaccuracies in models that use non-uniform scaling.
    Otherwise this is purely aesthetic.
+   The default value will not change axis, and is best for re-exporting from Blender.
+   This default option will change display mode (adding shape and changing relationship line) to have a better view,
+   even if original bones axis are not the most accurate (estheticaly speaking)
 Lighting Mode
    Optional backwards compatibility for non-standard render engines. Applies to lights.
    Standard: Physically-based glTF lighting units (cd, lx, nt).
