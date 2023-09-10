@@ -21,6 +21,7 @@ from ...io.com import gltf2_io
 from ...io.imp.gltf2_io_binary import BinaryData
 from ...io.com import gltf2_io_constants
 from ...io.exp import gltf2_io_binary_data
+from ..com.gltf2_blender_default import BLENDER_GLTF_SPECIAL_COLLECTION
 from . import gltf2_blender_gather_accessors
 
 class VExportNode:
@@ -433,6 +434,10 @@ class VExportTree:
             found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
             if not found:
                 return False
+
+        if BLENDER_GLTF_SPECIAL_COLLECTION in bpy.data.collections and self.nodes[uuid].blender_object.name in \
+                bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].objects:
+            return False
 
         return True
 
