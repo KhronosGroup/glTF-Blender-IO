@@ -2030,6 +2030,16 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
             });
 
+            it('roundtrips skin cylinder', function() {
+                let dir = '03_skinned_cylinder';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 1); // be sure bone shape are not re-exported
+
+            });
+
             it('roundtrips an OcclusionRoughnessMetallic texture', function() {
                 let dir = '08_combine_orm';
                 let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
