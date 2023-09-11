@@ -30,16 +30,17 @@ def export_volume(blender_material, export_settings):
         transmission_enabled = True
 
     if transmission_enabled is False:
-        return None, None, None
+        return None, {}
 
     volume_extension = {}
     has_thickness_texture = False
     thickness_slots = ()
+    uvmap_info = {}
 
     thicknesss_socket = gltf2_blender_get.get_socket_old(blender_material, 'Thickness')
     if thicknesss_socket is None:
         # If no thickness (here because there is no glTF Material Output node), no volume extension export
-            return None, None, None
+            return None, {}
 
     density_socket = gltf2_blender_get.get_socket(blender_material, 'Density', volume=True)
     attenuation_color_socket = gltf2_blender_get.get_socket(blender_material, 'Color', volume=True)
@@ -58,7 +59,7 @@ def export_volume(blender_material, export_settings):
         val = thicknesss_socket.default_value
         if val == 0.0:
             # If no thickness, no volume extension export
-            return None, None, None
+            return None, {}
         volume_extension['thicknessFactor'] = val
     elif gltf2_blender_get.has_image_node_from_socket(thicknesss_socket):
         fac = gltf2_blender_get.get_factor_from_socket(thicknesss_socket, kind='VALUE')
@@ -70,11 +71,8 @@ def export_volume(blender_material, export_settings):
     if has_thickness_texture:
         thickness_slots = (thicknesss_socket,)
 
-    use_actives_uvmaps = []
-    uvmap_attribute_names = {}
-
     if len(thickness_slots) > 0:
-        combined_texture, use_active_uvmap, uvmap_attribute_name, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             thicknesss_socket,
             thickness_slots,
             (),
@@ -82,9 +80,5 @@ def export_volume(blender_material, export_settings):
         )
         if has_thickness_texture:
             volume_extension['thicknessTexture'] = combined_texture
-        if use_active_uvmap:
-            use_actives_uvmaps.append("thicknessTexture")
-        if uvmap_attribute_name:
-            uvmap_attribute_names.update({"thicknessTexture": uvmap_attribute_name})
 
-    return Extension('KHR_materials_volume', volume_extension, False), use_actives_uvmaps, uvmap_attribute_names
+    return Extension('KHR_materials_volume', volume_extension, False), {'thicknessTexture': uvmap_info}

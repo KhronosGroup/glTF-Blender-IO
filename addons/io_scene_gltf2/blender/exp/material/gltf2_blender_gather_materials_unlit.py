@@ -138,11 +138,11 @@ def gather_base_color_texture(info, export_settings):
         # because gather_image determines how to pack images based on the
         # names of sockets, and the names are hard-coded to a Principled
         # style graph.
-        unlit_texture, unlit_use_active_uvmap, attribute_name, _  = gltf2_blender_gather_texture_info.gather_texture_info(
+        unlit_texture, uvmap_info, _  = gltf2_blender_gather_texture_info.gather_texture_info(
             sockets[0],
             sockets,
             (),
             export_settings,
         )
-        return unlit_texture, ["unlitTexture"] if unlit_use_active_uvmap else None, {"unlitTexture": attribute_name} if attribute_name else {}
-    return None, None
+        return unlit_texture, {'baseColorTexture': uvmap_info}
+    return None, {}

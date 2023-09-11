@@ -34,76 +34,17 @@ from .extensions.gltf2_blender_gather_materials_transmission import export_trans
 from .extensions.gltf2_blender_gather_materials_clearcoat import export_clearcoat
 from .extensions.gltf2_blender_gather_materials_ior import export_ior
 
-
-def gather_material(blender_material, active_uvmap_index, export_settings, get_uvmap_attributes=False, uvmap_attributes_index={}):
-
-    # unfortunaly, we can't cache the uvmap attribute (so UVMap is a custom attribute)
-    # Because we don't know the name of the attribute
-    # So we are going to retrieve material without this parameter
-    # And then, modifying it if needed
-
-    # uvmap_attributes will have the list of textures that nead attribute, with name of this attribute
-    # Example : {"BaseColorTexture": "CustomUVMap", "Emissive": "AnotherCustomUVMap"}
-
-    # uvmap_attributes_index will have, for each attribute name, the index of TEXCOORD_x to use
-
-    # TODO : when user doesn't export UVMap
-
-    base_material, uvmap_attributes = gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, export_settings)
-
-    if len(uvmap_attributes_index) > 0 and len(uvmap_attributes) > 0:
-
-        material = deepcopy(base_material)
-        __get_new_material_texture_shared(base_material, material)
-
-        # WARNING Any modification here (Because we have some new textures) must also go on active_uvmaps assignation
-        for tex in uvmap_attributes.keys():
-            if tex == "emissiveTexture":
-                material.emissive_texture.tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "normalTexture":
-                material.normal_texture.tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "occlusionTexture":
-                material.occlusion_texture.tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "baseColorTexture":
-                material.pbr_metallic_roughness.base_color_texture.tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "metallicRoughnessTexture":
-                material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "clearcoatTexture":
-                material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "clearcoatRoughnessTexture":
-                material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "clearcoatNormalTexture": #TODO not tested yet
-                material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "transmissionTexture": #TODO not tested yet
-                material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "specularTexture":
-                material.extensions["KHR_materials_specular"].extension['specularTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "specularColorTexture":
-                material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "sheenColorTexture":
-                material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-            elif tex == "sheenRoughnessTexture":
-                material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = uvmap_attributes_index[uvmap_attributes[tex]]
-    else:
-        material = base_material
-
-    if get_uvmap_attributes is False:
-        return material
-    else:
-        return material, uvmap_attributes
-
 @cached
-def get_material_cache_key(blender_material, active_uvmap_index, export_settings):
+def get_material_cache_key(blender_material, export_settings):
     # Use id of material
     # Do not use bpy.types that can be unhashable
     # Do not use material name, that can be not unique (when linked)
     return (
       (id(blender_material),),
-      (active_uvmap_index,)
     )
 
 @cached_by_key(key=get_material_cache_key)
-def gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, export_settings):
+def gather_material(blender_material, export_settings):
     """
     Gather the material used by the blender primitive.
 
@@ -112,21 +53,21 @@ def gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, e
     :return: a glTF material
     """
     if not __filter_material(blender_material, export_settings):
-        return None, None
+        return None, {}
 
-    mat_unlit, uvmaps_attribute_names = __export_unlit(blender_material, active_uvmap_index, export_settings)
+    mat_unlit, uvmap_info = __export_unlit(blender_material, export_settings)
     if mat_unlit is not None:
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
-        return mat_unlit, uvmaps_attribute_names
+        return mat_unlit, uvmap_info
 
     orm_texture, default_sockets = __gather_orm_texture(blender_material, export_settings)
 
     emissive_factor = __gather_emissive_factor(blender_material, export_settings)
-    emissive_texture, uvmap_actives_emissive_texture, uvmap_attribute_name_emissive = __gather_emissive_texture(blender_material, export_settings)
-    extensions, uvmap_actives_extensions, uvmap_attribute_name_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
-    normal_texture, uvmap_actives_normal_texture, uvmap_attribute_name_normal_texture = __gather_normal_texture(blender_material, export_settings)
-    occlusion_texture, uvmap_actives_occlusion_texture, uvmap_attribute_name_occlusion_texture = __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings)
-    pbr_metallic_roughness, uvmap_actives_pbr_metallic_roughness, uvmap_attribute_names_pbr_metallic_rougness = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
+    emissive_texture, uvmap_info_emissive = __gather_emissive_texture(blender_material, export_settings)
+    extensions, uvmap_info_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
+    normal_texture, uvmap_info_normal = __gather_normal_texture(blender_material, export_settings)
+    occlusion_texture, uvmap_info_occlusion = __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings)
+    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
 
     if any([i>1.0 for i in emissive_factor or []]) is True:
         # Strength is set on extension
@@ -134,7 +75,7 @@ def gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, e
         emissive_factor = [f / emission_strength for f in emissive_factor]
 
 
-    base_material = gltf2_io.Material(
+    material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
         double_sided=__gather_double_sided(blender_material, extensions, export_settings),
@@ -148,73 +89,12 @@ def gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, e
         pbr_metallic_roughness=pbr_metallic_roughness
     )
 
-
-    # merge all uvmap_actives
-    uvmap_actives = []
-    if uvmap_actives_emissive_texture:
-        uvmap_actives.extend(uvmap_actives_emissive_texture)
-    if uvmap_actives_extensions:
-        uvmap_actives.extend(uvmap_actives_extensions)
-    if uvmap_actives_normal_texture:
-        uvmap_actives.extend(uvmap_actives_normal_texture)
-    if uvmap_actives_occlusion_texture:
-        uvmap_actives.extend(uvmap_actives_occlusion_texture)
-    if uvmap_actives_pbr_metallic_roughness:
-        uvmap_actives.extend(uvmap_actives_pbr_metallic_roughness)
-
-    # merge all attribute names for UVMaps
-    uvmap_attribute_names = {}
-    if uvmap_attribute_name_normal_texture:
-        uvmap_attribute_names.update(uvmap_attribute_name_normal_texture)
-    if uvmap_attribute_name_extensions:
-        uvmap_attribute_names.update(uvmap_attribute_name_extensions)
-    if uvmap_attribute_name_occlusion_texture:
-        uvmap_attribute_names.update(uvmap_attribute_name_occlusion_texture)
-    if uvmap_attribute_names_pbr_metallic_rougness:
-        uvmap_attribute_names.update(uvmap_attribute_names_pbr_metallic_rougness)
-    if uvmap_attribute_name_emissive:
-        uvmap_attribute_names.update(uvmap_attribute_name_emissive)
-
-    # Because some part of material are shared (eg pbr_metallic_roughness), we must copy the material
-    # Texture must be shared, but not TextureInfo
-    material = deepcopy(base_material)
-    __get_new_material_texture_shared(base_material, material)
-
-    active_uvmap_index = active_uvmap_index if active_uvmap_index != 0 else None
-
-    # WARNING Any modification here (Because we have some new textures) must also go on Custom Attribute UVMap assignation
-    for tex in uvmap_actives:
-        if tex == "emissiveTexture":
-            material.emissive_texture.tex_coord = active_uvmap_index
-        elif tex == "normalTexture":
-            material.normal_texture.tex_coord = active_uvmap_index
-        elif tex == "occlusionTexture":
-            material.occlusion_texture.tex_coord = active_uvmap_index
-        elif tex == "baseColorTexture":
-            material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
-        elif tex == "metallicRoughnessTexture":
-            material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = active_uvmap_index
-        elif tex == "clearcoatTexture":
-            material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = active_uvmap_index
-        elif tex == "clearcoatRoughnessTexture":
-            material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = active_uvmap_index
-        elif tex == "clearcoatNormalTexture": #TODO not tested yet
-            material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = active_uvmap_index
-        elif tex == "transmissionTexture": #TODO not tested yet
-            material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = active_uvmap_index
-        elif tex == "specularTexture":
-            material.extensions["KHR_materials_specular"].extension['specularTexture'].tex_coord = active_uvmap_index
-        elif tex == "specularColorTexture":
-            material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = active_uvmap_index
-        elif tex == "sheenColorTexture":
-            material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = active_uvmap_index
-        elif tex == "sheenRoughnessTexture":
-            material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = active_uvmap_index
-
-    # If material is not using active UVMap, we need to return the same material,
-    # Even if multiples meshes are using different active UVMap
-    if len(uvmap_actives) == 0 and active_uvmap_index != -1:
-        material, _ = gather_material_omit_uvmap_attribute(blender_material, -1, export_settings)
+    uvmap_infos = {}
+    uvmap_infos.update(uvmap_info_emissive)
+    uvmap_infos.update(uvmap_info_extensions)
+    uvmap_infos.update(uvmap_info_normal)
+    uvmap_infos.update(uvmap_info_occlusion)
+    uvmap_infos.update(uvmap_info_pbr_metallic_roughness)
 
 
     # If emissive is set, from an emissive node (not PBR)
@@ -225,7 +105,7 @@ def gather_material_omit_uvmap_attribute(blender_material, active_uvmap_index, e
 
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
-    return material, uvmap_attribute_names
+    return material, uvmap_infos
 
 
 def __get_new_material_texture_shared(base, node):
@@ -292,23 +172,20 @@ def __gather_emissive_texture(blender_material, export_settings):
 def __gather_extensions(blender_material, emissive_factor, export_settings):
     extensions = {}
 
-    # KHR_materials_clearcoat
-    actives_uvmaps = []
-    uvmaps_attribute_names = {}
+    uvmap_infos = {}
 
-    clearcoat_extension, use_actives_uvmap_clearcoat, uvmaps_attribute_name_clearcoat = export_clearcoat(blender_material, export_settings)
+    # KHR_materials_clearcoat
+    clearcoat_extension, uvmap_info = export_clearcoat(blender_material, export_settings)
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
-        actives_uvmaps.extend(use_actives_uvmap_clearcoat)
-        uvmaps_attribute_names.update(uvmaps_attribute_name_clearcoat)
+        uvmap_infos.update(uvmap_infos)
 
     # KHR_materials_transmission
 
-    transmission_extension, use_actives_uvmap_transmission, uvmap_attribute_name_transmission = export_transmission(blender_material, export_settings)
+    transmission_extension, uvmap_info = export_transmission(blender_material, export_settings)
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
-        actives_uvmaps.extend(use_actives_uvmap_transmission)
-        uvmaps_attribute_names.update(uvmap_attribute_name_transmission)
+        uvmap_infos.update(uvmap_infos)
 
     # KHR_materials_emissive_strength
     if any([i>1.0 for i in emissive_factor or []]):
@@ -318,25 +195,22 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
 
     # KHR_materials_volume
 
-    volume_extension, use_actives_uvmap_volume_thickness, uvmap_attribute_name_volume  = export_volume(blender_material, export_settings)
+    volume_extension, uvmap_info  = export_volume(blender_material, export_settings)
     if volume_extension:
         extensions["KHR_materials_volume"] = volume_extension
-        actives_uvmaps.extend(use_actives_uvmap_volume_thickness)
-        uvmaps_attribute_names.update(uvmap_attribute_name_volume)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_specular
-    specular_extension, use_actives_uvmap_specular, uvmap_attribute_names_specular = export_specular(blender_material, export_settings)
+    specular_extension, uvmap_info = export_specular(blender_material, export_settings)
     if specular_extension:
         extensions["KHR_materials_specular"] = specular_extension
-        actives_uvmaps.extend(use_actives_uvmap_specular)
-        uvmaps_attribute_names.update(uvmap_attribute_names_specular)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_sheen
-    sheen_extension, use_actives_uvmap_sheen, uvmap_attribute_names_sheen = export_sheen(blender_material, export_settings)
+    sheen_extension, uvmap_info = export_sheen(blender_material, export_settings)
     if sheen_extension:
         extensions["KHR_materials_sheen"] = sheen_extension
-        actives_uvmaps.extend(use_actives_uvmap_sheen)
-        uvmaps_attribute_names.update(uvmap_attribute_names_sheen)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_ior
     # Keep this extension at the end, because we export it only if some others are exported
@@ -344,7 +218,7 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     if ior_extension:
         extensions["KHR_materials_ior"] = ior_extension
 
-    return extensions, actives_uvmaps if extensions else None, uvmaps_attribute_names if extensions else None
+    return extensions, uvmap_infos
 
 
 def __gather_extras(blender_material, export_settings):
@@ -361,11 +235,11 @@ def __gather_normal_texture(blender_material, export_settings):
     normal = gltf2_blender_get.get_socket(blender_material, "Normal")
     if normal is None:
         normal = gltf2_blender_get.get_socket_old(blender_material, "Normal")
-    normal_texture, use_active_uvmap_normal, attribute_name, _  = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+    normal_texture, uvmap_info, _  = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
         normal,
         (normal,),
         export_settings)
-    return normal_texture, ["normalTexture"] if use_active_uvmap_normal else None, {"normalTexture": attribute_name} if attribute_name is not None else None
+    return normal_texture, {"normalTexture" : uvmap_info}
 
 
 def __gather_orm_texture(blender_material, export_settings):
@@ -407,7 +281,7 @@ def __gather_orm_texture(blender_material, export_settings):
         return None, ()
 
     # Double-check this will past the filter in texture_info
-    info, _, _, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, default_sockets, export_settings)
+    info, _, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, default_sockets, export_settings)
     if info is None:
         return None, ()
 
@@ -417,14 +291,13 @@ def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, e
     occlusion = gltf2_blender_get.get_socket(blender_material, "Occlusion")
     if occlusion is None:
         occlusion = gltf2_blender_get.get_socket_old(blender_material, "Occlusion")
-    occlusion_texture, use_active_uvmap_occlusion, uvmap_attribute_names_occlusion, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
+    occlusion_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),
         default_sockets,
         export_settings)
     return occlusion_texture, \
-            ["occlusionTexture"] if use_active_uvmap_occlusion else None, \
-            {"occlusionTexture": uvmap_attribute_names_occlusion} if uvmap_attribute_names_occlusion else {}
+            {"occlusionTexture" : uvmap_info}
 
 
 def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
@@ -433,16 +306,16 @@ def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settin
         orm_texture,
         export_settings)
 
-def __export_unlit(blender_material, active_uvmap_index, export_settings):
+def __export_unlit(blender_material, export_settings):
     gltf2_unlit = gltf2_blender_gather_materials_unlit
 
     info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
     if info is None:
-        return None, None
+        return None, {}
 
-    base_color_texture, use_active_uvmap, uvmap_attribute_names = gltf2_unlit.gather_base_color_texture(info, export_settings)
+    base_color_texture, uvmap_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
 
-    base_material = gltf2_io.Material(
+    material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
         alpha_mode=__gather_alpha_mode(blender_material, export_settings),
         double_sided=__gather_double_sided(blender_material, {}, export_settings),
@@ -465,19 +338,154 @@ def __export_unlit(blender_material, active_uvmap_index, export_settings):
         )
     )
 
-    if use_active_uvmap is not None:
-        # Because some part of material are shared (eg pbr_metallic_roughness), we must copy the material
-        # Texture must be shared, but not TextureInfo
-        material = deepcopy(base_material)
-        __get_new_material_texture_shared(base_material, material)
-        material.pbr_metallic_roughness.base_color_texture.tex_coord = active_uvmap_index
-    elif use_active_uvmap is None and active_uvmap_index != -1:
-        # If material is not using active UVMap, we need to return the same material,
-        # Even if multiples meshes are using different active UVMap
-        material, _ = gather_material_omit_uvmap_attribute(blender_material, -1, export_settings)
-    else:
-        material = base_material
-
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
 
-    return material, uvmap_attribute_names
+    return material, uvmap_info
+
+def get_active_uvmap_index(blender_mesh):
+    # retrieve active render UVMap
+    active_uvmap_idx = 0
+    for i in range(len(blender_mesh.uv_layers)):
+        if blender_mesh.uv_layers[i].active_render is True:
+            active_uvmap_idx = i
+            break
+    return active_uvmap_idx
+
+
+def get_final_material(mesh, blender_material, attr_indices, base_material, uvmap_info, export_settings):
+
+    # First, we need to calculate all index of UVMap
+
+    indices = {}
+
+    for m, v in uvmap_info.items():
+
+        if not 'type' in v.keys():
+            continue
+
+        if v['type'] == 'Fixed':
+            i = mesh.uv_layers.find(v['value'])
+            if i >= 0:
+                indices[m] = i
+            else:
+                # Using active index
+                indices[m] = get_active_uvmap_index(mesh)
+        elif v['type'] == 'Active':
+            indices[m] = get_active_uvmap_index(mesh)
+        elif v['type'] == "Attribute":
+            indices[m] = attr_indices[v['value']]
+
+    # Now we have all needed indices, let's create a set that can be used for caching, so containing all possible textures
+    all_textures = get_all_textures()
+
+    caching_indices = []
+    for tex in all_textures:
+        caching_indices.append(indices.get(tex, None))
+
+    caching_indices = [i if i != 0 else None for i in caching_indices]
+    caching_indices = tuple(caching_indices)
+
+    material = __get_final_material_with_indices(blender_material, base_material, caching_indices, export_settings)
+
+    return material
+
+
+@cached
+def caching_material_tex_indices(blender_material, material, caching_indices, export_settings):
+    return (
+      (id(blender_material),),
+      (caching_indices,)
+    )
+
+@cached_by_key(key=caching_material_tex_indices)
+def __get_final_material_with_indices(blender_material, base_material, caching_indices, export_settings):
+
+    if base_material is None:
+        return None
+
+    if all([i is None for i in caching_indices]):
+        return base_material
+
+    material = deepcopy(base_material)
+    __get_new_material_texture_shared(base_material, material)
+
+    for tex, ind in zip(get_all_textures(), caching_indices):
+
+        if ind is None:
+            continue
+
+        if tex == "emissiveTexture":
+            material.emissive_texture.tex_coord = ind
+        elif tex == "normalTexture":
+            material.normal_texture.tex_coord = ind
+        elif tex == "occlusionTexture":
+            material.occlusion_texture.tex_coord = ind
+        elif tex == "baseColorTexture":
+            material.pbr_metallic_roughness.base_color_texture.tex_coord = ind
+        elif tex == "metallicRoughnessTexture":
+            material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = ind
+        elif tex == "clearcoatTexture":
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = ind
+        elif tex == "clearcoatRoughnessTexture":
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = ind
+        elif tex == "clearcoatNormalTexture":
+            material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = ind
+        elif tex == "transmissionTexture":
+            material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = ind
+        elif tex == "specularTexture":
+            material.extensions["KHR_materials_specular"].extension['specularTexture'].tex_coord = ind
+        elif tex == "specularColorTexture":
+            material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = ind
+        elif tex == "sheenColorTexture":
+            material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = ind
+        elif tex == "sheenRoughnessTexture":
+            material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = ind
+        elif tex == "thicknessTexture":
+            material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
+        else:
+            print_console("ERROR", "some Textures tex coord are not managed")
+
+    return material
+
+
+def get_material_from_idx(material_idx, materials, export_settings):
+    mat = None
+    if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
+        if materials:
+            i = material_idx if material_idx < len(materials) else -1
+            mat = materials[i]
+    return mat
+
+def get_base_material(material_idx, materials, export_settings):
+
+    material = None
+    uvmap_info = {}
+
+    mat = get_material_from_idx(material_idx, materials, export_settings)
+    if mat is not None:
+        material, uvmap_info = gather_material(
+            mat,
+            export_settings
+        )
+    return material, uvmap_info
+
+def get_all_textures():
+    # Make sure to have all texture here, always in same order
+    tab = []
+
+    tab.append("emissiveTexture")
+    tab.append("normalTexture")
+    tab.append("occlusionTexture")
+    tab.append("baseColorTexture")
+    tab.append("metallicRoughnessTexture")
+    tab.append("clearcoatTexture")
+    tab.append("clearcoatRoughnessTexture")
+    tab.append("clearcoatNormalTexture")
+    tab.append("transmissionTexture")
+    tab.append("specularTexture")
+    tab.append("specularColorTexture")
+    tab.append("sheenColorTexture")
+    tab.append("sheenRoughnessTexture")
+    tab.append("thicknessTexture")
+
+    return tab

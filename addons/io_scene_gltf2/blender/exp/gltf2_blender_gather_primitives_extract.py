@@ -20,7 +20,7 @@ from ...io.com.gltf2_io_constants import ROUNDING_DIGIT
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...io.com import gltf2_io_constants
 from ..com import gltf2_blender_conversion
-from .material import gltf2_blender_gather_materials
+from .material.gltf2_blender_gather_materials import get_base_material
 from . import gltf2_blender_gather_skins
 
 
@@ -405,8 +405,8 @@ class PrimitiveCreator:
         # So we need to get, for each material, what are these custom attribute
         # No choice : We need to retrieve materials here. Anyway, this will be baked, and next call will be quick
         for material_idx in self.prim_indices.keys():
-            _, uvmap_attributes = get_material(material_idx, None, self.materials, get_active_uvmap_index(self.blender_mesh), self.export_settings, get_uvmap_attributes=True)
-            self.uvmap_attribute_list = list(set(uvmap_attributes.values()))
+            _, uvmap_info = get_base_material(material_idx, self.materials, self.export_settings)
+            self.uvmap_attribute_list = list(set([i['value'] for i in uvmap_info.values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
 
             additional_fields = []
             for attr in self.uvmap_attribute_list:
@@ -994,33 +994,3 @@ class PrimitiveCreator:
             else:
                 self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
                 self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
-
-def get_active_uvmap_index(blender_mesh):
-    # retrieve active render UVMap
-    active_uvmap_idx = 0
-    for i in range(len(blender_mesh.uv_layers)):
-        if blender_mesh.uv_layers[i].active_render is True:
-            active_uvmap_idx = i
-            break
-    return active_uvmap_idx
-
-def get_material(material_idx, internal_primitive, materials, active_uvmap_idx, export_settings, get_uvmap_attributes=False):
-    if get_uvmap_attributes is False:
-        material = None
-    else:
-        material = None, {}
-
-    if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
-        mat = None
-        if materials:
-            i = material_idx if material_idx < len(materials) else -1
-            mat = materials[i]
-        if mat is not None:
-            material = gltf2_blender_gather_materials.gather_material(
-                mat,
-                active_uvmap_idx,
-                export_settings,
-                get_uvmap_attributes=get_uvmap_attributes,
-                uvmap_attributes_index=internal_primitive['uvmap_attributes_index'] if internal_primitive else {}
-            )
-    return material
