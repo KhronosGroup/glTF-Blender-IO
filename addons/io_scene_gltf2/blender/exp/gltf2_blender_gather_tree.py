@@ -79,7 +79,7 @@ class VExportNode:
     def recursive_display(self, tree, mode):
         if mode == "simple":
             for c in self.children:
-                print(self.blender_object.name, "/", self.blender_bone.name if self.blender_bone else "", "-->", tree.nodes[c].blender_object.name, "/", tree.nodes[c].blender_bone.name if tree.nodes[c].blender_bone else "" )
+                print(tree.nodes[c].uuid, self.blender_object.name, "/", self.blender_bone.name if self.blender_bone else "", "-->", tree.nodes[c].blender_object.name, "/", tree.nodes[c].blender_bone.name if tree.nodes[c].blender_bone else "" )
                 tree.nodes[c].recursive_display(tree, mode)
 
 class VExportTree:
@@ -319,7 +319,7 @@ class VExportTree:
     def display(self, mode):
         if mode == "simple":
             for n in self.roots:
-                print("Root", self.nodes[n].blender_object.name, "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
+                print(self.nodes[n].uuid, "Root", self.nodes[n].blender_object.name, "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
                 self.nodes[n].recursive_display(self, mode)
 
     def filter_tag(self):
@@ -452,6 +452,7 @@ class VExportTree:
         #TODOARMA add option
         # If we remove the Armature object
         if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
+            self.nodes[uuid].arma_exported = True
             return False
 
         return True
@@ -543,6 +544,9 @@ class VExportTree:
         from .gltf2_blender_gather_skins import gather_skin
         skins = []
         for n in [n for n in self.nodes.values() if n.blender_type == VExportNode.ARMATURE]:
+            #TODO add option
+            if hasattr(n, "arma_exported") is False:
+                continue
             if len([m for m in self.nodes.values() if m.keep_tag is True and m.blender_type == VExportNode.OBJECT and m.armature == n.uuid]) == 0:
                 skin = gather_skin(n.uuid, self.export_settings)
                 skins.append(skin)
