@@ -449,7 +449,7 @@ class VExportTree:
             if not found:
                 return False
 
-        #TODO add option
+        #TODOARMA add option
         # If we remove the Armature object
         if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
             return False
@@ -457,7 +457,7 @@ class VExportTree:
         return True
 
     def remove_filtered_nodes(self):
-        # TODO add option
+        #TODOARMA add option
         # If we remove the Armature object
         self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True or (n.keep_tag is False and n.blender_type == VExportNode.ARMATURE)}
 

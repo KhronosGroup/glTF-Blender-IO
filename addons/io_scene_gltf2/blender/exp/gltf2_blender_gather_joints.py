@@ -60,7 +60,7 @@ def gather_joint_vnode(vnode, export_settings):
     vtree = export_settings['vtree']
     blender_bone = vtree.nodes[vnode].blender_bone
 
-    #TODO add option
+    #TODOARMA add option
     if vtree.nodes[vnode].parent_uuid is not None:
         mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
     else:

@@ -78,7 +78,7 @@ def __gather_scene(blender_scene, export_settings):
 
     export_settings['vtree'] = vtree
 
-    #TODO add option
+    #TODOARMA add option
     armature_root_joints = {}
     for r in [vtree.nodes[r] for r in vtree.roots]:
         if r.blender_type != gltf2_blender_gather_tree.VExportNode.BONE:
