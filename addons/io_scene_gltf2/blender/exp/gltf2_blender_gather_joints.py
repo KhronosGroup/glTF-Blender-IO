@@ -64,7 +64,7 @@ def gather_joint_vnode(vnode, export_settings):
     if vtree.nodes[vnode].parent_uuid is not None:
         mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
     else:
-        mat = vtree.nodes[vtree.nodes[vnode].armature].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
+        mat = vtree.nodes[vnode].matrix_world
 
     trans, rot, sca = mat.decompose()
 
