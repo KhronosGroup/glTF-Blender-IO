@@ -125,6 +125,10 @@ def get_cache_data(path: str,
                             # Bone has a parent, but in export, after filter, is at root of armature
                             matrix = blender_bone.matrix.copy()
 
+                        #TODO add option
+                        # Because there is no armature object, we need to apply the TRS of armature to the root bone
+                        matrix = matrix @ blender_obj.matrix_world
+
                     if blender_obj.animation_data and blender_obj.animation_data.action \
                             and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                         if blender_bone.name not in data[obj_uuid][blender_obj.animation_data.action.name]['bone'].keys():
