@@ -238,15 +238,15 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
             # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
             if socket.socket.name == 'Metallic':
                 dst_chan = Channel.B
-            elif socket.socket.name == 'Roughness':
+            elif socket.socket.name == 'Roughness' and socket.node.type == "BSDF_PRINCIPLED":
                 dst_chan = Channel.G
             elif socket.socket.name == 'Occlusion':
                 dst_chan = Channel.R
             elif socket.socket.name == 'Alpha':
                 dst_chan = Channel.A
-            elif socket.socket.name == 'Clearcoat':
+            elif socket.socket.name == 'Coat':
                 dst_chan = Channel.R
-            elif socket.socket.name == 'Clearcoat Roughness':
+            elif socket.socket.name == 'Coat Roughness':
                 dst_chan = Channel.G
             elif socket.socket.name == 'Thickness': # For KHR_materials_volume
                 dst_chan = Channel.G

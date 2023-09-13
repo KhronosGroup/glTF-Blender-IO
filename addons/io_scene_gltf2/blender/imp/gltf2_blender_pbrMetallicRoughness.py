@@ -140,19 +140,19 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     clearcoat(
         mh,
         location=locs['clearcoat'],
-        clearcoat_socket=pbr_node.inputs['Clearcoat'],
+        clearcoat_socket=pbr_node.inputs['Coat'],
     )
 
     clearcoat_roughness(
         mh,
         location=locs['clearcoat_roughness'],
-        roughness_socket=pbr_node.inputs['Clearcoat Roughness'],
+        roughness_socket=pbr_node.inputs['Coat Roughness'],
     )
 
     clearcoat_normal(
         mh,
         location=locs['clearcoat_normal'],
-        normal_socket=pbr_node.inputs['Clearcoat Normal'],
+        normal_socket=pbr_node.inputs['Coat Normal'],
     )
 
     transmission(
