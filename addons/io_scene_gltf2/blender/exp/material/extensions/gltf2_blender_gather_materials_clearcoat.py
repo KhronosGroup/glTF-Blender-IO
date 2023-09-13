@@ -90,4 +90,4 @@ def export_clearcoat(blender_material, export_settings):
         clearcoat_extension['clearcoatNormalTexture'] = clearcoat_normal_texture
         uvmap_infos.update({'clearcoatNormalTexture': uvmap_info})
 
-    return Extension('KHR_materials_clearcoat', clearcoat_extension, False), uvmap_info
+    return Extension('KHR_materials_clearcoat', clearcoat_extension, False), uvmap_infos
