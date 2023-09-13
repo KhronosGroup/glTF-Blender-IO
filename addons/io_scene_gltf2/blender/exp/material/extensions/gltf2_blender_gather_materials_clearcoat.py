@@ -25,9 +25,9 @@ def export_clearcoat(blender_material, export_settings):
     clearcoat_extension = {}
     clearcoat_roughness_slots = ()
 
-    clearcoat_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat')
-    clearcoat_roughness_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat Roughness')
-    clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat Normal')
+    clearcoat_socket = gltf2_blender_get.get_socket(blender_material, 'Coat')
+    clearcoat_roughness_socket = gltf2_blender_get.get_socket(blender_material, 'Coat Roughness')
+    clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material, 'Coat Normal')
 
     if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
         clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value

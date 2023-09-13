@@ -556,7 +556,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.materials.length, 1);
                 assert.strictEqual(asset.images.length, 1);
                 const clearcoat = asset.materials[0].extensions.KHR_materials_clearcoat;
-                assert.equalEpsilon(clearcoat.clearcoatFactor, 0.9);
+                assert.equalEpsilon(clearcoat.clearcoatFactor, 0.225);
                 assert.equalEpsilon(clearcoat.clearcoatRoughnessFactor, 0.1);
 
                 // Base normal map
