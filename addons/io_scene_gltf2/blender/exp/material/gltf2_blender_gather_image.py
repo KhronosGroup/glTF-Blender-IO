@@ -239,7 +239,7 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                 # So export is correct if user plug the texture directly to the socket
                 if socket.name == 'Metallic':
                     src_chan = Channel.B
-                elif socket.name == 'Roughness':
+                elif socket.name == 'Roughness' and socket.node.type == "BSDF_PRINCIPLED":
                     src_chan = Channel.G
                 elif socket.name == 'Occlusion':
                     src_chan = Channel.R
