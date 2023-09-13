@@ -184,11 +184,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_image_format: EnumProperty(
         name='Images',
         items=(('AUTO', 'Automatic',
-                'Save PNGs as PNGs and JPEGs as JPEGs. '
+                'Save PNGs as PNGs, JPEGs as JPEGs, WEBPs as WEBPs. '
                 'If neither one, use PNG'),
                 ('JPEG', 'JPEG Format (.jpg)',
                 'Save images as JPEGs. (Images that need alpha are saved as PNGs though.) '
                 'Be aware of a possible loss in quality'),
+                ('WEBP', 'Webp Format',
+                'Save images as WEBPs as main image (no fallback)'),
                 ('NONE', 'None',
                  'Don\'t export images'),
                ),
@@ -199,15 +201,42 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default='AUTO'
     )
 
+    export_image_add_webp: BoolProperty(
+        name='Create Webp',
+        description=(
+            "Creates webp textures for every textures. "
+            "For already webp textures, nothing happen"
+        ),
+        default=False
+    )
+
+    export_image_webp_fallback: BoolProperty(
+        name='Webp fallback',
+        description=(
+            "For all webp textures, create a PNG fallback texture."
+        ),
+        default=False
+    )
+
     export_texture_dir: StringProperty(
         name='Textures',
         description='Folder to place texture files in. Relative to the .gltf file',
         default='',
     )
 
+    # Keep for back compatibility
     export_jpeg_quality: IntProperty(
         name='JPEG quality',
         description='Quality of JPEG export',
+        default=75,
+        min=0,
+        max=100
+    )
+
+    # Keep for back compatibility
+    export_image_quality: IntProperty(
+        name='Image quality',
+        description='Quality of image export',
         default=75,
         min=0,
         max=100
@@ -728,7 +757,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
-        export_settings['gltf_jpeg_quality'] = self.export_jpeg_quality
+        export_settings['gltf_add_webp'] = self.export_image_add_webp
+        export_settings['gltf_webp_fallback'] = self.export_image_webp_fallback
+        export_settings['gltf_image_quality'] = self.export_image_quality
+        export_settings['gltf_image_quality'] = self.export_jpeg_quality #For back compatibility
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
@@ -1037,8 +1069,13 @@ class GLTF_PT_export_data_material(bpy.types.Panel):
         col = layout.column()
         col.active = operator.export_materials == "EXPORT"
         col.prop(operator, 'export_image_format')
-        if operator.export_image_format in ["AUTO", "JPEG"]:
-            col.prop(operator, 'export_jpeg_quality')
+        if operator.export_image_format in ["AUTO", "JPEG", "WEBP"]:
+            col.prop(operator, 'export_image_quality')
+        col = layout.column()
+        col.active = operator.export_image_format != "WEBP"
+        col.prop(operator, "export_image_add_webp")
+        col = layout.column()
+        col.prop(operator, "export_image_webp_fallback")
 
 class GLTF_PT_export_data_original_pbr(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1578,6 +1615,15 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=True,
     )
 
+    import_webp_texture: BoolProperty(
+        name='Import Webp textures',
+        description=(
+            "If a texture exists in webp format,"
+            "loads the webp texture instead of the fallback png/jpg one"
+        ),
+        default=False,
+    )
+
     def draw(self, context):
         layout = self.layout
 
@@ -1590,6 +1636,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'bone_heuristic')
         layout.prop(self, 'export_import_convert_lighting_mode')
+        layout.prop(self, 'import_webp_texture')
 
     def invoke(self, context, event):
         import sys
