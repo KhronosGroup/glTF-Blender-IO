@@ -245,15 +245,15 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                     src_chan = Channel.R
                 elif socket.name == 'Alpha':
                     src_chan = Channel.A
-                elif socket.name == 'Clearcoat':
+                elif socket.name == 'Coat':
                     src_chan = Channel.R
-                elif socket.name == 'Clearcoat Roughness':
+                elif socket.name == 'Coat Roughness':
                     src_chan = Channel.G
                 elif socket.name == 'Thickness': # For KHR_materials_volume
                     src_chan = Channel.G
                 elif socket.name == "Specular": # For original KHR_material_specular
                     src_chan = Channel.A
-                elif socket.name == "Sigma": # For KHR_materials_sheen
+                elif socket.name == "Roughness" and socket.node.type == "BSDF_SHEEN": # For KHR_materials_sheen
                     src_chan = Channel.A
 
             dst_chan = None
