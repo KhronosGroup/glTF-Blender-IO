@@ -147,7 +147,8 @@ class ExportImage:
     def encode(self, mime_type: Optional[str], export_settings) -> Tuple[bytes, bool]:
         self.file_format = {
             "image/jpeg": "JPEG",
-            "image/png": "PNG"
+            "image/png": "PNG",
+            "image/webp": "WEBP"
         }.get(mime_type, "PNG")
 
         # Happy path = we can just use an existing Blender image
@@ -243,6 +244,9 @@ class ExportImage:
             elif self.file_format == 'JPEG':
                 if data.startswith(b'\xff\xd8\xff'):
                     return data
+            elif self.file_format == 'WEBP':
+                if data[8:12] == b'WEBP':
+                    return data
 
         # Copy to a temp image and save.
         with TmpImageGuard() as guard:
@@ -259,8 +263,8 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_sett
         tmp_image.file_format = file_format
 
         # if image is jpeg, use quality export settings
-        if file_format == "JPEG":
-            tmp_image.save(quality=export_settings['gltf_jpeg_quality'])
+        if file_format in ["JPEG", "WEBP"]:
+            tmp_image.save(quality=export_settings['gltf_image_quality'])
         else:
             tmp_image.save()
 
