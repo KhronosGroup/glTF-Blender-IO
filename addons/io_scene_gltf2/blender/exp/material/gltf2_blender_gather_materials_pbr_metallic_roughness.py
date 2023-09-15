@@ -19,6 +19,7 @@ from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...exp import gltf2_blender_get
 from ..gltf2_blender_gather_cache import cached
 from ..gltf2_blender_get import image_tex_is_valid_from_socket
+from .gltf2_blender_search_node_tree import get_vertex_color_info
 from .gltf2_blender_gather_texture_info import gather_texture_info
 
 @cached
@@ -28,7 +29,7 @@ def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export
 
     uvmap_infos = {}
 
-    base_color_texture, uvmap_info, _ = __gather_base_color_texture(blender_material, export_settings)
+    base_color_texture, uvmap_info, vc_info, _ = __gather_base_color_texture(blender_material, export_settings)
     uvmap_infos.update(uvmap_info)
     metallic_roughness_texture, uvmap_info, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
     uvmap_infos.update(uvmap_info)
@@ -45,7 +46,7 @@ def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export
 
     export_user_extensions('gather_material_pbr_metallic_roughness_hook', export_settings, material, blender_material, orm_texture)
 
-    return material, uvmap_infos
+    return material, uvmap_infos, vc_info
 
 
 def __filter_pbr_material(blender_material, export_settings):
@@ -103,10 +104,11 @@ def __gather_base_color_texture(blender_material, export_settings):
         if socket is not None and image_tex_is_valid_from_socket(socket)
     )
     if not inputs:
-        return None, {}, None
+        return None, {}, {"uv_info": {}, "vc_info": {}}, None
 
     tex, uvmap_info, factor = gather_texture_info(inputs[0], inputs, (), export_settings)
-    return tex, {'baseColorTexture': uvmap_info}, factor
+    vc_info = get_vertex_color_info(inputs[0], inputs, export_settings)
+    return tex, {'baseColorTexture': uvmap_info}, vc_info, factor
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -184,3 +186,5 @@ def get_default_pbr_for_emissive_node():
         metallic_roughness_texture=None,
         roughness_factor=None
     )
+
+

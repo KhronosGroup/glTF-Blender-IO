@@ -71,11 +71,11 @@ def gather_primitives(
 
         # We already call this function, in order to retrieve uvmap info, if any
         # So here, only the cache will be used
-        base_material, uvmap_info = get_base_material(internal_primitive['material'], materials, export_settings)
+        base_material, material_info = get_base_material(internal_primitive['material'], materials, export_settings)
 
         # Now, we can retrieve the real material, by checking attributes and active maps
         blender_mat = get_material_from_idx(internal_primitive['material'], materials, export_settings)
-        material = get_final_material(blender_mesh, blender_mat, internal_primitive['uvmap_attributes_index'], base_material, uvmap_info, export_settings)
+        material = get_final_material(blender_mesh, blender_mat, internal_primitive['uvmap_attributes_index'], base_material, material_info["uv_info"], export_settings)
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
@@ -260,7 +260,7 @@ def __gather_extensions(blender_mesh,
             variants.append(variant_extension)
         if len(variants) > 0:
             if i.material:
-                base_material, uvmap_info = gather_material(
+                base_material, material_info = gather_material(
                         i.material,
                         export_settings
                     )
@@ -270,7 +270,7 @@ def __gather_extensions(blender_mesh,
 
             if base_material is not None:
                 # Now, we can retrieve the real material, by checking attributes and active maps
-                mat = get_final_material(blender_mesh, i.material, attr_indices, base_material, uvmap_info, export_settings)
+                mat = get_final_material(blender_mesh, i.material, attr_indices, base_material, material_info["uv_info"], export_settings)
             else:
                 mat = None
 

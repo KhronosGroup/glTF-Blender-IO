@@ -55,10 +55,10 @@ def gather_material(blender_material, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None, {}
 
-    mat_unlit, uvmap_info = __export_unlit(blender_material, export_settings)
+    mat_unlit, uvmap_info, vc_info = __export_unlit(blender_material, export_settings)
     if mat_unlit is not None:
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
-        return mat_unlit, uvmap_info
+        return mat_unlit, {"uv_info": uvmap_info, "vc_info": vc_info}
 
     orm_texture, default_sockets = __gather_orm_texture(blender_material, export_settings)
 
@@ -67,7 +67,7 @@ def gather_material(blender_material, export_settings):
     extensions, uvmap_info_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
     normal_texture, uvmap_info_normal = __gather_normal_texture(blender_material, export_settings)
     occlusion_texture, uvmap_info_occlusion = __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings)
-    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
+    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
 
     if any([i>1.0 for i in emissive_factor or []]) is True:
         # Strength is set on extension
@@ -105,7 +105,7 @@ def gather_material(blender_material, export_settings):
 
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
-    return material, uvmap_infos
+    return material, {"uv_info": uvmap_infos, "vc_info": vc_info}
 
 
 def __get_new_material_texture_shared(base, node):
@@ -311,9 +311,9 @@ def __export_unlit(blender_material, export_settings):
 
     info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
     if info is None:
-        return None, {}
+        return None, {}, {"color": None, "alpha": None}
 
-    base_color_texture, uvmap_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
+    base_color_texture, uvmap_info, vc_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
 
     material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
@@ -340,7 +340,7 @@ def __export_unlit(blender_material, export_settings):
 
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
 
-    return material, uvmap_info
+    return material, uvmap_info, vc_info
 
 def get_active_uvmap_index(blender_mesh):
     # retrieve active render UVMap
@@ -459,15 +459,15 @@ def get_material_from_idx(material_idx, materials, export_settings):
 def get_base_material(material_idx, materials, export_settings):
 
     material = None
-    uvmap_info = {}
+    material_info = {"uv_info": {}, "vc_info": {}}
 
     mat = get_material_from_idx(material_idx, materials, export_settings)
     if mat is not None:
-        material, uvmap_info = gather_material(
+        material, material_info = gather_material(
             mat,
             export_settings
         )
-    return material, uvmap_info
+    return material, material_info
 
 def get_all_textures():
     # Make sure to have all texture here, always in same order

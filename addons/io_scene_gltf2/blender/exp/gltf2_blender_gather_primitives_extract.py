@@ -405,8 +405,8 @@ class PrimitiveCreator:
         # So we need to get, for each material, what are these custom attribute
         # No choice : We need to retrieve materials here. Anyway, this will be baked, and next call will be quick
         for material_idx in self.prim_indices.keys():
-            _, uvmap_info = get_base_material(material_idx, self.materials, self.export_settings)
-            self.uvmap_attribute_list = list(set([i['value'] for i in uvmap_info.values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
+            _, material_info = get_base_material(material_idx, self.materials, self.export_settings)
+            self.uvmap_attribute_list = list(set([i['value'] for i in material_info["uv_info"].values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
 
             additional_fields = []
             for attr in self.uvmap_attribute_list:
