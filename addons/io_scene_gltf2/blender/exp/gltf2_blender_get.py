@@ -334,3 +334,43 @@ def has_image_node_from_socket(socket):
 def image_tex_is_valid_from_socket(socket):
     res = get_tex_from_socket(socket)
     return res is not None and res.shader_node.image is not None and res.shader_node.image.channels != 0
+
+def get_vertex_color_info(color_socket, alpha_socket, export_settings):
+
+    attribute_color = None
+    attribute_alpha = None
+
+    # Retrieve Attribute used as vertex color for Color
+    if color_socket is not None:
+        node = previous_node(color_socket)
+        if node is not None:
+            if node.type == 'MIX' and node.data_type == "RGBA" and node.blend_type == 'MULTIPLY':
+                attribute_color = get_attribute_name(node.inputs[6], export_settings)
+                if attribute_color is None:
+                    attribute_color = get_attribute_name(node.inputs[7], export_settings)
+
+    if alpha_socket is not None:
+        node = previous_node(alpha_socket)
+        if node is not None:
+            if node.type == 'MIX' and node.data_type == "FLOAT" and node.blend_type == 'MULTIPLY':
+                attribute_alpha = get_attribute_name(node.inputs[2], export_settings)
+                if attribute_alpha is None:
+                    attribute_alpha = get_attribute_name(node.inputs[3], export_settings)
+
+    return {"color": attribute_color, "alpha": attribute_alpha}
+
+
+def get_attribute_name(socket, export_settings):
+    node = previous_node(socket)
+    if node is not None and node.type == "ATTRIBUTE" \
+            and node.attribute_type == "GEOMETRY" \
+            and node.attribute_name is not None \
+            and node.attribute_name != "":
+        return node.attribute_name
+
+    if node is not None and node.type == "VERTEX_COLOR" \
+            and node.layer_name is not None \
+            and node.layer_name != "":
+        return node.layer_name
+
+    return None

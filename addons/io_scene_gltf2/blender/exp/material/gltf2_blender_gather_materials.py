@@ -53,7 +53,7 @@ def gather_material(blender_material, export_settings):
     :return: a glTF material
     """
     if not __filter_material(blender_material, export_settings):
-        return None, {}
+        return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None}}
 
     mat_unlit, uvmap_info, vc_info = __export_unlit(blender_material, export_settings)
     if mat_unlit is not None:
@@ -313,6 +313,7 @@ def __export_unlit(blender_material, export_settings):
     if info is None:
         return None, {}, {"color": None, "alpha": None}
 
+    #TODOVC
     base_color_texture, uvmap_info, vc_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
 
     material = gltf2_io.Material(
@@ -459,7 +460,7 @@ def get_material_from_idx(material_idx, materials, export_settings):
 def get_base_material(material_idx, materials, export_settings):
 
     material = None
-    material_info = {"uv_info": {}, "vc_info": {}}
+    material_info = {"uv_info": {}, "vc_info": {"color": None, "alpha": None}}
 
     mat = get_material_from_idx(material_idx, materials, export_settings)
     if mat is not None:

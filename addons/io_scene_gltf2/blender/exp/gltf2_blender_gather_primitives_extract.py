@@ -20,7 +20,7 @@ from ...io.com.gltf2_io_constants import ROUNDING_DIGIT
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...io.com import gltf2_io_constants
 from ..com import gltf2_blender_conversion
-from .material.gltf2_blender_gather_materials import get_base_material
+from .material.gltf2_blender_gather_materials import get_base_material, get_material_from_idx
 from . import gltf2_blender_gather_skins
 
 
@@ -34,7 +34,7 @@ def extract_primitives(materials, blender_mesh, uuid_for_skined_data, blender_ve
     primitive_creator.create_dots_data_structure()
     primitive_creator.populate_dots_data()
     primitive_creator.primitive_split()
-    primitive_creator.material_uvmap_attribute_add()
+    primitive_creator.manage_material_info() # UVMap & Vertex Color
     return primitive_creator.primitive_creation()
 
 class PrimitiveCreator:
@@ -154,7 +154,7 @@ class PrimitiveCreator:
                 self.attr_name = attr_name
                 self.keep = attr_name.startswith("_")
 
-        # Manage attributes + COLOR_0
+        # Manage attributes
         for blender_attribute_index, blender_attribute in enumerate(self.blender_mesh.attributes):
 
             attr = {}
@@ -174,42 +174,27 @@ class PrimitiveCreator:
 
                 continue
 
-            if self.blender_mesh.color_attributes.find(blender_attribute.name) == self.blender_mesh.color_attributes.render_color_index \
-                and self.blender_mesh.color_attributes.render_color_index != -1:
+            # Custom attributes
+            # Keep only attributes that starts with _
+            # As Blender create lots of attributes that are internal / not needed are as duplicated of standard glTF accessors (position, uv, material_index...)
+            if self.export_settings['gltf_attributes'] is False:
+                continue
+            # Check if there is an extension that want to keep this attribute, or change the exported name
+            keep_attribute = KeepAttribute(blender_attribute.name)
 
-                if self.export_settings['gltf_colors'] is False:
-                    continue
-                attr['gltf_attribute_name'] = 'COLOR_0'
-                attr['get'] = self.get_function()
+            export_user_extensions('gather_attribute_keep', self.export_settings, keep_attribute)
 
-                # Seems we sometime can have name collision about attributes
-                # Avoid crash and ignoring one of duplicated attribute name
-                if 'COLOR_0' in [a['gltf_attribute_name'] for a in self.blender_attributes]:
-                    print_console('WARNING', 'Attribute (vertex color) collision name: ' + blender_attribute.name + ", ignoring one of them")
-                    continue
+            if keep_attribute.keep is False:
+                continue
 
-            else:
-                # Custom attributes
-                # Keep only attributes that starts with _
-                # As Blender create lots of attributes that are internal / not needed are as duplicated of standard glTF accessors (position, uv, material_index...)
-                if self.export_settings['gltf_attributes'] is False:
-                    continue
-                # Check if there is an extension that want to keep this attribute, or change the exported name
-                keep_attribute = KeepAttribute(blender_attribute.name)
+            attr['gltf_attribute_name'] = keep_attribute.attr_name.upper()
+            attr['get'] = self.get_function()
 
-                export_user_extensions('gather_attribute_keep', self.export_settings, keep_attribute)
-
-                if keep_attribute.keep is False:
-                    continue
-
-                attr['gltf_attribute_name'] = keep_attribute.attr_name.upper()
-                attr['get'] = self.get_function()
-
-                # Seems we sometime can have name collision about attributes
-                # Avoid crash and ignoring one of duplicated attribute name
-                if attr['gltf_attribute_name'] in [a['gltf_attribute_name'] for a in self.blender_attributes]:
-                    print_console('WARNING', 'Attribute collision name: ' + blender_attribute.name + ", ignoring one of them")
-                    continue
+            # Seems we sometime can have name collision about attributes
+            # Avoid crash and ignoring one of duplicated attribute name
+            if attr['gltf_attribute_name'] in [a['gltf_attribute_name'] for a in self.blender_attributes]:
+                print_console('WARNING', 'Attribute collision name: ' + blender_attribute.name + ", ignoring one of them")
+                continue
 
             self.blender_attributes.append(attr)
 
@@ -400,12 +385,19 @@ class PrimitiveCreator:
             for material_idx in unique_material_idxs:
                 self.prim_indices[material_idx] = loop_indices[loop_material_idxs == material_idx]
 
-    def material_uvmap_attribute_add(self):
+    def manage_material_info(self):
         # If user defined UVMap as a custom attribute, we need to add it/them in the dots structure and populate data
         # So we need to get, for each material, what are these custom attribute
         # No choice : We need to retrieve materials here. Anyway, this will be baked, and next call will be quick
+        # We also need to shuffle Vertex Color data if needed
+
         for material_idx in self.prim_indices.keys():
             _, material_info = get_base_material(material_idx, self.materials, self.export_settings)
+
+            # TODOVC if different materials use diffrent attribute, add warning
+
+            # UVMaps
+
             self.uvmap_attribute_list = list(set([i['value'] for i in material_info["uv_info"].values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
 
             additional_fields = []
@@ -437,6 +429,26 @@ class PrimitiveCreator:
                     del data
 
             self.dots = dots
+
+            # Vertex Color
+            # There are multiple case to take into account
+
+            # The simplier test is when no vertex color are used
+            if material_info['vc_info']['color'] is None and material_info['vc_info']['alpha'] is None:
+                # Nothing to do
+                return
+
+            if material_info['vc_info']['color'] is None and material_info['vc_info']['alpha'] is not None:
+                print("TODOVC add warning, we are not going to manage this case")
+                return
+
+            if material_info['vc_info']['color'] is not None:
+                # We need to check if we need to add alpha
+                add_alpha = material_info['vc_info']['alpha'] is not None
+                mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
+                add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                # Manage Vertex Color (RGB and Alpha if needed)
+                self.__manage_color_attribute(material_info['vc_info']['color'], material_info['vc_info']['alpha'] if add_alpha else None)
 
     def primitive_creation(self):
         primitives = []
@@ -640,9 +652,7 @@ class PrimitiveCreator:
     def get_function(self):
 
         def getting_function(attr):
-            if attr['gltf_attribute_name'] == "COLOR_0":
-                self.__get_color_attribute(attr)
-            elif attr['gltf_attribute_name'].startswith("_"):
+            if attr['gltf_attribute_name'].startswith("_"):
                 self.__get_layer_attribute(attr)
             elif attr['gltf_attribute_name'].startswith("TEXCOORD_"):
                 self.__get_uvs_attribute(int(attr['gltf_attribute_name'].split("_")[-1]), attr)
@@ -654,15 +664,77 @@ class PrimitiveCreator:
         return getting_function
 
 
-    def __get_color_attribute(self, attr):
-        blender_color_idx = self.blender_mesh.color_attributes.render_color_index
+    def __manage_color_attribute(self, attr_name, attr_name_alpha):
+        blender_color_idx = self.blender_mesh.color_attributes.find(attr_name)
+        if blender_color_idx < 0:
+            return None
 
-        if attr['blender_domain'] == "POINT":
+        # Add COLOR_0 in dots data
+
+        attr = self.blender_mesh.color_attributes[blender_color_idx]
+
+        # Get data
+        data_dots, data_dots_edges, data_dots_points = self.__get_color_attribute_data(attr)
+
+        # Get data for alpha if needed
+        if attr_name_alpha is not None and attr_name_alpha != attr_name:
+            blender_alpha_idx = self.blender_mesh.color_attributes.find(attr_name_alpha)
+            if blender_alpha_idx >= 0:
+                attr_alpha = self.blender_mesh.color_attributes[blender_alpha_idx]
+                data_dots_alpha, data_dots_edges_alpha, data_dots_points_alpha = self.__get_color_attribute_data(attr_alpha)
+                # Merging data
+                data_dots[:, 3] = data_dots_alpha[:, 3]
+                if data_dots_edges is not None:
+                    data_dots_edges[:, 3] = data_dots_edges_alpha[:, 3]
+                if data_dots_points is not None:
+                    data_dots_points[:, 3] = data_dots_points_alpha[:, 3]
+
+        # Check if we need to get alpha (the 4th channel) here
+        max_index = 4 if attr_name_alpha is not None else 3
+
+        # Add this data to dots structure
+        additional_fields = []
+        for i in range(max_index):
+            # Must calculate the type of the field : FLOAT_COLOR or BYTE_COLOR
+            additional_fields.append(('COLOR_0' + str(i), gltf2_blender_conversion.get_numpy_type('FLOAT_COLOR' if max_index == 3 else 'BYTE_COLOR')))
+
+        new_dt = np.dtype(self.dots.dtype.descr + additional_fields)
+        dots = np.zeros(self.dots.shape, dtype=new_dt)
+        for f in self.dots.dtype.names:
+            dots[f] = self.dots[f]
+
+        self.dots = dots
+
+        # colors are already linear, no need to switch color space
+        for i in range(max_index):
+            self.dots['COLOR_0' +str(i)] = data_dots[:, i]
+            if self.export_settings['gltf_loose_edges'] and attr.domain == "POINT":
+                self.dots_edges['COLOR_0' + str(i)] = data_dots_edges[:, i]
+            if self.export_settings['gltf_loose_points'] and attr['blender_domain'] == "POINT":
+                self.dots_points['COLOR_0' + str(i)] = data_dots_points[:, i]
+
+        # Add COLOR_0 in attribute list
+        attr_color_0 = {}
+        attr_color_0['blender_data_type'] = 'FLOAT_COLOR' if max_index == 3 else 'BYTE_COLOR'
+        attr_color_0['blender_domain'] = attr.domain
+        attr_color_0['gltf_attribute_name'] = 'COLOR_0'
+        attr_color_0['len'] = max_index # 3 or 4, depending if we have alpha
+        attr_color_0['type'] = gltf2_blender_conversion.get_numpy_type(attr_color_0['blender_data_type'])
+        attr_color_0['component_type'] = gltf2_blender_conversion.get_component_type(attr_color_0['blender_data_type'])
+        attr_color_0['data_type'] = gltf2_io_constants.DataType.Vec3 if max_index == 3 else gltf2_io_constants.DataType.Vec4
+
+        self.blender_attributes.append(attr_color_0)
+
+    def __get_color_attribute_data(self, attr):
+        data_dots_edges = None
+        data_dots_points = None
+
+        if attr.domain == "POINT":
             colors = np.empty(len(self.blender_mesh.vertices) * 4, dtype=np.float32)
-        elif attr['blender_domain'] == "CORNER":
+        elif attr.domain == "CORNER":
             colors = np.empty(len(self.blender_mesh.loops) * 4, dtype=np.float32)
-        self.blender_mesh.color_attributes[blender_color_idx].data.foreach_get('color', colors)
-        if attr['blender_domain'] == "POINT":
+        attr.data.foreach_get('color', colors)
+        if attr.domain == "POINT":
             colors = colors.reshape(-1, 4)
             data_dots = colors[self.dots['vertex_index']]
             if self.export_settings['gltf_loose_edges']:
@@ -670,18 +742,13 @@ class PrimitiveCreator:
             if self.export_settings['gltf_loose_points']:
                 data_dots_points = colors[self.dots_points['vertex_index']]
 
-        elif attr['blender_domain'] == "CORNER":
+        elif attr.domain == "CORNER":
             colors = colors.reshape(-1, 4)
             data_dots = colors
 
         del colors
-        # colors are already linear, no need to switch color space
-        for i in range(4):
-            self.dots[attr['gltf_attribute_name'] + str(i)] = data_dots[:, i]
-            if self.export_settings['gltf_loose_edges'] and attr['blender_domain'] == "POINT":
-                self.dots_edges[attr['gltf_attribute_name'] + str(i)] = data_dots_edges[:, i]
-            if self.export_settings['gltf_loose_points'] and attr['blender_domain'] == "POINT":
-                self.dots_points[attr['gltf_attribute_name'] + str(i)] = data_dots_points[:, i]
+
+        return data_dots, data_dots_edges, data_dots_points
 
     def __get_layer_attribute(self, attr):
         if attr['blender_domain'] in ['CORNER']:
@@ -982,15 +1049,19 @@ class PrimitiveCreator:
                 res[:, i] = self.prim_dots[attr['gltf_attribute_name'] + str(i)]
             self.attributes[attr['gltf_attribute_name']] = {}
             self.attributes[attr['gltf_attribute_name']]["data"] = res
-            if 'gltf_attribute_name' == "NORMAL":
+            if attr['gltf_attribute_name'] == "NORMAL":
                 self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
                 self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3
-            elif 'gltf_attribute_name' == "TANGENT":
+            elif attr['gltf_attribute_name'] == "TANGENT":
                 self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
                 self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec4
             elif attr['gltf_attribute_name'].startswith('TEXCOORD_'):
                 self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
                 self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec2
+            elif attr['gltf_attribute_name'].startswith('COLOR_'):
+                # This is already managed, we only have to copy
+                self.attributes[attr['gltf_attribute_name']]["component_type"] = attr['component_type']
+                self.attributes[attr['gltf_attribute_name']]["data_type"] = attr['data_type']
             else:
                 self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
                 self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])

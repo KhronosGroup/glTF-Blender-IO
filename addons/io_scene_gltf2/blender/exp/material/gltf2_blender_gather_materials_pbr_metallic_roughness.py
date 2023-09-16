@@ -18,24 +18,25 @@ from ....io.com import gltf2_io
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...exp import gltf2_blender_get
 from ..gltf2_blender_gather_cache import cached
-from ..gltf2_blender_get import image_tex_is_valid_from_socket
-from .gltf2_blender_search_node_tree import get_vertex_color_info
+from ..gltf2_blender_get import image_tex_is_valid_from_socket, get_vertex_color_info
 from .gltf2_blender_gather_texture_info import gather_texture_info
 
 @cached
 def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
     if not __filter_pbr_material(blender_material, export_settings):
-        return None, {}
+        return None, {}, {'color': None, 'alpha': None}
 
     uvmap_infos = {}
 
-    base_color_texture, uvmap_info, vc_info, _ = __gather_base_color_texture(blender_material, export_settings)
+    base_color_texture, uvmap_info, _ = __gather_base_color_texture(blender_material, export_settings)
     uvmap_infos.update(uvmap_info)
     metallic_roughness_texture, uvmap_info, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
     uvmap_infos.update(uvmap_info)
 
+    base_color_factor, vc_info = __gather_base_color_factor(blender_material, export_settings)
+
     material = gltf2_io.MaterialPBRMetallicRoughness(
-        base_color_factor=__gather_base_color_factor(blender_material, export_settings),
+        base_color_factor=base_color_factor,
         base_color_texture=base_color_texture,
         extensions=__gather_extensions(blender_material, export_settings),
         extras=__gather_extras(blender_material, export_settings),
@@ -55,7 +56,7 @@ def __filter_pbr_material(blender_material, export_settings):
 
 def __gather_base_color_factor(blender_material, export_settings):
     if not blender_material.use_nodes:
-        return [*blender_material.diffuse_color[:3], 1.0]
+        return [*blender_material.diffuse_color[:3], 1.0], {"color": None, "alpha": None}
 
     rgb, alpha = None, None
 
@@ -85,8 +86,10 @@ def __gather_base_color_factor(blender_material, export_settings):
 
     rgba = [*rgb, alpha]
 
-    if rgba == [1, 1, 1, 1]: return None
-    return rgba
+    vc_info = get_vertex_color_info(base_color_socket, alpha_socket, export_settings)
+
+    if rgba == [1, 1, 1, 1]: return None, vc_info
+    return rgba, vc_info
 
 
 def __gather_base_color_texture(blender_material, export_settings):
@@ -104,11 +107,10 @@ def __gather_base_color_texture(blender_material, export_settings):
         if socket is not None and image_tex_is_valid_from_socket(socket)
     )
     if not inputs:
-        return None, {}, {"uv_info": {}, "vc_info": {}}, None
+        return None, {}, None
 
     tex, uvmap_info, factor = gather_texture_info(inputs[0], inputs, (), export_settings)
-    vc_info = get_vertex_color_info(inputs[0], inputs, export_settings)
-    return tex, {'baseColorTexture': uvmap_info}, vc_info, factor
+    return tex, {'baseColorTexture': uvmap_info}, factor
 
 
 def __gather_extensions(blender_material, export_settings):
