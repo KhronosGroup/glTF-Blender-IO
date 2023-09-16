@@ -145,7 +145,5 @@ def gather_base_color_texture(info, export_settings):
             export_settings,
         )
 
-        vc_info = gltf2_blender_get.get_vertex_color_info(info.get('rgb_socket'), info.get('alpha_socket'), export_settings)
-
-        return unlit_texture, {'baseColorTexture': uvmap_info}, vc_info
-    return None, {}, {"color": None, "alpha": None}
+        return unlit_texture, {'baseColorTexture': uvmap_info}
+    return None, {}

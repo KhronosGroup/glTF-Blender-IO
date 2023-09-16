@@ -313,8 +313,9 @@ def __export_unlit(blender_material, export_settings):
     if info is None:
         return None, {}, {"color": None, "alpha": None}
 
-    #TODOVC
-    base_color_texture, uvmap_info, vc_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
+    base_color_texture, uvmap_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
+
+    vc_info = gltf2_blender_get.get_vertex_color_info(info.get('rgb_socket'), info.get('alpha_socket'), export_settings)
 
     material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
