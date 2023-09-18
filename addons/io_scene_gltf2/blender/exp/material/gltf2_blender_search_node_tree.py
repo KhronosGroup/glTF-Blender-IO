@@ -152,7 +152,8 @@ def get_const_from_default_value_socket(socket, kind):
         return socket.socket.default_value
     return None
 
-#TODOSNode : @cached?
+#TODOSNode : @cached? If yes, need to use id of node tree, has this is probably not fully hashable
+# For now, not caching it. If we encounter performance issue, we will see later
 def get_material_nodes(node_tree: bpy.types.NodeTree, group_path, type):
     """
     For a given tree, recursively return all nodes including node groups.
