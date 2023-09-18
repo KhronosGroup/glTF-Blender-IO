@@ -26,11 +26,9 @@ def export_sheen(blender_material, export_settings):
     sheen_socket = gltf2_blender_get.get_socket(blender_material, "Sheen")
 
     if sheenTint_socket is None or sheenRoughness_socket is None or sheen_socket is None:
-        print(">1")
         return None, None
 
     if sheen_socket.is_linked is False and sheen_socket.default_value == 0.0:
-        print(">2")
         return None, None
 
     #TODOExt : What to do if sheen_socket is linked?
