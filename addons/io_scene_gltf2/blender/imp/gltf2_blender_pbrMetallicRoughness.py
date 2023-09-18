@@ -316,6 +316,10 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
         return
 
     if mh.pymat.emissive_texture is None:
+        if emissive_factor == [0, 0, 0]:
+            color_socket.default_value = [1,1,1,1]
+            strength_socket.default_value = 0
+            return
         color_socket.default_value = emissive_factor + [1]
         strength_socket.default_value = strength
         return
