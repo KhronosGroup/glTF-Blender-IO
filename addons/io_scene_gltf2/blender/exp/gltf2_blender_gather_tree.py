@@ -590,4 +590,5 @@ class VExportTree:
             if len(self.get_root_bones_uuid(arma_uuid)) > 1:
                 # We can't remove armature
                 self.export_settings['gltf_armature_object_remove'] = False
+                print("WARNING: We can't remove armature object because some armatures have multiple root bones.")
                 break
