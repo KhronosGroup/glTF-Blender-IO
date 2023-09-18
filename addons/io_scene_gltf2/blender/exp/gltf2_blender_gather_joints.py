@@ -60,11 +60,13 @@ def gather_joint_vnode(vnode, export_settings):
     vtree = export_settings['vtree']
     blender_bone = vtree.nodes[vnode].blender_bone
 
-    #TODOARMA add option
-    if vtree.nodes[vnode].parent_uuid is not None:
-        mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
+    if export_settings['gltf_armature_object_remove'] is True:
+        if vtree.nodes[vnode].parent_uuid is not None:
+            mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
+        else:
+            mat = vtree.nodes[vnode].matrix_world
     else:
-        mat = vtree.nodes[vnode].matrix_world
+        mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
 
     trans, rot, sca = mat.decompose()
 

@@ -81,23 +81,24 @@ def __gather_children(vnode, export_settings):
     armature_object_uuid = None
 
     # Standard Children / Collection
-    # TODO add option
-    # for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
-    #     node = gather_node(c, export_settings)
-    #     if node is not None:
-    #         children.append(node)
-    root_joints = []
-    for c in [vtree.nodes[c] for c in vnode.children]:
-        if c.blender_type != gltf2_blender_gather_tree.VExportNode.BONE:
+    if export_settings['gltf_armature_object_remove'] is False:
+        for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
             node = gather_node(c, export_settings)
             if node is not None:
                 children.append(node)
-        else:
-            # We come here because armature was remove, and bone can be a child of any object
-            joint = gltf2_blender_gather_joints.gather_joint_vnode(c.uuid, export_settings)
-            children.append(joint)
-            armature_object_uuid = c.armature
-            root_joints.append(joint)
+    else:
+        root_joints = []
+        for c in [vtree.nodes[c] for c in vnode.children]:
+            if c.blender_type != gltf2_blender_gather_tree.VExportNode.BONE:
+                node = gather_node(c, export_settings)
+                if node is not None:
+                    children.append(node)
+            else:
+                # We come here because armature was remove, and bone can be a child of any object
+                joint = gltf2_blender_gather_joints.gather_joint_vnode(c.uuid, export_settings)
+                children.append(joint)
+                armature_object_uuid = c.armature
+                root_joints.append(joint)
 
     # Now got all bone children (that are root joints), we can get object parented to bones
 

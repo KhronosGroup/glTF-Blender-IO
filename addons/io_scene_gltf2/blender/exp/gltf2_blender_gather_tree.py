@@ -295,7 +295,7 @@ class VExportTree:
                 for c_uuid in self.nodes[uuid].children:
                     tot.extend(recursive_get_all_bones(c_uuid))
                 self.nodes[uuid].all_bones = tot
-                return tot
+                return tot # Not really needed to return, we are just baking it before export really starts
             else:
                 self.nodes[uuid].all_bones = []
                 return []
@@ -307,6 +307,7 @@ class VExportTree:
             if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
                 all_armature_children = self.nodes[uuid].children
                 self.nodes[uuid].root_bones_uuid = [c for c in all_armature_children if self.nodes[c].blender_type == VExportNode.BONE]
+                return self.nodes[uuid].root_bones_uuid # Not really needed to return, we are just baking it before export really starts
             else:
                 self.nodes[uuid].root_bones_uuid = []
                 return []
@@ -449,18 +450,20 @@ class VExportTree:
             if not found:
                 return False
 
-        #TODOARMA add option
-        # If we remove the Armature object
-        if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
-            self.nodes[uuid].arma_exported = True
-            return False
+        if self.export_settings['gltf_armature_object_remove'] is True:
+            # If we remove the Armature object
+            if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
+                self.nodes[uuid].arma_exported = True
+                return False
 
         return True
 
     def remove_filtered_nodes(self):
-        #TODOARMA add option
-        # If we remove the Armature object
-        self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True or (n.keep_tag is False and n.blender_type == VExportNode.ARMATURE)}
+        if self.export_settings['gltf_armature_object_remove'] is True:
+            # If we remove the Armature object
+            self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True or (n.keep_tag is False and n.blender_type == VExportNode.ARMATURE)}
+        else:
+            self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True}
 
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
@@ -544,9 +547,9 @@ class VExportTree:
         from .gltf2_blender_gather_skins import gather_skin
         skins = []
         for n in [n for n in self.nodes.values() if n.blender_type == VExportNode.ARMATURE]:
-            #TODO add option
-            if hasattr(n, "arma_exported") is False:
-                continue
+            if self.export_settings['gltf_armature_object_remove'] is True:
+                if hasattr(n, "arma_exported") is False:
+                    continue
             if len([m for m in self.nodes.values() if m.keep_tag is True and m.blender_type == VExportNode.OBJECT and m.armature == n.uuid]) == 0:
                 skin = gather_skin(n.uuid, self.export_settings)
                 skins.append(skin)
@@ -578,3 +581,13 @@ class VExportTree:
                     self.nodes[self.nodes[bone].parent_uuid].children.remove(bone)
                     self.nodes[bone].parent_uuid = arma
                     self.nodes[arma].children.append(bone)
+
+    def check_if_we_can_remove_armature(self):
+        # If user requested to remove armature, we need to check if it is possible
+        # If is impossible to remove it if armature has multiple root bones. (glTF validator error)
+        # Currently, we manage it at export level, not at each armature level
+        for arma_uuid in [n for n in self.nodes.keys() if self.nodes[n].blender_type == VExportNode.ARMATURE]:
+            if len(self.get_root_bones_uuid(arma_uuid)) > 1:
+                # We can't remove armature
+                self.export_settings['gltf_armature_object_remove'] = False
+                break
