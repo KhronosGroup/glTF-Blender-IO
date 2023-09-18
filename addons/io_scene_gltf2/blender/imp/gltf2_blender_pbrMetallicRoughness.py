@@ -317,6 +317,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
 
     if mh.pymat.emissive_texture is None:
         if emissive_factor == [0, 0, 0]:
+            # Keep as close as possible to the default Blender value when there is no emission
             color_socket.default_value = [1,1,1,1]
             strength_socket.default_value = 0
             return
