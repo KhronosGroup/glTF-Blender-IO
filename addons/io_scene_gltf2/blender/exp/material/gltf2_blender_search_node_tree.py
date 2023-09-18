@@ -309,13 +309,24 @@ def previous_socket(socket: NodeSocket):
             return NodeSocket(None, None)
 
         from_socket = soc.links[0].from_socket
-        from_node = soc.links[0].from_node
 
-        # if we entering a group
-        pass #TODOSNodes
+        # If we are entering a node group (from outputs)
+        if from_socket.node.type == "GROUP":
+            socket_name = from_socket.name
+            sockets = [n for n in from_socket.node.node_tree.nodes if n.type == "GROUP_OUTPUT"][0].inputs
+            socket = [s for s in sockets if s.name == socket_name][0]
+            group_path.append(from_socket.node)
+            soc = socket
+            continue
 
-        # if we exiting a group
-        pass #TODOSNodes
+        # If we are exiting a node group (from inputs)
+        if from_socket.node.type == "GROUP_INPUT":
+            socket_name = from_socket.name
+            sockets = group_path[-1].inputs
+            socket = [s for s in sockets if s.name == socket_name][0]
+            group_path = group_path[:-1]
+            soc = socket
+            continue
 
         # Skip over reroute nodes
         if from_socket.node.type == 'REROUTE':
