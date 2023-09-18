@@ -31,7 +31,7 @@ def export_sheen(blender_material, export_settings):
     if sheen_socket.is_linked is False and sheen_socket.default_value == 0.0:
         return None, None
 
-    #TODOExt : What to do if sheen_socket is linked?
+    #TODOExt : What to do if sheen_socket is linked? or is not between 0 and 1?
 
     sheenTint_non_linked = isinstance(sheenTint_socket, bpy.types.NodeSocket) and not sheenTint_socket.is_linked
     sheenRoughness_non_linked = isinstance(sheenRoughness_socket, bpy.types.NodeSocket) and not sheenRoughness_socket.is_linked
