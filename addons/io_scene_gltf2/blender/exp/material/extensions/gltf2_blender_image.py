@@ -145,14 +145,11 @@ class ExportImage:
         )
 
     def encode(self, mime_type: Optional[str], export_settings) -> Tuple[bytes, bool]:
-        print(">0", mime_type)
         self.file_format = {
             "image/jpeg": "JPEG",
             "image/png": "PNG",
             "image/webp": "WEBP"
         }.get(mime_type, "PNG")
-
-        print(">1", self.file_format)
 
         # Happy path = we can just use an existing Blender image
         if self.__on_happy_path():
