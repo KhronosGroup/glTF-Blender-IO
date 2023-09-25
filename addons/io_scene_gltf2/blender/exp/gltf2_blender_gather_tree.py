@@ -147,7 +147,7 @@ class VExportTree:
         # add to parent if needed
         if parent_uuid is not None:
             self.add_children(parent_uuid, node.uuid)
-            if self.nodes[parent_uuid].blender_type == VExportNode.COLLECTION:
+            if self.nodes[parent_uuid].blender_type == VExportNode.COLLECTION or original_object is not None:
                 self.nodes[parent_uuid].children_type[node.uuid] = VExportNode.CHILDREN_IS_IN_COLLECTION if is_children_in_collection is True else VExportNode.CHILDREN_REAL
         else:
             self.roots.append(node.uuid)
@@ -317,7 +317,7 @@ class VExportTree:
                     if type(inst.object.data).__name__ == "Mesh" and len(inst.object.data.vertices) == 0:
                         continue # This is nested instances, and this mesh has no vertices, so is an instancier for other instances
                     node.is_instancier = VExportNode.INSTANCIER
-                    self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object)
+                    self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object, is_children_in_collection=True)
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
