@@ -26,10 +26,12 @@ def export_sheen(blender_material, export_settings):
     sheen_socket = gltf2_blender_get.get_socket(blender_material, "Sheen")
 
     if sheenTint_socket is None or sheenRoughness_socket is None or sheen_socket is None:
-        return None, None
+        return None, {}
 
     if sheen_socket.is_linked is False and sheen_socket.default_value == 0.0:
-        return None, None
+        return None, {}
+
+    uvmap_infos = {}
 
     #TODOExt : What to do if sheen_socket is linked? or is not between 0 and 1?
 
@@ -53,16 +55,14 @@ def export_sheen(blender_material, export_settings):
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(sheenTint_socket):
-            original_sheenColor_texture, original_sheenColor_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+            original_sheenColor_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 sheenTint_socket,
                 (sheenTint_socket,),
                 (),
                 export_settings,
             )
             sheen_extension['sheenColorTexture'] = original_sheenColor_texture
-            if original_sheenColor_use_active_uvmap:
-                use_actives_uvmaps.append("sheenColorTexture")
-
+            uvmap_infos.update({'sheenColorTexture': uvmap_info})
 
     if sheenRoughness_non_linked is True:
         fac = sheenRoughness_socket.default_value
@@ -78,14 +78,13 @@ def export_sheen(blender_material, export_settings):
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(sheenRoughness_socket):
-            original_sheenRoughness_texture, original_sheenRoughness_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+            original_sheenRoughness_texture, uvmap_info , _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 sheenRoughness_socket,
                 (sheenRoughness_socket,),
                 (),
                 export_settings,
             )
             sheen_extension['sheenRoughnessTexture'] = original_sheenRoughness_texture
-            if original_sheenRoughness_use_active_uvmap:
-                use_actives_uvmaps.append("sheenRoughnessTexture")
+            uvmap_infos.update({'sheenRoughnessTexture': uvmap_info})
 
-    return Extension('KHR_materials_sheen', sheen_extension, False), use_actives_uvmaps
+    return Extension('KHR_materials_sheen', sheen_extension, False), uvmap_infos

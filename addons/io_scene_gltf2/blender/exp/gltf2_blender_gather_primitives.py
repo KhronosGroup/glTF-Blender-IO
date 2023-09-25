@@ -21,9 +21,9 @@ from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.exp import gltf2_io_binary_data
 from .gltf2_blender_gather_cache import cached, cached_by_key
 from . import gltf2_blender_gather_primitives_extract
-from . import gltf2_blender_gather_accessors
 from . import gltf2_blender_gather_primitive_attributes
-from .material import gltf2_blender_gather_materials
+from .gltf2_blender_gather_accessors import gather_accessor, array_to_accessor
+from .material.gltf2_blender_gather_materials import get_final_material, gather_material, get_base_material, get_material_from_idx
 from .material.extensions import gltf2_blender_gather_materials_variants
 
 @cached
@@ -64,36 +64,22 @@ def gather_primitives(
     """
     primitives = []
 
-    # retrieve active render UVMap
-    active_uvmap_idx = 0
-    for i in range(len(blender_mesh.uv_layers)):
-        if blender_mesh.uv_layers[i].active_render is True:
-            active_uvmap_idx = i
-            break
-
-    blender_primitives = __gather_cache_primitives(blender_mesh, uuid_for_skined_data,
+    blender_primitives = __gather_cache_primitives(materials, blender_mesh, uuid_for_skined_data,
         vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
-        material_idx = internal_primitive['material']
-        material = None
 
-        if export_settings['gltf_materials'] == "EXPORT" and material_idx is not None:
-            blender_material = None
-            mat = None
-            if materials:
-                i = material_idx if material_idx < len(materials) else -1
-                mat = materials[i]
-            if mat is not None:
-                material = gltf2_blender_gather_materials.gather_material(
-                    mat,
-                    active_uvmap_idx,
-                    export_settings
-                )
+        # We already call this function, in order to retrieve uvmap info, if any
+        # So here, only the cache will be used
+        base_material, material_info = get_base_material(internal_primitive['material'], materials, export_settings)
+
+        # Now, we can retrieve the real material, by checking attributes and active maps
+        blender_mat = get_material_from_idx(internal_primitive['material'], materials, export_settings)
+        material = get_final_material(blender_mesh, blender_mat, internal_primitive['uvmap_attributes_index'], base_material, material_info["uv_info"], export_settings)
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
-            extensions=__gather_extensions(blender_mesh, material_idx, active_uvmap_idx, export_settings),
+            extensions=__gather_extensions(blender_mesh, internal_primitive['material'], internal_primitive['uvmap_attributes_index'], export_settings),
             extras=None,
             indices=internal_primitive['indices'],
             material=material,
@@ -107,6 +93,7 @@ def gather_primitives(
 
 @cached
 def get_primitive_cache_key(
+        materials,
         blender_mesh,
         uuid_for_skined_data,
         vertex_groups,
@@ -128,6 +115,7 @@ def get_primitive_cache_key(
 
 @cached_by_key(key=get_primitive_cache_key)
 def __gather_cache_primitives(
+        materials,
         blender_mesh: bpy.types.Mesh,
         uuid_for_skined_data,
         vertex_groups: bpy.types.VertexGroups,
@@ -140,7 +128,7 @@ def __gather_cache_primitives(
     primitives = []
 
     blender_primitives = gltf2_blender_gather_primitives_extract.extract_primitives(
-        blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
+        materials, blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
 
     for internal_primitive in blender_primitives:
         primitive = {
@@ -148,7 +136,8 @@ def __gather_cache_primitives(
             "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
             "mode": internal_primitive.get('mode'),
             "material": internal_primitive.get('material'),
-            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings)
+            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
+            "uvmap_attributes_index": internal_primitive["uvmap_attributes_index"], #This will not be on final glTF dict
         }
         primitives.append(primitive)
 
@@ -178,7 +167,7 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
 
     element_type = gltf2_io_constants.DataType.Scalar
     binary_data = gltf2_io_binary_data.BinaryData(indices.tobytes(), bufferViewTarget=gltf2_io_constants.BufferViewTarget.ELEMENT_ARRAY_BUFFER)
-    return gltf2_blender_gather_accessors.gather_accessor(
+    return gather_accessor(
         binary_data,
         component_type,
         len(indices),
@@ -207,11 +196,13 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                 if blender_primitive["attributes"].get(target_position_id) is not None:
                     target = {}
                     internal_target_position = blender_primitive["attributes"][target_position_id]["data"]
-                    target["POSITION"] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
+                    target["POSITION"] = array_to_accessor(
                         internal_target_position,
+                        export_settings,
                         component_type=gltf2_io_constants.ComponentType.Float,
                         data_type=gltf2_io_constants.DataType.Vec3,
                         include_max_and_min=True,
+                        sparse_type='SK'
                     )
 
                     if export_settings['gltf_normals'] \
@@ -219,20 +210,24 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                             and blender_primitive["attributes"].get(target_normal_id) is not None:
 
                         internal_target_normal = blender_primitive["attributes"][target_normal_id]["data"]
-                        target['NORMAL'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
+                        target['NORMAL'] = array_to_accessor(
                             internal_target_normal,
+                            export_settings,
                             component_type=gltf2_io_constants.ComponentType.Float,
                             data_type=gltf2_io_constants.DataType.Vec3,
+                            sparse_type='SK'
                         )
 
                     if export_settings['gltf_tangents'] \
                             and export_settings['gltf_morph_tangent'] \
                             and blender_primitive["attributes"].get(target_tangent_id) is not None:
                         internal_target_tangent = blender_primitive["attributes"][target_tangent_id]["data"]
-                        target['TANGENT'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
+                        target['TANGENT'] = array_to_accessor(
                             internal_target_tangent,
+                            export_settings,
                             component_type=gltf2_io_constants.ComponentType.Float,
                             data_type=gltf2_io_constants.DataType.Vec3,
+                            sparse_type='SK'
                         )
                     targets.append(target)
                     morph_index += 1
@@ -241,7 +236,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
 
 def __gather_extensions(blender_mesh,
                         material_idx: int,
-                        active_uvmap_idx,
+                        attr_indices: dict,
                         export_settings):
     extensions = {}
 
@@ -271,14 +266,20 @@ def __gather_extensions(blender_mesh,
             variants.append(variant_extension)
         if len(variants) > 0:
             if i.material:
-                mat = gltf2_blender_gather_materials.gather_material(
+                base_material, material_info = gather_material(
                         i.material,
-                        active_uvmap_idx,
                         export_settings
                     )
             else:
                 # empty slot
+                base_material = None
+
+            if base_material is not None:
+                # Now, we can retrieve the real material, by checking attributes and active maps
+                mat = get_final_material(blender_mesh, i.material, attr_indices, base_material, material_info["uv_info"], export_settings)
+            else:
                 mat = None
+
             mapping.append({'material': mat, 'variants': variants})
 
     if len(mapping) > 0:
