@@ -63,6 +63,7 @@ class glTFImporter():
             'KHR_materials_specular',
             'KHR_materials_sheen',
             'KHR_materials_ior',
+            'KHR_materials_volume',
             'EXT_texture_webp'
         ]
 
