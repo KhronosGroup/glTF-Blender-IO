@@ -439,7 +439,7 @@ class PrimitiveCreator:
                 return
 
             if material_info['vc_info']['color'] is None and material_info['vc_info']['alpha'] is not None:
-                print("TODOVC add warning, we are not going to manage this case")
+                print_console('WARNING', 'We are not managing this case (Vertex Color alpha without color)')
                 return
 
             if material_info['vc_info']['color'] is not None:
