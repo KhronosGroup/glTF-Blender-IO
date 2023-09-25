@@ -25,9 +25,9 @@ def export_clearcoat(blender_material, export_settings):
     clearcoat_extension = {}
     clearcoat_roughness_slots = ()
 
-    clearcoat_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat')
-    clearcoat_roughness_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat Roughness')
-    clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material, 'Clearcoat Normal')
+    clearcoat_socket = gltf2_blender_get.get_socket(blender_material, 'Coat')
+    clearcoat_roughness_socket = gltf2_blender_get.get_socket(blender_material, 'Coat Roughness')
+    clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material, 'Coat Normal')
 
     if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
         clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
@@ -40,7 +40,7 @@ def export_clearcoat(blender_material, export_settings):
         clearcoat_enabled = True
 
     if not clearcoat_enabled:
-        return None, None
+        return None, {}
 
     if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
         clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
@@ -58,37 +58,36 @@ def export_clearcoat(blender_material, export_settings):
     elif has_clearcoat_roughness_texture:
         clearcoat_roughness_slots = (clearcoat_roughness_socket,)
 
-    use_actives_uvmaps = []
+    uvmap_infos = {}
 
     if len(clearcoat_roughness_slots) > 0:
         if has_clearcoat_texture:
-            clearcoat_texture, clearcoat_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+            clearcoat_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_socket,
                 clearcoat_roughness_slots,
                 (),
                 export_settings,
             )
             clearcoat_extension['clearcoatTexture'] = clearcoat_texture
-            if clearcoat_texture_use_active_uvmap:
-                use_actives_uvmaps.append("clearcoatTexture")
+            uvmap_infos.update({'clearcoatTexture' : uvmap_info})
+
         if has_clearcoat_roughness_texture:
-            clearcoat_roughness_texture, clearcoat_roughness_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+            clearcoat_roughness_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_roughness_socket,
                 clearcoat_roughness_slots,
                 (),
                 export_settings,
             )
             clearcoat_extension['clearcoatRoughnessTexture'] = clearcoat_roughness_texture
-            if clearcoat_roughness_texture_use_active_uvmap:
-                use_actives_uvmaps.append("clearcoatRoughnessTexture")
+            uvmap_infos.update({'clearcoatRoughnessTexture': uvmap_info})
+
     if gltf2_blender_get.has_image_node_from_socket(clearcoat_normal_socket):
-        clearcoat_normal_texture, clearcoat_normal_texture_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+        clearcoat_normal_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             clearcoat_normal_socket,
             (clearcoat_normal_socket,),
             export_settings
         )
         clearcoat_extension['clearcoatNormalTexture'] = clearcoat_normal_texture
-        if clearcoat_normal_texture_use_active_uvmap:
-            use_actives_uvmaps.append("clearcoatNormalTexture")
+        uvmap_infos.update({'clearcoatNormalTexture': uvmap_info})
 
-    return Extension('KHR_materials_clearcoat', clearcoat_extension, False), use_actives_uvmaps
+    return Extension('KHR_materials_clearcoat', clearcoat_extension, False), uvmap_infos

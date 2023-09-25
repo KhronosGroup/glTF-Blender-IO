@@ -480,8 +480,10 @@ def __get_blender_actions(obj_uuid: str,
                         action_on_type[strip.action.name] = "SHAPEKEY"
 
     # If there are only 1 armature, include all animations, even if not in NLA
+    # But only if armature has already some animation_data
+    # If not, we says that this armature is never animated, so don't add these additional actions
     if export_settings['gltf_export_anim_single_armature'] is True:
-        if blender_object and blender_object.type == "ARMATURE":
+        if blender_object and blender_object.type == "ARMATURE" and blender_object.animation_data is not None:
             if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
                 # Keep all actions on objects (no Shapekey animation)
                 for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:

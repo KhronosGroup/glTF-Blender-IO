@@ -46,11 +46,31 @@ def texture(
     tex_img = mh.node_tree.nodes.new('ShaderNodeTexImage')
     tex_img.location = x - 240, y
     tex_img.label = label
+
     # Get image
     if forced_image is None:
-        if pytexture.source is not None:
-            BlenderImage.create(mh.gltf, pytexture.source)
-            pyimg = mh.gltf.data.images[pytexture.source]
+
+        if mh.gltf.import_settings['import_webp_texture'] is True:
+            # Get the webp image if there is one
+            if pytexture.extensions \
+                    and 'EXT_texture_webp' in pytexture.extensions \
+                    and pytexture.extensions['EXT_texture_webp']['source'] is not None:
+                source = pytexture.extensions['EXT_texture_webp']['source']
+            elif pytexture.source is not None:
+                source = pytexture.source
+        else:
+            source = pytexture.source
+
+        if mh.gltf.import_settings['import_webp_texture'] is False and source is None:
+            # In case webp is not used as a fallback, use this as main texture
+            if pytexture.extensions \
+                    and 'EXT_texture_webp' in pytexture.extensions \
+                    and pytexture.extensions['EXT_texture_webp']['source'] is not None:
+                source = pytexture.extensions['EXT_texture_webp']['source']
+
+        if source is not None:
+            BlenderImage.create(mh.gltf, source)
+            pyimg = mh.gltf.data.images[source]
             blender_image_name = pyimg.blender_image_name
             if blender_image_name:
                 tex_img.image = bpy.data.images[blender_image_name]
