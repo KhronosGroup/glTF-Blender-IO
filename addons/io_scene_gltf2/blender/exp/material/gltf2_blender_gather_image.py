@@ -31,12 +31,12 @@ def gather_image(
         default_sockets: typing.Tuple[bpy.types.NodeSocket],
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
-        return None, None
+        return None, None, None
 
     image_data = __get_image_data(blender_shader_sockets, default_sockets, export_settings)
     if image_data.empty():
         # The export image has no data
-        return None, None
+        return None, None, None
 
     mime_type = __gather_mime_type(blender_shader_sockets, image_data, export_settings)
     name = __gather_name(image_data, export_settings)
@@ -51,7 +51,7 @@ def gather_image(
         # In case we can't retrieve image (for example packed images, with original moved)
         # We don't create invalid image without uri
         factor_uri = None
-        if uri is None: return None, None
+        if uri is None: return None, None, None
 
     buffer_view, factor_buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -69,7 +69,8 @@ def gather_image(
 
     export_user_extensions('gather_image_hook', export_settings, image, blender_shader_sockets)
 
-    return image, factor
+    # We also return image_data, as it can be used to generate same file with another extension for webp management
+    return image, image_data, factor
 
 def __gather_original_uri(original_uri, export_settings):
 
@@ -121,10 +122,17 @@ def __gather_extras(sockets, export_settings):
 
 
 def __gather_mime_type(sockets, export_image, export_settings):
-    # force png if Alpha contained so we can export alpha
+    # force png or webp if Alpha contained so we can export alpha
     for socket in sockets:
         if socket.socket.name == "Alpha":
-            return "image/png"
+            if export_settings["gltf_image_format"] == "WEBP":
+                return "image/webp"
+            else:
+                # If we keep image as is (no channel composition), we need to keep original format (for webp)
+                image = export_image.blender_image()
+                if image is not None and __is_blender_image_a_webp(image):
+                    return "image/webp"
+                return "image/png"
 
     if export_settings["gltf_image_format"] == "AUTO":
         if export_image.original is None: # We are going to create a new image
@@ -135,8 +143,12 @@ def __gather_mime_type(sockets, export_image, export_settings):
 
         if image is not None and __is_blender_image_a_jpeg(image):
             return "image/jpeg"
+        elif image is not None and __is_blender_image_a_webp(image):
+            return "image/webp"
         return "image/png"
 
+    elif export_settings["gltf_image_format"] == "WEBP":
+        return "image/webp"
     elif export_settings["gltf_image_format"] == "JPEG":
         return "image/jpeg"
 
@@ -341,3 +353,12 @@ def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
     else:
         path = image.filepath_raw.lower()
         return path.endswith('.jpg') or path.endswith('.jpeg') or path.endswith('.jpe')
+
+def __is_blender_image_a_webp(image: bpy.types.Image) -> bool:
+    if image.source != 'FILE':
+        return False
+    if image.filepath_raw == '' and image.packed_file:
+        return image.packed_file.data[8:12] == b'WEBP'
+    else:
+        path = image.filepath_raw.lower()
+        return path.endswith('.webp')

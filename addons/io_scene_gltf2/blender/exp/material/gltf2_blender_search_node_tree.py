@@ -450,3 +450,6 @@ def check_if_is_linked_to_active_output(shader_socket, group_path):
                 return True
 
     return False
+
+def get_vertex_color_info(primary_socket, sockets, export_settings):
+    return {"color": None, "alpha": None} #TODO, placeholder for now
