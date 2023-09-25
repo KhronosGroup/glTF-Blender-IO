@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 0, 15),
+    "version": (4, 0, 27),
     'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -575,9 +575,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    export_influence_nb: IntProperty(
+        name='Bone Influences',
+        description='Choose how many Bone influences to export',
+        default=4,
+        min=1
+    )
+
     export_all_influences: BoolProperty(
         name='Include All Bone Influences',
-        description='Allow >4 joint vertex influences. Models may appear incorrectly in many viewers',
+        description='Allow export of all joint vertex influences. Models may appear incorrectly in many viewers',
         default=False
     )
 
@@ -618,6 +625,18 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Punctual Lights',
         description='Export directional, point, and spot lights. '
                     'Uses "KHR_lights_punctual" glTF extension',
+        default=False
+    )
+
+    export_try_sparse_sk: BoolProperty(
+        name='Use Sparse Accessor if better',
+        description='Try using Sparce Accessor if it save space',
+        default=True
+    )
+
+    export_try_omit_sparse_sk: BoolProperty(
+        name='Omitting Sparse Accessor if data is empty',
+        description='Omitting Sparse Accessor if data is empty',
         default=False
     )
 
@@ -818,6 +837,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
+            export_settings['gltf_vertex_influences_nb'] = self.export_influence_nb
         else:
             export_settings['gltf_all_vertex_influences'] = False
             export_settings['gltf_def_bones'] = False
@@ -837,6 +857,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_lights'] = self.export_lights
         export_settings['gltf_lighting_mode'] = self.export_import_convert_lighting_mode
         export_settings['gltf_gpu_instances'] = self.export_gpu_instances
+
+        export_settings['gltf_try_sparse_sk'] = self.export_try_sparse_sk
+        export_settings['gltf_try_omit_sparse_sk'] = self.export_try_omit_sparse_sk
+        if not self.export_try_sparse_sk:
+            export_settings['gltf_try_omit_sparse_sk'] = False
+
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1152,6 +1178,36 @@ class GLTF_PT_export_data_shapekeys(bpy.types.Panel):
         col.prop(operator, 'export_morph_tangent')
 
 
+class GLTF_PT_export_data_sk_optimize(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Optimize Shape Keys"
+    bl_parent_id = "GLTF_PT_export_data_shapekeys"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        row = layout.row()
+        row.prop(operator, 'export_try_sparse_sk')
+
+        row = layout.row()
+        row.active = operator.export_try_sparse_sk
+        row.prop(operator, 'export_try_omit_sparse_sk')
+
+
 class GLTF_PT_export_data_skinning(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
@@ -1181,6 +1237,9 @@ class GLTF_PT_export_data_skinning(bpy.types.Panel):
 
         layout.active = operator.export_skins
 
+        row = layout.row()
+        row.prop(operator, 'export_influence_nb')
+        row.active = not operator.export_all_influences
         layout.prop(operator, 'export_all_influences')
 
 
@@ -1390,7 +1449,7 @@ class GLTF_PT_export_animation_armature(bpy.types.Panel):
 class GLTF_PT_export_animation_shapekeys(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
-    bl_label = "Shapekeys Animation"
+    bl_label = "Shape Keys Animation"
     bl_parent_id = "GLTF_PT_export_animation"
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -1583,8 +1642,9 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     bone_heuristic: EnumProperty(
         name="Bone Dir",
         items=(
-            ("BLENDER", "Blender (best for re-importing)",
-                "Good for re-importing glTFs exported from Blender. "
+            ("BLENDER", "Blender (best for import/export round trip)",
+                "Good for re-importing glTFs exported from Blender, "
+                "and re-exporting glTFs to glTFs after Blender editing"
                 "Bone tips are placed on their local +Y axis (in glTF space)"),
             ("TEMPERANCE", "Temperance (average)",
                 "Decent all-around strategy. "
@@ -1596,7 +1656,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
                 "Non-uniform scalings may get messed up though, so beware"),
         ),
         description="Heuristic for placing bones. Tries to make bones pretty",
-        default="TEMPERANCE",
+        default="BLENDER",
     )
 
     guess_original_bind_pose: BoolProperty(
@@ -1768,6 +1828,7 @@ classes = (
     GLTF_PT_export_data_material,
     GLTF_PT_export_data_original_pbr,
     GLTF_PT_export_data_shapekeys,
+    GLTF_PT_export_data_sk_optimize,
     GLTF_PT_export_data_armature,
     GLTF_PT_export_data_skinning,
     GLTF_PT_export_data_lighting,

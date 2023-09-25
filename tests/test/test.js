@@ -161,6 +161,9 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
     case 'VEC3':
         numElements = 3;
         break;
+    case 'VEC4':
+        numElements = 4;
+        break;
     default:
         throw new Error("Untested accessor type " + accessor.type);
     }
@@ -556,7 +559,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.materials.length, 1);
                 assert.strictEqual(asset.images.length, 1);
                 const clearcoat = asset.materials[0].extensions.KHR_materials_clearcoat;
-                assert.equalEpsilon(clearcoat.clearcoatFactor, 0.9);
+                assert.equalEpsilon(clearcoat.clearcoatFactor, 0.225);
                 assert.equalEpsilon(clearcoat.clearcoatRoughnessFactor, 0.1);
 
                 // Base normal map
@@ -1345,6 +1348,48 @@ describe('Exporter', function() {
 
             });
 
+            it('exports using sk sparse', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sparse_sk.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const target_pos = asset.meshes[0].primitives[0].targets[0]['POSITION'];
+                const output_count = asset.accessors[target_pos].sparse['count'] ;
+                assert.equal(asset.accessors[target_pos].bufferView, null);
+                assert.notEqual(asset.accessors[target_pos].sparse['indices']['bufferView'], null);
+                assert.equal(output_count, 3);
+
+            });
+
+            it('exports using sk no sparse', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sparse_sk_no_sparse.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const target_pos = asset.meshes[0].primitives[0].targets[0]['POSITION'];
+                assert.equal(asset.accessors[target_pos].sparse, null);
+                assert.notEqual(asset.accessors[target_pos].bufferView, null);
+
+            });
+
+            it('exports using sk sparse omit', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sparse_sk_omit.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const target_pos = asset.meshes[0].primitives[0].targets[0]['POSITION'];
+                assert.equal(asset.accessors[target_pos].sparse, null);
+                assert.equal(asset.accessors[target_pos].bufferView, null);
+
+            });
+
+            it('exports using sk sparse size', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sparse_sk_no_sparse_size.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const target_pos = asset.meshes[0].primitives[0].targets[0]['POSITION'];
+                assert.equal(asset.accessors[target_pos].sparse, null);
+                assert.notEqual(asset.accessors[target_pos].bufferView, null);
+
+            });
+
             it('exports using armature rest pose', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
@@ -1873,6 +1918,164 @@ describe('Exporter', function() {
 
 
             });
+
+            it('exports all influences', function() {
+
+                let gltfPath = path.resolve(outDirPath, '32_weights_influence_all.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                const m1 = asset.meshes.filter(m => m.name === 'Plane')[0].primitives[0];
+                const m2 = asset.meshes.filter(m => m.name === 'Plane.001')[0].primitives[0];
+                const m3 = asset.meshes.filter(m => m.name === 'Plane.002')[0].primitives[0];
+
+                assert.ok("JOINTS_0" in m1['attributes']);
+                assert.ok(!("JOINTS_1" in m1['attributes']));
+
+                const m1_weights_0 = getAccessorData(gltfPath, asset, m1['attributes']['WEIGHTS_0'], bufferCache);
+                assert.equalEpsilonArray(m1_weights_0, [1.0,0.0,0.0,0.0]);
+
+
+                assert.ok("JOINTS_0" in m2['attributes']);
+                assert.ok("JOINTS_1" in m2['attributes']);
+                assert.ok(!("JOINTS_2" in m2['attributes']));
+
+                const m2_weights_0 = getAccessorData(gltfPath, asset, m2['attributes']['WEIGHTS_0'], bufferCache);
+                const m2_weights_1 = getAccessorData(gltfPath, asset, m2['attributes']['WEIGHTS_1'], bufferCache);
+
+                assert.equalEpsilonArray(m2_weights_0, [0.2,0.2,0.2,0.2]);
+                assert.equalEpsilonArray(m2_weights_1, [0.2,0.0,0.0,0.0]);
+
+                assert.ok("JOINTS_0" in m3['attributes']);
+                assert.ok("JOINTS_1" in m3['attributes']);
+                assert.ok("JOINTS_2" in m3['attributes']);
+                assert.ok(!("JOINTS_3" in m3['attributes']));
+
+                const m3_weights_0 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_0'], bufferCache);
+                const m3_weights_1 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_1'], bufferCache);
+                const m3_weights_2 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_2'], bufferCache);
+
+                assert.equalEpsilonArray(m3_weights_0, [0.1,0.1,0.1,0.1]);
+                assert.equalEpsilonArray(m3_weights_1, [0.1,0.1,0.1,0.1]);
+                assert.equalEpsilonArray(m3_weights_2, [0.1,0.1,0.0,0.0]);
+
+            });
+
+            it('exports 4 influences', function() {
+
+                let gltfPath = path.resolve(outDirPath, '32_weights_influence_4.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                const m1 = asset.meshes.filter(m => m.name === 'Plane')[0].primitives[0];
+                const m2 = asset.meshes.filter(m => m.name === 'Plane.001')[0].primitives[0];
+                const m3 = asset.meshes.filter(m => m.name === 'Plane.002')[0].primitives[0];
+
+                assert.ok("JOINTS_0" in m1['attributes']);
+                assert.ok(!("JOINTS_1" in m1['attributes']));
+
+                const m1_weights_0 = getAccessorData(gltfPath, asset, m1['attributes']['WEIGHTS_0'], bufferCache);
+                assert.equalEpsilonArray(m1_weights_0, [1.0,0.0,0.0,0.0]);
+
+
+                assert.ok("JOINTS_0" in m2['attributes']);
+                assert.ok(!("JOINTS_1" in m2['attributes']));
+
+                const m2_weights_0 = getAccessorData(gltfPath, asset, m2['attributes']['WEIGHTS_0'], bufferCache);
+                assert.equalEpsilonArray(m2_weights_0, [0.4,0.3,0.2,0.1]);
+
+                assert.ok("JOINTS_0" in m3['attributes']);
+                assert.ok(!("JOINTS_1" in m3['attributes']));
+
+                const m3_weights_0 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_0'], bufferCache);
+
+                assert.equalEpsilonArray(m3_weights_0, [0.4,0.3,0.2,0.1]);
+
+            });
+
+            it('exports 6 influences', function() {
+
+                let gltfPath = path.resolve(outDirPath, '32_weights_influence_6.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                const m1 = asset.meshes.filter(m => m.name === 'Plane')[0].primitives[0];
+                const m2 = asset.meshes.filter(m => m.name === 'Plane.001')[0].primitives[0];
+                const m3 = asset.meshes.filter(m => m.name === 'Plane.002')[0].primitives[0];
+
+                assert.ok("JOINTS_0" in m1['attributes']);
+                assert.ok(!("JOINTS_1" in m1['attributes']));
+
+                const m1_weights_0 = getAccessorData(gltfPath, asset, m1['attributes']['WEIGHTS_0'], bufferCache);
+                assert.equalEpsilonArray(m1_weights_0, [1.0,0.0,0.0,0.0]);
+
+
+                assert.ok("JOINTS_0" in m2['attributes']);
+                assert.ok("JOINTS_1" in m2['attributes']);
+                assert.ok(!("JOINTS_2" in m2['attributes']));
+
+                const m2_weights_0 = getAccessorData(gltfPath, asset, m2['attributes']['WEIGHTS_0'], bufferCache);
+                const m2_weights_1 = getAccessorData(gltfPath, asset, m2['attributes']['WEIGHTS_1'], bufferCache);
+                assert.equalEpsilonArray(m2_weights_0, [0.4,0.3,0.1,0.1]);
+                assert.equalEpsilonArray(m2_weights_1, [0.1,0.0,0.0,0.0]);
+
+                assert.ok("JOINTS_0" in m3['attributes']);
+                assert.ok("JOINTS_1" in m3['attributes']);
+                assert.ok(!("JOINTS_2" in m3['attributes']));
+
+                const m3_weights_0 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_0'], bufferCache);
+                const m3_weights_1 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_1'], bufferCache);
+
+                assert.equalEpsilonArray(m3_weights_0, [0.2,0.2,0.2,0.2]);
+                assert.equalEpsilonArray(m3_weights_1, [0.1,0.1,0.0,0.0]);
+
+            });
+
+            it('exports 9 influences', function() {
+
+                let gltfPath = path.resolve(outDirPath, '32_weights_influence_9.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                const m1 = asset.meshes.filter(m => m.name === 'Plane')[0].primitives[0];
+                const m2 = asset.meshes.filter(m => m.name === 'Plane.001')[0].primitives[0];
+                const m3 = asset.meshes.filter(m => m.name === 'Plane.002')[0].primitives[0];
+
+                assert.ok("JOINTS_0" in m1['attributes']);
+                assert.ok(!("JOINTS_1" in m1['attributes']));
+
+                const m1_weights_0 = getAccessorData(gltfPath, asset, m1['attributes']['WEIGHTS_0'], bufferCache);
+                assert.equalEpsilonArray(m1_weights_0, [1.0,0.0,0.0,0.0]);
+
+
+                assert.ok("JOINTS_0" in m2['attributes']);
+                assert.ok("JOINTS_1" in m2['attributes']);
+                assert.ok(!("JOINTS_2" in m2['attributes']));
+
+                const m2_weights_0 = getAccessorData(gltfPath, asset, m2['attributes']['WEIGHTS_0'], bufferCache);
+                const m2_weights_1 = getAccessorData(gltfPath, asset, m2['attributes']['WEIGHTS_1'], bufferCache);
+                assert.equalEpsilonArray(m2_weights_0, [0.4,0.3,0.1,0.1]);
+                assert.equalEpsilonArray(m2_weights_1, [0.1,0.0,0.0,0.0]);
+
+                assert.ok("JOINTS_0" in m3['attributes']);
+                assert.ok("JOINTS_1" in m3['attributes']);
+                assert.ok("JOINTS_2" in m3['attributes']);
+                assert.ok(!("JOINTS_3" in m3['attributes']));
+
+                const m3_weights_0 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_0'], bufferCache);
+                const m3_weights_1 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_1'], bufferCache);
+                const m3_weights_2 = getAccessorData(gltfPath, asset, m3['attributes']['WEIGHTS_2'], bufferCache);
+
+                assert.equalEpsilonArray(m3_weights_0, [0.2,0.1,0.1,0.1]);
+                assert.equalEpsilonArray(m3_weights_1, [0.1,0.1,0.1,0.1]);
+                assert.equalEpsilonArray(m3_weights_2, [0.1,0.0,0.0,0.0]);
+
+            });
+
         });
     });
 });
@@ -2069,6 +2272,16 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 assert.strictEqual(asset.images[imageIndex].uri, '01_principled_emissive.png');
                 assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
+            });
+
+            it('roundtrips skin cylinder', function() {
+                let dir = '03_skinned_cylinder';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 1); // be sure bone shape are not re-exported
+
             });
 
             it('roundtrips an OcclusionRoughnessMetallic texture', function() {

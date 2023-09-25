@@ -63,7 +63,8 @@ class glTFImporter():
             'KHR_materials_transmission',
             'KHR_materials_specular',
             'KHR_materials_sheen',
-            'KHR_materials_ior'
+            'KHR_materials_ior',
+            'KHR_materials_volume'
         ]
 
         # Add extensions required supported by custom import extensions

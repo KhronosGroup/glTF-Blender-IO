@@ -807,6 +807,9 @@ Bone Direction
    Changes the heuristic the importer uses to decide where to place bone tips.
    Note that the Fortune setting may cause inaccuracies in models that use non-uniform scaling.
    Otherwise this is purely aesthetic.
+   The default value will not change axis, and is best for re-exporting from Blender.
+   This default option will change display mode (adding shape and changing relationship line) to have a better view,
+   even if original bones axis are not the most accurate (estheticaly speaking)
 Lighting Mode
    Optional backwards compatibility for non-standard render engines. Applies to lights.
    Standard: Physically-based glTF lighting units (cd, lx, nt).
@@ -915,6 +918,14 @@ Shape Key Normals
 Shape Key Tangents
    Export vertex tangents with shape keys (morph targets).
 
+Data - Shape Keys - Optimize
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use Sparse Accessor if better
+   Sparse Accessor will be used if it save space (if the exported file is smaller)
+Omitting Sparse Accessor if data is empty
+   If data is empty, omit to export SParce Accessor. Not all viewer managed it correctly, so this option is Off by default
+
 Data - Armature
 ^^^^^^^^^^^^^^^
 
@@ -931,8 +942,11 @@ Data - Skinning
 
 Export skinning data
 
+Bone influences
+   How many joint verex influences will be exported. Models may appear incorrectly in many viewers with value different to 4 or 8.
+
 Include All Bone Influences
-   Allow more than 4 joint vertex influences. Models may appear incorrectly in many viewers.
+   Export all joint vertex influences. Models may appear incorrectly in many viewers.
 
 Data - Lighting
 ^^^^^^^^^^^^^^^
