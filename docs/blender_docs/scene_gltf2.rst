@@ -815,6 +815,8 @@ Lighting Mode
    Standard: Physically-based glTF lighting units (cd, lx, nt).
    Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
    Raw (Deprecated): Blender lighting strengths with no conversion
+Import Webp textures
+   If a texture exists in webp format, loads the webp texture instead of the fallback png/jpg one.
 
 
 Export
@@ -901,9 +903,15 @@ Materials
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
+   If webp is chosen, all textures will be saved as Webp, without any png/jpg fallback.
    If None is chosen, materials are exported without textures.
-JPEG Quality
-   When exporting jpeg files, the quality of the exported file.
+Image Quality
+   When exporting jpeg or Webp files, the quality of the exported file.
+Create Webp
+   Creates webp textures for every textures, in addition to the existing texture.
+   For already webp textures, nothing happen.
+Webp fallback
+   For all webp textures, create a png fallback texture.
 Export Original PBR Specular
    When On, specular data are exported from glTF Material Output node,
    Instead of using sockets from Principled BSDF Node.

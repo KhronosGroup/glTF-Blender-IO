@@ -162,7 +162,7 @@ class GlTF2Exporter:
             os.makedirs(output_path, exist_ok=True)
 
         for name, image in self.__images.items():
-            dst_path = output_path + "/" + name + image.file_extension
+            dst_path = output_path + "/" + name
             with open(dst_path, 'wb') as f:
                 f.write(image.data)
 
@@ -391,7 +391,7 @@ class GlTF2Exporter:
         name = image.adjusted_name()
         count = 1
         regex = re.compile(r"-\d+$")
-        while name in self.__images.keys():
+        while name + image.file_extension in self.__images.keys():
             regex_found = re.findall(regex, name)
             if regex_found:
                 name = re.sub(regex, "-" + str(count), name)
@@ -401,7 +401,7 @@ class GlTF2Exporter:
             count += 1
         # TODO: allow embedding of images (base64)
 
-        self.__images[name] = image
+        self.__images[name + image.file_extension] = image
 
         texture_dir = self.export_settings['gltf_texturedirectory']
         abs_path = os.path.join(texture_dir, name + image.file_extension)
