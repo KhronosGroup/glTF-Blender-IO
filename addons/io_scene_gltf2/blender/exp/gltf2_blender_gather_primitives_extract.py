@@ -396,8 +396,6 @@ class PrimitiveCreator:
         for material_idx in self.prim_indices.keys():
             _, material_info = get_base_material(material_idx, self.materials, self.export_settings)
 
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!")
-
             # UVMaps
             self.uvmap_attribute_list = list(set([i['value'] for i in material_info["uv_info"].values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
 
@@ -447,24 +445,17 @@ class PrimitiveCreator:
 
             if material_info['vc_info']['color'] is not None:
 
-                print(">1")
-
                 vc_key = ""
                 vc_key += material_info['vc_info']['color'] if material_info['vc_info']['color'] is not None else ""
                 vc_key += material_info['vc_info']['alpha'] if material_info['vc_info']['alpha'] is not None else ""
 
-                print(">2", vc_key, materials_use_vc)
-
                 if materials_use_vc is not None and materials_use_vc != vc_key:
-                    print(">3")
                     if warning_already_displayed is False:
-                        print(">4")
                         print_console('WARNING', 'glTF specification does not allow this case (multiple materials with different Vertex Color)')
                         warning_already_displayed = True
                     materials_use_vc = vc_key
                     continue
                 elif materials_use_vc is None:
-                    print(">5")
                     materials_use_vc = vc_key
 
                     # We need to check if we need to add alpha
