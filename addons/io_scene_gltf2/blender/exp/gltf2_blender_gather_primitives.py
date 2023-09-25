@@ -21,7 +21,6 @@ from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.exp import gltf2_io_binary_data
 from .gltf2_blender_gather_cache import cached, cached_by_key
 from . import gltf2_blender_gather_primitives_extract
-from . import gltf2_blender_gather_accessors
 from . import gltf2_blender_gather_primitive_attributes
 from .material.gltf2_blender_gather_materials import get_final_material, gather_material, get_base_material, get_material_from_idx
 from .material.extensions import gltf2_blender_gather_materials_variants
@@ -167,7 +166,7 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
 
     element_type = gltf2_io_constants.DataType.Scalar
     binary_data = gltf2_io_binary_data.BinaryData(indices.tobytes(), bufferViewTarget=gltf2_io_constants.BufferViewTarget.ELEMENT_ARRAY_BUFFER)
-    return gltf2_blender_gather_accessors.gather_accessor(
+    return gather_accessor(
         binary_data,
         component_type,
         len(indices),
@@ -196,11 +195,13 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                 if blender_primitive["attributes"].get(target_position_id) is not None:
                     target = {}
                     internal_target_position = blender_primitive["attributes"][target_position_id]["data"]
-                    target["POSITION"] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
+                    target["POSITION"] = array_to_accessor(
                         internal_target_position,
+                        export_settings,
                         component_type=gltf2_io_constants.ComponentType.Float,
                         data_type=gltf2_io_constants.DataType.Vec3,
                         include_max_and_min=True,
+                        sparse_type='SK'
                     )
 
                     if export_settings['gltf_normals'] \
@@ -208,20 +209,24 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
                             and blender_primitive["attributes"].get(target_normal_id) is not None:
 
                         internal_target_normal = blender_primitive["attributes"][target_normal_id]["data"]
-                        target['NORMAL'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
+                        target['NORMAL'] = array_to_accessor(
                             internal_target_normal,
+                            export_settings,
                             component_type=gltf2_io_constants.ComponentType.Float,
                             data_type=gltf2_io_constants.DataType.Vec3,
+                            sparse_type='SK'
                         )
 
                     if export_settings['gltf_tangents'] \
                             and export_settings['gltf_morph_tangent'] \
                             and blender_primitive["attributes"].get(target_tangent_id) is not None:
                         internal_target_tangent = blender_primitive["attributes"][target_tangent_id]["data"]
-                        target['TANGENT'] = gltf2_blender_gather_primitive_attributes.array_to_accessor(
+                        target['TANGENT'] = array_to_accessor(
                             internal_target_tangent,
+                            export_settings,
                             component_type=gltf2_io_constants.ComponentType.Float,
                             data_type=gltf2_io_constants.DataType.Vec3,
+                            sparse_type='SK'
                         )
                     targets.append(target)
                     morph_index += 1
