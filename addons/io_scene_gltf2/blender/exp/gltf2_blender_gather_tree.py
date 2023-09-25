@@ -41,8 +41,15 @@ class VExportNode:
     PARENT_BONE_BONE = 55
 
 
+    # Children type
+    # Is used to split instance collection into 2 categories:
+    CHILDREN_REAL = 90
+    CHILDREN_IS_IN_COLLECTION = 91
+
+
     def __init__(self):
         self.children = []
+        self.children_type = {} # Used for children of instance collection
         self.blender_type = None
         self.matrix_world = None
         self.parent_type = None
@@ -117,7 +124,7 @@ class VExportTree:
         for blender_object in [obj.original for obj in scene_eval.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), False, blender_children)
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, delta, blender_children, armature_uuid=None, dupli_world_matrix=None):
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, delta, blender_children, armature_uuid=None, dupli_world_matrix=None, is_children_in_collection=False):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
@@ -126,6 +133,8 @@ class VExportTree:
         # add to parent if needed
         if parent_uuid is not None:
             self.add_children(parent_uuid, node.uuid)
+            if self.nodes[parent_uuid].blender_type == VExportNode.COLLECTION:
+                self.nodes[parent_uuid].children_type[node.uuid] = VExportNode.CHILDREN_IS_IN_COLLECTION if is_children_in_collection is True else VExportNode.CHILDREN_REAL
         else:
             self.roots.append(node.uuid)
 
@@ -252,7 +261,7 @@ class VExportTree:
             for dupli_object in blender_object.instance_collection.all_objects:
                 if dupli_object.parent is not None:
                     continue
-                self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world, new_delta or delta, blender_children)
+                self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world, new_delta or delta, blender_children, is_children_in_collection=True)
 
         # Armature : children are bones with no parent
         if blender_object.type == "ARMATURE" and blender_bone is None:
@@ -340,7 +349,11 @@ class VExportTree:
 
         for child in self.nodes[uuid].children:
             if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
-                self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
+                # We need to split children into 2 categories: real children, and objects inside the collection
+                if self.nodes[uuid].children_type[child] == VExportNode.CHILDREN_IS_IN_COLLECTION:
+                    self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
+                else:
+                    self.recursive_filter_tag(child, parent_keep_tag)
             else:
                 self.recursive_filter_tag(child, parent_keep_tag)
 
