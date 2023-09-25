@@ -196,7 +196,7 @@ def __gather_source(blender_shader_sockets, default_sockets, export_settings):
 
         if export_settings['gltf_webp_fallback'] is False:
             # Already managed in __gather_extensions
-            pass
+            return source, None, image_data, factor
         else:
             # Need to create a PNG texture
 
