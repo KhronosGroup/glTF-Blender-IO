@@ -246,7 +246,7 @@ describe('Exporter', function() {
 
                             validateGltf(dstPath, done);
                         }, args);
-                        // validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
+                        //validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
                     });
                 });
             });
@@ -2076,6 +2076,45 @@ describe('Exporter', function() {
 
             });
 
+            it('exports Custom Attribute UVMaps', function() {
+                let gltfPath = path.resolve(outDirPath, '32_custom_uvmap_attribute.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 2);
+                const material_0 = asset.materials[asset.meshes.filter(a => a.name == "Cube.001")[0].primitives[0]["material"]]
+                const material_1 = asset.materials[asset.meshes.filter(a => a.name == "Cube.002")[0].primitives[0]["material"]]
+                assert.strictEqual(material_0.pbrMetallicRoughness["baseColorTexture"]["index"], 0);
+                assert.strictEqual(material_0.pbrMetallicRoughness["baseColorTexture"]["texCoord"], 5);
+                assert.strictEqual(material_1.pbrMetallicRoughness["baseColorTexture"]["index"], 0);
+                assert.strictEqual(material_1.pbrMetallicRoughness["baseColorTexture"]["texCoord"], 1);
+
+            });
+
+            it('exports UVMaps texcoord', function() {
+                let gltfPath = path.resolve(outDirPath, '32_uvmap_indices.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.meshes.length, 6);
+                assert.strictEqual(asset.materials.length, 6);
+
+                const material_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube")[0].mesh].primitives[0]["material"]]
+                const material_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube.003")[0].mesh].primitives[0]["material"]]
+                const material_2 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube.001")[0].mesh].primitives[0]["material"]]
+                const material_3 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube.002")[0].mesh].primitives[0]["material"]]
+                const material_4 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Plane")[0].mesh].primitives[0]["material"]]
+                const material_5 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Plane.001")[0].mesh].primitives[0]["material"]]
+
+
+                assert.ok(!("texCoord" in material_0.emissiveTexture));
+                assert.strictEqual(material_1.emissiveTexture["texCoord"], 1);
+                assert.strictEqual(material_2.emissiveTexture["texCoord"], 1);
+                assert.ok(!("texCoord" in material_3.emissiveTexture));
+                assert.strictEqual(material_4.pbrMetallicRoughness["baseColorTexture"]["texCoord"], 1);
+                assert.ok(!("texCoord" in material_5.pbrMetallicRoughness["baseColorTexture"]));
+
+            });
+
         });
     });
 });
@@ -2107,7 +2146,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         if (fs.existsSync(gltfOptionsPath)) {
                             options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                         }
-                        // return done(); // uncomment to not roundtrip all files
+                        //return done(); // uncomment to not roundtrip all files
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
