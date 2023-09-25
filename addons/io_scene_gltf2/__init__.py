@@ -1075,6 +1075,7 @@ class GLTF_PT_export_data_material(bpy.types.Panel):
         col.active = operator.export_image_format != "WEBP"
         col.prop(operator, "export_image_add_webp")
         col = layout.column()
+        col.active = operator.export_image_format != "WEBP"
         col.prop(operator, "export_image_webp_fallback")
 
 class GLTF_PT_export_data_original_pbr(bpy.types.Panel):
