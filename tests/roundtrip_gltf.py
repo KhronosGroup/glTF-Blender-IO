@@ -57,6 +57,8 @@ try:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_original_specular=True)
     elif '--export-attributes' in argv:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_attributes=True, export_shared_accessors=export_shared_accessors)
+    elif '--export-gpu_instances' in argv:
+        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_gpu_instances=True)
     else:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]))
 except Exception as err:

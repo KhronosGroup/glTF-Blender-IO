@@ -20,29 +20,33 @@ from ...io.com.gltf2_io_constants import ROUNDING_DIGIT
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...io.com import gltf2_io_constants
 from ..com import gltf2_blender_conversion
+from .material.gltf2_blender_gather_materials import get_base_material
 from . import gltf2_blender_gather_skins
 
-def extract_primitives(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
+
+def extract_primitives(materials, blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
     """Extract primitives from a mesh."""
     print_console('INFO', 'Extracting primitive: ' + blender_mesh.name)
 
-    primitive_creator = PrimitiveCreator(blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings)
+    primitive_creator = PrimitiveCreator(materials, blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings)
     primitive_creator.prepare_data()
     primitive_creator.define_attributes()
     primitive_creator.create_dots_data_structure()
     primitive_creator.populate_dots_data()
     primitive_creator.primitive_split()
+    primitive_creator.material_uvmap_attribute_add()
     if export_settings['gltf_shared_accessors'] is False:
         return primitive_creator.primitive_creation_not_shared()
     else:
         return primitive_creator.primitive_creation_shared()
 
 class PrimitiveCreator:
-    def __init__(self, blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
+    def __init__(self, materials, blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
         self.blender_mesh = blender_mesh
         self.uuid_for_skined_data = uuid_for_skined_data
         self.blender_vertex_groups = blender_vertex_groups
         self.modifiers = modifiers
+        self.materials = materials
         self.export_settings = export_settings
 
     @classmethod
@@ -399,6 +403,44 @@ class PrimitiveCreator:
             for material_idx in unique_material_idxs:
                 self.prim_indices[material_idx] = loop_indices[loop_material_idxs == material_idx]
 
+    def material_uvmap_attribute_add(self):
+        # If user defined UVMap as a custom attribute, we need to add it/them in the dots structure and populate data
+        # So we need to get, for each material, what are these custom attribute
+        # No choice : We need to retrieve materials here. Anyway, this will be baked, and next call will be quick
+        for material_idx in self.prim_indices.keys():
+            _, material_info = get_base_material(material_idx, self.materials, self.export_settings)
+            self.uvmap_attribute_list = list(set([i['value'] for i in material_info["uv_info"].values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
+
+            additional_fields = []
+            for attr in self.uvmap_attribute_list:
+                if attr + str(0) not in self.dots.dtype.names: # In case user exports custom attributes, we may have it already
+                    additional_fields.append((attr + str(0), gltf2_blender_conversion.get_numpy_type('FLOAT2')))
+                    additional_fields.append((attr + str(1), gltf2_blender_conversion.get_numpy_type('FLOAT2')))
+
+            new_dt = np.dtype(self.dots.dtype.descr + additional_fields)
+            dots = np.zeros(self.dots.shape, dtype=new_dt)
+            for f in self.dots.dtype.names:
+                dots[f] = self.dots[f]
+
+            # Now we need to get data and populate
+            for attr in self.uvmap_attribute_list:
+                if attr + str(0) not in self.dots.dtype.names: # In case user exports custom attributes, we may have it already
+                    # Vector in custom Attributes are Vector3, but keeping only the first two data
+                    data = np.empty(len(self.blender_mesh.loops) * 3, gltf2_blender_conversion.get_numpy_type('FLOAT2'))
+                    self.blender_mesh.attributes[attr].data.foreach_get('vector', data)
+                    data = data.reshape(-1, 3)
+                    data = data[:,:2]
+                    # Blender UV space -> glTF UV space
+                    # u,v -> u,1-v
+                    data[:, 1] *= -1
+                    data[:, 1] += 1
+
+                    dots[attr + '0'] = data[:, 0]
+                    dots[attr + '1'] = data[:, 1]
+                    del data
+
+            self.dots = dots
+
     def primitive_creation_shared(self):
         primitives = []
         self.dots, shared_dot_indices = np.unique(self.dots, return_inverse=True)
@@ -475,6 +517,21 @@ class PrimitiveCreator:
                 else: # Regular case
                     self.__set_regular_attribute(self.prim_dots, attr)
 
+            next_texcoor_idx = self.tex_coord_max
+            uvmap_attributes_index = {}
+            for attr in self.uvmap_attribute_list:
+                res = np.empty((len(self.prim_dots), 2), dtype=gltf2_blender_conversion.get_numpy_type('FLOAT2'))
+                for i in range(2):
+                    res[:, i] = self.prim_dots[attr + str(i)]
+
+                self.attributes["TEXCOORD_" + str(next_texcoor_idx)] = {}
+                self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data"] = res
+                self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["component_type"] = gltf2_io_constants.ComponentType.Float
+                self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data_type"] = gltf2_io_constants.DataType.Vec2
+                uvmap_attributes_index[attr] = next_texcoor_idx
+                next_texcoor_idx += 1
+
+
             if self.skin:
                 joints = [[] for _ in range(self.num_joint_sets)]
                 weights = [[] for _ in range(self.num_joint_sets)]
@@ -496,7 +553,8 @@ class PrimitiveCreator:
             primitives.append({
                 'attributes': self.attributes,
                 'indices': indices,
-                'material': material_idx
+                'material': material_idx,
+                'uvmap_attributes_index': uvmap_attributes_index
             })
 
         if self.export_settings['gltf_loose_edges']:
@@ -546,7 +604,8 @@ class PrimitiveCreator:
                     'attributes': self.attributes,
                     'indices': indices,
                     'mode': 1,  # LINES
-                    'material': 0
+                    'material': 0,
+                    'uvmap_attributes_index': {}
                 })
 
         if self.export_settings['gltf_loose_points']:
@@ -592,7 +651,8 @@ class PrimitiveCreator:
                 primitives.append({
                     'attributes': self.attributes,
                     'mode': 0,  # POINTS
-                    'material': 0
+                    'material': 0,
+                    'uvmap_attributes_index': {}
                 })
 
         print_console('INFO', 'Primitives created: %d' % len(primitives))
