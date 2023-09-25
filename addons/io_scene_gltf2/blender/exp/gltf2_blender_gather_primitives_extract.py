@@ -391,13 +391,14 @@ class PrimitiveCreator:
         # No choice : We need to retrieve materials here. Anyway, this will be baked, and next call will be quick
         # We also need to shuffle Vertex Color data if needed
 
+        materials_use_vc = None
+        warning_already_displayed = False
         for material_idx in self.prim_indices.keys():
             _, material_info = get_base_material(material_idx, self.materials, self.export_settings)
 
-            # TODOVC if different materials use diffrent attribute, add warning
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!")
 
             # UVMaps
-
             self.uvmap_attribute_list = list(set([i['value'] for i in material_info["uv_info"].values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
 
             additional_fields = []
@@ -406,10 +407,11 @@ class PrimitiveCreator:
                     additional_fields.append((attr + str(0), gltf2_blender_conversion.get_numpy_type('FLOAT2')))
                     additional_fields.append((attr + str(1), gltf2_blender_conversion.get_numpy_type('FLOAT2')))
 
-            new_dt = np.dtype(self.dots.dtype.descr + additional_fields)
-            dots = np.zeros(self.dots.shape, dtype=new_dt)
-            for f in self.dots.dtype.names:
-                dots[f] = self.dots[f]
+            if len(additional_fields) > 0:
+                new_dt = np.dtype(self.dots.dtype.descr + additional_fields)
+                dots = np.zeros(self.dots.shape, dtype=new_dt)
+                for f in self.dots.dtype.names:
+                    dots[f] = self.dots[f]
 
             # Now we need to get data and populate
             for attr in self.uvmap_attribute_list:
@@ -428,27 +430,51 @@ class PrimitiveCreator:
                     dots[attr + '1'] = data[:, 1]
                     del data
 
-            self.dots = dots
+            if len(additional_fields) > 0:
+                self.dots = dots
 
-            # Vertex Color
             # There are multiple case to take into account
 
             # The simplier test is when no vertex color are used
             if material_info['vc_info']['color'] is None and material_info['vc_info']['alpha'] is None:
                 # Nothing to do
-                return
+                continue
 
             if material_info['vc_info']['color'] is None and material_info['vc_info']['alpha'] is not None:
                 print_console('WARNING', 'We are not managing this case (Vertex Color alpha without color)')
-                return
+                continue
+
 
             if material_info['vc_info']['color'] is not None:
-                # We need to check if we need to add alpha
-                add_alpha = material_info['vc_info']['alpha'] is not None
-                mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
-                add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
-                # Manage Vertex Color (RGB and Alpha if needed)
-                self.__manage_color_attribute(material_info['vc_info']['color'], material_info['vc_info']['alpha'] if add_alpha else None)
+
+                print(">1")
+
+                vc_key = ""
+                vc_key += material_info['vc_info']['color'] if material_info['vc_info']['color'] is not None else ""
+                vc_key += material_info['vc_info']['alpha'] if material_info['vc_info']['alpha'] is not None else ""
+
+                print(">2", vc_key, materials_use_vc)
+
+                if materials_use_vc is not None and materials_use_vc != vc_key:
+                    print(">3")
+                    if warning_already_displayed is False:
+                        print(">4")
+                        print_console('WARNING', 'glTF specification does not allow this case (multiple materials with different Vertex Color)')
+                        warning_already_displayed = True
+                    materials_use_vc = vc_key
+                    continue
+                elif materials_use_vc is None:
+                    print(">5")
+                    materials_use_vc = vc_key
+
+                    # We need to check if we need to add alpha
+                    add_alpha = material_info['vc_info']['alpha'] is not None
+                    mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
+                    add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                    # Manage Vertex Color (RGB and Alpha if needed)
+                    self.__manage_color_attribute(material_info['vc_info']['color'], material_info['vc_info']['alpha'] if add_alpha else None)
+                else:
+                    pass # Using the same Vertex Color
 
     def primitive_creation(self):
         primitives = []
