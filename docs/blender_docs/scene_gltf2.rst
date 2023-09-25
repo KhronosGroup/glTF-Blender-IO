@@ -898,6 +898,14 @@ Shape Key Normals
 Shape Key Tangents
    Export vertex tangents with shape keys (morph targets).
 
+Data - Shape Keys - Optimize
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use Sparse Accessor if better
+   Sparse Accessor will be used if it save space (if the exported file is smaller)
+Omitting Sparse Accessor if data is empty
+   If data is empty, omit to export SParce Accessor. Not all viewer managed it correctly, so this option is Off by default
+
 Data - Armature
 ^^^^^^^^^^^^^^^
 

@@ -17,6 +17,7 @@ import numpy as np
 from ...io.com import gltf2_io, gltf2_io_constants, gltf2_io_debug
 from ...io.exp import gltf2_io_binary_data
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
+from .gltf2_blender_gather_accessors import array_to_accessor
 
 
 def gather_primitive_attributes(blender_primitive, export_settings):
@@ -44,29 +45,6 @@ def gather_primitive_attributes(blender_primitive, export_settings):
 
     return attributes
 
-
-def array_to_accessor(array, component_type, data_type, include_max_and_min=False, normalized=None):
-
-    amax = None
-    amin = None
-    if include_max_and_min:
-        amax = np.amax(array, axis=0).tolist()
-        amin = np.amin(array, axis=0).tolist()
-
-    return gltf2_io.Accessor(
-        buffer_view=gltf2_io_binary_data.BinaryData(array.tobytes(), gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
-        byte_offset=None,
-        component_type=component_type,
-        count=len(array),
-        extensions=None,
-        extras=None,
-        max=amax,
-        min=amin,
-        name=None,
-        normalized=normalized,
-        sparse=None,
-        type=data_type,
-    )
 
 def __gather_skins(blender_primitive, export_settings):
     attributes = {}
@@ -119,6 +97,7 @@ def __gather_skins(blender_primitive, export_settings):
         joints = joints.reshape(-1, 4)
         joint = array_to_accessor(
             joints,
+            export_settings,
             component_type,
             data_type=gltf2_io_constants.DataType.Vec4,
         )
@@ -140,6 +119,7 @@ def __gather_skins(blender_primitive, export_settings):
 
         weight = array_to_accessor(
             weight_arrs[s],
+            export_settings,
             component_type=gltf2_io_constants.ComponentType.Float,
             data_type=gltf2_io_constants.DataType.Vec4,
             )
@@ -191,6 +171,7 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
         return {
             attribute: array_to_accessor(
                 data['data'],
+                export_settings,
                 component_type=data['component_type'],
                 data_type=data['data_type'],
                 include_max_and_min=include_max_and_mins.get(attribute, False),
