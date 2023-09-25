@@ -78,21 +78,21 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, 
     remove_source = False
     required = False
 
-    ext_wepb = {}
+    ext_webp = {}
 
     # If user want to keep original textures, and these textures are webp, we need to remove source from
     # gltf2_io.Texture, and populate extension
     if export_settings['gltf_keep_original_textures'] is True \
             and source is not None \
             and source.mime_type == "image/webp":
-        ext_wepb["source"] = source
+        ext_webp["source"] = source
         remove_source = True
         required = True
 
 # If user want to export in webp format (so without fallback in png/jpg)
     if export_settings['gltf_image_format'] == "WEBP":
         # We create all image without fallback
-        ext_wepb["source"] = source
+        ext_webp["source"] = source
         remove_source = True
         required = True
 
@@ -123,7 +123,7 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, 
 
         webp_image = __make_webp_image(buffer_view, None, None, new_mime_type, name, uri, export_settings)
 
-        ext_wepb["source"] = webp_image
+        ext_webp["source"] = webp_image
 
 
 # If user doesn't want to export in webp format, but want webp too. Texture is webp
@@ -133,7 +133,7 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, 
 
         # User does not want fallback
         if export_settings['gltf_webp_fallback'] is False:
-            ext_wepb["source"] = source
+            ext_webp["source"] = source
             remove_source = True
             required = True
 
@@ -142,14 +142,14 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, 
             and webp_image is not None \
             and export_settings['gltf_webp_fallback'] is True:
         # Already managed in __gather_source, we only have to assign
-        ext_wepb["source"] = webp_image
+        ext_webp["source"] = webp_image
 
         # Not needed in code, for for documentation:
         # remove_source = False
         # required = False
 
-    if len(ext_wepb) > 0:
-        extensions["EXT_texture_webp"] = Extension('EXT_texture_webp', ext_wepb, required)
+    if len(ext_webp) > 0:
+        extensions["EXT_texture_webp"] = Extension('EXT_texture_webp', ext_webp, required)
         return extensions, remove_source
     else:
         return None, False

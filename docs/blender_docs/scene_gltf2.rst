@@ -883,7 +883,7 @@ Materials
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
-   If Wepb is chosen, all textures will be saved as Webp, without any png/jpg fallback.
+   If webp is chosen, all textures will be saved as Webp, without any png/jpg fallback.
    If None is chosen, materials are exported without textures.
 Image Quality
    When exporting jpeg or Webp files, the quality of the exported file.

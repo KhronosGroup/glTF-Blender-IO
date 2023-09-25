@@ -126,7 +126,7 @@ def __gather_mime_type(sockets, export_image, export_settings):
     for socket in sockets:
         if socket.name == "Alpha":
             if export_settings["gltf_image_format"] == "WEBP":
-                return "image/wepb"
+                return "image/webp"
             else:
                 return "image/png"
 
