@@ -32,8 +32,8 @@ def export_sheen(blender_material, export_settings):
 
     uvmap_infos = {}
 
-    sheenColor_non_linked = isinstance(sheenColor_socket, bpy.types.NodeSocket) and not sheenColor_socket.is_linked
-    sheenRoughness_non_linked = isinstance(sheenRoughness_socket, bpy.types.NodeSocket) and not sheenRoughness_socket.is_linked
+    sheenColor_non_linked = isinstance(sheenColor_socket.socket, bpy.types.NodeSocket) and not sheenColor_socket.socket.is_linked
+    sheenRoughness_non_linked = isinstance(sheenRoughness_socket.socket, bpy.types.NodeSocket) and not sheenRoughness_socket.socket.is_linked
 
     if sheenColor_non_linked is True:
         color = sheenColor_socket.socket.default_value[:3]

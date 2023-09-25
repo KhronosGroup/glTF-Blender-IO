@@ -35,8 +35,8 @@ def export_original_specular(blender_material, export_settings):
 
     uvmap_infos = {}
 
-    specular_non_linked = isinstance(original_specular_socket, bpy.types.NodeSocket) and not original_specular_socket.is_linked
-    specularcolor_non_linked = isinstance(original_specularcolor_socket, bpy.types.NodeSocket) and not original_specularcolor_socket.is_linked
+    specular_non_linked = isinstance(original_specular_socket.socket, bpy.types.NodeSocket) and not original_specular_socket.socket.is_linked
+    specularcolor_non_linked = isinstance(original_specularcolor_socket.socket, bpy.types.NodeSocket) and not original_specularcolor_socket.socket.is_linked
 
     if specular_non_linked is True:
         fac = original_specular_socket.socket.default_value
