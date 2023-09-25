@@ -16,6 +16,7 @@ import bpy
 from mathutils import Vector, Matrix
 from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ..com.gltf2_blender_extras import set_extras
+from ..com.gltf2_blender_default import BLENDER_GLTF_SPECIAL_COLLECTION
 from .gltf2_blender_mesh import BlenderMesh
 from .gltf2_blender_camera import BlenderCamera
 from .gltf2_blender_light import BlenderLight
@@ -35,7 +36,7 @@ class BlenderNode():
         if bpy.app.debug_value == 101:
             gltf.log.critical("Node %d of %d (id %s)", gltf.display_current_node, len(gltf.vnodes), vnode_id)
 
-        if vnode.type == VNode.Object:
+        if vnode.type in [VNode.Object, VNode.Inst]:
             gltf_node = gltf.data.nodes[vnode_id] if isinstance(vnode_id, int) else None
             import_user_extensions('gather_import_node_before_hook', gltf, vnode, gltf_node)
             obj = BlenderNode.create_object(gltf, vnode_id)
@@ -61,6 +62,9 @@ class BlenderNode():
         if vnode.mesh_node_idx is not None:
             obj = BlenderNode.create_mesh_object(gltf, vnode)
 
+        elif vnode.type == VNode.Inst and vnode.mesh_idx is not None:
+            obj = BlenderNode.create_mesh_object(gltf, vnode)
+
         elif vnode.camera_node_idx is not None:
             pynode = gltf.data.nodes[vnode.camera_node_idx]
             cam = BlenderCamera.create(gltf, vnode, pynode.camera)
@@ -83,6 +87,8 @@ class BlenderNode():
             armature = bpy.data.armatures.new(vnode.arma_name)
             name = vnode.name or armature.name
             obj = bpy.data.objects.new(name, armature)
+            if gltf.import_settings['bone_heuristic'] == "BLENDER":
+                BlenderNode.armature_display(gltf, obj)
 
         else:
             # Empty
@@ -127,6 +133,24 @@ class BlenderNode():
         bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
 
         return obj
+
+    @staticmethod
+    def armature_display(gltf, obj):
+        obj.show_in_front = True
+        obj.data.relation_line_position = "HEAD"
+
+        # Create a special collection (if not exists already)
+        # Content of this collection will not be exported
+        if BLENDER_GLTF_SPECIAL_COLLECTION not in bpy.data.collections:
+            bpy.data.collections.new(BLENDER_GLTF_SPECIAL_COLLECTION)
+            bpy.data.scenes[gltf.blender_scene].collection.children.link(bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION])
+            bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].hide_viewport = True
+
+        # Create an icosphere, and assign it to the collection
+        bpy.ops.mesh.primitive_ico_sphere_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].objects.link(bpy.context.object)
+        gltf.bone_shape = bpy.context.object.name
+        bpy.context.collection.objects.unlink(bpy.context.object)
 
     @staticmethod
     def calc_empty_display_size(gltf, vnode_id):
@@ -209,9 +233,23 @@ class BlenderNode():
                 pynode = gltf.data.nodes[id]
                 set_extras(pose_bone, pynode.extras)
 
+            if gltf.import_settings['bone_heuristic'] == "BLENDER":
+                pose_bone.custom_shape = bpy.data.objects[gltf.bone_shape]
+                pose_bone.custom_shape_scale_xyz = Vector([0.1, 0.1, 0.1])
+
     @staticmethod
     def create_mesh_object(gltf, vnode):
-        pynode = gltf.data.nodes[vnode.mesh_node_idx]
+        if vnode.type != VNode.Inst:
+            # Regular case
+            pynode = gltf.data.nodes[vnode.mesh_node_idx]
+        else:
+            class DummyPyNode:
+                pass
+            pynode = DummyPyNode()
+            pynode.mesh = vnode.mesh_idx
+            pynode.skin = None
+            pynode.weights = None
+
         if not (0 <= pynode.mesh < len(gltf.data.meshes)):
             # Avoid traceback for invalid gltf file: invalid reference to meshes array
             # So return an empty blender object)
