@@ -15,6 +15,7 @@
 from ....io.com.gltf2_io_extensions import Extension
 from ...exp import gltf2_blender_get
 from . import gltf2_blender_gather_texture_info
+from .gltf2_blender_search_node_tree import get_vertex_color_info
 
 def detect_shadeless_material(blender_material, export_settings):
     """Detect if this material is "shadeless" ie. should be exported
@@ -138,11 +139,14 @@ def gather_base_color_texture(info, export_settings):
         # because gather_image determines how to pack images based on the
         # names of sockets, and the names are hard-coded to a Principled
         # style graph.
-        unlit_texture, unlit_use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+        unlit_texture, uvmap_info, _  = gltf2_blender_gather_texture_info.gather_texture_info(
             sockets[0],
             sockets,
             (),
             export_settings,
         )
-        return unlit_texture, ["unlitTexture"] if unlit_use_active_uvmap else None
-    return None, None
+
+        vc_info = get_vertex_color_info(sockets[0], sockets, export_settings)
+
+        return unlit_texture, {'baseColorTexture': uvmap_info}, vc_info
+    return None, {}, {"color": None, "alpha": None}

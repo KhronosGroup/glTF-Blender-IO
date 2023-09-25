@@ -49,6 +49,8 @@ class ImageData:
     def file_extension(self):
         if self._mime_type == "image/jpeg":
             return ".jpg"
+        elif self._mime_type == "image/webp":
+            return ".webp"
         return ".png"
 
     @property
