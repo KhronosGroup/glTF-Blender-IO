@@ -128,6 +128,10 @@ def __gather_mime_type(sockets, export_image, export_settings):
             if export_settings["gltf_image_format"] == "WEBP":
                 return "image/webp"
             else:
+                # If we keep image as is (no channel composition), we need to keep original format (for webp)
+                image = export_image.blender_image()
+                if image is not None and __is_blender_image_a_webp(image):
+                    return "image/webp"
                 return "image/png"
 
     if export_settings["gltf_image_format"] == "AUTO":
