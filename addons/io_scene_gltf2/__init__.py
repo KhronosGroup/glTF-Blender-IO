@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 0, 27),
+    "version": (4, 0, 29),
     'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -669,6 +669,14 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_gpu_instances: BoolProperty(
+        name='GPU Instances',
+        description='Export using EXT_mesh_gpu_instancing.'
+                    'Limited to children of a same Empty. '
+                    'multiple Materials might be omitted',
+        default=False
+    )
+
     # This parameter is only here for backward compatibility, as this option is removed in 3.6
     # This option does nothing, and is not displayed in UI
     # What you are looking for is probably "export_animation_mode"
@@ -880,11 +888,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_lights'] = self.export_lights
         export_settings['gltf_lighting_mode'] = self.export_import_convert_lighting_mode
+        export_settings['gltf_gpu_instances'] = self.export_gpu_instances
 
         export_settings['gltf_try_sparse_sk'] = self.export_try_sparse_sk
         export_settings['gltf_try_omit_sparse_sk'] = self.export_try_omit_sparse_sk
         if not self.export_try_sparse_sk:
             export_settings['gltf_try_omit_sparse_sk'] = False
+
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1033,6 +1043,28 @@ class GLTF_PT_export_data(bpy.types.Panel):
 
     def draw(self, context):
         pass
+
+class GLTF_PT_export_data_scene(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Scene Graph"
+    bl_parent_id = "GLTF_PT_export_data"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+        layout.prop(operator, 'export_gpu_instances')
 
 class GLTF_PT_export_data_mesh(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1839,6 +1871,7 @@ classes = (
     GLTF_PT_export_include,
     GLTF_PT_export_transform,
     GLTF_PT_export_data,
+    GLTF_PT_export_data_scene,
     GLTF_PT_export_data_mesh,
     GLTF_PT_export_data_material,
     GLTF_PT_export_data_original_pbr,

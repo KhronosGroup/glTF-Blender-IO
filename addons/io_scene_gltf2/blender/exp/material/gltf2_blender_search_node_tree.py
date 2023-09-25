@@ -99,3 +99,6 @@ def from_socket(start_socket: bpy.types.NodeSocket,
         return []
 
     return __search_from_socket(start_socket, shader_node_filter, [])
+
+def get_vertex_color_info(primary_socket, sockets, export_settings):
+    return {"color": None, "alpha": None} #TODO, placeholder for now

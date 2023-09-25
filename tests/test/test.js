@@ -246,7 +246,7 @@ describe('Exporter', function() {
 
                             validateGltf(dstPath, done);
                         }, args);
-                        // validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
+                        //validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
                     });
                 });
             });
@@ -1875,6 +1875,47 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[sphere_rotation_sampler.input].count, 6);
                 assert.strictEqual(asset.accessors[sphere_rotation_sampler.input].count, 6);
 
+            });
+
+            it('exports without gpu instancing', function() {
+                let gltfPath = path.resolve(outDirPath, '32_gpu_instancing_without_instancing.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.nodes.length, 13);
+                assert.strictEqual(asset.meshes.length,7);
+                assert.ok(asset.extensionsUsed == null);
+
+            });
+
+            it('exports with gpu instancing', function() {
+                let gltfPath = path.resolve(outDirPath, '32_gpu_instancing_with_instancing.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.nodes.length, 9);
+                assert.strictEqual(asset.meshes.length,7);
+                assert.ok(!(asset.extensionsUsed == null));
+                const holder_nodes = asset.nodes.filter(a => a.extensions != null);
+                assert.strictEqual(holder_nodes.length, 2);
+
+                const node_0 = holder_nodes.filter(a => a.name === "Empty.0")[0];
+                const node_1 = holder_nodes.filter(a => a.name === "Empty.1")[0];
+
+                const data_0_t = asset.accessors[node_0.extensions["EXT_mesh_gpu_instancing"]["attributes"]["TRANSLATION"]];
+                const data_0_r = asset.accessors[node_0.extensions["EXT_mesh_gpu_instancing"]["attributes"]["ROTATION"]];
+                const data_0_s = asset.accessors[node_0.extensions["EXT_mesh_gpu_instancing"]["attributes"]["SCALE"]];
+
+                const data_1_t = asset.accessors[node_1.extensions["EXT_mesh_gpu_instancing"]["attributes"]["TRANSLATION"]];
+                const data_1_r = asset.accessors[node_1.extensions["EXT_mesh_gpu_instancing"]["attributes"]["ROTATION"]];
+                const data_1_s = asset.accessors[node_1.extensions["EXT_mesh_gpu_instancing"]["attributes"]["SCALE"]];
+
+                assert.strictEqual(data_0_t.count, 3);
+                assert.strictEqual(data_0_r.count, 3);
+                assert.strictEqual(data_0_s.count, 3);
+
+                assert.strictEqual(data_1_t.count, 4);
+                assert.strictEqual(data_1_r.count, 4);
+                assert.strictEqual(data_1_s.count, 4);
+
 
             });
 
@@ -2035,6 +2076,45 @@ describe('Exporter', function() {
 
             });
 
+            it('exports Custom Attribute UVMaps', function() {
+                let gltfPath = path.resolve(outDirPath, '32_custom_uvmap_attribute.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 2);
+                const material_0 = asset.materials[asset.meshes.filter(a => a.name == "Cube.001")[0].primitives[0]["material"]]
+                const material_1 = asset.materials[asset.meshes.filter(a => a.name == "Cube.002")[0].primitives[0]["material"]]
+                assert.strictEqual(material_0.pbrMetallicRoughness["baseColorTexture"]["index"], 0);
+                assert.strictEqual(material_0.pbrMetallicRoughness["baseColorTexture"]["texCoord"], 5);
+                assert.strictEqual(material_1.pbrMetallicRoughness["baseColorTexture"]["index"], 0);
+                assert.strictEqual(material_1.pbrMetallicRoughness["baseColorTexture"]["texCoord"], 1);
+
+            });
+
+            it('exports UVMaps texcoord', function() {
+                let gltfPath = path.resolve(outDirPath, '32_uvmap_indices.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.meshes.length, 6);
+                assert.strictEqual(asset.materials.length, 6);
+
+                const material_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube")[0].mesh].primitives[0]["material"]]
+                const material_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube.003")[0].mesh].primitives[0]["material"]]
+                const material_2 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube.001")[0].mesh].primitives[0]["material"]]
+                const material_3 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube.002")[0].mesh].primitives[0]["material"]]
+                const material_4 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Plane")[0].mesh].primitives[0]["material"]]
+                const material_5 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Plane.001")[0].mesh].primitives[0]["material"]]
+
+
+                assert.ok(!("texCoord" in material_0.emissiveTexture));
+                assert.strictEqual(material_1.emissiveTexture["texCoord"], 1);
+                assert.strictEqual(material_2.emissiveTexture["texCoord"], 1);
+                assert.ok(!("texCoord" in material_3.emissiveTexture));
+                assert.strictEqual(material_4.pbrMetallicRoughness["baseColorTexture"]["texCoord"], 1);
+                assert.ok(!("texCoord" in material_5.pbrMetallicRoughness["baseColorTexture"]));
+
+            });
+
             it('exports webp mode', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '32_webp_mode_webp.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
@@ -2125,7 +2205,7 @@ describe('Importer / Exporter (Roundtrip)', function() {
                         if (fs.existsSync(gltfOptionsPath)) {
                             options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                         }
-                        // return done(); // uncomment to not roundtrip all files
+                        //return done(); // uncomment to not roundtrip all files
                         blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                             if (error)
                                 return done(error);
@@ -3074,6 +3154,18 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const primitive2 = asset.meshes[0].primitives[1];
                 assert.strictEqual(asset.accessors[primitive2.attributes['_PRESSURE']].count, 4);
             });
+
+            it('roundtrips gpu instances', function() {
+                let dir = '24_gpu_instancing';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 2);
+                assert.strictEqual(asset.nodes.length, 6);
+
+            });
+
         });
     });
 });
