@@ -41,6 +41,10 @@ def get_cache_data(path: str,
     else:
         obj_uuids = [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]
 
+    # For TRACK mode, we reset cache after each track export, so we don't need to keep others objects
+    if export_settings['gltf_animation_mode'] in "NLA_TRACKS":
+        obj_uuids = [blender_obj_uuid]
+
     frame = min_
     while frame <= max_:
         bpy.context.scene.frame_set(int(frame))
