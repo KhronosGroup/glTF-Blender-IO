@@ -59,6 +59,9 @@ def gather_track_animations(  obj_uuid: int,
     current_world_matrix = None
     current_use_nla = None
     current_use_nla_sk = None
+    restore_track_mute = {}
+    restore_track_mute["OBJECT"] = {}
+    restore_track_mute["SHAPEKEY"] = {}
 
     if blender_object.animation_data:
         current_action = blender_object.animation_data.action
@@ -101,9 +104,11 @@ def gather_track_animations(  obj_uuid: int,
     # Mute all channels
     for track_group in [b[0] for b in blender_tracks if b[2] == "OBJECT"]:
         for track in track_group:
+            restore_track_mute["OBJECT"][track.idx] = blender_object.animation_data.nla_tracks[track.idx].mute
             blender_object.animation_data.nla_tracks[track.idx].mute = True
     for track_group in [b[0] for b in blender_tracks if b[2] == "SHAPEKEY"]:
         for track in track_group:
+            restore_track_mute["SHAPEKEY"][track.idx] = blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute
             blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = True
 
 
@@ -168,7 +173,7 @@ def gather_track_animations(  obj_uuid: int,
         blender_object.animation_data.use_tweak_mode = restore_tweak_mode
         for track_group in [b[0] for b in blender_tracks if b[2] == "OBJECT"]:
             for track in track_group:
-                blender_object.animation_data.nla_tracks[track.idx].mute = True
+                blender_object.animation_data.nla_tracks[track.idx].mute = restore_track_mute["OBJECT"][track.idx]
     if blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
@@ -176,7 +181,7 @@ def gather_track_animations(  obj_uuid: int,
         blender_object.data.shape_keys.animation_data.use_nla = current_use_nla_sk
         for track_group in [b[0] for b in blender_tracks if b[2] == "SHAPEKEY"]:
             for track in track_group:
-                blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = True
+                blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = restore_track_mute["SHAPEKEY"][track.idx]
 
     blender_object.matrix_world = current_world_matrix
 
