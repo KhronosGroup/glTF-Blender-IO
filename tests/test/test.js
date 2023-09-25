@@ -1345,6 +1345,48 @@ describe('Exporter', function() {
 
             });
 
+            it('exports using sk sparse', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sparse_sk.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const target_pos = asset.meshes[0].primitives[0].targets[0]['POSITION'];
+                const output_count = asset.accessors[target_pos].sparse['count'] ;
+                assert.equal(asset.accessors[target_pos].bufferView, null);
+                assert.notEqual(asset.accessors[target_pos].sparse['indices']['bufferView'], null);
+                assert.equal(output_count, 3);
+
+            });
+
+            it('exports using sk no sparse', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sparse_sk_no_sparse.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const target_pos = asset.meshes[0].primitives[0].targets[0]['POSITION'];
+                assert.equal(asset.accessors[target_pos].sparse, null);
+                assert.notEqual(asset.accessors[target_pos].bufferView, null);
+
+            });
+
+            it('exports using sk sparse omit', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sparse_sk_omit.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const target_pos = asset.meshes[0].primitives[0].targets[0]['POSITION'];
+                assert.equal(asset.accessors[target_pos].sparse, null);
+                assert.equal(asset.accessors[target_pos].bufferView, null);
+
+            });
+
+            it('exports using sk sparse size', function() {
+                let gltfPath = path.resolve(outDirPath, '28_sparse_sk_no_sparse_size.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const target_pos = asset.meshes[0].primitives[0].targets[0]['POSITION'];
+                assert.equal(asset.accessors[target_pos].sparse, null);
+                assert.notEqual(asset.accessors[target_pos].bufferView, null);
+
+            });
+
             it('exports using armature rest pose', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '29_armature_use_current_pose.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
