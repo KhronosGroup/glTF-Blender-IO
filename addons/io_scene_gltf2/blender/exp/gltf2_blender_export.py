@@ -85,7 +85,7 @@ def __gather_gltf(exporter, export_settings):
     export_user_extensions('gather_gltf_hook', export_settings, active_scene_idx, scenes, animations)
 
     for idx, scene in enumerate(scenes):
-        exporter.add_scene(scene, idx==active_scene_idx)
+        exporter.add_scene(scene, idx==active_scene_idx, export_settings=export_settings)
     for animation in animations:
         exporter.add_animation(animation)
     exporter.traverse_unused_skins(unused_skins)

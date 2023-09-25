@@ -30,16 +30,17 @@ def export_volume(blender_material, export_settings):
         transmission_enabled = True
 
     if transmission_enabled is False:
-        return None, None
+        return None, {}
 
     volume_extension = {}
     has_thickness_texture = False
     thickness_slots = ()
+    uvmap_info = {}
 
     thicknesss_socket = gltf2_blender_get.get_socket_old(blender_material, 'Thickness')
     if thicknesss_socket is None:
         # If no thickness (here because there is no glTF Material Output node), no volume extension export
-            return None, None
+            return None, {}
 
     density_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Density', volume=True)
     attenuation_color_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Color', volume=True)
@@ -71,7 +72,7 @@ def export_volume(blender_material, export_settings):
         val = thicknesss_socket.default_value
         if val == 0.0:
             # If no thickness, no volume extension export
-            return None, None
+            return None, {}
         volume_extension['thicknessFactor'] = val
 
         # Storing path for KHR_animation_pointer
@@ -98,10 +99,8 @@ def export_volume(blender_material, export_settings):
     if has_thickness_texture:
         thickness_slots = (thicknesss_socket,)
 
-    use_actives_uvmaps = []
-
     if len(thickness_slots) > 0:
-        combined_texture, use_active_uvmap, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             thicknesss_socket,
             thickness_slots,
             (),
@@ -109,7 +108,5 @@ def export_volume(blender_material, export_settings):
         )
         if has_thickness_texture:
             volume_extension['thicknessTexture'] = combined_texture
-        if use_active_uvmap:
-            use_actives_uvmaps.append("thicknessTexture")
 
-    return Extension('KHR_materials_volume', volume_extension, False), use_actives_uvmaps
+    return Extension('KHR_materials_volume', volume_extension, False), {'thicknessTexture': uvmap_info}

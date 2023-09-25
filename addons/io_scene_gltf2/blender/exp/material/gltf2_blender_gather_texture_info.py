@@ -52,9 +52,9 @@ def __gather_texture_info_helper(
         filter_type: str,
         export_settings):
     if not __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
-        return None, None, None
+        return None, {}, None
 
-    tex_transform, tex_coord, use_active_uvmap = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
+    tex_transform, uvmap_info = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
 
     index, factor = __gather_index(blender_shader_sockets, default_sockets, export_settings)
 
@@ -62,7 +62,7 @@ def __gather_texture_info_helper(
         'extensions': __gather_extensions(tex_transform, export_settings),
         'extras': __gather_extras(blender_shader_sockets, export_settings),
         'index': index,
-        'tex_coord': tex_coord
+        'tex_coord': None # This will be set later, as some data are dependant of mesh or object
     }
 
     if kind == 'DEFAULT':
@@ -77,11 +77,11 @@ def __gather_texture_info_helper(
         texture_info = gltf2_io.MaterialOcclusionTextureInfoClass(**fields)
 
     if texture_info.index is None:
-        return None, None, None
+        return None, {}, None
 
     export_user_extensions('gather_texture_info_hook', export_settings, texture_info, blender_shader_sockets)
 
-    return texture_info, use_active_uvmap, factor
+    return texture_info, uvmap_info, factor
 
 
 def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
@@ -177,21 +177,22 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
         texture_transform = gltf2_blender_get.get_texture_transform_from_mapping_node(node, export_settings)
         node = previous_node(node.inputs['Vector'])
 
-    texcoord_idx = 0
-    use_active_uvmap = True
-    if node and node.type == 'UVMAP' and node.uv_map:
-        # Try to gather map index.
-        node_tree = node.id_data
-        for mesh in bpy.data.meshes:
-            for material in mesh.materials:
-                if material and material.node_tree == node_tree:
-                    i = mesh.uv_layers.find(node.uv_map)
-                    if i >= 0:
-                        texcoord_idx = i
-                        use_active_uvmap = False
-                        break
+    uvmap_info = {}
 
-    return texture_transform, texcoord_idx or None, use_active_uvmap
+    if node and node.type == 'UVMAP' and node.uv_map:
+        uvmap_info['type'] = "Fixed"
+        uvmap_info['value'] = node.uv_map
+
+    elif node and node.type == 'ATTRIBUTE' \
+            and node.attribute_type == "GEOMETRY" \
+            and node.attribute_name:
+        uvmap_info['type'] = 'Attribute'
+        uvmap_info['value'] = node.attribute_name
+
+    else:
+        uvmap_info['type'] = 'Active'
+
+    return texture_transform, uvmap_info
 
 
 def check_same_size_images(

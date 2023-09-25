@@ -46,8 +46,14 @@ def specular(mh, location_specular,
     try:
         tex_info = mh.pymat.pbr_metallic_roughness.base_color_texture
         pytexture = mh.gltf.data.textures[tex_info.index]
-        pyimg = mh.gltf.data.images[pytexture.source]
-        base_color_image_name = pyimg.blender_image_name
+        if mh.gltf.import_settings['import_webp_texture'] is True \
+                and pytexture.extensions is not None \
+                and "EXT_texture_webp" in pytexture.extensions:
+            pyimg = mh.gltf.data.images[pytexture.extensions["EXT_texture_webp"]["source"]]
+            base_color_image_name = pyimg.blender_image_name
+        else:
+            pyimg = mh.gltf.data.images[pytexture.source]
+            base_color_image_name = pyimg.blender_image_name
     except:
         base_color_image_name =  None
 
@@ -74,8 +80,14 @@ def specular(mh, location_specular,
         if tex_transmission_info is not None:
             tex_transmission_info = TextureInfo.from_dict(tex_transmission_info)
             pytexture = mh.gltf.data.textures[tex_transmission_info.index]
-            pyimg = mh.gltf.data.images[pytexture.source]
-            transmission_image_name = pyimg.blender_image_name
+            if mh.gltf.import_settings['import_webp_texture'] is True \
+                    and pytexture.extensions is not None \
+                    and "EXT_texture_webp" in pytexture.extensions:
+                pyimg = mh.gltf.data.images[pytexture.extensions["EXT_texture_webp"]["source"]]
+                transmission_image_name = pyimg.blender_image_name
+            else:
+                pyimg = mh.gltf.data.images[pytexture.source]
+                transmission_image_name = pyimg.blender_image_name
         else:
             transmission_image_name = None
     except Exception:
@@ -151,8 +163,14 @@ def specular(mh, location_specular,
         specular_image_name = None
         try:
             pytexture = mh.gltf.data.textures[tex_specular_info.index]
-            pyimg = mh.gltf.data.images[pytexture.source]
-            specular_image_name = pyimg.blender_image_name
+            if mh.gltf.import_settings['import_webp_texture'] is True \
+                    and pytexture.extensions is not None \
+                    and "EXT_texture_webp" in pytexture.extensions:
+                pyimg = mh.gltf.data.images[pytexture.extensions["EXT_texture_webp"]["source"]]
+                specular_image_name = pyimg.blender_image_name
+            else:
+                pyimg = mh.gltf.data.images[pytexture.source]
+                specular_image_name = pyimg.blender_image_name
         except:
             specular_image_name =  None
 
@@ -161,8 +179,14 @@ def specular(mh, location_specular,
         specularcolor_image_name = None
         try:
             pytexture = mh.gltf.data.textures[tex_specular_color_info.index]
-            pyimg = mh.gltf.data.images[pytexture.source]
-            specularcolor_image_name = pyimg.blender_image_name
+            if mh.gltf.import_settings['import_webp_texture'] is True \
+                    and pytexture.extensions is not None \
+                    and "EXT_texture_webp" in pytexture.extensions:
+                pyimg = mh.gltf.data.images[pytexture.extensions["EXT_texture_webp"]["source"]]
+                specularcolor_image_name = pyimg.blender_image_name
+            else:
+                pyimg = mh.gltf.data.images[pytexture.source]
+                specularcolor_image_name = pyimg.blender_image_name
         except:
             specularcolor_image_name =  None
 
@@ -174,6 +198,11 @@ def specular(mh, location_specular,
             specularcolor_image_name : 'speccolor',
             specular_image_name: 'spec'
         }
+        print("--")
+        print(base_color_image_name)
+        print(transmission_image_name)
+        print(specularcolor_image_name)
+        print(specular_image_name)
         images = [(name, bpy.data.images[name]) for name in [base_color_image_name, transmission_image_name, specularcolor_image_name, specular_image_name] if name is not None]
 
         width = max(image[1].size[0] for image in images)

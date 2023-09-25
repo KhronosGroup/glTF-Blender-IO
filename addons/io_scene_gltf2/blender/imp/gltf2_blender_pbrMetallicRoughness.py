@@ -159,19 +159,19 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     clearcoat(
         mh,
         location=locs['clearcoat'],
-        clearcoat_socket=pbr_node.inputs['Clearcoat'],
+        clearcoat_socket=pbr_node.inputs['Coat'],
     )
 
     clearcoat_roughness(
         mh,
         location=locs['clearcoat_roughness'],
-        roughness_socket=pbr_node.inputs['Clearcoat Roughness'],
+        roughness_socket=pbr_node.inputs['Coat Roughness'],
     )
 
     clearcoat_normal(
         mh,
         location=locs['clearcoat_normal'],
-        normal_socket=pbr_node.inputs['Clearcoat Normal'],
+        normal_socket=pbr_node.inputs['Coat Normal'],
     )
 
     transmission(
@@ -260,6 +260,12 @@ def calc_locations(mh):
     locs['metallic_roughness'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.metallic_roughness_texture is not None:
         y -= height
+    locs['transmission'] = (x, y)
+    if 'transmissionTexture' in transmission_ext:
+        y -= height
+    locs['normal'] = (x, y)
+    if mh.pymat.normal_texture is not None:
+        y -= height
     locs['specularTexture'] = (x, y)
     if 'specularTexture' in specular_ext:
         y -= height
@@ -272,17 +278,11 @@ def calc_locations(mh):
     locs['clearcoat_roughness'] = (x, y)
     if 'clearcoatRoughnessTexture' in clearcoat_ext:
         y -= height
-    locs['transmission'] = (x, y)
-    if 'transmissionTexture' in transmission_ext:
+    locs['clearcoat_normal'] = (x, y)
+    if 'clearcoatNormalTexture' in clearcoat_ext:
         y -= height
     locs['emission'] = (x, y)
     if mh.pymat.emissive_texture is not None:
-        y -= height
-    locs['normal'] = (x, y)
-    if mh.pymat.normal_texture is not None:
-        y -= height
-    locs['clearcoat_normal'] = (x, y)
-    if 'clearcoatNormalTexture' in clearcoat_ext:
         y -= height
     locs['occlusion'] = (x, y)
     if mh.pymat.occlusion_texture is not None:
