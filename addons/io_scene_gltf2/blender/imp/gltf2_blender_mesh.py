@@ -86,6 +86,10 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     num_cols = 0
     num_joint_sets = 0
     attributes = set({})
+    attribute_data = []
+    attribute_type = {}
+    attribute_component_type = {}
+
     for prim in pymesh.primitives:
         if 'POSITION' not in prim.attributes:
             continue
@@ -109,7 +113,18 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         while i < COLOR_MAX and ('COLOR_%d' % i) in prim.attributes: i += 1
         num_cols = max(i, num_cols)
 
-        attributes.update(set([k for k in prim.attributes if k.startswith('_')]))
+        custom_attrs = [k for k in prim.attributes if k.startswith('_')]
+        for attr in custom_attrs:
+            if not attr in attributes:
+                attribute_type[attr] = gltf.data.accessors[prim.attributes[attr]].type
+                attribute_component_type[attr] = gltf.data.accessors[prim.attributes[attr]].component_type
+                attribute_data.append(
+                    np.empty(
+                        dtype=ComponentType.to_numpy_dtype(attribute_component_type[attr]),
+                        shape=(0, DataType.num_elements(attribute_type[attr])))
+                        )
+        attributes.update(set(custom_attrs))
+
 
     num_shapekeys = sum(sk_name is not None for sk_name in pymesh.shapekey_names)
 
@@ -142,13 +157,6 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         np.empty(dtype=np.float32, shape=(0,3))  # coordinate for each vert for each shapekey
         for _ in range(num_shapekeys)
     ]
-    attribute_data = []
-    for attr in attributes:
-        attribute_data.append(
-            np.empty(
-                dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type),
-                shape=(0, DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type)))
-                )
 
     for prim in pymesh.primitives:
         prim.num_faces = 0
@@ -253,12 +261,13 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         for idx, attr in enumerate(attributes):
             if attr in prim.attributes:
                 attr_data = BinaryData.decode_accessor(gltf, prim.attributes[attr], cache=True)
+                attribute_data[idx] = np.concatenate((attribute_data[idx], attr_data[unique_indices]))
             else:
                 attr_data = np.zeros(
-                    (len(indices), DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type)),
-                     dtype=ComponentType.to_numpy_dtype(gltf.data.accessors[prim.attributes[attr]].component_type)
+                    (len(unique_indices), DataType.num_elements(attribute_type[attr])),
+                     dtype=ComponentType.to_numpy_dtype(attribute_component_type[attr])
                 )
-            attribute_data[idx] = np.concatenate((attribute_data[idx], attr_data[unique_indices]))
+                attribute_data[idx] = np.concatenate((attribute_data[idx], attr_data))
 
     # Accessors are cached in case they are shared between primitives; clear
     # the cache now that all prims are done.
@@ -456,14 +465,14 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     for idx, attr in enumerate(attributes):
 
         blender_attribute_data_type = get_attribute_type(
-            gltf.data.accessors[prim.attributes[attr]].component_type,
-            gltf.data.accessors[prim.attributes[attr]].type
+            attribute_component_type[attr],
+            attribute_type[attr]
         )
 
         blender_attribute = mesh.attributes.new(attr, blender_attribute_data_type, 'POINT')
-        if DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) == 1:
+        if DataType.num_elements(attribute_type[attr]) == 1:
             blender_attribute.data.foreach_set('value', attribute_data[idx].flatten())
-        elif DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) > 1:
+        elif DataType.num_elements(attribute_type[attr]) > 1:
             if blender_attribute_data_type in ["BYTE_COLOR", "FLOAT_COLOR"]:
                 blender_attribute.data.foreach_set('color', attribute_data[idx].flatten())
             else:
