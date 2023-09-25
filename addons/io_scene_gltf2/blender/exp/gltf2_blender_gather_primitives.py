@@ -22,6 +22,7 @@ from ...io.exp import gltf2_io_binary_data
 from .gltf2_blender_gather_cache import cached, cached_by_key
 from . import gltf2_blender_gather_primitives_extract
 from . import gltf2_blender_gather_primitive_attributes
+from .gltf2_blender_gather_accessors import gather_accessor, array_to_accessor
 from .material.gltf2_blender_gather_materials import get_final_material, gather_material, get_base_material, get_material_from_idx
 from .material.extensions import gltf2_blender_gather_materials_variants
 
