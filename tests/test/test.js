@@ -1875,6 +1875,47 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.accessors[sphere_rotation_sampler.input].count, 6);
                 assert.strictEqual(asset.accessors[sphere_rotation_sampler.input].count, 6);
 
+            });
+
+            it('exports without gpu instancing', function() {
+                let gltfPath = path.resolve(outDirPath, '32_gpu_instancing_without_instancing.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.nodes.length, 13);
+                assert.strictEqual(asset.meshes.length,7);
+                assert.ok(asset.extensionsUsed == null);
+
+            });
+
+            it('exports with gpu instancing', function() {
+                let gltfPath = path.resolve(outDirPath, '32_gpu_instancing_with_instancing.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.nodes.length, 9);
+                assert.strictEqual(asset.meshes.length,7);
+                assert.ok(!(asset.extensionsUsed == null));
+                const holder_nodes = asset.nodes.filter(a => a.extensions != null);
+                assert.strictEqual(holder_nodes.length, 2);
+
+                const node_0 = holder_nodes.filter(a => a.name === "Empty.0")[0];
+                const node_1 = holder_nodes.filter(a => a.name === "Empty.1")[0];
+
+                const data_0_t = asset.accessors[node_0.extensions["EXT_mesh_gpu_instancing"]["attributes"]["TRANSLATION"]];
+                const data_0_r = asset.accessors[node_0.extensions["EXT_mesh_gpu_instancing"]["attributes"]["ROTATION"]];
+                const data_0_s = asset.accessors[node_0.extensions["EXT_mesh_gpu_instancing"]["attributes"]["SCALE"]];
+
+                const data_1_t = asset.accessors[node_1.extensions["EXT_mesh_gpu_instancing"]["attributes"]["TRANSLATION"]];
+                const data_1_r = asset.accessors[node_1.extensions["EXT_mesh_gpu_instancing"]["attributes"]["ROTATION"]];
+                const data_1_s = asset.accessors[node_1.extensions["EXT_mesh_gpu_instancing"]["attributes"]["SCALE"]];
+
+                assert.strictEqual(data_0_t.count, 3);
+                assert.strictEqual(data_0_r.count, 3);
+                assert.strictEqual(data_0_s.count, 3);
+
+                assert.strictEqual(data_1_t.count, 4);
+                assert.strictEqual(data_1_r.count, 4);
+                assert.strictEqual(data_1_s.count, 4);
+
 
             });
 
@@ -3015,6 +3056,18 @@ describe('Importer / Exporter (Roundtrip)', function() {
                 const primitive2 = asset.meshes[0].primitives[1];
                 assert.strictEqual(asset.accessors[primitive2.attributes['_PRESSURE']].count, 4);
             });
+
+            it('roundtrips gpu instances', function() {
+                let dir = '24_gpu_instancing';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.meshes.length, 2);
+                assert.strictEqual(asset.nodes.length, 6);
+
+            });
+
         });
     });
 });
