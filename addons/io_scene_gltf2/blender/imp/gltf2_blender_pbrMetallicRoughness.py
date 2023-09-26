@@ -106,7 +106,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     emission(
         mh,
         location=locs['emission'],
-        color_socket=pbr_node.inputs['Emission'],
+        color_socket=pbr_node.inputs['Emission Color'],
         strength_socket=pbr_node.inputs['Emission Strength'],
     )
 
@@ -140,7 +140,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     clearcoat(
         mh,
         location=locs['clearcoat'],
-        clearcoat_socket=pbr_node.inputs['Coat'],
+        clearcoat_socket=pbr_node.inputs['Coat Weight'],
     )
 
     clearcoat_roughness(
@@ -158,7 +158,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     transmission(
         mh,
         location=locs['transmission'],
-        transmission_socket=pbr_node.inputs['Transmission']
+        transmission_socket=pbr_node.inputs['Transmission Weight']
     )
 
     if need_volume_node:
@@ -173,7 +173,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         mh,
         location_specular=locs['specularTexture'],
         location_specular_tint=locs['specularColorTexture'],
-        specular_socket=pbr_node.inputs['Specular'],
+        specular_socket=pbr_node.inputs['Specular IOR Level'],
         specular_tint_socket=pbr_node.inputs['Specular Tint'],
         original_specular_socket=mh.settings_node.inputs[2] if mh.settings_node else None,
         original_specularcolor_socket=mh.settings_node.inputs[3] if mh.settings_node else None,

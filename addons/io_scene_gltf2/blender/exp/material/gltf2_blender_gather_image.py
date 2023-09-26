@@ -204,7 +204,7 @@ def __get_image_data(sockets, default_sockets, export_settings) -> ExportImage:
     results = [get_tex_from_socket(socket) for socket in sockets]
 
     # Check if we need a simple mapping or more complex calculation
-    if any([socket.name == "Specular" and socket.node.type == "BSDF_PRINCIPLED" for socket in sockets]):
+    if any([socket.name == "Specular IOR Level" and socket.node.type == "BSDF_PRINCIPLED" for socket in sockets]):
         return __get_image_data_specular(sockets, results, export_settings)
     else:
         return __get_image_data_mapping(sockets, default_sockets, results, export_settings)
@@ -256,7 +256,7 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                 dst_chan = Channel.R
             elif socket.name == 'Alpha':
                 dst_chan = Channel.A
-            elif socket.name == 'Coat':
+            elif socket.name == 'Coat Weight':
                 dst_chan = Channel.R
             elif socket.name == 'Coat Roughness':
                 dst_chan = Channel.G

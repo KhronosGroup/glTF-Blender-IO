@@ -149,7 +149,7 @@ def specular(mh, location_specular,
             blender_specular_tint = 1.0
 
         specular_socket.default_value = blender_specular
-        specular_tint_socket.default_value = blender_specular_tint
+        specular_tint_socket.default_value = [blender_specular_tint]*3 + [1.0] #TODO tmp fix to avoid crash
         # Note: blender_specular can be greater 1. The Blender documentation permits this.
 
         return
@@ -307,7 +307,7 @@ def specular(mh, location_specular,
 
         if blender_specular_tint_tex_not_needed == True:
             lum = lambda c: 0.3 * c[0] + 0.6 * c[1] + 0.1 * c[2]
-            specular_tint_socket.default_value = lum(blender_specular_tint[0][0])
+            specular_tint_socket.default_value = [lum(blender_specular_tint[0][0])]*3 + [1.0] #TODO tmp fix to avoid crash
         else:
             blender_specular_tint = np.reshape(blender_specular_tint, width * height * 4)
             # Create images in Blender, width and height are dummy values, then set packed file data

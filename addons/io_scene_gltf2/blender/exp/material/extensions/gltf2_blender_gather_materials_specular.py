@@ -86,10 +86,10 @@ def export_specular(blender_material, export_settings):
     specular_extension = {}
     specular_ext_enabled = False
 
-    specular_socket = gltf2_blender_get.get_socket(blender_material, 'Specular')
+    specular_socket = gltf2_blender_get.get_socket(blender_material, 'Specular IOR Level')
     specular_tint_socket = gltf2_blender_get.get_socket(blender_material, 'Specular Tint')
     base_color_socket = gltf2_blender_get.get_socket(blender_material, 'Base Color')
-    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
+    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission Weight')
     ior_socket = gltf2_blender_get.get_socket(blender_material, 'IOR')
 
     if base_color_socket is None:
@@ -103,6 +103,8 @@ def export_specular(blender_material, export_settings):
 
     specular = specular_socket.default_value if specular_not_linked else None
     specular_tint = specular_tint_socket.default_value if specular_tint_not_linked else None
+    if specular_tint is not None:
+        specular_tint = (specular_tint[0] + specular_tint[1] + specular_tint[2]) / 3 # TODO tmp fix to avoid crash
     transmission = transmission_socket.default_value if transmission_not_linked else None
     ior = ior_socket.default_value if ior_not_linked else GLTF_IOR   # textures not supported #TODOExt add warning?
     base_color = base_color_socket.default_value[0:3]

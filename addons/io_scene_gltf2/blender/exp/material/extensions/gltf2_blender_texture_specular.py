@@ -54,14 +54,14 @@ def specular_calculation(stored):
 
     # keep only needed channels
     ## scalar
-    for i in ['specular', 'specular_tint', 'transmission']:
+    for i in ['specular', 'transmission']:
         if i in buffers.keys():
             buffers[i] = buffers[i][:,:,stored[i + "_channel"].data]
         else:
             buffers[i] = np.full((width, height, 1), stored[i].data)
 
     # Vector 3
-    for i in ['base_color']:
+    for i in ['base_color', 'specular_tint']:
         if i in buffers.keys():
             if i + "_channel" not in stored.keys():
                 buffers[i] = buffers[i][:,:,:3]
@@ -73,6 +73,9 @@ def specular_calculation(stored):
                 buffers[i] = buffers[i][:,:,:3]
         else:
             buffers[i] = np.full((width, height, 3), stored[i].data[0:3])
+
+    # TODO tmp Merge last dimension to avoid crash
+    buffers['specular_tint'] = np.average(buffers['specular_tint'], axis=2)
 
     ior = stored['ior'].data
 

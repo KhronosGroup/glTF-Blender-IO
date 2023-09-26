@@ -75,8 +75,8 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
             emissive_socket = get_node_socket(blender_material, bpy.types.ShaderNodeEmission, "Color")
             if emissive_socket:
                 return emissive_socket
-            # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission socket.
-            name = "Emission"
+            # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission Color socket.
+            name = "Emission Color"
             type = bpy.types.ShaderNodeBsdfPrincipled
         elif name == "Background":
             type = bpy.types.ShaderNodeBackground
