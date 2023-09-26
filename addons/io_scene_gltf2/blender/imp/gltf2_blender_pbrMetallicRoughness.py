@@ -60,7 +60,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     # This value may be overridden later if IOR extension is set on file
     pbr_node.inputs['IOR'].default_value = GLTF_IOR
 
-    if mh.pymat.occlusion_texture is not None or (mh.pymat.extensions and 'KHR_materials_specular' in mh.pymat.extensions):
+    if mh.pymat.occlusion_texture is not None:
         if mh.settings_node is None:
             mh.settings_node = make_settings_node(mh)
             mh.settings_node.location = additional_location
@@ -79,7 +79,6 @@ def pbr_metallic_roughness(mh: MaterialHelper):
                 mh.settings_node = make_settings_node(mh)
                 mh.settings_node.location = additional_location
                 mh.settings_node.width = 180
-                volume_location = additional_location
                 additional_location = additional_location[0], additional_location[1] - 150
 
     _, _, volume_socket  = make_output_nodes(
@@ -166,18 +165,14 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         location_specular=locs['specularTexture'],
         location_specular_tint=locs['specularColorTexture'],
         specular_socket=pbr_node.inputs['Specular IOR Level'],
-        specular_tint_socket=pbr_node.inputs['Specular Tint'],
-        original_specular_socket=mh.settings_node.inputs[2] if mh.settings_node else None,
-        original_specularcolor_socket=mh.settings_node.inputs[3] if mh.settings_node else None,
-        location_original_specular=locs['original_specularTexture'],
-        location_original_specularcolor=locs['original_specularColorTexture']
+        specular_tint_socket=pbr_node.inputs['Specular Tint']
     )
 
     sheen(
         mh,
         location_sheenTint=locs['sheenColorTexture'],
         location_sheenRoughness=locs['sheenRoughnessTexture'],
-        sheen_socket=pbr_node.inputs['Sheen'],
+        sheen_socket=pbr_node.inputs['Sheen Weight'],
         sheenTint_socket=pbr_node.inputs['Sheen Tint'],
         sheenRoughness_socket=pbr_node.inputs['Sheen Roughness']
     )

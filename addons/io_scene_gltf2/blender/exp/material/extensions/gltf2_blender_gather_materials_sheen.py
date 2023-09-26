@@ -23,7 +23,7 @@ def export_sheen(blender_material, export_settings):
 
     sheenTint_socket = gltf2_blender_get.get_socket(blender_material, "Sheen Tint")
     sheenRoughness_socket = gltf2_blender_get.get_socket(blender_material, "Sheen Roughness")
-    sheen_socket = gltf2_blender_get.get_socket(blender_material, "Sheen")
+    sheen_socket = gltf2_blender_get.get_socket(blender_material, "Sheen Weight")
 
     if sheenTint_socket is None or sheenRoughness_socket is None or sheen_socket is None:
         return None, {}
