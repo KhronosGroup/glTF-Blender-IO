@@ -82,24 +82,16 @@ def pbr_metallic_roughness(mh: MaterialHelper):
                 volume_location = additional_location
                 additional_location = additional_location[0], additional_location[1] - 150
 
-    need_sheen_node = False
-    if mh.pymat.extensions and 'KHR_materials_sheen' in mh.pymat.extensions:
-        need_sheen_node = True
-
-    _, _, volume_socket, sheen_node = make_output_nodes(
+    _, _, volume_socket  = make_output_nodes(
         mh,
         location=(250, 260),
         additional_location=additional_location,
         shader_socket=pbr_node.outputs[0],
         make_emission_socket=False, # is managed by Principled shader node
         make_alpha_socket=False, # is managed by Principled shader node
-        make_volume_socket=need_volume_node,
-        make_sheen_socket=need_sheen_node
+        make_volume_socket=need_volume_node
     )
 
-
-    if mh.pymat.extensions and 'KHR_materials_sheen':
-        pass #TOTOEXT
 
     locs = calc_locations(mh)
 
@@ -181,14 +173,14 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         location_original_specularcolor=locs['original_specularColorTexture']
     )
 
-    if need_sheen_node:
-        sheen(
-            mh,
-            location_sheenColor=locs['sheenColorTexture'],
-            location_sheenRoughness=locs['sheenRoughnessTexture'],
-            sheenColor_socket=sheen_node.inputs[0],
-            sheenRoughness_socket=sheen_node.inputs[1]
-        )
+    sheen(
+        mh,
+        location_sheenTint=locs['sheenColorTexture'],
+        location_sheenRoughness=locs['sheenRoughnessTexture'],
+        sheen_socket=pbr_node.inputs['Sheen'],
+        sheenTint_socket=pbr_node.inputs['Sheen Tint'],
+        sheenRoughness_socket=pbr_node.inputs['Sheen Roughness']
+    )
 
     ior(
         mh,
@@ -229,12 +221,6 @@ def calc_locations(mh):
     except:
         sheen_ext = {}
 
-    locs['sheenColorTexture'] = (x, y)
-    if 'sheenColorTexture' in sheen_ext:
-        y -= height
-    locs['sheenRoughnessTexture'] = (x, y)
-    if 'sheenRoughnessTexture' in sheen_ext:
-        y -= height
     locs['base_color'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
         y -= height
@@ -252,6 +238,12 @@ def calc_locations(mh):
         y -= height
     locs['specularColorTexture'] = (x, y)
     if 'specularColorTexture' in specular_ext:
+        y -= height
+    locs['sheenRoughnessTexture'] = (x, y)
+    if 'sheenRoughnessTexture' in sheen_ext:
+        y -= height
+    locs['sheenColorTexture'] = (x, y)
+    if 'sheenColorTexture' in sheen_ext:
         y -= height
     locs['clearcoat'] = (x, y)
     if 'clearcoatTexture' in clearcoat_ext:
@@ -277,13 +269,6 @@ def calc_locations(mh):
     locs['original_specularColorTexture'] = (x, y)
     if 'specularColorTexture' in specular_ext:
         y -= height
-    locs['original_sheenColorTexture'] = (x, y)
-    if 'sheenColorTexture' in sheen_ext:
-        y -= height
-    locs['original_sheenRoughnessTexture'] = (x, y)
-    if 'sheenRoughnessTexture' in sheen_ext:
-        y -= height
-
 
     # Center things
     total_height = -y
@@ -639,12 +624,11 @@ def make_output_nodes(
     shader_socket,
     make_emission_socket,
     make_alpha_socket,
-    make_volume_socket,
-    make_sheen_socket,
+    make_volume_socket
 ):
     """
     Creates the Material Output node and connects shader_socket to it.
-    If requested, it can also create places to hookup the emission/alpha.sheen
+    If requested, it can also create places to hookup the emission/alpha
     in between shader_socket and the Output node too.
 
     :return: a pair containing the sockets you should put emission and alpha
@@ -652,7 +636,6 @@ def make_output_nodes(
     """
     x, y = location
     emission_socket = None
-    sheen_node = None
     alpha_socket = None
 
     # Create an Emission node and add it to the shader.
@@ -680,31 +663,6 @@ def make_output_nodes(
         else:
             x += 380
             y += 125
-
-    # Create an Sheen node add add it to the shader
-    # Note that you can not have Emission & Sheen at the same time
-    if make_sheen_socket:
-        # Sheen
-        node = mh.node_tree.nodes.new("ShaderNodeBsdfSheen")
-        node.location = x + 50, y + 250
-        # Node
-        sheen_node = node
-        # Outputs
-        sheen_output = node.outputs[0]
-
-        # Add
-        node = mh.node_tree.nodes.new('ShaderNodeAddShader')
-        node.location = x + 250, y + 160
-        # Inputs
-        mh.node_tree.links.new(node.inputs[0], sheen_output)
-        mh.node_tree.links.new(node.inputs[1], shader_socket)
-        # Outputs
-        shader_socket = node.outputs[0]
-
-
-        x += 380
-        y += 125
-
 
     # Mix with a Transparent BSDF. Mixing factor is the alpha value.
     if make_alpha_socket:
@@ -745,7 +703,7 @@ def make_output_nodes(
         volume_socket = node.outputs[0]
 
 
-    return emission_socket, alpha_socket, volume_socket, sheen_node
+    return emission_socket, alpha_socket, volume_socket
 
 
 def make_settings_node(mh):
