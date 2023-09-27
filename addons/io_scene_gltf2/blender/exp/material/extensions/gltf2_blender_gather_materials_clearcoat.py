@@ -25,7 +25,7 @@ def export_clearcoat(blender_material, export_settings):
     clearcoat_extension = {}
     clearcoat_roughness_slots = ()
 
-    clearcoat_socket = get_socket(blender_material, 'Coat')
+    clearcoat_socket = get_socket(blender_material, 'Coat Weight')
     clearcoat_roughness_socket = get_socket(blender_material, 'Coat Roughness')
     clearcoat_normal_socket = get_socket(blender_material, 'Coat Normal')
 

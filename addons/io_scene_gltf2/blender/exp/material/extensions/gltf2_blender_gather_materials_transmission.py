@@ -27,7 +27,7 @@ def export_transmission(blender_material, export_settings):
     transmission_extension = {}
     transmission_slots = ()
 
-    transmission_socket = get_socket(blender_material, 'Transmission')
+    transmission_socket = get_socket(blender_material, 'Transmission Weight')
 
     if isinstance(transmission_socket.socket, bpy.types.NodeSocket) and not transmission_socket.socket.is_linked:
         transmission_extension['transmissionFactor'] = transmission_socket.socket.default_value
