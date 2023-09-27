@@ -60,6 +60,9 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     # This value may be overridden later if IOR extension is set on file
     pbr_node.inputs['IOR'].default_value = GLTF_IOR
 
+    pbr_node.inputs['Specular IOR Level'].default_value = 0.0 # Will be overridden by KHR_materials_specular if set
+    pbr_node.inputs['Specular Tint'].default_value = [0.0]*3 + [1.0] # Will be overridden by KHR_materials_specular if set
+
     if mh.pymat.occlusion_texture is not None:
         if mh.settings_node is None:
             mh.settings_node = make_settings_node(mh)
@@ -257,12 +260,6 @@ def calc_locations(mh):
         y -= height
     locs['volume_thickness'] = (x, y)
     if 'thicknessTexture' in volume_ext:
-        y -= height
-    locs['original_specularTexture'] = (x, y)
-    if 'specularTexture' in specular_ext:
-        y -= height
-    locs['original_specularColorTexture'] = (x, y)
-    if 'specularColorTexture' in specular_ext:
         y -= height
 
     # Center things

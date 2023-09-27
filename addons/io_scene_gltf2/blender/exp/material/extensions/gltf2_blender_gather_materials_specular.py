@@ -35,11 +35,16 @@ def export_specular(blender_material, export_settings):
         fac = specular_socket.default_value
         if fac != 1.0:
             specular_extension['specularFactor'] = fac
+        if fac == 0.0:
+            return None, {}
     else:
         # Factor
         fac = gltf2_blender_get.get_factor_from_socket(specular_socket, kind='VALUE')
         if fac is not None and fac != 1.0:
             specular_extension['specularFactor'] = fac
+
+        if fac == 0.0:
+            return None, {}
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(specular_socket):
@@ -54,12 +59,12 @@ def export_specular(blender_material, export_settings):
 
     if specularcolor_non_linked is True:
         color = speculartint_socket.default_value[:3]
-        if color != [1.0, 1.0, 1.0]:
+        if color != (1.0, 1.0, 1.0):
             specular_extension['specularColorFactor'] = color
     else:
         # Factor
         fac = gltf2_blender_get.get_factor_from_socket(speculartint_socket, kind='RGB')
-        if fac is not None and fac != [1.0, 1.0, 1.0]:
+        if fac is not None and fac != (1.0, 1.0, 1.0):
             specular_extension['specularColorFactor'] = fac
 
         # Texture
