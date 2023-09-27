@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 0, 30),
+    "version": (4, 0, 32),
     'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -334,14 +334,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         'Do not export materials, and combine mesh primitive groups, losing material slot information')),
         description='Export materials',
         default='EXPORT'
-    )
-
-    export_original_specular: BoolProperty(
-        name='Export original PBR Specular',
-        description=(
-            'Export original glTF PBR Specular, instead of Blender Principled Shader Specular'
-        ),
-        default=False,
     )
 
     export_colors: BoolProperty(
@@ -697,6 +689,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    # Keep for back compatibility, but no more used
+    export_original_specular: BoolProperty(
+        name='Export original PBR Specular',
+        description=(
+            'Export original glTF PBR Specular, instead of Blender Principled Shader Specular'
+        ),
+        default=False,
+    )
+
     will_save_settings: BoolProperty(
         name='Remember Export Settings',
         description='Store glTF export settings in the Blender project',
@@ -817,8 +818,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_colors'] = self.export_colors
         export_settings['gltf_attributes'] = self.export_attributes
         export_settings['gltf_cameras'] = self.export_cameras
-
-        export_settings['gltf_original_specular'] = self.export_original_specular
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
@@ -1143,29 +1142,6 @@ class GLTF_PT_export_data_material(bpy.types.Panel):
         col = layout.column()
         col.active = operator.export_image_format != "WEBP"
         col.prop(operator, "export_image_webp_fallback")
-
-class GLTF_PT_export_data_original_pbr(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "PBR Extensions"
-    bl_parent_id = "GLTF_PT_export_data_material"
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        layout.prop(operator, 'export_original_specular')
 
 class GLTF_PT_export_data_lighting(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1886,7 +1862,6 @@ classes = (
     GLTF_PT_export_data_scene,
     GLTF_PT_export_data_mesh,
     GLTF_PT_export_data_material,
-    GLTF_PT_export_data_original_pbr,
     GLTF_PT_export_data_shapekeys,
     GLTF_PT_export_data_sk_optimize,
     GLTF_PT_export_data_armature,
