@@ -248,7 +248,7 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
             # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
             if socket.socket.name == 'Metallic':
                 dst_chan = Channel.B
-            elif socket.name == 'Roughness':
+            elif socket.socket.name == 'Roughness':
                 dst_chan = Channel.G
             elif socket.socket.name == 'Occlusion':
                 dst_chan = Channel.R
@@ -262,7 +262,7 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                 dst_chan = Channel.G
             elif socket.socket.name == "Specular IOR Level": # For KHR_material_specular
                 dst_chan = Channel.A
-            elif socket.name == "Sheen Roughness": # For KHR_materials_sheen
+            elif socket.socket.name == "Sheen Roughness": # For KHR_materials_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:
