@@ -48,13 +48,13 @@ def export_specular(blender_material, export_settings):
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(specular_socket):
-            original_specular_texture, uvmap_info, _ = gather_texture_info(
+            specular_texture, uvmap_info, _ = gather_texture_info(
                 specular_socket,
                 (specular_socket,),
                 (),
                 export_settings,
             )
-            specular_extension['specularTexture'] = original_specular_texture
+            specular_extension['specularTexture'] = specular_texture
             uvmap_infos.update({'specularTexture': uvmap_info})
 
     if specularcolor_non_linked is True:
@@ -69,13 +69,13 @@ def export_specular(blender_material, export_settings):
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(speculartint_socket):
-            original_specularcolor_texture, uvmap_info, _ = gather_texture_info(
+            specularcolor_texture, uvmap_info, _ = gather_texture_info(
                 speculartint_socket,
                 (speculartint_socket,),
                 (),
                 export_settings,
             )
-            specular_extension['specularColorTexture'] = original_specularcolor_texture
+            specular_extension['specularColorTexture'] = specularcolor_texture
             uvmap_infos.update({'specularColorTexture': uvmap_info})
 
     return Extension('KHR_materials_specular', specular_extension, False), uvmap_infos
