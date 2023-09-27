@@ -113,7 +113,6 @@ def __gather_base_color_texture(blender_material, export_settings):
     if not inputs:
         return None, {}, {"uv_info": {}, "vc_info": {}}, None
 
-    export_settings['current_texture_transform'] = {}
     tex, uvmap_info, factor = gather_texture_info(inputs[0], inputs, (), export_settings)
     vc_info = get_vertex_color_info(inputs[0], inputs, export_settings)
 

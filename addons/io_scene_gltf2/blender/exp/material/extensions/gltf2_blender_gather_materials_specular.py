@@ -20,8 +20,8 @@ from ...material.gltf2_blender_gather_texture_info import gather_texture_info
 def export_specular(blender_material, export_settings):
     specular_extension = {}
 
-    specular_socket = gltf2_blender_get.get_socket(blender_material, 'Specular IOR Level')
-    speculartint_socket = gltf2_blender_get.get_socket(blender_material, 'Specular Tint')
+    specular_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Specular IOR Level')
+    speculartint_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Specular Tint')
 
     if specular_socket is None or speculartint_socket is None:
         return None, {}
