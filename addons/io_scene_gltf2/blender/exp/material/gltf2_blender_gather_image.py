@@ -204,10 +204,8 @@ def __get_image_data(sockets, default_sockets, export_settings) -> ExportImage:
     results = [get_tex_from_socket(socket) for socket in sockets]
 
     # Check if we need a simple mapping or more complex calculation
-    if any([socket.name == "Specular IOR Level" and socket.node.type == "BSDF_PRINCIPLED" for socket in sockets]):
-        return __get_image_data_specular(sockets, results, export_settings)
-    else:
-        return __get_image_data_mapping(sockets, default_sockets, results, export_settings)
+    # There is currently no complex calculation for any textures
+    return __get_image_data_mapping(sockets, default_sockets, results, export_settings)
 
 def __get_image_data_mapping(sockets, default_sockets, results, export_settings) -> ExportImage:
     """
@@ -250,7 +248,7 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
             # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
             if socket.name == 'Metallic':
                 dst_chan = Channel.B
-            elif socket.name == 'Roughness' and socket.node.type == "BSDF_PRINCIPLED":
+            elif socket.name == 'Roughness':
                 dst_chan = Channel.G
             elif socket.name == 'Occlusion':
                 dst_chan = Channel.R
@@ -262,9 +260,9 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                 dst_chan = Channel.G
             elif socket.name == 'Thickness': # For KHR_materials_volume
                 dst_chan = Channel.G
-            elif socket.name == "Specular": # For original KHR_material_specular
+            elif socket.name == "Specular IOR Level": # For KHR_material_specular
                 dst_chan = Channel.A
-            elif socket.name == "Roughness" and socket.node.type == "BSDF_SHEEN": # For KHR_materials_sheen
+            elif socket.name == "Sheen Roughness": # For KHR_materials_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:
@@ -294,54 +292,6 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                                          "Image '{}' has no size and cannot be exported.".format(
                                              composed_image.fills[k].image))
             del composed_image.fills[k]
-
-    return composed_image
-
-
-def __get_image_data_specular(sockets, results, export_settings) -> ExportImage:
-    """
-    calculating Specular Texture, settings needed data
-    """
-    from .extensions.gltf2_blender_texture_specular import specular_calculation
-    composed_image = ExportImage()
-    composed_image.set_calc(specular_calculation)
-
-    composed_image.store_data("ior", sockets[4].default_value, type="Data")
-
-    results = [get_tex_from_socket(socket) for socket in sockets[:-1]] #Do not retrieve IOR --> No texture allowed
-
-    mapping = {
-        0: "specular",
-        1: "specular_tint",
-        2: "base_color",
-        3: "transmission"
-    }
-
-    for idx, result in enumerate(results):
-        if get_tex_from_socket(sockets[idx]):
-
-            composed_image.store_data(mapping[idx], result.shader_node.image, type="Image")
-
-            # rudimentarily try follow the node tree to find the correct image data.
-            src_chan = None if idx == 2 else Channel.R
-            for elem in result.path:
-                if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateColor):
-                    src_chan = {
-                        'Red': Channel.R,
-                        'Green': Channel.G,
-                        'Blue': Channel.B,
-                    }[elem.from_socket.name]
-                if elem.from_socket.name == 'Alpha':
-                    src_chan = Channel.A
-            # For base_color, keep all channels, as this is a Vec, not scalar
-            if idx != 2:
-                composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
-            else:
-                if src_chan is not None:
-                    composed_image.store_data(mapping[idx] + "_channel", src_chan, type="Data")
-
-        else:
-            composed_image.store_data(mapping[idx], sockets[idx].default_value, type="Data")
 
     return composed_image
 
