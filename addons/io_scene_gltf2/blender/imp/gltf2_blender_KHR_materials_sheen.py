@@ -16,13 +16,14 @@ from ...io.com.gltf2_io import TextureInfo
 from .gltf2_blender_texture import texture
 
 def sheen(  mh,
-            location_sheenColor,
+            location_sheenTint,
             location_sheenRoughness,
-            sheenColor_socket,
+            sheen_socket,
+            sheenTint_socket,
             sheenRoughness_socket
             ):
 
-    x_sheenColor, y_sheenColor = location_sheenColor
+    x_sheenTint, y_sheenTint = location_sheenTint
     x_sheenRoughness, y_sheenRoughness = location_sheenRoughness
 
     try:
@@ -30,7 +31,8 @@ def sheen(  mh,
     except Exception:
         return
 
-    sheenColorFactor = ext.get('sheenColorFactor', [0.0, 0.0, 0.0])
+    sheen_socket.default_value = 1.0
+    sheenTintFactor = ext.get('sheenColorFactor', [0.0, 0.0, 0.0])
     tex_info_color = ext.get('sheenColorTexture')
     if tex_info_color is not None:
         tex_info_color = TextureInfo.from_dict(tex_info_color)
@@ -41,31 +43,31 @@ def sheen(  mh,
         tex_info_roughness = TextureInfo.from_dict(tex_info_roughness)
 
     if tex_info_color is None:
-        sheenColorFactor.extend([1.0])
-        sheenColor_socket.default_value = sheenColorFactor
+        sheenTintFactor.extend([1.0])
+        sheenTint_socket.default_value = sheenTintFactor
     else:
-        # Mix sheenColor factor
-        sheenColorFactor = sheenColorFactor + [1.0]
-        if sheenColorFactor != [1.0, 1.0, 1.0, 1.0]:
+        # Mix sheenTint factor
+        sheenTintFactor = sheenTintFactor + [1.0]
+        if sheenTintFactor != [1.0, 1.0, 1.0, 1.0]:
             node = mh.node_tree.nodes.new('ShaderNodeMix')
-            node.label = 'sheenColor Factor'
+            node.label = 'sheenTint Factor'
             node.data_type = 'RGBA'
-            node.location = x_sheenColor - 140, y_sheenColor
+            node.location = x_sheenTint - 140, y_sheenTint
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(sheenColor_socket, node.outputs[2])
+            mh.node_tree.links.new(sheenTint_socket, node.outputs[2])
             # Inputs
             node.inputs['Factor'].default_value = 1.0
-            sheenColor_socket = node.inputs[6]
-            node.inputs[7].default_value = sheenColorFactor
-            x_sheenColor -= 200
+            sheenTint_socket = node.inputs[6]
+            node.inputs[7].default_value = sheenTintFactor
+            x_sheenTint -= 200
 
         texture(
             mh,
             tex_info=tex_info_color,
             label='SHEEN COLOR',
-            location=(x_sheenColor, y_sheenColor),
-            color_socket=sheenColor_socket
+            location=(x_sheenTint, y_sheenTint),
+            color_socket=sheenTint_socket
             )
 
     if tex_info_roughness is None:

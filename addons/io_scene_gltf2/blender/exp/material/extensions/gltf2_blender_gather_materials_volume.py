@@ -23,7 +23,7 @@ def export_volume(blender_material, export_settings):
 
     # If no transmission --> No volume
     transmission_enabled = False
-    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission')
+    transmission_socket = gltf2_blender_get.get_socket(blender_material, 'Transmission Weight')
     if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
         transmission_enabled = transmission_socket.default_value > 0
     elif gltf2_blender_get.has_image_node_from_socket(transmission_socket):
