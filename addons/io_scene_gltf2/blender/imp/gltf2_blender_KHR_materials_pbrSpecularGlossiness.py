@@ -33,15 +33,14 @@ def pbr_specular_glossiness(mh):
     mh.node_tree.links.new(add_node.inputs[0], glossy_node.outputs[0])
     mh.node_tree.links.new(add_node.inputs[1], diffuse_node.outputs[0])
 
-    emission_socket, alpha_socket, _, _ = make_output_nodes(
+    emission_socket, alpha_socket, _ = make_output_nodes(
         mh,
         location=(370, 250),
         additional_location=None, #No additional location needed for SpecGloss
         shader_socket=add_node.outputs[0],
         make_emission_socket=mh.needs_emissive(),
         make_alpha_socket=not mh.is_opaque(),
-        make_volume_socket=None, # No possible to have KHR_materials_volume with specular/glossiness
-        make_sheen_socket=None # No possible to have KHR_materials_volume with specular/glossiness
+        make_volume_socket=None # No possible to have KHR_materials_volume with specular/glossiness
     )
 
     if emission_socket:
