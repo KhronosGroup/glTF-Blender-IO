@@ -70,7 +70,7 @@ def __gather_camera(vnode, export_settings):
     if vnode.blender_object.type != 'CAMERA':
         return None
 
-    return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
+    return gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
 
 
 def __gather_children(vnode, blender_object, export_settings):

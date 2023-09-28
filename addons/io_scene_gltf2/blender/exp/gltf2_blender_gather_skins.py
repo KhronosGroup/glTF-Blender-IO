@@ -123,8 +123,6 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
 
 def __gather_joints(armature_uuid, export_settings):
 
-    blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
-
     all_armature_children = export_settings['vtree'].nodes[armature_uuid].children
     root_bones_uuid = [c for c in all_armature_children if export_settings['vtree'].nodes[c].blender_type == VExportNode.BONE]
 
