@@ -14,11 +14,8 @@
 
 import bpy
 from mathutils import Vector, Quaternion, Matrix
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from .gltf2_blender_scene import BlenderScene
-from ..com.gltf2_blender_ui import gltf2_KHR_materials_variants_variant, gltf2_KHR_materials_variants_primitive, gltf2_KHR_materials_variants_default_material
-from .gltf2_blender_material import BlenderMaterial
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
-
 
 class BlenderGlTF():
     """Main glTF import class."""
@@ -193,6 +190,8 @@ class BlenderGlTF():
                     # Try to use name from extras.targetNames
                     try:
                         shapekey_name = str(mesh.extras['targetNames'][sk])
+                        if shapekey_name == "": # Issue when shapekey name is empty
+                            shapekey_name = None
                     except Exception:
                         pass
 

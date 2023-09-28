@@ -16,22 +16,19 @@ import math
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
-from . import gltf2_blender_export_keys
-from io_scene_gltf2.blender.com import gltf2_blender_math
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_skins
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_cameras
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_mesh
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_joints
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_lights
-from io_scene_gltf2.blender.exp.gltf2_blender_gather_tree import VExportNode
+from ...io.com.gltf2_io_debug import print_console
+from ...io.com import gltf2_io
+from ...io.com import gltf2_io_extensions
+from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
-from io_scene_gltf2.io.com import gltf2_io
-from io_scene_gltf2.io.com import gltf2_io_extensions
-from io_scene_gltf2.io.exp.gltf2_io_user_extensions import export_user_extensions
-from io_scene_gltf2.io.com.gltf2_io_debug import print_console
-from io_scene_gltf2.blender.exp import gltf2_blender_gather_tree
-
+from ..com import gltf2_blender_math
+from . import gltf2_blender_gather_tree
+from . import gltf2_blender_gather_skins
+from . import gltf2_blender_gather_cameras
+from . import gltf2_blender_gather_mesh
+from . import gltf2_blender_gather_joints
+from . import gltf2_blender_gather_lights
+from .gltf2_blender_gather_tree import VExportNode
 
 def gather_node(vnode, export_settings):
     blender_object = vnode.blender_object
@@ -199,24 +196,24 @@ def __gather_mesh(vnode, blender_object, export_settings):
         return None
 
     # Be sure that object is valid (no NaN for example)
-    blender_object.data.validate()
+    res = blender_object.data.validate()
+    if res is True:
+        print_console("WARNING", "Mesh " + blender_object.data.name + " is not valid, and may be exported wrongly")
 
-    # If not using vertex group, they are irrelevant for caching --> ensure that they do not trigger a cache miss
-    vertex_groups = blender_object.vertex_groups
     modifiers = blender_object.modifiers
-    if len(vertex_groups) == 0:
-        vertex_groups = None
     if len(modifiers) == 0:
         modifiers = None
 
 
-    if export_settings[gltf2_blender_export_keys.APPLY]:
+    if export_settings['gltf_apply']:
         if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
             blender_mesh = blender_object.data
-            skip_filter = False
+            # Keep materials from object, as no modifiers are applied, so no risk that
+            # modifiers changed them
+            materials = tuple(ms.material for ms in blender_object.material_slots)
         else:
             armature_modifiers = {}
-            if export_settings[gltf2_blender_export_keys.SKINS]:
+            if export_settings['gltf_skins']:
                 # temporarily disable Armature modifiers if exporting skins
                 for idx, modifier in enumerate(blender_object.modifiers):
                     if modifier.type == 'ARMATURE':
@@ -228,46 +225,47 @@ def __gather_mesh(vnode, blender_object, export_settings):
             blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
             for prop in blender_object.data.keys():
                 blender_mesh[prop] = blender_object.data[prop]
-            skip_filter = True
 
-            if export_settings[gltf2_blender_export_keys.SKINS]:
+            if export_settings['gltf_skins']:
                 # restore Armature modifiers
                 for idx, show_viewport in armature_modifiers.items():
                     blender_object.modifiers[idx].show_viewport = show_viewport
+
+            # Keep materials from the newly created tmp mesh
+            materials = tuple(mat for mat in blender_mesh.materials)
+            if len(materials) == 1 and materials[0] is None:
+                    materials = tuple(ms.material for ms in blender_object.material_slots)
     else:
         blender_mesh = blender_object.data
-        skip_filter = False
         # If no skin are exported, no need to have vertex group, this will create a cache miss
-        if not export_settings[gltf2_blender_export_keys.SKINS]:
-            vertex_groups = None
+        if not export_settings['gltf_skins']:
             modifiers = None
         else:
             # Check if there is an armature modidier
             if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
-                vertex_groups = None # Not needed if no armature, avoid a cache miss
                 modifiers = None
-
-    materials = tuple(ms.material for ms in blender_object.material_slots)
+        # Keep materials from object, as no modifiers are applied, so no risk that
+        # modifiers changed them
+        materials = tuple(ms.material for ms in blender_object.material_slots)
 
     # retrieve armature
     # Because mesh data will be transforms to skeleton space,
     # we can't instantiate multiple object at different location, skined by same armature
     uuid_for_skined_data = None
-    if export_settings[gltf2_blender_export_keys.SKINS]:
+    if export_settings['gltf_skins']:
         for idx, modifier in enumerate(blender_object.modifiers):
             if modifier.type == 'ARMATURE':
                 uuid_for_skined_data = vnode.uuid
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                    uuid_for_skined_data,
-                                                   vertex_groups,
+                                                   blender_object.vertex_groups,
                                                    modifiers,
-                                                   skip_filter,
                                                    materials,
                                                    None,
                                                    export_settings)
 
-    if export_settings[gltf2_blender_export_keys.APPLY] and modifiers is not None:
+    if export_settings['gltf_apply'] and modifiers is not None:
         blender_mesh_owner.to_mesh_clear()
 
     return result
@@ -279,7 +277,7 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
     try:
         # Convert to a mesh
         try:
-            if export_settings[gltf2_blender_export_keys.APPLY]:
+            if export_settings['gltf_apply']:
                 depsgraph = bpy.context.evaluated_depsgraph_get()
                 blender_mesh_owner = blender_object.evaluated_get(depsgraph)
                 blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
@@ -298,17 +296,14 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
         needs_to_mesh_clear = True
 
-        skip_filter = True
         materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
-        vertex_groups = None
         modifiers = None
         blender_object_for_skined_data = None
 
         result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                        blender_object_for_skined_data,
-                                                       vertex_groups,
+                                                       blender_object.vertex_groups,
                                                        modifiers,
-                                                       skip_filter,
                                                        materials,
                                                        blender_object.data,
                                                        export_settings)
@@ -321,7 +316,14 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
 
 def __gather_name(blender_object, export_settings):
-    return blender_object.name
+
+    class GltfHookName:
+        def __init__(self, name):
+            self.name = name
+    gltf_hook_name = GltfHookName(blender_object.name)
+
+    export_user_extensions('gather_node_name_hook', export_settings, gltf_hook_name, blender_object)
+    return gltf_hook_name.name
 
 def __gather_trans_rot_scale(vnode, export_settings):
     if vnode.parent_uuid is None:
@@ -332,7 +334,7 @@ def __gather_trans_rot_scale(vnode, export_settings):
         if export_settings['vtree'].nodes[vnode.parent_uuid].skin is None:
             trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
         else:
-            # But ... if parent has skin, the parent TRS are not taken into account, so don't get local from parent, but from armature 
+            # But ... if parent has skin, the parent TRS are not taken into account, so don't get local from parent, but from armature
             # It also depens if skined mesh is parented to armature or not
             if export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
                 trans, rot, sca = (export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].armature].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
@@ -380,8 +382,7 @@ def gather_skin(vnode, export_settings):
         return None
 
     # no skin needed when the modifier is linked without having a vertex group
-    vertex_groups = blender_object.vertex_groups
-    if len(vertex_groups) == 0:
+    if len(blender_object.vertex_groups) == 0:
         return None
 
     # check if any vertices in the mesh are part of a vertex group
@@ -409,7 +410,7 @@ def __gather_weights(blender_object, export_settings):
 
 def __convert_swizzle_location(loc, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Vector((loc[0], loc[2], -loc[1]))
     else:
         return Vector((loc[0], loc[1], loc[2]))
@@ -421,7 +422,7 @@ def __convert_swizzle_rotation(rot, export_settings):
 
     'w' is still at first position.
     """
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Quaternion((rot[0], rot[1], rot[3], -rot[2]))
     else:
         return Quaternion((rot[0], rot[1], rot[2], rot[3]))
@@ -429,7 +430,7 @@ def __convert_swizzle_rotation(rot, export_settings):
 
 def __convert_swizzle_scale(scale, export_settings):
     """Convert a scale from Blender coordinate system to glTF coordinate system."""
-    if export_settings[gltf2_blender_export_keys.YUP]:
+    if export_settings['gltf_yup']:
         return Vector((scale[0], scale[2], scale[1]))
     else:
         return Vector((scale[0], scale[1], scale[2]))

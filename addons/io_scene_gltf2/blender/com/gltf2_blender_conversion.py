@@ -14,7 +14,7 @@
 
 from math import sin, cos
 import numpy as np
-from io_scene_gltf2.io.com import gltf2_io_constants
+from ...io.com import gltf2_io_constants
 
 PBR_WATTS_TO_LUMENS = 683
 # Industry convention, biological peak at 555nm, scientific standard as part of SI candela definition.
@@ -57,13 +57,15 @@ def get_target(property):
     return {
         "delta_location": "translation",
         "delta_rotation_euler": "rotation",
+        "delta_rotation_quaternion": "rotation",
+        "delta_scale": "scale",
         "location": "translation",
         "rotation_axis_angle": "rotation",
         "rotation_euler": "rotation",
         "rotation_quaternion": "rotation",
         "scale": "scale",
         "value": "weights"
-    }.get(property)
+    }.get(property, None)
 
 def get_component_type(attribute_component_type):
     return {
@@ -77,6 +79,13 @@ def get_component_type(attribute_component_type):
         "FLOAT": gltf2_io_constants.ComponentType.Float,
         "BOOLEAN": gltf2_io_constants.ComponentType.Float
     }.get(attribute_component_type)
+
+def get_channel_from_target(target):
+    return {
+        "rotation": "rotation_quaternion",
+        "translation": "location",
+        "scale": "scale"
+    }.get(target)
 
 def get_data_type(attribute_component_type):
     return {
@@ -116,3 +125,33 @@ def get_numpy_type(attribute_component_type):
         "FLOAT": np.float32,
         "BOOLEAN": np.float32
     }.get(attribute_component_type)
+
+def get_attribute_type(component_type, data_type):
+    if gltf2_io_constants.DataType.num_elements(data_type) == 1:
+        return {
+            gltf2_io_constants.ComponentType.Float: "FLOAT",
+            gltf2_io_constants.ComponentType.UnsignedByte: "INT" # What is the best for compatibility?
+        }[component_type]
+    elif gltf2_io_constants.DataType.num_elements(data_type) == 2:
+        return {
+            gltf2_io_constants.ComponentType.Float: "FLOAT2"
+        }[component_type]
+    elif gltf2_io_constants.DataType.num_elements(data_type) == 3:
+        return {
+            gltf2_io_constants.ComponentType.Float: "FLOAT_VECTOR"
+        }[component_type]
+    elif gltf2_io_constants.DataType.num_elements(data_type) == 4:
+        return {
+            gltf2_io_constants.ComponentType.Float: "FLOAT_COLOR",
+            gltf2_io_constants.ComponentType.UnsignedShort: "BYTE_COLOR",
+            gltf2_io_constants.ComponentType.UnsignedByte: "BYTE_COLOR" # What is the best for compatibility?
+        }[component_type]
+    else:
+        pass
+
+def get_gltf_interpolation(interpolation):
+        return {
+        "BEZIER": "CUBICSPLINE",
+        "LINEAR": "LINEAR",
+        "CONSTANT": "STEP"
+    }.get(interpolation, "LINEAR")

@@ -14,6 +14,7 @@
 
 from re import M
 import bpy
+from ...io.com.gltf2_io_constants import GLTF_IOR
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
 from .gltf2_blender_texture import texture
@@ -24,7 +25,6 @@ from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_specular import specular
 from .gltf2_blender_KHR_materials_sheen import sheen
-from ...io.com.gltf2_io_constants import GLTF_IOR
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
@@ -60,7 +60,10 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     # This value may be overridden later if IOR extension is set on file
     pbr_node.inputs['IOR'].default_value = GLTF_IOR
 
-    if mh.pymat.occlusion_texture is not None or (mh.pymat.extensions and 'KHR_materials_specular' in mh.pymat.extensions):
+    pbr_node.inputs['Specular IOR Level'].default_value = 0.0 # Will be overridden by KHR_materials_specular if set
+    pbr_node.inputs['Specular Tint'].default_value = [0.0]*3 + [1.0] # Will be overridden by KHR_materials_specular if set
+
+    if mh.pymat.occlusion_texture is not None:
         if mh.settings_node is None:
             mh.settings_node = make_settings_node(mh)
             mh.settings_node.location = additional_location
@@ -75,37 +78,29 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             need_volume_node = True
 
             # We also need glTF Material Output Node, to set thicknessFactor and thicknessTexture
-            mh.settings_node = make_settings_node(mh)
-            mh.settings_node.location = additional_location
-            mh.settings_node.width = 180
-            volume_location = additional_location
-            additional_location = additional_location[0], additional_location[1] - 150
+            if mh.settings_node is None:
+                mh.settings_node = make_settings_node(mh)
+                mh.settings_node.location = additional_location
+                mh.settings_node.width = 180
+                additional_location = additional_location[0], additional_location[1] - 150
 
-    need_velvet_node = False
-    if mh.pymat.extensions and 'KHR_materials_sheen' in mh.pymat.extensions:
-        need_velvet_node = True
-
-    _, _, volume_socket, velvet_node = make_output_nodes(
+    _, _, volume_socket  = make_output_nodes(
         mh,
         location=(250, 260),
         additional_location=additional_location,
         shader_socket=pbr_node.outputs[0],
         make_emission_socket=False, # is managed by Principled shader node
         make_alpha_socket=False, # is managed by Principled shader node
-        make_volume_socket=need_volume_node,
-        make_velvet_socket=need_velvet_node
+        make_volume_socket=need_volume_node
     )
 
-
-    if mh.pymat.extensions and 'KHR_materials_sheen':
-        pass #TOTOEXT     
 
     locs = calc_locations(mh)
 
     emission(
         mh,
         location=locs['emission'],
-        color_socket=pbr_node.inputs['Emission'],
+        color_socket=pbr_node.inputs['Emission Color'],
         strength_socket=pbr_node.inputs['Emission Strength'],
     )
 
@@ -139,25 +134,25 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     clearcoat(
         mh,
         location=locs['clearcoat'],
-        clearcoat_socket=pbr_node.inputs['Clearcoat'],
+        clearcoat_socket=pbr_node.inputs['Coat Weight'],
     )
 
     clearcoat_roughness(
         mh,
         location=locs['clearcoat_roughness'],
-        roughness_socket=pbr_node.inputs['Clearcoat Roughness'],
+        roughness_socket=pbr_node.inputs['Coat Roughness'],
     )
 
     clearcoat_normal(
         mh,
         location=locs['clearcoat_normal'],
-        normal_socket=pbr_node.inputs['Clearcoat Normal'],
+        normal_socket=pbr_node.inputs['Coat Normal'],
     )
 
     transmission(
         mh,
         location=locs['transmission'],
-        transmission_socket=pbr_node.inputs['Transmission']
+        transmission_socket=pbr_node.inputs['Transmission Weight']
     )
 
     if need_volume_node:
@@ -172,22 +167,18 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         mh,
         location_specular=locs['specularTexture'],
         location_specular_tint=locs['specularColorTexture'],
-        specular_socket=pbr_node.inputs['Specular'],
-        specular_tint_socket=pbr_node.inputs['Specular Tint'],
-        original_specular_socket=mh.settings_node.inputs[2] if mh.settings_node else None,
-        original_specularcolor_socket=mh.settings_node.inputs[3] if mh.settings_node else None,
-        location_original_specular=locs['original_specularTexture'],
-        location_original_specularcolor=locs['original_specularColorTexture']
+        specular_socket=pbr_node.inputs['Specular IOR Level'],
+        specular_tint_socket=pbr_node.inputs['Specular Tint']
     )
 
-    if need_velvet_node:
-        sheen(
-            mh,
-            location_sheenColor=locs['sheenColorTexture'],
-            location_sheenRoughness=locs['sheenRoughnessTexture'],
-            sheenColor_socket=velvet_node.inputs[0],
-            sheenRoughness_socket=velvet_node.inputs[1]
-        )
+    sheen(
+        mh,
+        location_sheenTint=locs['sheenColorTexture'],
+        location_sheenRoughness=locs['sheenRoughnessTexture'],
+        sheen_socket=pbr_node.inputs['Sheen Weight'],
+        sheenTint_socket=pbr_node.inputs['Sheen Tint'],
+        sheenRoughness_socket=pbr_node.inputs['Sheen Roughness']
+    )
 
     ior(
         mh,
@@ -228,17 +219,17 @@ def calc_locations(mh):
     except:
         sheen_ext = {}
 
-    locs['sheenColorTexture'] = (x, y)
-    if 'sheenColorTexture' in sheen_ext:
-        y -= height
-    locs['sheenRoughnessTexture'] = (x, y)
-    if 'sheenRoughnessTexture' in sheen_ext:
-        y -= height
     locs['base_color'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
         y -= height
     locs['metallic_roughness'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.metallic_roughness_texture is not None:
+        y -= height
+    locs['transmission'] = (x, y)
+    if 'transmissionTexture' in transmission_ext:
+        y -= height
+    locs['normal'] = (x, y)
+    if mh.pymat.normal_texture is not None:
         y -= height
     locs['specularTexture'] = (x, y)
     if 'specularTexture' in specular_ext:
@@ -246,23 +237,23 @@ def calc_locations(mh):
     locs['specularColorTexture'] = (x, y)
     if 'specularColorTexture' in specular_ext:
         y -= height
+    locs['sheenRoughnessTexture'] = (x, y)
+    if 'sheenRoughnessTexture' in sheen_ext:
+        y -= height
+    locs['sheenColorTexture'] = (x, y)
+    if 'sheenColorTexture' in sheen_ext:
+        y -= height
     locs['clearcoat'] = (x, y)
     if 'clearcoatTexture' in clearcoat_ext:
         y -= height
     locs['clearcoat_roughness'] = (x, y)
     if 'clearcoatRoughnessTexture' in clearcoat_ext:
         y -= height
-    locs['transmission'] = (x, y)
-    if 'transmissionTexture' in transmission_ext:
+    locs['clearcoat_normal'] = (x, y)
+    if 'clearcoatNormalTexture' in clearcoat_ext:
         y -= height
     locs['emission'] = (x, y)
     if mh.pymat.emissive_texture is not None:
-        y -= height
-    locs['normal'] = (x, y)
-    if mh.pymat.normal_texture is not None:
-        y -= height
-    locs['clearcoat_normal'] = (x, y)
-    if 'clearcoatNormalTexture' in clearcoat_ext:
         y -= height
     locs['occlusion'] = (x, y)
     if mh.pymat.occlusion_texture is not None:
@@ -270,19 +261,6 @@ def calc_locations(mh):
     locs['volume_thickness'] = (x, y)
     if 'thicknessTexture' in volume_ext:
         y -= height
-    locs['original_specularTexture'] = (x, y)
-    if 'specularTexture' in specular_ext:
-        y -= height
-    locs['original_specularColorTexture'] = (x, y)
-    if 'specularColorTexture' in specular_ext:
-        y -= height
-    locs['original_sheenColorTexture'] = (x, y)
-    if 'sheenColorTexture' in sheen_ext:
-        y -= height
-    locs['original_sheenRoughnessTexture'] = (x, y)
-    if 'sheenRoughnessTexture' in sheen_ext:
-        y -= height
-
 
     # Center things
     total_height = -y
@@ -315,6 +293,11 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
         return
 
     if mh.pymat.emissive_texture is None:
+        if emissive_factor == [0, 0, 0]:
+            # Keep as close as possible to the default Blender value when there is no emission
+            color_socket.default_value = [1,1,1,1]
+            strength_socket.default_value = 0
+            return
         color_socket.default_value = emissive_factor + [1]
         strength_socket.default_value = strength
         return
@@ -327,16 +310,17 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     # Otherwise, use a multiply node for it
     else:
         if emissive_factor != [1, 1, 1]:
-            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node = mh.node_tree.nodes.new('ShaderNodeMix')
             node.label = 'Emissive Factor'
+            node.data_type = 'RGBA'
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(color_socket, node.outputs[0])
+            mh.node_tree.links.new(color_socket, node.outputs[2])
             # Inputs
-            node.inputs['Fac'].default_value = 1.0
-            color_socket = node.inputs['Color1']
-            node.inputs['Color2'].default_value = emissive_factor + [1]
+            node.inputs['Factor'].default_value = 1.0
+            color_socket = node.inputs[6]
+            node.inputs[7].default_value = emissive_factor + [1]
 
             x -= 200
 
@@ -392,16 +376,17 @@ def base_color(
     needs_alpha_factor = base_color_factor[3] != 1.0 and alpha_socket is not None
     if needs_color_factor or needs_alpha_factor:
         if needs_color_factor:
-            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node = mh.node_tree.nodes.new('ShaderNodeMix')
             node.label = 'Color Factor'
+            node.data_type = "RGBA"
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(color_socket, node.outputs[0])
+            mh.node_tree.links.new(color_socket, node.outputs[2])
             # Inputs
-            node.inputs['Fac'].default_value = 1.0
-            color_socket = node.inputs['Color1']
-            node.inputs['Color2'].default_value = base_color_factor[:3] + [1]
+            node.inputs['Factor'].default_value = 1.0
+            color_socket = node.inputs[6]
+            node.inputs[7].default_value = base_color_factor[:3] + [1]
 
         if needs_alpha_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
@@ -424,16 +409,17 @@ def base_color(
 
     # Mix texture and vertex color together
     if base_color_texture is not None and mh.vertex_color:
-        node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+        node = mh.node_tree.nodes.new('ShaderNodeMix')
         node.label = 'Mix Vertex Color'
+        node.data_type = 'RGBA'
         node.location = x - 140, y
         node.blend_type = 'MULTIPLY'
         # Outputs
-        mh.node_tree.links.new(color_socket, node.outputs[0])
+        mh.node_tree.links.new(color_socket, node.outputs[2])
         # Inputs
-        node.inputs['Fac'].default_value = 1.0
-        texture_color_socket = node.inputs['Color1']
-        vcolor_color_socket = node.inputs['Color2']
+        node.inputs['Factor'].default_value = 1.0
+        texture_color_socket = node.inputs[6]
+        vcolor_color_socket = node.inputs[7]
 
         if alpha_socket is not None:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
@@ -586,16 +572,17 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
     if strength is None: strength = 1.0
     if strength != 1.0:
         # Mix with white
-        node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+        node = mh.node_tree.nodes.new('ShaderNodeMix')
         node.label = 'Occlusion Strength'
+        node.data_type = 'RGBA'
         node.location = x - 140, y
         node.blend_type = 'MIX'
         # Outputs
         mh.node_tree.links.new(occlusion_socket, node.outputs[0])
         # Inputs
-        node.inputs['Fac'].default_value = strength
-        node.inputs['Color1'].default_value = [1, 1, 1, 1]
-        occlusion_socket = node.inputs['Color2']
+        node.inputs['Factor'].default_value = strength
+        node.inputs[6].default_value = [1, 1, 1, 1]
+        occlusion_socket = node.inputs[7]
 
         x -= 200
 
@@ -621,7 +608,7 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
 
 # => [Add Emission] => [Mix Alpha] => [Material Output] if needed, only for SpecGlossiness
 # => [Volume] => [Add Shader] => [Material Output] if needed
-# => [Velvet] => [Add Shader] => [Material Output] if needed
+# => [Sheen] => [Add Shader] => [Material Output] if needed
 def make_output_nodes(
     mh: MaterialHelper,
     location,
@@ -629,12 +616,11 @@ def make_output_nodes(
     shader_socket,
     make_emission_socket,
     make_alpha_socket,
-    make_volume_socket,
-    make_velvet_socket, # For sheen
+    make_volume_socket
 ):
     """
     Creates the Material Output node and connects shader_socket to it.
-    If requested, it can also create places to hookup the emission/alpha.sheen
+    If requested, it can also create places to hookup the emission/alpha
     in between shader_socket and the Output node too.
 
     :return: a pair containing the sockets you should put emission and alpha
@@ -642,7 +628,6 @@ def make_output_nodes(
     """
     x, y = location
     emission_socket = None
-    velvet_node = None
     alpha_socket = None
 
     # Create an Emission node and add it to the shader.
@@ -670,31 +655,6 @@ def make_output_nodes(
         else:
             x += 380
             y += 125
-
-    # Create an Velvet node add add it to the shader
-    # Note that you can not have Emission & Velvet at the same time
-    if make_velvet_socket:
-        # Velvet
-        node = mh.node_tree.nodes.new("ShaderNodeBsdfVelvet")
-        node.location = x + 50, y + 250
-        # Node
-        velvet_node = node
-        # Outputs
-        velvet_output = node.outputs[0]
-
-        # Add
-        node = mh.node_tree.nodes.new('ShaderNodeAddShader')
-        node.location = x + 250, y + 160
-        # Inputs
-        mh.node_tree.links.new(node.inputs[0], velvet_output)
-        mh.node_tree.links.new(node.inputs[1], shader_socket)
-        # Outputs
-        shader_socket = node.outputs[0]
-
-
-        x += 380
-        y += 125
-
 
     # Mix with a Transparent BSDF. Mixing factor is the alpha value.
     if make_alpha_socket:
@@ -735,7 +695,7 @@ def make_output_nodes(
         volume_socket = node.outputs[0]
 
 
-    return emission_socket, alpha_socket, volume_socket, velvet_node
+    return emission_socket, alpha_socket, volume_socket
 
 
 def make_settings_node(mh):

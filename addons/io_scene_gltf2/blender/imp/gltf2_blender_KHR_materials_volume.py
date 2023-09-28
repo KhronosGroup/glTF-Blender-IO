@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ...io.com.gltf2_io import TextureInfo, MaterialNormalTextureInfoClass
+from ...io.com.gltf2_io import TextureInfo
 from .gltf2_blender_texture import texture
 
 def volume(mh, location, volume_socket, thickness_socket):

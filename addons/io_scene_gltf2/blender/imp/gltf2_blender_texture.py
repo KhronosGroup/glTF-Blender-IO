@@ -13,12 +13,11 @@
 # limitations under the License.
 
 import bpy
-
-from .gltf2_blender_image import BlenderImage
+from ...io.com.gltf2_io import Sampler
+from ...io.com.gltf2_io_constants import TextureFilter, TextureWrap
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
-from io_scene_gltf2.io.com.gltf2_io import Sampler
-from io_scene_gltf2.io.com.gltf2_io_constants import TextureFilter, TextureWrap
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
+from .gltf2_blender_image import BlenderImage
 
 def texture(
     mh,
@@ -47,11 +46,31 @@ def texture(
     tex_img = mh.node_tree.nodes.new('ShaderNodeTexImage')
     tex_img.location = x - 240, y
     tex_img.label = label
+
     # Get image
     if forced_image is None:
-        if pytexture.source is not None:
-            BlenderImage.create(mh.gltf, pytexture.source)
-            pyimg = mh.gltf.data.images[pytexture.source]
+
+        if mh.gltf.import_settings['import_webp_texture'] is True:
+            # Get the webp image if there is one
+            if pytexture.extensions \
+                    and 'EXT_texture_webp' in pytexture.extensions \
+                    and pytexture.extensions['EXT_texture_webp']['source'] is not None:
+                source = pytexture.extensions['EXT_texture_webp']['source']
+            elif pytexture.source is not None:
+                source = pytexture.source
+        else:
+            source = pytexture.source
+
+        if mh.gltf.import_settings['import_webp_texture'] is False and source is None:
+            # In case webp is not used as a fallback, use this as main texture
+            if pytexture.extensions \
+                    and 'EXT_texture_webp' in pytexture.extensions \
+                    and pytexture.extensions['EXT_texture_webp']['source'] is not None:
+                source = pytexture.extensions['EXT_texture_webp']['source']
+
+        if source is not None:
+            BlenderImage.create(mh.gltf, source)
+            pyimg = mh.gltf.data.images[source]
             blender_image_name = pyimg.blender_image_name
             if blender_image_name:
                 tex_img.image = bpy.data.images[blender_image_name]
@@ -80,11 +99,13 @@ def texture(
         wrap_s = TextureWrap.Repeat
     if wrap_t is None:
         wrap_t = TextureWrap.Repeat
-    # If wrapping is REPEATxREPEAT or CLAMPxCLAMP, just set tex_img.extension
-    if (wrap_s, wrap_t) == (TextureWrap.Repeat, TextureWrap.Repeat):
+    # If wrapping is the same in both directions, just set tex_img.extension
+    if wrap_s == wrap_t == TextureWrap.Repeat:
         tex_img.extension = 'REPEAT'
-    elif (wrap_s, wrap_t) == (TextureWrap.ClampToEdge, TextureWrap.ClampToEdge):
+    elif wrap_s == wrap_t == TextureWrap.ClampToEdge:
         tex_img.extension = 'EXTEND'
+    elif wrap_s == wrap_t == TextureWrap.MirroredRepeat:
+        tex_img.extension = 'MIRROR'
     else:
         # Otherwise separate the UV components and use math nodes to compute
         # the wrapped UV coordinates

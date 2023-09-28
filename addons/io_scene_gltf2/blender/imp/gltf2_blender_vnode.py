@@ -15,7 +15,6 @@
 import bpy
 from mathutils import Vector, Quaternion, Matrix
 from ...io.imp.gltf2_io_binary import BinaryData
-
 from ..com.gltf2_blender_math import scale_rot_swap_matrix, nearby_signed_perm_matrix
 
 def compute_vnodes(gltf):
@@ -42,6 +41,7 @@ class VNode:
     Object = 0
     Bone = 1
     DummyRoot = 2
+    Inst = 3
 
     def __init__(self):
         self.name = None
@@ -118,7 +118,11 @@ def init_vnodes(gltf):
         vnode.children = list(pynode.children or [])
         vnode.base_trs = get_node_trs(gltf, pynode)
         if pynode.mesh is not None:
-            vnode.mesh_node_idx = i
+            # Check if there is gpu_instancing extension
+            if pynode.extensions and "EXT_mesh_gpu_instancing" in pynode.extensions.keys():
+                manage_gpu_instancing(gltf, vnode, i, pynode.extensions['EXT_mesh_gpu_instancing'], pynode.mesh)
+            else:
+                vnode.mesh_node_idx = i
         if pynode.camera is not None:
             vnode.camera_node_idx = i
         if 'KHR_lights_punctual' in (pynode.extensions or {}):
@@ -137,6 +141,61 @@ def init_vnodes(gltf):
     gltf.vnodes['root'].children = roots
     for root in roots:
         gltf.vnodes[root].parent = 'root'
+
+def manage_gpu_instancing(gltf, vnode, i, ext, mesh_id):
+
+
+    trans_list = BinaryData.get_data_from_accessor(gltf, ext['attributes'].get('TRANSLATION', None)) \
+            if ext['attributes'].get('TRANSLATION', None) is not None else None
+
+    rot_list = BinaryData.get_data_from_accessor(gltf, ext['attributes'].get('ROTATION', None)) \
+            if ext['attributes'].get('ROTATION', None) is not None else None
+
+    scale_list = BinaryData.get_data_from_accessor(gltf, ext['attributes'].get('SCALE', None)) \
+            if ext['attributes'].get('SCALE', None) is not None else None
+
+    # Retrieve the first available attribute to get the number of children
+    val = next((elem for elem in [
+            trans_list,
+            rot_list,
+            scale_list,
+        ] if elem is not None), None)
+
+    # Wwe can't have only custom properties
+    if not val:
+        return
+
+    length = len(val)
+
+    if trans_list is None:
+        trans_list = [None] * length
+    if rot_list is None:
+        rot_list = [None] * length
+    if scale_list is None:
+        scale_list = [None] * length
+
+    assert len(trans_list) == len(rot_list) == len(scale_list)
+
+    for inst in range(length):
+        inst_id = '%d' % i + "." + '%d' % inst
+        inst_vnode = VNode()
+        inst_vnode.type = VNode.Inst
+        gltf.vnodes[inst_id] = inst_vnode
+        inst_vnode.name = None
+        inst_vnode.default_name = 'Node_' + inst_id
+        inst_vnode.children = []
+        inst_vnode.base_trs = get_inst_trs(gltf, trans_list[inst], rot_list[inst], scale_list[inst])
+        inst_vnode.mesh_idx = mesh_id
+
+        vnode.children.append(inst_id)
+
+
+def get_inst_trs(gltf, trans, rot, scale):
+    t = gltf.loc_gltf_to_blender(trans or [0, 0, 0])
+    r = gltf.quaternion_gltf_to_blender(rot or [0, 0, 0, 1])
+    s = gltf.scale_gltf_to_blender(scale or [1, 1, 1])
+    return t, r, s
+
 
 def get_node_trs(gltf, pynode):
     if pynode.matrix is not None:

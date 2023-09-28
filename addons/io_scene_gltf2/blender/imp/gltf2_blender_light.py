@@ -15,10 +15,9 @@
 import bpy
 from math import pi
 
-from ..com.gltf2_blender_extras import set_extras
-from io_scene_gltf2.io.imp.gltf2_io_user_extensions import import_user_extensions
+from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ..com.gltf2_blender_conversion import PBR_WATTS_TO_LUMENS
-
+from ..com.gltf2_blender_extras import set_extras
 
 class BlenderLight():
     """Blender Light."""
@@ -58,27 +57,27 @@ class BlenderLight():
         sun = bpy.data.lights.new(name=pylight['name'], type="SUN")
 
         if 'intensity' in pylight.keys():
-            if gltf.import_settings['convert_lighting_mode'] == 'SPEC':
+            if gltf.import_settings['export_import_convert_lighting_mode'] == 'SPEC':
                 sun.energy = pylight['intensity'] / PBR_WATTS_TO_LUMENS
-            elif gltf.import_settings['convert_lighting_mode'] == 'COMPAT':
+            elif gltf.import_settings['export_import_convert_lighting_mode'] == 'COMPAT':
                 sun.energy = pylight['intensity']
-            elif gltf.import_settings['convert_lighting_mode'] == 'RAW':
+            elif gltf.import_settings['export_import_convert_lighting_mode'] == 'RAW':
                 sun.energy = pylight['intensity']
             else:
-                raise ValueError(gltf.import_settings['convert_lighting_mode'])
+                raise ValueError(gltf.import_settings['export_import_convert_lighting_mode'])
 
         return sun
 
     @staticmethod
     def _calc_energy_pointlike(gltf, pylight):
-        if gltf.import_settings['convert_lighting_mode'] == 'SPEC':
+        if gltf.import_settings['export_import_convert_lighting_mode'] == 'SPEC':
             return pylight['intensity'] / PBR_WATTS_TO_LUMENS * 4 * pi
-        elif gltf.import_settings['convert_lighting_mode'] == 'COMPAT':
+        elif gltf.import_settings['export_import_convert_lighting_mode'] == 'COMPAT':
             return pylight['intensity'] * 4 * pi
-        elif gltf.import_settings['convert_lighting_mode'] == 'RAW':
+        elif gltf.import_settings['export_import_convert_lighting_mode'] == 'RAW':
             return pylight['intensity']
         else:
-            raise ValueError(gltf.import_settings['convert_lighting_mode'])
+            raise ValueError(gltf.import_settings['export_import_convert_lighting_mode'])
 
     @staticmethod
     def create_point(gltf, light_id):

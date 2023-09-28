@@ -33,15 +33,14 @@ def pbr_specular_glossiness(mh):
     mh.node_tree.links.new(add_node.inputs[0], glossy_node.outputs[0])
     mh.node_tree.links.new(add_node.inputs[1], diffuse_node.outputs[0])
 
-    emission_socket, alpha_socket, _, _ = make_output_nodes(
+    emission_socket, alpha_socket, _ = make_output_nodes(
         mh,
         location=(370, 250),
         additional_location=None, #No additional location needed for SpecGloss
         shader_socket=add_node.outputs[0],
         make_emission_socket=mh.needs_emissive(),
         make_alpha_socket=not mh.is_opaque(),
-        make_volume_socket=None, # No possible to have KHR_materials_volume with specular/glossiness
-        make_velvet_socket=None # No possible to have KHR_materials_volume with specular/glossiness
+        make_volume_socket=None # No possible to have KHR_materials_volume with specular/glossiness
     )
 
     if emission_socket:
@@ -84,12 +83,13 @@ def pbr_specular_glossiness(mh):
     )
 
     if mh.pymat.occlusion_texture is not None:
-        node = make_settings_node(mh)
-        node.location = (610, -1060)
+        if mh.settings_node is None:
+            mh.settings_node = make_settings_node(mh)
+            mh.settings_node.location = (610, -1060)
         occlusion(
             mh,
             location=(510, -970),
-            occlusion_socket=node.inputs['Occlusion'],
+            occlusion_socket=mh.settings_node.inputs['Occlusion'],
         )
 
 
@@ -128,16 +128,17 @@ def specular_glossiness(mh, location, specular_socket, roughness_socket):
     # Mix in spec/gloss factor
     if spec_factor != [1, 1, 1] or gloss_factor != 1:
         if spec_factor != [1, 1, 1]:
-            node = mh.node_tree.nodes.new('ShaderNodeMixRGB')
+            node = mh.node_tree.nodes.new('ShaderNodeMix')
+            node.data_type = 'RGBA'
             node.label = 'Specular Factor'
             node.location = x - 140, y
             node.blend_type = 'MULTIPLY'
             # Outputs
-            mh.node_tree.links.new(specular_socket, node.outputs[0])
+            mh.node_tree.links.new(specular_socket, node.outputs[2])
             # Inputs
-            node.inputs['Fac'].default_value = 1.0
-            specular_socket = node.inputs['Color1']
-            node.inputs['Color2'].default_value = spec_factor + [1]
+            node.inputs['Factor'].default_value = 1.0
+            specular_socket = node.inputs[6]
+            node.inputs[7].default_value = spec_factor + [1]
 
         if gloss_factor != 1:
             node = mh.node_tree.nodes.new('ShaderNodeMath')

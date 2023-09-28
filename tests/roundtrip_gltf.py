@@ -30,6 +30,8 @@ try:
 
     bpy.ops.import_scene.gltf(filepath=argv[0])
 
+    bpy.context.scene.frame_start = 0
+
     extension = '.gltf'
     export_format = 'GLTF_SEPARATE'
     if '--glb' in argv:
@@ -45,8 +47,10 @@ try:
         bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
     if '--no-sample-anim' in argv:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_force_sampling=False)
-    elif '--use-original-specular' in argv:
-        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_original_specular=True)
+    elif '--export-attributes' in argv:
+        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_attributes=True)
+    elif '--export-gpu_instances' in argv:
+        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_gpu_instances=True)
     else:
         bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]))
 except Exception as err:

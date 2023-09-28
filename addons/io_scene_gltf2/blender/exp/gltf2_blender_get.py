@@ -14,11 +14,10 @@
 
 import bpy
 from mathutils import Vector, Matrix
-
-from ..com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name
 from ...blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
-from io_scene_gltf2.io.com import gltf2_io_debug
-from io_scene_gltf2.blender.exp import gltf2_blender_search_node_tree
+from ...io.com import gltf2_io_debug
+from ..com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name
+from .material import gltf2_blender_search_node_tree
 
 
 def get_animation_target(action_group: bpy.types.ActionGroup):
@@ -76,16 +75,12 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
             emissive_socket = get_node_socket(blender_material, bpy.types.ShaderNodeEmission, "Color")
             if emissive_socket:
                 return emissive_socket
-            # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission socket.
-            name = "Emission"
+            # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission Color socket.
+            name = "Emission Color"
             type = bpy.types.ShaderNodeBsdfPrincipled
         elif name == "Background":
             type = bpy.types.ShaderNodeBackground
             name = "Color"
-        elif name == "sheenColor":
-            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfVelvet, "Color")
-        elif name == "sheenRoughness":
-            return get_node_socket(blender_material, bpy.types.ShaderNodeBsdfVelvet, "Sigma")
         else:
             if volume is False:
                 type = bpy.types.ShaderNodeBsdfPrincipled
@@ -107,8 +102,10 @@ def get_socket_old(blender_material: bpy.types.Material, name: str):
     """
     gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
     if blender_material.node_tree and blender_material.use_nodes:
+        # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
         nodes = [n for n in blender_material.node_tree.nodes if \
             isinstance(n, bpy.types.ShaderNodeGroup) and \
+            n.node_tree is not None and
             (n.node_tree.name.startswith('glTF Metallic Roughness') or n.node_tree.name.lower() in gltf_node_group_names)]
         inputs = sum([[input for input in node.inputs if input.name == name] for node in nodes], [])
         if inputs:
@@ -253,10 +250,10 @@ def get_factor_from_socket(socket, kind):
     if node is not None:
         x1, x2 = None, None
         if kind == 'RGB':
-            if node.type == 'MIX_RGB' and node.blend_type == 'MULTIPLY':
+            if node.type == 'MIX' and node.data_type == "RGBA" and node.blend_type == 'MULTIPLY':
                 # TODO: handle factor in inputs[0]?
-                x1 = get_const_from_socket(node.inputs[1], kind)
-                x2 = get_const_from_socket(node.inputs[2], kind)
+                x1 = get_const_from_socket(node.inputs[6], kind)
+                x2 = get_const_from_socket(node.inputs[7], kind)
         if kind == 'VALUE':
             if node.type == 'MATH' and node.operation == 'MULTIPLY':
                 x1 = get_const_from_socket(node.inputs[0], kind)
@@ -317,11 +314,19 @@ def previous_node(socket):
         return prev_socket.node
     return None
 
-#TODOExt is this the same as __get_tex_from_socket from gather_image ?
-def has_image_node_from_socket(socket):
+def get_tex_from_socket(socket):
     result = gltf2_blender_search_node_tree.from_socket(
         socket,
         gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeTexImage))
     if not result:
-        return False
-    return True
+        return None
+    if result[0].shader_node.image is None:
+        return None
+    return result[0]
+
+def has_image_node_from_socket(socket):
+    return get_tex_from_socket(socket) is not None
+
+def image_tex_is_valid_from_socket(socket):
+    res = get_tex_from_socket(socket)
+    return res is not None and res.shader_node.image is not None and res.shader_node.image.channels != 0

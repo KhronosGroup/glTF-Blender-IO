@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import re
 
 
@@ -48,6 +49,8 @@ class ImageData:
     def file_extension(self):
         if self._mime_type == "image/jpeg":
             return ".jpg"
+        elif self._mime_type == "image/webp":
+            return ".webp"
         return ".png"
 
     @property
