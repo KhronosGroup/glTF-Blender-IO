@@ -136,7 +136,7 @@ class VExportTree:
         # add to parent if needed
         if parent_uuid is not None:
             self.add_children(parent_uuid, node.uuid)
-            if self.nodes[parent_uuid].blender_type == VExportNode.COLLECTION:
+            if self.nodes[parent_uuid].blender_type == VExportNode.INST_COLLECTION:
                 self.nodes[parent_uuid].children_type[node.uuid] = VExportNode.CHILDREN_IS_IN_COLLECTION if is_children_in_collection is True else VExportNode.CHILDREN_REAL
         else:
             self.roots.append(node.uuid)

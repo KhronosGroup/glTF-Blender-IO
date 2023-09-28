@@ -34,6 +34,9 @@ def gather_tracks_animations(export_settings):
         if vtree.nodes[obj_uuid].node is None:
             continue
 
+        if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
+            continue
+
         animations_, merged_tracks = gather_track_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
 

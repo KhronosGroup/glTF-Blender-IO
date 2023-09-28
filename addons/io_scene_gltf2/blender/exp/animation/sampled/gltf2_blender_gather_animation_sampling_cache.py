@@ -59,7 +59,10 @@ def get_cache_data(path: str,
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
             else:
                 if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type not in [VExportNode.BONE]:
-                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                    if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type != VExportNode.COLLECTION:
+                        parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                    else:
+                        parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].matrix_world
                 else:
                     # Object animated is parented to a bone
                     blender_bone = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].blender_bone
@@ -70,30 +73,40 @@ def get_cache_data(path: str,
                     parent_mat = armature_object.matrix_world @ blender_bone.matrix @ axis_basis_change
 
             #For object inside collection (at root), matrix world is already expressed regarding collection parent
-            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.COLLECTION:
+            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.INST_COLLECTION:
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
 
-            mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
+            if export_settings['vtree'].nodes[obj_uuid].blender_type != VExportNode.COLLECTION:
+                mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
+            else:
+                mat = parent_mat.inverted_safe()
 
             if obj_uuid not in data.keys():
                 data[obj_uuid] = {}
 
-            if blender_obj.animation_data and blender_obj.animation_data.action \
-                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-                if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
-                    data[obj_uuid][blender_obj.animation_data.action.name] = {}
-                    data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
-                    data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None] = {}
-                data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None][frame] = mat
-            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-                if action_name not in data[obj_uuid].keys():
-                    data[obj_uuid][action_name] = {}
-                    data[obj_uuid][action_name]['matrix'] = {}
-                    data[obj_uuid][action_name]['matrix'][None] = {}
-                data[obj_uuid][action_name]['matrix'][None][frame] = mat
+            if export_settings['vtree'].nodes[obj_uuid].blender_type != VExportNode.COLLECTION:
+                if blender_obj.animation_data and blender_obj.animation_data.action \
+                        and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                    if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
+                        data[obj_uuid][blender_obj.animation_data.action.name] = {}
+                        data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
+                        data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None] = {}
+                    data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None][frame] = mat
+                elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                    if action_name not in data[obj_uuid].keys():
+                        data[obj_uuid][action_name] = {}
+                        data[obj_uuid][action_name]['matrix'] = {}
+                        data[obj_uuid][action_name]['matrix'][None] = {}
+                    data[obj_uuid][action_name]['matrix'][None][frame] = mat
+                else:
+                    # case of baking object.
+                    # There is no animation, so use uuid of object as key
+                    if obj_uuid not in data[obj_uuid].keys():
+                        data[obj_uuid][obj_uuid] = {}
+                        data[obj_uuid][obj_uuid]['matrix'] = {}
+                        data[obj_uuid][obj_uuid]['matrix'][None] = {}
+                    data[obj_uuid][obj_uuid]['matrix'][None][frame] = mat
             else:
-                # case of baking object.
-                # There is no animation, so use uuid of object as key
                 if obj_uuid not in data[obj_uuid].keys():
                     data[obj_uuid][obj_uuid] = {}
                     data[obj_uuid][obj_uuid]['matrix'] = {}
