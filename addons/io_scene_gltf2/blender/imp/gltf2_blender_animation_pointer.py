@@ -412,7 +412,7 @@ class BlenderPointerAnim():
             pointer_tab[4] == "KHR_materials_transmission" and \
             pointer_tab[5] == "transmissionFactor":
 
-            transmission_socket = get_socket(asset['blender_nodetree'], True, 'Transmission')
+            transmission_socket = get_socket(asset['blender_nodetree'], True, 'Transmission Weight')
             if transmission_socket.is_linked:
                 mix_node = transmission_socket.links[0].from_node
                 if mix_node.type == "MATH":
