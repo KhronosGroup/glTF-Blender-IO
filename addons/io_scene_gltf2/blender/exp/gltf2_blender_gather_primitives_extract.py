@@ -715,7 +715,8 @@ class PrimitiveCreator:
             # Must calculate the type of the field : FLOAT_COLOR or BYTE_COLOR
             additional_fields.append(('COLOR_0' + str(i), gltf2_blender_conversion.get_numpy_type('FLOAT_COLOR' if max_index == 3 else 'BYTE_COLOR')))
 
-        #TODOVC : remove corresponding custum attribute if we export them ?
+        # Keep the existing custom attribute
+        # Data will be exported twice, one for COLOR_O, one for the custom attribute
         new_dt = np.dtype(self.dots.dtype.descr + additional_fields)
         dots = np.zeros(self.dots.shape, dtype=new_dt)
         for f in self.dots.dtype.names:
