@@ -55,9 +55,9 @@ class BlenderCamera():
                                     pointer_tab[3] == "orthographic" and \
                                     pointer_tab[4] in ["xmag", "ymag"]:
                                 # Store multiple channel data, as we will need all channels to convert to blender data when animated
-                                if not hasattr(pycamera, "multiple_channels"):
-                                    pycamera.multiple_channels = {}
-                                pycamera.multiple_channels[pointer_tab[4]] = (anim_idx, channel_idx)
+                                if not hasattr(pycamera, "multiple_channels_mag"):
+                                    pycamera.multiple_channels_mag = {}
+                                pycamera.multiple_channels_mag[pointer_tab[4]] = (anim_idx, channel_idx)
 
         else:
             cam.angle_y = pycamera.perspective.yfov

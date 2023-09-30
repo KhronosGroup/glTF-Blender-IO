@@ -94,12 +94,12 @@ class BlenderPointerAnim():
             pointer_tab[4] in ["ymag", "xmag"]:
 
 
-            if len(asset.multiple_channels) != 0:
+            if len(asset.multiple_channels_mag) != 0:
 
                 # We need to calculate the value, based on ymag and xmag
-                if "xmag" in asset.multiple_channels.keys():
-                    xmag_animation = gltf.data.animations[asset.multiple_channels['xmag'][0]]
-                    xmag_channel = xmag_animation.channels[asset.multiple_channels['xmag'][1]]
+                if "xmag" in asset.multiple_channels_mag.keys():
+                    xmag_animation = gltf.data.animations[asset.multiple_channels_mag['xmag'][0]]
+                    xmag_channel = xmag_animation.channels[asset.multiple_channels_mag['xmag'][1]]
                     xmag_keys = BinaryData.get_data_from_accessor(gltf, xmag_animation.samplers[xmag_channel.sampler].input)
                     xmag_values = BinaryData.get_data_from_accessor(gltf, xmag_animation.samplers[xmag_channel.sampler].output)
                 else:
@@ -107,9 +107,9 @@ class BlenderPointerAnim():
                     xmag_values = [asset.orthographic.xmag] * len(keys)
 
 
-                if "ymag" in asset.multiple_channels.keys():
-                    ymag_animation = gltf.data.animations[asset.multiple_channels['ymag'][0]]
-                    ymag_channel = ymag_animation.channels[asset.multiple_channels['ymag'][1]]
+                if "ymag" in asset.multiple_channels_mag.keys():
+                    ymag_animation = gltf.data.animations[asset.multiple_channels_mag['ymag'][0]]
+                    ymag_channel = ymag_animation.channels[asset.multiple_channels_mag['ymag'][1]]
                     ymag_keys = BinaryData.get_data_from_accessor(gltf, ymag_animation.samplers[ymag_channel.sampler].input)
                     ymag_values = BinaryData.get_data_from_accessor(gltf, ymag_animation.samplers[ymag_channel.sampler].output)
                 else:
@@ -127,7 +127,7 @@ class BlenderPointerAnim():
                         values[idx] = max(xmag_values[idx], ymag_values[idx]) * 2
 
                 # Delete values, as we don't need to add keyframes again for ortho_scale (xmag + ymag channels => only 1 ortho_scale channel in blender)
-                asset.multiple_channels = {}
+                asset.multiple_channels_mag = {}
 
         ### Light
         if len(pointer_tab) == 6 and pointer_tab[1] == "extensions" and \
