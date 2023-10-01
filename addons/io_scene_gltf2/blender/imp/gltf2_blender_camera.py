@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+from math import tan
 from ..com.gltf2_blender_extras import set_extras
 from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 
@@ -76,3 +77,8 @@ class BlenderCamera():
         pycamera.blender_object_data = cam # Needed in case of KHR_animation_pointer
 
         return cam
+
+
+    @staticmethod
+    def calc_lens_from_fov(gltf, input_value, sensor):
+        return (sensor / 2.0) / tan(input_value * 0.5)

@@ -22,6 +22,7 @@ from ..exp.gltf2_blender_get import previous_node #TODO move to COM
 from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
 from .gltf2_blender_animation_utils import make_fcurve
 from .gltf2_blender_light import BlenderLight
+from .gltf2_blender_camera import BlenderCamera
 
 
 class BlenderPointerAnim():
@@ -80,14 +81,25 @@ class BlenderPointerAnim():
         group_name = ''
         ### Camera
         if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
-            pointer_tab[3] in ["perspective"] and \
-            pointer_tab[4] in ["yfov", "znear", "zfar"]:
+                pointer_tab[3] in ["perspective"] and \
+                pointer_tab[4] in ["znear", "zfar"]: # Aspect Ratio is not something we can animate in Blender
             blender_path = {
-                "yfov": "angle_y", #TODOPointer : need to convert, angle can't be animated
                 "znear": "clip_start",
                 "zfar": "clip_end"
             }.get(pointer_tab[4])
             num_components = 1
+
+        if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
+                pointer_tab[3] in ["perspective"] and \
+                pointer_tab[4] == "yfov":
+
+            blender_path = "lens"
+            num_components = 1
+
+            old_values = values.copy()
+            sensor = asset.blender_object_data.sensor_height
+            for idx, i in enumerate(old_values):
+                values[idx] = [BlenderCamera.calc_lens_from_fov(gltf, i[0], sensor)]
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
             pointer_tab[3] in ["orthographic"] and \
