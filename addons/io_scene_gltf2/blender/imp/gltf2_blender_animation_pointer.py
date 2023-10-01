@@ -301,7 +301,7 @@ class BlenderPointerAnim():
             if pointer_tab[-4] == "baseColorTexture":
                 socket = get_socket(asset['blender_nodetree'], True, "Base Color")
             elif pointer_tab[-4] == "emissiveTexture":
-                socket = get_socket(asset.blender_nodetree, True, "Emissive")
+                socket = get_socket(asset.blender_nodetree, True, "Emission Color")
             elif pointer_tab[-4] == "normalTexture":
                 socket = get_socket(asset.blender_nodetree, True, "Normal")
             elif pointer_tab[-4] == "occlusionTexture":
