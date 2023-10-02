@@ -197,7 +197,10 @@ class BlenderNode():
             arma_mat = vnode.editbone_arma_mat
             editbone.head = arma_mat @ Vector((0, 0, 0))
             editbone.tail = arma_mat @ Vector((0, 1, 0))
-            editbone.length = vnode.bone_length
+            if gltf.import_settings['bone_heuristic'] == "BLENDER":
+                editbone.length = vnode.bone_length / max(blender_arma.scale)
+            else:
+                editbone.length = vnode.bone_length
             editbone.align_roll(arma_mat @ Vector((0, 0, 1)) - editbone.head)
 
             if isinstance(id, int):
@@ -235,7 +238,8 @@ class BlenderNode():
 
             if gltf.import_settings['bone_heuristic'] == "BLENDER":
                 pose_bone.custom_shape = bpy.data.objects[gltf.bone_shape]
-                pose_bone.custom_shape_scale_xyz = Vector([0.1, 0.1, 0.1])
+                armature_max_dim = max([blender_arma.dimensions[0] / blender_arma.scale[0], blender_arma.dimensions[1]  / blender_arma.scale[1], blender_arma.dimensions[2] / blender_arma.scale[2]])
+                pose_bone.custom_shape_scale_xyz = Vector([armature_max_dim * 0.2] * 3)
 
     @staticmethod
     def create_mesh_object(gltf, vnode):
