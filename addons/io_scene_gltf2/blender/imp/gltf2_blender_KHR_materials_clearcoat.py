@@ -21,6 +21,8 @@ def clearcoat(mh, location, clearcoat_socket):
     x, y = location
     try:
         ext = mh.pymat.extensions['KHR_materials_clearcoat']
+        mh.pymat.extensions['KHR_materials_clearcoat']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_clearcoat']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
     except Exception:
         return
     clearcoat_factor = ext.get('clearcoatFactor', 0)

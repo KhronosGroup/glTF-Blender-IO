@@ -17,6 +17,7 @@ from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
 from ..exp.gltf2_blender_get import get_socket, get_socket_old #TODO move to COM
 from ..exp.material.gltf2_blender_gather_texture_info import get_tex_from_socket #TODO move to COM
+from ..exp.material.gltf2_blender_search_node_tree import from_socket, FilterByType #TODO move to COM
 from ..exp.gltf2_blender_gather_sampler import detect_manual_uv_wrapping #TODO move to COM
 from ..exp.gltf2_blender_get import previous_node #TODO move to COM
 from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
@@ -432,6 +433,18 @@ class BlenderPointerAnim():
                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
             else:
                 blender_path = transmission_socket.path_from_id() + ".default_value"
+                num_components = 1
+
+        if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_clearcoat" and \
+                pointer_tab[5] == "clearcoatNormalTexture" and \
+                pointer_tab[6] == "scale":
+            result = from_socket(
+                get_socket(asset['blender_nodetree'], True, 'Coat Normal'),
+                FilterByType(bpy.types.ShaderNodeNormalMap))
+            if result:
+                blender_path = result[0].shader_node.inputs['Strength'].path_from_id() + ".default_value"
                 num_components = 1
 
         if blender_path is None:

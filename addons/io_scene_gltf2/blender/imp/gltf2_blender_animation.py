@@ -90,7 +90,8 @@ class BlenderAnimation():
                         #"KHR_materials_iridescence",
                         "KHR_materials_volume",
                         "KHR_materials_ior",
-                        "KHR_materials_transmission"
+                        "KHR_materials_transmission",
+                        "KHR_materials_clearcoat",
                         ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         BlenderPointerAnim.anim(gltf, anim_idx, mat.extensions[ext], mat_idx, 'EXT', name=mat.name)

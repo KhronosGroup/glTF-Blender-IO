@@ -167,7 +167,8 @@ class BlenderGlTF():
                         #"KHR_materials_iridescence",
                         "KHR_materials_volume",
                         "KHR_materials_ior",
-                        "KHR_materials_transmission"
+                        "KHR_materials_transmission",
+                        "KHR_materials_clearcoat",
                         ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         mat.extensions[ext]["animations"] = {}
@@ -464,6 +465,15 @@ class BlenderGlTF():
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_clearcoat" and \
+            pointer_tab[5] == "clearcoatNormalTexture" and \
+            pointer_tab[6] == "scale":
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx].append(channel_idx)
 
     @staticmethod
     def find_unused_name(haystack, desired_name):
