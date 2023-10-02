@@ -22,7 +22,14 @@ from .gltf2_blender_gather_material_sampler import gather_material_sampled_anima
 def gather_material_sampled_channels(blender_material_id, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
+    baseColorFactor_alpha_merged_already_done = False
     for path in export_settings['KHR_animation_pointer']['materials'][blender_material_id]['paths'].keys():
+
+        # Do not manage alpha, as it will be mangaed by the baseColorFactor (merging Color and alpha)
+        if export_settings['KHR_animation_pointer']['materials'][blender_material_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                and baseColorFactor_alpha_merged_already_done is True:
+            continue
+
         channel = gather_sampled_material_channel(
             blender_material_id,
             path,
@@ -32,6 +39,9 @@ def gather_material_sampled_channels(blender_material_id, blender_action_name, e
             export_settings)
         if channel is not None:
             channels.append(channel)
+
+        if export_settings['KHR_animation_pointer']['materials'][blender_material_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+            baseColorFactor_alpha_merged_already_done = True
 
     return channels
 

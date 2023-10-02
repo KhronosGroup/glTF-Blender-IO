@@ -108,8 +108,6 @@ def gather_material(blender_material, export_settings):
     # Now we have exported the material itself, we need to store some additional data
     # This will be used when trying to export some KHR_animation_pointer
 
-    #TODOPointer for baseColorFactor, we need to merge color + alpha
-
     if len(export_settings['current_paths']) > 0:
         export_settings['KHR_animation_pointer']['materials'][id(blender_material)] = {}
         export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['paths'] = export_settings['current_paths'].copy()

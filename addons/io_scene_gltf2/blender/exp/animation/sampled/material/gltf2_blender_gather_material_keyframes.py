@@ -37,7 +37,12 @@ def gather_material_sampled_keyframes(
     while frame <= end_frame:
 
         # Retrieve length of data to export
-        key = Keyframe([None] * export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['length'], frame, 'value')
+        if export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['path'] != "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+            length = export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['length']
+        else:
+            length = 4
+
+        key = Keyframe([None] * length, frame, 'value')
 
         value = get_cache_data(
             'value',

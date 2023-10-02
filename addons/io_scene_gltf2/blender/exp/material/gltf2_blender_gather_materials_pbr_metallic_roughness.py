@@ -59,12 +59,14 @@ def __gather_base_color_factor(blender_material, export_settings):
 
     rgb, alpha = None, None
 
+    path_alpha = None
+    path = None
     alpha_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Alpha")
     if isinstance(alpha_socket, bpy.types.NodeSocket):
         if export_settings['gltf_image_format'] != "NONE":
-            alpha, path = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
+            alpha, path_alpha = gltf2_blender_get.get_factor_from_socket(alpha_socket, kind='VALUE')
         else:
-            alpha, path = gltf2_blender_get.get_const_from_default_value_socket(alpha_socket, kind='VALUE')
+            alpha, path_alpha = gltf2_blender_get.get_const_from_default_value_socket(alpha_socket, kind='VALUE')
 
     base_color_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes,"Base Color")
     if base_color_socket is None:
@@ -75,14 +77,25 @@ def __gather_base_color_factor(blender_material, export_settings):
         if export_settings['gltf_image_format'] != "NONE":
             rgb, path = gltf2_blender_get.get_factor_from_socket(base_color_socket, kind='RGB')
         else:
-            rgb, path = gltf2_blender_get.get_const_from_default_value_socket(base_color_socket, kind='RGB') #TODOPointet add path
+            rgb, path = gltf2_blender_get.get_const_from_default_value_socket(base_color_socket, kind='RGB')
 
-        # Storing path for KHR_animation_pointer
+    # Storing path for KHR_animation_pointer
+    if path is not None:
+        path_ = {}
+        path_['length'] = 3
+        path_['path'] = "/materials/XXX/pbrMetallicRoughness/baseColorFactor"
+        if path_alpha is not None:
+            path_['additional_path'] = path_alpha
+        export_settings['current_paths'][path] = path_
+
+    # Storing path for KHR_animation_pointer
+    if path_alpha is not None:
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/pbrMetallicRoughness/baseColorFactor"
         if path is not None:
-            path_ = {}
-            path_['length'] = 4
-            path_['path'] = "/materials/XXX/pbrMetallicRoughness/baseColorFactor"
-            export_settings['current_paths'][path] = path_
+            path_['additional_path'] = path
+        export_settings['current_paths'][path_alpha] = path_
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0
