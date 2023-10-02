@@ -44,6 +44,7 @@ def gather_material_normal_texture_info_class(primary_socket, blender_shader_soc
 
 def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, default_sockets, export_settings, filter_type='ALL'):
     export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
+    export_settings['current_occlusion_strength'] = {} # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, default_sockets, 'OCCLUSION', filter_type, export_settings)
 
 
@@ -150,17 +151,28 @@ def __gather_occlusion_strength(primary_socket, export_settings):
     # Look for a MixRGB node that mixes with pure white in front of
     # primary_socket. The mix factor gives the occlusion strength.
     node = gltf2_blender_get.previous_node(primary_socket)
+
+    strength = None
+    reverse = False
     if node and node.type == 'MIX' and node.blend_type == 'MIX':
         fac, path = gltf2_blender_get.get_const_from_socket(node.inputs['Factor'], kind='VALUE')
         col1, path_col1 = gltf2_blender_get.get_const_from_socket(node.inputs[6], kind='RGB')
         col2, path_col2 = gltf2_blender_get.get_const_from_socket(node.inputs[7], kind='RGB')
         if fac is not None:
             if col1 == [1.0, 1.0, 1.0] and col2 is None:
-                return fac
+                strength = fac
             if col1 is None and col2 == [1.0, 1.0, 1.0]:
-                return 1.0 - fac  # reversed for reversed inputs
+                strength =  1.0 - fac  # reversed for reversed inputs
+                reverse = True
 
-    return None
+        # Storing path for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/occlusionTexture/strength"
+        path_['reverse'] = reverse
+        export_settings['current_occlusion_strength'][path] = path_
+
+    return strength
 
 
 def __gather_index(blender_shader_sockets, default_sockets, export_settings):

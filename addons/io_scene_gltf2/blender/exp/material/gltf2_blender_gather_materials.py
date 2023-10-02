@@ -338,6 +338,17 @@ def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, e
         orm_texture or (occlusion,),
         default_sockets,
         export_settings)
+
+    if len(export_settings['current_occlusion_strength']) != 0:
+        for k in export_settings['current_occlusion_strength'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_occlusion_strength'][k]['length']
+            path_['path'] = export_settings['current_occlusion_strength'][k]['path']
+            path_['reverse'] = export_settings['current_occlusion_strength'][k]['reverse']
+            export_settings['current_paths'][k] = path_
+
+    export_settings['current_occlusion_strength'] = {}
+
     return occlusion_texture, \
             {"occlusionTexture" : uvmap_info}
 

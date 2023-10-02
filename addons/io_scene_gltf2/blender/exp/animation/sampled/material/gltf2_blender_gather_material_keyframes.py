@@ -58,6 +58,10 @@ def gather_material_sampled_keyframes(
         if "attenuationDistance" in export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['path']:
             value = 1.0 / value if value != 0.0 else 1e13
 
+        if export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['path'] == "/materials/XXX/occlusionTexture/strength":
+            if export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['reverse'] is True:
+                value = 1.0 - value
+
         key.value_total = value
         keyframes.append(key)
         frame += step
