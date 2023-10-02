@@ -169,6 +169,8 @@ class BlenderGlTF():
                         "KHR_materials_ior",
                         "KHR_materials_transmission",
                         "KHR_materials_clearcoat",
+                        "KHR_materials_sheen",
+                        "KHR_materials_specular",
                         ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         mat.extensions[ext]["animations"] = {}
@@ -184,6 +186,22 @@ class BlenderGlTF():
                 for tex in [t for t in texs if t is not None]:
                     if tex.extensions is not None and "KHR_texture_transform" in tex.extensions:
                         tex.extensions["KHR_texture_transform"]["animations"] = {}
+
+                texs_ext = [
+                    mat.extensions["KHR_materials_volume"].get("thicknessTexture") if "KHR_materials_volume" in mat.extensions else None,
+                    mat.extensions["KHR_materials_transmission"].get("transmissionTexture") if "KHR_materials_transmission" in mat.extensions else None,
+                    mat.extensions["KHR_materials_specular"].get("specularTexture") if "KHR_materials_specular" in mat.extensions else None,
+                    mat.extensions["KHR_materials_specular"].get("specularColorTexture") if "KHR_materials_specular" in mat.extensions else None,
+                    mat.extensions["KHR_materials_sheen"].get("sheenColorTexture") if "KHR_materials_sheen" in mat.extensions else None,
+                    mat.extensions["KHR_materials_sheen"].get("sheenRoughnessTexture") if "KHR_materials_sheen" in mat.extensions else None,
+                    mat.extensions["KHR_materials_clearcoat"].get("clearcoatTexture") if "KHR_materials_clearcoat" in mat.extensions else None,
+                    mat.extensions["KHR_materials_clearcoat"].get("clearcoatRoughnessTexture") if "KHR_materials_clearcoat" in mat.extensions else None,
+                    mat.extensions["KHR_materials_clearcoat"].get("clearcoatNormalTexture") if "KHR_materials_clearcoat" in mat.extensions else None,
+                ]
+
+                for tex in [t for t in texs_ext if t is not None]:
+                    if tex['extensions'] is not None and "KHR_texture_transform" in tex['extensions']:
+                        tex['extensions']["KHR_texture_transform"]["animations"] = {}
 
 
             for light in gltf.data.extensions["KHR_lights_punctual"]["lights"] \
@@ -399,6 +417,16 @@ class BlenderGlTF():
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 9 and pointer_tab[1] == "materials" and \
+            pointer_tab[-1] in ["scale", "offset"] and \
+            pointer_tab[-2] == "KHR_texture_transform" and \
+            pointer_tab[-3] == "extensions" and \
+            pointer_tab[3] == "extensions":
+
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]]['extensions']["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]]['extensions']["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]]['extensions']["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
             pointer_tab[3] == "pbrMetallicRoughness" and \

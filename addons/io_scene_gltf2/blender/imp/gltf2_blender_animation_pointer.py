@@ -309,6 +309,24 @@ class BlenderPointerAnim():
                     socket = get_socket_old(asset.blender_mat, "Occlusion")
             elif pointer_tab[-4] == "metallicRoughnessTexture":
                 socket = get_socket(asset.blender_nodetree, True, "Roughness")
+            elif pointer_tab[-4] == "specularTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Specular IOR Level")
+            elif pointer_tab[-4] == "specularColorTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Specular Tint")
+            elif pointer_tab[-4] == "sheenColorTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Sheen Tint")
+            elif pointer_tab[-4] == "sheenRoughnessTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Sheen Roughness")
+            elif pointer_tab[-4] == "clearcoatTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Coat Weight")
+            elif pointer_tab[-4] == "clearcoatRoughnessTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Coat Roughness")
+            elif pointer_tab[-4] == "clearcoatNormalTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Coat Normal")
+            elif pointer_tab[-4] == "thicknessTexture":
+                socket = get_socket_old(asset['blender_nodetree'], True, "Thickness")
+            elif pointer_tab[-4] == "transmissionTexture":
+                socket = get_socket(asset['blender_nodetree'], True, "Transmission Weight")
             else:
                 print("Some Texture are not managed for KHR_animation_pointer / KHR_texture_transform")
 

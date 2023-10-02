@@ -74,6 +74,11 @@ def specular(mh, location_specular,
             alpha_socket=specular_socket
             )
 
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_specular_info.extensions is not None and "KHR_texture_transform" in tex_specular_info.extensions:
+            mh.pymat.extensions['KHR_materials_specular']['specularTexture']['extensions']['KHR_texture_transform'] = tex_specular_info.extensions["KHR_texture_transform"]
+
     if tex_specular_tint_info is None:
         specular_tint_factor = list(specular_tint_factor)
         specular_tint_factor.extend([1.0])
@@ -102,4 +107,10 @@ def specular(mh, location_specular,
                 location=(x_specularcolor, y_specularcolor),
                 color_socket=specular_tint_socket,
                 )
+
+            # Because extensions are dict, they are not passed by reference
+            # So we need to update the dict of the KHR_texture_transform extension if needed
+            if tex_specular_tint_info.extensions is not None and "KHR_texture_transform" in tex_specular_tint_info.extensions:
+                mh.pymat.extensions['KHR_materials_specular']['specularColorTexture']['extensions']['KHR_texture_transform'] = tex_specular_tint_info.extensions["KHR_texture_transform"]
+
     # TODOPointer

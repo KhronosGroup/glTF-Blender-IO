@@ -70,6 +70,12 @@ def sheen(  mh,
             color_socket=sheenTint_socket
             )
 
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info_color.extensions is not None and "KHR_texture_transform" in tex_info_color.extensions:
+            mh.pymat.extensions['KHR_materials_sheen']['sheenColorTexture']['extensions']['KHR_texture_transform'] = tex_info_color.extensions["KHR_texture_transform"]
+
+
     if tex_info_roughness is None:
         sheenRoughness_socket.default_value = sheenRoughnessFactor
     else:
@@ -95,6 +101,12 @@ def sheen(  mh,
             color_socket=None,
             alpha_socket=sheenRoughness_socket
             )
-    return
+
+
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info_roughness.extensions is not None and "KHR_texture_transform" in tex_info_roughness.extensions:
+            mh.pymat.extensions['KHR_materials_sheen']['sheenRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info_roughness.extensions["KHR_texture_transform"]
+
 
     #TODOPointer

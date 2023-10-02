@@ -86,6 +86,12 @@ def clearcoat(mh, location, clearcoat_socket):
         color_socket=clearcoat_socket,
     )
 
+    # Because extensions are dict, they are not passed by reference
+    # So we need to update the dict of the KHR_texture_transform extension if needed
+    if tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+        mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
+
 
 # [Texture] => [Separate G] => [Roughness Factor] =>
 def clearcoat_roughness(mh, location, roughness_socket):
@@ -157,6 +163,12 @@ def clearcoat_roughness(mh, location, roughness_socket):
         color_socket=color_socket,
     )
 
+    # Because extensions are dict, they are not passed by reference
+    # So we need to update the dict of the KHR_texture_transform extension if needed
+    if tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+        mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
+
 
 # [Texture] => [Normal Map] =>
 def clearcoat_normal(mh, location, normal_socket):
@@ -201,3 +213,9 @@ def clearcoat_normal(mh, location, normal_socket):
         is_data=True,
         color_socket=color_socket,
     )
+
+    # Because extensions are dict, they are not passed by reference
+    # So we need to update the dict of the KHR_texture_transform extension if needed
+    if tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+        mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatNormalTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
