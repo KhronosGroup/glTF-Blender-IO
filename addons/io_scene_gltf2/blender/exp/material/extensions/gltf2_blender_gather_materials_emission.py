@@ -54,6 +54,13 @@ def export_emission_factor(blender_material, export_settings):
 
         if factor == [0, 0, 0]: factor = None
 
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 3
+            path_['path'] = "/materials/XXX/emissiveFactor"
+            export_settings['current_paths'][path] = path_
+
         return factor
 
     return None

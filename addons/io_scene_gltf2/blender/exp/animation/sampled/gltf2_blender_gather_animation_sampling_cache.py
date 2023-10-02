@@ -307,7 +307,7 @@ def get_cache_data(path: str,
                         val_alpha = blender_material.path_resolve(path)
                         if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
                             val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                            data_color = list(val_color)[:3]
+                            data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
                         else:
                             data_color = [1.0, 1.0, 1.0]
                         data[mat][action_name]['value'][path][frame] = data_color + [val_alpha]
@@ -330,15 +330,13 @@ def get_cache_data(path: str,
 
                 baseColorFactor_alpha_merged_already_done = False
                 for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                    print("--", path)
-                    print(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path])
                     # Manage special case where we merge baseColorFactor and alpha
                     if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
                         if baseColorFactor_alpha_merged_already_done is True:
                             continue
                         val_color = blender_material.path_resolve(path)
-                        data_color = list(val_color)[:3]
+                        data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
                         if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
                             val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
                         else:
@@ -353,7 +351,7 @@ def get_cache_data(path: str,
                         val_alpha = blender_material.path_resolve(path)
                         if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
                             val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                            data_color = list(val_color)[:3]
+                            data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
                         else:
                             data_color = [1.0, 1.0, 1.0]
                         data[mat][mat]['value'][path][frame] = data_color + [val_alpha]
@@ -364,7 +362,7 @@ def get_cache_data(path: str,
                         if type(val).__name__ == "float":
                             data[mat][mat]['value'][path][frame] = val
                         else:
-                            data[mat][mat]['value'][path][frame] = list(val)
+                            data[mat][mat]['value'][path][frame] = list(val)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
 
         frame += step
     return data
