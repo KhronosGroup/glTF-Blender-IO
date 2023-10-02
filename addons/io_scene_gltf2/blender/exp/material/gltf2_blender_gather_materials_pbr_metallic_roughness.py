@@ -84,8 +84,7 @@ def __gather_base_color_factor(blender_material, export_settings):
         path_ = {}
         path_['length'] = 3
         path_['path'] = "/materials/XXX/pbrMetallicRoughness/baseColorFactor"
-        if path_alpha is not None:
-            path_['additional_path'] = path_alpha
+        path_['additional_path'] = path_alpha
         export_settings['current_paths'][path] = path_
 
     # Storing path for KHR_animation_pointer
@@ -93,8 +92,7 @@ def __gather_base_color_factor(blender_material, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/pbrMetallicRoughness/baseColorFactor"
-        if path is not None:
-            path_['additional_path'] = path
+        path_['additional_path'] = path
         export_settings['current_paths'][path_alpha] = path_
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
