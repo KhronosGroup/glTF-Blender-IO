@@ -81,3 +81,6 @@ def export_emission_strength_extension(emissive_factor, export_settings):
     emissive_strength_extension['emissiveStrength'] = max(emissive_factor)
 
     return Extension('KHR_materials_emissive_strength', emissive_strength_extension, False)
+
+#TODOPointer: if strength is animated, but default value is < 1.0, we are currently not exporting the extension
+# But if he animated value is sometimes > 1.0, we should export the extension, and use the extension value for the channel
