@@ -319,6 +319,7 @@ def __gather_orm_texture(blender_material, export_settings):
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "occlusionTexture/extensions")
             export_settings['current_paths'][k] = path_
 
+        #TODOPointer : this case can't happen because we are going to keep only 1 UVMap
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
@@ -348,6 +349,15 @@ def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, e
             export_settings['current_paths'][k] = path_
 
     export_settings['current_occlusion_strength'] = {}
+
+    if len(export_settings['current_texture_transform']) != 0:
+        for k in export_settings['current_texture_transform'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_texture_transform'][k]['length']
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "occlusionTexture/extensions")
+            export_settings['current_paths'][k] = path_
+
+    export_settings['current_texture_transform'] = {}
 
     return occlusion_texture, \
             {"occlusionTexture" : uvmap_info}
