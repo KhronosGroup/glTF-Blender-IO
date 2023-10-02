@@ -249,6 +249,16 @@ def __gather_normal_texture(blender_material, export_settings):
         normal,
         (normal,),
         export_settings)
+
+    if len(export_settings['current_texture_transform']) != 0:
+        for k in export_settings['current_texture_transform'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_texture_transform'][k]['length']
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "normalTexture/extensions")
+            export_settings['current_paths'][k] = path_
+
+    export_settings['current_texture_transform'] = {}
+
     return normal_texture, {"normalTexture" : uvmap_info}
 
 
@@ -294,6 +304,21 @@ def __gather_orm_texture(blender_material, export_settings):
     info, _, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, default_sockets, export_settings)
     if info is None:
         return None, ()
+
+    if len(export_settings['current_texture_transform']) != 0:
+        for k in export_settings['current_texture_transform'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_texture_transform'][k]['length']
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "occlusionTexture/extensions")
+            export_settings['current_paths'][k] = path_
+
+        for k in export_settings['current_texture_transform'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_texture_transform'][k]['length']
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "pbrMetallicRoughness/metallicRoughnessTexture/extensions")
+            export_settings['current_paths'][k] = path_
+
+    export_settings['current_texture_transform'] = {}
 
     return result, default_sockets
 

@@ -109,4 +109,13 @@ def export_volume(blender_material, export_settings):
         if has_thickness_texture:
             volume_extension['thicknessTexture'] = combined_texture
 
+        if len(export_settings['current_texture_transform']) != 0:
+            for k in export_settings['current_texture_transform'].keys():
+                path_ = {}
+                path_['length'] = export_settings['current_texture_transform'][k]['length']
+                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_volume/thicknessTexture/extensions")
+                export_settings['current_paths'][k] = path_
+
+        export_settings['current_texture_transform'] = {}
+
     return Extension('KHR_materials_volume', volume_extension, False), {'thicknessTexture': uvmap_info}

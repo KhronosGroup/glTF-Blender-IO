@@ -39,8 +39,6 @@ def export_sheen(blender_material, export_settings):
     sheenRoughness_non_linked = isinstance(sheenRoughness_socket, bpy.types.NodeSocket) and not sheenRoughness_socket.is_linked
 
 
-    use_actives_uvmaps = []
-
     if sheenTint_non_linked is True:
         color = sheenTint_socket.default_value[:3]
         if color != (0.0, 0.0, 0.0):
@@ -64,6 +62,15 @@ def export_sheen(blender_material, export_settings):
             sheen_extension['sheenColorTexture'] = original_sheenColor_texture
             uvmap_infos.update({'sheenColorTexture': uvmap_info})
 
+            if len(export_settings['current_texture_transform']) != 0:
+                for k in export_settings['current_texture_transform'].keys():
+                    path_ = {}
+                    path_['length'] = export_settings['current_texture_transform'][k]['length']
+                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_sheen/sheenColorTexture/extensions")
+                    export_settings['current_paths'][k] = path_
+
+            export_settings['current_texture_transform'] = {}
+
     if sheenRoughness_non_linked is True:
         fac = sheenRoughness_socket.default_value
         if fac != 0.0:
@@ -86,5 +93,14 @@ def export_sheen(blender_material, export_settings):
             )
             sheen_extension['sheenRoughnessTexture'] = original_sheenRoughness_texture
             uvmap_infos.update({'sheenRoughnessTexture': uvmap_info})
+
+            if len(export_settings['current_texture_transform']) != 0:
+                for k in export_settings['current_texture_transform'].keys():
+                    path_ = {}
+                    path_['length'] = export_settings['current_texture_transform'][k]['length']
+                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_sheen/sheenRoughnessTexture/extensions")
+                    export_settings['current_paths'][k] = path_
+
+            export_settings['current_texture_transform'] = {}
 
     return Extension('KHR_materials_sheen', sheen_extension, False), uvmap_infos

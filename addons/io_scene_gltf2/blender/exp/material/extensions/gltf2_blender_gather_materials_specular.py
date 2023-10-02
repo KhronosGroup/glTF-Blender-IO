@@ -57,6 +57,15 @@ def export_specular(blender_material, export_settings):
             specular_extension['specularTexture'] = original_specular_texture
             uvmap_infos.update({'specularTexture': uvmap_info})
 
+            if len(export_settings['current_texture_transform']) != 0:
+                for k in export_settings['current_texture_transform'].keys():
+                    path_ = {}
+                    path_['length'] = export_settings['current_texture_transform'][k]['length']
+                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_specular/specularTexture/extensions")
+                    export_settings['current_paths'][k] = path_
+
+            export_settings['current_texture_transform'] = {}
+
     if specularcolor_non_linked is True:
         color = speculartint_socket.default_value[:3]
         if color != (1.0, 1.0, 1.0):
@@ -77,5 +86,14 @@ def export_specular(blender_material, export_settings):
             )
             specular_extension['specularColorTexture'] = original_specularcolor_texture
             uvmap_infos.update({'specularColorTexture': uvmap_info})
+
+            if len(export_settings['current_texture_transform']) != 0:
+                for k in export_settings['current_texture_transform'].keys():
+                    path_ = {}
+                    path_['length'] = export_settings['current_texture_transform'][k]['length']
+                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_specular/specularColorTexture/extensions")
+                    export_settings['current_paths'][k] = path_
+
+            export_settings['current_texture_transform'] = {}
 
     return Extension('KHR_materials_specular', specular_extension, False), uvmap_infos

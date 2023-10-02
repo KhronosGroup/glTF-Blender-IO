@@ -38,9 +38,11 @@ def gather_texture_info(primary_socket, blender_shader_sockets, default_sockets,
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, default_sockets, 'DEFAULT', filter_type, export_settings)
 
 def gather_material_normal_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
+    export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, (), 'NORMAL', filter_type, export_settings)
 
 def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, default_sockets, export_settings, filter_type='ALL'):
+    export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, default_sockets, 'OCCLUSION', filter_type, export_settings)
 
 

@@ -71,6 +71,15 @@ def export_clearcoat(blender_material, export_settings):
             clearcoat_extension['clearcoatTexture'] = clearcoat_texture
             uvmap_infos.update({'clearcoatTexture' : uvmap_info})
 
+        if len(export_settings['current_texture_transform']) != 0:
+            for k in export_settings['current_texture_transform'].keys():
+                path_ = {}
+                path_['length'] = export_settings['current_texture_transform'][k]['length']
+                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_clearcoat/clearcoatTexture/extensions")
+                export_settings['current_paths'][k] = path_
+
+        export_settings['current_texture_transform'] = {}
+
         if has_clearcoat_roughness_texture:
             clearcoat_roughness_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_roughness_socket,
@@ -80,6 +89,15 @@ def export_clearcoat(blender_material, export_settings):
             )
             clearcoat_extension['clearcoatRoughnessTexture'] = clearcoat_roughness_texture
             uvmap_infos.update({'clearcoatRoughnessTexture': uvmap_info})
+
+        if len(export_settings['current_texture_transform']) != 0:
+            for k in export_settings['current_texture_transform'].keys():
+                path_ = {}
+                path_['length'] = export_settings['current_texture_transform'][k]['length']
+                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_clearcoat/clearcoatRoughnessTexture/extensions")
+                export_settings['current_paths'][k] = path_
+
+        export_settings['current_texture_transform'] = {}
 
     if gltf2_blender_get.has_image_node_from_socket(clearcoat_normal_socket):
         clearcoat_normal_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
