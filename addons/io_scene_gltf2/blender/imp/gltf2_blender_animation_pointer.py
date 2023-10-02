@@ -295,8 +295,6 @@ class BlenderPointerAnim():
             pointer_tab[-2] == "KHR_texture_transform" and \
             pointer_tab[-1] in ["scale", "offset", "rotation"]:
 
-            #TODOPointer for KHR_texture_transform on extension textures
-
             socket = None
             if pointer_tab[-4] == "baseColorTexture":
                 socket = get_socket(asset['blender_nodetree'], True, "Base Color")
