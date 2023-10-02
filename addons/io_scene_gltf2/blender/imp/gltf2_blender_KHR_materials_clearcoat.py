@@ -37,8 +37,24 @@ def clearcoat(mh, location, clearcoat_socket):
         clearcoat_socket.default_value = clearcoat_factor
         return
 
+    # We will need clearcoat factor (Mix node) if animated by KHR_animation_pointer (and standard case if clearcoatFactor != 1)
+    need_clearcoat_factor = clearcoat_factor != 1  # Default value is 1, so no clearcoat factor
+    if need_clearcoat_factor is False:
+        # Check if animated by KHR_animation_pointer
+        if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+            if len(mh.pymat.extensions["KHR_materials_clearcoat"]["animations"]) > 0:
+                for anim_idx in mh.pymat.extensions["KHR_materials_clearcoat"]["animations"].keys():
+                    for channel_idx in mh.pymat.extensions["KHR_materials_clearcoat"]["animations"][anim_idx]:
+                        channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                                pointer_tab[3] == "extensions" and \
+                                pointer_tab[4] == "KHR_materials_clearcoat" and \
+                                pointer_tab[5] == "clearcoatFactor":
+                            need_clearcoat_factor = True
+
     # Mix clearcoat factor
-    if clearcoat_factor != 1:
+    if need_clearcoat_factor is True:
         node = mh.node_tree.nodes.new('ShaderNodeMath')
         node.label = 'Clearcoat Factor'
         node.location = x - 140, y
@@ -76,6 +92,8 @@ def clearcoat_roughness(mh, location, roughness_socket):
     x, y = location
     try:
         ext = mh.pymat.extensions['KHR_materials_clearcoat']
+        mh.pymat.extensions['KHR_materials_clearcoat']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_clearcoat']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
     except Exception:
         return
     roughness_factor = ext.get('clearcoatRoughnessFactor', 0)
@@ -90,8 +108,24 @@ def clearcoat_roughness(mh, location, roughness_socket):
         roughness_socket.default_value = roughness_factor
         return
 
+    # We will need clearcoatRoughness factor (Mix node) if animated by KHR_animation_pointer (and standard case if clearcoatRoughnessFactor != 1)
+    need_clearcoat_roughness_factor = roughness_factor != 1  # Default value is 1, so no clearcoatRoughness factor
+    if need_clearcoat_roughness_factor is False:
+        # Check if animated by KHR_animation_pointer
+        if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+            if len(mh.pymat.extensions["KHR_materials_clearcoat"]["animations"]) > 0:
+                for anim_idx in mh.pymat.extensions["KHR_materials_clearcoat"]["animations"].keys():
+                    for channel_idx in mh.pymat.extensions["KHR_materials_clearcoat"]["animations"][anim_idx]:
+                        channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                                pointer_tab[3] == "extensions" and \
+                                pointer_tab[4] == "KHR_materials_clearcoat" and \
+                                pointer_tab[5] == "clearcoatRoughnessFactor":
+                            need_clearcoat_roughness_factor = True
+
     # Mix roughness factor
-    if roughness_factor != 1:
+    if need_clearcoat_roughness_factor is True:
         node = mh.node_tree.nodes.new('ShaderNodeMath')
         node.label = 'Clearcoat Roughness Factor'
         node.location = x - 140, y
@@ -167,5 +201,3 @@ def clearcoat_normal(mh, location, normal_socket):
         is_data=True,
         color_socket=color_socket,
     )
-
-    #TODOPointer

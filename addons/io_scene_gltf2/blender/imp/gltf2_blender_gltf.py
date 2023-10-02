@@ -475,6 +475,14 @@ class BlenderGlTF():
                 gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx].append(channel_idx)
 
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_clearcoat" and \
+            pointer_tab[5] in ["clearcoatFactor", "clearcoatRoughnessFactor"]:
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx].append(channel_idx)
+
     @staticmethod
     def find_unused_name(haystack, desired_name):
         """Finds a name not in haystack and <= 63 UTF-8 bytes.

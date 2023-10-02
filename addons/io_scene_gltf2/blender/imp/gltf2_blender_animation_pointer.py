@@ -447,6 +447,39 @@ class BlenderPointerAnim():
                 blender_path = result[0].shader_node.inputs['Strength'].path_from_id() + ".default_value"
                 num_components = 1
 
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_clearcoat" and \
+                pointer_tab[5] == "clearcoatFactor":
+            clearcoat_socket = get_socket(asset['blender_nodetree'], True, 'Coat Weight')
+            if clearcoat_socket.is_linked:
+                mix_node = clearcoat_socket.links[0].from_node
+                if mix_node.type == "MATH":
+                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                    num_components = 1
+                else:
+                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = clearcoat_socket.path_from_id() + ".default_value"
+                num_components = 1
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_clearcoat" and \
+                pointer_tab[5] == "clearcoatRoughnessFactor":
+            clearcoat_roughness_socket = get_socket(asset['blender_nodetree'], True, 'Coat Roughness')
+            if clearcoat_roughness_socket.is_linked:
+                mix_node = clearcoat_roughness_socket.links[0].from_node
+                if mix_node.type == "MATH":
+                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                    num_components = 1
+                else:
+                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = clearcoat_roughness_socket.path_from_id() + ".default_value"
+                num_components = 1
+
+
         if blender_path is None:
             return # Should not happen if all specification is managed
 
