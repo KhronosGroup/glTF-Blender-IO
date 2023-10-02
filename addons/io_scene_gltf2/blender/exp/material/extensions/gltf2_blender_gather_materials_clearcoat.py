@@ -108,4 +108,13 @@ def export_clearcoat(blender_material, export_settings):
         clearcoat_extension['clearcoatNormalTexture'] = clearcoat_normal_texture
         uvmap_infos.update({'clearcoatNormalTexture': uvmap_info})
 
+        if len(export_settings['current_normal_scale']) != 0:
+            for k in export_settings['current_normal_scale'].keys():
+                path_ = {}
+                path_['length'] = export_settings['current_normal_scale'][k]['length']
+                path_['path'] = export_settings['current_normal_scale'][k]['path'].replace("YYY", "extensions/KHR_materials_clearcoat/clearcoatNormalTexture")
+                export_settings['current_paths'][k] = path_
+
+        export_settings['current_normal_scale'] = {}
+
     return Extension('KHR_materials_clearcoat', clearcoat_extension, False), uvmap_infos

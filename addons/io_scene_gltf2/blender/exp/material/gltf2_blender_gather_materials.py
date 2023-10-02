@@ -257,6 +257,15 @@ def __gather_normal_texture(blender_material, export_settings):
 
     export_settings['current_texture_transform'] = {}
 
+    if len(export_settings['current_normal_scale']) != 0:
+        for k in export_settings['current_normal_scale'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_normal_scale'][k]['length']
+            path_['path'] = export_settings['current_normal_scale'][k]['path'].replace("YYY", "normalTexture")
+            export_settings['current_paths'][k] = path_
+
+    export_settings['current_normal_scale'] = {}
+
     return normal_texture, {"normalTexture" : uvmap_info}
 
 

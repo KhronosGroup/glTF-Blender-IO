@@ -39,6 +39,7 @@ def gather_texture_info(primary_socket, blender_shader_sockets, default_sockets,
 
 def gather_material_normal_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
     export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
+    export_settings['current_normal_scale'] = {} # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, (), 'NORMAL', filter_type, export_settings)
 
 def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, default_sockets, export_settings, filter_type='ALL'):
@@ -131,9 +132,17 @@ def __gather_normal_scale(primary_socket, export_settings):
     if not result:
         return None
     strengthInput = result[0].shader_node.inputs['Strength']
+    normal_scale = None
     if not strengthInput.is_linked and strengthInput.default_value != 1:
-        return strengthInput.default_value
-    return None
+        normal_scale = strengthInput.default_value
+
+    # Storing path for KHR_animation_pointer
+    path_ = {}
+    path_['length'] = 1
+    path_['path'] = "/materials/XXX/YYY/scale"
+    export_settings['current_normal_scale']["node_tree." + strengthInput.path_from_id() + ".default_value"] = path_
+
+    return normal_scale
 
 
 # MaterialOcclusionTextureInfo only
