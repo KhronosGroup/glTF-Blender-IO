@@ -36,7 +36,13 @@ def export_specular(blender_material, export_settings):
         if fac != 1.0:
             specular_extension['specularFactor'] = fac
         if fac == 0.0:
-            return None, {}
+            return None, {} #TODOPointer. If animated, we need to keep the extension
+
+        # Storing path for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularFactor"
+        export_settings['current_paths']["node_tree." + specular_socket.path_from_id() + ".default_value"] = path_
     else:
         # Factor
         fac, path = gltf2_blender_get.get_factor_from_socket(specular_socket, kind='VALUE')
@@ -44,7 +50,13 @@ def export_specular(blender_material, export_settings):
             specular_extension['specularFactor'] = fac
 
         if fac == 0.0:
-            return None, {}
+            return None, {} #TODOPointer. If animated, we need to keep the extension
+
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularFactor"
+            export_settings['current_paths'][path] = path_
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(specular_socket):
@@ -70,11 +82,23 @@ def export_specular(blender_material, export_settings):
         color = speculartint_socket.default_value[:3]
         if color != (1.0, 1.0, 1.0):
             specular_extension['specularColorFactor'] = color
+
+         # Storing path for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor"
+        export_settings['current_paths']["node_tree." + speculartint_socket.path_from_id() + ".default_value"] = path_
     else:
         # Factor
         fac, path = gltf2_blender_get.get_factor_from_socket(speculartint_socket, kind='RGB')
         if fac is not None and fac != (1.0, 1.0, 1.0):
             specular_extension['specularColorFactor'] = fac
+
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor"
+            export_settings['current_paths'][path] = path_
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(speculartint_socket):

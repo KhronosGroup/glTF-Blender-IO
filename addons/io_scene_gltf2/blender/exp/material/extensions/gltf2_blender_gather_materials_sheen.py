@@ -43,6 +43,13 @@ def export_sheen(blender_material, export_settings):
         color = sheenTint_socket.default_value[:3]
         if color != (0.0, 0.0, 0.0):
             sheen_extension['sheenColorFactor'] = color
+
+        # Storing path for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_sheen/sheenColorFactor"
+        export_settings['current_paths']["node_tree." + sheenTint_socket.path_from_id() + ".default_value"] = path_
+
     else:
         # Factor
         fac, path = gltf2_blender_get.get_factor_from_socket(sheenTint_socket, kind='RGB')
@@ -50,6 +57,13 @@ def export_sheen(blender_material, export_settings):
             fac = [1.0, 1.0, 1.0] # Default is 0.0/0.0/0.0, so we need to set it to 1 if no factor
         if fac is not None and fac != [0.0, 0.0, 0.0]:
             sheen_extension['sheenColorFactor'] = fac
+
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_sheen/sheenColorFactor"
+            export_settings['current_paths'][path] = path_
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(sheenTint_socket):
@@ -75,6 +89,13 @@ def export_sheen(blender_material, export_settings):
         fac = sheenRoughness_socket.default_value
         if fac != 0.0:
             sheen_extension['sheenRoughnessFactor'] = fac
+
+        # Storing path for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_sheen/sheenRoughnessFactor"
+        export_settings['current_paths']["node_tree." + sheenRoughness_socket.path_from_id() + ".default_value"] = path_
+
     else:
         # Factor
         fac, path = gltf2_blender_get.get_factor_from_socket(sheenRoughness_socket, kind='VALUE')
@@ -82,6 +103,13 @@ def export_sheen(blender_material, export_settings):
             fac = 1.0 # Default is 0.0 so we need to set it to 1.0 if no factor
         if fac is not None and fac != 0.0:
             sheen_extension['sheenRoughnessFactor'] = fac
+
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_sheen/sheenRoughnessFactor"
+            export_settings['current_paths'][path] = path_
 
         # Texture
         if gltf2_blender_get.has_image_node_from_socket(sheenRoughness_socket):
