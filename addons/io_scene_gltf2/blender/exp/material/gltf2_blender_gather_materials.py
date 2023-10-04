@@ -141,6 +141,12 @@ def __filter_material(blender_material, export_settings):
 
 def __gather_alpha_cutoff(blender_material, export_settings):
     if blender_material.blend_method == 'CLIP':
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/alphaCutoff"
+        export_settings['current_paths']['alpha_threshold'] = path_
+
         return blender_material.alpha_threshold
     return None
 
