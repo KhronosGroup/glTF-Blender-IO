@@ -52,4 +52,3 @@ def unlit(mh):
         alpha_socket=alpha_socket,
     )
 
-    #TODOPointer KHR_animation_pointer on unlit materials ?
