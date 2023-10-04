@@ -28,6 +28,8 @@ def sheen(  mh,
 
     try:
         ext = mh.pymat.extensions['KHR_materials_sheen']
+        mh.pymat.extensions['KHR_materials_sheen']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_sheen']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
     except Exception:
         return
 
@@ -108,5 +110,3 @@ def sheen(  mh,
         if tex_info_roughness.extensions is not None and "KHR_texture_transform" in tex_info_roughness.extensions:
             mh.pymat.extensions['KHR_materials_sheen']['sheenRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info_roughness.extensions["KHR_texture_transform"]
 
-
-    #TODOPointer

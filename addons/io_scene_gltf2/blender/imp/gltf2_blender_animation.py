@@ -89,7 +89,7 @@ class BlenderAnimation():
                     ]
 
                     for tex in [t for t in texs if t is not None]:
-                        if tex['extensions'] is not None and "KHR_texture_transform" in tex['extensions']:
+                        if 'extensions' in tex and "KHR_texture_transform" in tex['extensions']:
                             BlenderPointerAnim.anim(gltf, anim_idx, tex['extensions']["KHR_texture_transform"], mat_idx, 'TEX_TRANSFORM', name=mat.name)
 
                 for ext in [

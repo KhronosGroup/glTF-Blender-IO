@@ -497,6 +497,37 @@ class BlenderPointerAnim():
                 blender_path = clearcoat_roughness_socket.path_from_id() + ".default_value"
                 num_components = 1
 
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_sheen" and \
+                pointer_tab[5] == "sheenColorFactor":
+            sheen_color_socket = get_socket(asset['blender_nodetree'], True, 'Sheen Tint')
+            if sheen_color_socket.is_linked:
+                mix_node = sheen_color_socket.links[0].from_node
+                if mix_node.type == "MIX":
+                    blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
+                    num_components = 3
+                else:
+                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = sheen_color_socket.path_from_id() + ".default_value"
+                num_components = 3
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_sheen" and \
+                pointer_tab[5] == "sheenRoughnessFactor":
+            sheen_roughness_socket = get_socket(asset['blender_nodetree'], True, 'Sheen Roughness')
+            if sheen_roughness_socket.is_linked:
+                mix_node = sheen_roughness_socket.links[0].from_node
+                if mix_node.type == "MATH":
+                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                    num_components = 1
+                else:
+                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = sheen_roughness_socket.path_from_id() + ".default_value"
+                num_components = 1
 
         if blender_path is None:
             return # Should not happen if all specification is managed

@@ -200,7 +200,7 @@ class BlenderGlTF():
                 ]
 
                 for tex in [t for t in texs_ext if t is not None]:
-                    if tex['extensions'] is not None and "KHR_texture_transform" in tex['extensions']:
+                    if 'extensions' in tex and "KHR_texture_transform" in tex['extensions']:
                         tex['extensions']["KHR_texture_transform"]["animations"] = {}
 
 
@@ -510,6 +510,15 @@ class BlenderGlTF():
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_sheen" and \
+            pointer_tab[5] in ["sheenColorFactor", "sheenRoughnessFactor"]:
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"][anim_idx].append(channel_idx)
+
 
     @staticmethod
     def find_unused_name(haystack, desired_name):
