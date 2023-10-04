@@ -527,6 +527,8 @@ def get_material_from_idx(material_idx, materials, export_settings):
 
 def get_base_material(material_idx, materials, export_settings):
 
+    export_settings['current_paths'] = {}
+
     material = None
     material_info = {"uv_info": {}, "vc_info": {}}
 

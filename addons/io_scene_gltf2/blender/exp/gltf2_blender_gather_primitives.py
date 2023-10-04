@@ -71,7 +71,6 @@ def gather_primitives(
 
         # We already call this function, in order to retrieve uvmap info, if any
         # So here, only the cache will be used
-        export_settings['current_paths'] = {} #Used for KHR_animation_pointer. #TODOPointer: Now we have removed the call gather_material multiple times,
         # We may can initialize it inside the function??
         base_material, material_info = get_base_material(internal_primitive['material'], materials, export_settings)
 
