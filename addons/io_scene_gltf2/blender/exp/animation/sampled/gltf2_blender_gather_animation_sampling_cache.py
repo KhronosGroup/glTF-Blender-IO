@@ -37,13 +37,13 @@ def get_cache_data(path: str,
     min_, max_ = get_range(blender_obj_uuid, action_name, export_settings)
 
     if only_gather_provided:
-        obj_uuids = [blender_obj_uuid]
+        obj_uuids = [blender_obj_uuid] if blender_obj_uuid in export_settings['vtree'].nodes.keys() else [] #If object is not in vtree, this is a material or light for pointers
     else:
         obj_uuids = [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]
 
     # For TRACK mode, we reset cache after each track export, so we don't need to keep others objects
     if export_settings['gltf_animation_mode'] in "NLA_TRACKS":
-        obj_uuids = [blender_obj_uuid]
+        obj_uuids = [blender_obj_uuid]  if blender_obj_uuid in export_settings['vtree'].nodes.keys() else [] #If object is not in vtree, this is a material or light for pointers
 
     frame = min_
     while frame <= max_:
@@ -229,183 +229,184 @@ def get_cache_data(path: str,
             if mat not in data.keys():
                 data[mat] = {}
 
-            if blender_material.node_tree and blender_material.node_tree.animation_data and blender_material.node_tree.animation_data.action:
-                if export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-                    if blender_material.node_tree.animation_data.action.name not in data[mat].keys():
-                        data[mat][blender_material.node_tree.animation_data.action.name] = {}
-                        data[mat][blender_material.node_tree.animation_data.action.name]['value'] = {}
-                        for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path] = {}
+            if blender_material.node_tree and blender_material.node_tree.animation_data and blender_material.node_tree.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
 
-
-                    baseColorFactor_alpha_merged_already_done = False
+                if blender_material.node_tree.animation_data.action.name not in data[mat].keys():
+                    data[mat][blender_material.node_tree.animation_data.action.name] = {}
+                    data[mat][blender_material.node_tree.animation_data.action.name]['value'] = {}
                     for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path] = {}
 
-                        # Manage special case where we merge baseColorFactor and alpha
-                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
-                                and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
-                            if baseColorFactor_alpha_merged_already_done is True:
-                                continue
-                            val_color = blender_material.path_resolve(path)
+
+                baseColorFactor_alpha_merged_already_done = False
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    # Manage special case where we merge baseColorFactor and alpha
+                    if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_color = blender_material.path_resolve(path)
+                        data_color = list(val_color)[:3]
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                        else:
+                            val_alpha = 1.0
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Manage special case where we merge baseColorFactor and alpha
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_alpha = blender_material.path_resolve(path)
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
                             data_color = list(val_color)[:3]
-                            if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
-                                val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                            else:
-                                val_alpha = 1.0
-                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = data_color + [val_alpha]
-                            baseColorFactor_alpha_merged_already_done = True
-                        # Manage special case where we merge baseColorFactor and alpha
-                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
-                                and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
-                            if baseColorFactor_alpha_merged_already_done is True:
-                                continue
-                            val_alpha = blender_material.path_resolve(path)
-                            if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
-                                val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                                data_color = list(val_color)[:3]
-                            else:
-                                data_color = [1.0, 1.0, 1.0]
-                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = data_color + [val_alpha]
-                            baseColorFactor_alpha_merged_already_done = True
-                        # Classic case
                         else:
-                            val = blender_material.path_resolve(path)
-                            if type(val).__name__ == "float":
-                                data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = val
-                            else:
-                                data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = list(val)
-
-                elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-                    if action_name not in data[mat].keys():
-                        data[mat][action_name] = {}
-                        data[mat][action_name]['value'] = {}
-                        for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                            data[mat][action_name]['value'][path] = {}
-
-                    baseColorFactor_alpha_merged_already_done = False
-                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                        # Manage special case where we merge baseColorFactor and alpha
-                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
-                                and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
-                            if baseColorFactor_alpha_merged_already_done is True:
-                                continue
-                            val_color = blender_material.path_resolve(path)
-                            data_color = list(val_color)[:3]
-                            if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
-                                val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                            else:
-                                val_alpha = 1.0
-                            data[mat][action_name]['value'][path][frame] = data_color + [val_alpha]
-                            baseColorFactor_alpha_merged_already_done = True
-                        # Manage special case where we merge baseColorFactor and alpha
-                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
-                                and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
-                            if baseColorFactor_alpha_merged_already_done is True:
-                                continue
-                            val_alpha = blender_material.path_resolve(path)
-                            if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
-                                val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                                data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
-                            else:
-                                data_color = [1.0, 1.0, 1.0]
-                            data[mat][action_name]['value'][path][frame] = data_color + [val_alpha]
-                            baseColorFactor_alpha_merged_already_done = True
-                        # Classic case
-                        else:
-                            val = blender_material.path_resolve(path)
-                            if type(val).__name__ == "float":
-                                data[mat][action_name]['value'][path][frame] = val
-                            else:
-                                data[mat][action_name]['value'][path][frame] = list(val)
-                else:
-                    # case of baking object.
-                    # There is no animation, so use id as key
-                    if mat not in data[mat].keys():
-                        data[mat][mat] = {}
-                        data[mat][mat]['value'] = {}
-                        for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                            data[mat][mat]['value'][path] = {}
-
-                    baseColorFactor_alpha_merged_already_done = False
-                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                        # Manage special case where we merge baseColorFactor and alpha
-                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
-                                and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
-                            if baseColorFactor_alpha_merged_already_done is True:
-                                continue
-                            val_color = blender_material.path_resolve(path)
-                            data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
-                            if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
-                                val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                            else:
-                                val_alpha = 1.0
-                            data[mat][mat]['value'][path][frame] = data_color + [val_alpha]
-                            baseColorFactor_alpha_merged_already_done = True
-                        # Manage special case where we merge baseColorFactor and alpha
-                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
-                                and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
-                            if baseColorFactor_alpha_merged_already_done is True:
-                                continue
-                            val_alpha = blender_material.path_resolve(path)
-                            if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
-                                val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                                data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
-                            else:
-                                data_color = [1.0, 1.0, 1.0]
-                            data[mat][mat]['value'][path][frame] = data_color + [val_alpha]
-                            baseColorFactor_alpha_merged_already_done = True
-                        # Classic case
-                        else:
-                            val = blender_material.path_resolve(path)
-                            if type(val).__name__ == "float":
-                                data[mat][mat]['value'][path][frame] = val
-                            else:
-                                data[mat][mat]['value'][path][frame] = list(val)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
-
-
-            elif blender_material and blender_material.animation_data and blender_material.animation_data.action:
-                if export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-                    if blender_material.animation_data.action.name not in data[mat].keys():
-                        data[mat][blender_material.animation_data.action.name] = {}
-                        data[mat][blender_material.animation_data.action.name]['value'] = {}
-                        for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                            data[mat][blender_material.animation_data.action.name]['value'][path] = {}
-
-                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                            data_color = [1.0, 1.0, 1.0]
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Classic case
+                    else:
                         val = blender_material.path_resolve(path)
                         if type(val).__name__ == "float":
-                            data[mat][blender_material.animation_data.action.name]['value'][path][frame] = val
+                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = val
                         else:
-                            data[mat][blender_material.animation_data.action.name]['value'][path][frame] = list(val)
+                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = list(val)
 
-                elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-                    if action_name not in data[mat].keys():
-                        data[mat][action_name] = {}
-                        data[mat][action_name]['value'] = {}
-                        for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                            data[mat][action_name]['value'][path] = {}
-
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[mat].keys():
+                    data[mat][action_name] = {}
+                    data[mat][action_name]['value'] = {}
                     for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][action_name]['value'][path] = {}
+
+                baseColorFactor_alpha_merged_already_done = False
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                    # Manage special case where we merge baseColorFactor and alpha
+                    if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_color = blender_material.path_resolve(path)
+                        data_color = list(val_color)[:3]
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                        else:
+                            val_alpha = 1.0
+                        data[mat][action_name]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Manage special case where we merge baseColorFactor and alpha
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_alpha = blender_material.path_resolve(path)
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                            data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
+                        else:
+                            data_color = [1.0, 1.0, 1.0]
+                        data[mat][action_name]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Classic case
+                    else:
                         val = blender_material.path_resolve(path)
                         if type(val).__name__ == "float":
                             data[mat][action_name]['value'][path][frame] = val
                         else:
                             data[mat][action_name]['value'][path][frame] = list(val)
-
-
-                else:
-                    if mat not in data[mat].keys():
-                        data[mat][mat] = {}
-                        data[mat][mat]['value'] = {}
-                        for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
-                            data[mat][mat]['value'][path] = {}
-
+            else:
+                # case of baking materials (scene export).
+                # There is no animation, so use id as key
+                if mat not in data[mat].keys():
+                    data[mat][mat] = {}
+                    data[mat][mat]['value'] = {}
                     for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][mat]['value'][path] = {}
+
+                baseColorFactor_alpha_merged_already_done = False
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                    # Manage special case where we merge baseColorFactor and alpha
+                    if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_color = blender_material.path_resolve(path)
+                        data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                        else:
+                            val_alpha = 1.0
+                        data[mat][mat]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Manage special case where we merge baseColorFactor and alpha
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_alpha = blender_material.path_resolve(path)
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                            data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
+                        else:
+                            data_color = [1.0, 1.0, 1.0]
+                        data[mat][mat]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Classic case
+                    else:
                         val = blender_material.path_resolve(path)
                         if type(val).__name__ == "float":
                             data[mat][mat]['value'][path][frame] = val
                         else:
-                            data[mat][mat]['value'][path][frame] = list(val)
+                            data[mat][mat]['value'][path][frame] = list(val)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
+
+
+            if blender_material and blender_material.animation_data and blender_material.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                if blender_material.animation_data.action.name not in data[mat].keys():
+                    data[mat][blender_material.animation_data.action.name] = {}
+                    data[mat][blender_material.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][blender_material.animation_data.action.name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][blender_material.animation_data.action.name]['value'][path][frame] = val
+                    else:
+                        data[mat][blender_material.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[mat].keys():
+                    data[mat][action_name] = {}
+                    data[mat][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][action_name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][action_name]['value'][path][frame] = val
+                    else:
+                        data[mat][action_name]['value'][path][frame] = list(val)
+
+
+            else:
+                if mat not in data[mat].keys():
+                    data[mat][mat] = {}
+                    data[mat][mat]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][mat]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][mat]['value'][path][frame] = val
+                    else:
+                        data[mat][mat]['value'][path][frame] = list(val)
 
 
         frame += step
