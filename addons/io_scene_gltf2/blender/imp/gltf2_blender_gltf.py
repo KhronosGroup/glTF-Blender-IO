@@ -519,6 +519,13 @@ class BlenderGlTF():
                 gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"][anim_idx].append(channel_idx)
 
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_specular" and \
+            pointer_tab[5] in ["specularFactor", "specularColorFactor"]:
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"][anim_idx].append(channel_idx)
 
     @staticmethod
     def find_unused_name(haystack, desired_name):

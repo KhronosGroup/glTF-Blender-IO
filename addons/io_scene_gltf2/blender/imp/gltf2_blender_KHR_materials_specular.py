@@ -31,6 +31,8 @@ def specular(mh, location_specular,
 
     try:
         ext = mh.pymat.extensions['KHR_materials_specular']
+        mh.pymat.extensions['KHR_materials_specular']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_specular']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
     except Exception:
         return
 
@@ -113,4 +115,3 @@ def specular(mh, location_specular,
             if tex_specular_tint_info.extensions is not None and "KHR_texture_transform" in tex_specular_tint_info.extensions:
                 mh.pymat.extensions['KHR_materials_specular']['specularColorTexture']['extensions']['KHR_texture_transform'] = tex_specular_tint_info.extensions["KHR_texture_transform"]
 
-    # TODOPointer
