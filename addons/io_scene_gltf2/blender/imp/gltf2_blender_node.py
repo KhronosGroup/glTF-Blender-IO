@@ -145,6 +145,7 @@ class BlenderNode():
             bpy.data.collections.new(BLENDER_GLTF_SPECIAL_COLLECTION)
             bpy.data.scenes[gltf.blender_scene].collection.children.link(bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION])
             bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].hide_viewport = True
+            bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].hide_render = True
 
         # Create an icosphere, and assign it to the collection
         bpy.ops.mesh.primitive_ico_sphere_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
