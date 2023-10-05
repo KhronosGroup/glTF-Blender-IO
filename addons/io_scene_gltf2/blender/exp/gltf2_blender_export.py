@@ -205,8 +205,10 @@ def __should_include_json_value(key, value, export_settings):
                 return False
         return False
     elif not __is_empty_collection(value):
-        if key.startswith("KHR_"):
+        if key.startswith("KHR_") or key.startswith("EXT_"):
             export_settings['gltf_need_to_keep_extension_declaration'].append(key)
+    elif __is_empty_collection(value) and key in allowed_empty_collections:
+        export_settings['gltf_need_to_keep_extension_declaration'].append(key)
     return True
 
 
