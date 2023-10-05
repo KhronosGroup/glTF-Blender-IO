@@ -13,12 +13,13 @@
 # limitations under the License.
 
 import bpy
+from .....io.com.gltf2_io_constants import BLENDER_COAT_ROUGHNESS
 from .....io.com.gltf2_io_extensions import Extension
 from ....exp import gltf2_blender_get
 from ...material import gltf2_blender_gather_texture_info
 
+
 def export_clearcoat(blender_material, export_settings):
-    clearcoat_enabled = False
     has_clearcoat_texture = False
     has_clearcoat_roughness_texture = False
 
@@ -30,8 +31,9 @@ def export_clearcoat(blender_material, export_settings):
     clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Coat Normal')
 
     if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
-        clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
-        clearcoat_enabled = clearcoat_extension['clearcoatFactor'] > 0
+        if clearcoat_socket.default_value != 0.0:
+            print(">1")
+            clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
 
         # Storing path for KHR_animation_pointer
         path_ = {}
@@ -45,7 +47,6 @@ def export_clearcoat(blender_material, export_settings):
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatFactor'] = fac if fac != None else 1.0
         has_clearcoat_texture = True
-        clearcoat_enabled = True
 
         # Storing path for KHR_animation_pointer
         if path is not None:
@@ -54,13 +55,10 @@ def export_clearcoat(blender_material, export_settings):
             path_['path'] = "/materials/XXX/extensions/KHR_materials_clearcoat/clearcoatFactor"
             export_settings['current_paths'][path] = path_
 
-
-    # TODOPointer if clearcoatFactor is animated, we need to export the extension, even if current value is 0.0
-    if not clearcoat_enabled:
-        return None, {}
-
     if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
-        clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
+        if abs(clearcoat_roughness_socket.default_value - BLENDER_COAT_ROUGHNESS) > 1e-5 \
+                or (abs(clearcoat_roughness_socket.default_value - BLENDER_COAT_ROUGHNESS) > 1e-5 and 'clearcoatFactor' in clearcoat_extension):
+            clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
 
         # Storing path for KHR_animation_pointer
         path_ = {}
