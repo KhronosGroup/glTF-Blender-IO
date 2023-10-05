@@ -211,10 +211,6 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     if texture_transform["rotation"] == 0:
         del(texture_transform["rotation"])
 
-    # TODOPointer: Even if all is zero, but animated, we need to keep it
-    # if len(texture_transform) == 0:
-    #     return None
-
     path_ = {}
     path_['length'] = 2
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
