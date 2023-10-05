@@ -67,11 +67,60 @@ def __export(export_settings):
     export_user_extensions('gather_gltf_extensions_hook', export_settings, exporter.glTF)
     exporter.traverse_extensions()
 
+    # Detect extensions that are animated
+    # If they are not animated, we can remove the extension if it is empty (all default values)
+    # But if they are animated, we need to keep the extension, even if it is empty
+    __detect_animated_extensions(exporter.glTF.to_dict(), export_settings)
+
     # now that addons possibly add some fields in json, we can fix in needed
-    json = __fix_json(exporter.glTF.to_dict())
+    json = __fix_json(exporter.glTF.to_dict(), export_settings)
+
+    __manage_extension_declaration(json, export_settings)
+
+
+    # We need to run it again, as we can now have some "extensions" dict that are empty
+    # Or extensionsUsed / extensionsRequired that are empty
+    # (because we removed some extensions)
+    json = __fix_json(json, export_settings)
 
     return json, buffer
 
+
+def __detect_animated_extensions(obj, export_settings):
+    export_settings['gltf_animated_extensions'] = []
+    export_settings['gltf_need_to_keep_extension_declaration'] = []
+    if not 'animations' in obj.keys():
+        return
+    for anim in obj['animations']:
+        if 'extensions' in anim.keys():
+            for channel in anim['channels']:
+                if not channel['target']['path'] == "pointer":
+                    continue
+                pointer = channel['target']['extensions']['KHR_animation_pointer']['pointer']
+                if not "/KHR" in pointer:
+                    continue
+                tab = pointer.split("/")
+                tab = [i for i in tab if i.startswith("KHR_")]
+                if len(tab) == 0:
+                    continue
+                if tab[-1] not in export_settings['gltf_animated_extensions']:
+                    export_settings['gltf_animated_extensions'].append(tab[-1])
+
+def __manage_extension_declaration(json, export_settings):
+    if 'extensionsUsed' in json.keys():
+        new_ext_used = []
+        for ext in json['extensionsUsed']:
+            if ext not in export_settings['gltf_need_to_keep_extension_declaration']:
+                continue
+            new_ext_used.append(ext)
+        json['extensionsUsed'] = new_ext_used
+    if 'extensionsRequired' in json.keys():
+        new_ext_required = []
+        for ext in json['extensionsRequired']:
+            if ext not in export_settings['gltf_need_to_keep_extension_declaration']:
+                continue
+            new_ext_required.append(ext)
+        json['extensionsRequired'] = new_ext_required
 
 def __gather_gltf(exporter, export_settings):
     active_scene_idx, scenes, animations = gltf2_blender_gather.gather_gltf2(export_settings)
@@ -105,7 +154,7 @@ def __create_buffer(exporter, export_settings):
     return buffer
 
 
-def __fix_json(obj):
+def __fix_json(obj, export_settings):
     # TODO: move to custom JSON encoder
     fixed = obj
     if isinstance(obj, dict):
@@ -114,13 +163,13 @@ def __fix_json(obj):
             if key == 'extras' and value is not None:
                 fixed[key] = value
                 continue
-            if not __should_include_json_value(key, value):
+            if not __should_include_json_value(key, value, export_settings):
                 continue
-            fixed[key] = __fix_json(value)
+            fixed[key] = __fix_json(value, export_settings)
     elif isinstance(obj, list):
         fixed = []
         for value in obj:
-            fixed.append(__fix_json(value))
+            fixed.append(__fix_json(value, export_settings))
     elif isinstance(obj, float):
         # force floats to int, if they are integers (prevent INTEGER_WRITTEN_AS_FLOAT validator warnings)
         if int(obj) == obj:
@@ -128,13 +177,36 @@ def __fix_json(obj):
     return fixed
 
 
-def __should_include_json_value(key, value):
-    allowed_empty_collections = ["KHR_materials_unlit", "KHR_materials_specular", "KHR_texture_transform"]
+def __should_include_json_value(key, value, export_settings):
+    allowed_empty_collections = ["KHR_materials_unlit"]
+    allowed_empty_collections_if_animated = \
+        [
+        "KHR_materials_specular",
+         "KHR_texture_transform",
+         "KHR_materials_clearcoat",
+         "KHR_materials_emissive_strength",
+         "KHR_materials_ior",
+         #"KHR_materials_iridescence",
+         "KHR_materials_sheen",
+         "KHR_materials_specular",
+         "KHR_materials_transmission",
+         "KHR_materials_volume",
+         "KHR_lights_punctual"
+         ]
 
     if value is None:
         return False
     elif __is_empty_collection(value) and key not in allowed_empty_collections:
+        if key in allowed_empty_collections_if_animated:
+            if key in export_settings['gltf_animated_extensions']:
+                export_settings['gltf_need_to_keep_extension_declaration'].append(key)
+                return True
+            else:
+                return False
         return False
+    elif not __is_empty_collection(value):
+        if key.startswith("KHR_"):
+            export_settings['gltf_need_to_keep_extension_declaration'].append(key)
     return True
 
 
