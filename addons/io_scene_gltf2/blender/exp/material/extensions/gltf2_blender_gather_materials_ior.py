@@ -27,8 +27,9 @@ def export_ior(blender_material, extensions, export_settings):
         # TODOExt: add warning?
         return None
 
-    if ior_socket.default_value == GLTF_IOR:
-        return None
+    # Exporting IOR even if it is the default value
+    # It will be removed by the exporter if it is not animated
+    # (In case the first key is the default value, we need to keep the extension)
 
     # Export only if the following extensions are exported:
     need_to_export_ior = [
@@ -41,13 +42,13 @@ def export_ior(blender_material, extensions, export_settings):
         return None
 
     ior_extension = {}
-    ior_extension['ior'] = ior_socket.default_value
+    if ior_socket.default_value != GLTF_IOR:
+        ior_extension['ior'] = ior_socket.default_value
 
     # Storing path for KHR_animation_pointer
     path_ = {}
     path_['length'] = 1
     path_['path'] = "/materials/XXX/extensions/KHR_materials_ior/ior"
     export_settings['current_paths']["node_tree." + ior_socket.path_from_id() + ".default_value"] = path_
-    #TODOPointer if ior is default GLTF_IOR, we need to export extension anyways if animated
 
     return Extension('KHR_materials_ior', ior_extension, False)
