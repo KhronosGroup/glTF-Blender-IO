@@ -15,6 +15,7 @@
 import bpy
 import typing
 from ......io.com import gltf2_io
+from ......blender.com.gltf2_blender_conversion import get_gltf_interpolation
 from .gltf2_blender_gather_material_channel_target import gather_material_sampled_channel_target
 from .gltf2_blender_gather_material_sampler import gather_material_sampled_animation_sampler
 
@@ -22,10 +23,13 @@ from .gltf2_blender_gather_material_sampler import gather_material_sampled_anima
 def gather_material_sampled_channels(blender_material_id, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
+
+    list_of_animated_material_channels = {} #TODOPointer
+
     baseColorFactor_alpha_merged_already_done = False
     for path in export_settings['KHR_animation_pointer']['materials'][blender_material_id]['paths'].keys():
 
-        # Do not manage alpha, as it will be mangaed by the baseColorFactor (merging Color and alpha)
+        # Do not manage alpha, as it will be managaed by the baseColorFactor (merging Color and alpha)
         if export_settings['KHR_animation_pointer']['materials'][blender_material_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
                 and baseColorFactor_alpha_merged_already_done is True:
             continue
@@ -34,8 +38,8 @@ def gather_material_sampled_channels(blender_material_id, blender_action_name, e
             blender_material_id,
             path,
             blender_action_name,
-            True,    #TODOPointer
-            "LINEAR", #TODOPointer
+            path in list_of_animated_material_channels.keys(),
+            list_of_animated_material_channels[path] if path in list_of_animated_material_channels.keys() else get_gltf_interpolation("LINEAR"),
             export_settings)
         if channel is not None:
             channels.append(channel)
