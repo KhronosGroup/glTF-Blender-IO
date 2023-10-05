@@ -325,7 +325,8 @@ def __gather_orm_texture(blender_material, export_settings):
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "occlusionTexture/extensions")
             export_settings['current_paths'][k] = path_
 
-        #TODOPointer : this case can't happen because we are going to keep only 1 UVMap
+        #This case can't happen because we are going to keep only 1 UVMap
+        print_console("WARNING", "This case should not happen, please report a bug")
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']

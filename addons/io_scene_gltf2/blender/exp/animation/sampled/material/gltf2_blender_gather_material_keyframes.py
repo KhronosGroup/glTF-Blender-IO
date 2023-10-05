@@ -70,7 +70,6 @@ def gather_material_sampled_keyframes(
         # For example, option CROP negative frames, but all are negatives
         return None
 
-    # TODOPointer optim better ?
     cst = fcurve_is_constant(keyframes)
     return None if cst is True else keyframes
 
