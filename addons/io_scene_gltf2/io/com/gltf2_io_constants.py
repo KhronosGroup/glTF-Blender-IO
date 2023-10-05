@@ -161,6 +161,7 @@ GLTF_DATA_TYPE_MAT3 = "MAT3"
 GLTF_DATA_TYPE_MAT4 = "MAT4"
 
 GLTF_IOR = 1.5
+BLENDER_COAT_ROUGHNESS = 0.03
 
 # Rounding digit used for normal/tangent rounding
 ROUNDING_DIGIT = 4
