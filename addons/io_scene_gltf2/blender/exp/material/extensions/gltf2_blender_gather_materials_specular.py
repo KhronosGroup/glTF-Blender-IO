@@ -32,11 +32,8 @@ def export_specular(blender_material, export_settings):
     specularcolor_non_linked = isinstance(speculartint_socket, bpy.types.NodeSocket) and not speculartint_socket.is_linked
 
     if specular_non_linked is True:
-        fac = specular_socket.default_value
-        if fac != 1.0:
-            specular_extension['specularFactor'] = fac
-        if fac == 0.0:
-            return None, {} #TODOPointer. If animated, we need to keep the extension
+        if specular_socket.default_value != 1.0:
+            specular_extension['specularFactor'] = specular_socket.default_value
 
         # Storing path for KHR_animation_pointer
         path_ = {}
@@ -48,9 +45,6 @@ def export_specular(blender_material, export_settings):
         fac, path = gltf2_blender_get.get_factor_from_socket(specular_socket, kind='VALUE')
         if fac is not None and fac != 1.0:
             specular_extension['specularFactor'] = fac
-
-        if fac == 0.0:
-            return None, {} #TODOPointer. If animated, we need to keep the extension
 
         if path is not None:
             path_ = {}

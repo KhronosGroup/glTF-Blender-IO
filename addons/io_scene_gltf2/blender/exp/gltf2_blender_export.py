@@ -68,12 +68,19 @@ def __export(export_settings):
     exporter.traverse_extensions()
 
     # Detect extensions that are animated
-    # If they are not animated, we can remove the extension if it is empty (all default values)
+    # If they are not animated, we can remove the extension if it is empty (all default values), and if default values don't change the shader
     # But if they are animated, we need to keep the extension, even if it is empty
     __detect_animated_extensions(exporter.glTF.to_dict(), export_settings)
 
-    # now that addons possibly add some fields in json, we can fix in needed
+    # now that addons possibly add some fields in json, we can fix if needed
+    # Also deleting no more needed extensions, based on what we detected above
     json = __fix_json(exporter.glTF.to_dict(), export_settings)
+
+    # IOR is a special case where we need to export only if some other extensions are used
+    __check_ior(json, export_settings)
+
+    # Volum is a special case where we need to export only if transmission is used
+    __check_volume(json, export_settings)
 
     __manage_extension_declaration(json, export_settings)
 
@@ -84,6 +91,62 @@ def __export(export_settings):
     json = __fix_json(json, export_settings)
 
     return json, buffer
+
+def __check_ior(json, export_settings):
+    if 'materials' not in json.keys():
+        return
+    for mat in json['materials']:
+        if 'extensions' not in mat.keys():
+            continue
+        if 'KHR_materials_ior' not in mat['extensions'].keys():
+            continue
+        # We keep IOR only if some other extensions are used
+        # And because we may have deleted some extensions, we need to check again
+        need_to_export_ior = [
+            'KHR_materials_transmission',
+            'KHR_materials_volume',
+            'KHR_materials_specular'
+        ]
+
+        if not any([e in mat['extensions'].keys() for e in need_to_export_ior]):
+            del mat['extensions']['KHR_materials_ior']
+
+    # Check if we need to keep the extension declaration
+    ior_found = False
+    for mat in json['materials']:
+        if 'extensions' not in mat.keys():
+            continue
+        if 'KHR_materials_ior' not in mat['extensions'].keys():
+            continue
+        ior_found = True
+        break
+    if not ior_found:
+        export_settings['gltf_need_to_keep_extension_declaration'] = [e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_materials_ior']
+
+def __check_volume(json, export_settings):
+    if 'materials' not in json.keys():
+        return
+    for mat in json['materials']:
+        if 'extensions' not in mat.keys():
+            continue
+        if 'KHR_materials_volume' not in mat['extensions'].keys():
+            continue
+        # We keep volume only if transmission is used
+        # And because we may have deleted some extensions, we need to check again
+        if 'KHR_materials_transmission' not in mat['extensions'].keys():
+            del mat['extensions']['KHR_materials_volume']
+
+    # Check if we need to keep the extension declaration
+    volume_found = False
+    for mat in json['materials']:
+        if 'extensions' not in mat.keys():
+            continue
+        if 'KHR_materials_volume' not in mat['extensions'].keys():
+            continue
+        volume_found = True
+        break
+    if not volume_found:
+        export_settings['gltf_need_to_keep_extension_declaration'] = [e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_materials_volume']
 
 
 def __detect_animated_extensions(obj, export_settings):
@@ -178,12 +241,12 @@ def __fix_json(obj, export_settings):
 
 
 def __should_include_json_value(key, value, export_settings):
-    allowed_empty_collections = ["KHR_materials_unlit"]
+    allowed_empty_collections = ["KHR_materials_unlit", "KHR_materials_specular"]
     allowed_empty_collections_if_animated = \
         [
-        "KHR_materials_specular",
-         "KHR_texture_transform",
+         "KHR_materials_specular",
          "KHR_materials_clearcoat",
+         "KHR_texture_transform",
          "KHR_materials_emissive_strength",
          "KHR_materials_ior",
          #"KHR_materials_iridescence",
@@ -205,6 +268,16 @@ def __should_include_json_value(key, value, export_settings):
                 return False
         return False
     elif not __is_empty_collection(value):
+        if key == "KHR_materials_specular" and "specularFactor" in value.keys() and value["specularFactor"] == 0.0:
+            if key in export_settings['gltf_animated_extensions']:
+                export_settings['gltf_need_to_keep_extension_declaration'].append(key)
+                return True
+            return False
+        if key == "KHR_materials_clearcoat" and "clearcoatFactor" in value.keys() and value["clearcoatFactor"] == 0.0:
+            if key in export_settings['gltf_animated_extensions']:
+                export_settings['gltf_need_to_keep_extension_declaration'].append(key)
+                return True
+            return False
         if key.startswith("KHR_") or key.startswith("EXT_"):
             export_settings['gltf_need_to_keep_extension_declaration'].append(key)
     elif __is_empty_collection(value) and key in allowed_empty_collections:

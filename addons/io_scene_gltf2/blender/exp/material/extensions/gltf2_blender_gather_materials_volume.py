@@ -22,15 +22,7 @@ def export_volume(blender_material, export_settings):
     # Implementation based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
 
     # If no transmission --> No volume
-    transmission_enabled = False
-    transmission_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Transmission Weight')
-    if isinstance(transmission_socket, bpy.types.NodeSocket) and not transmission_socket.is_linked:
-        transmission_enabled = transmission_socket.default_value > 0
-    elif gltf2_blender_get.has_image_node_from_socket(transmission_socket):
-        transmission_enabled = True
-
-    if transmission_enabled is False:
-        return None, {}
+    # But we need to keep it, in case it is animated
 
     volume_extension = {}
     has_thickness_texture = False

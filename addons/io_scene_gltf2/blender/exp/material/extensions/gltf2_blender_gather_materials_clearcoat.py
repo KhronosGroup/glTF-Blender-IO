@@ -32,7 +32,6 @@ def export_clearcoat(blender_material, export_settings):
 
     if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
         if clearcoat_socket.default_value != 0.0:
-            print(">1")
             clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
 
         # Storing path for KHR_animation_pointer
