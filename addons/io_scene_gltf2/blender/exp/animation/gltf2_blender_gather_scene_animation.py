@@ -118,6 +118,9 @@ def gather_scene_animations(export_settings):
         export_settings['ranges'][id(blender_material)] = {}
         export_settings['ranges'][id(blender_material)][id(blender_material)] = {'start': start_frame, 'end': end_frame}
 
+        if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
+            add_slide_data(start_frame, mat, mat, export_settings, add_drivers=False)
+
         channels = gather_data_sampled_channels('materials', mat, mat, export_settings)
         if channels is not None:
             total_channels.extend(channels)
@@ -145,6 +148,9 @@ def gather_scene_animations(export_settings):
 
         export_settings['ranges'][id(blender_light)] = {}
         export_settings['ranges'][id(blender_light)][id(blender_light)] = {'start': start_frame, 'end': end_frame}
+
+        if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
+            add_slide_data(start_frame, light, light, export_settings, add_drivers=False)
 
         channels = gather_data_sampled_channels('lights', light, light, export_settings)
         if channels is not None:
@@ -174,6 +180,9 @@ def gather_scene_animations(export_settings):
 
         export_settings['ranges'][id(blender_camera)] = {}
         export_settings['ranges'][id(blender_camera)][id(blender_camera)] = {'start': start_frame, 'end': end_frame}
+
+        if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
+            add_slide_data(start_frame, cam, cam, export_settings, add_drivers=False)
 
         channels = gather_data_sampled_channels('cameras', cam, cam, export_settings)
         if channels is not None:

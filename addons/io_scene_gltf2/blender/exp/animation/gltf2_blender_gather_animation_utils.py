@@ -84,17 +84,19 @@ def reset_sk_data(blender_object, blender_actions, export_settings) -> None:
         sk.value = 0.0
 
 
-def add_slide_data(start_frame, obj_uuid: int, key: str, export_settings):
+def add_slide_data(start_frame, uuid: int, key: str, export_settings, add_drivers=True):
 
-    if obj_uuid not in export_settings['slide'].keys():
-        export_settings['slide'][obj_uuid] = {}
-    export_settings['slide'][obj_uuid][key] = start_frame
+    if uuid not in export_settings['slide'].keys():
+        export_settings['slide'][uuid] = {}
+    export_settings['slide'][uuid][key] = start_frame
+
     # Add slide info for driver sk too
-    obj_drivers = get_sk_drivers(obj_uuid, export_settings)
-    for obj_dr in obj_drivers:
-        if obj_dr not in export_settings['slide'].keys():
-            export_settings['slide'][obj_dr] = {}
-        export_settings['slide'][obj_dr][obj_uuid + "_" + key] = start_frame
+    if add_drivers is True:
+        obj_drivers = get_sk_drivers(uuid, export_settings)
+        for obj_dr in obj_drivers:
+            if obj_dr not in export_settings['slide'].keys():
+                export_settings['slide'][obj_dr] = {}
+            export_settings['slide'][obj_dr][uuid + "_" + key] = start_frame
 
 def merge_tracks_perform(merged_tracks, animations, export_settings):
     to_delete_idx = []
