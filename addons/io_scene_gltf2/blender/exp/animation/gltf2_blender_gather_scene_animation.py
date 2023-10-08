@@ -165,6 +165,35 @@ def gather_scene_animations(export_settings):
             total_channels = []
 
 
+    # Export now KHR_animation_pointer for cameras
+    for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
+        if len(export_settings['KHR_animation_pointer']['cameras'][cam]['paths']) == 0:
+            continue
+
+        blender_camera = [l for l in bpy.data.cameras if id(l) == cam][0]
+
+        export_settings['ranges'][id(blender_camera)] = {}
+        export_settings['ranges'][id(blender_camera)][id(blender_camera)] = {'start': start_frame, 'end': end_frame}
+
+        channels = gather_data_sampled_channels('cameras', cam, cam, export_settings)
+        if channels is not None:
+            total_channels.extend(channels)
+
+        if export_settings['gltf_anim_scene_split_object'] is True:
+            if len(total_channels) > 0:
+                animation = gltf2_io.Animation(
+                    channels=total_channels,
+                    extensions=None,
+                    extras=__gather_extras(blender_camera, export_settings),
+                    name=blender_camera.name,
+                    samplers=[]
+                )
+                link_samplers(animation, export_settings)
+                animations.append(animation)
+
+            total_channels = []
+
+
     if export_settings['gltf_anim_scene_split_object'] is False:
         if len(total_channels) > 0:
             animation = gltf2_io.Animation(

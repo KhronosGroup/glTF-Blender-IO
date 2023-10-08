@@ -66,7 +66,9 @@ def gather_data_sampled_keyframes(
 
             # TODOPointer: KHR_texture_transform needs conversion
 
-            # TODOPointer: lights need conversion
+        # TODOPointer: lights need conversion
+
+        # TODOPointer: cameras need conversion
 
         key.value_total = value
         keyframes.append(key)

@@ -507,6 +507,58 @@ def get_cache_data(path: str,
                     else:
                         data[light][light]['value'][path][frame] = list(val)
 
+        # After caching lights, caching cameras, for KHR_animation_pointer
+        for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
+            if len(export_settings['KHR_animation_pointer']['cameras'][cam]['paths']) == 0:
+                continue
+
+            blender_camera = [m for m in bpy.data.cameras if id(m) == cam][0]
+            if cam not in data.keys():
+                data[cam] = {}
+
+            if blender_camera and blender_camera.animation_data and blender_camera.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                if blender_camera.animation_data.action.name not in data[cam].keys():
+                    data[cam][blender_camera.animation_data.action.name] = {}
+                    data[cam][blender_camera.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                        data[cam][blender_camera.animation_data.action.name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    val = blender_camera.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val
+                    else:
+                        data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[cam].keys():
+                    data[cam][action_name] = {}
+                    data[cam][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                        data[cam][action_name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    val = blender_camera.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[cam][action_name]['value'][path][frame] = val
+                    else:
+                        data[cam][action_name]['value'][path][frame] = list(val)
+
+            else:
+                if cam not in data[cam].keys():
+                    data[cam][cam] = {}
+                    data[cam][cam]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                        data[cam][cam]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    val = blender_camera.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[cam][cam]['value'][path][frame] = val
+                    else:
+                        data[cam][cam]['value'][path][frame] = list(val)
+
         frame += step
     return data
 

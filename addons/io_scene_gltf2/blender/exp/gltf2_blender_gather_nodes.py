@@ -68,7 +68,16 @@ def __gather_camera(blender_object, export_settings):
     if blender_object.type != 'CAMERA':
         return None
 
-    return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
+    cam =  gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
+
+    if len(export_settings['current_paths']) > 0:
+        export_settings['KHR_animation_pointer']['cameras'][id(blender_object.data)] = {}
+        export_settings['KHR_animation_pointer']['cameras'][id(blender_object.data)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['cameras'][id(blender_object.data)]['glTF_camera'] = cam
+
+    export_settings['current_paths'] = {}
+
+    return cam
 
 
 def __gather_children(vnode, blender_object, export_settings):

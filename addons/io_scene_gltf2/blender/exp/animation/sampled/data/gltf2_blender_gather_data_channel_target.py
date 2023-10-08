@@ -44,8 +44,10 @@ def __gather_node(blender_type_data, blender_id, export_settings):
         return export_settings['KHR_animation_pointer']['materials'][blender_id]['glTF_material']
     elif blender_type_data == "lights":
         return export_settings['KHR_animation_pointer']['lights'][blender_id]['glTF_light']
+    elif blender_type_data == "cameras":
+        return export_settings['KHR_animation_pointer']['cameras'][blender_id]['glTF_camera']
     else:
-        pass #TODOPointer
+        pass # This should never happen
 
 def __gather_path(blender_type_data, blender_id, channel, export_settings):
     return export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][channel]['path']

@@ -62,6 +62,7 @@ def __gather_scene(blender_scene, export_settings):
     export_settings['KHR_animation_pointer'] = {}
     export_settings['KHR_animation_pointer']['materials'] = {}
     export_settings['KHR_animation_pointer']['lights'] = {}
+    export_settings['KHR_animation_pointer']['cameras'] = {}
 
     vtree = gltf2_blender_gather_tree.VExportTree(export_settings)
     vtree.construct(blender_scene)

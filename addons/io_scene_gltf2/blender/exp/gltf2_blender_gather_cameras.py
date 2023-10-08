@@ -25,6 +25,8 @@ def gather_camera(blender_camera, export_settings):
     if not __filter_camera(blender_camera, export_settings):
         return None
 
+    export_settings['current_paths'] = {} #For KHR_animation_pointer
+
     camera = gltf2_io.Camera(
         extensions=__gather_extensions(blender_camera, export_settings),
         extras=__gather_extras(blender_camera, export_settings),
@@ -82,6 +84,27 @@ def __gather_orthographic(blender_camera, export_settings):
         orthographic.znear = blender_camera.clip_start
         orthographic.zfar = blender_camera.clip_end
 
+        # Store data for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/orthographic/xmag"
+        export_settings['current_paths']['ortho_scale'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/orthographic/ymag"
+        export_settings['current_paths']['ortho_scale'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/orthographic/zfar"
+        export_settings['current_paths']['clip_end'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/orthographic/znear"
+        export_settings['current_paths']['clip_start'] = path_
+
         return orthographic
     return None
 
@@ -116,6 +139,23 @@ def __gather_perspective(blender_camera, export_settings):
 
         perspective.znear = blender_camera.clip_start
         perspective.zfar = blender_camera.clip_end
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/perspective/zfar"
+        export_settings['current_paths']['clip_end'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/perspective/znear"
+        export_settings['current_paths']['clip_start'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/perspective/yfov"
+        export_settings['current_paths']['angle'] = path_
+
+        # aspect ratio is not animatable in blender
 
         return perspective
     return None
