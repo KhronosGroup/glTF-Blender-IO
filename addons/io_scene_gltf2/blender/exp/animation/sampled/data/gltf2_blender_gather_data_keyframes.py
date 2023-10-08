@@ -46,7 +46,7 @@ def gather_data_sampled_keyframes(
         key = Keyframe([None] * length, frame, 'value')
 
         value = get_cache_data(
-            'value', #TODOPointer used for differenciate material / light / camera ?
+            'value',
             blender_id,
             channel,
             action_name,

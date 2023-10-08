@@ -42,6 +42,8 @@ def __gather_extras(blender_type_data, blender_id, channel, export_settings):
 def __gather_node(blender_type_data, blender_id, export_settings):
     if blender_type_data == "materials":
         return export_settings['KHR_animation_pointer']['materials'][blender_id]['glTF_material']
+    elif blender_type_data == "lights":
+        return export_settings['KHR_animation_pointer']['lights'][blender_id]['glTF_light']
     else:
         pass #TODOPointer
 

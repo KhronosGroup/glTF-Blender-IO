@@ -409,6 +409,104 @@ def get_cache_data(path: str,
                         data[mat][mat]['value'][path][frame] = list(val)
 
 
+        # After caching materials, caching lights, for KHR_animation_pointer
+        for light in export_settings['KHR_animation_pointer']['lights'].keys():
+            if len(export_settings['KHR_animation_pointer']['lights'][light]['paths']) == 0:
+                continue
+
+            blender_light = [m for m in bpy.data.lights if id(m) == light][0]
+            if light not in data.keys():
+                data[light] = {}
+
+            if blender_light.node_tree and blender_light.node_tree.animation_data and blender_light.node_tree.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+
+                if blender_light.node_tree.animation_data.action.name not in data[light].keys():
+                    data[light][blender_light.node_tree.animation_data.action.name] = {}
+                    data[light][blender_light.node_tree.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][blender_light.node_tree.animation_data.action.name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][blender_light.node_tree.animation_data.action.name]['value'][path][frame] = val
+                    else:
+                        data[light][blender_light.node_tree.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[light].keys():
+                    data[light][action_name] = {}
+                    data[light][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][action_name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][action_name]['value'][path][frame] = val
+                    else:
+                        data[light][action_name]['value'][path][frame] = list(val)
+            else:
+                # case of baking materials (scene export).
+                # There is no animation, so use id as key
+
+                if light not in data[light].keys():
+                    data[light][light] = {}
+                    data[light][light]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][light]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][light]['value'][path][frame] = val
+                    else:
+                        data[light][light]['value'][path][frame] = list(val)
+
+            if blender_light and blender_light.animation_data and blender_light.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                if blender_light.animation_data.action.name not in data[light].keys():
+                    data[light][blender_light.animation_data.action.name] = {}
+                    data[light][blender_light.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][blender_light.animation_data.action.name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][blender_light.animation_data.action.name]['value'][path][frame] = val
+                    else:
+                        data[light][blender_light.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[light].keys():
+                    data[light][action_name] = {}
+                    data[light][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][action_name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][action_name]['value'][path][frame] = val
+                    else:
+                        data[light][action_name]['value'][path][frame] = list(val)
+
+            else:
+                if light not in data[light].keys():
+                    data[light][light] = {}
+                    data[light][light]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][light]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][light]['value'][path][frame] = val
+                    else:
+                        data[light][light]['value'][path][frame] = list(val)
+
         frame += step
     return data
 

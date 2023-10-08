@@ -165,6 +165,12 @@ def __gather_extensions(blender_object, export_settings):
                     "light": light_extension
                 }
             )
+            if len(export_settings['current_paths']) > 0:
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)] = {}
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['paths'] = export_settings['current_paths'].copy()
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['glTF_light'] = light_extension
+
+            export_settings['current_paths'] = {}
 
     return extensions if extensions else None
 

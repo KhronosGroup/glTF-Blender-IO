@@ -136,33 +136,33 @@ def gather_scene_animations(export_settings):
 
             total_channels = []
 
-    # # Export now KHR_animation_pointer for lights
-    # for light in export_settings['KHR_animation_pointer']['lights'].keys():
-    #     if len(export_settings['KHR_animation_pointer']['lights'][light]['paths']) == 0:
-    #         continue
+    # Export now KHR_animation_pointer for lights
+    for light in export_settings['KHR_animation_pointer']['lights'].keys():
+        if len(export_settings['KHR_animation_pointer']['lights'][light]['paths']) == 0:
+            continue
 
-    #     light = [l for l in bpy.data.lights if id(l) == light][0]
+        blender_light = [l for l in bpy.data.lights if id(l) == light][0]
 
-    #     export_settings['ranges'][id(light)] = {}
-    #     export_settings['ranges'][id(light)][id(light)] = {'start': start_frame, 'end': end_frame}
+        export_settings['ranges'][id(blender_light)] = {}
+        export_settings['ranges'][id(blender_light)][id(blender_light)] = {'start': start_frame, 'end': end_frame}
 
-    #     channels = gather_data_sampled_channels('lights', light, light, export_settings)
-    #     if channels is not None:
-    #         total_channels.extend(channels)
+        channels = gather_data_sampled_channels('lights', light, light, export_settings)
+        if channels is not None:
+            total_channels.extend(channels)
 
-    #     if export_settings['gltf_anim_scene_split_object'] is True:
-    #         if len(total_channels) > 0:
-    #             animation = gltf2_io.Animation(
-    #                 channels=total_channels,
-    #                 extensions=None,
-    #                 extras=__gather_extras(light, export_settings),
-    #                 name=light.name,
-    #                 samplers=[]
-    #             )
-    #             link_samplers(animation, export_settings)
-    #             animations.append(animation)
+        if export_settings['gltf_anim_scene_split_object'] is True:
+            if len(total_channels) > 0:
+                animation = gltf2_io.Animation(
+                    channels=total_channels,
+                    extensions=None,
+                    extras=__gather_extras(blender_light, export_settings),
+                    name=blender_light.name,
+                    samplers=[]
+                )
+                link_samplers(animation, export_settings)
+                animations.append(animation)
 
-    #         total_channels = []
+            total_channels = []
 
 
     if export_settings['gltf_anim_scene_split_object'] is False:

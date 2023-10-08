@@ -113,6 +113,8 @@ def gather_material(blender_material, export_settings):
         export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['paths'] = export_settings['current_paths'].copy()
         export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['glTF_material'] = material
 
+    export_settings['current_paths'] = {}
+
     return material, {"uv_info": uvmap_infos, "vc_info": vc_info}
 
 
