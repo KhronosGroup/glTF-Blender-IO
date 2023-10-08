@@ -64,6 +64,8 @@ def gather_data_sampled_keyframes(
                 if export_settings['KHR_animation_pointer']['materials'][blender_id]['paths'][channel]['reverse'] is True:
                     value = 1.0 - value
 
+            # TODOPointer: KHR_texture_transform needs conversion
+
         key.value_total = value
         keyframes.append(key)
         frame += step
