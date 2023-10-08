@@ -19,11 +19,12 @@ from ......io.exp import gltf2_io_binary_data
 from ......io.com import gltf2_io_constants
 from ....gltf2_blender_gather_cache import cached
 from ....gltf2_blender_gather_accessors import gather_accessor
-from .gltf2_blender_gather_material_keyframes import gather_material_sampled_keyframes
+from .gltf2_blender_gather_data_keyframes import gather_data_sampled_keyframes
 
 @cached
-def gather_material_sampled_animation_sampler(
-        material_id: str,
+def gather_data_sampled_animation_sampler(
+        blender_type_data: str,
+        blender_id: str,
         channel: str,
         action_name: str,
         node_channel_is_animated: bool,
@@ -32,7 +33,8 @@ def gather_material_sampled_animation_sampler(
         ):
 
     keyframes = __gather_keyframes(
-        material_id,
+        blender_type_data,
+        blender_id,
         channel,
         action_name,
         node_channel_is_animated,
@@ -43,27 +45,29 @@ def gather_material_sampled_animation_sampler(
         return None
 
     # Now we are raw input/output, we need to convert to glTF data
-    input, output = __convert_keyframes(material_id, channel, keyframes, action_name, export_settings)
+    input, output = __convert_keyframes(blender_type_data, blender_id, channel, keyframes, action_name, export_settings)
 
     sampler = gltf2_io.AnimationSampler(
         extensions=None,
         extras=None,
         input=input,
-        interpolation=__gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings),
+        interpolation=__gather_interpolation(blender_type_data, node_channel_is_animated, node_channel_interpolation, keyframes, export_settings),
         output=output
     )
 
     return sampler
 
 def __gather_keyframes(
-        material_id,
+        blender_type_data,
+        blender_id,
         channel,
         action_name,
         node_channel_is_animated,
         export_settings):
 
-    keyframes = gather_material_sampled_keyframes(
-        material_id,
+    keyframes = gather_data_sampled_keyframes(
+        blender_type_data,
+        blender_id,
         channel,
         action_name,
         node_channel_is_animated,
@@ -76,14 +80,14 @@ def __gather_keyframes(
 
     return keyframes
 
-def __convert_keyframes(material_id, channel, keyframes, action_name, export_settings):
+def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, action_name, export_settings):
 
     # Sliding can come from:
     # - option SLIDE for negative frames
     # - option to start animation at frame 0 for looping
-    if material_id in export_settings['slide'].keys() and action_name in export_settings['slide'][material_id].keys():
+    if blender_id in export_settings['slide'].keys() and action_name in export_settings['slide'][blender_id].keys():
         for k in keyframes:
-            k.frame += -export_settings['slide'][material_id][action_name]
+            k.frame += -export_settings['slide'][blender_id][action_name]
             k.seconds = k.frame / bpy.context.scene.render.fps
 
     times = [k.seconds for k in keyframes]
@@ -126,7 +130,7 @@ def __convert_keyframes(material_id, channel, keyframes, action_name, export_set
 
     return input, output
 
-def __gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings):
+def __gather_interpolation(blender_type_data, node_channel_is_animated, node_channel_interpolation, keyframes, export_settings):
     # TODOPointer
     return 'LINEAR'
 

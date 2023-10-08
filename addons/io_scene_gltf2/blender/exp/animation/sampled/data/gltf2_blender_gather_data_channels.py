@@ -16,42 +16,43 @@ import bpy
 import typing
 from ......io.com import gltf2_io
 from ......blender.com.gltf2_blender_conversion import get_gltf_interpolation
-from .gltf2_blender_gather_material_channel_target import gather_material_sampled_channel_target
-from .gltf2_blender_gather_material_sampler import gather_material_sampled_animation_sampler
+from .gltf2_blender_gather_data_channel_target import gather_data_sampled_channel_target
+from .gltf2_blender_gather_data_sampler import gather_data_sampled_animation_sampler
 
-
-def gather_material_sampled_channels(blender_material_id, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
+def gather_data_sampled_channels(blender_type_data, blender_id, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
-
-    list_of_animated_material_channels = {} #TODOPointer
+    list_of_animated_data_channels = {} #TODOPointer
 
     baseColorFactor_alpha_merged_already_done = False
-    for path in export_settings['KHR_animation_pointer']['materials'][blender_material_id]['paths'].keys():
+    for path in export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'].keys():
 
         # Do not manage alpha, as it will be managaed by the baseColorFactor (merging Color and alpha)
-        if export_settings['KHR_animation_pointer']['materials'][blender_material_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+        if export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
                 and baseColorFactor_alpha_merged_already_done is True:
             continue
 
-        channel = gather_sampled_material_channel(
-            blender_material_id,
+        channel = gather_sampled_data_channel(
+            blender_type_data,
+            blender_id,
             path,
             blender_action_name,
-            path in list_of_animated_material_channels.keys(),
-            list_of_animated_material_channels[path] if path in list_of_animated_material_channels.keys() else get_gltf_interpolation("LINEAR"),
+            path in list_of_animated_data_channels.keys(),
+            list_of_animated_data_channels[path] if path in list_of_animated_data_channels.keys() else get_gltf_interpolation("LINEAR"),
             export_settings)
         if channel is not None:
             channels.append(channel)
 
-        if export_settings['KHR_animation_pointer']['materials'][blender_material_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+        if export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
             baseColorFactor_alpha_merged_already_done = True
+
 
     return channels
 
 
-def gather_sampled_material_channel(
-        material_id: str,
+def gather_sampled_data_channel(
+        blender_type_data: str,
+        blender_id: str,
         channel: str,
         action_name: str,
         node_channel_is_animated: bool,
@@ -59,9 +60,9 @@ def gather_sampled_material_channel(
         export_settings
         ):
 
-    __target= __gather_target(material_id, channel, export_settings)
+    __target= __gather_target(blender_type_data, blender_id, channel, export_settings)
     if __target.path is not None:
-        sampler = __gather_sampler(material_id, channel, action_name, node_channel_is_animated, node_channel_interpolation, export_settings)
+        sampler = __gather_sampler(blender_type_data, blender_id, channel, action_name, node_channel_is_animated, node_channel_interpolation, export_settings)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
@@ -77,17 +78,20 @@ def gather_sampled_material_channel(
         return animation_channel
     return None
 
-def __gather_target(material_id,
+def __gather_target(
+                    blender_type_data: str,
+                    blender_id: str,
                     channel: str,
                     export_settings
                     ) -> gltf2_io.AnimationChannelTarget:
 
-    return gather_material_sampled_channel_target(
-        material_id, channel, export_settings)
+    return gather_data_sampled_channel_target(
+        blender_type_data, blender_id, channel, export_settings)
 
-def __gather_sampler(material_id, channel, action_name, node_channel_is_animated, node_channel_interpolation, export_settings):
-    return gather_material_sampled_animation_sampler(
-        material_id,
+def __gather_sampler(blender_type_data, blender_id, channel, action_name, node_channel_is_animated, node_channel_interpolation, export_settings):
+    return gather_data_sampled_animation_sampler(
+        blender_type_data,
+        blender_id,
         channel,
         action_name,
         node_channel_is_animated,

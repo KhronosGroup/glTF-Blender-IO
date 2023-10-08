@@ -20,15 +20,16 @@ from ..gltf2_blender_gather_animation_sampling_cache import get_cache_data
 
 
 @cached
-def gather_material_sampled_keyframes(
-        material_id,
+def gather_data_sampled_keyframes(
+        blender_type_data: str,
+        blender_id,
         channel,
         action_name,
         node_channel_is_animated: bool,
         export_settings):
 
-    start_frame = export_settings['ranges'][material_id][action_name]['start']
-    end_frame  = export_settings['ranges'][material_id][action_name]['end']
+    start_frame = export_settings['ranges'][blender_id][action_name]['start']
+    end_frame  = export_settings['ranges'][blender_id][action_name]['end']
 
     keyframes = []
 
@@ -37,16 +38,16 @@ def gather_material_sampled_keyframes(
     while frame <= end_frame:
 
         # Retrieve length of data to export
-        if export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['path'] != "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
-            length = export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['length']
+        if export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][channel]['path'] != "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+            length = export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][channel]['length']
         else:
             length = 4
 
         key = Keyframe([None] * length, frame, 'value')
 
         value = get_cache_data(
-            'value',
-            material_id,
+            'value', #TODOPointer used for differenciate material / light / camera ?
+            blender_id,
             channel,
             action_name,
             frame,
@@ -55,12 +56,13 @@ def gather_material_sampled_keyframes(
         )
 
         # Convert data if needed
-        if "attenuationDistance" in export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['path']:
-            value = 1.0 / value if value != 0.0 else 1e13
+        if blender_type_data == "materials":
+            if "attenuationDistance" in export_settings['KHR_animation_pointer']['materials'][blender_id]['paths'][channel]['path']:
+                value = 1.0 / value if value != 0.0 else 1e13
 
-        if export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['path'] == "/materials/XXX/occlusionTexture/strength":
-            if export_settings['KHR_animation_pointer']['materials'][material_id]['paths'][channel]['reverse'] is True:
-                value = 1.0 - value
+            if export_settings['KHR_animation_pointer']['materials'][blender_id]['paths'][channel]['path'] == "/materials/XXX/occlusionTexture/strength":
+                if export_settings['KHR_animation_pointer']['materials'][blender_id]['paths'][channel]['reverse'] is True:
+                    value = 1.0 - value
 
         key.value_total = value
         keyframes.append(key)
