@@ -166,7 +166,6 @@ class ExportImage:
 
         # Unhappy path = we need to create the image self.fills describes or self.stores describes
         if self.numpy_calc is None:
-            print(">2")
             return self.__encode_unhappy(export_settings), None
         else:
             pixels, width, height, factor = self.numpy_calc(self.stored, export_settings)
