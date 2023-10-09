@@ -257,8 +257,12 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, e
 
         if blender_type_data == "materials":
             blender_data_object = [i for i in bpy.data.materials if id(i) == blender_id][0]
+        elif blender_type_data == "cameras":
+            blender_data_object = [i for i in bpy.data.cameras if id(i) == blender_id][0]
+        elif blender_type_data == "lights":
+            blender_data_object = [i for i in bpy.data.lights if id(i) == blender_id][0]
         else:
-            pass #TODOPointer: lights and cameras
+            pass # Should not happen
 
         # Export now KHR_animation_pointer for materials / light / camera
         for i in [a for a in export_settings['KHR_animation_pointer'][blender_type_data].keys() if a==blender_id]:
