@@ -14,8 +14,8 @@
 
 import bpy
 from .....io.com.gltf2_io_extensions import Extension
-from ....exp import gltf2_blender_get
 from ...material import gltf2_blender_gather_texture_info
+from ..gltf2_blender_search_node_tree import has_image_node_from_socket, get_socket, get_factor_from_socket
 
 def export_clearcoat(blender_material, export_settings):
     clearcoat_enabled = False
@@ -25,15 +25,15 @@ def export_clearcoat(blender_material, export_settings):
     clearcoat_extension = {}
     clearcoat_roughness_slots = ()
 
-    clearcoat_socket = gltf2_blender_get.get_socket(blender_material, 'Coat Weight')
-    clearcoat_roughness_socket = gltf2_blender_get.get_socket(blender_material, 'Coat Roughness')
-    clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material, 'Coat Normal')
+    clearcoat_socket = get_socket(blender_material, 'Coat Weight')
+    clearcoat_roughness_socket = get_socket(blender_material, 'Coat Roughness')
+    clearcoat_normal_socket = get_socket(blender_material, 'Coat Normal')
 
-    if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
-        clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
+    if isinstance(clearcoat_socket.socket, bpy.types.NodeSocket) and not clearcoat_socket.socket.is_linked:
+        clearcoat_extension['clearcoatFactor'] = clearcoat_socket.socket.default_value
         clearcoat_enabled = clearcoat_extension['clearcoatFactor'] > 0
-    elif gltf2_blender_get.has_image_node_from_socket(clearcoat_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(clearcoat_socket, kind='VALUE')
+    elif has_image_node_from_socket(clearcoat_socket, export_settings):
+        fac = get_factor_from_socket(clearcoat_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatFactor'] = fac if fac != None else 1.0
         has_clearcoat_texture = True
@@ -42,10 +42,10 @@ def export_clearcoat(blender_material, export_settings):
     if not clearcoat_enabled:
         return None, {}
 
-    if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
-        clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
-    elif gltf2_blender_get.has_image_node_from_socket(clearcoat_roughness_socket):
-        fac = gltf2_blender_get.get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
+    if isinstance(clearcoat_roughness_socket.socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.socket.is_linked:
+        clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.socket.default_value
+    elif has_image_node_from_socket(clearcoat_roughness_socket, export_settings):
+        fac = get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatRoughnessFactor'] = fac if fac != None else 1.0
         has_clearcoat_roughness_texture = True
@@ -81,7 +81,7 @@ def export_clearcoat(blender_material, export_settings):
             clearcoat_extension['clearcoatRoughnessTexture'] = clearcoat_roughness_texture
             uvmap_infos.update({'clearcoatRoughnessTexture': uvmap_info})
 
-    if gltf2_blender_get.has_image_node_from_socket(clearcoat_normal_socket):
+    if has_image_node_from_socket(clearcoat_normal_socket, export_settings):
         clearcoat_normal_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             clearcoat_normal_socket,
             (clearcoat_normal_socket,),
