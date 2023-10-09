@@ -27,9 +27,12 @@ def gather_data_sampled_channels(blender_type_data, blender_id, blender_action_n
     baseColorFactor_alpha_merged_already_done = False
     for path in export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'].keys():
 
+        print(path)
+
         # Do not manage alpha, as it will be managaed by the baseColorFactor (merging Color and alpha)
         if export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
                 and baseColorFactor_alpha_merged_already_done is True:
+            print("continue")
             continue
 
         channel = gather_sampled_data_channel(

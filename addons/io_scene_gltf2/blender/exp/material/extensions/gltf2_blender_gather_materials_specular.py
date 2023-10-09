@@ -14,35 +14,40 @@
 
 import bpy
 from .....io.com.gltf2_io_extensions import Extension
-from ....exp import gltf2_blender_get
 from ...material.gltf2_blender_gather_texture_info import gather_texture_info
+from ..gltf2_blender_search_node_tree import \
+    has_image_node_from_socket, \
+    get_socket_from_gltf_material_node, \
+    get_socket, \
+    get_factor_from_socket
+
 
 def export_specular(blender_material, export_settings):
     specular_extension = {}
 
-    specular_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Specular IOR Level')
-    speculartint_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Specular Tint')
+    specular_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Specular IOR Level')
+    speculartint_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Specular Tint')
 
-    if specular_socket is None or speculartint_socket is None:
+    if specular_socket.socket is None or speculartint_socket.socket is None:
         return None, {}
 
     uvmap_infos = {}
 
-    specular_non_linked = isinstance(specular_socket, bpy.types.NodeSocket) and not specular_socket.is_linked
-    specularcolor_non_linked = isinstance(speculartint_socket, bpy.types.NodeSocket) and not speculartint_socket.is_linked
+    specular_non_linked = specular_socket.socket is not None and isinstance(specular_socket.socket, bpy.types.NodeSocket) and not specular_socket.socket.is_linked
+    specularcolor_non_linked = speculartint_socket.socket is not None and isinstance(speculartint_socket.socket, bpy.types.NodeSocket) and not speculartint_socket.socket.is_linked
 
     if specular_non_linked is True:
-        if specular_socket.default_value != 1.0:
-            specular_extension['specularFactor'] = specular_socket.default_value
+        if specular_socket.socket.default_value != 1.0:
+            specular_extension['specularFactor'] = specular_socket.socket.default_value
 
         # Storing path for KHR_animation_pointer
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularFactor"
-        export_settings['current_paths']["node_tree." + specular_socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + specular_socket.socket.path_from_id() + ".default_value"] = path_
     else:
         # Factor
-        fac, path = gltf2_blender_get.get_factor_from_socket(specular_socket, kind='VALUE')
+        fac, path = get_factor_from_socket(specular_socket, kind='VALUE')
         if fac is not None and fac != 1.0:
             specular_extension['specularFactor'] = fac
 
@@ -53,7 +58,7 @@ def export_specular(blender_material, export_settings):
             export_settings['current_paths'][path] = path_
 
         # Texture
-        if gltf2_blender_get.has_image_node_from_socket(specular_socket):
+        if has_image_node_from_socket(specular_socket, export_settings):
             original_specular_texture, uvmap_info, _ = gather_texture_info(
                 specular_socket,
                 (specular_socket,),
@@ -73,7 +78,7 @@ def export_specular(blender_material, export_settings):
             export_settings['current_texture_transform'] = {}
 
     if specularcolor_non_linked is True:
-        color = speculartint_socket.default_value[:3]
+        color = speculartint_socket.socket.default_value[:3]
         if color != (1.0, 1.0, 1.0):
             specular_extension['specularColorFactor'] = color
 
@@ -81,10 +86,10 @@ def export_specular(blender_material, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor"
-        export_settings['current_paths']["node_tree." + speculartint_socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + speculartint_socket.socket.path_from_id() + ".default_value"] = path_
     else:
         # Factor
-        fac, path = gltf2_blender_get.get_factor_from_socket(speculartint_socket, kind='RGB')
+        fac, path = get_factor_from_socket(speculartint_socket, kind='RGB')
         if fac is not None and fac != (1.0, 1.0, 1.0):
             specular_extension['specularColorFactor'] = fac
 
@@ -95,7 +100,7 @@ def export_specular(blender_material, export_settings):
             export_settings['current_paths'][path] = path_
 
         # Texture
-        if gltf2_blender_get.has_image_node_from_socket(speculartint_socket):
+        if has_image_node_from_socket(speculartint_socket, export_settings):
             original_specularcolor_texture, uvmap_info, _ = gather_texture_info(
                 speculartint_socket,
                 (speculartint_socket,),

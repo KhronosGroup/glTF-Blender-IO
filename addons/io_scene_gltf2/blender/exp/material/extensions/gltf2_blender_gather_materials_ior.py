@@ -14,16 +14,16 @@
 
 from .....io.com.gltf2_io_extensions import Extension
 from .....io.com.gltf2_io_constants import GLTF_IOR
-from ....exp import gltf2_blender_get
+from ..gltf2_blender_search_node_tree import get_socket
 
 def export_ior(blender_material, extensions, export_settings):
-    ior_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'IOR')
+    ior_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'IOR')
 
-    if not ior_socket:
+    if not ior_socket.socket:
         return None
 
     # We don't manage case where socket is linked, always check default value
-    if ior_socket.is_linked:
+    if ior_socket.socket.is_linked:
         # TODOExt: add warning?
         return None
 
@@ -42,13 +42,14 @@ def export_ior(blender_material, extensions, export_settings):
         return None
 
     ior_extension = {}
-    if ior_socket.default_value != GLTF_IOR:
-        ior_extension['ior'] = ior_socket.default_value
+    if ior_socket.socket.default_value != GLTF_IOR:
+        ior_extension['ior'] = ior_socket.socket.default_value
 
     # Storing path for KHR_animation_pointer
     path_ = {}
     path_['length'] = 1
     path_['path'] = "/materials/XXX/extensions/KHR_materials_ior/ior"
-    export_settings['current_paths']["node_tree." + ior_socket.path_from_id() + ".default_value"] = path_
+    export_settings['current_paths']["node_tree." + ior_socket.socket.path_from_id() + ".default_value"] = path_
+
 
     return Extension('KHR_materials_ior', ior_extension, False)

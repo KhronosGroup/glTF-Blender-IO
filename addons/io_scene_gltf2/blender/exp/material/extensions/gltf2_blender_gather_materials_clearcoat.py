@@ -15,9 +15,9 @@
 import bpy
 from .....io.com.gltf2_io_constants import BLENDER_COAT_ROUGHNESS
 from .....io.com.gltf2_io_extensions import Extension
-from ....exp import gltf2_blender_get
 from ...material import gltf2_blender_gather_texture_info
 
+from ..gltf2_blender_search_node_tree import has_image_node_from_socket, get_socket, get_factor_from_socket
 
 def export_clearcoat(blender_material, export_settings):
     has_clearcoat_texture = False
@@ -26,23 +26,23 @@ def export_clearcoat(blender_material, export_settings):
     clearcoat_extension = {}
     clearcoat_roughness_slots = ()
 
-    clearcoat_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Coat Weight')
-    clearcoat_roughness_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Coat Roughness')
-    clearcoat_normal_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, 'Coat Normal')
+    clearcoat_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Coat Weight')
+    clearcoat_roughness_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Coat Roughness')
+    clearcoat_normal_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Coat Normal')
 
-    if isinstance(clearcoat_socket, bpy.types.NodeSocket) and not clearcoat_socket.is_linked:
-        if clearcoat_socket.default_value != 0.0:
-            clearcoat_extension['clearcoatFactor'] = clearcoat_socket.default_value
+    if clearcoat_socket.socket is not None and isinstance(clearcoat_socket.socket, bpy.types.NodeSocket) and not clearcoat_socket.socket.is_linked:
+        if clearcoat_socket.socket.default_value != 0.0:
+            clearcoat_extension['clearcoatFactor'] = clearcoat_socket.socket.default_value
 
         # Storing path for KHR_animation_pointer
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_clearcoat/clearcoatFactor"
-        export_settings['current_paths']["node_tree." + clearcoat_socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + clearcoat_socket.socket.path_from_id() + ".default_value"] = path_
 
 
-    elif gltf2_blender_get.has_image_node_from_socket(clearcoat_socket):
-        fac, path = gltf2_blender_get.get_factor_from_socket(clearcoat_socket, kind='VALUE')
+    elif has_image_node_from_socket(clearcoat_socket, export_settings):
+        fac, path = get_factor_from_socket(clearcoat_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatFactor'] = fac if fac != None else 1.0
         has_clearcoat_texture = True
@@ -54,19 +54,19 @@ def export_clearcoat(blender_material, export_settings):
             path_['path'] = "/materials/XXX/extensions/KHR_materials_clearcoat/clearcoatFactor"
             export_settings['current_paths'][path] = path_
 
-    if isinstance(clearcoat_roughness_socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.is_linked:
-        if abs(clearcoat_roughness_socket.default_value - BLENDER_COAT_ROUGHNESS) > 1e-5 \
-                or (abs(clearcoat_roughness_socket.default_value - BLENDER_COAT_ROUGHNESS) > 1e-5 and 'clearcoatFactor' in clearcoat_extension):
-            clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.default_value
+    if clearcoat_roughness_socket.socket is not None and isinstance(clearcoat_roughness_socket.socket, bpy.types.NodeSocket) and not clearcoat_roughness_socket.socket.is_linked:
+        if abs(clearcoat_roughness_socket.socket.default_value - BLENDER_COAT_ROUGHNESS) > 1e-5 \
+                or (abs(clearcoat_roughness_socket.socket.default_value - BLENDER_COAT_ROUGHNESS) > 1e-5 and 'clearcoatFactor' in clearcoat_extension):
+            clearcoat_extension['clearcoatRoughnessFactor'] = clearcoat_roughness_socket.socket.default_value
 
         # Storing path for KHR_animation_pointer
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_clearcoat/clearcoatRoughnessFactor "
-        export_settings['current_paths']["node_tree." + clearcoat_roughness_socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + clearcoat_roughness_socket.socket.path_from_id() + ".default_value"] = path_
 
-    elif gltf2_blender_get.has_image_node_from_socket(clearcoat_roughness_socket):
-        fac, path = gltf2_blender_get.get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
+    elif has_image_node_from_socket(clearcoat_roughness_socket, export_settings):
+        fac, path = get_factor_from_socket(clearcoat_roughness_socket, kind='VALUE')
         # default value in glTF is 0.0, but if there is a texture without factor, use 1
         clearcoat_extension['clearcoatRoughnessFactor'] = fac if fac != None else 1.0
         has_clearcoat_roughness_texture = True
@@ -127,7 +127,7 @@ def export_clearcoat(blender_material, export_settings):
 
         export_settings['current_texture_transform'] = {}
 
-    if gltf2_blender_get.has_image_node_from_socket(clearcoat_normal_socket):
+    if has_image_node_from_socket(clearcoat_normal_socket, export_settings):
         clearcoat_normal_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             clearcoat_normal_socket,
             (clearcoat_normal_socket,),

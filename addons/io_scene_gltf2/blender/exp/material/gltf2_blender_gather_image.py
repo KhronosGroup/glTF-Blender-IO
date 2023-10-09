@@ -23,7 +23,7 @@ from ....io.com import gltf2_io_debug
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..gltf2_blender_gather_cache import cached
 from .extensions.gltf2_blender_image import Channel, ExportImage, FillImage
-from ..gltf2_blender_get import get_tex_from_socket
+from .gltf2_blender_search_node_tree import get_texture_node_from_socket, NodeSocket
 
 @cached
 def gather_image(
@@ -124,7 +124,7 @@ def __gather_extras(sockets, export_settings):
 def __gather_mime_type(sockets, export_image, export_settings):
     # force png or webp if Alpha contained so we can export alpha
     for socket in sockets:
-        if socket.name == "Alpha":
+        if socket.socket.name == "Alpha":
             if export_settings["gltf_image_format"] == "WEBP":
                 return "image/webp"
             else:
@@ -201,7 +201,7 @@ def __get_image_data(sockets, default_sockets, export_settings) -> ExportImage:
     # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
-    results = [get_tex_from_socket(socket) for socket in sockets]
+    results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets]
 
     # Check if we need a simple mapping or more complex calculation
     # There is currently no complex calculation for any textures
@@ -246,23 +246,23 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
             dst_chan = None
 
             # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
-            if socket.name == 'Metallic':
+            if socket.socket.name == 'Metallic':
                 dst_chan = Channel.B
-            elif socket.name == 'Roughness':
+            elif socket.socket.name == 'Roughness':
                 dst_chan = Channel.G
-            elif socket.name == 'Occlusion':
+            elif socket.socket.name == 'Occlusion':
                 dst_chan = Channel.R
-            elif socket.name == 'Alpha':
+            elif socket.socket.name == 'Alpha':
                 dst_chan = Channel.A
-            elif socket.name == 'Coat Weight':
+            elif socket.socket.name == 'Coat Weight':
                 dst_chan = Channel.R
-            elif socket.name == 'Coat Roughness':
+            elif socket.socket.name == 'Coat Roughness':
                 dst_chan = Channel.G
-            elif socket.name == 'Thickness': # For KHR_materials_volume
+            elif socket.socket.name == 'Thickness': # For KHR_materials_volume
                 dst_chan = Channel.G
-            elif socket.name == "Specular IOR Level": # For KHR_material_specular
+            elif socket.socket.name == "Specular IOR Level": # For KHR_material_specular
                 dst_chan = Channel.A
-            elif socket.name == "Sheen Roughness": # For KHR_materials_sheen
+            elif socket.socket.name == "Sheen Roughness": # For KHR_materials_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:
@@ -270,12 +270,12 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
 
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
-                if socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
+                if socket.socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
                     if default_roughness is not None:
                         composed_image.fill_with(Channel.G, default_roughness)
                     else:
                         composed_image.fill_white(Channel.G)
-                elif socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
+                elif socket.socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
                     if default_metallic is not None:
                         composed_image.fill_with(Channel.B, default_metallic)
                     else:

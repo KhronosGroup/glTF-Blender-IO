@@ -14,20 +14,26 @@
 
 import bpy
 from .....io.com.gltf2_io_extensions import Extension
-from ....exp import gltf2_blender_get
 from ...material import gltf2_blender_gather_texture_info
+from ..gltf2_blender_search_node_tree import \
+    get_const_from_default_value_socket, \
+    get_socket, \
+    get_factor_from_socket, \
+    get_const_from_socket, \
+    NodeSocket, \
+    get_socket_from_gltf_material_node
 
 def export_emission_factor(blender_material, export_settings):
-    emissive_socket = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Emissive")
-    if emissive_socket is None:
-        emissive_socket = gltf2_blender_get.get_socket_old(blender_material, "EmissiveFactor")
-    if isinstance(emissive_socket, bpy.types.NodeSocket):
+    emissive_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, "Emissive")
+    if emissive_socket.socket is None:
+        emissive_socket = get_socket_from_gltf_material_node(blender_material.node_tree, blender_material.use_nodes, "EmissiveFactor")
+    if emissive_socket is not None and isinstance(emissive_socket.socket, bpy.types.NodeSocket):
         if export_settings['gltf_image_format'] != "NONE":
-            factor, path = gltf2_blender_get.get_factor_from_socket(emissive_socket, kind='RGB')
+            factor, path = get_factor_from_socket(emissive_socket, kind='RGB')
         else:
-            factor, path = gltf2_blender_get.get_const_from_default_value_socket(emissive_socket, kind='RGB')
+            factor, path = get_const_from_default_value_socket(emissive_socket, kind='RGB')
 
-        if factor is None and emissive_socket.is_linked:
+        if factor is None and emissive_socket.socket.is_linked:
             # In glTF, the default emissiveFactor is all zeros, so if an emission texture is connected,
             # we have to manually set it to all ones.
             factor = [1.0, 1.0, 1.0]
@@ -36,12 +42,12 @@ def export_emission_factor(blender_material, export_settings):
 
         # Handle Emission Strength
         strength_socket = None
-        if emissive_socket.node.type == 'EMISSION':
-            strength_socket = emissive_socket.node.inputs['Strength']
-        elif 'Emission Strength' in emissive_socket.node.inputs:
-            strength_socket = emissive_socket.node.inputs['Emission Strength']
+        if emissive_socket.socket.node.type == 'EMISSION':
+            strength_socket = emissive_socket.socket.node.inputs['Strength']
+        elif 'Emission Strength' in emissive_socket.socket.node.inputs:
+            strength_socket = emissive_socket.socket.node.inputs['Emission Strength']
         strength = (
-            gltf2_blender_get.get_const_from_socket(strength_socket, kind='VALUE')[0]
+            get_const_from_socket(NodeSocket(strength_socket, emissive_socket.group_path), kind='VALUE')[0]
             if strength_socket is not None
             else None
         )
@@ -66,9 +72,9 @@ def export_emission_factor(blender_material, export_settings):
     return None
 
 def export_emission_texture(blender_material, export_settings):
-    emissive = gltf2_blender_get.get_socket(blender_material.node_tree, blender_material.use_nodes, "Emissive")
-    if emissive is None:
-        emissive = gltf2_blender_get.get_socket_old(blender_material, "Emissive")
+    emissive = get_socket(blender_material.node_tree, blender_material.use_nodes, "Emissive")
+    if emissive.socket is None:
+        emissive = get_socket_from_gltf_material_node(blender_material.node_tree, blender_material.use_nodes, "Emissive")
     emissive_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), (), export_settings)
 
     if len(export_settings['current_texture_transform']) != 0:

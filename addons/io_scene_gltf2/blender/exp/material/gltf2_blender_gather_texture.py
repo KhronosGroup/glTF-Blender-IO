@@ -14,21 +14,23 @@
 
 import typing
 import bpy
-from ....io.com import gltf2_io_debug
+
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....io.com.gltf2_io_extensions import Extension
 from ....io.exp.gltf2_io_image_data import ImageData
 from ....io.exp.gltf2_io_binary_data import BinaryData
+from ....io.com import gltf2_io_debug
 from ....io.com import gltf2_io
-from ..gltf2_blender_gather_cache import cached
 from ..gltf2_blender_gather_sampler import gather_sampler
-from ..gltf2_blender_get import get_tex_from_socket
+from ..gltf2_blender_gather_cache import cached
+from .gltf2_blender_search_node_tree import get_texture_node_from_socket, NodeSocket
 from . import gltf2_blender_gather_image
+
 
 @cached
 def gather_texture(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
-        default_sockets: typing.Tuple[bpy.types.NodeSocket],
+        default_sockets,
         export_settings):
     """
     Gather texture sampling information and image channels from a blender shader texture attached to a shader socket.
@@ -174,14 +176,37 @@ def __gather_name(blender_shader_sockets, export_settings):
 
 
 def __gather_sampler(blender_shader_sockets, export_settings):
-    shader_nodes = [get_tex_from_socket(socket) for socket in blender_shader_sockets]
+    shader_nodes = [get_texture_node_from_socket(socket, export_settings) for socket in blender_shader_sockets]
     if len(shader_nodes) > 1:
         gltf2_io_debug.print_console("WARNING",
                                      "More than one shader node tex image used for a texture. "
                                      "The resulting glTF sampler will behave like the first shader node tex image.")
-    first_valid_shader_node = next(filter(lambda x: x is not None, shader_nodes)).shader_node
+    first_valid_shader_node = next(filter(lambda x: x is not None, shader_nodes))
+
+    # group_path can't be a list, so transform it to str
+
+    sep_item = "##~~gltf-sep~~##"
+    sep_inside_item = "##~~gltf-inside-sep~~##"
+    group_path_str = ""
+    if len(first_valid_shader_node.group_path) > 0:
+        # Retrieving the blender material using this shader tree
+        for mat in bpy.data.materials:
+            if mat.use_nodes is True and id(mat.node_tree) == id(first_valid_shader_node.group_path[0]):
+                group_path_str += mat.name #TODO if linked, we can have multiple materials with same name...
+                break
+    if len(first_valid_shader_node.group_path) > 1:
+        for idx, i in enumerate(first_valid_shader_node.group_path[1:]):
+            group_path_str += sep_item
+            if idx == 0:
+                group_path_str += first_valid_shader_node.group_path[0].name
+            else:
+                group_path_str += i.id_data.name
+            group_path_str += sep_inside_item
+            group_path_str += i.name
+
     return gather_sampler(
-        first_valid_shader_node,
+        first_valid_shader_node.shader_node,
+        group_path_str,
         export_settings)
 
 
