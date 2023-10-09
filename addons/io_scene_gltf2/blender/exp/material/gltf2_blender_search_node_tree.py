@@ -453,21 +453,21 @@ def get_vertex_color_info(color_socket, alpha_socket, export_settings):
     attribute_alpha = None
 
     # Retrieve Attribute used as vertex color for Color
-    if color_socket.socket is not None:
+    if color_socket is not None and color_socket.socket is not None:
         node = previous_node(color_socket)
         if node.node is not None:
             if node.node.type == 'MIX' and node.node.data_type == "RGBA" and node.node.blend_type == 'MULTIPLY':
-                attribute_color = get_attribute_name(node.node.inputs[6], export_settings)
+                attribute_color = get_attribute_name(NodeSocket(node.node.inputs[6], node.group_path), export_settings)
                 if attribute_color is None:
-                    attribute_color = get_attribute_name(node.node.inputs[7], export_settings)
+                    attribute_color = get_attribute_name(NodeSocket(node.node.inputs[7], node.group_path), export_settings)
 
-    if alpha_socket.socket is not None:
+    if alpha_socket is not None and alpha_socket.socket is not None:
         node = previous_node(alpha_socket)
         if node.node is not None:
             if node.node.type == 'MIX' and node.node.data_type == "FLOAT" and node.node.blend_type == 'MULTIPLY':
-                attribute_alpha = get_attribute_name(node.node.inputs[2], export_settings)
+                attribute_alpha = get_attribute_name(NodeSocket(node.node.inputs[2], node.group_path), export_settings)
                 if attribute_alpha is None:
-                    attribute_alpha = get_attribute_name(node.node.inputs[3], export_settings)
+                    attribute_alpha = get_attribute_name(NodeSocket(node.node.inputs[3], node.group_path), export_settings)
 
     return {"color": attribute_color, "alpha": attribute_alpha}
 

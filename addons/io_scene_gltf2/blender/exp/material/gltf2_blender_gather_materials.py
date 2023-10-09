@@ -36,7 +36,8 @@ from .gltf2_blender_search_node_tree import \
     has_image_node_from_socket, \
     get_socket_from_gltf_material_node, \
     get_socket, \
-    get_node_socket
+    get_node_socket, \
+    get_vertex_color_info
 
 @cached
 def get_material_cache_key(blender_material, export_settings):
@@ -313,7 +314,7 @@ def __export_unlit(blender_material, export_settings):
 
     base_color_texture, uvmap_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
 
-    vc_info = gltf2_blender_get.get_vertex_color_info(info.get('rgb_socket'), info.get('alpha_socket'), export_settings)
+    vc_info = get_vertex_color_info(info.get('rgb_socket'), info.get('alpha_socket'), export_settings)
 
     material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
