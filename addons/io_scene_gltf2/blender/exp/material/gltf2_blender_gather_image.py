@@ -247,25 +247,25 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
             if src_chan is None:
                 # No SeparateColor node found, so take the specification channel that is needed
                 # So export is correct if user plug the texture directly to the socket
-                if socket.name == 'Metallic':
+                if socket.socket.name == 'Metallic':
                     src_chan = Channel.B
-                elif socket.name == 'Roughness':
+                elif socket.socket.name == 'Roughness':
                     src_chan = Channel.G
-                elif socket.name == 'Occlusion':
+                elif socket.socket.name == 'Occlusion':
                     src_chan = Channel.R
-                elif socket.name == 'Alpha':
+                elif socket.socket.name == 'Alpha':
                     src_chan = Channel.A
-                elif socket.name == 'Coat Weight':
+                elif socket.socket.name == 'Coat Weight':
                     src_chan = Channel.R
-                elif socket.name == 'Coat Roughness':
+                elif socket.socket.name == 'Coat Roughness':
                     src_chan = Channel.G
-                elif socket.name == 'Thickness': # For KHR_materials_volume
+                elif socket.socket.name == 'Thickness': # For KHR_materials_volume
                     src_chan = Channel.G
 
             if src_chan is None:
                 # Seems we can't find the channel
                 # We are in a case where user plugged a texture in a Color socket, but we may have used the alpha one
-                if socket.name in ["Alpha", "Specular IOR Level", "Sheen Roughness"]:
+                if socket.socket.name in ["Alpha", "Specular IOR Level", "Sheen Roughness"]:
                     src_chan = Channel.A
 
             if src_chan is None:
