@@ -62,7 +62,7 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
-        export_settings['current_paths'][emission_node.inputs["Color"].path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + emission_node.inputs["Color"].path_from_id() + ".default_value"] = path_
 
         return list(emission_node.inputs["Color"].default_value)[:3]
 
@@ -92,7 +92,7 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
                 path_ = {}
                 path_['length'] = 1
                 path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
-                export_settings['current_paths'][quadratic_falloff_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
+                export_settings['current_paths']["node_tree." + quadratic_falloff_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
 
             else:
                 gltf2_io_debug.print_console('WARNING',
@@ -110,7 +110,7 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
             path_ = {}
             path_['length'] = 1
             path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
-            export_settings['current_paths'][emission_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
+            export_settings['current_paths']["node_tree." + emission_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
 
 
     else:
