@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 0, 32),
+    "version": (4, 1, 3),
     'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -213,7 +213,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_image_webp_fallback: BoolProperty(
         name='Webp fallback',
         description=(
-            "For all webp textures, create a PNG fallback texture."
+            "For all webp textures, create a PNG fallback texture"
         ),
         default=False
     )
