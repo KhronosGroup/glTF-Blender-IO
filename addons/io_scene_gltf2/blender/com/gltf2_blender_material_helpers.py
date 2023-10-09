@@ -18,6 +18,10 @@ import bpy
 def get_gltf_node_old_name():
     return "glTF Settings"
 
+# Old group name
+def get_gltf_old_group_node_name():
+    return "glTF Metallic Roughness"
+
 def get_gltf_node_name():
     return "glTF Material Output"
 
