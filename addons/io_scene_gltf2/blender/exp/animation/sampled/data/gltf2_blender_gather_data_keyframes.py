@@ -26,6 +26,7 @@ def gather_data_sampled_keyframes(
         channel,
         action_name,
         node_channel_is_animated: bool,
+        additional_key, # Used to differentiate between material / material node_tree
         export_settings):
 
     start_frame = export_settings['ranges'][blender_id][action_name]['start']

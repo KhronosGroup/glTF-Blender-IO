@@ -29,6 +29,7 @@ def gather_data_sampled_animation_sampler(
         action_name: str,
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
+        additional_key: str, # Used to differentiate between material / material node_tree
         export_settings
         ):
 
@@ -38,6 +39,7 @@ def gather_data_sampled_animation_sampler(
         channel,
         action_name,
         node_channel_is_animated,
+        additional_key,
         export_settings)
 
     if keyframes is None:
@@ -63,6 +65,7 @@ def __gather_keyframes(
         channel,
         action_name,
         node_channel_is_animated,
+        additional_key, # Used to differentiate between material / material node_tree
         export_settings):
 
     keyframes = gather_data_sampled_keyframes(
@@ -71,6 +74,7 @@ def __gather_keyframes(
         channel,
         action_name,
         node_channel_is_animated,
+        additional_key,
         export_settings
     )
 

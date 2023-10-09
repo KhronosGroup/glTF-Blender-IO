@@ -121,7 +121,7 @@ def gather_scene_animations(export_settings):
         if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
             add_slide_data(start_frame, mat, mat, export_settings, add_drivers=False)
 
-        channels = gather_data_sampled_channels('materials', mat, mat, export_settings)
+        channels = gather_data_sampled_channels('materials', mat, mat, None, export_settings)
         if channels is not None:
             total_channels.extend(channels)
 
@@ -152,7 +152,7 @@ def gather_scene_animations(export_settings):
         if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
             add_slide_data(start_frame, light, light, export_settings, add_drivers=False)
 
-        channels = gather_data_sampled_channels('lights', light, light, export_settings)
+        channels = gather_data_sampled_channels('lights', light, light, None, export_settings)
         if channels is not None:
             total_channels.extend(channels)
 
@@ -184,7 +184,7 @@ def gather_scene_animations(export_settings):
         if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
             add_slide_data(start_frame, cam, cam, export_settings, add_drivers=False)
 
-        channels = gather_data_sampled_channels('cameras', cam, cam, export_settings)
+        channels = gather_data_sampled_channels('cameras', cam, cam, None, export_settings)
         if channels is not None:
             total_channels.extend(channels)
 

@@ -451,7 +451,7 @@ class GlTF2Exporter:
                     self.__append_unique_and_get_index(self.__gltf.extensions_used, "KHR_animation_pointer")
 
             if type(node) == gltf2_io.AnimationChannelTarget:
-                if node.path not in ["translation", "rotation", "scale", "weights"]:
+                if node.path not in ["translation", "rotation", "scale", "weights"] and node.path != "pointer":
                     if node.extensions is None:
                         node.extensions = {}
                     node.extensions["KHR_animation_pointer"] = {"pointer": node.path.replace("XXX", str(node.node))}

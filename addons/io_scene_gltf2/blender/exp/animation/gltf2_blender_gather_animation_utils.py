@@ -23,6 +23,7 @@ from ..gltf2_blender_gather_tree import VExportNode
 from .sampled.armature.gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
 from .sampled.object.gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
+from .sampled.data.gltf2_blender_gather_data_channels import gather_data_sampled_channels
 from .gltf2_blender_gather_drivers import get_sk_drivers
 
 def link_samplers(animation: gltf2_io.Animation, export_settings):
@@ -242,3 +243,41 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
         if animation is not None:
             return animation
     return None
+
+def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, export_settings):
+    # if there is no animation in file => no need to bake
+    if len(bpy.data.actions) == 0:
+        return None
+
+    total_channels = []
+    animation = None
+
+    if (export_settings['gltf_bake_animation'] is True \
+            or export_settings['gltf_animation_mode'] == "NLA_TRACKS"):
+
+        if blender_type_data == "materials":
+            blender_data_object = [i for i in bpy.data.materials if id(i) == blender_id][0]
+        else:
+            pass #TODOPointer: lights and cameras
+
+        # Export now KHR_animation_pointer for materials / light / camera
+        for i in [a for a in export_settings['KHR_animation_pointer'][blender_type_data].keys() if a==blender_id]:
+            if len(export_settings['KHR_animation_pointer'][blender_type_data][i]['paths']) == 0:
+                continue
+
+            channels = gather_data_sampled_channels(blender_type_data, i, animation_key, on_type, export_settings)
+            if channels is not None:
+                total_channels.extend(channels)
+
+    if len(total_channels) > 0:
+        animation = gltf2_io.Animation(
+            channels=total_channels,
+            extensions=None, # as other animations
+            extras=None, # Because there is no animation to get extras from
+            name=blender_data_object.name, # Use object name as animation name
+            samplers=[]
+        )
+
+    if animation is not None and animation.channels:
+        link_samplers(animation, export_settings)
+        return animation
