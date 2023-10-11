@@ -36,7 +36,9 @@ from .gltf2_blender_search_node_tree import \
     has_image_node_from_socket, \
     get_socket_from_gltf_material_node, \
     get_socket, \
-    get_node_socket
+    get_node_socket, \
+    get_material_nodes, \
+    NodeSocket
 
 @cached
 def get_material_cache_key(blender_material, export_settings):
@@ -94,6 +96,24 @@ def gather_material(blender_material, export_settings):
     )
 
     uvmap_infos = {}
+
+    # Get all textures nodes that are not used in the material
+    nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+    # TODO : excluse already managed nodes
+    cpt_additional = 0
+    for node in nodes:
+        s = NodeSocket(node[0].outputs[0], node[1])
+        tex, uv_info_additional, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), (), export_settings)
+        if tex is not None:
+            export_settings['exported_images'][node[0].image.name] = 1 # Fully used
+            uvmap_infos.update({'additional' + str(cpt_additional): uv_info_additional})
+            cpt_additional += 1
+            if material.extras is None:
+                material.extras = {}
+                material.extras["additionalTextures"] = []
+            material.extras["additionalTextures"].append(tex)
+        # TODO : using extras will not create json correctly because is not mangled
+
     uvmap_infos.update(uvmap_info_emissive)
     uvmap_infos.update(uvmap_info_extensions)
     uvmap_infos.update(uvmap_info_normal)
@@ -355,8 +375,12 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
     # First, we need to calculate all index of UVMap
 
     indices = {}
+    additional_indices = 0
 
     for m, v in uvmap_info.items():
+
+        if m.startswith("additional") and additional_indices <= int(m[10:]):
+            additional_indices = +1
 
         if not 'type' in v.keys():
             continue
@@ -374,7 +398,7 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
             indices[m] = attr_indices[v['value']]
 
     # Now we have all needed indices, let's create a set that can be used for caching, so containing all possible textures
-    all_textures = get_all_textures()
+    all_textures = get_all_textures(additional_indices)
 
     caching_indices = []
     for tex in all_textures:
@@ -407,7 +431,7 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
     material = deepcopy(base_material)
     __get_new_material_texture_shared(base_material, material)
 
-    for tex, ind in zip(get_all_textures(), caching_indices):
+    for tex, ind in zip(get_all_textures(len(caching_indices) - 14), caching_indices):
 
         if ind is None:
             continue
@@ -440,6 +464,8 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
             material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = ind
         elif tex == "thicknessTexture":
             material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
+        elif tex.startswith("additional"):
+            material.extras["additionalTextures"][int(tex[10:])].tex_coord = ind
         else:
             print_console("ERROR", "some Textures tex coord are not managed")
 
@@ -467,9 +493,12 @@ def get_base_material(material_idx, materials, export_settings):
         )
     return material, material_info
 
-def get_all_textures():
+def get_all_textures(idx=0):
     # Make sure to have all texture here, always in same order
     tab = []
+
+    # Note that there 14 textures
+    # If this value changes, we need to change the code in __get_final_material_with_indices
 
     tab.append("emissiveTexture")
     tab.append("normalTexture")
@@ -485,5 +514,8 @@ def get_all_textures():
     tab.append("sheenColorTexture")
     tab.append("sheenRoughnessTexture")
     tab.append("thicknessTexture")
+
+    for i in range(idx):
+        tab.append("additional" + str(i))
 
     return tab
