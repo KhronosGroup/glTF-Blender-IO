@@ -942,6 +942,8 @@ Use Rest Position Armature
 Export Deformation Bones only
    Export Deformation bones only, not other bones.
    Animation for deformation bones are baked.
+Remove Armature Object
+   Remove Armature Objects if possible. If some armature(s) have multiple root bones, we can't remove them.
 Flatten Bone Hierarchy
    Useful in case of non-decomposable TRS matrix.
 
