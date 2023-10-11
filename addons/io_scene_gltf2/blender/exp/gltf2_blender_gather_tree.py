@@ -600,6 +600,17 @@ class VExportTree:
                     self.nodes[bone].parent_uuid = arma
                     self.nodes[arma].children.append(bone)
 
+    def break_obj_hierarchy(self):
+        # Can be usefull when matrix is not decomposable
+        # TODO: if we get real collection one day, we probably need to adapt this code
+        for obj in self.get_all_objects():
+            if self.nodes[obj].armature is not None and self.nodes[obj].parent_uuid == self.nodes[obj].armature:
+                continue # Keep skined meshs as children of armature
+            if self.nodes[obj].parent_uuid is not None:
+                self.nodes[self.nodes[obj].parent_uuid].children.remove(obj)
+                self.nodes[obj].parent_uuid = None
+                self.roots.append(obj)
+
     def check_if_we_can_remove_armature(self):
         # If user requested to remove armature, we need to check if it is possible
         # If is impossible to remove it if armature has multiple root bones. (glTF validator error)
