@@ -232,7 +232,7 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
 
         else:
             # rudimentarily try follow the node tree to find the correct image data.
-            src_chan = Channel.R
+            src_chan = None
             for elem in result.path:
                 if isinstance(elem.from_node, bpy.types.ShaderNodeSeparateColor):
                     src_chan = {
@@ -242,6 +242,35 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                     }[elem.from_socket.name]
                 if elem.from_socket.name == 'Alpha':
                     src_chan = Channel.A
+
+
+            if src_chan is None:
+                # No SeparateColor node found, so take the specification channel that is needed
+                # So export is correct if user plug the texture directly to the socket
+                if socket.socket.name == 'Metallic':
+                    src_chan = Channel.B
+                elif socket.socket.name == 'Roughness':
+                    src_chan = Channel.G
+                elif socket.socket.name == 'Occlusion':
+                    src_chan = Channel.R
+                elif socket.socket.name == 'Alpha':
+                    src_chan = Channel.A
+                elif socket.socket.name == 'Coat Weight':
+                    src_chan = Channel.R
+                elif socket.socket.name == 'Coat Roughness':
+                    src_chan = Channel.G
+                elif socket.socket.name == 'Thickness': # For KHR_materials_volume
+                    src_chan = Channel.G
+
+            if src_chan is None:
+                # Seems we can't find the channel
+                # We are in a case where user plugged a texture in a Color socket, but we may have used the alpha one
+                if socket.socket.name in ["Alpha", "Specular IOR Level", "Sheen Roughness"]:
+                    src_chan = Channel.A
+
+            if src_chan is None:
+                # We definitely can't find the channel, so keep the first channel even if this is wrong
+                src_chan = Channel.R
 
             dst_chan = None
 
