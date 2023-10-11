@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 1, 6),
+    "version": (4, 1, 7),
     'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -486,6 +486,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_hierarchy_flatten_objs: BoolProperty(
+        name='Flatten Object Hierarchy',
+        description='Flatten Object Hierarchy. Useful in case of non decomposable transformation matrix',
+        default=False
+    )
+
     export_armature_object_remove: BoolProperty(
         name='Remove Armature Object',
         description=(
@@ -842,6 +848,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_animations'] = self.export_animations
         export_settings['gltf_def_bones'] = self.export_def_bones
         export_settings['gltf_flatten_bones_hierarchy'] = self.export_hierarchy_flatten_bones
+        export_settings['gltf_flatten_obj_hierarchy'] = self.export_hierarchy_flatten_objs
         export_settings['gltf_armature_object_remove'] = self.export_armature_object_remove
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
@@ -1076,6 +1083,7 @@ class GLTF_PT_export_data_scene(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         layout.prop(operator, 'export_gpu_instances')
+        layout.prop(operator, 'export_hierarchy_flatten_objs')
 
 class GLTF_PT_export_data_mesh(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'

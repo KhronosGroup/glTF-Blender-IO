@@ -72,6 +72,8 @@ def __gather_scene(blender_scene, export_settings):
     vtree.filter()
     if export_settings['gltf_flatten_bones_hierarchy'] is True:
         vtree.break_bone_hierarchy()
+    if export_settings['gltf_flatten_obj_hierarchy'] is True:
+        vtree.break_obj_hierarchy()
 
     vtree.variants_reset_to_original()
 
