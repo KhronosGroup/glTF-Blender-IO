@@ -333,14 +333,18 @@ def get_gltf_image_from_blender_image(blender_image_name, export_settings):
     )
 
 def __get_mime_type_of_image(blender_image_name, export_settings):
-    #TODO webp
+
     image = bpy.data.images[blender_image_name]
     if image.channels == 4:
+        if __is_blender_image_a_webp(image):
+            return "image/webp"
         return "image/png"
 
     if export_settings["gltf_image_format"] == "AUTO":
         if __is_blender_image_a_jpeg(image):
             return "image/jpeg"
+        elif __is_blender_image_a_webp(image):
+            return "image/webp"
         return "image/png"
 
     elif export_settings["gltf_image_format"] == "JPEG":
