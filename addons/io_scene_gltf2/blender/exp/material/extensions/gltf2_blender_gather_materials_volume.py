@@ -72,7 +72,7 @@ def export_volume(blender_material, export_settings):
         volume_extension['thicknessFactor'] = fac if fac != None else 1.0
         has_thickness_texture = True
 
-       # Pack thickness channel (R).
+       # Pack thickness channel (G).
     if has_thickness_texture:
         thickness_slots = (thickness_socket,)
 
