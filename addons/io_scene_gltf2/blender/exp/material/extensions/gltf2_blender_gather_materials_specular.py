@@ -36,15 +36,20 @@ def export_specular(blender_material, export_settings):
     specular_non_linked = isinstance(specular_socket.socket, bpy.types.NodeSocket) and not specular_socket.socket.is_linked
     specularcolor_non_linked = isinstance(speculartint_socket.socket, bpy.types.NodeSocket) and not speculartint_socket.socket.is_linked
 
+    # If no value changes from default, skip specular extension
+    if specular_non_linked is True and specularcolor_non_linked is True and specular_socket.socket.default_value == 0.5 and speculartint_socket.socket.default_value[:] == (1.0, 1.0, 1.0, 1.0):
+        return None, {}
+
     if specular_non_linked is True:
         fac = specular_socket.socket.default_value
+        fac = fac * 2.0
         if fac != 1.0:
             specular_extension['specularFactor'] = fac
-        if fac == 0.0:
-            return None, {}
+
     else:
         # Factor
         fac = get_factor_from_socket(specular_socket, kind='VALUE')
+        fac = fac * 2.0 if fac is not None else None
         if fac is not None and fac != 1.0:
             specular_extension['specularFactor'] = fac
 
