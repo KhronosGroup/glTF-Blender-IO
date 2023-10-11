@@ -873,6 +873,9 @@ Data - Scene Graph
 GPU Instances
    Export using ``EXT_mesh_gpu_instancing`` extensions.
 
+Flatten Object Hierarchy
+   Useful in case of non-decomposable TRS matrix. Only skined meshes will stay children of armature.
+
 Data - Mesh
 ^^^^^^^^^^^
 
