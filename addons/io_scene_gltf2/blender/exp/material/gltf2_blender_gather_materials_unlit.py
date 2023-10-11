@@ -48,7 +48,7 @@ def detect_shadeless_material(blender_material, export_settings):
     else:
         return None
 
-    socket = NodeSocket(socket, [])
+    socket = NodeSocket(socket, [blender_material])
 
     # Be careful not to misidentify a lightpath trick as mix-alpha.
     result = __detect_lightpath_trick(socket)

@@ -32,7 +32,12 @@ def gather_tracks_animations(export_settings):
 
         # Do not manage not exported objects
         if vtree.nodes[obj_uuid].node is None:
-            continue
+            if export_settings['gltf_armature_object_remove'] is True:
+                # Manage armature object, as this is the object that has the animation
+                if not vtree.nodes[obj_uuid].blender_object:
+                    continue
+            else:
+                continue
 
         animations_, merged_tracks = gather_track_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
