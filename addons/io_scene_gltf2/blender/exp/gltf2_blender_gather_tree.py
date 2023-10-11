@@ -602,9 +602,10 @@ class VExportTree:
 
     def break_obj_hierarchy(self):
         # Can be usefull when matrix is not decomposable
-        # TODO: if we get real collection, we probably need to adapt this code
-        # TODO: check if we need to keep parenting in case of skined object?
+        # TODO: if we get real collection one day, we probably need to adapt this code
         for obj in self.get_all_objects():
+            if self.nodes[obj].armature is not None and self.nodes[obj].parent_uuid == self.nodes[obj].armature:
+                continue # Keep skined meshs as children of armature
             if self.nodes[obj].parent_uuid is not None:
                 self.nodes[self.nodes[obj].parent_uuid].children.remove(obj)
                 self.nodes[obj].parent_uuid = None
