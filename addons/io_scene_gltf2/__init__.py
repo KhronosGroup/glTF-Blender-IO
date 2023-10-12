@@ -789,6 +789,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings = {}
 
         export_settings['exported_images'] = {}
+        export_settings['exported_texture_nodes'] = []
 
         export_settings['timestamp'] = datetime.datetime.now()
         export_settings['gltf_export_id'] = self.gltf_export_id

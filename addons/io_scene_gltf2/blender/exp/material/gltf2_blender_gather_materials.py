@@ -61,6 +61,13 @@ def gather_material(blender_material, export_settings):
     if not __filter_material(blender_material, export_settings):
         return None, {}
 
+    # Reset exported images / textures nodes
+    export_settings['exported_texture_nodes'] = []
+    nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+    for node in nodes:
+        if node[0].get("used", None) is not None:
+            del(node[0]['used'])
+
     mat_unlit, uvmap_info, vc_info = __export_unlit(blender_material, export_settings)
     if mat_unlit is not None:
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
@@ -99,9 +106,12 @@ def gather_material(blender_material, export_settings):
 
     # Get all textures nodes that are not used in the material
     nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
-    # TODO : excluse already managed nodes
     cpt_additional = 0
     for node in nodes:
+        if node[0].get("used", None) is not None:
+            del(node[0]['used'])
+            continue
+
         s = NodeSocket(node[0].outputs[0], node[1])
         tex, uv_info_additional, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), (), export_settings)
         if tex is not None:
@@ -113,6 +123,12 @@ def gather_material(blender_material, export_settings):
                 material.extras["additionalTextures"] = []
             material.extras["additionalTextures"].append(tex)
         # TODO : using extras will not create json correctly because is not mangled
+
+    # Reset
+    nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+    for node in nodes:
+        if node[0].get("used", None) is not None:
+            del(node[0]['used'])
 
     uvmap_infos.update(uvmap_info_emissive)
     uvmap_infos.update(uvmap_info_extensions)
