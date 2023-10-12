@@ -118,11 +118,7 @@ def gather_material(blender_material, export_settings):
             export_settings['exported_images'][node[0].image.name] = 1 # Fully used
             uvmap_infos.update({'additional' + str(cpt_additional): uv_info_additional})
             cpt_additional += 1
-            if material.extras is None:
-                material.extras = {}
-                material.extras["additionalTextures"] = []
-            material.extras["additionalTextures"].append(tex)
-        # TODO : using extras will not create json correctly because is not mangled
+            export_settings['additional_texture_export'].append(tex)
 
     # Reset
     nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
@@ -481,9 +477,11 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
         elif tex == "thicknessTexture":
             material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
         elif tex.startswith("additional"):
-            material.extras["additionalTextures"][int(tex[10:])].tex_coord = ind
+            export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx'] + int(tex[10:])].tex_coord = ind
         else:
             print_console("ERROR", "some Textures tex coord are not managed")
+
+    export_settings['additional_texture_export_current_idx'] = len(export_settings['additional_texture_export'])
 
     return material
 

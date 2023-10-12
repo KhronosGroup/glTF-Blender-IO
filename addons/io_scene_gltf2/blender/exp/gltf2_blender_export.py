@@ -25,6 +25,7 @@ from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com import gltf2_blender_json
 from . import gltf2_blender_gather
 from .gltf2_blender_gltf2_exporter import GlTF2Exporter
+from .gltf2_blender_gltf2_exporter import fix_json
 
 
 def save(context, export_settings):
@@ -68,7 +69,15 @@ def __export(export_settings):
     exporter.traverse_extensions()
 
     # now that addons possibly add some fields in json, we can fix in needed
-    json = __fix_json(exporter.glTF.to_dict())
+    json = fix_json(exporter.glTF.to_dict())
+
+    # Convert additional data if needed
+    additional_json_textures = fix_json([i.to_dict() for i in exporter.additional_data.additional_textures])
+
+    # Now that we have the final json, we can add the additional data
+    if json.get('extras') is None:
+        json['extras'] = {}
+    json['extras']['additionalTextures'] = additional_json_textures
 
     return json, buffer
 
@@ -89,6 +98,7 @@ def __gather_gltf(exporter, export_settings):
     for animation in animations:
         exporter.add_animation(animation)
     exporter.traverse_unused_skins(unused_skins)
+    exporter.traverse_additional_textures()
     exporter.traverse_additional_images()
 
 
@@ -104,43 +114,6 @@ def __create_buffer(exporter, export_settings):
                                      export_settings['gltf_binaryfilename'])
 
     return buffer
-
-
-def __fix_json(obj):
-    # TODO: move to custom JSON encoder
-    fixed = obj
-    if isinstance(obj, dict):
-        fixed = {}
-        for key, value in obj.items():
-            if key == 'extras' and value is not None:
-                fixed[key] = value
-                continue
-            if not __should_include_json_value(key, value):
-                continue
-            fixed[key] = __fix_json(value)
-    elif isinstance(obj, list):
-        fixed = []
-        for value in obj:
-            fixed.append(__fix_json(value))
-    elif isinstance(obj, float):
-        # force floats to int, if they are integers (prevent INTEGER_WRITTEN_AS_FLOAT validator warnings)
-        if int(obj) == obj:
-            return int(obj)
-    return fixed
-
-
-def __should_include_json_value(key, value):
-    allowed_empty_collections = ["KHR_materials_unlit", "KHR_materials_specular"]
-
-    if value is None:
-        return False
-    elif __is_empty_collection(value) and key not in allowed_empty_collections:
-        return False
-    return True
-
-
-def __is_empty_collection(value):
-    return (isinstance(value, dict) or isinstance(value, list)) and len(value) == 0
 
 
 def __write_file(json, buffer, export_settings):
