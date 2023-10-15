@@ -51,21 +51,22 @@ def anisotropy(
         anisotropy_rotation_socket.default_value = get_anisotropy_rotation_gltf_to_blender(anisotropy_rotation)
         return
 
+    # Tangent node
+    node = mh.node_tree.nodes.new('ShaderNodeTangent')
+    node.direction_type = "UV_MAP"
+    node.location = x - 180, y - 200
+    uv_idx = tex_info.tex_coord or 0
 
+    # Get the UVMap of the normal map if available (if not, keeping the first UVMap available, uv_idx = 0)
     tex_info_normal = mh.pymat.normal_texture
-
     if tex_info_normal is not None:
-        node = mh.node_tree.nodes.new('ShaderNodeTangent')
-        node.direction_type = "UV_MAP"
-        node.location = x - 180, y - 200
-        uv_idx = tex_info.tex_coord or 0
         try:
             uv_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
         except Exception:
             pass
-        node.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
-        mh.node_tree.links.new(anisotropy_tangent_socket, node.outputs['Tangent'])
 
+    node.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
+    mh.node_tree.links.new(anisotropy_tangent_socket, node.outputs['Tangent'])
 
 
     # Multiply node
