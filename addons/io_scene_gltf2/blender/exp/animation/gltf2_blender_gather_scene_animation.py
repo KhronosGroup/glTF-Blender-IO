@@ -111,7 +111,7 @@ def gather_scene_animations(export_settings):
                     channels=total_channels,
                     extensions=None,
                     extras=__gather_extras(blender_object, export_settings),
-                    name=blender_object.name,
+                    name=blender_object.name if blender_object else "GN Instance",
                     samplers=[]
                 )
                 link_samplers(animation, export_settings)
