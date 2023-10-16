@@ -454,9 +454,15 @@ def __get_blender_actions(obj_uuid: str,
     if blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
-            blender_actions.append(blender_object.animation_data.action)
-            blender_tracks[blender_object.animation_data.action.name] = None
-            action_on_type[blender_object.animation_data.action.name] = "OBJECT"
+
+            # Check the action is not in list of actions to ignore
+            if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                    and id(blender_object.animation_data.action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                pass # We ignore this action
+            else:
+                blender_actions.append(blender_object.animation_data.action)
+                blender_tracks[blender_object.animation_data.action.name] = None
+                action_on_type[blender_object.animation_data.action.name] = "OBJECT"
 
         # Collect associated strips from NLA tracks.
         if export_settings['gltf_animation_mode'] == "ACTIONS":
@@ -467,6 +473,12 @@ def __get_blender_actions(obj_uuid: str,
                 if track.strips is None or len(non_muted_strips) != 1:
                     continue
                 for strip in non_muted_strips:
+
+                    # Check the action is not in list of actions to ignore
+                    if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                            and id(strip.action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                        continue # We ignore this action
+
                     blender_actions.append(strip.action)
                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                     action_on_type[strip.action.name] = "OBJECT"
@@ -478,9 +490,15 @@ def __get_blender_actions(obj_uuid: str,
             and blender_object.data.shape_keys.animation_data is not None:
 
             if blender_object.data.shape_keys.animation_data.action is not None:
-                blender_actions.append(blender_object.data.shape_keys.animation_data.action)
-                blender_tracks[blender_object.data.shape_keys.animation_data.action.name] = None
-                action_on_type[blender_object.data.shape_keys.animation_data.action.name] = "SHAPEKEY"
+
+                # Check the action is not in list of actions to ignore
+                if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                        and id(blender_object.data.shape_keys.animation_data.action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                    pass # We ignore this action
+                else:
+                    blender_actions.append(blender_object.data.shape_keys.animation_data.action)
+                    blender_tracks[blender_object.data.shape_keys.animation_data.action.name] = None
+                    action_on_type[blender_object.data.shape_keys.animation_data.action.name] = "SHAPEKEY"
 
             if export_settings['gltf_animation_mode'] == "ACTIONS":
                 for track in blender_object.data.shape_keys.animation_data.nla_tracks:
@@ -490,6 +508,11 @@ def __get_blender_actions(obj_uuid: str,
                     if track.strips is None or len(non_muted_strips) != 1:
                         continue
                     for strip in non_muted_strips:
+                        # Check the action is not in list of actions to ignore
+                        if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                                and id(strip.action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                            continue # We ignore this action
+
                         blender_actions.append(strip.action)
                         blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                         action_on_type[strip.action.name] = "SHAPEKEY"
@@ -509,6 +532,12 @@ def __get_blender_actions(obj_uuid: str,
                     # Check if this action is already taken into account
                     if act.name in blender_tracks.keys():
                         continue
+
+                    # Check the action is not in list of actions to ignore
+                    if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                            and id(act) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                        continue # We ignore this action
+
                     blender_actions.append(act)
                     blender_tracks[act.name] = None
                     action_on_type[act.name] = "OBJECT"
