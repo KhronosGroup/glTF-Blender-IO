@@ -210,7 +210,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_image_webp_fallback: BoolProperty(
         name='WebP fallback',
         description=(
-            "For all WebP textures, create a PNG fallback texture."
+            "For all WebP textures, create a PNG fallback texture"
         ),
         default=False
     )
