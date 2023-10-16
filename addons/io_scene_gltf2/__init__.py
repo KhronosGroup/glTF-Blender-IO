@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 1, 7),
+    "version": (4, 1, 9),
     'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -154,13 +154,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 'Most efficient and portable, but more difficult to edit later'),
                ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
                 'Exports multiple files, with separate JSON, binary and texture data. '
-                'Easiest to edit later'),
-                ('GLTF_EMBEDDED', 'glTF Embedded (.gltf)',
-                 'Exports a single file, with all data packed in JSON. '
-                 'Less efficient than binary, but easier to edit later')),
+                'Easiest to edit later')),
         description=(
-            'Output format and embedding options. Binary is most efficient, '
-            'but JSON (embedded or separate) may be easier to edit later'
+            'Output format. Binary is most efficient, '
+            'but JSON may be easier to edit later'
         ),
         default='GLB', #Warning => If you change the default, need to change the default filter too
         update=on_export_format_changed,
@@ -184,13 +181,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_image_format: EnumProperty(
         name='Images',
         items=(('AUTO', 'Automatic',
-                'Save PNGs as PNGs, JPEGs as JPEGs, WEBPs as WEBPs. '
+                'Save PNGs as PNGs, JPEGs as JPEGs, WebPs as WebPs. '
                 'If neither one, use PNG'),
                 ('JPEG', 'JPEG Format (.jpg)',
                 'Save images as JPEGs. (Images that need alpha are saved as PNGs though.) '
                 'Be aware of a possible loss in quality'),
-                ('WEBP', 'Webp Format',
-                'Save images as WEBPs as main image (no fallback)'),
+                ('WEBP', 'WebP Format',
+                'Save images as WebPs as main image (no fallback)'),
                 ('NONE', 'None',
                  'Don\'t export images'),
                ),
@@ -202,18 +199,18 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_image_add_webp: BoolProperty(
-        name='Create Webp',
+        name='Create WebP',
         description=(
-            "Creates webp textures for every textures. "
-            "For already webp textures, nothing happen"
+            "Creates WebP textures for every textures. "
+            "For already WebP textures, nothing happen"
         ),
         default=False
     )
 
     export_image_webp_fallback: BoolProperty(
-        name='Webp fallback',
+        name='WebP fallback',
         description=(
-            "For all webp textures, create a PNG fallback texture"
+            "For all WebP textures, create a PNG fallback texture"
         ),
         default=False
     )
@@ -1709,10 +1706,10 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     )
 
     import_webp_texture: BoolProperty(
-        name='Import Webp textures',
+        name='Import WebP textures',
         description=(
-            "If a texture exists in webp format,"
-            "loads the webp texture instead of the fallback png/jpg one"
+            "If a texture exists in WebP format,"
+            "loads the WebP texture instead of the fallback png/jpg one"
         ),
         default=False,
     )

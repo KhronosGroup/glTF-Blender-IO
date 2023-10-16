@@ -51,7 +51,7 @@ def texture(
     if forced_image is None:
 
         if mh.gltf.import_settings['import_webp_texture'] is True:
-            # Get the webp image if there is one
+            # Get the WebP image if there is one
             if pytexture.extensions \
                     and 'EXT_texture_webp' in pytexture.extensions \
                     and pytexture.extensions['EXT_texture_webp']['source'] is not None:
