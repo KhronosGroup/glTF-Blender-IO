@@ -2120,7 +2120,7 @@ describe('Exporter', function() {
 
             });
 
-            it('exports webp mode', function() {
+            it('exports WebP mode', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '32_webp_mode_webp.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -2152,7 +2152,7 @@ describe('Exporter', function() {
                 }
             });
 
-            it('exports auto mode + create webp', function() {
+            it('exports auto mode + create WebP', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '32_webp_mode_auto_with_create_webp.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -2169,7 +2169,7 @@ describe('Exporter', function() {
                 }
             });
 
-            it('exports auto mode + create webp + fallback', function() {
+            it('exports auto mode + create WebP + fallback', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '32_webp_mode_auto_with_fallback_and_create_webp.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 

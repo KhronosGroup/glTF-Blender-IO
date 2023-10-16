@@ -127,7 +127,7 @@ class GlTF2Exporter:
                     f.write(self.__buffer.to_bytes())
                 uri = buffer_name
             else:
-                uri = self.__buffer.to_embed_string()
+                pass # This is no more possible, we don't export embedded buffers
 
             buffer = gltf2_io.Buffer(
                 byte_length=self.__buffer.byte_length,

@@ -69,7 +69,7 @@ def gather_image(
 
     export_user_extensions('gather_image_hook', export_settings, image, blender_shader_sockets)
 
-    # We also return image_data, as it can be used to generate same file with another extension for webp management
+    # We also return image_data, as it can be used to generate same file with another extension for WebP management
     return image, image_data, factor
 
 def __gather_original_uri(original_uri, export_settings):
@@ -128,7 +128,7 @@ def __gather_mime_type(sockets, export_image, export_settings):
             if export_settings["gltf_image_format"] == "WEBP":
                 return "image/webp"
             else:
-                # If we keep image as is (no channel composition), we need to keep original format (for webp)
+                # If we keep image as is (no channel composition), we need to keep original format (for WebP)
                 image = export_image.blender_image()
                 if image is not None and __is_blender_image_a_webp(image):
                     return "image/webp"
