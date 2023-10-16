@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 1, 7),
+    "version": (4, 1, 8),
     'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -154,13 +154,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 'Most efficient and portable, but more difficult to edit later'),
                ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
                 'Exports multiple files, with separate JSON, binary and texture data. '
-                'Easiest to edit later'),
-                ('GLTF_EMBEDDED', 'glTF Embedded (.gltf)',
-                 'Exports a single file, with all data packed in JSON. '
-                 'Less efficient than binary, but easier to edit later')),
+                'Easiest to edit later')),
         description=(
-            'Output format and embedding options. Binary is most efficient, '
-            'but JSON (embedded or separate) may be easier to edit later'
+            'Output format. Binary is most efficient, '
+            'but JSON may be easier to edit later'
         ),
         default='GLB', #Warning => If you change the default, need to change the default filter too
         update=on_export_format_changed,
