@@ -113,6 +113,24 @@ def on_export_format_changed(self, context):
     # Force update of file list, because update the filter does not update the real file list
     bpy.ops.file.refresh()
 
+def on_export_action_filter_changed(self, context):
+    if self.export_action_filter is True:
+        bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(type=GLTF2_filter_action)
+        bpy.types.Scene.gltf_action_filter_active = bpy.props.IntProperty()
+
+        for action in bpy.data.actions:
+            if id(action) not in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter]:
+                item = bpy.data.scenes[0].gltf_action_filter.add()
+                item.keep = True
+                item.action = action
+
+    else:
+        bpy.data.scenes[0].gltf_action_filter.clear()
+        del bpy.types.Scene.gltf_action_filter
+        del bpy.types.Scene.gltf_action_filter_active
+
+
+
 
 class ConvertGLTF2_Base:
     """Base class containing options that should be exposed during both import and export."""
@@ -682,6 +700,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                     'Limited to children of a same Empty. '
                     'multiple Materials might be omitted',
         default=False
+    )
+
+    export_action_filter: BoolProperty(
+        name='Filter Actions',
+        description='Filter Actions to be exported',
+        default=False,
+        update=on_export_action_filter_changed,
     )
 
     # This parameter is only here for backward compatibility, as this option is removed in 3.6
@@ -1814,6 +1839,10 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             self.loglevel = logging.NOTSET
 
 
+class GLTF2_filter_action(bpy.types.PropertyGroup):
+    keep : bpy.props.BoolProperty(name="Keep Animation")
+    action: bpy.props.PointerProperty(type=bpy.types.Action)
+
 def gltf_variant_ui_update(self, context):
     from .blender.com.gltf2_blender_ui import variant_register, variant_unregister
     if self.KHR_materials_variants_ui is True:
@@ -1886,6 +1915,7 @@ classes = (
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
     GLTF_PT_import_user_extensions,
+    GLTF2_filter_action,
     GLTF_AddonPreferences
 )
 
