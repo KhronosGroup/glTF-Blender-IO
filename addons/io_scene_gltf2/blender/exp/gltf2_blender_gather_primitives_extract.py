@@ -431,23 +431,36 @@ class PrimitiveCreator:
             if len(additional_fields) > 0:
                 self.dots = dots
 
-            # There are multiple case to take into account
+            # There are multiple case to take into account for VC
 
             # The simplier test is when no vertex color are used
-            if material_info['vc_info']['color'] is None and material_info['vc_info']['alpha'] is None:
+            if material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is None:
                 # Nothing to do
                 continue
 
-            if material_info['vc_info']['color'] is None and material_info['vc_info']['alpha'] is not None:
+            if material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None:
                 print_console('WARNING', 'We are not managing this case (Vertex Color alpha without color)')
                 continue
 
+            vc_color_name = None
+            vc_alpha_name = None
+            if material_info['vc_info']['color_type'] == "name":
+                vc_color_name = material_info['vc_info']['color']
+            elif material_info['vc_info']['color_type'] == "active":
+                # Get active (render) Vertex Color
+                vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
 
-            if material_info['vc_info']['color'] is not None:
+            if material_info['vc_info']['alpha_type'] == "name":
+                vc_alpha_name = material_info['vc_info']['alpha']
+            elif material_info['vc_info']['alpha_type'] == "active":
+                # Get active (render) Vertex Color
+                vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+
+            if vc_color_name is not None:
 
                 vc_key = ""
-                vc_key += material_info['vc_info']['color'] if material_info['vc_info']['color'] is not None else ""
-                vc_key += material_info['vc_info']['alpha'] if material_info['vc_info']['alpha'] is not None else ""
+                vc_key += vc_color_name if vc_color_name is not None else ""
+                vc_key += vc_alpha_name if vc_alpha_name is not None else ""
 
                 if materials_use_vc is not None and materials_use_vc != vc_key:
                     if warning_already_displayed is False:
@@ -459,11 +472,11 @@ class PrimitiveCreator:
                     materials_use_vc = vc_key
 
                     # We need to check if we need to add alpha
-                    add_alpha = material_info['vc_info']['alpha'] is not None
+                    add_alpha = vc_alpha_name is not None
                     mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
                     add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
                     # Manage Vertex Color (RGB and Alpha if needed)
-                    self.__manage_color_attribute(material_info['vc_info']['color'], material_info['vc_info']['alpha'] if add_alpha else None)
+                    self.__manage_color_attribute(vc_color_name, vc_alpha_name if add_alpha else None)
                 else:
                     pass # Using the same Vertex Color
 

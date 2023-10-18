@@ -451,6 +451,8 @@ def get_vertex_color_info(color_socket, alpha_socket, export_settings):
 
     attribute_color = None
     attribute_alpha = None
+    attribute_color_type = None
+    attribute_alpha_type = None
 
     # Retrieve Attribute used as vertex color for Color
     if color_socket is not None and color_socket.socket is not None:
@@ -460,6 +462,7 @@ def get_vertex_color_info(color_socket, alpha_socket, export_settings):
                 attribute_color = get_attribute_name(NodeSocket(node.node.inputs[6], node.group_path), export_settings)
                 if attribute_color is None:
                     attribute_color = get_attribute_name(NodeSocket(node.node.inputs[7], node.group_path), export_settings)
+                attribute_color_type = "name" if attribute_color is not None else "active"
 
     if alpha_socket is not None and alpha_socket.socket is not None:
         node = previous_node(alpha_socket)
@@ -468,8 +471,9 @@ def get_vertex_color_info(color_socket, alpha_socket, export_settings):
                 attribute_alpha = get_attribute_name(NodeSocket(node.node.inputs[2], node.group_path), export_settings)
                 if attribute_alpha is None:
                     attribute_alpha = get_attribute_name(NodeSocket(node.node.inputs[3], node.group_path), export_settings)
+                attribute_alpha_type = "name" if attribute_alpha is not None else "active"
 
-    return {"color": attribute_color, "alpha": attribute_alpha}
+    return {"color": attribute_color, "alpha": attribute_alpha, "color_type": attribute_color_type, "alpha_type": attribute_alpha_type}
 
 def get_attribute_name(socket, export_settings):
     node = previous_node(socket)
