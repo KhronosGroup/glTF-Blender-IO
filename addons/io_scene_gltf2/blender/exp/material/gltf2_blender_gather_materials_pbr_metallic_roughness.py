@@ -30,7 +30,7 @@ from .gltf2_blender_search_node_tree import \
 @cached
 def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
     if not __filter_pbr_material(blender_material, export_settings):
-        return None, {}, {'color': None, 'alpha': None}
+        return None, {}, {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None}
 
     uvmap_infos = {}
 
@@ -62,7 +62,7 @@ def __filter_pbr_material(blender_material, export_settings):
 
 def __gather_base_color_factor(blender_material, export_settings):
     if not blender_material.use_nodes:
-        return [*blender_material.diffuse_color[:3], 1.0], {"color": None, "alpha": None}
+        return [*blender_material.diffuse_color[:3], 1.0], {"color": None, "alpha": None, "color_type": None, "alpha_type": None}
 
     rgb, alpha = None, None
 

@@ -459,19 +459,25 @@ def get_vertex_color_info(color_socket, alpha_socket, export_settings):
         node = previous_node(color_socket)
         if node.node is not None:
             if node.node.type == 'MIX' and node.node.data_type == "RGBA" and node.node.blend_type == 'MULTIPLY':
-                attribute_color = get_attribute_name(NodeSocket(node.node.inputs[6], node.group_path), export_settings)
-                if attribute_color is None:
-                    attribute_color = get_attribute_name(NodeSocket(node.node.inputs[7], node.group_path), export_settings)
-                attribute_color_type = "name" if attribute_color is not None else "active"
+                use_vc, attribute_color, use_active = get_attribute_name(NodeSocket(node.node.inputs[6], node.group_path), export_settings)
+                if use_vc is False:
+                    use_vc, attribute_color, use_active = get_attribute_name(NodeSocket(node.node.inputs[7], node.group_path), export_settings)
+                if use_vc is True and use_active is True:
+                    attribute_color_type = "active"
+                elif use_vc is True and use_active is None and attribute_color is not None:
+                    attribute_color_type = "name"
 
     if alpha_socket is not None and alpha_socket.socket is not None:
         node = previous_node(alpha_socket)
         if node.node is not None:
             if node.node.type == 'MIX' and node.node.data_type == "FLOAT" and node.node.blend_type == 'MULTIPLY':
-                attribute_alpha = get_attribute_name(NodeSocket(node.node.inputs[2], node.group_path), export_settings)
-                if attribute_alpha is None:
-                    attribute_alpha = get_attribute_name(NodeSocket(node.node.inputs[3], node.group_path), export_settings)
-                attribute_alpha_type = "name" if attribute_alpha is not None else "active"
+                use_vc, attribute_alpha, use_active = get_attribute_name(NodeSocket(node.node.inputs[2], node.group_path), export_settings)
+                if use_vc is False:
+                    use_vc, attribute_alpha, use_active = get_attribute_name(NodeSocket(node.node.inputs[3], node.group_path), export_settings)
+                if use_vc is True and use_active is True:
+                    attribute_alpha_type = "active"
+                elif use_vc is True and use_active is None and attribute_alpha is not None:
+                    attribute_alpha_type = "name"
 
     return {"color": attribute_color, "alpha": attribute_alpha, "color_type": attribute_color_type, "alpha_type": attribute_alpha_type}
 
@@ -481,11 +487,18 @@ def get_attribute_name(socket, export_settings):
             and node.node.attribute_type == "GEOMETRY" \
             and node.node.attribute_name is not None \
             and node.node.attribute_name != "":
-        return node.node.attribute_name
+        return True, node.node.attribute_name, None
+    elif node.node is not None and node.node.type == "ATTRIBUTE" \
+            and node.node.attribute_type == "GEOMETRY" \
+            and node.node.attribute_name == "":
+        return True, None, True
 
     if node.node is not None and node.node.type == "VERTEX_COLOR" \
             and node.node.layer_name is not None \
             and node.node.layer_name != "":
-        return node.node.layer_name
+        return True, node.node.layer_name, None
+    elif node.node is not None and node.node.type == "VERTEX_COLOR" \
+            and node.node.layer_name == "":
+        return True, None, True
 
-    return None
+    return False, None, None
