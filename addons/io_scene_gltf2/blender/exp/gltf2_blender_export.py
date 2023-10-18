@@ -238,7 +238,7 @@ def __fix_json(obj, export_settings):
 
 
 def __should_include_json_value(key, value, export_settings):
-    allowed_empty_collections = ["KHR_materials_unlit", "KHR_materials_specular"]
+    allowed_empty_collections = ["KHR_materials_unlit"]
     allowed_empty_collections_if_animated = \
         [
          "KHR_materials_specular",
@@ -265,6 +265,7 @@ def __should_include_json_value(key, value, export_settings):
                 return False
         return False
     elif not __is_empty_collection(value):
+        # TODOPointer: not sure this is still needed (specular / clearcoat ???)
         if key == "KHR_materials_specular" and "specularFactor" in value.keys() and value["specularFactor"] == 0.0:
             if key in export_settings['gltf_animated_extensions']:
                 export_settings['gltf_need_to_keep_extension_declaration'].append(key)

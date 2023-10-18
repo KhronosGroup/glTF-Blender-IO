@@ -137,7 +137,7 @@ def export_specular(blender_material, export_settings):
             extensions_needed = True
 
     if extensions_needed is False:
-        return None, {}
+        pass # Keeping specular_extension empty, in case some factor are animated
 
     if len(export_settings['current_texture_transform']) != 0:
         for k in export_settings['current_texture_transform'].keys():
