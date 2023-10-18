@@ -127,7 +127,7 @@ class GlTF2Exporter:
                     f.write(self.__buffer.to_bytes())
                 uri = buffer_name
             else:
-                uri = self.__buffer.to_embed_string()
+                pass # This is no more possible, we don't export embedded buffers
 
             buffer = gltf2_io.Buffer(
                 byte_length=self.__buffer.byte_length,
@@ -329,6 +329,20 @@ class GlTF2Exporter:
                 if skin.skeleton is not None:
                     len_ = len([i for i in self.nodes_idx_to_remove if i < skin.skeleton])
                     skin.skeleton = skin.skeleton - len_
+
+            # Remove animation channels that was targeting a node that will be removed
+            new_animation_list = []
+            for animation in self.__gltf.animations:
+                new_channel_list = []
+                for channel in animation.channels:
+                    if channel.target.node not in self.nodes_idx_to_remove:
+                        new_channel_list.append(channel)
+                animation.channels = new_channel_list
+                if len(animation.channels) > 0:
+                    new_animation_list.append(animation)
+            self.__gltf.animations = new_animation_list
+
+            #TODO: remove unused animation accessors?
 
             # And now really remove nodes
             self.__gltf.nodes = [node for idx, node in enumerate(self.__gltf.nodes) if idx not in self.nodes_idx_to_remove]
