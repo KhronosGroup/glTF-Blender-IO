@@ -49,7 +49,7 @@ def specular(mh, location_specular,
     x_specularcolor, y_specularcolor = location_specular_tint
 
     if tex_specular_info is None:
-        specular_socket.default_value = specular_factor
+        specular_socket.default_value = specular_factor / 2.0
     else:
         # Mix specular factor
         if specular_factor != 1.0:
@@ -61,7 +61,7 @@ def specular(mh, location_specular,
             mh.node_tree.links.new(specular_socket, node.outputs[0])
             # Inputs
             specular_socket = node.inputs[0]
-            node.inputs[1].default_value = specular_factor
+            node.inputs[1].default_value = specular_factor / 2.0
             x_specular -= 200
 
         texture(
