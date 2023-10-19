@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 1, 11),
+    "version": (4, 1, 12),
     'blender': (4, 0, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -182,7 +182,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Images',
         items=(('AUTO', 'Automatic',
                 'Save PNGs as PNGs, JPEGs as JPEGs, WebPs as WebPs. '
-                'If neither one, use PNG'),
+                'For other formats, use PNG'),
                 ('JPEG', 'JPEG Format (.jpg)',
                 'Save images as JPEGs. (Images that need alpha are saved as PNGs though.) '
                 'Be aware of a possible loss in quality'),
@@ -201,8 +201,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_image_add_webp: BoolProperty(
         name='Create WebP',
         description=(
-            "Creates WebP textures for every textures. "
-            "For already WebP textures, nothing happen"
+            "Creates WebP textures for every texture. "
+            "For already WebP textures, nothing happens"
         ),
         default=False
     )
@@ -663,7 +663,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_try_sparse_sk: BoolProperty(
         name='Use Sparse Accessor if better',
-        description='Try using Sparce Accessor if it save space',
+        description='Try using Sparse Accessor if it saves space',
         default=True
     )
 
@@ -675,9 +675,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_gpu_instances: BoolProperty(
         name='GPU Instances',
-        description='Export using EXT_mesh_gpu_instancing.'
-                    'Limited to children of a same Empty. '
-                    'multiple Materials might be omitted',
+        description='Export using EXT_mesh_gpu_instancing. '
+                    'Limited to children of a given Empty. '
+                    'Multiple materials might be omitted',
         default=False
     )
 
@@ -1687,7 +1687,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         items=(
             ("BLENDER", "Blender (best for import/export round trip)",
                 "Good for re-importing glTFs exported from Blender, "
-                "and re-exporting glTFs to glTFs after Blender editing"
+                "and re-exporting glTFs to glTFs after Blender editing. "
                 "Bone tips are placed on their local +Y axis (in glTF space)"),
             ("TEMPERANCE", "Temperance (average)",
                 "Decent all-around strategy. "
@@ -1715,8 +1715,8 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     import_webp_texture: BoolProperty(
         name='Import WebP textures',
         description=(
-            "If a texture exists in WebP format,"
-            "loads the WebP texture instead of the fallback png/jpg one"
+            "If a texture exists in WebP format, "
+            "loads the WebP texture instead of the fallback PNG/JPEG one"
         ),
         default=False,
     )
