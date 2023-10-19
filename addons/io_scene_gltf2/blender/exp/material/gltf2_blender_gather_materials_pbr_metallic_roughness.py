@@ -87,7 +87,6 @@ def __gather_base_color_factor(blender_material, export_settings):
 
     # Storing path for KHR_animation_pointer
     if path is not None:
-        print("......>>>>>>>")
         path_ = {}
         path_['length'] = 3
         path_['path'] = "/materials/XXX/pbrMetallicRoughness/baseColorFactor"
