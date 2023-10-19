@@ -267,7 +267,6 @@ def __gather_normal_texture(blender_material, export_settings):
             path_ = {}
             path_['length'] = export_settings['current_normal_scale'][k]['length']
             path_['path'] = export_settings['current_normal_scale'][k]['path'].replace("YYY", "normalTexture")
-            path_['vector_type'] = export_settings['current_normal_scale'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
     export_settings['current_normal_scale'] = {}
