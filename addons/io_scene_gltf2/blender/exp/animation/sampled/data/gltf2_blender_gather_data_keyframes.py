@@ -67,8 +67,6 @@ def gather_data_sampled_keyframes(
 
             # TODPointer: KHR_materials_specular needs conversion
 
-            # TODOPointer: KHR_texture_transform needs conversion
-
         # TODOPointer: lights need conversion
 
         # TODOPointer: cameras need conversion

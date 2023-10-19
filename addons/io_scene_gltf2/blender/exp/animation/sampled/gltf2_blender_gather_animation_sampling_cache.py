@@ -16,6 +16,7 @@ import mathutils
 import bpy
 import typing
 from .....blender.com.gltf2_blender_data_path import get_sk_exported
+from .....blender.com.gltf2_blender_conversion import inverted_trs_mapping_node, texture_transform_blender_to_gltf
 from ...gltf2_blender_gather_cache import datacache
 from ...gltf2_blender_gather_tree import VExportNode
 from ..gltf2_blender_gather_drivers import get_sk_drivers
@@ -246,6 +247,9 @@ def get_cache_data(path: str,
                 baseColorFactor_alpha_merged_already_done = False
                 for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
 
+                    if not path.startswith("node_tree"):
+                        continue
+
                     # Manage special case where we merge baseColorFactor and alpha
                     if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
@@ -272,6 +276,56 @@ def get_cache_data(path: str,
                             data_color = [1.0, 1.0, 1.0]
                         data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = data_color + [val_alpha]
                         baseColorFactor_alpha_merged_already_done = True
+
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("offset"):
+
+
+                        val_offset = blender_material.path_resolve(path)
+                        rotation_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "rotation"][0]
+                        val_rotation = blender_material.path_resolve(rotation_path)
+                        scale_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "scale"][0]
+                        val_scale = blender_material.path_resolve(scale_path)
+
+                        mapping_transform = {}
+                        mapping_transform["offset"] = [val_offset[0], val_offset[1]]
+                        mapping_transform["rotation"] = val_rotation
+                        mapping_transform["scale"] = [val_scale[0], val_scale[1]]
+
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "TEXTURE":
+                            mapping_transform = inverted_trs_mapping_node(mapping_transform)
+                            if mapping_transform is None:
+                                # Can not be converted to TRS, so ... keeping default values
+                                # TODOPointer: Add warning
+                                mapping_transform = {}
+                                mapping_transform["offset"] = [0.0, 0.0]
+                                mapping_transform["rotation"] = 0.0
+                                mapping_transform["scale"] = [1.0, 1.0]
+                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "VECTOR":
+                            # Vectors don't get translated
+                            mapping_transform["offset"] = [0, 0]
+
+                        texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+
+
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = texture_transform['offset']
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][rotation_path][frame] = texture_transform['rotation']
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][scale_path][frame] = texture_transform['scale']
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("rotation"):
+                        # Already handled by offset
+                        continue
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
+                        # Already handled by offset
+                        continue
+
+
+
                     # Classic case
                     else:
                         val = blender_material.path_resolve(path)
@@ -289,6 +343,10 @@ def get_cache_data(path: str,
 
                 baseColorFactor_alpha_merged_already_done = False
                 for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if not path.startswith("node_tree"):
+                        continue
+
                     # Manage special case where we merge baseColorFactor and alpha
                     if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
@@ -315,6 +373,55 @@ def get_cache_data(path: str,
                             data_color = [1.0, 1.0, 1.0]
                         data[mat][action_name]['value'][path][frame] = data_color + [val_alpha]
                         baseColorFactor_alpha_merged_already_done = True
+
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("offset"):
+
+
+                        val_offset = blender_material.path_resolve(path)
+                        rotation_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "rotation"][0]
+                        val_rotation = blender_material.path_resolve(rotation_path)
+                        scale_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "scale"][0]
+                        val_scale = blender_material.path_resolve(scale_path)
+
+                        mapping_transform = {}
+                        mapping_transform["offset"] = [val_offset[0], val_offset[1]]
+                        mapping_transform["rotation"] = val_rotation
+                        mapping_transform["scale"] = [val_scale[0], val_scale[1]]
+
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "TEXTURE":
+                            mapping_transform = inverted_trs_mapping_node(mapping_transform)
+                            if mapping_transform is None:
+                                # Can not be converted to TRS, so ... keeping default values
+                                # TODOPointer: Add warning
+                                mapping_transform = {}
+                                mapping_transform["offset"] = [0.0, 0.0]
+                                mapping_transform["rotation"] = 0.0
+                                mapping_transform["scale"] = [1.0, 1.0]
+                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "VECTOR":
+                            # Vectors don't get translated
+                            mapping_transform["offset"] = [0, 0]
+
+                        texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+
+
+                        data[mat][action_name]['value'][path][frame] = texture_transform['offset']
+                        data[mat][action_name]['value'][rotation_path][frame] = texture_transform['rotation']
+                        data[mat][action_name]['value'][scale_path][frame] = texture_transform['scale']
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("rotation"):
+                        # Already handled by offset
+                        continue
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
+                        # Already handled by offset
+                        continue
+
+
                     # Classic case
                     else:
                         val = blender_material.path_resolve(path)
@@ -333,6 +440,10 @@ def get_cache_data(path: str,
 
                 baseColorFactor_alpha_merged_already_done = False
                 for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if not path.startswith("node_tree"):
+                        continue
+
                     # Manage special case where we merge baseColorFactor and alpha
                     if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
@@ -359,6 +470,54 @@ def get_cache_data(path: str,
                             data_color = [1.0, 1.0, 1.0]
                         data[mat][mat]['value'][path][frame] = data_color + [val_alpha]
                         baseColorFactor_alpha_merged_already_done = True
+
+                    # Manage special case for KHR_texture_transform offset, that needs rotation and scale too (and not only translation)
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("offset"):
+
+                        val_offset = blender_material.path_resolve(path)
+                        rotation_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "rotation"][0]
+                        val_rotation = blender_material.path_resolve(rotation_path)
+                        scale_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "scale"][0]
+                        val_scale = blender_material.path_resolve(scale_path)
+
+                        mapping_transform = {}
+                        mapping_transform["offset"] = [val_offset[0], val_offset[1]]
+                        mapping_transform["rotation"] = val_rotation
+                        mapping_transform["scale"] = [val_scale[0], val_scale[1]]
+
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "TEXTURE":
+                            mapping_transform = inverted_trs_mapping_node(mapping_transform)
+                            if mapping_transform is None:
+                                # Can not be converted to TRS, so ... keeping default values
+                                # TODOPointer: Add warning
+                                mapping_transform = {}
+                                mapping_transform["offset"] = [0.0, 0.0]
+                                mapping_transform["rotation"] = 0.0
+                                mapping_transform["scale"] = [1.0, 1.0]
+                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "VECTOR":
+                            # Vectors don't get translated
+                            mapping_transform["offset"] = [0, 0]
+
+                        texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+
+
+                        data[mat][mat]['value'][path][frame] = texture_transform['offset']
+                        data[mat][mat]['value'][rotation_path][frame] = texture_transform['rotation']
+                        data[mat][mat]['value'][scale_path][frame] = texture_transform['scale']
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("rotation"):
+                        # Already handled by offset
+                        continue
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
+                        # Already handled by offset
+                        continue
+
                     # Classic case
                     else:
                         val = blender_material.path_resolve(path)
@@ -377,6 +536,10 @@ def get_cache_data(path: str,
                         data[mat][blender_material.animation_data.action.name]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if path.startswith("node_tree"):
+                        continue
+
                     val = blender_material.path_resolve(path)
                     if type(val).__name__ == "float":
                         data[mat][blender_material.animation_data.action.name]['value'][path][frame] = val
@@ -391,6 +554,10 @@ def get_cache_data(path: str,
                         data[mat][action_name]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if path.startswith("node_tree"):
+                        continue
+
                     val = blender_material.path_resolve(path)
                     if type(val).__name__ == "float":
                         data[mat][action_name]['value'][path][frame] = val
@@ -406,6 +573,10 @@ def get_cache_data(path: str,
                         data[mat][mat]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if path.startswith("node_tree"):
+                        continue
+
                     val = blender_material.path_resolve(path)
                     if type(val).__name__ == "float":
                         data[mat][mat]['value'][path][frame] = val

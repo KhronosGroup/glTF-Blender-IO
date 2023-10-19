@@ -20,7 +20,7 @@ import bpy
 from mathutils import Vector, Matrix
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ...com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name, get_gltf_old_group_node_name
-from ....blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
+from ....blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf, inverted_trs_mapping_node
 from io_scene_gltf2.io.com import gltf2_io_debug
 import typing
 
@@ -362,28 +362,7 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     mapping_transform["scale"] = [mapping_node.node.inputs['Scale'].default_value[0], mapping_node.node.inputs['Scale'].default_value[1]]
 
     if mapping_node.node.vector_type == "TEXTURE":
-        # This means use the inverse of the TRS transform.
-        def inverted(mapping_transform):
-            offset = mapping_transform["offset"]
-            rotation = mapping_transform["rotation"]
-            scale = mapping_transform["scale"]
-
-            # Inverse of a TRS is not always a TRS. This function will be right
-            # at least when the following don't occur.
-            if abs(rotation) > 1e-5 and abs(scale[0] - scale[1]) > 1e-5:
-                return None
-            if abs(scale[0]) < 1e-5 or abs(scale[1]) < 1e-5:
-                return None
-
-            new_offset = Matrix.Rotation(-rotation, 3, 'Z') @ Vector((-offset[0], -offset[1], 1))
-            new_offset[0] /= scale[0]; new_offset[1] /= scale[1]
-            return {
-                "offset": new_offset[0:2],
-                "rotation": -rotation,
-                "scale": [1/scale[0], 1/scale[1]],
-            }
-
-        mapping_transform = inverted(mapping_transform)
+        mapping_transform = inverted_trs_mapping_node(mapping_transform)
         if mapping_transform is None:
             gltf2_io_debug.print_console("WARNING",
                 "Skipping exporting texture transform with type TEXTURE because "
@@ -404,18 +383,26 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     if texture_transform["rotation"] == 0:
         del(texture_transform["rotation"])
 
+    # glTF Offset needs: offset, rotation, scale
+    # glTF Rotation needs: rotation
+    # glTF Scale needs: scale
+
     path_ = {}
     path_['length'] = 2
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
+    path_['vector_type'] = mapping_node.node.vector_type
     export_settings['current_texture_transform']["node_tree." + mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
 
     path_ = {}
     path_['length'] = 2
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/scale"
+    path_['vector_type'] = mapping_node.node.vector_type
     export_settings['current_texture_transform']["node_tree." + mapping_node.node.inputs['Scale'].path_from_id() + ".default_value"] = path_
+
     path_ = {}
     path_['length'] = 1
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/rotation"
+    path_['vector_type'] = mapping_node.node.vector_type
     export_settings['current_texture_transform']["node_tree." + mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
 
     return texture_transform

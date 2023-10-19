@@ -71,6 +71,7 @@ def export_transmission(blender_material, export_settings):
                 path_ = {}
                 path_['length'] = export_settings['current_texture_transform'][k]['length']
                 path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_transmission/transmissionTexture/extensions")
+                path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
                 export_settings['current_paths'][k] = path_
 
         export_settings['current_texture_transform'] = {}

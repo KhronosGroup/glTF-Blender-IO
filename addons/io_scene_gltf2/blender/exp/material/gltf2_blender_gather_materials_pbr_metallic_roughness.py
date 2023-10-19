@@ -139,6 +139,7 @@ def __gather_base_color_texture(blender_material, export_settings):
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "pbrMetallicRoughness/baseColorTexture/extensions")
+            path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}

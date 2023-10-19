@@ -257,6 +257,7 @@ def __gather_normal_texture(blender_material, export_settings):
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "normalTexture/extensions")
+            path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}
@@ -266,6 +267,7 @@ def __gather_normal_texture(blender_material, export_settings):
             path_ = {}
             path_['length'] = export_settings['current_normal_scale'][k]['length']
             path_['path'] = export_settings['current_normal_scale'][k]['path'].replace("YYY", "normalTexture")
+            path_['vector_type'] = export_settings['current_normal_scale'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
     export_settings['current_normal_scale'] = {}
@@ -323,6 +325,7 @@ def __gather_orm_texture(blender_material, export_settings):
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "occlusionTexture/extensions")
+            path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
         #This case can't happen because we are going to keep only 1 UVMap
@@ -331,6 +334,7 @@ def __gather_orm_texture(blender_material, export_settings):
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "pbrMetallicRoughness/metallicRoughnessTexture/extensions")
+            path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}
@@ -362,6 +366,7 @@ def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, e
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "occlusionTexture/extensions")
+            path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}

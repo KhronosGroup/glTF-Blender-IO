@@ -13,11 +13,35 @@
 # limitations under the License.
 
 from math import sin, cos
+from mathutils import Matrix, Vector
 import numpy as np
 from ...io.com import gltf2_io_constants
 
 PBR_WATTS_TO_LUMENS = 683
 # Industry convention, biological peak at 555nm, scientific standard as part of SI candela definition.
+
+
+
+# This means use the inverse of the TRS transform.
+def inverted_trs_mapping_node(mapping_transform):
+    offset = mapping_transform["offset"]
+    rotation = mapping_transform["rotation"]
+    scale = mapping_transform["scale"]
+
+    # Inverse of a TRS is not always a TRS. This function will be right
+    # at least when the following don't occur.
+    if abs(rotation) > 1e-5 and abs(scale[0] - scale[1]) > 1e-5:
+        return None
+    if abs(scale[0]) < 1e-5 or abs(scale[1]) < 1e-5:
+        return None
+
+    new_offset = Matrix.Rotation(-rotation, 3, 'Z') @ Vector((-offset[0], -offset[1], 1))
+    new_offset[0] /= scale[0]; new_offset[1] /= scale[1]
+    return {
+        "offset": new_offset[0:2],
+        "rotation": -rotation,
+        "scale": [1/scale[0], 1/scale[1]],
+    }
 
 def texture_transform_blender_to_gltf(mapping_transform):
     """
