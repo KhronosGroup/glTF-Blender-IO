@@ -148,38 +148,28 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
     comb = previous_node(NodeSocket(blender_shader_node.inputs['Vector'], group_path))
     if comb.node is None or comb.node.type != 'COMBXYZ': return None
 
-    print(">1")
-
     for soc in ['X', 'Y']:
         node = previous_node(NodeSocket(comb.node.inputs[soc], comb.group_path))
         if node.node is None: return None
-
-        print(">2")
 
         if node.node.type == 'SEPXYZ':
             # Passed through without change
             wrap = None
             prev_socket = previous_socket(NodeSocket(comb.node.inputs[soc], comb.group_path))
-            print(">3")
         elif node.node.type == 'MATH':
             # Math node applies a manual wrap
-            print(">>>>", node.node.operation)
             if (node.node.operation == 'PINGPONG' and
                     get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE')[0] == 1.0):  # scale = 1
                 wrap = TextureWrap.MirroredRepeat
-                print(">4")
             elif (node.node.operation == 'WRAP' and
                     get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE')[0] == 0.0 and  # min = 0
                     get_const_from_socket(NodeSocket(node.node.inputs[2], node.group_path), kind='VALUE')[0] == 1.0):    # max = 1
                 wrap = TextureWrap.Repeat
-                print(">5")
             else:
-                print(">6")
                 return None
 
             prev_socket = previous_socket(NodeSocket(node.node.inputs[0], node.group_path))
         else:
-            print(">7")
             return None
 
         if prev_socket.socket is None: return None
@@ -188,15 +178,12 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
         # Make sure X goes to X, etc.
         if prev_socket.socket.name != soc: return None
         # Make sure both attach to the same SeparateXYZ node
-        print(">8")
         if soc == 'X':
             sep = prev_node
         else:
             if sep != prev_node: return None
 
-        print(">9")
         result['wrap_s' if soc == 'X' else 'wrap_t'] = wrap
 
-    print(">10")
     result['next_socket'] = NodeSocket(sep.inputs[0], prev_socket.group_path)
     return result
