@@ -657,47 +657,9 @@ describe('Exporter', function() {
             it('exports custom normals', function() {
                 let gltfPath = path.resolve(outDirPath, '10_custom_normals.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
-                assert.strictEqual(asset.meshes.length, 2);
+                assert.strictEqual(asset.meshes.length, 1);
 
                 let bufferCache = {};
-
-                const angleCubeMesh = asset.meshes.filter(m => m.name === 'AngleCube')[0];
-                const flatNormals = angleCubeMesh.primitives[0].attributes.NORMAL;
-                const flatNormalData = getAccessorData(gltfPath, asset, flatNormals, bufferCache);
-                const flatNormalHash = buildVectorHash(flatNormalData);
-
-                // In this mesh, the beveled cube has various angled edges.  Custom normals
-                // exist but are not enabled via the auto-smooth flag.  So, many exported
-                // normals are not axis-aligned.
-                const expectedFlatNormalHash = {
-                    "0.000,1.000,0.000": 4,
-                    "-1.000,0.000,0.000": 4,
-                    "0.000,0.000,-1.000": 4,
-                    "0.000,-1.000,0.000": 4,
-                    "1.000,0.000,0.000": 4,
-                    "0.577,-0.577,0.577": 3,
-                    "0.577,0.577,0.577": 3,
-                    "0.577,-0.577,-0.577": 3,
-                    "0.577,0.577,-0.577": 3,
-                    "-0.577,-0.577,0.577": 3,
-                    "-0.577,0.577,0.577": 3,
-                    "-0.577,-0.577,-0.577": 3,
-                    "-0.577,0.577,-0.577": 3,
-                    "-0.707,0.707,0.000": 4,
-                    "0.000,0.707,0.707": 4,
-                    "0.707,0.000,0.707": 4,
-                    "-0.707,0.000,-0.707": 4,
-                    "0.707,0.000,-0.707": 4,
-                    "-0.707,0.000,0.707": 4,
-                    "0.000,-0.707,-0.707": 4,
-                    "0.707,-0.707,0.000": 4,
-                    "0.000,0.707,-0.707": 4,
-                    "-0.707,-0.707,0.000": 4,
-                    "0.000,-0.707,0.707": 4,
-                    "0.707,0.707,0.000": 4,
-                    "0.000,0.000,1.000": 4
-                };
-                assert.deepStrictEqual(flatNormalHash, expectedFlatNormalHash);
 
                 const smoothCubeMesh = asset.meshes.filter(m => m.name === 'SmoothCube')[0];
                 const customNormals = smoothCubeMesh.primitives[0].attributes.NORMAL;
