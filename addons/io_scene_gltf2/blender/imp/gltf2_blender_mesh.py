@@ -71,10 +71,9 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
     # Use a class here, to be able to pass data by reference to hook (to be able to change them inside hook)
     class IMPORT_mesh_options:
-        def __init__(self, skinning: bool = True, skin_into_bind_pose: bool = True, use_auto_smooth: bool = True):
+        def __init__(self, skinning: bool = True, skin_into_bind_pose: bool = True):
             self.skinning = skinning
             self.skin_into_bind_pose = skin_into_bind_pose
-            self.use_auto_smooth = use_auto_smooth
 
     mesh_options = IMPORT_mesh_options()
     import_user_extensions('gather_import_mesh_options', gltf, mesh_options, pymesh, skin_idx)
@@ -489,9 +488,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     mesh.update(calc_edges_loose=has_loose_edges)
 
     if has_normals:
-        mesh.create_normals_split()
         mesh.normals_split_custom_set_from_vertices(vert_normals)
-        mesh.use_auto_smooth = mesh_options.use_auto_smooth
 
 
 def points_edges_tris(mode, indices):
