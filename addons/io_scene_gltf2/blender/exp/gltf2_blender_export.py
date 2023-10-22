@@ -257,28 +257,22 @@ def __should_include_json_value(key, value, export_settings):
     if value is None:
         return False
     elif __is_empty_collection(value) and key not in allowed_empty_collections:
+        # Empty collection is not allowed, except if it is animated
         if key in allowed_empty_collections_if_animated:
             if key in export_settings['gltf_animated_extensions']:
+                # There is an animation, so we can keep this empty collection, and store that this extension declaration needs to be kept
                 export_settings['gltf_need_to_keep_extension_declaration'].append(key)
                 return True
             else:
+                # There is no animation, so we will not keep this empty collection
                 return False
+        # We can't have this empty collection, because it can't be animated
         return False
     elif not __is_empty_collection(value):
-        # TODOPointer: not sure this is still needed (specular / clearcoat ???)
-        if key == "KHR_materials_specular" and "specularFactor" in value.keys() and value["specularFactor"] == 0.0:
-            if key in export_settings['gltf_animated_extensions']:
-                export_settings['gltf_need_to_keep_extension_declaration'].append(key)
-                return True
-            return False
-        if key == "KHR_materials_clearcoat" and "clearcoatFactor" in value.keys() and value["clearcoatFactor"] == 0.0:
-            if key in export_settings['gltf_animated_extensions']:
-                export_settings['gltf_need_to_keep_extension_declaration'].append(key)
-                return True
-            return False
         if key.startswith("KHR_") or key.startswith("EXT_"):
             export_settings['gltf_need_to_keep_extension_declaration'].append(key)
     elif __is_empty_collection(value) and key in allowed_empty_collections:
+        # We can have this empty collection for this extension. So keeping it, and store that this extension declaration needs to be kept
         export_settings['gltf_need_to_keep_extension_declaration'].append(key)
     return True
 

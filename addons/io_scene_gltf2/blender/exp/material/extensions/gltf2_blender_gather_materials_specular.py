@@ -98,10 +98,9 @@ def export_specular(blender_material, export_settings):
         color = speculartint_socket.socket.default_value[:3]
         if fac is not None and fac > 1.0:
             color = (color[0] * fac, color[1] * fac, color[2] * fac)
-        specular_extension['specularColorFactor'] = color if color != (1.0, 1.0, 1.0) else None
-        if color != (1.0, 1.0, 1.0):
-            extensions_needed = True
-
+            if color != (1.0, 1.0, 1.0):
+                specular_extension['specularColorFactor'] = color
+                extensions_needed = True
 
          # Storing path for KHR_animation_pointer
         path_ = {}
@@ -115,8 +114,8 @@ def export_specular(blender_material, export_settings):
             fac_color = (fac_color[0] * fac, fac_color[1] * fac, fac_color[2] * fac)
         elif fac_color is None and fac is not None and fac > 1.0:
             fac_color = (fac, fac, fac)
-        specular_extension['specularColorFactor'] = fac_color if fac_color != (1.0, 1.0, 1.0) else None
         if fac_color != (1.0, 1.0, 1.0):
+            specular_extension['specularColorFactor'] = fac_color
             extensions_needed = True
 
         if path is not None:
