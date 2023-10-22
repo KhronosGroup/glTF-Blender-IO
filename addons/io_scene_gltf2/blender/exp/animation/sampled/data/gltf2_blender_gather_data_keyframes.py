@@ -65,7 +65,8 @@ def gather_data_sampled_keyframes(
                 if export_settings['KHR_animation_pointer']['materials'][blender_id]['paths'][channel]['reverse'] is True:
                     value = 1.0 - value
 
-            # TODPointer: KHR_materials_specular needs conversion
+            # For specularFactor and specularColorFactor, we already multiplied it by 2.0, and clamp it to 1.0 (and adapt specularColor accordingly)
+            # This is done in cache retrieval
 
         # TODOPointer: lights need conversion
 

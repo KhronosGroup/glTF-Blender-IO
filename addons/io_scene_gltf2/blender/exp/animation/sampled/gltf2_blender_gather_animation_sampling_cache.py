@@ -324,6 +324,29 @@ def get_cache_data(path: str,
                         # Already handled by offset
                         continue
 
+                    # Manage special cases for specularFactor & specularColorFactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
+                        val = blender_material.path_resolve(path)
+                        val = val * 2.0
+                        if val > 1.0:
+                            fac = val
+                            val = 1.0
+                        else:
+                            fac = 1.0
+
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = val
+
+                        # Retrieve specularColorFactor
+                        colorfactor_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "specularColorFactor"][0]
+                        val_colorfactor = blender_material.path_resolve(colorfactor_path)
+                        if fac > 1.0:
+                            val_colorfactor = [i * fac for i in val_colorfactor]
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][colorfactor_path][frame] = val_colorfactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor":
+                        # Already handled by specularFactor
+                        continue
 
 
                     # Classic case
@@ -421,6 +444,29 @@ def get_cache_data(path: str,
                         # Already handled by offset
                         continue
 
+                    # Manage special cases for specularFactor & specularColorFactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
+                        val = blender_material.path_resolve(path)
+                        val = val * 2.0
+                        if val > 1.0:
+                            fac = val
+                            val = 1.0
+                        else:
+                            fac = 1.0
+
+                        data[mat][action_name]['value'][path][frame] = val
+
+                        # Retrieve specularColorFactor
+                        colorfactor_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "specularColorFactor"][0]
+                        val_colorfactor = blender_material.path_resolve(colorfactor_path)
+                        if fac > 1.0:
+                            val_colorfactor = [i * fac for i in val_colorfactor]
+                        data[mat][action_name]['value'][colorfactor_path][frame] = val_colorfactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor":
+                        # Already handled by specularFactor
+                        continue
 
                     # Classic case
                     else:
@@ -516,6 +562,30 @@ def get_cache_data(path: str,
                     elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
                         # Already handled by offset
+                        continue
+
+                    # Manage special cases for specularFactor & specularColorFactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
+                        val = blender_material.path_resolve(path)
+                        val = val * 2.0
+                        if val > 1.0:
+                            fac = val
+                            val = 1.0
+                        else:
+                            fac = 1.0
+
+                        data[mat][mat]['value'][path][frame] = val
+
+                        # Retrieve specularColorFactor
+                        colorfactor_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "specularColorFactor"][0]
+                        val_colorfactor = blender_material.path_resolve(colorfactor_path)
+                        if fac > 1.0:
+                            val_colorfactor = [i * fac for i in val_colorfactor]
+                        data[mat][mat]['value'][colorfactor_path][frame] = val_colorfactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor":
+                        # Already handled by specularFactor
                         continue
 
                     # Classic case

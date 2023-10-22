@@ -542,6 +542,11 @@ class BlenderPointerAnim():
                 blender_path = specular_socket.socket.path_from_id() + ".default_value"
                 num_components = 1
 
+            old_values = values.copy()
+            for idx, i in enumerate(old_values):
+                values[idx] = [i[0] / 2.0]
+
+
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_specular" and \
