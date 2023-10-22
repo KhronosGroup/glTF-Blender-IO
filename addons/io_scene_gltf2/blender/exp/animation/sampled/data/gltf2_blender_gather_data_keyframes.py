@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import typing
+import math
 import numpy as np
+from .....com.gltf2_blender_conversion import PBR_WATTS_TO_LUMENS
 from ....gltf2_blender_gather_cache import cached
 from ...gltf2_blender_gather_keyframes import Keyframe
 from ..gltf2_blender_gather_animation_sampling_cache import get_cache_data
@@ -68,7 +70,17 @@ def gather_data_sampled_keyframes(
             # For specularFactor and specularColorFactor, we already multiplied it by 2.0, and clamp it to 1.0 (and adapt specularColor accordingly)
             # This is done in cache retrieval
 
-        # TODOPointer: lights need conversion
+        elif blender_type_data == "lights":
+            if export_settings['KHR_animation_pointer']['lights'][blender_id]['paths'][channel]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/intensity":
+                # Lights need conversion in case quadratic_falloff_node is used, for intensity
+                if 'quadratic_falloff_node' in channel:
+                    value /= (math.pi * 4.0)
+
+                if export_settings['gltf_lighting_mode'] == 'SPEC' \
+                        and export_settings['KHR_animation_pointer']['lights'][blender_id]['paths'][channel]['lamp_type'] != "SUN":
+                    value *= PBR_WATTS_TO_LUMENS
+
+        # TODOPointer: Light spots need conversion (that needs spot_size and spot_blend)
 
         # TODOPointer: cameras need conversion
 

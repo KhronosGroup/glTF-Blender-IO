@@ -60,7 +60,7 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
 
         # Store data for KHR_animation_pointer
         path_ = {}
-        path_['length'] = 1
+        path_['length'] = 3 #TODOPointer: check if export is done correctly with 3 (or bad with 4)
         path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
         export_settings['current_paths']["node_tree." + emission_node.inputs["Color"].path_from_id() + ".default_value"] = path_
 
@@ -68,7 +68,7 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
 
     # Store data for KHR_animation_pointer
     path_ = {}
-    path_['length'] = 1
+    path_['length'] = 3 #TODOPointer: check if export is done correctly with 3 (or bad with 4)
     path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
     export_settings['current_paths']['color'] = path_
 
@@ -92,6 +92,7 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
                 path_ = {}
                 path_['length'] = 1
                 path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
+                path_['lamp_type'] = blender_lamp.type
                 export_settings['current_paths']["node_tree." + quadratic_falloff_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
 
             else:
@@ -101,6 +102,7 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
                 path_ = {}
                 path_['length'] = 1
                 path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
+                path_['lamp_type'] = blender_lamp.type
                 export_settings['current_paths']["energy"] = path_
 
                 emission_strength = blender_lamp.energy
@@ -110,6 +112,7 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
             path_ = {}
             path_['length'] = 1
             path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
+            path_['lamp_type'] = blender_lamp.type
             export_settings['current_paths']["node_tree." + emission_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
 
 
@@ -119,6 +122,7 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
+        path_['lamp_type'] = blender_lamp.type
         export_settings['current_paths']["energy"] = path_
 
     if export_settings['gltf_lighting_mode'] == 'RAW':
