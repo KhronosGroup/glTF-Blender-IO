@@ -357,7 +357,8 @@ def get_texture_transform_from_mapping_node(mapping_node):
         return None
 
     mapping_transform = {}
-    mapping_transform["offset"] = [mapping_node.node.inputs['Location'].default_value[0], mapping_node.node.inputs['Location'].default_value[1]]
+    if mapping_node.node.vector_type != "VECTOR":
+        mapping_transform["offset"] = [mapping_node.node.inputs['Location'].default_value[0], mapping_node.node.inputs['Location'].default_value[1]]
     mapping_transform["rotation"] = mapping_node.node.inputs['Rotation'].default_value[2]
     mapping_transform["scale"] = [mapping_node.node.inputs['Scale'].default_value[0], mapping_node.node.inputs['Scale'].default_value[1]]
 
