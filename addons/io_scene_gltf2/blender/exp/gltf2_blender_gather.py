@@ -64,7 +64,8 @@ def __gather_scene(blender_scene, export_settings):
     vtree.construct(blender_scene)
     vtree.search_missing_armature() # In case armature are no parented correctly
     vtree.bake_armature_bone_list() # Used in case we remove the armature
-    vtree.check_if_we_can_remove_armature() # Check if we can remove the armatures objects
+    if export_settings['gltf_armature_object_remove'] is True:
+        vtree.check_if_we_can_remove_armature() # Check if we can remove the armatures objects
 
     export_user_extensions('vtree_before_filter_hook', export_settings, vtree)
 
