@@ -317,12 +317,30 @@ def get_cache_data(path: str,
                         data[mat][blender_material.node_tree.animation_data.action.name]['value'][scale_path][frame] = texture_transform['scale']
                     elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("rotation"):
-                        # Already handled by offset
-                        continue
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = val
+                            mapping_transform["scale"] = [1, 1] # Placeholder, not needed
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = texture_transform['rotation']
                     elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
-                        # Already handled by offset
-                        continue
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = 0.0 # Placeholder, not needed
+                            mapping_transform["scale"] = [val[0], val[1]]
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = texture_transform['rotation']
 
                     # Manage special cases for specularFactor & specularColorFactor
                     elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
@@ -437,12 +455,30 @@ def get_cache_data(path: str,
                         data[mat][action_name]['value'][scale_path][frame] = texture_transform['scale']
                     elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("rotation"):
-                        # Already handled by offset
-                        continue
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = val
+                            mapping_transform["scale"] = [1, 1] # Placeholder, not needed
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][action_name]['value'][path][frame] = texture_transform['rotation']
                     elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
-                        # Already handled by offset
-                        continue
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = 0.0 # Placeholder, not needed
+                            mapping_transform["scale"] = [val[0], val[1]]
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][action_name]['value'][path][frame] = texture_transform['rotation']
 
                     # Manage special cases for specularFactor & specularColorFactor
                     elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
@@ -555,14 +591,30 @@ def get_cache_data(path: str,
                         data[mat][mat]['value'][path][frame] = texture_transform['offset']
                         data[mat][mat]['value'][rotation_path][frame] = texture_transform['rotation']
                         data[mat][mat]['value'][scale_path][frame] = texture_transform['scale']
-                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
-                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("rotation"):
-                        # Already handled by offset
-                        continue
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = val
+                            mapping_transform["scale"] = [1, 1] # Placeholder, not needed
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][mat]['value'][path][frame] = texture_transform['rotation']
                     elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
                             and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
-                        # Already handled by offset
-                        continue
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = 0.0 # Placeholder, not needed
+                            mapping_transform["scale"] = [val[0], val[1]]
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][mat]['value'][path][frame] = texture_transform['rotation']
 
                     # Manage special cases for specularFactor & specularColorFactor
                     elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
