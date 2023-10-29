@@ -388,11 +388,12 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     # glTF Rotation needs: rotation
     # glTF Scale needs: scale
 
-    path_ = {}
-    path_['length'] = 2
-    path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
-    path_['vector_type'] = mapping_node.node.vector_type
-    export_settings['current_texture_transform']["node_tree." + mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
+    if mapping_node.node.vector_type != "VECTOR":
+        path_ = {}
+        path_['length'] = 2
+        path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
+        path_['vector_type'] = mapping_node.node.vector_type
+        export_settings['current_texture_transform']["node_tree." + mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
 
     path_ = {}
     path_['length'] = 2
