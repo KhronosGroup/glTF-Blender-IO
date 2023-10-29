@@ -36,7 +36,8 @@ from .gltf2_blender_search_node_tree import \
     has_image_node_from_socket, \
     get_socket_from_gltf_material_node, \
     get_socket, \
-    get_node_socket
+    get_node_socket, \
+    get_vertex_color_info
 
 @cached
 def get_material_cache_key(blender_material, export_settings):
@@ -57,7 +58,7 @@ def gather_material(blender_material, export_settings):
     :return: a glTF material
     """
     if not __filter_material(blender_material, export_settings):
-        return None, {}
+        return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None}}
 
     mat_unlit, uvmap_info, vc_info = __export_unlit(blender_material, export_settings)
     if mat_unlit is not None:
@@ -309,9 +310,11 @@ def __export_unlit(blender_material, export_settings):
 
     info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
     if info is None:
-        return None, {}, {"color": None, "alpha": None}
+        return None, {}, {"color": None, "alpha": None, "color_type": None, "alpha_type": None}
 
-    base_color_texture, uvmap_info, vc_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
+    base_color_texture, uvmap_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
+
+    vc_info = get_vertex_color_info(info.get('rgb_socket'), info.get('alpha_socket'), export_settings)
 
     material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
@@ -457,7 +460,7 @@ def get_material_from_idx(material_idx, materials, export_settings):
 def get_base_material(material_idx, materials, export_settings):
 
     material = None
-    material_info = {"uv_info": {}, "vc_info": {}}
+    material_info = {"uv_info": {}, "vc_info": {"color": None, "alpha": None, "color_type": None, "alpha_type": None}}
 
     mat = get_material_from_idx(material_idx, materials, export_settings)
     if mat is not None:
