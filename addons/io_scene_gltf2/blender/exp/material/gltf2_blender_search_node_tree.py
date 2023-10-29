@@ -384,7 +384,7 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     if texture_transform["rotation"] == 0:
         del(texture_transform["rotation"])
 
-    # glTF Offset needs: offset, rotation, scale
+    # glTF Offset needs: offset, rotation, scale (note that Offset is not used for Vector mapping)
     # glTF Rotation needs: rotation
     # glTF Scale needs: scale
 
