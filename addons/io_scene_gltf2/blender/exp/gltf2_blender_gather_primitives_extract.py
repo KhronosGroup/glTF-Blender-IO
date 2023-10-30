@@ -529,11 +529,12 @@ class PrimitiveCreator:
         # Manage edges & points primitives.
         # One for edges, one for points
         # No material for them, so only one primitive for each
+        has_triangle_primitive = len(primitives) != 0
         primitives.extend(self.primitive_creation_edges_and_points())
 
         print_console('INFO', 'Primitives created: %d' % len(primitives))
 
-        return primitives, self.attributes
+        return primitives, self.attributes if has_triangle_primitive else None
 
     def primitive_creation_not_shared(self):
         primitives = []
