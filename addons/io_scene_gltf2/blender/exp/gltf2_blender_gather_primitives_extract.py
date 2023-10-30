@@ -392,6 +392,9 @@ class PrimitiveCreator:
         # No choice : We need to retrieve materials here. Anyway, this will be baked, and next call will be quick
         # We also need to shuffle Vertex Color data if needed
 
+
+        self.uvmap_attribute_list = [] # Initialize here, in case we don't have any triangle primitive
+
         materials_use_vc = None
         warning_already_displayed = False
         for material_idx in self.prim_indices.keys():
@@ -489,6 +492,22 @@ class PrimitiveCreator:
 
         self.attributes = {}
 
+        next_texcoor_idx = self.tex_coord_max
+        uvmap_attributes_index = {}
+        for attr in self.uvmap_attribute_list:
+            res = np.empty((len(self.dots), 2), dtype=gltf2_blender_conversion.get_numpy_type('FLOAT2'))
+            for i in range(2):
+                res[:, i] = self.dots[attr + str(i)]
+
+            print(res)
+
+            self.attributes["TEXCOORD_" + str(next_texcoor_idx)] = {}
+            self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data"] = res
+            self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["component_type"] = gltf2_io_constants.ComponentType.Float
+            self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data_type"] = gltf2_io_constants.DataType.Vec2
+            uvmap_attributes_index[attr] = next_texcoor_idx
+            next_texcoor_idx += 1
+
         for attr in self.blender_attributes:
             if 'set' in attr:
                 attr['set'](attr)
@@ -523,7 +542,8 @@ class PrimitiveCreator:
             primitives.append({
                 # No attribute here, as they are shared accross all primitives
                 'indices': indices,
-                'material': material_idx
+                'material': material_idx,
+                'uvmap_attributes_index': uvmap_attributes_index
             })
 
         # Manage edges & points primitives.
@@ -566,6 +586,8 @@ class PrimitiveCreator:
                 res = np.empty((len(self.prim_dots), 2), dtype=gltf2_blender_conversion.get_numpy_type('FLOAT2'))
                 for i in range(2):
                     res[:, i] = self.prim_dots[attr + str(i)]
+
+                print(res)
 
                 self.attributes["TEXCOORD_" + str(next_texcoor_idx)] = {}
                 self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data"] = res
