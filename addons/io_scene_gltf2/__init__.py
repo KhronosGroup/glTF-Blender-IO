@@ -425,7 +425,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_shared_accessors: BoolProperty(
         name='Shared Accessors',
         description='Export Primitives using shared accessors for attributes',
-        default=True
+        default=False
     )
 
     export_animations: BoolProperty(
