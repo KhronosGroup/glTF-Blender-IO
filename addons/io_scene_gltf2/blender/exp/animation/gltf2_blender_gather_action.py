@@ -44,7 +44,12 @@ def gather_actions_animations(export_settings):
 
         # Do not manage not exported objects
         if vtree.nodes[obj_uuid].node is None:
-            continue
+            if export_settings["gltf_armature_object_remove"] is True:
+                # Manage armature object, as this is the object that has the animation
+                if not vtree.nodes[obj_uuid].blender_object:
+                    continue
+            else:
+                continue
 
         if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
             continue
@@ -76,7 +81,12 @@ def prepare_actions_range(export_settings):
 
         # Do not manage not exported objects
         if vtree.nodes[obj_uuid].node is None:
-            continue
+            if export_settings["gltf_armature_object_remove"] is True:
+                # Manage armature object, as this is the object that has the animation
+                if not vtree.nodes[obj_uuid].blender_object:
+                    continue
+            else:
+                continue
 
         if obj_uuid not in export_settings['ranges']:
             export_settings['ranges'][obj_uuid] = {}
@@ -181,7 +191,12 @@ def prepare_actions_range(export_settings):
 
             # Do not manage not exported objects
             if vtree.nodes[obj_uuid].node is None:
-                continue
+                if export_settings['gltf_armature_object_remove'] is True:
+                    # Manage armature object, as this is the object that has the animation
+                    if not vtree.nodes[obj_uuid].blender_object:
+                        continue
+                else:
+                    continue
 
             blender_actions = __get_blender_actions(obj_uuid, export_settings)
             for blender_action, track, type_ in blender_actions:

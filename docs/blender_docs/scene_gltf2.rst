@@ -49,7 +49,8 @@ When the option is enable in Exporter, instances are exported using the ``EXT_me
 There are some limitations, at export:
 - Instances must be meshes, and don't have any children themselves
 - Instances must all be children of the same object.
-- This extension doesn't manage material variation. That means that the generated file may include all instances with same materials.
+- This extension doesn't manage material variation. That means that the generated file may include all instances with
+  same materials.
 - Instances detected are objects sharing the same mesh data.
 At import, instances are created by creating objects sharing the same mesh data.
 
@@ -278,7 +279,7 @@ If a Sheen Roughness Texture is used, glTF requires the values be written to the
 .. tip::
 
    Sheen BSDF node is only available on Cycles render engine.
-   You may have to temporary switch to Cycles to add this node, and get back to Eevee.
+   You may have to temporary switch to Cycles to add this node, and get back to EEVEE.
 
 .. note::
 
@@ -452,8 +453,8 @@ Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For materials where only the front faces will be visible, turn on *Backface Culling* in
-the *Settings* panel of an Eevee material. When using other engines (Cycles, Workbench)
-you can temporarily switch to Eevee to configure this setting, then switch back.
+the *Settings* panel of an EEVEE material. When using other engines (Cycles, Workbench)
+you can temporarily switch to EEVEE to configure this setting, then switch back.
 
 Leave this box unchecked for double-sided materials.
 
@@ -468,7 +469,7 @@ Blend Modes
 The Base Color input can optionally supply alpha values.
 How these values are treated by glTF depends on the selected blend mode.
 
-With the Eevee render engine selected, each material has a Blend Mode on
+With the EEVEE render engine selected, each material has a Blend Mode on
 the material settings panel. Use this setting to define how alpha values from
 the Base Color channel are treated in glTF. Three settings are supported by glTF:
 
@@ -482,7 +483,7 @@ Alpha Clip
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-alpha-blend.png
 
-   With the Eevee engine selected, a material's blend modes are configurable.
+   With the EEVEE engine selected, a material's blend modes are configurable.
 
 .. note::
 
@@ -772,19 +773,6 @@ referenced by the ``.gltf`` file.
    Be aware that sharing this format requires sharing all of these separate files
    together as a group.
 
-
-glTF Embedded (``.gltf``)
--------------------------
-
-This produces a JSON text-based ``.gltf`` file, with all mesh data and
-image data encoded (using Base64) within the file. This form is useful if
-the asset must be shared over a plain-text-only connection.
-
-.. warning::
-
-   This is the least efficient of the available forms, and should only be used when required.
-
-
 Properties
 ==========
 
@@ -815,8 +803,8 @@ Lighting Mode
    Standard: Physically-based glTF lighting units (cd, lx, nt).
    Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
    Raw (Deprecated): Blender lighting strengths with no conversion
-Import Webp textures
-   If a texture exists in webp format, loads the webp texture instead of the fallback png/jpg one.
+Import WebP textures
+   If a texture exists in WebP format, loads the WebP texture instead of the fallback png/jpg one.
 
 
 Export
@@ -873,6 +861,9 @@ Data - Scene Graph
 GPU Instances
    Export using ``EXT_mesh_gpu_instancing`` extensions.
 
+Flatten Object Hierarchy
+   Useful in case of non-decomposable TRS matrix. Only skined meshes will stay children of armature.
+
 Data - Mesh
 ^^^^^^^^^^^
 
@@ -903,15 +894,15 @@ Materials
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
-   If webp is chosen, all textures will be saved as Webp, without any png/jpg fallback.
+   If WebP is chosen, all textures will be saved as WebP, without any png/jpg fallback.
    If None is chosen, materials are exported without textures.
 Image Quality
-   When exporting jpeg or Webp files, the quality of the exported file.
-Create Webp
-   Creates webp textures for every textures, in addition to the existing texture.
-   For already webp textures, nothing happen.
-Webp fallback
-   For all webp textures, create a png fallback texture.
+   When exporting jpeg or WebP files, the quality of the exported file.
+Create WebP
+   Creates WebP textures for every textures, in addition to the existing texture.
+   For already WebP textures, nothing happen.
+WebP fallback
+   For all WebP textures, create a png fallback texture.
 Export Original PBR Specular
    When On, specular data are exported from glTF Material Output node,
    Instead of using sockets from Principled BSDF Node.
@@ -932,7 +923,8 @@ Data - Shape Keys - Optimize
 Use Sparse Accessor if better
    Sparse Accessor will be used if it save space (if the exported file is smaller)
 Omitting Sparse Accessor if data is empty
-   If data is empty, omit to export SParce Accessor. Not all viewer managed it correctly, so this option is Off by default
+   If data is empty, omit to export SParce Accessor. Not all viewer managed it correctly, so this option is Off by
+   default
 
 Data - Armature
 ^^^^^^^^^^^^^^^
@@ -942,6 +934,8 @@ Use Rest Position Armature
 Export Deformation Bones only
    Export Deformation bones only, not other bones.
    Animation for deformation bones are baked.
+Remove Armature Object
+   Remove Armature Objects if possible. If some armature(s) have multiple root bones, we can't remove them.
 Flatten Bone Hierarchy
    Useful in case of non-decomposable TRS matrix.
 
@@ -951,7 +945,8 @@ Data - Skinning
 Export skinning data
 
 Bone influences
-   How many joint verex influences will be exported. Models may appear incorrectly in many viewers with value different to 4 or 8.
+   How many joint verex influences will be exported. Models may appear incorrectly in many viewers with value
+   different to 4 or 8.
 
 Include All Bone Influences
    Export all joint vertex influences. Models may appear incorrectly in many viewers.

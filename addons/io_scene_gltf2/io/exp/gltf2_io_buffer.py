@@ -57,8 +57,5 @@ class Buffer:
     def to_bytes(self):
         return self.__data
 
-    def to_embed_string(self):
-        return 'data:application/octet-stream;base64,' + base64.b64encode(self.__data).decode('ascii')
-
     def clear(self):
         self.__data = b""
