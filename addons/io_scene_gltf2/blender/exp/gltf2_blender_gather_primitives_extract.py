@@ -499,8 +499,6 @@ class PrimitiveCreator:
             for i in range(2):
                 res[:, i] = self.dots[attr + str(i)]
 
-            print(res)
-
             self.attributes["TEXCOORD_" + str(next_texcoor_idx)] = {}
             self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data"] = res
             self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["component_type"] = gltf2_io_constants.ComponentType.Float
@@ -586,8 +584,6 @@ class PrimitiveCreator:
                 res = np.empty((len(self.prim_dots), 2), dtype=gltf2_blender_conversion.get_numpy_type('FLOAT2'))
                 for i in range(2):
                     res[:, i] = self.prim_dots[attr + str(i)]
-
-                print(res)
 
                 self.attributes["TEXCOORD_" + str(next_texcoor_idx)] = {}
                 self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data"] = res
