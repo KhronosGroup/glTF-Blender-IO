@@ -141,15 +141,27 @@ def __gather_cache_primitives(
             targets = __gather_targets(shared, blender_mesh, modifiers, export_settings)
 
         for internal_primitive in blender_primitives:
+            if internal_primitive.get('mode') is None:
 
-            primitive = {
-                "attributes": attributes,
-                "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
-                "mode": internal_primitive.get('mode'),
-                "material": internal_primitive.get('material'),
-                "targets": targets,
-                "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
-            }
+                primitive = {
+                    "attributes": attributes,
+                    "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "mode": internal_primitive.get('mode'),
+                    "material": internal_primitive.get('material'),
+                    "targets": targets,
+                    "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
+                }
+
+            else:
+                # Edges & points, no shared attributes
+                primitive = {
+                    "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "mode": internal_primitive.get('mode'),
+                    "material": internal_primitive.get('material'),
+                    "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
+                }
             primitives.append(primitive)
 
     else:
