@@ -389,6 +389,8 @@ class PrimitiveCreator:
         # No choice : We need to retrieve materials here. Anyway, this will be baked, and next call will be quick
         # We also need to shuffle Vertex Color data if needed
 
+        new_prim_indices = {}
+
         materials_use_vc = None
         warning_already_displayed = False
         for material_idx in self.prim_indices.keys():
@@ -434,49 +436,60 @@ class PrimitiveCreator:
             # The simplier test is when no vertex color are used
             if material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is None:
                 # Nothing to do
-                continue
+                pass
 
-            if material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None:
+            elif material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None:
                 print_console('WARNING', 'We are not managing this case (Vertex Color alpha without color)')
+
+            else:
+                vc_color_name = None
+                vc_alpha_name = None
+                if material_info['vc_info']['color_type'] == "name":
+                    vc_color_name = material_info['vc_info']['color']
+                elif material_info['vc_info']['color_type'] == "active":
+                    # Get active (render) Vertex Color
+                    vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+
+                if material_info['vc_info']['alpha_type'] == "name":
+                    vc_alpha_name = material_info['vc_info']['alpha']
+                elif material_info['vc_info']['alpha_type'] == "active":
+                    # Get active (render) Vertex Color
+                    vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+
+                if vc_color_name is not None:
+
+                    vc_key = ""
+                    vc_key += vc_color_name if vc_color_name is not None else ""
+                    vc_key += vc_alpha_name if vc_alpha_name is not None else ""
+
+                    if materials_use_vc is not None and materials_use_vc != vc_key:
+                        if warning_already_displayed is False:
+                            print_console('WARNING', 'glTF specification does not allow this case (multiple materials with different Vertex Color)')
+                            warning_already_displayed = True
+                        materials_use_vc = vc_key
+
+                    elif materials_use_vc is None:
+                        materials_use_vc = vc_key
+
+                        # We need to check if we need to add alpha
+                        add_alpha = vc_alpha_name is not None
+                        mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
+                        add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                        # Manage Vertex Color (RGB and Alpha if needed)
+                        self.__manage_color_attribute(vc_color_name, vc_alpha_name if add_alpha else None)
+                    else:
+                        pass # Using the same Vertex Color
+
+            if 'udim' not in material_info['udim_info'] or material_info['udim_info']['udim'] is False:
+                new_prim_indices[material_idx] = self.prim_indices[material_idx]
                 continue
 
-            vc_color_name = None
-            vc_alpha_name = None
-            if material_info['vc_info']['color_type'] == "name":
-                vc_color_name = material_info['vc_info']['color']
-            elif material_info['vc_info']['color_type'] == "active":
-                # Get active (render) Vertex Color
-                vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+            # We have some UDIM for BaseColor of this material
+            # We need to split the mesh into multiple primitives
+            print_console('INFO', 'Splitting UDIM tiles into different primitives/materials')
+            new_prim_indices[material_idx] = self.prim_indices[material_idx] #TODOUDIM tmp
 
-            if material_info['vc_info']['alpha_type'] == "name":
-                vc_alpha_name = material_info['vc_info']['alpha']
-            elif material_info['vc_info']['alpha_type'] == "active":
-                # Get active (render) Vertex Color
-                vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
-
-            if vc_color_name is not None:
-
-                vc_key = ""
-                vc_key += vc_color_name if vc_color_name is not None else ""
-                vc_key += vc_alpha_name if vc_alpha_name is not None else ""
-
-                if materials_use_vc is not None and materials_use_vc != vc_key:
-                    if warning_already_displayed is False:
-                        print_console('WARNING', 'glTF specification does not allow this case (multiple materials with different Vertex Color)')
-                        warning_already_displayed = True
-                    materials_use_vc = vc_key
-                    continue
-                elif materials_use_vc is None:
-                    materials_use_vc = vc_key
-
-                    # We need to check if we need to add alpha
-                    add_alpha = vc_alpha_name is not None
-                    mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
-                    add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
-                    # Manage Vertex Color (RGB and Alpha if needed)
-                    self.__manage_color_attribute(vc_color_name, vc_alpha_name if add_alpha else None)
-                else:
-                    pass # Using the same Vertex Color
+        self.prim_indices = new_prim_indices
 
     def primitive_creation(self):
         primitives = []

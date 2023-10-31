@@ -34,7 +34,7 @@ def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export
 
     uvmap_infos = {}
 
-    base_color_texture, uvmap_info, _ = __gather_base_color_texture(blender_material, export_settings)
+    base_color_texture, uvmap_info, udim_info, _ = __gather_base_color_texture(blender_material, export_settings)
     uvmap_infos.update(uvmap_info)
     metallic_roughness_texture, uvmap_info, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
     uvmap_infos.update(uvmap_info)
@@ -53,7 +53,7 @@ def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export
 
     export_user_extensions('gather_material_pbr_metallic_roughness_hook', export_settings, material, blender_material, orm_texture)
 
-    return material, uvmap_infos, vc_info
+    return material, uvmap_infos, vc_info, udim_info
 
 
 def __filter_pbr_material(blender_material, export_settings):
@@ -113,10 +113,10 @@ def __gather_base_color_texture(blender_material, export_settings):
         if socket.socket is not None and has_image_node_from_socket(socket, export_settings)
     )
     if not inputs:
-        return None, {}, None
+        return None, {}, {}, None
 
-    tex, uvmap_info, factor = gather_texture_info(inputs[0], inputs, (), export_settings)
-    return tex, {'baseColorTexture': uvmap_info}, factor
+    tex, uvmap_info, udim_info, factor = gather_texture_info(inputs[0], inputs, (), export_settings)
+    return tex, {'baseColorTexture': uvmap_info}, udim_info, factor
 
 
 def __gather_extensions(blender_material, export_settings):
@@ -164,7 +164,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
         texture_input = (metallic_socket, roughness_socket)
         default_sockets = ()
 
-    tex, uvmap_info, factor = gather_texture_info(
+    tex, uvmap_info, udim_info, factor = gather_texture_info(
         texture_input[0],
         orm_texture or texture_input,
         default_sockets,

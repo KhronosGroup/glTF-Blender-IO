@@ -77,7 +77,7 @@ def export_volume(blender_material, export_settings):
         thickness_slots = (thickness_socket,)
 
     if len(thickness_slots) > 0:
-        combined_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             thickness_socket,
             thickness_slots,
             (),

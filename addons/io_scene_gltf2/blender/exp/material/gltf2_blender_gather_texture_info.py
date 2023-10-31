@@ -57,11 +57,12 @@ def __gather_texture_info_helper(
         filter_type: str,
         export_settings):
     if not __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
-        return None, {}, None
+        return None, {}, {'udim': False}, None
 
     tex_transform, uvmap_info = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
 
-    index, factor = __gather_index(blender_shader_sockets, default_sockets, export_settings)
+    index, factor, is_udim = __gather_index(blender_shader_sockets, default_sockets, export_settings)
+    udim_info = {'udim': is_udim}
 
     fields = {
         'extensions': __gather_extensions(tex_transform, export_settings),
@@ -82,11 +83,11 @@ def __gather_texture_info_helper(
         texture_info = gltf2_io.MaterialOcclusionTextureInfoClass(**fields)
 
     if texture_info.index is None:
-        return None, {}, None
+        return None, {}, udim_info, None
 
     export_user_extensions('gather_texture_info_hook', export_settings, texture_info, blender_shader_sockets)
 
-    return texture_info, uvmap_info, factor
+    return texture_info, uvmap_info, udim_info, factor
 
 
 def __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):

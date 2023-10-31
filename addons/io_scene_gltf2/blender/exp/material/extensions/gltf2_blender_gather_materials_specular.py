@@ -62,7 +62,7 @@ def export_specular(blender_material, export_settings):
 
         # Texture
         if has_image_node_from_socket(specular_socket, export_settings):
-            specular_texture, uvmap_info, _ = gather_texture_info(
+            specular_texture, uvmap_info, udim_info, _ = gather_texture_info(
                 specular_socket,
                 (specular_socket,),
                 (),
@@ -93,7 +93,7 @@ def export_specular(blender_material, export_settings):
 
         # Texture
         if has_image_node_from_socket(speculartint_socket, export_settings):
-            specularcolor_texture, uvmap_info, _ = gather_texture_info(
+            specularcolor_texture, uvmap_info, udim_info, _ = gather_texture_info(
                 speculartint_socket,
                 (speculartint_socket,),
                 (),

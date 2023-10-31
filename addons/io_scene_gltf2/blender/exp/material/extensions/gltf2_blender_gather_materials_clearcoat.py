@@ -62,7 +62,7 @@ def export_clearcoat(blender_material, export_settings):
 
     if len(clearcoat_roughness_slots) > 0:
         if has_clearcoat_texture:
-            clearcoat_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+            clearcoat_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_socket,
                 clearcoat_roughness_slots,
                 (),
@@ -72,7 +72,7 @@ def export_clearcoat(blender_material, export_settings):
             uvmap_infos.update({'clearcoatTexture' : uvmap_info})
 
         if has_clearcoat_roughness_texture:
-            clearcoat_roughness_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+            clearcoat_roughness_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
                 clearcoat_roughness_socket,
                 clearcoat_roughness_slots,
                 (),
@@ -82,7 +82,7 @@ def export_clearcoat(blender_material, export_settings):
             uvmap_infos.update({'clearcoatRoughnessTexture': uvmap_info})
 
     if has_image_node_from_socket(clearcoat_normal_socket, export_settings):
-        clearcoat_normal_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+        clearcoat_normal_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             clearcoat_normal_socket,
             (clearcoat_normal_socket,),
             export_settings
