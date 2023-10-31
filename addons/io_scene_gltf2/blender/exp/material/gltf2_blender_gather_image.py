@@ -31,18 +31,18 @@ def gather_image(
         default_sockets: typing.Tuple[bpy.types.NodeSocket],
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
-        return None, None, None, False
+        return None, None, None, None
 
-    image_data, is_udim = __get_image_data(blender_shader_sockets, default_sockets, export_settings)
+    image_data, udim_image = __get_image_data(blender_shader_sockets, default_sockets, export_settings)
 
-    if is_udim:
+    if udim_image is not None:
         # We are in a UDIM case, so we return no image data
         # This will be used later to create multiple primitives/material/texture with UDIM information
-        return None, None, None, True
+        return None, None, None, udim_image
 
     if image_data.empty():
         # The export image has no data
-        return None, None, None, False
+        return None, None, None, None
 
     mime_type = __gather_mime_type(blender_shader_sockets, image_data, export_settings)
     name = __gather_name(image_data, export_settings)
@@ -76,7 +76,7 @@ def gather_image(
     export_user_extensions('gather_image_hook', export_settings, image, blender_shader_sockets)
 
     # We also return image_data, as it can be used to generate same file with another extension for WebP management
-    return image, image_data, factor, is_udim
+    return image, image_data, factor, None
 
 def __gather_original_uri(original_uri, export_settings):
 
@@ -213,11 +213,11 @@ def __get_image_data(sockets, default_sockets, export_settings) -> ExportImage:
     # In that case, we return no texture data for now, and only get that this texture is UDIM
     # This will be used later
     if any([r.shader_node.image.source == "TILED" for r in results if r.shader_node.image is not None]):
-        return ExportImage(), True
+        return ExportImage(), [r.shader_node.image for r in results if r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
 
     # Check if we need a simple mapping or more complex calculation
     # There is currently no complex calculation for any textures
-    return __get_image_data_mapping(sockets, default_sockets, results, export_settings), False
+    return __get_image_data_mapping(sockets, default_sockets, results, export_settings), None
 
 def __get_image_data_mapping(sockets, default_sockets, results, export_settings) -> ExportImage:
     """

@@ -43,7 +43,7 @@ def gather_texture(
     if not __filter_texture(blender_shader_sockets, export_settings):
         return None, None, False
 
-    source, webp_image, image_data, factor, is_udim = __gather_source(blender_shader_sockets, default_sockets, export_settings)
+    source, webp_image, image_data, factor, udim_image = __gather_source(blender_shader_sockets, default_sockets, export_settings)
 
     exts, remove_source = __gather_extensions(blender_shader_sockets, source, webp_image, image_data, export_settings)
 
@@ -58,11 +58,11 @@ def gather_texture(
     # although valid, most viewers can't handle missing source properties
     # This can have None source for "keep original", when original can't be found
     if texture.source is None and remove_source is False:
-        return None, None, is_udim
+        return None, None, udim_image
 
     export_user_extensions('gather_texture_hook', export_settings, texture, blender_shader_sockets)
 
-    return texture, factor, is_udim
+    return texture, factor, udim_image
 
 
 def __filter_texture(blender_shader_sockets, export_settings):
@@ -207,7 +207,7 @@ def __gather_sampler(blender_shader_sockets, export_settings):
 
 
 def __gather_source(blender_shader_sockets, default_sockets, export_settings):
-    source, image_data, factor, is_udim = gltf2_blender_gather_image.gather_image(blender_shader_sockets, default_sockets, export_settings)
+    source, image_data, factor, udim_image = gltf2_blender_gather_image.gather_image(blender_shader_sockets, default_sockets, export_settings)
 
 
     if export_settings['gltf_keep_original_textures'] is False \
@@ -217,7 +217,7 @@ def __gather_source(blender_shader_sockets, default_sockets, export_settings):
 
         if export_settings['gltf_webp_fallback'] is False:
             # Already managed in __gather_extensions
-            return source, None, image_data, factor, is_udim
+            return source, None, image_data, factor, udim_image
         else:
             # Need to create a PNG texture
 
@@ -241,7 +241,7 @@ def __gather_source(blender_shader_sockets, default_sockets, export_settings):
             png_image = __make_webp_image(buffer_view, None, None, new_mime_type, name, uri, export_settings)
 
         # We inverted the png & WebP image, to have the png as main source
-        return png_image, source, image_data, factor, is_udim
-    return source, None, image_data, factor, is_udim
+        return png_image, source, image_data, factor, udim_image
+    return source, None, image_data, factor, udim_image
 
 # Helpers

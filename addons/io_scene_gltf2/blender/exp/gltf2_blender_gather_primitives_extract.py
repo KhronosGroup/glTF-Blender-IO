@@ -487,6 +487,9 @@ class PrimitiveCreator:
             # We have some UDIM for BaseColor of this material
             # We need to split the mesh into multiple primitives
             print_console('INFO', 'Splitting UDIM tiles into different primitives/materials')
+            # Retrieve UDIM images
+            image = material_info['udim_info']['image']
+
             new_prim_indices[material_idx] = self.prim_indices[material_idx] #TODOUDIM tmp
 
         self.prim_indices = new_prim_indices
