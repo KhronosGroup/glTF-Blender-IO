@@ -83,7 +83,7 @@ def __gather_texture_info_helper(
         texture_info = gltf2_io.MaterialOcclusionTextureInfoClass(**fields)
 
     if texture_info.index is None:
-        return None, {}, udim_info, None
+        return None, {} if udim_image is None else uvmap_info, udim_info, None
 
     export_user_extensions('gather_texture_info_hook', export_settings, texture_info, blender_shader_sockets)
 
