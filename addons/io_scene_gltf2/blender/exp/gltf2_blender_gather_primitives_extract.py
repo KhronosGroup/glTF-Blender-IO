@@ -681,6 +681,7 @@ class PrimitiveCreator:
                     'material': 0,
                     'uvmap_attributes_index': {}
                 })
+                self.additional_materials.append(None)
 
         if self.export_settings['gltf_loose_points']:
 
@@ -728,6 +729,7 @@ class PrimitiveCreator:
                     'material': 0,
                     'uvmap_attributes_index': {}
                 })
+                self.additional_materials.append(None)
 
         print_console('INFO', 'Primitives created: %d' % len(primitives))
 
