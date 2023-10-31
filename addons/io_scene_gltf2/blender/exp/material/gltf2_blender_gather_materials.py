@@ -113,7 +113,7 @@ def gather_material(blender_material, export_settings):
     return material, {"uv_info": uvmap_infos, "vc_info": vc_info, "udim_info": udim_info}
 
 
-def __get_new_material_texture_shared(base, node):
+def get_new_material_texture_shared(base, node):
         if node is None:
             return
         if callable(node) is True:
@@ -125,12 +125,12 @@ def __get_new_material_texture_shared(base, node):
         else:
             if hasattr(node, '__dict__'):
                 for attr, value in node.__dict__.items():
-                    __get_new_material_texture_shared(getattr(base, attr), value)
+                    get_new_material_texture_shared(getattr(base, attr), value)
             else:
                 # For extensions (on a dict)
                 if type(node).__name__ == 'dict':
                     for i in node.keys():
-                        __get_new_material_texture_shared(base[i], node[i])
+                        get_new_material_texture_shared(base[i], node[i])
 
 def __filter_material(blender_material, export_settings):
     return export_settings['gltf_materials']
@@ -408,7 +408,7 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
         return base_material
 
     material = deepcopy(base_material)
-    __get_new_material_texture_shared(base_material, material)
+    get_new_material_texture_shared(base_material, material)
 
     for tex, ind in zip(get_all_textures(), caching_indices):
 

@@ -29,11 +29,12 @@ from .gltf2_blender_search_node_tree import get_texture_node_from_socket, NodeSo
 def gather_image(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         default_sockets: typing.Tuple[bpy.types.NodeSocket],
+        use_tile: bool,
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
         return None, None, None, None
 
-    image_data, udim_image = __get_image_data(blender_shader_sockets, default_sockets, export_settings)
+    image_data, udim_image = __get_image_data(blender_shader_sockets, default_sockets, use_tile, export_settings)
 
     if udim_image is not None:
         # We are in a UDIM case, so we return no image data
@@ -203,23 +204,24 @@ def __gather_uri(image_data, mime_type, name, export_settings):
     return None, None
 
 
-def __get_image_data(sockets, default_sockets, export_settings) -> ExportImage:
+def __get_image_data(sockets, default_sockets, use_tile, export_settings) -> ExportImage:
     # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
     results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets]
 
-    # First checking if texture used is UDIM
-    # In that case, we return no texture data for now, and only get that this texture is UDIM
-    # This will be used later
-    if any([r.shader_node.image.source == "TILED" for r in results if r.shader_node.image is not None]):
-        return ExportImage(), [r.shader_node.image for r in results if r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
+    if use_tile is None:
+        # First checking if texture used is UDIM
+        # In that case, we return no texture data for now, and only get that this texture is UDIM
+        # This will be used later
+        if any([r.shader_node.image.source == "TILED" for r in results if r.shader_node.image is not None]):
+            return ExportImage(), [r.shader_node.image for r in results if r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
 
     # Check if we need a simple mapping or more complex calculation
     # There is currently no complex calculation for any textures
-    return __get_image_data_mapping(sockets, default_sockets, results, export_settings), None
+    return __get_image_data_mapping(sockets, default_sockets, results, use_tile, export_settings), None
 
-def __get_image_data_mapping(sockets, default_sockets, results, export_settings) -> ExportImage:
+def __get_image_data_mapping(sockets, default_sockets, results, use_tile, export_settings) -> ExportImage:
     """
     Simple mapping
     Will fit for most of exported textures : RoughnessMetallic, Basecolor, normal, ...
@@ -307,7 +309,10 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                 dst_chan = Channel.A
 
             if dst_chan is not None:
-                composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
+                if use_tile is None:
+                    composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
+                else:
+                    composed_image.fill_image_tile(result.shader_node.image, export_settings['current_udim_info']['tile'], dst_chan, src_chan)
 
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
@@ -323,7 +328,10 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                         composed_image.fill_white(Channel.B)
             else:
                 # copy full image...eventually following sockets might overwrite things
-                composed_image = ExportImage.from_blender_image(result.shader_node.image)
+                if use_tile is None:
+                    composed_image = ExportImage.from_blender_image(result.shader_node.image)
+                else:
+                    composed_image = ExportImage.from_blender_image_tile(export_settings)
 
     # Check that we don't have some empty channels (based on weird images without any size for example)
     keys = list(composed_image.fills.keys()) # do not loop on dict, we may have to delete an element

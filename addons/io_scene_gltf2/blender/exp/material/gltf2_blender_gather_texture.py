@@ -31,6 +31,7 @@ from . import gltf2_blender_gather_image
 def gather_texture(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         default_sockets,
+        use_tile: bool,
         export_settings):
     """
     Gather texture sampling information and image channels from a blender shader texture attached to a shader socket.
@@ -43,7 +44,7 @@ def gather_texture(
     if not __filter_texture(blender_shader_sockets, export_settings):
         return None, None, False
 
-    source, webp_image, image_data, factor, udim_image = __gather_source(blender_shader_sockets, default_sockets, export_settings)
+    source, webp_image, image_data, factor, udim_image = __gather_source(blender_shader_sockets, default_sockets, use_tile, export_settings)
 
     exts, remove_source = __gather_extensions(blender_shader_sockets, source, webp_image, image_data, export_settings)
 
@@ -206,8 +207,8 @@ def __gather_sampler(blender_shader_sockets, export_settings):
         export_settings)
 
 
-def __gather_source(blender_shader_sockets, default_sockets, export_settings):
-    source, image_data, factor, udim_image = gltf2_blender_gather_image.gather_image(blender_shader_sockets, default_sockets, export_settings)
+def __gather_source(blender_shader_sockets, default_sockets, use_tile, export_settings):
+    source, image_data, factor, udim_image = gltf2_blender_gather_image.gather_image(blender_shader_sockets, default_sockets, use_tile, export_settings)
 
 
     if export_settings['gltf_keep_original_textures'] is False \
