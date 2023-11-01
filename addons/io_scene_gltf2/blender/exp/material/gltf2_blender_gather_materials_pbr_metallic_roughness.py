@@ -118,7 +118,7 @@ def __gather_base_color_texture(blender_material, export_settings):
         return None, {}, {}, None
 
     tex, uvmap_info, udim_info, factor = gather_texture_info(inputs[0], inputs, (), export_settings)
-    return tex, {'baseColorTexture': uvmap_info}, {'baseColorTexture': udim_info}, factor
+    return tex, {'baseColorTexture': uvmap_info}, {'baseColorTexture': udim_info} if len(udim_info.keys()) > 0 else {}, factor
 
 
 def __gather_extensions(blender_material, export_settings):

@@ -240,7 +240,7 @@ def __gather_normal_texture(blender_material, export_settings):
         normal,
         (normal,),
         export_settings)
-    return normal_texture, {"normalTexture" : uvmap_info}, {'normalTexture': udim_info}
+    return normal_texture, {"normalTexture" : uvmap_info}, {'normalTexture': udim_info } if len(udim_info.keys()) > 0 else {}
 
 
 def __gather_orm_texture(blender_material, export_settings):
@@ -294,6 +294,8 @@ def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, e
     occlusion = get_socket(blender_material, "Occlusion")
     if occlusion.socket is None:
         occlusion = get_socket_from_gltf_material_node(blender_material, "Occlusion")
+    if occlusion.socket is None:
+        return None, {}
     occlusion_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),

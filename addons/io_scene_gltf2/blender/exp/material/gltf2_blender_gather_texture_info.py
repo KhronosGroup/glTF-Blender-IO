@@ -57,12 +57,15 @@ def __gather_texture_info_helper(
         filter_type: str,
         export_settings):
     if not __filter_texture_info(primary_socket, blender_shader_sockets, filter_type, export_settings):
-        return None, {}, {'udim': False}, None
+        return None, {}, {}, None
 
     tex_transform, uvmap_info = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
 
     index, factor, udim_image = __gather_index(blender_shader_sockets, default_sockets, None, export_settings)
-    udim_info = {'udim': udim_image is not None, 'image': udim_image, 'sockets': blender_shader_sockets}
+    if udim_image is not None:
+        udim_info = {'udim': udim_image is not None, 'image': udim_image, 'sockets': blender_shader_sockets}
+    else:
+        udim_info = {}
 
     fields = {
         'extensions': __gather_extensions(tex_transform, export_settings),

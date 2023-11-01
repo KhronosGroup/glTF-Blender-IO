@@ -2134,11 +2134,11 @@ describe('Exporter', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '33_udim.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
-                assert.strictEqual(asset.images.length, 4);
+                assert.strictEqual(asset.images.length, 7);
                 assert.strictEqual(asset.meshes.length, 1);
                 assert.strictEqual(asset.meshes[0].primitives.length, 4);
                 assert.strictEqual(asset.materials.length, 4);
-                assert.strictEqual(asset.textures.length, 4);
+                assert.strictEqual(asset.textures.length, 8);
             });
 
         });
