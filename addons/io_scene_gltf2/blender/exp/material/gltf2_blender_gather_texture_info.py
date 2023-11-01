@@ -93,6 +93,7 @@ def gather_udim_texture_info(
         primary_socket: bpy.types.NodeSocket,
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         udim_info,
+        tex,
         export_settings):
 
     tex_transform, _ = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
@@ -107,7 +108,11 @@ def gather_udim_texture_info(
         'tex_coord': None # This will be set later, as some data are dependant of mesh or object
     }
 
-    texture_info = gltf2_io.TextureInfo(**fields)
+    if tex in ["normalTexture"]:
+        fields['scale'] = __gather_normal_scale(primary_socket, export_settings)
+        texture_info = gltf2_io.MaterialNormalTextureInfoClass(**fields)
+    else:
+        texture_info = gltf2_io.TextureInfo(**fields)
 
     export_user_extensions('gather_udim_texture_info_hook', export_settings, texture_info, blender_shader_sockets)
 

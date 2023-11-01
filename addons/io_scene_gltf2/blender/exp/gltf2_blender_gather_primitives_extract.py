@@ -485,31 +485,47 @@ class PrimitiveCreator:
 
             ##### UDIM #####
 
-            if 'udim' not in material_info['udim_info'] or material_info['udim_info']['udim'] is False:
+            if len(material_info['udim_info'].keys()) == 0:
                 new_prim_indices[material_idx] = self.prim_indices[material_idx]
                 self.additional_materials.append(None)
                 continue
 
-            # We have some UDIM for BaseColor of this material
+            # We have some UDIM for some texture of this material
             # We need to split the mesh into multiple primitives
+            # We manage only case where all texture are using the same UVMap
+            # And where UDIM have exactly the same number of tiles (TODO to check?)
+
+            # So, retrieve all uvmaps used by this material
+            all_uvmaps = {}
+            for tex in material_info['udim_info'].keys():
+                if material_info['uv_info'][tex]['type'] == "Active":
+                    index_uvmap = get_active_uvmap_index(self.blender_mesh)
+                    uvmap_name = "TEXCOORD_" + str(index_uvmap)
+                elif material_info['uv_info'][tex]['type'] == "Fixed":
+                    index_uvmap = self.blender_mesh.uv_layers.find(material_info['uv_info'][tex]['value'])
+                    if index_uvmap < 0:
+                        # Using active index
+                        index_uvmap = get_active_uvmap_index(self.blender_mesh)
+                    uvmap_name = "TEXCOORD_" + str(index_uvmap)
+                else: #Attribute
+                    uvmap_name = material_info['uv_info'][tex]['value']
+                all_uvmaps[tex] = uvmap_name
+
+            if len(set(all_uvmaps.values())) > 1:
+                print_console('WARNING', 'We are not managing this case (multiple UVMap for UDIM)')
+                new_prim_indices[material_idx] = self.prim_indices[material_idx]
+                self.additional_materials.append(None)
+                continue
+
             print_console('INFO', 'Splitting UDIM tiles into different primitives/materials')
             # Retrieve UDIM images
-            image = material_info['udim_info']['image']
+            tex = list(material_info['udim_info'].keys())[0]
+            image = material_info['udim_info'][tex]['image']
 
             new_material_index = len(self.prim_indices.keys())
 
             # Get UVMap used for UDIM
-            if material_info['uv_info']['baseColorTexture']['type'] == "Active":
-                index_uvmap = get_active_uvmap_index(self.blender_mesh)
-                uvmap_name = "TEXCOORD_" + str(index_uvmap)
-            elif material_info['uv_info']['baseColorTexture']['type'] == "Fixed":
-                index_uvmap = self.blender_mesh.uv_layers.find(material_info['uv_info']['baseColorTexture']['value'])
-                if index_uvmap < 0:
-                    # Using active index
-                    index_uvmap = get_active_uvmap_index(self.blender_mesh)
-                uvmap_name = "TEXCOORD_" + str(index_uvmap)
-            else: #Attribute
-                uvmap_name = material_info['uv_info']['baseColorTexture']['value']
+            uvmap_name = all_uvmaps[list(all_uvmaps.keys())[0]]
 
             # Retrieve tiles number
             tiles = [t.number for t in image.tiles]
@@ -552,19 +568,29 @@ class PrimitiveCreator:
 
 
                     # Now we have to create a new material for this tile
-                    # This will be the existing material, but with a new BaseColorTexture
-                    # We need to duplicate the material, and add a new texture
+                    # This will be the existing material, but with new textures
+                    # We need to duplicate the material, and add these new textures
                     new_material = deepcopy(base_material)
                     get_new_material_texture_shared(base_material, new_material)
-                    tex = gather_udim_texture_info(
-                        material_info['udim_info']['sockets'][0],
-                        material_info['udim_info']['sockets'],
-                        {
-                            'tile': "10" + str(v) + str(u+1),
-                            'image': material_info['udim_info']['image']
-                        },
-                        self.export_settings)
-                    new_material.pbr_metallic_roughness.base_color_texture = tex
+
+                    for tex in material_info['udim_info'].keys():
+                        new_tex = gather_udim_texture_info(
+                            material_info['udim_info'][tex]['sockets'][0],
+                            material_info['udim_info'][tex]['sockets'],
+                            {
+                                'tile': "10" + str(v) + str(u+1),
+                                'image': material_info['udim_info'][tex]['image']
+                            },
+                            tex,
+                            self.export_settings)
+
+                        if tex == "baseColorTexture":
+                            new_material.pbr_metallic_roughness.base_color_texture = new_tex
+                        elif tex == "normalTexture":
+                            new_material.normal_texture = new_tex
+                        else:
+                            print_console('WARNING', 'We are not managing this case yet (UDIM for {})'.format(tex))
+
                     self.additional_materials.append((new_material, material_info, int(str(id(base_material)) + str(u) + str(v))))
 
 

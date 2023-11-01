@@ -70,9 +70,9 @@ def gather_material(blender_material, export_settings):
     emissive_factor = __gather_emissive_factor(blender_material, export_settings)
     emissive_texture, uvmap_info_emissive = __gather_emissive_texture(blender_material, export_settings)
     extensions, uvmap_info_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
-    normal_texture, uvmap_info_normal = __gather_normal_texture(blender_material, export_settings)
+    normal_texture, uvmap_info_normal, udim_info_normal = __gather_normal_texture(blender_material, export_settings)
     occlusion_texture, uvmap_info_occlusion = __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings)
-    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info, udim_info = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
+    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info, udim_info_prb_mr = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
 
     if any([i>1.0 for i in emissive_factor or []]) is True:
         # Strength is set on extension
@@ -101,6 +101,10 @@ def gather_material(blender_material, export_settings):
     uvmap_infos.update(uvmap_info_occlusion)
     uvmap_infos.update(uvmap_info_pbr_metallic_roughness)
 
+    udim_infos = {}
+    udim_infos.update(udim_info_prb_mr)
+    udim_infos.update(udim_info_normal)
+
 
     # If emissive is set, from an emissive node (not PBR)
     # We need to set manually default values for
@@ -110,7 +114,7 @@ def gather_material(blender_material, export_settings):
 
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
 
-    return material, {"uv_info": uvmap_infos, "vc_info": vc_info, "udim_info": udim_info}
+    return material, {"uv_info": uvmap_infos, "vc_info": vc_info, "udim_info": udim_infos}
 
 
 def get_new_material_texture_shared(base, node):
@@ -236,7 +240,7 @@ def __gather_normal_texture(blender_material, export_settings):
         normal,
         (normal,),
         export_settings)
-    return normal_texture, {"normalTexture" : uvmap_info}
+    return normal_texture, {"normalTexture" : uvmap_info}, {'normalTexture': udim_info}
 
 
 def __gather_orm_texture(blender_material, export_settings):

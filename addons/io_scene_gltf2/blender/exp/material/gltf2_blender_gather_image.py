@@ -217,6 +217,7 @@ def __get_image_data(sockets, default_sockets, use_tile, export_settings) -> Exp
         if any([r.shader_node.image.source == "TILED" for r in results if r.shader_node.image is not None]):
             return ExportImage(), [r.shader_node.image for r in results if r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
 
+    # If we are here, we are in UDIM split process
     # Check if we need a simple mapping or more complex calculation
     # There is currently no complex calculation for any textures
     return __get_image_data_mapping(sockets, default_sockets, results, use_tile, export_settings), None

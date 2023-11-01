@@ -30,12 +30,14 @@ from .gltf2_blender_search_node_tree import \
 @cached
 def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
     if not __filter_pbr_material(blender_material, export_settings):
-        return None, {}, {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None}
+        return None, {}, {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None}, {}
 
     uvmap_infos = {}
+    udim_infos = {}
 
     base_color_texture, uvmap_info, udim_info, _ = __gather_base_color_texture(blender_material, export_settings)
     uvmap_infos.update(uvmap_info)
+    udim_infos.update(udim_info)
     metallic_roughness_texture, uvmap_info, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
     uvmap_infos.update(uvmap_info)
 
@@ -53,7 +55,7 @@ def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export
 
     export_user_extensions('gather_material_pbr_metallic_roughness_hook', export_settings, material, blender_material, orm_texture)
 
-    return material, uvmap_infos, vc_info, udim_info
+    return material, uvmap_infos, vc_info, udim_infos
 
 
 def __filter_pbr_material(blender_material, export_settings):
@@ -116,7 +118,7 @@ def __gather_base_color_texture(blender_material, export_settings):
         return None, {}, {}, None
 
     tex, uvmap_info, udim_info, factor = gather_texture_info(inputs[0], inputs, (), export_settings)
-    return tex, {'baseColorTexture': uvmap_info}, udim_info, factor
+    return tex, {'baseColorTexture': uvmap_info}, {'baseColorTexture': udim_info}, factor
 
 
 def __gather_extensions(blender_material, export_settings):

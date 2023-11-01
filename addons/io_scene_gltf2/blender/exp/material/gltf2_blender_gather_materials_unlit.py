@@ -152,5 +152,5 @@ def gather_base_color_texture(info, export_settings):
             export_settings,
         )
 
-        return unlit_texture, {'baseColorTexture': uvmap_info}, udim_info
+        return unlit_texture, {'baseColorTexture': uvmap_info}, {'baseColorTexture':udim_info}
     return None, {}, {}
