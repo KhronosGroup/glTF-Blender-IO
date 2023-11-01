@@ -415,34 +415,35 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
         if ind is None:
             continue
 
+        # Need to check if texture is not None, because it can be the case for UDIM on non managed UDIM textures
         if tex == "emissiveTexture":
-            material.emissive_texture.tex_coord = ind
+            if material.emissive_texture: material.emissive_texture.tex_coord = ind
         elif tex == "normalTexture":
-            material.normal_texture.tex_coord = ind
+            if material.normal_texture: material.normal_texture.tex_coord = ind
         elif tex == "occlusionTexture":
-            material.occlusion_texture.tex_coord = ind
+            if material.occlusion_texture: material.occlusion_texture.tex_coord = ind
         elif tex == "baseColorTexture":
-            material.pbr_metallic_roughness.base_color_texture.tex_coord = ind
+            if material.pbr_metallic_roughness.base_color_texture: material.pbr_metallic_roughness.base_color_texture.tex_coord = ind
         elif tex == "metallicRoughnessTexture":
-            material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = ind
+            if material.pbr_metallic_roughness.metallic_roughness_texture: material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = ind
         elif tex == "clearcoatTexture":
-            material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture']: material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = ind
         elif tex == "clearcoatRoughnessTexture":
-            material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture']: material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = ind
         elif tex == "clearcoatNormalTexture":
-            material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture']: material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = ind
         elif tex == "transmissionTexture":
-            material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_transmission"].extension['transmissionTexture']: material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = ind
         elif tex == "specularTexture":
-            material.extensions["KHR_materials_specular"].extension['specularTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_specular"].extension['specularTexture']: material.extensions["KHR_materials_specular"].extension['specularTexture'].tex_coord = ind
         elif tex == "specularColorTexture":
-            material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_specular"].extension['specularColorTexture']: material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = ind
         elif tex == "sheenColorTexture":
-            material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_sheen"].extension['sheenColorTexture']: material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = ind
         elif tex == "sheenRoughnessTexture":
-            material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture']: material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = ind
         elif tex == "thicknessTexture":
-            material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
+            if material.extensions["KHR_materials_volume"].extension['thicknessTexture']: material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
         else:
             print_console("ERROR", "some Textures tex coord are not managed")
 
