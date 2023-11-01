@@ -541,6 +541,16 @@ a typical node structure when several of the above options are applied at once:
 
    A Principled BSDF material with an emissive texture.
 
+UDIM
+^^^^
+
+UDIM is a way to store multiple textures in a single image file.
+The UDIM system is supported by Blender, but is not supported by glTF.
+When exporting a model that uses UDIM, the add-on will automatically split the
+image into multiple images, one for each tile, and will update the material
+nodes to use the new images.
+Note that only Base Color Textures are supported by this feature.
+
 
 Exporting a Shadeless (Unlit) Material
 --------------------------------------
