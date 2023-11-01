@@ -39,7 +39,7 @@ class BlenderScene():
         if gltf.data.scene is not None:
             import_user_extensions('gather_import_scene_before_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
             pyscene = gltf.data.scenes[gltf.data.scene]
-            set_extras(scene, pyscene.extras)
+            set_extras(scene, pyscene.extras, gltf.import_settings)
 
         compute_vnodes(gltf)
 

@@ -128,5 +128,5 @@ def gather_scene_animations(export_settings):
 
 def __gather_extras(blender_scene, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_scene)
+        return generate_extras(blender_scene, export_settings)
     return None

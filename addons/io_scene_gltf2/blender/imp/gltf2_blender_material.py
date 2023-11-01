@@ -40,7 +40,7 @@ class BlenderMaterial():
         mat = bpy.data.materials.new(name)
         pymaterial.blender_material[vertex_color] = mat.name
 
-        set_extras(mat, pymaterial.extras)
+        set_extras(mat, pymaterial.extras, gltf.import_settings)
         BlenderMaterial.set_double_sided(pymaterial, mat)
         BlenderMaterial.set_alpha_mode(pymaterial, mat)
         BlenderMaterial.set_viewport_color(pymaterial, mat, vertex_color)

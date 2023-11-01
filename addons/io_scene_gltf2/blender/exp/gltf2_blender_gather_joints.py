@@ -112,5 +112,5 @@ def gather_joint_vnode(vnode, export_settings):
 
 def __gather_extras(blender_bone, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_bone.bone)
+        return generate_extras(blender_bone.bone, export_settings)
     return None

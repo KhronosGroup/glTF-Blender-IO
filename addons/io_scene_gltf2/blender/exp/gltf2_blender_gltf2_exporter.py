@@ -17,7 +17,7 @@ import os
 from typing import List
 
 from ... import get_version_string
-from ...io.com import gltf2_io, gltf2_io_extensions
+from ...io.com import gltf2_io, gltf2_io_extensions, gltf2_io_constants
 from ...io.com.gltf2_io_path import path_to_uri, uri_to_path
 from ...io.com.gltf2_io_constants import ComponentType, DataType
 from ...io.exp import gltf2_io_binary_data, gltf2_io_buffer, gltf2_io_image_data
@@ -35,6 +35,10 @@ class GlTF2Exporter:
     def __init__(self, export_settings):
         self.export_settings = export_settings
         self.__finalized = False
+
+        # Allow user to set a list of custom prop to ignore during export of extras
+        self.export_settings['blender_custom_prop_black_list'] = gltf2_io_constants.BLENDER_CUSTOM_PROP_BLACK_LIST
+        export_user_extensions('gather_custom_prop_black_list', export_settings)
 
         copyright = export_settings['gltf_copyright'] or None
         asset = gltf2_io.Asset(

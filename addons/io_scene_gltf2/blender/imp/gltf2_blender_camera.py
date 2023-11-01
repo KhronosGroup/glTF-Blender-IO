@@ -33,7 +33,7 @@ class BlenderCamera():
             pycamera.name = "Camera"
 
         cam = bpy.data.cameras.new(pycamera.name)
-        set_extras(cam, pycamera.extras)
+        set_extras(cam, pycamera.extras, gltf.import_settings)
 
         # Blender create a perspective camera by default
         if pycamera.type == "orthographic":

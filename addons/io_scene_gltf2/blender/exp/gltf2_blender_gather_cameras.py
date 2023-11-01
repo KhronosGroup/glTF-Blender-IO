@@ -49,7 +49,7 @@ def __gather_extensions(blender_camera, export_settings):
 
 def __gather_extras(blender_camera, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_camera)
+        return generate_extras(blender_camera, export_settings)
     return None
 
 

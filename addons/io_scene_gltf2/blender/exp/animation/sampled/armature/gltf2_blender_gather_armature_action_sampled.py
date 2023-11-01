@@ -73,5 +73,5 @@ def __gather_channels(armature_uuid, blender_action_name, export_settings) -> ty
 
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_action) if blender_action else None
+        return generate_extras(blender_action, export_settings) if blender_action else None
     return None

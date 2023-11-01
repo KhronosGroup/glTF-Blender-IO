@@ -1774,9 +1774,13 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         import time
         from .io.imp.gltf2_io_gltf import glTFImporter, ImportError
         from .blender.imp.gltf2_blender_gltf import BlenderGlTF
+        from .io.com.gltf2_io_constants import BLENDER_CUSTOM_PROP_BLACK_LIST
+        from .io.imp.gltf2_io_user_extensions import import_user_extensions
 
         try:
             gltf_importer = glTFImporter(filename, import_settings)
+            gltf_importer.import_settings['blender_custom_prop_black_list'] = BLENDER_CUSTOM_PROP_BLACK_LIST
+            import_user_extensions('gather_import_custom_prop_black_list', gltf_importer)
             gltf_importer.read()
             gltf_importer.checks()
 

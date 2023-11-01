@@ -544,5 +544,5 @@ def __is_armature_action(blender_action) -> bool:
 
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_action)
+        return generate_extras(blender_action, export_settings)
     return None

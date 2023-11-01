@@ -54,5 +54,5 @@ def __gather_channels(object_uuid: str, blender_action_name: str, export_setting
 
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_action) if blender_action else None
+        return generate_extras(blender_action, export_settings) if blender_action else None
     return None
