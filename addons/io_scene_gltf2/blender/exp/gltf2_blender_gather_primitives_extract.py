@@ -531,11 +531,13 @@ class PrimitiveCreator:
                     else:
                         indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] <= (u + 1)) & (self.dots[uvmap_name + '1'] <= (1-v) ) & (self.dots[uvmap_name + '1'] >= 1-(v + 1)))[0]
 
-                    #TODOUDIM: reset UVMap to 0-1 is wrong here
-
-                    # Reset UVMap to 0-1
+                    # Reset UVMap to 0-1 : reset to Blener UVMAP => slide to 0-1 => go to glTF UVMap
+                    self.dots[uvmap_name + '1'][indices] -= 1
+                    self.dots[uvmap_name + '1'][indices] *= -1
                     self.dots[uvmap_name + '0'][indices] -= u
                     self.dots[uvmap_name + '1'][indices] -= v
+                    self.dots[uvmap_name + '1'][indices] *= -1
+                    self.dots[uvmap_name + '1'][indices] += 1
 
                     # Now, get every triangle, and check that it belongs to this tile
                     # Assume that we can check only the first vertex of each triangle (=> No management of triangle on multiple tiles)
