@@ -588,6 +588,32 @@ class PrimitiveCreator:
                             new_material.pbr_metallic_roughness.base_color_texture = new_tex
                         elif tex == "normalTexture":
                             new_material.normal_texture = new_tex
+                        elif tex == "emissiveTexture":
+                            new_material.emissive_texture = new_tex
+                        elif tex == "metallicRoughnessTexture":
+                            new_material.pbr_metallic_roughness.metallic_roughness_texture = new_tex
+                        elif tex == "occlusionTexture":
+                            new_material.occlusion_texture = new_tex
+                        elif tex == "clearcoatTexture":
+                            new_material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'] = new_tex
+                        elif tex == "clearcoatRoughnessTexture":
+                            new_material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'] = new_tex
+                        elif tex == "clearcoatNormalTexture":
+                            new_material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'] = new_tex
+                        elif tex == "sheenColorTexture":
+                            new_material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'] = new_tex
+                        elif tex == "sheenRoughnessTexture":
+                            new_material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'] = new_tex
+                        elif tex == "transmissionTexture":
+                            new_material.extensions["KHR_materials_transmission"].extension['transmissionTexture'] = new_tex
+                        elif tex == "thicknessTexture":
+                            new_material.extensions["KHR_materials_volume"].extension['thicknessTexture'] = new_tex
+                        elif tex == "specularTexture":
+                            new_material.extensions["KHR_materials_specular"].extension['specularTexture'] = new_tex
+                        elif tex == "specularColorTexture":
+                            new_material.extensions["KHR_materials_specular"].extension['specularColorTexture'] = new_tex
+                        elif tex == "anisotropyTexture":
+                            new_material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'] = new_tex
                         else:
                             print_console('WARNING', 'We are not managing this case yet (UDIM for {})'.format(tex))
 

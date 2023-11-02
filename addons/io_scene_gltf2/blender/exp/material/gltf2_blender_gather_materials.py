@@ -68,10 +68,10 @@ def gather_material(blender_material, export_settings):
     orm_texture, default_sockets = __gather_orm_texture(blender_material, export_settings)
 
     emissive_factor = __gather_emissive_factor(blender_material, export_settings)
-    emissive_texture, uvmap_info_emissive = __gather_emissive_texture(blender_material, export_settings)
-    extensions, uvmap_info_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
+    emissive_texture, uvmap_info_emissive, udim_info_emissive = __gather_emissive_texture(blender_material, export_settings)
+    extensions, uvmap_info_extensions, udim_info_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
     normal_texture, uvmap_info_normal, udim_info_normal = __gather_normal_texture(blender_material, export_settings)
-    occlusion_texture, uvmap_info_occlusion = __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings)
+    occlusion_texture, uvmap_info_occlusion, udim_occlusion = __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings)
     pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info, udim_info_prb_mr = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
 
     if any([i>1.0 for i in emissive_factor or []]) is True:
@@ -104,6 +104,9 @@ def gather_material(blender_material, export_settings):
     udim_infos = {}
     udim_infos.update(udim_info_prb_mr)
     udim_infos.update(udim_info_normal)
+    udim_infos.update(udim_info_emissive)
+    udim_infos.update(udim_occlusion)
+    udim_infos.update(udim_info_extensions)
 
 
     # If emissive is set, from an emissive node (not PBR)
@@ -176,19 +179,23 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     extensions = {}
 
     uvmap_infos = {}
+    udim_infos = {}
 
     # KHR_materials_clearcoat
-    clearcoat_extension, uvmap_info = export_clearcoat(blender_material, export_settings)
+    clearcoat_extension, uvmap_info, udim_info_clearcoat = export_clearcoat(blender_material, export_settings)
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
-        uvmap_infos.update(uvmap_infos)
+        uvmap_infos.update(uvmap_info)
+        udim_infos.update(udim_info_clearcoat)
 
     # KHR_materials_transmission
 
-    transmission_extension, uvmap_info = export_transmission(blender_material, export_settings)
+    transmission_extension, uvmap_info, udim_info_transmission = export_transmission(blender_material, export_settings)
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
-        uvmap_infos.update(uvmap_infos)
+        uvmap_infos.update(uvmap_info)
+        udim_infos.update(udim_info_transmission)
+        print("juju", uvmap_infos, udim_infos)
 
     # KHR_materials_emissive_strength
     if any([i>1.0 for i in emissive_factor or []]):
@@ -198,22 +205,25 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
 
     # KHR_materials_volume
 
-    volume_extension, uvmap_info  = export_volume(blender_material, export_settings)
+    volume_extension, uvmap_info, udim_info  = export_volume(blender_material, export_settings)
     if volume_extension:
         extensions["KHR_materials_volume"] = volume_extension
         uvmap_infos.update(uvmap_info)
+        udim_infos.update(udim_info)
 
     # KHR_materials_specular
-    specular_extension, uvmap_info = export_specular(blender_material, export_settings)
+    specular_extension, uvmap_info, udim_info = export_specular(blender_material, export_settings)
     if specular_extension:
         extensions["KHR_materials_specular"] = specular_extension
         uvmap_infos.update(uvmap_info)
+        udim_infos.update(udim_info)
 
     # KHR_materials_sheen
-    sheen_extension, uvmap_info = export_sheen(blender_material, export_settings)
+    sheen_extension, uvmap_info, udim_info = export_sheen(blender_material, export_settings)
     if sheen_extension:
         extensions["KHR_materials_sheen"] = sheen_extension
         uvmap_infos.update(uvmap_info)
+        udim_infos.update(udim_info)
 
     # KHR_materials_ior
     # Keep this extension at the end, because we export it only if some others are exported
@@ -221,7 +231,8 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     if ior_extension:
         extensions["KHR_materials_ior"] = ior_extension
 
-    return extensions, uvmap_infos
+    print(":::::", udim_infos)
+    return extensions, uvmap_infos, udim_infos
 
 
 def __gather_extras(blender_material, export_settings):
@@ -295,14 +306,14 @@ def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, e
     if occlusion.socket is None:
         occlusion = get_socket_from_gltf_material_node(blender_material, "Occlusion")
     if occlusion.socket is None:
-        return None, {}
+        return None, {}, {}
     occlusion_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),
         default_sockets,
         export_settings)
     return occlusion_texture, \
-            {"occlusionTexture" : uvmap_info}
+            {"occlusionTexture" : uvmap_info}, {'occlusionTexture': udim_info } if len(udim_info.keys()) > 0 else {}
 
 
 def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings):

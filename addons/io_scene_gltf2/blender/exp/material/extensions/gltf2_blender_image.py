@@ -170,7 +170,7 @@ class ExportImage:
             all(isinstance(fill, FillImageTile) for fill in self.fills.values()) and
             all(dst_chan == fill.src_chan for dst_chan, fill in self.fills.items()) and
             len(set(fill.image.name for fill in self.fills.values())) == 1 and
-            all(fill.tile == self.fills[Channel.R].tile for fill in self.fills.values())
+            all(fill.tile == self.fills[list(self.fills.keys())[0]].tile for fill in self.fills.values())
         )
 
     def encode(self, mime_type: Optional[str], export_settings) -> Tuple[bytes, bool]:
@@ -198,7 +198,7 @@ class ExportImage:
         return self.__encode_from_image(self.blender_image(), export_settings)
 
     def __encode_happy_tile(self, export_settings) -> bytes:
-        return self.__encode_from_image_tile(self.fills[Channel.R].image, export_settings['current_udim_info']['tile'], export_settings)
+        return self.__encode_from_image_tile(self.fills[list(self.fills.keys())[0]].image, export_settings['current_udim_info']['tile'], export_settings)
 
     def __encode_unhappy(self, export_settings) -> bytes:
         # We need to assemble the image out of channels.

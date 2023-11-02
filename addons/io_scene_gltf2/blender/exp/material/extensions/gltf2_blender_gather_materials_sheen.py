@@ -29,12 +29,13 @@ def export_sheen(blender_material, export_settings):
     sheen_socket = get_socket(blender_material, "Sheen Weight")
 
     if sheenTint_socket.socket is None or sheenRoughness_socket.socket is None or sheen_socket.socket is None:
-        return None, {}
+        return None, {}, {}
 
     if sheen_socket.socket.is_linked is False and sheen_socket.socket.default_value == 0.0:
-        return None, {}
+        return None, {}, {}
 
     uvmap_infos = {}
+    udim_infos = {}
 
     #TODOExt : What to do if sheen_socket is linked? or is not between 0 and 1?
 
@@ -64,6 +65,7 @@ def export_sheen(blender_material, export_settings):
             )
             sheen_extension['sheenColorTexture'] = original_sheenColor_texture
             uvmap_infos.update({'sheenColorTexture': uvmap_info})
+            udim_infos.update({'sheenColorTexture': udim_info} if len(udim_info) > 0 else {})
 
     if sheenRoughness_non_linked is True:
         fac = sheenRoughness_socket.socket.default_value
@@ -87,5 +89,6 @@ def export_sheen(blender_material, export_settings):
             )
             sheen_extension['sheenRoughnessTexture'] = original_sheenRoughness_texture
             uvmap_infos.update({'sheenRoughnessTexture': uvmap_info})
+            udim_infos.update({'sheenRoughnessTexture': udim_info} if len(udim_info) > 0 else {})
 
-    return Extension('KHR_materials_sheen', sheen_extension, False), uvmap_infos
+    return Extension('KHR_materials_sheen', sheen_extension, False), uvmap_infos, udim_infos

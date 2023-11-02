@@ -549,8 +549,7 @@ The UDIM system is supported by Blender, but is not supported by glTF.
 When exporting a model that uses UDIM, the add-on will automatically split the
 image into multiple images, one for each tile, and will update the material
 nodes to use the new images.
-Note that only Base Color Textures & Normal textures are supported by this feature for now.
-All UDIM texture must use the same UV map.
+All UDIM texture must use the same UV map to be exported.
 
 
 Exporting a Shadeless (Unlit) Material

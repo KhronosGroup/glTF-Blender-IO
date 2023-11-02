@@ -35,11 +35,12 @@ def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export
     uvmap_infos = {}
     udim_infos = {}
 
-    base_color_texture, uvmap_info, udim_info, _ = __gather_base_color_texture(blender_material, export_settings)
+    base_color_texture, uvmap_info, udim_info_bc, _ = __gather_base_color_texture(blender_material, export_settings)
     uvmap_infos.update(uvmap_info)
-    udim_infos.update(udim_info)
-    metallic_roughness_texture, uvmap_info, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
+    udim_infos.update(udim_info_bc)
+    metallic_roughness_texture, uvmap_info, udim_info_mr, _ = __gather_metallic_roughness_texture(blender_material, orm_texture, export_settings)
     uvmap_infos.update(uvmap_info)
+    udim_infos.update(udim_info_mr)
 
     base_color_factor, vc_info = __gather_base_color_factor(blender_material, export_settings)
 
@@ -155,7 +156,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     if not hasMetal and not hasRough:
         metallic_roughness = get_socket_from_gltf_material_node(blender_material, "MetallicRoughness")
         if metallic_roughness is None or not has_image_node_from_socket(metallic_roughness, export_settings):
-            return None, {}, None
+            return None, {}, {}, None
     elif not hasMetal:
         texture_input = (roughness_socket,)
         default_sockets = (metallic_socket.socket,)
@@ -173,7 +174,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
         export_settings,
     )
 
-    return tex, {'metallicRoughnessTexture': uvmap_info}, factor
+    return tex, {'metallicRoughnessTexture': uvmap_info}, {'metallicRoughnessTexture' : udim_info} if len(udim_info.keys()) > 0 else {}, factor
 
 def __gather_roughness_factor(blender_material, export_settings):
     if not blender_material.use_nodes:

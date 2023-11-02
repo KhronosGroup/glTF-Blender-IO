@@ -39,9 +39,10 @@ def export_transmission(blender_material, export_settings):
         transmission_enabled = True
 
     if not transmission_enabled:
-        return None, {}
+        return None, {}, {}
 
     uvmap_info = {}
+    udim_info = {}
 
     # Pack transmission channel (R).
     if has_transmission_texture:
@@ -57,4 +58,4 @@ def export_transmission(blender_material, export_settings):
         if has_transmission_texture:
             transmission_extension['transmissionTexture'] = combined_texture
 
-    return Extension('KHR_materials_transmission', transmission_extension, False), {'transmissionTexture': uvmap_info}
+    return Extension('KHR_materials_transmission', transmission_extension, False), {'transmissionTexture': uvmap_info}, {'transmissionTexture': udim_info} if len(udim_info) > 0 else {}
