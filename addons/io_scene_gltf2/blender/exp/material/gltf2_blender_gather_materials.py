@@ -195,7 +195,6 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
         extensions["KHR_materials_transmission"] = transmission_extension
         uvmap_infos.update(uvmap_info)
         udim_infos.update(udim_info_transmission)
-        print("juju", uvmap_infos, udim_info)
 
     # KHR_materials_emissive_strength
     if any([i>1.0 for i in emissive_factor or []]):
@@ -231,7 +230,6 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     if ior_extension:
         extensions["KHR_materials_ior"] = ior_extension
 
-    print(":::::", udim_infos)
     return extensions, uvmap_infos, udim_infos
 
 
