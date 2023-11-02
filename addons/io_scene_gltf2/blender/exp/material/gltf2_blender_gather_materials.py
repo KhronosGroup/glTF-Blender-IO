@@ -186,7 +186,7 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
         uvmap_infos.update(uvmap_info)
-        udim_info.update(udim_info_clearcoat)
+        udim_infos.update(udim_info_clearcoat)
 
     # KHR_materials_transmission
 
