@@ -178,14 +178,14 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     clearcoat_extension, uvmap_info = export_clearcoat(blender_material, export_settings)
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
-        uvmap_infos.update(uvmap_infos)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_transmission
 
     transmission_extension, uvmap_info = export_transmission(blender_material, export_settings)
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
-        uvmap_infos.update(uvmap_infos)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_emissive_strength
     if any([i>1.0 for i in emissive_factor or []]):
