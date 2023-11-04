@@ -455,7 +455,7 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
     material = deepcopy(base_material)
     __get_new_material_texture_shared(base_material, material)
 
-    for tex, ind in zip(get_all_textures(len(caching_indices) - 14), caching_indices):
+    for tex, ind in zip(get_all_textures(len(caching_indices) - len(get_all_textures())), caching_indices):
 
         if ind is None:
             continue
@@ -522,9 +522,6 @@ def get_base_material(material_idx, materials, export_settings):
 def get_all_textures(idx=0):
     # Make sure to have all texture here, always in same order
     tab = []
-
-    # Note that there 14 textures
-    # If this value changes, we need to change the code in __get_final_material_with_indices
 
     tab.append("emissiveTexture")
     tab.append("normalTexture")
