@@ -39,7 +39,7 @@ def gather_node(vnode, export_settings):
         vnode.skin = skin
 
     node = gltf2_io.Node(
-        camera=__gather_camera(blender_object, export_settings),
+        camera=__gather_camera(vnode, export_settings),
         children=__gather_children(vnode, export_settings),
         extensions=__gather_extensions(blender_object, export_settings),
         extras=__gather_extras(blender_object, export_settings),
@@ -65,11 +65,13 @@ def gather_node(vnode, export_settings):
     return node
 
 
-def __gather_camera(blender_object, export_settings):
-    if blender_object.type != 'CAMERA':
+def __gather_camera(vnode, export_settings):
+    if vnode.blender_type == VExportNode.COLLECTION:
+        return None
+    if vnode.blender_object.type != 'CAMERA':
         return None
 
-    return gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
+    return gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
 
 
 def __gather_children(vnode, export_settings):
@@ -207,6 +209,8 @@ def __gather_matrix(blender_object, export_settings):
 
 
 def __gather_mesh(vnode, blender_object, export_settings):
+    if vnode.blender_type == VExportNode.COLLECTION:
+        return None
     if blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
         return __gather_mesh_from_nonmesh(blender_object, export_settings)
 
@@ -370,7 +374,7 @@ def __gather_trans_rot_scale(vnode, export_settings):
     rot = __convert_swizzle_rotation(rot, export_settings)
     sca = __convert_swizzle_scale(sca, export_settings)
 
-    if vnode.blender_object.instance_type == 'COLLECTION' and vnode.blender_object.instance_collection:
+    if vnode.blender_type != VExportNode.COLLECTION and vnode.blender_object.instance_type == 'COLLECTION' and vnode.blender_object.instance_collection:
         offset = -__convert_swizzle_location(
             vnode.blender_object.instance_collection.instance_offset, export_settings)
 
@@ -398,6 +402,10 @@ def __gather_trans_rot_scale(vnode, export_settings):
     return translation, rotation, scale
 
 def gather_skin(vnode, export_settings):
+
+    if export_settings['vtree'].nodes[vnode].blender_type == VExportNode.COLLECTION:
+        return None
+
     blender_object = export_settings['vtree'].nodes[vnode].blender_object
     modifiers = {m.type: m for m in blender_object.modifiers}
     if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:

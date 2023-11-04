@@ -51,6 +51,9 @@ def gather_actions_animations(export_settings):
             else:
                 continue
 
+        if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
+            continue
+
         animations_, merged_tracks = gather_action_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
 
@@ -75,6 +78,9 @@ def prepare_actions_range(export_settings):
 
     vtree = export_settings['vtree']
     for obj_uuid in vtree.get_all_objects():
+
+        if vtree.nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
+            continue
 
         # Do not manage not exported objects
         if vtree.nodes[obj_uuid].node is None:
