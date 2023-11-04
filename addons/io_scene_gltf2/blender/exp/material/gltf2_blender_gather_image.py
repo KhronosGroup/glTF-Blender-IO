@@ -289,7 +289,7 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                 dst_chan = Channel.G
             elif socket.socket.name == 'Thickness': # For KHR_materials_volume
                 dst_chan = Channel.G
-            elif socket.socket.name == "Specular IOR Level": # For KHR_material_specular
+            elif socket.socket.name == "Specular IOR Level": # For KHR_materials_specular
                 dst_chan = Channel.A
             elif socket.socket.name == "Sheen Roughness": # For KHR_materials_sheen
                 dst_chan = Channel.A

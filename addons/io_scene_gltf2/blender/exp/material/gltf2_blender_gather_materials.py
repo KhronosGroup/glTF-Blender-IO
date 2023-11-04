@@ -38,7 +38,8 @@ from .gltf2_blender_search_node_tree import \
     get_socket, \
     get_node_socket, \
     get_material_nodes, \
-    NodeSocket
+    NodeSocket, \
+    get_vertex_color_info
 
 @cached
 def get_material_cache_key(blender_material, export_settings):
@@ -59,7 +60,7 @@ def gather_material(blender_material, export_settings):
     :return: a glTF material
     """
     if not __filter_material(blender_material, export_settings):
-        return None, {}
+        return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None}}
 
     # Reset exported images / textures nodes
     export_settings['exported_texture_nodes'] = []
@@ -208,14 +209,14 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     clearcoat_extension, uvmap_info = export_clearcoat(blender_material, export_settings)
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
-        uvmap_infos.update(uvmap_infos)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_transmission
 
     transmission_extension, uvmap_info = export_transmission(blender_material, export_settings)
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
-        uvmap_infos.update(uvmap_infos)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_emissive_strength
     if any([i>1.0 for i in emissive_factor or []]):
@@ -341,9 +342,11 @@ def __export_unlit(blender_material, export_settings):
 
     info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
     if info is None:
-        return None, {}, {"color": None, "alpha": None}
+        return None, {}, {"color": None, "alpha": None, "color_type": None, "alpha_type": None}
 
-    base_color_texture, uvmap_info, vc_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
+    base_color_texture, uvmap_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
+
+    vc_info = get_vertex_color_info(info.get('rgb_socket'), info.get('alpha_socket'), export_settings)
 
     material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(blender_material, export_settings),
@@ -497,7 +500,7 @@ def get_material_from_idx(material_idx, materials, export_settings):
 def get_base_material(material_idx, materials, export_settings):
 
     material = None
-    material_info = {"uv_info": {}, "vc_info": {}}
+    material_info = {"uv_info": {}, "vc_info": {"color": None, "alpha": None, "color_type": None, "alpha_type": None}}
 
     mat = get_material_from_idx(material_idx, materials, export_settings)
     if mat is not None:
