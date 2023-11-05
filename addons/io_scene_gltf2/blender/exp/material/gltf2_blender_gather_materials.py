@@ -109,32 +109,33 @@ def gather_material(blender_material, export_settings):
     uvmap_infos = {}
 
     # Get all textures nodes that are not used in the material
-    if blender_material.node_tree and blender_material.use_nodes:
-        nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
-    else:
-        nodes = []
-    cpt_additional = 0
-    for node in nodes:
-        if node[0].get("used", None) is not None:
-            del(node[0]['used'])
-            continue
+    if export_settings['gltf_unused_textures'] is True:
+        if blender_material.node_tree and blender_material.use_nodes:
+            nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+        else:
+            nodes = []
+        cpt_additional = 0
+        for node in nodes:
+            if node[0].get("used", None) is not None:
+                del(node[0]['used'])
+                continue
 
-        s = NodeSocket(node[0].outputs[0], node[1])
-        tex, uv_info_additional, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), (), export_settings)
-        if tex is not None:
-            export_settings['exported_images'][node[0].image.name] = 1 # Fully used
-            uvmap_infos.update({'additional' + str(cpt_additional): uv_info_additional})
-            cpt_additional += 1
-            export_settings['additional_texture_export'].append(tex)
+            s = NodeSocket(node[0].outputs[0], node[1])
+            tex, uv_info_additional, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), (), export_settings)
+            if tex is not None:
+                export_settings['exported_images'][node[0].image.name] = 1 # Fully used
+                uvmap_infos.update({'additional' + str(cpt_additional): uv_info_additional})
+                cpt_additional += 1
+                export_settings['additional_texture_export'].append(tex)
 
-    # Reset
-    if blender_material.node_tree and blender_material.use_nodes:
-        nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
-    else:
-        nodes = []
-    for node in nodes:
-        if node[0].get("used", None) is not None:
-            del(node[0]['used'])
+        # Reset
+        if blender_material.node_tree and blender_material.use_nodes:
+            nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+        else:
+            nodes = []
+        for node in nodes:
+            if node[0].get("used", None) is not None:
+                del(node[0]['used'])
 
     uvmap_infos.update(uvmap_info_emissive)
     uvmap_infos.update(uvmap_info_extensions)

@@ -374,18 +374,20 @@ class GlTF2Exporter:
             self.__traverse(s)
 
     def traverse_additional_textures(self):
-        tab = []
-        for tex in self.export_settings['additional_texture_export']:
-            res = self.__traverse(tex)
-            tab.append(res)
+        if self.export_settings['gltf_unused_textures'] is True:
+            tab = []
+            for tex in self.export_settings['additional_texture_export']:
+                res = self.__traverse(tex)
+                tab.append(res)
 
-        self.additional_data.additional_textures = tab
+            self.additional_data.additional_textures = tab
 
     def traverse_additional_images(self):
-        for img in [img for img in bpy.data.images if img.source != "VIEWER"]:
-            # TODO manage full / partial / custom via hook ...
-            if img.name not in self.export_settings['exported_images'].keys():
-                self.__traverse(get_gltf_image_from_blender_image(img.name, self.export_settings))
+        if self.export_settings['gltf_unused_images']:
+            for img in [img for img in bpy.data.images if img.source != "VIEWER"]:
+                # TODO manage full / partial / custom via hook ...
+                if img.name not in self.export_settings['exported_images'].keys():
+                    self.__traverse(get_gltf_image_from_blender_image(img.name, self.export_settings))
 
     def add_animation(self, animation: gltf2_io.Animation):
         """

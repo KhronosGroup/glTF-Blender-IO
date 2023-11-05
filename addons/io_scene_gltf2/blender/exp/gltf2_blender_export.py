@@ -72,13 +72,14 @@ def __export(export_settings):
     json = fix_json(exporter.glTF.to_dict())
 
     # Convert additional data if needed
-    additional_json_textures = fix_json([i.to_dict() for i in exporter.additional_data.additional_textures])
+    if export_settings['gltf_unused_textures'] is True:
+        additional_json_textures = fix_json([i.to_dict() for i in exporter.additional_data.additional_textures])
 
-    # Now that we have the final json, we can add the additional data
-    if len(additional_json_textures) > 0:
-        if json.get('extras') is None:
-            json['extras'] = {}
-        json['extras']['additionalTextures'] = additional_json_textures
+        # Now that we have the final json, we can add the additional data
+        if len(additional_json_textures) > 0:
+            if json.get('extras') is None:
+                json['extras'] = {}
+            json['extras']['additionalTextures'] = additional_json_textures
 
     return json, buffer
 
