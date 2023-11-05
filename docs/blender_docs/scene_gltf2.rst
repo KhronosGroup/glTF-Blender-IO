@@ -901,9 +901,6 @@ Create WebP
    For already WebP textures, nothing happen.
 WebP fallback
    For all WebP textures, create a png fallback texture.
-Export Original PBR Specular
-   When On, specular data are exported from glTF Material Output node,
-   Instead of using sockets from Principled BSDF Node.
 
 Data - Shape Keys
 ^^^^^^^^^^^^^^^^^
