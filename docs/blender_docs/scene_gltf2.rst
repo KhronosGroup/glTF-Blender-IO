@@ -908,6 +908,10 @@ WebP fallback
 Export Original PBR Specular
    When On, specular data are exported from glTF Material Output node,
    Instead of using sockets from Principled BSDF Node.
+Unused images
+   Export images that are not used in any material.
+Unused textures
+   Export texture info (sampler, image, texcoord) that are not used in any material.
 
 Data - Shape Keys
 ^^^^^^^^^^^^^^^^^
