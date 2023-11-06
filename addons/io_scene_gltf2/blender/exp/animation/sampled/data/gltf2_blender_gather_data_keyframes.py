@@ -15,6 +15,7 @@
 import typing
 import math
 import numpy as np
+import bpy
 from .....com.gltf2_blender_conversion import PBR_WATTS_TO_LUMENS
 from ....gltf2_blender_gather_cache import cached
 from ...gltf2_blender_gather_keyframes import Keyframe
@@ -85,7 +86,9 @@ def gather_data_sampled_keyframes(
 
             # innerConeAngle is handled in cache retrieval, as it requires spot_size and spot_blend
 
-        # TODOPointer: cameras need conversion
+        # Camera yvof is calculated in cache retrieval, as it requires sensor_fit, angle, aspect ratio
+
+
 
         key.value_total = value
         keyframes.append(key)

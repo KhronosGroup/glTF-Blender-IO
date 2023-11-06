@@ -15,6 +15,7 @@
 import bpy
 import math
 from ...io.com import gltf2_io
+from ...blender.com.gltf2_blender_conversion import yvof_blender_to_gltf
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 from .gltf2_blender_gather_cache import cached
@@ -126,16 +127,7 @@ def __gather_perspective(blender_camera, export_settings):
         perspective.aspect_ratio = width / height
         del _render
 
-        if width >= height:
-            if blender_camera.sensor_fit != 'VERTICAL':
-                perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspect_ratio)
-            else:
-                perspective.yfov = blender_camera.angle
-        else:
-            if blender_camera.sensor_fit != 'HORIZONTAL':
-                perspective.yfov = blender_camera.angle
-            else:
-                perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspect_ratio)
+        perspective.yfov = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
 
         perspective.znear = blender_camera.clip_start
         perspective.zfar = blender_camera.clip_end
@@ -153,6 +145,7 @@ def __gather_perspective(blender_camera, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/cameras/XXX/perspective/yfov"
+        path_['sensor_fit'] = 'sensor_fit'
         export_settings['current_paths']['angle'] = path_
 
         # aspect ratio is not animatable in blender

@@ -16,7 +16,7 @@ import mathutils
 import bpy
 import typing
 from .....blender.com.gltf2_blender_data_path import get_sk_exported
-from .....blender.com.gltf2_blender_conversion import inverted_trs_mapping_node, texture_transform_blender_to_gltf
+from .....blender.com.gltf2_blender_conversion import inverted_trs_mapping_node, texture_transform_blender_to_gltf, yvof_blender_to_gltf
 from ...gltf2_blender_gather_cache import datacache
 from ...gltf2_blender_gather_tree import VExportNode
 from ..gltf2_blender_gather_drivers import get_sk_drivers
@@ -843,11 +843,22 @@ def get_cache_data(path: str,
                         data[cam][blender_camera.animation_data.action.name]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
-                    val = blender_camera.path_resolve(path)
-                    if type(val).__name__ == "float":
+                    # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
+                    if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
+                        _render = bpy.context.scene.render
+                        width = _render.pixel_aspect_x * _render.resolution_x
+                        height = _render.pixel_aspect_y * _render.resolution_y
+                        del _render
+
+                        val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
                         data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val
                     else:
-                        data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = list(val)
+                        # classic case
+                        val = blender_camera.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val
+                        else:
+                            data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = list(val)
 
             elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                 if action_name not in data[cam].keys():
@@ -857,11 +868,22 @@ def get_cache_data(path: str,
                         data[cam][action_name]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
-                    val = blender_camera.path_resolve(path)
-                    if type(val).__name__ == "float":
+                    # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
+                    if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
+                        _render = bpy.context.scene.render
+                        width = _render.pixel_aspect_x * _render.resolution_x
+                        height = _render.pixel_aspect_y * _render.resolution_y
+                        del _render
+
+                        val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
                         data[cam][action_name]['value'][path][frame] = val
                     else:
-                        data[cam][action_name]['value'][path][frame] = list(val)
+                        # classic case
+                        val = blender_camera.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[cam][action_name]['value'][path][frame] = val
+                        else:
+                            data[cam][action_name]['value'][path][frame] = list(val)
 
             else:
                 if cam not in data[cam].keys():
@@ -871,11 +893,23 @@ def get_cache_data(path: str,
                         data[cam][cam]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
-                    val = blender_camera.path_resolve(path)
-                    if type(val).__name__ == "float":
+                    # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
+                    if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
+                        _render = bpy.context.scene.render
+                        width = _render.pixel_aspect_x * _render.resolution_x
+                        height = _render.pixel_aspect_y * _render.resolution_y
+                        del _render
+
+                        val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
+                        print(val)
                         data[cam][cam]['value'][path][frame] = val
                     else:
-                        data[cam][cam]['value'][path][frame] = list(val)
+                        # classic case
+                        val = blender_camera.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[cam][cam]['value'][path][frame] = val
+                        else:
+                            data[cam][cam]['value'][path][frame] = list(val)
 
         frame += step
     return data

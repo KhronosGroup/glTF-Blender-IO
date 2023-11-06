@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from math import sin, cos
+from math import sin, cos, tan, atan
 from mathutils import Matrix, Vector
 import numpy as np
 from ...io.com import gltf2_io_constants
@@ -179,3 +179,19 @@ def get_gltf_interpolation(interpolation):
         "LINEAR": "LINEAR",
         "CONSTANT": "STEP"
     }.get(interpolation, "LINEAR")
+
+
+def yvof_blender_to_gltf(angle, width, height, sensor_fit):
+
+    aspect_ratio = width / height
+
+    if width >= height:
+        if sensor_fit != 'VERTICAL':
+            return 2.0 * atan(tan(angle * 0.5) / aspect_ratio)
+        else:
+            return angle
+    else:
+        if sensor_fit != 'HORIZONTAL':
+            return angle
+        else:
+            return 2.0 * atan(tan(angle * 0.5) / aspect_ratio)
