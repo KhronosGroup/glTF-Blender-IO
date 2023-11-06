@@ -1084,6 +1084,7 @@ class GLTF_PT_export_data_scene(bpy.types.Panel):
 
         sfile = context.space_data
         operator = sfile.active_operator
+        layout.prop(operator, 'export_gn_mesh')
         layout.prop(operator, 'export_gpu_instances')
         layout.prop(operator, 'export_hierarchy_flatten_objs')
 
@@ -1119,8 +1120,6 @@ class GLTF_PT_export_data_mesh(bpy.types.Panel):
         col = layout.column()
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
-
-        layout.prop(operator, 'export_gn_mesh')
 
 class GLTF_PT_export_data_material(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
