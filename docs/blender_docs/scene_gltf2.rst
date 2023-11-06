@@ -269,10 +269,6 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
 Sheen
 ^^^^^
 
-When the *Sheen BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
-extension will be included in the export. The Sheen Color will be exported from Color socket of Sheen node.
-Sheen Roughness will be exported from Roughness socket.
-
 If a Sheen Roughness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-sheen.png
@@ -282,49 +278,15 @@ If a Sheen Roughness Texture is used, glTF requires the values be written to the
    Sheen BSDF node is only available on Cycles render engine.
    You may have to temporary switch to Cycles to add this node, and get back to EEVEE.
 
-.. note::
-
-   Because the node tree is adding 2 Shaders (Principled and Sheen),
-   the resulting shader is not fully energy conservative.
-   You may find some difference between Blender render, and glTF render.
-   Sheen models are not fully compatible between Blender and glTF.
-   This trick about adding Sheen Shader is the most accurate
-   approximation (better that using Sheen Principled sockets).
-
 
 Specular
 ^^^^^^^^
 
-When the *Specular* or *Specular Tint* input of Principled BSDF node have a non default value or
+When the *Specular IOR Level* or *Specular Tint* input of Principled BSDF node have a non default value or
 Image Texture node connected, the ``KHR_materials_specular`` glTF extension will be
 included in the export.
 
-.. note::
 
-   Specular models are not fully compatible between Blender and glTF.
-   By default, Blender data are converted to glTF at export,
-   with a possible loss of information.
-   Some conversion are also performed at import, will a possible loss of information too.
-
-
-At import, a custom node group is created, to store original Specular data, not converted.
-
-.. figure:: /images/addons_import-export_scene-gltf2_material_specular-custom-node.png
-
-At export, by default, Specular data are converted from Principled BSDF node.
-
-You can export original Specular data, enabling the option at export.
-If enabled, Principled Specular data are ignored, only data from custom node are used.
-
-.. figure:: /images/addons_import-export_scene-gltf2_material_specular-export-option.png
-
-
-.. tip::
-
-   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
-   Add > Output > glTF Material Output
-
-   .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
 
 Transmission
 ^^^^^^^^^^^^
