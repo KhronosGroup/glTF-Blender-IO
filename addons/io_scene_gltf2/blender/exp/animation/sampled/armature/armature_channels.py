@@ -16,15 +16,15 @@ import bpy
 import typing
 from ......io.com import gltf2_io
 from ......io.exp.gltf2_io_user_extensions import export_user_extensions
-from ......blender.com.gltf2_blender_conversion import get_gltf_interpolation
+from .....com.gltf2_blender_conversion import get_gltf_interpolation
 from .....com.gltf2_blender_conversion import get_target, get_channel_from_target
 from ...fcurves.gltf2_blender_gather_fcurves_channels import get_channel_groups
 from ...fcurves.gltf2_blender_gather_fcurves_channels import needs_baking
 from ...gltf2_blender_gather_drivers import get_sk_drivers
 from ..object.gltf2_blender_gather_object_channels import gather_sampled_object_channel
 from ..shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
-from .gltf2_blender_gather_armature_channel_target import gather_armature_sampled_channel_target
-from .gltf2_blender_gather_armature_sampler import gather_bone_sampled_animation_sampler
+from .armature_channel_target import gather_armature_sampled_channel_target
+from .armature_sampler import gather_bone_sampled_animation_sampler
 
 def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
