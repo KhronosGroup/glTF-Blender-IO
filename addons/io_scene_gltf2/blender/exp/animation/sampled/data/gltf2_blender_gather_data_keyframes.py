@@ -80,7 +80,10 @@ def gather_data_sampled_keyframes(
                         and export_settings['KHR_animation_pointer']['lights'][blender_id]['paths'][channel]['lamp_type'] != "SUN":
                     value *= PBR_WATTS_TO_LUMENS
 
-        # TODOPointer: Light spots need conversion (that needs spot_size and spot_blend)
+            if export_settings['KHR_animation_pointer']['lights'][blender_id]['paths'][channel]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/spot.outerConeAngle":
+                value *= 0.5
+
+            # innerConeAngle is handled in cache retrieval, as it requires spot_size and spot_blend
 
         # TODOPointer: cameras need conversion
 

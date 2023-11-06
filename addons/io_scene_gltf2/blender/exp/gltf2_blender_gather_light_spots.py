@@ -41,6 +41,7 @@ def __gather_inner_cone_angle(blender_lamp, export_settings) -> Optional[float]:
     path_ = {}
     path_['length'] = 1
     path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/spot.innerConeAngle"
+    path_['additional_path'] = "spot_size"
     export_settings['current_paths']["spot_blend"] = path_
 
     return angle - angle * blender_lamp.spot_blend

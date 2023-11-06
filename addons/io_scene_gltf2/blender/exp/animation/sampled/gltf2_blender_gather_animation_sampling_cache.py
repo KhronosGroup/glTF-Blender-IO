@@ -770,11 +770,18 @@ def get_cache_data(path: str,
                         data[light][blender_light.animation_data.action.name]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
-                    val = blender_light.path_resolve(path)
-                    if type(val).__name__ == "float":
-                        data[light][blender_light.animation_data.action.name]['value'][path][frame] = val
+                    # Manage special case for innerConeAngle because it requires spot_size & spot_blend
+                    if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/spot.innerConeAngle":
+                        val = blender_light.path_resolve(path)
+                        val_size = blender_light.path_resolve(export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['additional_path'])
+                        data[light][blender_light.animation_data.action.name]['value'][path][frame] = (val_size * 0.5) - ((val_size * 0.5) * val)
                     else:
-                        data[light][blender_light.animation_data.action.name]['value'][path][frame] = list(val)
+                        # classic case
+                        val = blender_light.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[light][blender_light.animation_data.action.name]['value'][path][frame] = val
+                        else:
+                            data[light][blender_light.animation_data.action.name]['value'][path][frame] = list(val)
 
             elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                 if action_name not in data[light].keys():
@@ -784,11 +791,18 @@ def get_cache_data(path: str,
                         data[light][action_name]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
-                    val = blender_light.path_resolve(path)
-                    if type(val).__name__ == "float":
-                        data[light][action_name]['value'][path][frame] = val
+                    # Manage special case for innerConeAngle because it requires spot_size & spot_blend
+                    if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/spot.innerConeAngle":
+                        val = blender_light.path_resolve(path)
+                        val_size = blender_light.path_resolve(export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['additional_path'])
+                        data[light][action_name]['value'][path][frame] = (val_size * 0.5) - ((val_size * 0.5) * val)
                     else:
-                        data[light][action_name]['value'][path][frame] = list(val)
+                        # classic case
+                        val = blender_light.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[light][action_name]['value'][path][frame] = val
+                        else:
+                            data[light][action_name]['value'][path][frame] = list(val)
 
             else:
                 if light not in data[light].keys():
@@ -798,11 +812,18 @@ def get_cache_data(path: str,
                         data[light][light]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
-                    val = blender_light.path_resolve(path)
-                    if type(val).__name__ == "float":
-                        data[light][light]['value'][path][frame] = val
+                    # Manage special case for innerConeAngle because it requires spot_size & spot_blend
+                    if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/spot.innerConeAngle":
+                        val = blender_light.path_resolve(path)
+                        val_size = blender_light.path_resolve(export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['additional_path'])
+                        data[light][light]['value'][path][frame] = (val_size * 0.5) - ((val_size * 0.5) * val)
                     else:
-                        data[light][light]['value'][path][frame] = list(val)
+                        # classic case
+                        val = blender_light.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[light][light]['value'][path][frame] = val
+                        else:
+                            data[light][light]['value'][path][frame] = list(val)
 
         # After caching lights, caching cameras, for KHR_animation_pointer
         for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
