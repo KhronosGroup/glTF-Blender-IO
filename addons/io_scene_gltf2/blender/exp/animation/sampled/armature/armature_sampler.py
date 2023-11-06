@@ -23,7 +23,7 @@ from .....com import gltf2_blender_math
 from ....gltf2_blender_gather_accessors import gather_accessor
 from ....gltf2_blender_gather_cache import cached
 from ....gltf2_blender_gather_tree import VExportNode
-from .gltf2_blender_gather_armature_keyframes import gather_bone_sampled_keyframes
+from .armature_keyframes import gather_bone_sampled_keyframes
 
 @cached
 def gather_bone_sampled_animation_sampler(
