@@ -172,6 +172,11 @@ class BlenderPointerAnim():
                 blender_path = "spot_size"
                 num_components = 1
 
+                old_values = values.copy()
+                for idx, i in enumerate(old_values):
+                    values[idx] = [values[idx][0] * 2]
+
+
             if pointer_tab[5] == "spot.innerConeAngle":
                 if "spot.outerConeAngle" in asset["multiple_channels"].keys():
                     outer_animation = gltf.data.animations[asset['multiple_channels']['spot.outerConeAngle'][0]]
