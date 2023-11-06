@@ -163,23 +163,23 @@ class BlenderPointerAnim():
 
             #TODO range, not implemented (even not in static import)
 
-        if len(pointer_tab) == 7 and pointer_tab[1] == "extensions" and \
+        if len(pointer_tab) == 6 and pointer_tab[1] == "extensions" and \
             pointer_tab[2] == "KHR_lights_punctual" and \
             pointer_tab[3] == "lights" and \
-            pointer_tab[5] == "spot" and \
-            pointer_tab[6] in ["outerConeAngle", "innerConeAngle"]:
+            pointer_tab[5] in ["spot.outerConeAngle", "spot.innerConeAngle"]:
 
-            if pointer_tab[6] == "outerConeAngle":
+            if pointer_tab[5] == "spot.outerConeAngle":
                 blender_path = "spot_size"
                 num_components = 1
 
-            if pointer_tab[6] == "innerConeAngle":
-                if "outerConeAngle" in asset["multiple_channels"].keys():
-                    outer_animation = gltf.data.animations[asset['multiple_channels']['outerConeAngle'][0]]
-                    outer_channel = outer_animation.channels[asset['multiple_channels']['outerConeAngle'][1]]
+            if pointer_tab[5] == "spot.innerConeAngle":
+                if "spot.outerConeAngle" in asset["multiple_channels"].keys():
+                    outer_animation = gltf.data.animations[asset['multiple_channels']['spot.outerConeAngle'][0]]
+                    outer_channel = outer_animation.channels[asset['multiple_channels']['spot.outerConeAngle'][1]]
                     outer_keys = BinaryData.get_data_from_accessor(gltf, outer_animation.samplers[outer_channel.sampler].input)
                     outer_values = BinaryData.get_data_from_accessor(gltf, outer_animation.samplers[outer_channel.sampler].output)
                 else:
+                    outer_keys = keys.copy()
                     outer_values = [[asset['spot']['outerConeAngle']]] * len(keys)
 
                 # We will manage it only if keys are the same... TODO ?

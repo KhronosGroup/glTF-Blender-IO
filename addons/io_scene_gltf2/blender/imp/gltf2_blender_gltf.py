@@ -352,11 +352,10 @@ class BlenderGlTF():
                 gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx] = []
             gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx].append(channel_idx)
 
-        if len(pointer_tab) == 7 and pointer_tab[1] == "extensions" and \
+        if len(pointer_tab) == 6 and pointer_tab[1] == "extensions" and \
             pointer_tab[2] == "KHR_lights_punctual" and \
             pointer_tab[3] == "lights" and \
-            pointer_tab[5] == "spot" and \
-            pointer_tab[6] in ["outerConeAngle", "innerConeAngle"]:
+            pointer_tab[5] in ["spot.outerConeAngle", "spot.innerConeAngle"]:
 
             if anim_idx not in gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"].keys():
                 gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx] = []
