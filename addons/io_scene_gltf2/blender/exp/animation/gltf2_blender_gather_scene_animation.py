@@ -17,7 +17,7 @@ from ....io.com import gltf2_io
 from ...com.gltf2_blender_extras import generate_extras
 from ..gltf2_blender_gather_tree import VExportNode
 from .gltf2_blender_gather_drivers import get_sk_drivers
-from .sampled.armature.gltf2_blender_gather_armature_channels import gather_armature_sampled_channels
+from .sampled.armature.armature_channels import gather_armature_sampled_channels
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sk_sampled_channels
 from .sampled.data.gltf2_blender_gather_data_channels import gather_data_sampled_channels

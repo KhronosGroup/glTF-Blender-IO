@@ -18,7 +18,7 @@ from ......io.exp.gltf2_io_user_extensions import export_user_extensions
 from ......io.com.gltf2_io_debug import print_console
 from ......io.com import gltf2_io
 from .....com.gltf2_blender_extras import generate_extras
-from .gltf2_blender_gather_armature_channels import gather_armature_sampled_channels
+from .armature_channels import gather_armature_sampled_channels
 
 
 

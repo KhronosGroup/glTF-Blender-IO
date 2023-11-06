@@ -47,11 +47,13 @@ GPU Instances
 
 When the option is enable in Exporter, instances are exported using the ``EXT_mesh_gpu_instancing`` extension.
 There are some limitations, at export:
+
 - Instances must be meshes, and don't have any children themselves
 - Instances must all be children of the same object.
 - This extension doesn't manage material variation. That means that the generated file may include all instances with
   same materials.
 - Instances detected are objects sharing the same mesh data.
+
 At import, instances are created by creating objects sharing the same mesh data.
 
 Materials
@@ -903,9 +905,6 @@ Create WebP
    For already WebP textures, nothing happen.
 WebP fallback
    For all WebP textures, create a png fallback texture.
-Export Original PBR Specular
-   When On, specular data are exported from glTF Material Output node,
-   Instead of using sockets from Principled BSDF Node.
 
 Data - Shape Keys
 ^^^^^^^^^^^^^^^^^
