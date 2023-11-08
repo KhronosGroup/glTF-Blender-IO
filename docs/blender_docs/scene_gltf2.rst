@@ -993,6 +993,11 @@ Force keeping channel for armature / bones
 Force keeping channel for objects
    if all keyframes are identical for object transformations, force keeping the minimal animation
 
+Animation - Filter
+^^^^^^^^^^^^^^^^^^
+
+Restrict actions to be exported to the ones matching the filter.
+
 Contributing
 ============
 
