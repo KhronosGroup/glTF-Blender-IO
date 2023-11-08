@@ -325,6 +325,27 @@ If enabled, Principled Specular data are ignored, only data from custom node are
 
    .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
 
+
+Anisotropy
+^^^^^^^^^^
+
+Anisotropic textures and data need to be converted at export, and at import.
+
+At import, some nodes are created to manage this conversion
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_anisotropy.png
+
+At export, this exact same nodes are detected, and used to export data.
+
+At export, you can also plug some grayscale textures for *Anisotropic* and *Anisotropic Rotation* sockets.
+Then, exporter will convert these texture into a glTF compatible texture.
+
+.. figure:: /images/addons_import-export_scene-gltf2_material_anisotropy-grayscale-texture.png
+
+Note that the *tangent* socket must be linked to a *tangent* node, with UVMap.
+The choosen UVMap must be the UVMap of the Normal Map.
+
+
 Transmission
 ^^^^^^^^^^^^
 
@@ -575,6 +596,7 @@ are supported directly by this add-on:
 - ``KHR_materials_volume``
 - ``KHR_materials_sheen``
 - ``KHR_materials_specular``
+- ``KHR_materials_anisotropy``
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
 - ``KHR_lights_punctual``
@@ -594,6 +616,7 @@ are supported directly by this add-on:
 - ``KHR_materials_volume``
 - ``KHR_materials_sheen``
 - ``KHR_materials_specular``
+- ``KHR_materials_anisotropy``
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
 - ``KHR_texture_transform``
