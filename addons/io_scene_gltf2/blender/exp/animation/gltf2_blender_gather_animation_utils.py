@@ -20,7 +20,7 @@ from ....io.com import gltf2_io
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....io.com.gltf2_io_debug import print_console
 from ..gltf2_blender_gather_tree import VExportNode
-from .sampled.armature.gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
+from .sampled.armature.armature_action_sampled import gather_action_armature_sampled
 from .sampled.object.gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from .gltf2_blender_gather_drivers import get_sk_drivers

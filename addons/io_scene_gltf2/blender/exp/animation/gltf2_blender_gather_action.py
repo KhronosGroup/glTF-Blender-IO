@@ -23,8 +23,8 @@ from ...com.gltf2_blender_extras import generate_extras
 from ..gltf2_blender_gather_cache import cached
 from ..gltf2_blender_gather_tree import VExportNode
 from .fcurves.gltf2_blender_gather_fcurves_animation import gather_animation_fcurves
-from .sampled.armature.gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
-from .sampled.armature.gltf2_blender_gather_armature_channels import gather_sampled_bone_channel
+from .sampled.armature.armature_action_sampled import gather_action_armature_sampled
+from .sampled.armature.armature_channels import gather_sampled_bone_channel
 from .sampled.object.gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
 from .sampled.shapekeys.gltf2_blender_gather_sk_action_sampled import gather_action_sk_sampled
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels, gather_sampled_object_channel

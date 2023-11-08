@@ -47,11 +47,13 @@ GPU Instances
 
 When the option is enable in Exporter, instances are exported using the ``EXT_mesh_gpu_instancing`` extension.
 There are some limitations, at export:
+
 - Instances must be meshes, and don't have any children themselves
 - Instances must all be children of the same object.
 - This extension doesn't manage material variation. That means that the generated file may include all instances with
   same materials.
 - Instances detected are objects sharing the same mesh data.
+
 At import, instances are created by creating objects sharing the same mesh data.
 
 Materials
@@ -268,10 +270,6 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
 Sheen
 ^^^^^
 
-When the *Sheen BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
-extension will be included in the export. The Sheen Color will be exported from Color socket of Sheen node.
-Sheen Roughness will be exported from Roughness socket.
-
 If a Sheen Roughness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-sheen.png
@@ -281,49 +279,15 @@ If a Sheen Roughness Texture is used, glTF requires the values be written to the
    Sheen BSDF node is only available on Cycles render engine.
    You may have to temporary switch to Cycles to add this node, and get back to EEVEE.
 
-.. note::
-
-   Because the node tree is adding 2 Shaders (Principled and Sheen),
-   the resulting shader is not fully energy conservative.
-   You may find some difference between Blender render, and glTF render.
-   Sheen models are not fully compatible between Blender and glTF.
-   This trick about adding Sheen Shader is the most accurate
-   approximation (better that using Sheen Principled sockets).
-
 
 Specular
 ^^^^^^^^
 
-When the *Specular* or *Specular Tint* input of Principled BSDF node have a non default value or
+When the *Specular IOR Level* or *Specular Tint* input of Principled BSDF node have a non default value or
 Image Texture node connected, the ``KHR_materials_specular`` glTF extension will be
 included in the export.
 
-.. note::
 
-   Specular models are not fully compatible between Blender and glTF.
-   By default, Blender data are converted to glTF at export,
-   with a possible loss of information.
-   Some conversion are also performed at import, will a possible loss of information too.
-
-
-At import, a custom node group is created, to store original Specular data, not converted.
-
-.. figure:: /images/addons_import-export_scene-gltf2_material_specular-custom-node.png
-
-At export, by default, Specular data are converted from Principled BSDF node.
-
-You can export original Specular data, enabling the option at export.
-If enabled, Principled Specular data are ignored, only data from custom node are used.
-
-.. figure:: /images/addons_import-export_scene-gltf2_material_specular-export-option.png
-
-
-.. tip::
-
-   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
-   Add > Output > glTF Material Output
-
-   .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
 
 Transmission
 ^^^^^^^^^^^^
@@ -773,19 +737,6 @@ referenced by the ``.gltf`` file.
    Be aware that sharing this format requires sharing all of these separate files
    together as a group.
 
-
-glTF Embedded (``.gltf``)
--------------------------
-
-This produces a JSON text-based ``.gltf`` file, with all mesh data and
-image data encoded (using Base64) within the file. This form is useful if
-the asset must be shared over a plain-text-only connection.
-
-.. warning::
-
-   This is the least efficient of the available forms, and should only be used when required.
-
-
 Properties
 ==========
 
@@ -816,8 +767,8 @@ Lighting Mode
    Standard: Physically-based glTF lighting units (cd, lx, nt).
    Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
    Raw (Deprecated): Blender lighting strengths with no conversion
-Import Webp textures
-   If a texture exists in webp format, loads the webp texture instead of the fallback png/jpg one.
+Import WebP textures
+   If a texture exists in WebP format, loads the WebP texture instead of the fallback png/jpg one.
 
 
 Export
@@ -907,18 +858,15 @@ Materials
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
-   If webp is chosen, all textures will be saved as Webp, without any png/jpg fallback.
+   If WebP is chosen, all textures will be saved as WebP, without any png/jpg fallback.
    If None is chosen, materials are exported without textures.
 Image Quality
-   When exporting jpeg or Webp files, the quality of the exported file.
-Create Webp
-   Creates webp textures for every textures, in addition to the existing texture.
-   For already webp textures, nothing happen.
-Webp fallback
-   For all webp textures, create a png fallback texture.
-Export Original PBR Specular
-   When On, specular data are exported from glTF Material Output node,
-   Instead of using sockets from Principled BSDF Node.
+   When exporting jpeg or WebP files, the quality of the exported file.
+Create WebP
+   Creates WebP textures for every textures, in addition to the existing texture.
+   For already WebP textures, nothing happen.
+WebP fallback
+   For all WebP textures, create a png fallback texture.
 
 Data - Shape Keys
 ^^^^^^^^^^^^^^^^^

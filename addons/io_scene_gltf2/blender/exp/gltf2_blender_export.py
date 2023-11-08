@@ -96,11 +96,8 @@ def __create_buffer(exporter, export_settings):
     if export_settings['gltf_format'] == 'GLB':
         buffer = exporter.finalize_buffer(export_settings['gltf_filedirectory'], is_glb=True)
     else:
-        if export_settings['gltf_format'] == 'GLTF_EMBEDDED':
-            exporter.finalize_buffer(export_settings['gltf_filedirectory'])
-        else:
-            exporter.finalize_buffer(export_settings['gltf_filedirectory'],
-                                     export_settings['gltf_binaryfilename'])
+        exporter.finalize_buffer(export_settings['gltf_filedirectory'],
+                                 export_settings['gltf_binaryfilename'])
 
     return buffer
 
@@ -129,7 +126,7 @@ def __fix_json(obj):
 
 
 def __should_include_json_value(key, value):
-    allowed_empty_collections = ["KHR_materials_unlit", "KHR_materials_specular"]
+    allowed_empty_collections = ["KHR_materials_unlit"]
 
     if value is None:
         return False
