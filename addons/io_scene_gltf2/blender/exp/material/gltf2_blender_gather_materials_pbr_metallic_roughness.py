@@ -195,5 +195,3 @@ def get_default_pbr_for_emissive_node():
         metallic_roughness_texture=None,
         roughness_factor=None
     )
-
-
