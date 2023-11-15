@@ -800,7 +800,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_add_webp'] = self.export_image_add_webp
         export_settings['gltf_webp_fallback'] = self.export_image_webp_fallback
         export_settings['gltf_image_quality'] = self.export_image_quality
-        export_settings['gltf_image_quality'] = self.export_jpeg_quality #For back compatibility
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
