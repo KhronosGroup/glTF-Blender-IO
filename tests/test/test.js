@@ -1081,7 +1081,16 @@ describe('Exporter', function() {
                 let gltfPath_3 = path.resolve(outDirPath, '23_use_active_collection_nested.gltf');
                 const asset_3 = JSON.parse(fs.readFileSync(gltfPath_3));
                 assert.strictEqual(asset_3.nodes.length, 2);
-            });
+              });
+
+              it('exports GN', function() {
+                let gltfPath = path.resolve(outDirPath, '22_simple_GN.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 2);
+                assert.strictEqual(asset.meshes.length, 2);
+
+              });
 
             it('exports correct no SK when modifier', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '27_apply_modifier_with_shapekeys.gltf');
@@ -3019,6 +3028,34 @@ describe('Importer / Exporter (Roundtrip)', function() {
 
                 assert.strictEqual(asset.meshes.length, 2);
                 assert.strictEqual(asset.nodes.length, 6);
+
+            });
+
+            it('roundtrips anisotropy', function() {
+                let dir = '25_anisotropy';
+                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat_roughness_0_5 = asset.materials.find(mat => mat.name === "roughness 0.5");
+                assert.equalEpsilon(mat_roughness_0_5.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
+                assert.ok("anisotropyTexture" in mat_roughness_0_5.extensions['KHR_materials_anisotropy']);
+                assert.ok(!("anisotropyRotation" in mat_roughness_0_5.extensions['KHR_materials_anisotropy']));
+
+                const mat_roughness_1_0 = asset.materials.find(mat => mat.name === "roughness 1.0");
+                assert.equalEpsilon(mat_roughness_1_0.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
+                assert.equalEpsilon(mat_roughness_1_0.extensions['KHR_materials_anisotropy']["anisotropyRotation"], 0.349);
+                assert.ok("anisotropyTexture" in mat_roughness_1_0.extensions['KHR_materials_anisotropy']);
+
+                const tan_text = asset.materials.find(mat => mat.name === "Aniso Tan + Texture");
+                assert.equalEpsilon(tan_text.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 0.8);
+                assert.ok(!("anisotropyRotation" in tan_text.extensions['KHR_materials_anisotropy']));
+                assert.ok("anisotropyTexture" in tan_text.extensions['KHR_materials_anisotropy']);
+
+                const tan_rot = asset.materials.find(mat => mat.name === "Aniso Tan + Rotation + Texture");
+                assert.equalEpsilon(tan_rot.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
+                assert.equalEpsilon(tan_rot.extensions['KHR_materials_anisotropy']["anisotropyRotation"], 0.349065840);
+                assert.ok("anisotropyTexture" in tan_rot.extensions['KHR_materials_anisotropy']);
 
             });
 

@@ -503,3 +503,122 @@ def get_attribute_name(socket, export_settings):
         return True, None, True
 
     return False, None, None
+
+def detect_anisotropy_nodes(
+        anisotropy_socket,
+        anisotropy_rotation_socket,
+        anisotropy_tangent_socket,
+        export_settings):
+    """
+    Detects if the material uses anisotropy and returns the corresponding data.
+
+    :param anisotropy_socket: the anisotropy socket
+    :param anisotropy_rotation_socket: the anisotropy rotation socket
+    :param anisotropy_tangent_socket: the anisotropy tangent socket
+    :param export_settings: the export settings
+    :return: a tuple (is_anisotropy, anisotropy_data)
+    """
+
+    if anisotropy_socket.socket is None:
+        return False, None
+    if anisotropy_rotation_socket.socket is None:
+        return False, None
+    if anisotropy_tangent_socket.socket is None:
+        return False, None
+
+    # Check that tangent is linked to a tangent node, with UVMap as input
+    tangent_node = previous_node(anisotropy_tangent_socket)
+    if tangent_node.node is None or tangent_node.node.type != "TANGENT":
+        return False, None
+    if tangent_node.node.direction_type != "UV_MAP":
+        return False, None
+
+    # Check that anisotropy is linked to a multiply node
+    if not anisotropy_socket.socket.is_linked:
+        return False, None
+    if not anisotropy_rotation_socket.socket.is_linked:
+        return False, None
+    if not anisotropy_tangent_socket.socket.is_linked:
+        return False, None
+    anisotropy_multiply_node = anisotropy_socket.socket.links[0].from_node
+    if anisotropy_multiply_node is None or anisotropy_multiply_node.type != "MATH":
+        return False, None
+    if anisotropy_multiply_node.operation != "MULTIPLY":
+        return False, None
+    # this multiply node should have the first input linked to separate XYZ, on Z
+    if not anisotropy_multiply_node.inputs[0].is_linked:
+        return False, None
+    separate_xyz_node = anisotropy_multiply_node.inputs[0].links[0].from_node
+    if separate_xyz_node is None or separate_xyz_node.type != "SEPXYZ":
+        return False, None
+    separate_xyz_z_socket = anisotropy_multiply_node.inputs[0].links[0].from_socket
+    if separate_xyz_z_socket.name != "Z":
+        return False, None
+    # This separate XYZ node output should be linked to ArcTan2 node (X on inputs[1], Y on inputs[0])
+    if not separate_xyz_node.outputs[0].is_linked:
+        return False, None
+    arctan2_node = separate_xyz_node.outputs[0].links[0].to_node
+    if arctan2_node.type != "MATH":
+        return False, None
+    if arctan2_node.operation != "ARCTAN2":
+        return False, None
+    if arctan2_node.inputs[0].links[0].from_socket.name != "Y":
+        return False, None
+    if arctan2_node.inputs[1].links[0].from_socket.name != "X":
+        return False, None
+    # This arctan2 node output should be linked to anisotropy rotation (Math add node)
+    if not arctan2_node.outputs[0].is_linked:
+        return False, None
+    anisotropy_rotation_node = arctan2_node.outputs[0].links[0].to_node
+    if anisotropy_rotation_node.type != "MATH":
+        return False, None
+    if anisotropy_rotation_node.operation != "ADD":
+        return False, None
+    # This anisotropy rotation node should have the output linked to rotation conversion node
+    if not anisotropy_rotation_node.outputs[0].is_linked:
+        return False, None
+    rotation_conversion_node = anisotropy_rotation_node.outputs[0].links[0].to_node
+    if rotation_conversion_node.type != "MATH":
+        return False, None
+    if rotation_conversion_node.operation != "DIVIDE":
+        return False, None
+    # This rotation conversion node should have the second input value PI
+    if abs(rotation_conversion_node.inputs[1].default_value - 6.283185) > 0.0001:
+        return False, None
+    # This rotation conversion node should have the output linked to anisotropy rotation socket of Principled BSDF
+    if not rotation_conversion_node.outputs[0].is_linked:
+        return False, None
+    if rotation_conversion_node.outputs[0].links[0].to_socket.name != "Anisotropic Rotation":
+        return False, None
+    if rotation_conversion_node.outputs[0].links[0].to_node.type != "BSDF_PRINCIPLED":
+        return False, None
+
+    # Separate XYZ node should have the input linked to anisotropy multiply Add node (for normalization)
+    if not separate_xyz_node.inputs[0].is_linked:
+        return False, None
+    anisotropy_multiply_add_node = separate_xyz_node.inputs[0].links[0].from_node
+    if anisotropy_multiply_add_node.type != "VECT_MATH":
+        return False, None
+    if anisotropy_multiply_add_node.operation != "MULTIPLY_ADD":
+        return False, None
+    if list(anisotropy_multiply_add_node.inputs[1].default_value) != [2.0, 2.0, 1.0]:
+        return False, None
+    if list(anisotropy_multiply_add_node.inputs[2].default_value) != [-1.0, -1.0, 0.0]:
+        return False, None
+    if not anisotropy_multiply_add_node.inputs[0].is_linked:
+        return False, None
+    # This anisotropy multiply Add node should have the first input linked to a texture node
+    anisotropy_texture_node = anisotropy_multiply_add_node.inputs[0].links[0].from_node
+    if anisotropy_texture_node.type != "TEX_IMAGE":
+        return False, None
+
+    tex_ok = has_image_node_from_socket(NodeSocket(anisotropy_multiply_add_node.inputs[0], anisotropy_socket.group_path), export_settings)
+    if tex_ok is False:
+        return False, None
+
+    return True, {
+        'anisotropyStrength': get_const_from_socket(NodeSocket(anisotropy_multiply_node.inputs[1], anisotropy_socket.group_path), 'VALUE'),
+        'anisotropyRotation': get_const_from_socket(NodeSocket(anisotropy_rotation_node.inputs[1], anisotropy_socket.group_path), 'VALUE'),
+        'tangent': tangent_node.node.uv_map,
+        'tex_socket': NodeSocket(anisotropy_multiply_add_node.inputs[0], anisotropy_socket.group_path),
+        }

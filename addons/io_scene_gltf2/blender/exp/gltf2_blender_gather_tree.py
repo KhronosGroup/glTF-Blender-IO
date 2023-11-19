@@ -33,6 +33,10 @@ class VExportNode:
     LIGHT = 4
     CAMERA = 5
     COLLECTION = 6
+    INSTANCE = 7 # For instances of GN
+
+    INSTANCIER = 8
+    NOT_INSTANCIER = 9
 
     # Parent type, to be set on child regarding its parent
     NO_PARENT = 54
@@ -77,6 +81,12 @@ class VExportNode:
         # glTF
         self.node = None
 
+        # For mesh instance data of GN instances
+        self.data = None
+        self.materials = None
+
+        self.is_instancier = VExportNode.NOT_INSTANCIER
+
     def add_child(self, uuid):
         self.children.append(uuid)
 
@@ -87,7 +97,7 @@ class VExportNode:
     def recursive_display(self, tree, mode):
         if mode == "simple":
             for c in self.children:
-                print(tree.nodes[c].uuid, self.blender_object.name, "/", self.blender_bone.name if self.blender_bone else "", "-->", tree.nodes[c].blender_object.name, "/", tree.nodes[c].blender_bone.name if tree.nodes[c].blender_bone else "" )
+                print(tree.nodes[c].uuid, self.blender_object.name if self.blender_object is not None else "GN" + self.data.name, "/", self.blender_bone.name if self.blender_bone else "", "-->", tree.nodes[c].blender_object.name if tree.nodes[c].blender_object else "GN" + tree.nodes[c].data.name, "/", tree.nodes[c].blender_bone.name if tree.nodes[c].blender_bone else "" )
                 tree.nodes[c].recursive_display(tree, mode)
 
 class VExportTree:
@@ -126,22 +136,27 @@ class VExportTree:
         for blender_object in [obj.original for obj in scene_eval.objects if obj.parent is None]:
             self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), False, blender_children)
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, delta, blender_children, armature_uuid=None, dupli_world_matrix=None, is_children_in_collection=False):
+    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, delta, blender_children, armature_uuid=None, dupli_world_matrix=None, data=None, original_object=None, is_children_in_collection=False):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
         node.set_blender_data(blender_object, blender_bone)
+        if blender_object is None:
+            node.data = data
+            node.original_object = original_object
 
         # add to parent if needed
         if parent_uuid is not None:
             self.add_children(parent_uuid, node.uuid)
-            if self.nodes[parent_uuid].blender_type == VExportNode.COLLECTION:
+            if self.nodes[parent_uuid].blender_type == VExportNode.COLLECTION or original_object is not None:
                 self.nodes[parent_uuid].children_type[node.uuid] = VExportNode.CHILDREN_IS_IN_COLLECTION if is_children_in_collection is True else VExportNode.CHILDREN_REAL
         else:
             self.roots.append(node.uuid)
 
         # Set blender type
-        if blender_bone is not None:
+        if blender_object is None: #GN instance
+            node.blender_type = VExportNode.INSTANCE
+        elif blender_bone is not None:
             node.blender_type = VExportNode.BONE
             self.nodes[armature_uuid].bones[blender_bone.name] = node.uuid
             node.use_deform = blender_bone.id_data.data.bones[blender_bone.name].use_deform
@@ -239,7 +254,7 @@ class VExportTree:
 
         # Force empty ?
         # For duplis, if instancer is not display, we should create an empty
-        if blender_object.is_instancer is True and blender_object.show_instancer_for_render is False:
+        if blender_object and blender_object.is_instancer is True and blender_object.show_instancer_for_render is False:
             node.force_as_empty = True
 
         # Storing this node
@@ -247,10 +262,14 @@ class VExportTree:
 
         ###### Manage children ######
 
+        # GN instance have no children
+        if blender_object is None:
+            return
+
         # standard children (of object, or of instance collection)
         if blender_bone is None:
             for child_object in blender_children[blender_object]:
-                if child_object.parent_bone:
+                if child_object.parent_bone and child_object.parent_type in ("BONE", "BONE_RELATIVE"):
                     # Object parented to bones
                     # Will be manage later
                     continue
@@ -285,6 +304,21 @@ class VExportTree:
             depsgraph = bpy.context.evaluated_depsgraph_get()
             for (dupl, mat) in [(dup.object.original, dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(dup.parent.original) == id(blender_object)]:
                 self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=mat)
+
+        # Geometry Nodes instances
+        if self.export_settings['gltf_gn_mesh'] is True:
+            # Do not force export as empty
+            # Because GN graph can have both geometry and instances
+            depsgraph = bpy.context.evaluated_depsgraph_get()
+            eval = blender_object.evaluated_get(depsgraph)
+            for inst in depsgraph.object_instances: # use only as iterator
+                if inst.parent == eval:
+                    if not inst.is_instance:
+                        continue
+                    if type(inst.object.data).__name__ == "Mesh" and len(inst.object.data.vertices) == 0:
+                        continue # This is nested instances, and this mesh has no vertices, so is an instancier for other instances
+                    node.is_instancier = VExportNode.INSTANCIER
+                    self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object, is_children_in_collection=True)
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
@@ -330,7 +364,7 @@ class VExportTree:
     def display(self, mode):
         if mode == "simple":
             for n in self.roots:
-                print(self.nodes[n].uuid, "Root", self.nodes[n].blender_object.name, "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
+                print(self.nodes[n].uuid, "Root", self.nodes[n].blender_object.name if self.nodes[n].blender_object else "GN instance", "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
                 self.nodes[n].recursive_display(self, mode)
 
     def filter_tag(self):
@@ -365,7 +399,7 @@ class VExportTree:
             print("This should not happen!")
 
         for child in self.nodes[uuid].children:
-            if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
+            if self.nodes[uuid].blender_type == VExportNode.COLLECTION or self.nodes[uuid].is_instancier == VExportNode.INSTANCIER:
                 # We need to split children into 2 categories: real children, and objects inside the collection
                 if self.nodes[uuid].children_type[child] == VExportNode.CHILDREN_IS_IN_COLLECTION:
                     self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
@@ -428,6 +462,10 @@ class VExportTree:
         return True
 
     def node_filter_inheritable_is_kept(self, uuid):
+
+        if self.nodes[uuid].blender_object is None:
+            # geometry node instances
+            return True
 
         if self.export_settings['gltf_selected'] and self.nodes[uuid].blender_object.select_get() is False:
             return False
@@ -504,7 +542,10 @@ class VExportTree:
                 n.armature is not None and \
                 n.armature in self.nodes and \
                 n.blender_type == VExportNode.OBJECT and \
+                n.blender_object.type == "MESH" and \
                 hasattr(self.nodes[n.armature], "need_neutral_bone")]: #all skin meshes objects where neutral bone is needed
+                # Only for meshes, as curve can't have skin data (no weights pain available)
+
 
             if n.armature not in added_armatures:
 

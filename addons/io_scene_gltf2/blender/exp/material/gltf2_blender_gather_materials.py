@@ -31,6 +31,7 @@ from .extensions.gltf2_blender_gather_materials_sheen import export_sheen
 from .extensions.gltf2_blender_gather_materials_specular import export_specular
 from .extensions.gltf2_blender_gather_materials_transmission import export_transmission
 from .extensions.gltf2_blender_gather_materials_clearcoat import export_clearcoat
+from .extensions.gltf2_blender_gather_materials_anisotropy import export_anisotropy
 from .extensions.gltf2_blender_gather_materials_ior import export_ior
 from .gltf2_blender_search_node_tree import \
     has_image_node_from_socket, \
@@ -177,14 +178,14 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     clearcoat_extension, uvmap_info = export_clearcoat(blender_material, export_settings)
     if clearcoat_extension:
         extensions["KHR_materials_clearcoat"] = clearcoat_extension
-        uvmap_infos.update(uvmap_infos)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_transmission
 
     transmission_extension, uvmap_info = export_transmission(blender_material, export_settings)
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
-        uvmap_infos.update(uvmap_infos)
+        uvmap_infos.update(uvmap_info)
 
     # KHR_materials_emissive_strength
     if any([i>1.0 for i in emissive_factor or []]):
@@ -209,6 +210,12 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
     sheen_extension, uvmap_info = export_sheen(blender_material, export_settings)
     if sheen_extension:
         extensions["KHR_materials_sheen"] = sheen_extension
+        uvmap_infos.update(uvmap_info)
+
+    # KHR_materials_anisotropy
+    anisotropy_extension, uvmap_info = export_anisotropy(blender_material, export_settings)
+    if anisotropy_extension:
+        extensions["KHR_materials_anisotropy"] = anisotropy_extension
         uvmap_infos.update(uvmap_info)
 
     # KHR_materials_ior
@@ -443,6 +450,8 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
             material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = ind
         elif tex == "thicknessTexture":
             material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
+        elif tex == "anisotropyTexture":
+            material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'].tex_coord = ind
         else:
             print_console("ERROR", "some Textures tex coord are not managed")
 
@@ -488,5 +497,6 @@ def get_all_textures():
     tab.append("sheenColorTexture")
     tab.append("sheenRoughnessTexture")
     tab.append("thicknessTexture")
+    tab.append("anisotropyTexture")
 
     return tab

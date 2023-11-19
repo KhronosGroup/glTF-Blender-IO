@@ -19,6 +19,7 @@ from ...io.com import gltf2_io_lights_punctual
 from ...io.com import gltf2_io_debug
 from ..com.gltf2_blender_extras import generate_extras
 from ..com.gltf2_blender_conversion import PBR_WATTS_TO_LUMENS
+from ..com.gltf2_blender_default import LIGHTS
 from .gltf2_blender_gather_cache import cached
 from . import gltf2_blender_gather_light_spots
 from .material import gltf2_blender_search_node_tree
@@ -106,11 +107,7 @@ def __gather_spot(blender_lamp, export_settings) -> Optional[gltf2_io_lights_pun
 
 
 def __gather_type(blender_lamp, _) -> str:
-    return {
-        "POINT": "point",
-        "SUN": "directional",
-        "SPOT": "spot"
-    }[blender_lamp.type]
+    return LIGHTS[blender_lamp.type]
 
 
 def __gather_range(blender_lamp, export_settings) -> Optional[float]:
