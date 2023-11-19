@@ -468,6 +468,9 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             attribute_type[attr]
         )
 
+        if blender_attribute_data_type is None:
+            continue
+
         blender_attribute = mesh.attributes.new(attr, blender_attribute_data_type, 'POINT')
         if DataType.num_elements(attribute_type[attr]) == 1:
             blender_attribute.data.foreach_set('value', attribute_data[idx].flatten())

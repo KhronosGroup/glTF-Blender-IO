@@ -270,10 +270,6 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
 Sheen
 ^^^^^
 
-When the *Sheen BSDF* node is used in addition to Principled BSDF node, the ``KHR_materials_sheen`` glTF
-extension will be included in the export. The Sheen Color will be exported from Color socket of Sheen node.
-Sheen Roughness will be exported from Roughness socket.
-
 If a Sheen Roughness Texture is used, glTF requires the values be written to the alpha (``A``) channel.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-sheen.png
@@ -283,49 +279,36 @@ If a Sheen Roughness Texture is used, glTF requires the values be written to the
    Sheen BSDF node is only available on Cycles render engine.
    You may have to temporary switch to Cycles to add this node, and get back to EEVEE.
 
-.. note::
-
-   Because the node tree is adding 2 Shaders (Principled and Sheen),
-   the resulting shader is not fully energy conservative.
-   You may find some difference between Blender render, and glTF render.
-   Sheen models are not fully compatible between Blender and glTF.
-   This trick about adding Sheen Shader is the most accurate
-   approximation (better that using Sheen Principled sockets).
-
 
 Specular
 ^^^^^^^^
 
-When the *Specular* or *Specular Tint* input of Principled BSDF node have a non default value or
+When the *Specular IOR Level* or *Specular Tint* input of Principled BSDF node have a non default value or
 Image Texture node connected, the ``KHR_materials_specular`` glTF extension will be
 included in the export.
 
-.. note::
-
-   Specular models are not fully compatible between Blender and glTF.
-   By default, Blender data are converted to glTF at export,
-   with a possible loss of information.
-   Some conversion are also performed at import, will a possible loss of information too.
 
 
-At import, a custom node group is created, to store original Specular data, not converted.
 
-.. figure:: /images/addons_import-export_scene-gltf2_material_specular-custom-node.png
+Anisotropy
+^^^^^^^^^^
 
-At export, by default, Specular data are converted from Principled BSDF node.
+Anisotropic textures and data need to be converted at export, and at import.
 
-You can export original Specular data, enabling the option at export.
-If enabled, Principled Specular data are ignored, only data from custom node are used.
+At import, some nodes are created to manage this conversion
 
-.. figure:: /images/addons_import-export_scene-gltf2_material_specular-export-option.png
+.. figure:: /images/addons_import-export_scene-gltf2_material_anisotropy.png
 
+At export, this exact same nodes are detected, and used to export data.
 
-.. tip::
+At export, you can also plug some grayscale textures for *Anisotropic* and *Anisotropic Rotation* sockets.
+Then, exporter will convert these texture into a glTF compatible texture.
 
-   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
-   Add > Output > glTF Material Output
+.. figure:: /images/addons_import-export_scene-gltf2_material_anisotropy-grayscale-texture.png
 
-   .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
+Note that the *tangent* socket must be linked to a *tangent* node, with UVMap.
+The choosen UVMap must be the UVMap of the Normal Map.
+
 
 Transmission
 ^^^^^^^^^^^^
@@ -543,6 +526,16 @@ a typical node structure when several of the above options are applied at once:
 
    A Principled BSDF material with an emissive texture.
 
+UDIM
+^^^^
+
+UDIM is a way to store multiple textures in a single image file.
+The UDIM system is supported by Blender, but is not supported by glTF.
+When exporting a model that uses UDIM, the add-on will automatically split the
+image into multiple images, one for each tile, and will update the material
+nodes to use the new images.
+All UDIM texture must use the same UV map to be exported.
+
 
 Exporting a Shadeless (Unlit) Material
 --------------------------------------
@@ -577,6 +570,7 @@ are supported directly by this add-on:
 - ``KHR_materials_volume``
 - ``KHR_materials_sheen``
 - ``KHR_materials_specular``
+- ``KHR_materials_anisotropy``
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
 - ``KHR_lights_punctual``
@@ -596,6 +590,7 @@ are supported directly by this add-on:
 - ``KHR_materials_volume``
 - ``KHR_materials_sheen``
 - ``KHR_materials_specular``
+- ``KHR_materials_anisotropy``
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
 - ``KHR_texture_transform``
@@ -860,6 +855,9 @@ Y Up
 Data - Scene Graph
 ^^^^^^^^^^^^^^^^^^
 
+Geometry Nodes Instances
+   Export Geometry nodes instances. This feature is experimental.
+
 GPU Instances
    Export using ``EXT_mesh_gpu_instancing`` extensions.
 
@@ -905,9 +903,6 @@ Create WebP
    For already WebP textures, nothing happen.
 WebP fallback
    For all WebP textures, create a png fallback texture.
-Export Original PBR Specular
-   When On, specular data are exported from glTF Material Output node,
-   Instead of using sockets from Principled BSDF Node.
 
 Data - Shape Keys
 ^^^^^^^^^^^^^^^^^
@@ -1033,6 +1028,11 @@ Force keeping channel for armature / bones
    if all keyframes are identical in a rig, force keeping the minimal animation.
 Force keeping channel for objects
    if all keyframes are identical for object transformations, force keeping the minimal animation
+
+Animation - Filter
+^^^^^^^^^^^^^^^^^^
+
+Restrict actions to be exported to the ones matching the filter.
 
 Contributing
 ============

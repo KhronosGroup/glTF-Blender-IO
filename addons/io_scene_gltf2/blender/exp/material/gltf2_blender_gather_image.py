@@ -23,20 +23,27 @@ from ....io.com import gltf2_io_debug
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..gltf2_blender_gather_cache import cached
 from .extensions.gltf2_blender_image import Channel, ExportImage, FillImage
-from .gltf2_blender_search_node_tree import get_texture_node_from_socket, NodeSocket
+from .gltf2_blender_search_node_tree import get_texture_node_from_socket, detect_anisotropy_nodes
 
 @cached
 def gather_image(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         default_sockets: typing.Tuple[bpy.types.NodeSocket],
+        use_tile: bool,
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
-        return None, None, None
+        return None, None, None, None
 
-    image_data = __get_image_data(blender_shader_sockets, default_sockets, export_settings)
+    image_data, udim_image = __get_image_data(blender_shader_sockets, default_sockets, use_tile, export_settings)
+
+    if udim_image is not None:
+        # We are in a UDIM case, so we return no image data
+        # This will be used later to create multiple primitives/material/texture with UDIM information
+        return None, None, None, udim_image
+
     if image_data.empty():
         # The export image has no data
-        return None, None, None
+        return None, None, None, None
 
     mime_type = __gather_mime_type(blender_shader_sockets, image_data, export_settings)
     name = __gather_name(image_data, export_settings)
@@ -51,7 +58,7 @@ def gather_image(
         # In case we can't retrieve image (for example packed images, with original moved)
         # We don't create invalid image without uri
         factor_uri = None
-        if uri is None: return None, None, None
+        if uri is None: return None, None, None, False
 
     buffer_view, factor_buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -70,7 +77,7 @@ def gather_image(
     export_user_extensions('gather_image_hook', export_settings, image, blender_shader_sockets)
 
     # We also return image_data, as it can be used to generate same file with another extension for WebP management
-    return image, image_data, factor
+    return image, image_data, factor, None
 
 def __gather_original_uri(original_uri, export_settings):
 
@@ -197,17 +204,51 @@ def __gather_uri(image_data, mime_type, name, export_settings):
     return None, None
 
 
-def __get_image_data(sockets, default_sockets, export_settings) -> ExportImage:
+def __get_image_data(sockets, default_sockets, use_tile, export_settings) -> ExportImage:
     # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
     results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets]
 
-    # Check if we need a simple mapping or more complex calculation
-    # There is currently no complex calculation for any textures
-    return __get_image_data_mapping(sockets, default_sockets, results, export_settings)
+    if use_tile is None:
+        # First checking if texture used is UDIM
+        # In that case, we return no texture data for now, and only get that this texture is UDIM
+        # This will be used later
+        if any([r.shader_node.image.source == "TILED" for r in results if r is not None and r.shader_node.image is not None]):
+            return ExportImage(), [r.shader_node.image for r in results if r is not None and r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
 
-def __get_image_data_mapping(sockets, default_sockets, results, export_settings) -> ExportImage:
+    # If we are here, we are in UDIM split process
+    # Check if we need a simple mapping or more complex calculation
+
+    # Case of Anisotropy : It can be a complex node setup, or simple grayscale textures
+    # In case of complex node setup, this will be a direct mapping of channels
+    # But in case of grayscale textures, we need to combine them, we numpy calculations
+    # So we need to check if we have a complex node setup or not
+
+    need_to_check_anisotropy = is_anisotropy = False
+    try:
+        anisotropy_socket = [s for s in sockets if s.socket.name == 'Anisotropic'][0]
+        anisotropy_rotation_socket = [s for s in sockets if s.socket.name == 'Anisotropic Rotation'][0]
+        anisotropy_tangent_socket = [s for s in sockets if s.socket.name == 'Tangent'][0]
+        need_to_check_anisotropy = True
+    except:
+        need_to_check_anisotropy = False
+
+    if need_to_check_anisotropy is True:
+        is_anisotropy, anisotropy_data = detect_anisotropy_nodes(
+            anisotropy_socket,
+            anisotropy_rotation_socket,
+            anisotropy_tangent_socket,
+            export_settings
+        )
+
+    if need_to_check_anisotropy is True and is_anisotropy is False:
+        # We are not in complex node setup, so we can try to get the image data from grayscale textures
+        return __get_image_data_grayscale_anisotropy(sockets, results, export_settings), None
+
+    return __get_image_data_mapping(sockets, default_sockets, results, use_tile, export_settings), None
+
+def __get_image_data_mapping(sockets, default_sockets, results, use_tile, export_settings) -> ExportImage:
     """
     Simple mapping
     Will fit for most of exported textures : RoughnessMetallic, Basecolor, normal, ...
@@ -295,7 +336,10 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                 dst_chan = Channel.A
 
             if dst_chan is not None:
-                composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
+                if use_tile is None:
+                    composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
+                else:
+                    composed_image.fill_image_tile(result.shader_node.image, export_settings['current_udim_info']['tile'], dst_chan, src_chan)
 
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
@@ -311,7 +355,10 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
                         composed_image.fill_white(Channel.B)
             else:
                 # copy full image...eventually following sockets might overwrite things
-                composed_image = ExportImage.from_blender_image(result.shader_node.image)
+                if use_tile is None:
+                    composed_image = ExportImage.from_blender_image(result.shader_node.image)
+                else:
+                    composed_image = ExportImage.from_blender_image_tile(export_settings)
 
     # Check that we don't have some empty channels (based on weird images without any size for example)
     keys = list(composed_image.fills.keys()) # do not loop on dict, we may have to delete an element
@@ -324,6 +371,29 @@ def __get_image_data_mapping(sockets, default_sockets, results, export_settings)
 
     return composed_image
 
+
+def __get_image_data_grayscale_anisotropy(sockets, results, export_settings) -> ExportImage:
+    """
+    calculating Anisotropy Texture from grayscale textures, settings needed data
+    """
+    from .extensions.gltf2_blender_gather_materials_anisotropy import grayscale_anisotropy_calculation
+    composed_image = ExportImage()
+    composed_image.set_calc(grayscale_anisotropy_calculation)
+
+    results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets[:-1]] #No texture from tangent
+
+    mapping = {
+        0: "anisotropy",
+        1: "anisotropic_rotation",
+    }
+
+    for idx, result in enumerate(results):
+        if get_texture_node_from_socket(sockets[idx], export_settings):
+            composed_image.store_data(mapping[idx], result.shader_node.image, type="Image")
+        else:
+            composed_image.store_data(mapping[idx], sockets[idx].socket.default_value, type="Data")
+
+    return composed_image
 
 def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
     if image.source != 'FILE':

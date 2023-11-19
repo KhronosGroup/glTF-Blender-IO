@@ -29,9 +29,10 @@ def export_specular(blender_material, export_settings):
     speculartint_socket = get_socket(blender_material, 'Specular Tint')
 
     if specular_socket.socket is None or speculartint_socket.socket is None:
-        return None, {}
+        return None, {}, {}
 
     uvmap_infos = {}
+    udim_infos = {}
 
     specular_non_linked = isinstance(specular_socket.socket, bpy.types.NodeSocket) and not specular_socket.socket.is_linked
     specularcolor_non_linked = isinstance(speculartint_socket.socket, bpy.types.NodeSocket) and not speculartint_socket.socket.is_linked
@@ -62,7 +63,7 @@ def export_specular(blender_material, export_settings):
 
         # Texture
         if has_image_node_from_socket(specular_socket, export_settings):
-            specular_texture, uvmap_info, _ = gather_texture_info(
+            specular_texture, uvmap_info, udim_info, _ = gather_texture_info(
                 specular_socket,
                 (specular_socket,),
                 (),
@@ -70,6 +71,7 @@ def export_specular(blender_material, export_settings):
             )
             specular_extension['specularTexture'] = specular_texture
             uvmap_infos.update({'specularTexture': uvmap_info})
+            udim_infos.update({'specularTexture': udim_info} if len(udim_info) > 0 else {})
             extensions_needed = True
 
     if specularcolor_non_linked is True:
@@ -93,7 +95,7 @@ def export_specular(blender_material, export_settings):
 
         # Texture
         if has_image_node_from_socket(speculartint_socket, export_settings):
-            specularcolor_texture, uvmap_info, _ = gather_texture_info(
+            specularcolor_texture, uvmap_info, udim_info, _ = gather_texture_info(
                 speculartint_socket,
                 (speculartint_socket,),
                 (),
@@ -101,9 +103,10 @@ def export_specular(blender_material, export_settings):
             )
             specular_extension['specularColorTexture'] = specularcolor_texture
             uvmap_infos.update({'specularColorTexture': uvmap_info})
+            udim_infos.update({'specularColorTexture': udim_info} if len(udim_info) > 0 else {})
             extensions_needed = True
 
     if extensions_needed is False:
-        return None, {}
+        return None, {}, {}
 
-    return Extension('KHR_materials_specular', specular_extension, False), uvmap_infos
+    return Extension('KHR_materials_specular', specular_extension, False), uvmap_infos, udim_infos

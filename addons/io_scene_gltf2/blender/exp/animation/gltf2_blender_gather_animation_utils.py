@@ -20,7 +20,7 @@ from ....io.com import gltf2_io
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....io.com.gltf2_io_debug import print_console
 from ..gltf2_blender_gather_tree import VExportNode
-from .sampled.armature.gltf2_blender_gather_armature_action_sampled import gather_action_armature_sampled
+from .sampled.armature.armature_action_sampled import gather_action_armature_sampled
 from .sampled.object.gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sampled_sk_channel
 from .gltf2_blender_gather_drivers import get_sk_drivers
@@ -184,7 +184,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
     # If force sampling is OFF, can lead to inconsistent export anyway
     if (export_settings['gltf_bake_animation'] is True \
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS") \
-            and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
+            and blender_object and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
         animation = None
         # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
         # (skinned meshes TRS must be ignored, says glTF specification)
@@ -196,6 +196,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
         # Need to bake sk only if not linked to a driver sk by parent armature
         # In case of NLA track export, no baking of SK
         if export_settings['gltf_morph_anim'] \
+                and blender_object \
                 and blender_object.type == "MESH" \
                 and blender_object.data is not None \
                 and blender_object.data.shape_keys is not None:
@@ -230,6 +231,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
 
     elif (export_settings['gltf_bake_animation'] is True \
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS") \
+            and blender_object \
             and blender_object.type == "ARMATURE" \
             and mode is None or mode == "OBJECT":
         # We need to bake all bones. Because some bone can have some constraints linking to

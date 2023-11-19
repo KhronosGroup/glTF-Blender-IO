@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 1, 20),
+    "version": (4, 1, 31),
     'blender': (4, 1, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -112,6 +112,24 @@ def on_export_format_changed(self, context):
     sfile.params.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
     # Force update of file list, because update the filter does not update the real file list
     bpy.ops.file.refresh()
+
+def on_export_action_filter_changed(self, context):
+    if self.export_action_filter is True:
+        bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(type=GLTF2_filter_action)
+        bpy.types.Scene.gltf_action_filter_active = bpy.props.IntProperty()
+
+        for action in bpy.data.actions:
+            if id(action) not in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter]:
+                item = bpy.data.scenes[0].gltf_action_filter.add()
+                item.keep = True
+                item.action = action
+
+    else:
+        bpy.data.scenes[0].gltf_action_filter.clear()
+        del bpy.types.Scene.gltf_action_filter
+        del bpy.types.Scene.gltf_action_filter_active
+
+
 
 
 class ConvertGLTF2_Base:
@@ -259,6 +277,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Normals',
         description='Export vertex normals with meshes',
         default=True
+    )
+
+    export_gn_mesh: BoolProperty(
+        name='Geometry Nodes Instances (Experimental)',
+        description='Export Geometry nodes instance meshes',
+        default=False
     )
 
     export_draco_mesh_compression_enable: BoolProperty(
@@ -419,6 +443,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Apply Modifiers',
         description='Apply modifiers (excluding Armatures) to mesh objects -'
                     'WARNING: prevents exporting shape keys',
+        default=False
+    )
+
+    export_shared_accessors: BoolProperty(
+        name='Shared Accessors',
+        description='Export Primitives using shared accessors for attributes',
         default=False
     )
 
@@ -681,6 +711,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_action_filter: BoolProperty(
+        name='Filter Actions',
+        description='Filter Actions to be exported',
+        default=False,
+        update=on_export_action_filter_changed,
+    )
+
     # This parameter is only here for backward compatibility, as this option is removed in 3.6
     # This option does nothing, and is not displayed in UI
     # What you are looking for is probably "export_animation_mode"
@@ -806,7 +843,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_add_webp'] = self.export_image_add_webp
         export_settings['gltf_webp_fallback'] = self.export_image_webp_fallback
         export_settings['gltf_image_quality'] = self.export_image_quality
-        export_settings['gltf_image_quality'] = self.export_jpeg_quality #For back compatibility
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
         export_settings['gltf_normals'] = self.export_normals
@@ -824,6 +860,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_draco_generic_quantization'] = self.export_draco_generic_quantization
         else:
             export_settings['gltf_draco_mesh_compression'] = False
+
+        export_settings['gltf_gn_mesh'] = self.export_gn_mesh
 
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_attributes'] = self.export_attributes
@@ -844,6 +882,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
         export_settings['gltf_apply'] = self.export_apply
+        export_settings['gltf_shared_accessors'] = self.export_shared_accessors
         export_settings['gltf_current_frame'] = self.export_current_frame
         export_settings['gltf_animations'] = self.export_animations
         export_settings['gltf_def_bones'] = self.export_def_bones
@@ -1083,6 +1122,7 @@ class GLTF_PT_export_data_scene(bpy.types.Panel):
 
         sfile = context.space_data
         operator = sfile.active_operator
+        layout.prop(operator, 'export_gn_mesh')
         layout.prop(operator, 'export_gpu_instances')
         layout.prop(operator, 'export_hierarchy_flatten_objs')
         layout.prop(operator, 'export_hierarchy_full_collections')
@@ -1119,6 +1159,9 @@ class GLTF_PT_export_data_mesh(bpy.types.Panel):
         col = layout.column()
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
+
+        col = layout.column()
+        col.prop(operator, 'export_shared_accessors')
 
 
 class GLTF_PT_export_data_material(bpy.types.Panel):
@@ -1817,6 +1860,10 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             self.loglevel = logging.NOTSET
 
 
+class GLTF2_filter_action(bpy.types.PropertyGroup):
+    keep : bpy.props.BoolProperty(name="Keep Animation")
+    action: bpy.props.PointerProperty(type=bpy.types.Action)
+
 def gltf_variant_ui_update(self, context):
     from .blender.com.gltf2_blender_ui import variant_register, variant_unregister
     if self.KHR_materials_variants_ui is True:
@@ -1889,6 +1936,7 @@ classes = (
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
     GLTF_PT_import_user_extensions,
+    GLTF2_filter_action,
     GLTF_AddonPreferences
 )
 
