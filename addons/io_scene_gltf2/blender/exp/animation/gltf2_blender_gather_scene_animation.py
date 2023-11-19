@@ -17,15 +17,16 @@ from ....io.com import gltf2_io
 from ...com.gltf2_blender_extras import generate_extras
 from ..gltf2_blender_gather_tree import VExportNode
 from .gltf2_blender_gather_drivers import get_sk_drivers
-from .sampled.armature.gltf2_blender_gather_armature_channels import gather_armature_sampled_channels
+from .sampled.armature.armature_channels import gather_armature_sampled_channels
 from .sampled.object.gltf2_blender_gather_object_channels import gather_object_sampled_channels
 from .sampled.shapekeys.gltf2_blender_gather_sk_channels import gather_sk_sampled_channels
 from .gltf2_blender_gather_animation_utils import link_samplers, add_slide_data
 
 def gather_scene_animations(export_settings):
 
-    # if there is no animation in file => no need to bake
-    if len(bpy.data.actions) == 0:
+    # if there is no animation in file => no need to bake. Except if we are trying to bake GN instances
+    if len(bpy.data.actions) == 0 and export_settings['gltf_gn_mesh'] is False:
+        #TODO : get a better filter by checking we really have some GN instances...
         return []
 
     total_channels = []
@@ -52,11 +53,11 @@ def gather_scene_animations(export_settings):
             else:
                 continue
 
-        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object # blender_object can be None for GN instances
 
         export_settings['ranges'][obj_uuid] = {}
         export_settings['ranges'][obj_uuid][obj_uuid] = {'start': start_frame, 'end': end_frame}
-        if blender_object.type == "ARMATURE":
+        if blender_object and blender_object.type == "ARMATURE":
             # Manage sk drivers
             obj_drivers = get_sk_drivers(obj_uuid, export_settings)
             for obj_dr in obj_drivers:
@@ -71,7 +72,7 @@ def gather_scene_animations(export_settings):
 
         # Perform baking animation export
 
-        if blender_object.type != "ARMATURE":
+        if blender_object and blender_object.type != "ARMATURE":
             # We have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
                 channels = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
@@ -93,6 +94,12 @@ def gather_scene_animations(export_settings):
                     channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, export_settings)
                     if channels is not None:
                         total_channels.extend(channels)
+        elif blender_object is None:
+            # This is GN instances
+            # Currently, not checking if this instance is skinned.... #TODO
+            channels = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
+            if channels is not None:
+                total_channels.extend(channels)
         else:
                 channels = gather_armature_sampled_channels(obj_uuid, obj_uuid, export_settings)
                 if channels is not None:
@@ -104,7 +111,7 @@ def gather_scene_animations(export_settings):
                     channels=total_channels,
                     extensions=None,
                     extras=__gather_extras(blender_object, export_settings),
-                    name=blender_object.name,
+                    name=blender_object.name if blender_object else "GN Instance",
                     samplers=[]
                 )
                 link_samplers(animation, export_settings)

@@ -817,6 +817,8 @@ class PrimitiveCreator:
         # glTF stores deltas in morph targets
         for vs in self.morph_locs:
             vs -= self.locs
+            # Some invalid mesh can have NaN value in SK, so replace them by 0, avoid crash
+            np.nan_to_num(vs, copy=False)
 
         if self.export_settings['gltf_yup']:
             PrimitiveCreator.zup2yup(self.locs)
