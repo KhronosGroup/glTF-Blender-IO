@@ -53,6 +53,9 @@ def gather_scene_animations(export_settings):
             else:
                 continue
 
+        if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
+            continue
+
         blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object # blender_object can be None for GN instances
 
         export_settings['ranges'][obj_uuid] = {}

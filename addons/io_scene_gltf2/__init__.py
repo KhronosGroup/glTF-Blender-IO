@@ -745,6 +745,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         description='Store glTF export settings in the Blender project',
         default=False)
 
+    export_hierarchy_full_collections: BoolProperty(
+        name='Full Collection hierarchy',
+        description='Export full hierarchy, including inbetween collection',
+        default=False
+    )
+
     # Custom scene property for saving settings
     scene_key = "glTF2ExportSettings"
 
@@ -946,6 +952,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         if not self.export_try_sparse_sk:
             export_settings['gltf_try_omit_sparse_sk'] = False
 
+        export_settings['gltf_hierarchy_full_collections'] = self.export_hierarchy_full_collections
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1118,6 +1125,7 @@ class GLTF_PT_export_data_scene(bpy.types.Panel):
         layout.prop(operator, 'export_gn_mesh')
         layout.prop(operator, 'export_gpu_instances')
         layout.prop(operator, 'export_hierarchy_flatten_objs')
+        layout.prop(operator, 'export_hierarchy_full_collections')
 
 class GLTF_PT_export_data_mesh(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
