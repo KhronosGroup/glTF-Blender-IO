@@ -122,10 +122,11 @@ def gather_material(blender_material, export_settings):
                 continue
 
             s = NodeSocket(node[0].outputs[0], node[1])
-            tex, uv_info_additional, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), (), export_settings)
+            tex, uv_info_additional, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), (), export_settings)
             if tex is not None:
                 export_settings['exported_images'][node[0].image.name] = 1 # Fully used
                 uvmap_infos.update({'additional' + str(cpt_additional): uv_info_additional})
+                udim_infos.update({'additional' + str(cpt_additional): udim_info})
                 cpt_additional += 1
                 export_settings['additional_texture_export'].append(tex)
 
