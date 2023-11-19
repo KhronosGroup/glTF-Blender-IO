@@ -2139,6 +2139,17 @@ describe('Exporter', function() {
                 }
             });
 
+            it('exports UDIM', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '33_udim.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                assert.strictEqual(asset.images.length, 15);
+                assert.strictEqual(asset.meshes.length, 1);
+                assert.strictEqual(asset.meshes[0].primitives.length, 4);
+                assert.strictEqual(asset.materials.length, 4);
+                assert.strictEqual(asset.textures.length, 20);
+            });
+
         });
     });
 });

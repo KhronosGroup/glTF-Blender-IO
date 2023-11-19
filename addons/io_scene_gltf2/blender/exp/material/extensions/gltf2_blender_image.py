@@ -34,6 +34,13 @@ class FillImage:
         self.image = image
         self.src_chan = src_chan
 
+class FillImageTile:
+    """Fills a channel with the channel src_chan from a Blender UDIM image."""
+    def __init__(self, image: bpy.types.Image, tile, src_chan: Channel):
+        self.image = image
+        self.tile = tile
+        self.src_chan = src_chan
+
 class FillWhite:
     """Fills a channel with all ones (1.0)."""
     pass
@@ -99,11 +106,23 @@ class ExportImage:
         return export_image
 
     @staticmethod
+    def from_blender_image_tile(export_settings):
+        export_image = ExportImage()
+        original_udim = export_settings['current_udim_info']['image']
+        for chan in range(original_udim.channels):
+            export_image.fill_image_tile(original_udim, export_settings['current_udim_info']['tile'], dst_chan=chan, src_chan=chan)
+
+        return export_image
+
+    @staticmethod
     def from_original(image: bpy.types.Image):
         return ExportImage(image)
 
     def fill_image(self, image: bpy.types.Image, dst_chan: Channel, src_chan: Channel):
         self.fills[dst_chan] = FillImage(image, src_chan)
+
+    def fill_image_tile(self, image: bpy.types.Image, tile, dst_chan: Channel, src_chan: Channel):
+        self.fills[dst_chan] = FillImageTile(image, tile, src_chan)
 
     def store_data(self, identifier, data, type='Image'):
         if type == "Image": # This is an image
@@ -144,6 +163,16 @@ class ExportImage:
             len(set(fill.image.name for fill in self.fills.values())) == 1
         )
 
+    def __on_happy_path_udim(self) -> bool:
+        # All src_chans match their dst_chan and come from the same udim image
+
+        return (
+            all(isinstance(fill, FillImageTile) for fill in self.fills.values()) and
+            all(dst_chan == fill.src_chan for dst_chan, fill in self.fills.items()) and
+            len(set(fill.image.name for fill in self.fills.values())) == 1 and
+            all(fill.tile == self.fills[list(self.fills.keys())[0]].tile for fill in self.fills.values())
+        )
+
     def encode(self, mime_type: Optional[str], export_settings) -> Tuple[bytes, bool]:
         self.file_format = {
             "image/jpeg": "JPEG",
@@ -155,6 +184,9 @@ class ExportImage:
         if self.__on_happy_path():
             return self.__encode_happy(export_settings), None
 
+        if self.__on_happy_path_udim():
+            return self.__encode_happy_tile(export_settings), None
+
         # Unhappy path = we need to create the image self.fills describes or self.stores describes
         if self.numpy_calc is None:
             return self.__encode_unhappy(export_settings), None
@@ -164,6 +196,9 @@ class ExportImage:
 
     def __encode_happy(self, export_settings) -> bytes:
         return self.__encode_from_image(self.blender_image(), export_settings)
+
+    def __encode_happy_tile(self, export_settings) -> bytes:
+        return self.__encode_from_image_tile(self.fills[list(self.fills.keys())[0]].image, export_settings['current_udim_info']['tile'], export_settings)
 
     def __encode_unhappy(self, export_settings) -> bytes:
         # We need to assemble the image out of channels.
@@ -254,6 +289,25 @@ class ExportImage:
             tmp_image = guard.image
             return _encode_temp_image(tmp_image, self.file_format, export_settings)
 
+    def __encode_from_image_tile(self, udim_image, tile, export_settings):
+        src_path = bpy.path.abspath(udim_image.filepath_raw).replace("<UDIM>", tile)
+
+        if os.path.isfile(src_path):
+            with open(src_path, 'rb') as f:
+                data = f.read()
+
+        if data:
+            if self.file_format == 'PNG':
+                if data.startswith(b'\x89PNG'):
+                    return data
+            elif self.file_format == 'JPEG':
+                if data.startswith(b'\xff\xd8\xff'):
+                    return data
+            elif self.file_format == 'WEBP':
+                if data[8:12] == b'WEBP':
+                    return data
+
+        # We don't manage UDIM packed image, so this could not happen to be here
 
 def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_settings) -> bytes:
     with tempfile.TemporaryDirectory() as tmpdirname:

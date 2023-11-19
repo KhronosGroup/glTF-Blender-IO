@@ -39,16 +39,17 @@ def export_transmission(blender_material, export_settings):
         transmission_enabled = True
 
     if not transmission_enabled:
-        return None, {}
+        return None, {}, {}
 
     uvmap_info = {}
+    udim_info = {}
 
     # Pack transmission channel (R).
     if has_transmission_texture:
         transmission_slots = (transmission_socket,)
 
     if len(transmission_slots) > 0:
-        combined_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             transmission_socket,
             transmission_slots,
             (),
@@ -57,4 +58,4 @@ def export_transmission(blender_material, export_settings):
         if has_transmission_texture:
             transmission_extension['transmissionTexture'] = combined_texture
 
-    return Extension('KHR_materials_transmission', transmission_extension, False), {'transmissionTexture': uvmap_info}
+    return Extension('KHR_materials_transmission', transmission_extension, False), {'transmissionTexture': uvmap_info}, {'transmissionTexture': udim_info} if len(udim_info) > 0 else {}

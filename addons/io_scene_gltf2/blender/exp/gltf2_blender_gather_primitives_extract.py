@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+from copy import deepcopy
 from mathutils import Vector
 from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.com.gltf2_io_debug import print_console
@@ -20,7 +21,8 @@ from ...io.com.gltf2_io_constants import ROUNDING_DIGIT
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...io.com import gltf2_io_constants
 from ..com import gltf2_blender_conversion
-from .material.gltf2_blender_gather_materials import get_base_material, get_material_from_idx
+from .material.gltf2_blender_gather_materials import get_base_material, get_material_from_idx, get_active_uvmap_index, get_new_material_texture_shared
+from .material.gltf2_blender_gather_texture_info import gather_udim_texture_info
 from . import gltf2_blender_gather_skins
 
 
@@ -36,7 +38,7 @@ def extract_primitives(materials, blender_mesh, uuid_for_skined_data, blender_ve
     primitive_creator.primitive_split()
     primitive_creator.manage_material_info() # UVMap & Vertex Color
     if export_settings['gltf_shared_accessors'] is False:
-        return primitive_creator.primitive_creation_not_shared()
+        return primitive_creator.primitive_creation_not_shared(), primitive_creator.additional_materials, None
     else:
         return primitive_creator.primitive_creation_shared()
 
@@ -392,13 +394,15 @@ class PrimitiveCreator:
         # No choice : We need to retrieve materials here. Anyway, this will be baked, and next call will be quick
         # We also need to shuffle Vertex Color data if needed
 
+        new_prim_indices = {}
+        self.additional_materials = [] # In case of UDIM
 
         self.uvmap_attribute_list = [] # Initialize here, in case we don't have any triangle primitive
 
         materials_use_vc = None
         warning_already_displayed = False
         for material_idx in self.prim_indices.keys():
-            _, material_info = get_base_material(material_idx, self.materials, self.export_settings)
+            base_material, material_info = get_base_material(material_idx, self.materials, self.export_settings)
 
             # UVMaps
             self.uvmap_attribute_list = list(set([i['value'] for i in material_info["uv_info"].values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
@@ -440,49 +444,188 @@ class PrimitiveCreator:
             # The simplier test is when no vertex color are used
             if material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is None:
                 # Nothing to do
-                continue
+                pass
 
-            if material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None:
+            elif material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None:
                 print_console('WARNING', 'We are not managing this case (Vertex Color alpha without color)')
+
+            else:
+                vc_color_name = None
+                vc_alpha_name = None
+                if material_info['vc_info']['color_type'] == "name":
+                    vc_color_name = material_info['vc_info']['color']
+                elif material_info['vc_info']['color_type'] == "active":
+                    # Get active (render) Vertex Color
+                    vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+
+                if material_info['vc_info']['alpha_type'] == "name":
+                    vc_alpha_name = material_info['vc_info']['alpha']
+                elif material_info['vc_info']['alpha_type'] == "active":
+                    # Get active (render) Vertex Color
+                    vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+
+                if vc_color_name is not None:
+
+                    vc_key = ""
+                    vc_key += vc_color_name if vc_color_name is not None else ""
+                    vc_key += vc_alpha_name if vc_alpha_name is not None else ""
+
+                    if materials_use_vc is not None and materials_use_vc != vc_key:
+                        if warning_already_displayed is False:
+                            print_console('WARNING', 'glTF specification does not allow this case (multiple materials with different Vertex Color)')
+                            warning_already_displayed = True
+                        materials_use_vc = vc_key
+
+                    elif materials_use_vc is None:
+                        materials_use_vc = vc_key
+
+                        # We need to check if we need to add alpha
+                        add_alpha = vc_alpha_name is not None
+                        mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
+                        add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                        # Manage Vertex Color (RGB and Alpha if needed)
+                        self.__manage_color_attribute(vc_color_name, vc_alpha_name if add_alpha else None)
+                    else:
+                        pass # Using the same Vertex Color
+
+            ##### UDIM #####
+
+            if len(material_info['udim_info'].keys()) == 0:
+                new_prim_indices[material_idx] = self.prim_indices[material_idx]
+                self.additional_materials.append(None)
                 continue
 
-            vc_color_name = None
-            vc_alpha_name = None
-            if material_info['vc_info']['color_type'] == "name":
-                vc_color_name = material_info['vc_info']['color']
-            elif material_info['vc_info']['color_type'] == "active":
-                # Get active (render) Vertex Color
-                vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+            # We have some UDIM for some texture of this material
+            # We need to split the mesh into multiple primitives
+            # We manage only case where all texture are using the same UVMap
+            # And where UDIM have exactly the same number of tiles (TODO to check?)
 
-            if material_info['vc_info']['alpha_type'] == "name":
-                vc_alpha_name = material_info['vc_info']['alpha']
-            elif material_info['vc_info']['alpha_type'] == "active":
-                # Get active (render) Vertex Color
-                vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+            # So, retrieve all uvmaps used by this material
+            all_uvmaps = {}
+            for tex in material_info['udim_info'].keys():
+                if material_info['uv_info'][tex]['type'] == "Active":
+                    index_uvmap = get_active_uvmap_index(self.blender_mesh)
+                    uvmap_name = "TEXCOORD_" + str(index_uvmap)
+                elif material_info['uv_info'][tex]['type'] == "Fixed":
+                    index_uvmap = self.blender_mesh.uv_layers.find(material_info['uv_info'][tex]['value'])
+                    if index_uvmap < 0:
+                        # Using active index
+                        index_uvmap = get_active_uvmap_index(self.blender_mesh)
+                    uvmap_name = "TEXCOORD_" + str(index_uvmap)
+                else: #Attribute
+                    uvmap_name = material_info['uv_info'][tex]['value']
+                all_uvmaps[tex] = uvmap_name
 
-            if vc_color_name is not None:
+            if len(set(all_uvmaps.values())) > 1:
+                print_console('WARNING', 'We are not managing this case (multiple UVMap for UDIM)')
+                new_prim_indices[material_idx] = self.prim_indices[material_idx]
+                self.additional_materials.append(None)
+                continue
 
-                vc_key = ""
-                vc_key += vc_color_name if vc_color_name is not None else ""
-                vc_key += vc_alpha_name if vc_alpha_name is not None else ""
+            print_console('INFO', 'Splitting UDIM tiles into different primitives/materials')
+            # Retrieve UDIM images
+            tex = list(material_info['udim_info'].keys())[0]
+            image = material_info['udim_info'][tex]['image']
 
-                if materials_use_vc is not None and materials_use_vc != vc_key:
-                    if warning_already_displayed is False:
-                        print_console('WARNING', 'glTF specification does not allow this case (multiple materials with different Vertex Color)')
-                        warning_already_displayed = True
-                    materials_use_vc = vc_key
-                    continue
-                elif materials_use_vc is None:
-                    materials_use_vc = vc_key
+            new_material_index = len(self.prim_indices.keys())
 
-                    # We need to check if we need to add alpha
-                    add_alpha = vc_alpha_name is not None
-                    mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
-                    add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
-                    # Manage Vertex Color (RGB and Alpha if needed)
-                    self.__manage_color_attribute(vc_color_name, vc_alpha_name if add_alpha else None)
-                else:
-                    pass # Using the same Vertex Color
+            # Get UVMap used for UDIM
+            uvmap_name = all_uvmaps[list(all_uvmaps.keys())[0]]
+
+            # Retrieve tiles number
+            tiles = [t.number for t in image.tiles]
+            u_tiles = max([int(str(t)[3:]) for t in tiles])
+            v_tiles = max([int(str(t)[2:3]) for t in tiles]) + 1
+
+            # We are now going to split the mesh into multiple primitives, based on tiles
+            # We need to create a new primitive for each tile
+
+            for u in range(u_tiles):
+                for v in range(v_tiles):
+
+                    if u != u_tiles - 1 and v != v_tiles - 1:
+                        indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] < (u + 1)) & (self.dots[uvmap_name + '1'] <= (1-v) ) & (self.dots[uvmap_name + '1'] > 1-(v + 1)))[0]
+                    elif u == u_tiles - 1 and v != v_tiles - 1:
+                        indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] <= (u + 1)) & (self.dots[uvmap_name + '1'] <= (1-v) ) & (self.dots[uvmap_name + '1'] > 1-(v + 1)))[0]
+                    elif u != u_tiles -1 and v == v_tiles - 1:
+                        indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] < (u + 1)) & (self.dots[uvmap_name + '1'] <= (1-v) ) & (self.dots[uvmap_name + '1'] >= 1-(v + 1)))[0]
+                    else:
+                        indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] <= (u + 1)) & (self.dots[uvmap_name + '1'] <= (1-v) ) & (self.dots[uvmap_name + '1'] >= 1-(v + 1)))[0]
+
+                    # Reset UVMap to 0-1 : reset to Blener UVMAP => slide to 0-1 => go to glTF UVMap
+                    self.dots[uvmap_name + '1'][indices] -= 1
+                    self.dots[uvmap_name + '1'][indices] *= -1
+                    self.dots[uvmap_name + '0'][indices] -= u
+                    self.dots[uvmap_name + '1'][indices] -= v
+                    self.dots[uvmap_name + '1'][indices] *= -1
+                    self.dots[uvmap_name + '1'][indices] += 1
+
+                    # Now, get every triangle, and check that it belongs to this tile
+                    # Assume that we can check only the first vertex of each triangle (=> No management of triangle on multiple tiles)
+                    new_triangle_indices = []
+                    for idx, i in enumerate(self.prim_indices[material_idx]):
+                        if idx % 3 == 0 and i in indices:
+                            new_triangle_indices.append(self.prim_indices[material_idx][idx])
+                            new_triangle_indices.append(self.prim_indices[material_idx][idx+1])
+                            new_triangle_indices.append(self.prim_indices[material_idx][idx+2])
+                    new_prim_indices[new_material_index] = np.array(new_triangle_indices, dtype=np.uint32)
+                    new_material_index += 1
+
+
+                    # Now we have to create a new material for this tile
+                    # This will be the existing material, but with new textures
+                    # We need to duplicate the material, and add these new textures
+                    new_material = deepcopy(base_material)
+                    get_new_material_texture_shared(base_material, new_material)
+
+                    for tex in material_info['udim_info'].keys():
+                        new_tex = gather_udim_texture_info(
+                            material_info['udim_info'][tex]['sockets'][0],
+                            material_info['udim_info'][tex]['sockets'],
+                            {
+                                'tile': "10" + str(v) + str(u+1),
+                                'image': material_info['udim_info'][tex]['image']
+                            },
+                            tex,
+                            self.export_settings)
+
+                        if tex == "baseColorTexture":
+                            new_material.pbr_metallic_roughness.base_color_texture = new_tex
+                        elif tex == "normalTexture":
+                            new_material.normal_texture = new_tex
+                        elif tex == "emissiveTexture":
+                            new_material.emissive_texture = new_tex
+                        elif tex == "metallicRoughnessTexture":
+                            new_material.pbr_metallic_roughness.metallic_roughness_texture = new_tex
+                        elif tex == "occlusionTexture":
+                            new_material.occlusion_texture = new_tex
+                        elif tex == "clearcoatTexture":
+                            new_material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'] = new_tex
+                        elif tex == "clearcoatRoughnessTexture":
+                            new_material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'] = new_tex
+                        elif tex == "clearcoatNormalTexture":
+                            new_material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'] = new_tex
+                        elif tex == "sheenColorTexture":
+                            new_material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'] = new_tex
+                        elif tex == "sheenRoughnessTexture":
+                            new_material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'] = new_tex
+                        elif tex == "transmissionTexture":
+                            new_material.extensions["KHR_materials_transmission"].extension['transmissionTexture'] = new_tex
+                        elif tex == "thicknessTexture":
+                            new_material.extensions["KHR_materials_volume"].extension['thicknessTexture'] = new_tex
+                        elif tex == "specularTexture":
+                            new_material.extensions["KHR_materials_specular"].extension['specularTexture'] = new_tex
+                        elif tex == "specularColorTexture":
+                            new_material.extensions["KHR_materials_specular"].extension['specularColorTexture'] = new_tex
+                        elif tex == "anisotropyTexture":
+                            new_material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'] = new_tex
+                        else:
+                            print_console('WARNING', 'We are not managing this case yet (UDIM for {})'.format(tex))
+
+                    self.additional_materials.append((new_material, material_info, int(str(id(base_material)) + str(u) + str(v))))
+
+
+        self.prim_indices = new_prim_indices
 
     def primitive_creation_shared(self):
         primitives = []
@@ -552,7 +695,7 @@ class PrimitiveCreator:
 
         print_console('INFO', 'Primitives created: %d' % len(primitives))
 
-        return primitives, self.attributes if has_triangle_primitive else None
+        return primitives, [None]*len(primitives), self.attributes if has_triangle_primitive else None
 
     def primitive_creation_not_shared(self):
         primitives = []
@@ -625,7 +768,7 @@ class PrimitiveCreator:
 
         print_console('INFO', 'Primitives created: %d' % len(primitives))
 
-        return primitives, None
+        return primitives
 
     def primitive_creation_edges_and_points(self):
         primitives_edges_points = []
@@ -680,6 +823,7 @@ class PrimitiveCreator:
                     'material': 0,
                     'uvmap_attributes_index': {}
                 })
+                self.additional_materials.append(None)
 
         if self.export_settings['gltf_loose_points']:
 
@@ -727,6 +871,7 @@ class PrimitiveCreator:
                     'material': 0,
                     'uvmap_attributes_index': {}
                 })
+                self.additional_materials.append(None)
 
         return primitives_edges_points
 

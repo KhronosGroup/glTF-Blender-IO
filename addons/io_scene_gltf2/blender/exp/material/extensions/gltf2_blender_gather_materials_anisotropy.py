@@ -24,13 +24,14 @@ def export_anisotropy(blender_material, export_settings):
 
     anisotropy_extension = {}
     uvmap_infos = {}
+    udim_infos = {}
 
     anisotropy_socket = get_socket(blender_material, 'Anisotropic')
     anisotropic_rotation_socket = get_socket(blender_material, 'Anisotropic Rotation')
     anisotropy_tangent_socket = get_socket(blender_material, 'Tangent')
 
     if anisotropy_socket.socket is None or anisotropic_rotation_socket.socket is None or anisotropy_tangent_socket.socket is None:
-        return None, {}
+        return None, {}, {}
 
     if anisotropy_socket.socket.is_linked is False and anisotropic_rotation_socket.socket.is_linked is False:
         # We don't need the complex node setup, just export the value
@@ -42,9 +43,9 @@ def export_anisotropy(blender_material, export_settings):
             anisotropy_extension['anisotropyRotation'] = anisotropyRotation
 
         if len(anisotropy_extension) == 0:
-            return None, {}
+            return None, {}, {}
 
-        return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos
+        return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos, udim_infos
 
     # Get complex node setup
 
@@ -59,7 +60,7 @@ def export_anisotropy(blender_material, export_settings):
         # Trying to export from grayscale textures
         anisotropy_texture, uvmap_info = export_anisotropy_from_grayscale_textures(blender_material, export_settings)
         if anisotropy_texture is None:
-            return None, {}
+            return None, {}, {}
 
         fac = get_factor_from_socket(anisotropy_socket, kind='VALUE')
         if fac is None and anisotropy_texture is not None:
@@ -76,7 +77,7 @@ def export_anisotropy(blender_material, export_settings):
         anisotropy_extension['anisotropyTexture'] = anisotropy_texture
         uvmap_infos.update({'anisotropyTexture': uvmap_info})
 
-        return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos
+        return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos, udim_infos
 
 
     # Export from complex node setup
@@ -88,7 +89,7 @@ def export_anisotropy(blender_material, export_settings):
 
     # Get texture data
     # No need to check here that we have a texture, this check is already done insode detect_anisotropy_nodes
-    anisotropy_texture, uvmap_info , _ = gltf2_blender_gather_texture_info.gather_texture_info(
+    anisotropy_texture, uvmap_info , udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
         anisotropy_data['tex_socket'],
         (anisotropy_data['tex_socket'],),
         (),
@@ -96,9 +97,10 @@ def export_anisotropy(blender_material, export_settings):
     )
     anisotropy_extension['anisotropyTexture'] = anisotropy_texture
     uvmap_infos.update({'anisotropyTexture': uvmap_info})
+    udim_infos.update({'anisotropyTexture' : udim_info} if len(udim_info.keys()) > 0 else {})
 
 
-    return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos
+    return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos, udim_infos
 
 def export_anisotropy_from_grayscale_textures(blender_material, export_settings):
     # There will be a texture, with a complex calculation (no direct channel mapping)
@@ -114,7 +116,7 @@ def export_anisotropy_from_grayscale_textures(blender_material, export_settings)
     if not has_image_node_from_socket(primary_socket, export_settings):
         primary_socket = anisotropic_rotation_socket
 
-    anisotropyTexture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+    anisotropyTexture, uvmap_info, _, _ = gltf2_blender_gather_texture_info.gather_texture_info(
         primary_socket,
         sockets,
         (),
