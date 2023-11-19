@@ -45,12 +45,18 @@ def get_cache_data(path: str,
     if export_settings['gltf_animation_mode'] in "NLA_TRACKS":
         obj_uuids = [blender_obj_uuid]
 
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+
     frame = min_
     while frame <= max_:
         bpy.context.scene.frame_set(int(frame))
+        current_instance = {} # For GN instances, we are going to track instances by their order in instance iterator
 
         for obj_uuid in obj_uuids:
             blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
+            if blender_obj is None: #GN instance
+                if export_settings['vtree'].nodes[obj_uuid].parent_uuid not in current_instance.keys():
+                    current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] = 0
 
             # TODO: we may want to avoid looping on all objects, but an accurate filter must be found
 
@@ -59,7 +65,10 @@ def get_cache_data(path: str,
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
             else:
                 if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type not in [VExportNode.BONE]:
-                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                    if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type != VExportNode.COLLECTION:
+                        parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                    else:
+                        parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].matrix_world
                 else:
                     # Object animated is parented to a bone
                     blender_bone = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].blender_bone
@@ -70,30 +79,52 @@ def get_cache_data(path: str,
                     parent_mat = armature_object.matrix_world @ blender_bone.matrix @ axis_basis_change
 
             #For object inside collection (at root), matrix world is already expressed regarding collection parent
-            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.COLLECTION:
+            if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.INST_COLLECTION:
                 parent_mat = mathutils.Matrix.Identity(4).freeze()
 
-            mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
+            if blender_obj:
+                if export_settings['vtree'].nodes[obj_uuid].blender_type != VExportNode.COLLECTION:
+                    mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
+                else:
+                    mat = parent_mat.inverted_safe()
+            else:
+                eval = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.evaluated_get(depsgraph)
+                cpt_inst = 0
+                for inst in depsgraph.object_instances: # use only as iterator
+                    if inst.parent == eval:
+                        if current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] == cpt_inst:
+                            mat = inst.matrix_world.copy()
+                            current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] += 1
+                            break
+                        cpt_inst += 1
+
 
             if obj_uuid not in data.keys():
                 data[obj_uuid] = {}
 
-            if blender_obj.animation_data and blender_obj.animation_data.action \
-                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-                if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
-                    data[obj_uuid][blender_obj.animation_data.action.name] = {}
-                    data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
-                    data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None] = {}
-                data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None][frame] = mat
-            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-                if action_name not in data[obj_uuid].keys():
-                    data[obj_uuid][action_name] = {}
-                    data[obj_uuid][action_name]['matrix'] = {}
-                    data[obj_uuid][action_name]['matrix'][None] = {}
-                data[obj_uuid][action_name]['matrix'][None][frame] = mat
+            if export_settings['vtree'].nodes[obj_uuid].blender_type != VExportNode.COLLECTION:
+                if blender_obj and blender_obj.animation_data and blender_obj.animation_data.action \
+                        and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                    if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
+                        data[obj_uuid][blender_obj.animation_data.action.name] = {}
+                        data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
+                        data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None] = {}
+                    data[obj_uuid][blender_obj.animation_data.action.name]['matrix'][None][frame] = mat
+                elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                    if action_name not in data[obj_uuid].keys():
+                        data[obj_uuid][action_name] = {}
+                        data[obj_uuid][action_name]['matrix'] = {}
+                        data[obj_uuid][action_name]['matrix'][None] = {}
+                    data[obj_uuid][action_name]['matrix'][None][frame] = mat
+                else:
+                    # case of baking object.
+                    # There is no animation, so use uuid of object as key
+                    if obj_uuid not in data[obj_uuid].keys():
+                        data[obj_uuid][obj_uuid] = {}
+                        data[obj_uuid][obj_uuid]['matrix'] = {}
+                        data[obj_uuid][obj_uuid]['matrix'][None] = {}
+                    data[obj_uuid][obj_uuid]['matrix'][None][frame] = mat
             else:
-                # case of baking object.
-                # There is no animation, so use uuid of object as key
                 if obj_uuid not in data[obj_uuid].keys():
                     data[obj_uuid][obj_uuid] = {}
                     data[obj_uuid][obj_uuid]['matrix'] = {}
@@ -101,7 +132,7 @@ def get_cache_data(path: str,
                 data[obj_uuid][obj_uuid]['matrix'][None][frame] = mat
 
             # Store data for all bones, if object is an armature
-            if blender_obj.type == "ARMATURE":
+            if blender_obj and blender_obj.type == "ARMATURE":
                 bones = export_settings['vtree'].get_all_bones(obj_uuid)
                 if blender_obj.animation_data and blender_obj.animation_data.action \
                         and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
@@ -150,10 +181,18 @@ def get_cache_data(path: str,
                             data[obj_uuid][obj_uuid]['bone'][blender_bone.name] = {}
                         data[obj_uuid][obj_uuid]['bone'][blender_bone.name][frame] = matrix
 
+            elif blender_obj is None: # GN instances
+                # case of baking object, for GN instances
+                # There is no animation, so use uuid of object as key
+                if obj_uuid not in data[obj_uuid].keys():
+                    data[obj_uuid][obj_uuid] = {}
+                    data[obj_uuid][obj_uuid]['matrix'] = {}
+                    data[obj_uuid][obj_uuid]['matrix'][None] = {}
+                data[obj_uuid][obj_uuid]['matrix'][None][frame] = mat
 
             # Check SK animation here, as we are caching data
             # This will avoid to have to do it again when exporting SK animation
-            if export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
+            if export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
             and blender_obj.data is not None \
             and blender_obj.data.shape_keys is not None \
             and blender_obj.data.shape_keys.animation_data is not None \
@@ -166,7 +205,7 @@ def get_cache_data(path: str,
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None] = {}
                 data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name]['sk'][None][frame] = [k.value for k in get_sk_exported(blender_obj.data.shape_keys.key_blocks)]
 
-            elif export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
+            elif export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
             and blender_obj.data is not None \
             and blender_obj.data.shape_keys is not None \
             and blender_obj.data.shape_keys.animation_data is not None \
@@ -183,7 +222,7 @@ def get_cache_data(path: str,
 
 
 
-            elif export_settings['gltf_morph_anim'] and blender_obj.type == "MESH" \
+            elif export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
                     and blender_obj.data is not None \
                     and blender_obj.data.shape_keys is not None:
                 if obj_uuid not in data[obj_uuid].keys():
@@ -197,7 +236,7 @@ def get_cache_data(path: str,
 
             # caching driver sk meshes
             # This will avoid to have to do it again when exporting SK animation
-            if blender_obj.type == "ARMATURE":
+            if blender_obj and blender_obj.type == "ARMATURE":
                 sk_drivers = get_sk_drivers(obj_uuid, export_settings)
                 for dr_obj in sk_drivers:
                     driver_object = export_settings['vtree'].nodes[dr_obj].blender_object
