@@ -1,1 +1,1 @@
---export-attributes
+--export-attributes --export_not_shared_accessors

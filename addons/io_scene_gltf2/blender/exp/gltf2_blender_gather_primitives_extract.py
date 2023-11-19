@@ -37,7 +37,10 @@ def extract_primitives(materials, blender_mesh, uuid_for_skined_data, blender_ve
     primitive_creator.populate_dots_data()
     primitive_creator.primitive_split()
     primitive_creator.manage_material_info() # UVMap & Vertex Color
-    return primitive_creator.primitive_creation(), primitive_creator.additional_materials
+    if export_settings['gltf_shared_accessors'] is False:
+        return primitive_creator.primitive_creation_not_shared(), primitive_creator.additional_materials, None
+    else:
+        return primitive_creator.primitive_creation_shared()
 
 class PrimitiveCreator:
     def __init__(self, materials, blender_mesh, uuid_for_skined_data, blender_vertex_groups, modifiers, export_settings):
@@ -394,6 +397,8 @@ class PrimitiveCreator:
         new_prim_indices = {}
         self.additional_materials = [] # In case of UDIM
 
+        self.uvmap_attribute_list = [] # Initialize here, in case we don't have any triangle primitive
+
         materials_use_vc = None
         warning_already_displayed = False
         for material_idx in self.prim_indices.keys():
@@ -622,7 +627,77 @@ class PrimitiveCreator:
 
         self.prim_indices = new_prim_indices
 
-    def primitive_creation(self):
+    def primitive_creation_shared(self):
+        primitives = []
+        self.dots, shared_dot_indices = np.unique(self.dots, return_inverse=True)
+
+        self.blender_idxs = self.dots['vertex_index']
+
+        self.attributes = {}
+
+        next_texcoor_idx = self.tex_coord_max
+        uvmap_attributes_index = {}
+        for attr in self.uvmap_attribute_list:
+            res = np.empty((len(self.dots), 2), dtype=gltf2_blender_conversion.get_numpy_type('FLOAT2'))
+            for i in range(2):
+                res[:, i] = self.dots[attr + str(i)]
+
+            self.attributes["TEXCOORD_" + str(next_texcoor_idx)] = {}
+            self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data"] = res
+            self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["component_type"] = gltf2_io_constants.ComponentType.Float
+            self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data_type"] = gltf2_io_constants.DataType.Vec2
+            uvmap_attributes_index[attr] = next_texcoor_idx
+            next_texcoor_idx += 1
+
+        for attr in self.blender_attributes:
+            if 'set' in attr:
+                attr['set'](attr)
+            else:
+                self.__set_regular_attribute(self.dots, attr)
+
+        if self.skin:
+            joints = [[] for _ in range(self.num_joint_sets)]
+            weights = [[] for _ in range(self.num_joint_sets)]
+
+            for vi in self.blender_idxs:
+                bones = self.vert_bones[vi]
+                for j in range(0, 4 * self.num_joint_sets):
+                    if j < len(bones):
+                        joint, weight = bones[j]
+                    else:
+                        joint, weight = 0, 0.0
+                    joints[j//4].append(joint)
+                    weights[j//4].append(weight)
+
+            for i, (js, ws) in enumerate(zip(joints, weights)):
+                self.attributes['JOINTS_%d' % i] = js
+                self.attributes['WEIGHTS_%d' % i] = ws
+
+
+        for material_idx, dot_indices in self.prim_indices.items():
+            indices = shared_dot_indices[dot_indices]
+
+            if len(indices) == 0:
+                continue
+
+            primitives.append({
+                # No attribute here, as they are shared accross all primitives
+                'indices': indices,
+                'material': material_idx,
+                'uvmap_attributes_index': uvmap_attributes_index
+            })
+
+        # Manage edges & points primitives.
+        # One for edges, one for points
+        # No material for them, so only one primitive for each
+        has_triangle_primitive = len(primitives) != 0
+        primitives.extend(self.primitive_creation_edges_and_points())
+
+        print_console('INFO', 'Primitives created: %d' % len(primitives))
+
+        return primitives, [None]*len(primitives), self.attributes if has_triangle_primitive else None
+
+    def primitive_creation_not_shared(self):
         primitives = []
 
         for material_idx, dot_indices in self.prim_indices.items():
@@ -644,7 +719,7 @@ class PrimitiveCreator:
                 if 'set' in attr:
                     attr['set'](attr)
                 else: # Regular case
-                    self.__set_regular_attribute(attr)
+                    self.__set_regular_attribute(self.prim_dots, attr)
 
             next_texcoor_idx = self.tex_coord_max
             uvmap_attributes_index = {}
@@ -659,6 +734,7 @@ class PrimitiveCreator:
                 self.attributes["TEXCOORD_" + str(next_texcoor_idx)]["data_type"] = gltf2_io_constants.DataType.Vec2
                 uvmap_attributes_index[attr] = next_texcoor_idx
                 next_texcoor_idx += 1
+
 
             if self.skin:
                 joints = [[] for _ in range(self.num_joint_sets)]
@@ -685,6 +761,18 @@ class PrimitiveCreator:
                 'uvmap_attributes_index': uvmap_attributes_index
             })
 
+        # Manage edges & points primitives.
+        # One for edges, one for points
+        # No material for them, so only one primitive for each
+        primitives.extend(self.primitive_creation_edges_and_points())
+
+        print_console('INFO', 'Primitives created: %d' % len(primitives))
+
+        return primitives
+
+    def primitive_creation_edges_and_points(self):
+        primitives_edges_points = []
+
         if self.export_settings['gltf_loose_edges']:
 
             if self.blender_idxs_edges.shape[0] > 0:
@@ -693,21 +781,21 @@ class PrimitiveCreator:
                 dots_edges, indices = np.unique(self.dots_edges, return_inverse=True)
                 self.blender_idxs = np.unique(self.blender_idxs_edges)
 
-                self.attributes = {}
+                self.attributes_edges_points = {}
 
                 for attr in self.blender_attributes:
                     if attr['blender_domain'] != 'POINT':
                         continue
                     if 'set' in attr:
-                        attr['set'](attr)
+                        attr['set'](attr, edges_points=True)
                     else:
                         res = np.empty((len(dots_edges), attr['len']), dtype=attr['type'])
                         for i in range(attr['len']):
                             res[:, i] = dots_edges[attr['gltf_attribute_name'] + str(i)]
-                        self.attributes[attr['gltf_attribute_name']] = {}
-                        self.attributes[attr['gltf_attribute_name']]["data"] = res
-                        self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
-                        self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
+                        self.attributes_edges_points[attr['gltf_attribute_name']] = {}
+                        self.attributes_edges_points[attr['gltf_attribute_name']]["data"] = res
+                        self.attributes_edges_points[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
+                        self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
 
 
                 if self.skin:
@@ -725,11 +813,11 @@ class PrimitiveCreator:
                             weights[j//4].append(weight)
 
                     for i, (js, ws) in enumerate(zip(joints, weights)):
-                        self.attributes['JOINTS_%d' % i] = js
-                        self.attributes['WEIGHTS_%d' % i] = ws
+                        self.attributes_edges_points['JOINTS_%d' % i] = js
+                        self.attributes_edges_points['WEIGHTS_%d' % i] = ws
 
-                primitives.append({
-                    'attributes': self.attributes,
+                primitives_edges_points.append({
+                    'attributes': self.attributes_edges_points,
                     'indices': indices,
                     'mode': 1,  # LINES
                     'material': 0,
@@ -742,21 +830,21 @@ class PrimitiveCreator:
             if self.blender_idxs_points.shape[0] > 0:
                 self.blender_idxs = self.blender_idxs_points
 
-                self.attributes = {}
+                self.attributes_edges_points = {}
 
                 for attr in self.blender_attributes:
                     if attr['blender_domain'] != 'POINT':
                         continue
                     if 'set' in attr:
-                        attr['set'](attr)
+                        attr['set'](attr, edges_points=True)
                     else:
                         res = np.empty((len(self.blender_idxs), attr['len']), dtype=attr['type'])
                         for i in range(attr['len']):
                             res[:, i] = self.dots_points[attr['gltf_attribute_name'] + str(i)]
-                        self.attributes[attr['gltf_attribute_name']] = {}
-                        self.attributes[attr['gltf_attribute_name']]["data"] = res
-                        self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
-                        self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
+                        self.attributes_edges_points[attr['gltf_attribute_name']] = {}
+                        self.attributes_edges_points[attr['gltf_attribute_name']]["data"] = res
+                        self.attributes_edges_points[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
+                        self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
 
 
                 if self.skin:
@@ -774,20 +862,18 @@ class PrimitiveCreator:
                             weights[j//4].append(weight)
 
                     for i, (js, ws) in enumerate(zip(joints, weights)):
-                        self.attributes['JOINTS_%d' % i] = js
-                        self.attributes['WEIGHTS_%d' % i] = ws
+                        self.attributes_edges_points['JOINTS_%d' % i] = js
+                        self.attributes_edges_points['WEIGHTS_%d' % i] = ws
 
-                primitives.append({
-                    'attributes': self.attributes,
+                primitives_edges_points.append({
+                    'attributes': self.attributes_edges_points,
                     'mode': 0,  # POINTS
                     'material': 0,
                     'uvmap_attributes_index': {}
                 })
                 self.additional_materials.append(None)
 
-        print_console('INFO', 'Primitives created: %d' % len(primitives))
-
-        return primitives
+        return primitives_edges_points
 
 ################################## Get ##################################################
 
@@ -1174,36 +1260,50 @@ class PrimitiveCreator:
 ##################################### Set ###################################
     def set_function(self):
 
-        def setting_function(attr):
+        def setting_function(attr, edges_points=False):
             if attr['gltf_attribute_name'] == "POSITION":
-                self.__set_positions_attribute(attr)
+                self.__set_positions_attribute(attr, edges_points=edges_points)
             elif attr['gltf_attribute_name'].startswith("MORPH_POSITION_"):
-                self.__set_morph_locs_attribute(attr)
+                self.__set_morph_locs_attribute(attr, edges_points=edges_points)
             elif attr['gltf_attribute_name'].startswith("MORPH_TANGENT_"):
-                self.__set_morph_tangent_attribute(attr)
+                self.__set_morph_tangent_attribute(attr, edges_points=edges_points)
 
         return setting_function
 
-    def __set_positions_attribute(self, attr):
-        self.attributes[attr['gltf_attribute_name']] = {}
-        self.attributes[attr['gltf_attribute_name']]["data"] = self.locs[self.blender_idxs]
-        self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3
-        self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
+    def __set_positions_attribute(self, attr, edges_points=False):
+        if edges_points is False:
+            self.attributes[attr['gltf_attribute_name']] = {}
+            self.attributes[attr['gltf_attribute_name']]["data"] = self.locs[self.blender_idxs]
+            self.attributes[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3
+            self.attributes[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
+        else:
+            self.attributes_edges_points[attr['gltf_attribute_name']] = {}
+            self.attributes_edges_points[attr['gltf_attribute_name']]["data"] = self.locs[self.blender_idxs]
+            self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3
+            self.attributes_edges_points[attr['gltf_attribute_name']]["component_type"] = gltf2_io_constants.ComponentType.Float
 
 
-    def __set_morph_locs_attribute(self, attr):
-        self.attributes[attr['gltf_attribute_name']] = {}
-        self.attributes[attr['gltf_attribute_name']]["data"] = self.morph_locs[attr['blender_attribute_index']][self.blender_idxs]
+    def __set_morph_locs_attribute(self, attr, edges_points=False):
+        if edges_points is False:
+            self.attributes[attr['gltf_attribute_name']] = {}
+            self.attributes[attr['gltf_attribute_name']]["data"] = self.morph_locs[attr['blender_attribute_index']][self.blender_idxs]
+        else:
+            self.attributes_edges_points[attr['gltf_attribute_name']] = {}
+            self.attributes_edges_points[attr['gltf_attribute_name']]["data"] = self.morph_locs[attr['blender_attribute_index']][self.blender_idxs]
 
-    def __set_morph_tangent_attribute(self, attr):
+    def __set_morph_tangent_attribute(self, attr, edges_points=False):
         # Morph tangent are after these 3 others, so, they are already calculated
         self.normals = self.attributes[attr['gltf_attribute_name_normal']]["data"]
         self.morph_normals = self.attributes[attr['gltf_attribute_name_morph_normal']]["data"]
         self.tangents = self.attributes[attr['gltf_attribute_name_tangent']]["data"]
 
         self.__calc_morph_tangents()
-        self.attributes[attr['gltf_attribute_name']] = {}
-        self.attributes[attr['gltf_attribute_name']]["data"] = self.morph_tangents
+        if edges_points is False:
+            self.attributes[attr['gltf_attribute_name']] = {}
+            self.attributes[attr['gltf_attribute_name']]["data"] = self.morph_tangents
+        else:
+            self.attributes_edges_points[attr['gltf_attribute_name']] = {}
+            self.attributes_edges_points[attr['gltf_attribute_name']]["data"] = self.morph_tangents
 
     def __calc_morph_tangents(self):
         # TODO: check if this works
@@ -1220,10 +1320,10 @@ class PrimitiveCreator:
             t_morph.rotate(rotation)
             self.morph_tangents[i] = t_morph - t  # back to delta
 
-    def __set_regular_attribute(self, attr):
-            res = np.empty((len(self.prim_dots), attr['len']), dtype=attr['type'])
+    def __set_regular_attribute(self, dots, attr):
+            res = np.empty((len(dots), attr['len']), dtype=attr['type'])
             for i in range(attr['len']):
-                res[:, i] = self.prim_dots[attr['gltf_attribute_name'] + str(i)]
+                res[:, i] = dots[attr['gltf_attribute_name'] + str(i)]
             self.attributes[attr['gltf_attribute_name']] = {}
             self.attributes[attr['gltf_attribute_name']]["data"] = res
             if attr['gltf_attribute_name'] == "NORMAL":

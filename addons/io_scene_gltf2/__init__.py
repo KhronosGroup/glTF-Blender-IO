@@ -446,6 +446,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_shared_accessors: BoolProperty(
+        name='Shared Accessors',
+        description='Export Primitives using shared accessors for attributes',
+        default=False
+    )
+
     export_animations: BoolProperty(
         name='Animations',
         description='Exports active actions and NLA tracks as glTF animations',
@@ -870,6 +876,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
         export_settings['gltf_apply'] = self.export_apply
+        export_settings['gltf_shared_accessors'] = self.export_shared_accessors
         export_settings['gltf_current_frame'] = self.export_current_frame
         export_settings['gltf_animations'] = self.export_animations
         export_settings['gltf_def_bones'] = self.export_def_bones
@@ -1144,6 +1151,10 @@ class GLTF_PT_export_data_mesh(bpy.types.Panel):
         col = layout.column()
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
+
+        col = layout.column()
+        col.prop(operator, 'export_shared_accessors')
+
 
 class GLTF_PT_export_data_material(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'

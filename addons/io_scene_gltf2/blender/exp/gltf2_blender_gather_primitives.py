@@ -131,19 +131,55 @@ def __gather_cache_primitives(
     """
     primitives = []
 
-    blender_primitives, additional_materials_udim = gltf2_blender_gather_primitives_extract.extract_primitives(
+    blender_primitives, additional_materials_udim, shared_attributes = gltf2_blender_gather_primitives_extract.extract_primitives(
         materials, blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
 
-    for internal_primitive in blender_primitives:
-        primitive = {
-            "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
-            "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
-            "mode": internal_primitive.get('mode'),
-            "material": internal_primitive.get('material'),
-            "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
-            "uvmap_attributes_index": internal_primitive["uvmap_attributes_index"], #This will not be on final glTF dict
-        }
-        primitives.append(primitive)
+
+    if shared_attributes is not None:
+
+        if len(blender_primitives) > 0:
+            shared = {}
+            shared["attributes"] = shared_attributes
+
+            attributes = __gather_attributes(shared, blender_mesh, modifiers, export_settings)
+            targets = __gather_targets(shared, blender_mesh, modifiers, export_settings)
+
+        for internal_primitive in blender_primitives:
+            if internal_primitive.get('mode') is None:
+
+                primitive = {
+                    "attributes": attributes,
+                    "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "mode": internal_primitive.get('mode'),
+                    "material": internal_primitive.get('material'),
+                    "targets": targets,
+                    "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
+                }
+
+            else:
+                # Edges & points, no shared attributes
+                primitive = {
+                    "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "mode": internal_primitive.get('mode'),
+                    "material": internal_primitive.get('material'),
+                    "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
+                }
+            primitives.append(primitive)
+
+    else:
+
+        for internal_primitive in blender_primitives:
+            primitive = {
+                    "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "mode": internal_primitive.get('mode'),
+                    "material": internal_primitive.get('material'),
+                    "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
+                    "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
+                }
+            primitives.append(primitive)
 
     return primitives, additional_materials_udim
 
