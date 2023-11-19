@@ -155,3 +155,11 @@ def get_gltf_interpolation(interpolation):
         "LINEAR": "LINEAR",
         "CONSTANT": "STEP"
     }.get(interpolation, "LINEAR")
+
+def get_anisotropy_rotation_gltf_to_blender(rotation):
+    # glTF rotation is in randian, Blender in 0 to 1
+    return rotation / (2 * np.pi)
+
+def get_anisotropy_rotation_blender_to_gltf(rotation):
+    # glTF rotation is in randian, Blender in 0 to 1
+    return rotation * (2 * np.pi)
