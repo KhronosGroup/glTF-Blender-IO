@@ -129,7 +129,7 @@ def export_anisotropy_from_grayscale_textures(blender_material, export_settings)
     return anisotropyTexture, uvmap_info
 
 
-def grayscale_anisotropy_calculation(stored):
+def grayscale_anisotropy_calculation(stored, export_settings):
 
     # Find all Blender images used
     images = []

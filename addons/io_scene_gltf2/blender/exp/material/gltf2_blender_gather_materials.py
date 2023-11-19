@@ -38,6 +38,8 @@ from .gltf2_blender_search_node_tree import \
     get_socket_from_gltf_material_node, \
     get_socket, \
     get_node_socket, \
+    get_material_nodes, \
+    NodeSocket, \
     get_vertex_color_info
 
 @cached
@@ -60,6 +62,16 @@ def gather_material(blender_material, export_settings):
     """
     if not __filter_material(blender_material, export_settings):
         return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None}, "udim_info": {}}
+
+    # Reset exported images / textures nodes
+    export_settings['exported_texture_nodes'] = []
+    if blender_material.node_tree and blender_material.use_nodes:
+        nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+    else:
+        nodes = []
+    for node in nodes:
+        if node[0].get("used", None) is not None:
+            del(node[0]['used'])
 
     mat_unlit, uvmap_info, vc_info, udim_info = __export_unlit(blender_material, export_settings)
     if mat_unlit is not None:
@@ -96,6 +108,38 @@ def gather_material(blender_material, export_settings):
     )
 
     uvmap_infos = {}
+    udim_infos = {}
+
+    # Get all textures nodes that are not used in the material
+    if export_settings['gltf_unused_textures'] is True:
+        if blender_material.node_tree and blender_material.use_nodes:
+            nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+        else:
+            nodes = []
+        cpt_additional = 0
+        for node in nodes:
+            if node[0].get("used", None) is not None:
+                del(node[0]['used'])
+                continue
+
+            s = NodeSocket(node[0].outputs[0], node[1])
+            tex, uv_info_additional, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), (), export_settings)
+            if tex is not None:
+                export_settings['exported_images'][node[0].image.name] = 1 # Fully used
+                uvmap_infos.update({'additional' + str(cpt_additional): uv_info_additional})
+                udim_infos.update({'additional' + str(cpt_additional): udim_info})
+                cpt_additional += 1
+                export_settings['additional_texture_export'].append(tex)
+
+        # Reset
+        if blender_material.node_tree and blender_material.use_nodes:
+            nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+        else:
+            nodes = []
+        for node in nodes:
+            if node[0].get("used", None) is not None:
+                del(node[0]['used'])
+
     uvmap_infos.update(uvmap_info_emissive)
     uvmap_infos.update(uvmap_info_extensions)
     uvmap_infos.update(uvmap_info_normal)
@@ -381,8 +425,12 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
     # First, we need to calculate all index of UVMap
 
     indices = {}
+    additional_indices = 0
 
     for m, v in uvmap_info.items():
+
+        if m.startswith("additional") and additional_indices <= int(m[10:]):
+            additional_indices = +1
 
         if not 'type' in v.keys():
             continue
@@ -400,7 +448,7 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
             indices[m] = attr_indices[v['value']]
 
     # Now we have all needed indices, let's create a set that can be used for caching, so containing all possible textures
-    all_textures = get_all_textures()
+    all_textures = get_all_textures(additional_indices)
 
     caching_indices = []
     for tex in all_textures:
@@ -433,7 +481,7 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
     material = deepcopy(base_material)
     get_new_material_texture_shared(base_material, material)
 
-    for tex, ind in zip(get_all_textures(), caching_indices):
+    for tex, ind in zip(get_all_textures(len(caching_indices) - len(get_all_textures())), caching_indices):
 
         if ind is None:
             continue
@@ -469,8 +517,12 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
             if material.extensions["KHR_materials_volume"].extension['thicknessTexture']: material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
         elif tex == "anisotropyTexture":
             if material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture']: material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'].tex_coord = ind
+        elif tex.startswith("additional"):
+            export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx'] + int(tex[10:])].tex_coord = ind
         else:
             print_console("ERROR", "some Textures tex coord are not managed")
+
+    export_settings['additional_texture_export_current_idx'] = len(export_settings['additional_texture_export'])
 
     return material
 
@@ -505,7 +557,7 @@ def get_base_material(material_idx, materials, export_settings):
         )
     return material, material_info
 
-def get_all_textures():
+def get_all_textures(idx=0):
     # Make sure to have all texture here, always in same order
     tab = []
 
@@ -524,5 +576,8 @@ def get_all_textures():
     tab.append("sheenRoughnessTexture")
     tab.append("thicknessTexture")
     tab.append("anisotropyTexture")
+
+    for i in range(idx):
+        tab.append("additional" + str(i))
 
     return tab

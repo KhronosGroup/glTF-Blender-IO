@@ -2150,6 +2150,46 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.textures.length, 20);
             });
 
+            it('exports addtional textures & images', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '33_unused_texture_and_image.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                assert.strictEqual(asset.images.length, 3);
+                assert.strictEqual(asset.textures.length, 2);
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.extras['additionalTextures'].length, 1);
+            });
+
+            it('exports addtional textures', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '33_unused_texture.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                assert.strictEqual(asset.images.length, 2);
+                assert.strictEqual(asset.textures.length, 2);
+                assert.strictEqual(asset.materials.length, 1);
+                assert.strictEqual(asset.extras['additionalTextures'].length, 1);
+            });
+
+            it('exports addtional images', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '33_unused_image.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                assert.strictEqual(asset.images.length, 3);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.materials.length, 1);
+                assert.ok(!("extras" in asset));
+            });
+
+            it('exports no addtional images & textures', function() {
+                let gltfPath_1 = path.resolve(outDirPath, '33_no_unused_texture_and_image.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                assert.strictEqual(asset.images.length, 1);
+                assert.strictEqual(asset.textures.length, 1);
+                assert.strictEqual(asset.materials.length, 1);
+                assert.ok(!("extras" in asset));
+            });
+
         });
     });
 });

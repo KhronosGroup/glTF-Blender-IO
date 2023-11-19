@@ -136,14 +136,14 @@ def __gather_mime_type(sockets, export_image, export_settings):
                 return "image/webp"
             else:
                 # If we keep image as is (no channel composition), we need to keep original format (for WebP)
-                image = export_image.blender_image()
+                image = export_image.blender_image(export_settings)
                 if image is not None and __is_blender_image_a_webp(image):
                     return "image/webp"
                 return "image/png"
 
     if export_settings["gltf_image_format"] == "AUTO":
         if export_image.original is None: # We are going to create a new image
-            image = export_image.blender_image()
+            image = export_image.blender_image(export_settings)
         else:
             # Using original image
             image = export_image.original
@@ -412,3 +412,39 @@ def __is_blender_image_a_webp(image: bpy.types.Image) -> bool:
     else:
         path = image.filepath_raw.lower()
         return path.endswith('.webp')
+
+def get_gltf_image_from_blender_image(blender_image_name, export_settings):
+    image_data = ExportImage.from_blender_image(bpy.data.images[blender_image_name])
+
+    name = __gather_name(image_data, export_settings)
+    mime_type = __get_mime_type_of_image(blender_image_name, export_settings)
+
+    uri, _ = __gather_uri(image_data, mime_type, name, export_settings)
+    buffer_view, _ = __gather_buffer_view(image_data, mime_type, name, export_settings)
+
+    return gltf2_io.Image(
+        buffer_view=buffer_view,
+        extensions=None,
+        extras=None,
+        mime_type=mime_type,
+        name=name,
+        uri=uri
+    )
+
+def __get_mime_type_of_image(blender_image_name, export_settings):
+
+    image = bpy.data.images[blender_image_name]
+    if image.channels == 4:
+        if __is_blender_image_a_webp(image):
+            return "image/webp"
+        return "image/png"
+
+    if export_settings["gltf_image_format"] == "AUTO":
+        if __is_blender_image_a_jpeg(image):
+            return "image/jpeg"
+        elif __is_blender_image_a_webp(image):
+            return "image/webp"
+        return "image/png"
+
+    elif export_settings["gltf_image_format"] == "JPEG":
+        return "image/jpeg"

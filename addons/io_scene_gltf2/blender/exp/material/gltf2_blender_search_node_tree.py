@@ -125,6 +125,10 @@ def from_socket(start_socket: NodeTreeSearchResult,
     if start_socket.socket is None:
         return []
 
+    # Search if direct node of the socket matches the filter
+    if shader_node_filter(start_socket.socket.node):
+        return [NodeTreeSearchResult(start_socket.socket.node, [], start_socket.group_path.copy())]
+
     return __search_from_socket(start_socket.socket, shader_node_filter, [], start_socket.group_path)
 
 @cached

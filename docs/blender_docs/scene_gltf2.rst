@@ -903,6 +903,10 @@ Create WebP
    For already WebP textures, nothing happen.
 WebP fallback
    For all WebP textures, create a png fallback texture.
+Unused images
+   Export images that are not used in any material.
+Unused textures
+   Export texture info (sampler, image, texcoord) that are not used in any material.
 
 Data - Shape Keys
 ^^^^^^^^^^^^^^^^^

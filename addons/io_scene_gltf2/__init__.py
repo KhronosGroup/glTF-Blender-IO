@@ -357,6 +357,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default='EXPORT'
     )
 
+    export_unused_images: BoolProperty(
+        name='Unused images',
+        description='Export images not assigned to any material',
+        default=False)
+
+    export_unused_textures: BoolProperty(
+        name='Unused textures',
+        description='Export image texture nodes not assigned to any material',
+        default=False)
+
     export_colors: BoolProperty(
         name='dummy',
         description='Keep for compatibility only',
@@ -828,6 +838,11 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # All custom export settings are stored in this container.
         export_settings = {}
 
+        export_settings['exported_images'] = {}
+        export_settings['exported_texture_nodes'] = []
+        export_settings['additional_texture_export'] = []
+        export_settings['additional_texture_export_current_idx'] = 0
+
         export_settings['timestamp'] = datetime.datetime.now()
         export_settings['gltf_export_id'] = self.gltf_export_id
         export_settings['gltf_filepath'] = self.filepath
@@ -866,6 +881,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_attributes'] = self.export_attributes
         export_settings['gltf_cameras'] = self.export_cameras
+
+        export_settings['gltf_unused_textures'] = self.export_unused_textures
+        export_settings['gltf_unused_images'] = self.export_unused_images
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
@@ -1197,6 +1215,34 @@ class GLTF_PT_export_data_material(bpy.types.Panel):
         col = layout.column()
         col.active = operator.export_image_format != "WEBP"
         col.prop(operator, "export_image_webp_fallback")
+
+class GLTF_PT_export_unsed_tex_image(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Unused Textures & Images"
+    bl_parent_id = "GLTF_PT_export_data_material"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        row = layout.row()
+        row.prop(operator, 'export_unused_images')
+        row = layout.row()
+        row.prop(operator, 'export_unused_textures')
+
 
 class GLTF_PT_export_data_lighting(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -1920,6 +1966,7 @@ classes = (
     GLTF_PT_export_data_scene,
     GLTF_PT_export_data_mesh,
     GLTF_PT_export_data_material,
+    GLTF_PT_export_unsed_tex_image,
     GLTF_PT_export_data_shapekeys,
     GLTF_PT_export_data_sk_optimize,
     GLTF_PT_export_data_armature,
