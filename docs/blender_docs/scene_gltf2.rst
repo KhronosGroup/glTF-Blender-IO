@@ -845,6 +845,9 @@ Y Up
 Data - Scene Graph
 ^^^^^^^^^^^^^^^^^^
 
+Geometry Nodes Instances
+   Export Geometry nodes instances. This feature is experimental.
+
 GPU Instances
    Export using ``EXT_mesh_gpu_instancing`` extensions.
 
