@@ -269,7 +269,7 @@ class VExportTree:
         # standard children (of object, or of instance collection)
         if blender_bone is None:
             for child_object in blender_children[blender_object]:
-                if child_object.parent_bone:
+                if child_object.parent_bone and child_object.parent_type in ("BONE", "BONE_RELATIVE"):
                     # Object parented to bones
                     # Will be manage later
                     continue
