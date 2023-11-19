@@ -108,6 +108,7 @@ def gather_material(blender_material, export_settings):
     )
 
     uvmap_infos = {}
+    udim_infos = {}
 
     # Get all textures nodes that are not used in the material
     if export_settings['gltf_unused_textures'] is True:
