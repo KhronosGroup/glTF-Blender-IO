@@ -214,8 +214,8 @@ def __get_image_data(sockets, default_sockets, use_tile, export_settings) -> Exp
         # First checking if texture used is UDIM
         # In that case, we return no texture data for now, and only get that this texture is UDIM
         # This will be used later
-        if any([r.shader_node.image.source == "TILED" for r in results if r.shader_node.image is not None]):
-            return ExportImage(), [r.shader_node.image for r in results if r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
+        if any([r.shader_node.image.source == "TILED" for r in results if r is not None and r.shader_node.image is not None]):
+            return ExportImage(), [r.shader_node.image for r in results if r is not None and r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
 
     # If we are here, we are in UDIM split process
     # Check if we need a simple mapping or more complex calculation
@@ -244,7 +244,7 @@ def __get_image_data(sockets, default_sockets, use_tile, export_settings) -> Exp
 
     if need_to_check_anisotropy is True and is_anisotropy is False:
         # We are not in complex node setup, so we can try to get the image data from grayscale textures
-        return __get_image_data_grayscale_anisotropy(sockets, results, export_settings)
+        return __get_image_data_grayscale_anisotropy(sockets, results, export_settings), None
 
     return __get_image_data_mapping(sockets, default_sockets, results, use_tile, export_settings), None
 
