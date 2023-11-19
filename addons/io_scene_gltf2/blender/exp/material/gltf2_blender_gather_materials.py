@@ -232,12 +232,6 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
         uvmap_infos.update(uvmap_info)
         udim_infos.update(udim_info)
 
-    # KHR_materials_anisotropy
-    anisotropy_extension, uvmap_info = export_anisotropy(blender_material, export_settings)
-    if anisotropy_extension:
-        extensions["KHR_materials_anisotropy"] = anisotropy_extension
-        uvmap_infos.update(uvmap_info)
-
     # KHR_materials_ior
     # Keep this extension at the end, because we export it only if some others are exported
     ior_extension = export_ior(blender_material, extensions, export_settings)
