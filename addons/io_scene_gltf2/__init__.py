@@ -261,6 +261,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    export_gn_mesh: BoolProperty(
+        name='Geometry Nodes Instances (Experimental)',
+        description='Export Geometry nodes instance meshes',
+        default=False
+    )
+
     export_draco_mesh_compression_enable: BoolProperty(
         name='Draco mesh compression',
         description='Compress mesh using Draco',
@@ -818,6 +824,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         else:
             export_settings['gltf_draco_mesh_compression'] = False
 
+        export_settings['gltf_gn_mesh'] = self.export_gn_mesh
+
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_attributes'] = self.export_attributes
         export_settings['gltf_cameras'] = self.export_cameras
@@ -1075,6 +1083,7 @@ class GLTF_PT_export_data_scene(bpy.types.Panel):
 
         sfile = context.space_data
         operator = sfile.active_operator
+        layout.prop(operator, 'export_gn_mesh')
         layout.prop(operator, 'export_gpu_instances')
         layout.prop(operator, 'export_hierarchy_flatten_objs')
 
@@ -1110,7 +1119,6 @@ class GLTF_PT_export_data_mesh(bpy.types.Panel):
         col = layout.column()
         col.prop(operator, 'use_mesh_edges')
         col.prop(operator, 'use_mesh_vertices')
-
 
 class GLTF_PT_export_data_material(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'

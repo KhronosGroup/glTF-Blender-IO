@@ -233,14 +233,14 @@ def gather_action_animations(  obj_uuid: int,
     current_action = None
     current_sk_action = None
     current_world_matrix = None
-    if blender_object.animation_data and blender_object.animation_data.action:
+    if blender_object and blender_object.animation_data and blender_object.animation_data.action:
         # There is an active action. Storing it, to be able to restore after switching all actions during export
         current_action = blender_object.animation_data.action
     elif len(blender_actions) != 0 and blender_object.animation_data is not None and blender_object.animation_data.action is None:
         # No current action set, storing world matrix of object
         current_world_matrix = blender_object.matrix_world.copy()
 
-    if blender_object.type == "MESH" \
+    if blender_object and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None \
@@ -249,7 +249,7 @@ def gather_action_animations(  obj_uuid: int,
 
     # Remove any solo (starred) NLA track. Restored after export
     solo_track = None
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         for track in blender_object.animation_data.nla_tracks:
             if track.is_solo:
                 solo_track = track
@@ -257,11 +257,11 @@ def gather_action_animations(  obj_uuid: int,
                 break
 
     # Remove any tweak mode. Restore after export
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         restore_tweak_mode = blender_object.animation_data.use_tweak_mode
 
     # Remove use of NLA. Restore after export
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         current_use_nla = blender_object.animation_data.use_nla
         blender_object.animation_data.use_nla = False
 
@@ -410,7 +410,7 @@ def gather_action_animations(  obj_uuid: int,
 
     # Restore action status
     # TODO: do this in a finally
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         if blender_object.animation_data.action is not None:
             if current_action is None:
                 # remove last exported action
@@ -425,14 +425,14 @@ def gather_action_animations(  obj_uuid: int,
         blender_object.animation_data.use_tweak_mode = restore_tweak_mode
         blender_object.animation_data.use_nla = current_use_nla
 
-    if blender_object.type == "MESH" \
+    if blender_object and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
         reset_sk_data(blender_object, blender_actions, export_settings)
         blender_object.data.shape_keys.animation_data.action = current_sk_action
 
-    if current_world_matrix is not None:
+    if blender_object and current_world_matrix is not None:
         blender_object.matrix_world = current_world_matrix
 
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, True)
@@ -451,7 +451,7 @@ def __get_blender_actions(obj_uuid: str,
 
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
 
-    if blender_object.animation_data is not None:
+    if blender_object and blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
             blender_actions.append(blender_object.animation_data.action)
@@ -472,7 +472,7 @@ def __get_blender_actions(obj_uuid: str,
                     action_on_type[strip.action.name] = "OBJECT"
 
     # For caching, actions linked to SK must be after actions about TRS
-    if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
+    if export_settings['gltf_morph_anim'] and blender_object and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
@@ -498,7 +498,7 @@ def __get_blender_actions(obj_uuid: str,
     # But only if armature has already some animation_data
     # If not, we says that this armature is never animated, so don't add these additional actions
     if export_settings['gltf_export_anim_single_armature'] is True:
-        if blender_object.type == "ARMATURE" and blender_object.animation_data is not None:
+        if blender_object and blender_object.type == "ARMATURE" and blender_object.animation_data is not None:
             if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
                 # Keep all actions on objects (no Shapekey animation)
                 for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
