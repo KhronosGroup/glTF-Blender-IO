@@ -37,7 +37,7 @@ def export_volume(blender_material, export_settings):
     thickness_socket = get_socket_from_gltf_material_node(blender_material.node_tree, blender_material.use_nodes, 'Thickness')
     if thickness_socket.socket is None:
         # If no thickness (here because there is no glTF Material Output node), no volume extension export
-            return None, {}
+            return None, {}, {}
 
     density_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Density', volume=True)
     attenuation_color_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Color', volume=True)
@@ -63,7 +63,7 @@ def export_volume(blender_material, export_settings):
         val = thickness_socket.socket.default_value
         if val == 0.0:
             # If no thickness, no volume extension export
-            return None, {}
+            return None, {}, {}
         volume_extension['thicknessFactor'] = val
 
         # Storing path for KHR_animation_pointer
@@ -90,8 +90,9 @@ def export_volume(blender_material, export_settings):
     if has_thickness_texture:
         thickness_slots = (thickness_socket,)
 
+    udim_info = {}
     if len(thickness_slots) > 0:
-        combined_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             thickness_socket,
             thickness_slots,
             (),
@@ -110,4 +111,4 @@ def export_volume(blender_material, export_settings):
 
         export_settings['current_texture_transform'] = {}
 
-    return Extension('KHR_materials_volume', volume_extension, False), {'thicknessTexture': uvmap_info}
+    return Extension('KHR_materials_volume', volume_extension, False), {'thicknessTexture': uvmap_info}, {'thicknessTexture': udim_info} if len(udim_info.keys()) > 0 else {}

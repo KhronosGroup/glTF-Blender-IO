@@ -25,6 +25,7 @@ from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com import gltf2_blender_json
 from . import gltf2_blender_gather
 from .gltf2_blender_gltf2_exporter import GlTF2Exporter
+from .gltf2_blender_gltf2_exporter import fix_json
 
 
 def save(context, export_settings):
@@ -74,7 +75,7 @@ def __export(export_settings):
 
     # now that addons possibly add some fields in json, we can fix if needed
     # Also deleting no more needed extensions, based on what we detected above
-    json = __fix_json(exporter.glTF.to_dict(), export_settings)
+    json = fix_json(exporter.glTF.to_dict(), export_settings)
 
     # IOR is a special case where we need to export only if some other extensions are used
     __check_ior(json, export_settings)
@@ -89,6 +90,16 @@ def __export(export_settings):
     # Or extensionsUsed / extensionsRequired that are empty
     # (because we removed some extensions)
     json = __fix_json(json, export_settings)
+
+    # Convert additional data if needed
+    if export_settings['gltf_unused_textures'] is True:
+        additional_json_textures = fix_json([i.to_dict() for i in exporter.additional_data.additional_textures])
+
+        # Now that we have the final json, we can add the additional data
+        if len(additional_json_textures) > 0:
+            if json.get('extras') is None:
+                json['extras'] = {}
+            json['extras']['additionalTextures'] = additional_json_textures
 
     return json, buffer
 
@@ -201,6 +212,8 @@ def __gather_gltf(exporter, export_settings):
     for animation in animations:
         exporter.add_animation(animation)
     exporter.traverse_unused_skins(unused_skins)
+    exporter.traverse_additional_textures()
+    exporter.traverse_additional_images()
 
 
 def __create_buffer(exporter, export_settings):

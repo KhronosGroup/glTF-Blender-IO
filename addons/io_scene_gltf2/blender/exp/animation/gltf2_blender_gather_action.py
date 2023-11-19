@@ -51,6 +51,9 @@ def gather_actions_animations(export_settings):
             else:
                 continue
 
+        if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
+            continue
+
         animations_, merged_tracks = gather_action_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
 
@@ -75,6 +78,9 @@ def prepare_actions_range(export_settings):
 
     vtree = export_settings['vtree']
     for obj_uuid in vtree.get_all_objects():
+
+        if vtree.nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
+            continue
 
         # Do not manage not exported objects
         if vtree.nodes[obj_uuid].node is None:
@@ -233,14 +239,14 @@ def gather_action_animations(  obj_uuid: int,
     current_action = None
     current_sk_action = None
     current_world_matrix = None
-    if blender_object.animation_data and blender_object.animation_data.action:
+    if blender_object and blender_object.animation_data and blender_object.animation_data.action:
         # There is an active action. Storing it, to be able to restore after switching all actions during export
         current_action = blender_object.animation_data.action
     elif len(blender_actions) != 0 and blender_object.animation_data is not None and blender_object.animation_data.action is None:
         # No current action set, storing world matrix of object
         current_world_matrix = blender_object.matrix_world.copy()
 
-    if blender_object.type == "MESH" \
+    if blender_object and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None \
@@ -249,7 +255,7 @@ def gather_action_animations(  obj_uuid: int,
 
     # Remove any solo (starred) NLA track. Restored after export
     solo_track = None
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         for track in blender_object.animation_data.nla_tracks:
             if track.is_solo:
                 solo_track = track
@@ -257,11 +263,11 @@ def gather_action_animations(  obj_uuid: int,
                 break
 
     # Remove any tweak mode. Restore after export
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         restore_tweak_mode = blender_object.animation_data.use_tweak_mode
 
     # Remove use of NLA. Restore after export
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         current_use_nla = blender_object.animation_data.use_nla
         blender_object.animation_data.use_nla = False
 
@@ -410,7 +416,7 @@ def gather_action_animations(  obj_uuid: int,
 
     # Restore action status
     # TODO: do this in a finally
-    if blender_object.animation_data:
+    if blender_object and blender_object.animation_data:
         if blender_object.animation_data.action is not None:
             if current_action is None:
                 # remove last exported action
@@ -425,14 +431,14 @@ def gather_action_animations(  obj_uuid: int,
         blender_object.animation_data.use_tweak_mode = restore_tweak_mode
         blender_object.animation_data.use_nla = current_use_nla
 
-    if blender_object.type == "MESH" \
+    if blender_object and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
         reset_sk_data(blender_object, blender_actions, export_settings)
         blender_object.data.shape_keys.animation_data.action = current_sk_action
 
-    if current_world_matrix is not None:
+    if blender_object and current_world_matrix is not None:
         blender_object.matrix_world = current_world_matrix
 
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, True)
@@ -451,12 +457,18 @@ def __get_blender_actions(obj_uuid: str,
 
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
 
-    if blender_object.animation_data is not None:
+    if blender_object and blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
-            blender_actions.append(blender_object.animation_data.action)
-            blender_tracks[blender_object.animation_data.action.name] = None
-            action_on_type[blender_object.animation_data.action.name] = "OBJECT"
+
+            # Check the action is not in list of actions to ignore
+            if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                    and id(blender_object.animation_data.action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                pass # We ignore this action
+            else:
+                blender_actions.append(blender_object.animation_data.action)
+                blender_tracks[blender_object.animation_data.action.name] = None
+                action_on_type[blender_object.animation_data.action.name] = "OBJECT"
 
         # Collect associated strips from NLA tracks.
         if export_settings['gltf_animation_mode'] == "ACTIONS":
@@ -467,20 +479,32 @@ def __get_blender_actions(obj_uuid: str,
                 if track.strips is None or len(non_muted_strips) != 1:
                     continue
                 for strip in non_muted_strips:
+
+                    # Check the action is not in list of actions to ignore
+                    if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                            and id(strip.action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                        continue # We ignore this action
+
                     blender_actions.append(strip.action)
                     blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                     action_on_type[strip.action.name] = "OBJECT"
 
     # For caching, actions linked to SK must be after actions about TRS
-    if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
+    if export_settings['gltf_morph_anim'] and blender_object and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
 
             if blender_object.data.shape_keys.animation_data.action is not None:
-                blender_actions.append(blender_object.data.shape_keys.animation_data.action)
-                blender_tracks[blender_object.data.shape_keys.animation_data.action.name] = None
-                action_on_type[blender_object.data.shape_keys.animation_data.action.name] = "SHAPEKEY"
+
+                # Check the action is not in list of actions to ignore
+                if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                        and id(blender_object.data.shape_keys.animation_data.action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                    pass # We ignore this action
+                else:
+                    blender_actions.append(blender_object.data.shape_keys.animation_data.action)
+                    blender_tracks[blender_object.data.shape_keys.animation_data.action.name] = None
+                    action_on_type[blender_object.data.shape_keys.animation_data.action.name] = "SHAPEKEY"
 
             if export_settings['gltf_animation_mode'] == "ACTIONS":
                 for track in blender_object.data.shape_keys.animation_data.nla_tracks:
@@ -490,6 +514,11 @@ def __get_blender_actions(obj_uuid: str,
                     if track.strips is None or len(non_muted_strips) != 1:
                         continue
                     for strip in non_muted_strips:
+                        # Check the action is not in list of actions to ignore
+                        if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                                and id(strip.action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                            continue # We ignore this action
+
                         blender_actions.append(strip.action)
                         blender_tracks[strip.action.name] = track.name # Always set after possible active action -> None will be overwrite
                         action_on_type[strip.action.name] = "SHAPEKEY"
@@ -498,7 +527,7 @@ def __get_blender_actions(obj_uuid: str,
     # But only if armature has already some animation_data
     # If not, we says that this armature is never animated, so don't add these additional actions
     if export_settings['gltf_export_anim_single_armature'] is True:
-        if blender_object.type == "ARMATURE" and blender_object.animation_data is not None:
+        if blender_object and blender_object.type == "ARMATURE" and blender_object.animation_data is not None:
             if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
                 # Keep all actions on objects (no Shapekey animation)
                 for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
@@ -509,6 +538,12 @@ def __get_blender_actions(obj_uuid: str,
                     # Check if this action is already taken into account
                     if act.name in blender_tracks.keys():
                         continue
+
+                    # Check the action is not in list of actions to ignore
+                    if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                            and id(act) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                        continue # We ignore this action
+
                     blender_actions.append(act)
                     blender_tracks[act.name] = None
                     action_on_type[act.name] = "OBJECT"

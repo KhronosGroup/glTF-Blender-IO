@@ -155,21 +155,21 @@ def get_attribute_type(component_type, data_type):
         return {
             gltf2_io_constants.ComponentType.Float: "FLOAT",
             gltf2_io_constants.ComponentType.UnsignedByte: "INT" # What is the best for compatibility?
-        }[component_type]
+        }.get(component_type, None)
     elif gltf2_io_constants.DataType.num_elements(data_type) == 2:
         return {
             gltf2_io_constants.ComponentType.Float: "FLOAT2"
-        }[component_type]
+        }.get(component_type, None)
     elif gltf2_io_constants.DataType.num_elements(data_type) == 3:
         return {
             gltf2_io_constants.ComponentType.Float: "FLOAT_VECTOR"
-        }[component_type]
+        }.get(component_type, None)
     elif gltf2_io_constants.DataType.num_elements(data_type) == 4:
         return {
             gltf2_io_constants.ComponentType.Float: "FLOAT_COLOR",
             gltf2_io_constants.ComponentType.UnsignedShort: "BYTE_COLOR",
             gltf2_io_constants.ComponentType.UnsignedByte: "BYTE_COLOR" # What is the best for compatibility?
-        }[component_type]
+        }.get(component_type, None)
     else:
         pass
 
@@ -179,6 +179,14 @@ def get_gltf_interpolation(interpolation):
         "LINEAR": "LINEAR",
         "CONSTANT": "STEP"
     }.get(interpolation, "LINEAR")
+
+def get_anisotropy_rotation_gltf_to_blender(rotation):
+    # glTF rotation is in randian, Blender in 0 to 1
+    return rotation / (2 * np.pi)
+
+def get_anisotropy_rotation_blender_to_gltf(rotation):
+    # glTF rotation is in randian, Blender in 0 to 1
+    return rotation * (2 * np.pi)
 
 
 def yvof_blender_to_gltf(angle, width, height, sensor_fit):

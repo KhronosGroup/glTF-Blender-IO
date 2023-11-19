@@ -21,6 +21,7 @@ from ...io.com import gltf2_io
 from ...io.com import gltf2_io_extensions
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
+from ..com.gltf2_blender_default import LIGHTS
 from ..com import gltf2_blender_math
 from . import gltf2_blender_gather_tree
 from . import gltf2_blender_gather_skins
@@ -39,9 +40,9 @@ def gather_node(vnode, export_settings):
         vnode.skin = skin
 
     node = gltf2_io.Node(
-        camera=__gather_camera(blender_object, export_settings),
+        camera=__gather_camera(vnode, export_settings),
         children=__gather_children(vnode, export_settings),
-        extensions=__gather_extensions(blender_object, export_settings),
+        extensions=__gather_extensions(vnode, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
         mesh=__gather_mesh(vnode, blender_object, export_settings),
@@ -65,16 +66,20 @@ def gather_node(vnode, export_settings):
     return node
 
 
-def __gather_camera(blender_object, export_settings):
-    if blender_object.type != 'CAMERA':
+def __gather_camera(vnode, export_settings):
+    if not vnode.blender_object:
+        return
+    if vnode.blender_type == VExportNode.COLLECTION:
+        return None
+    if vnode.blender_object.type != 'CAMERA':
         return None
 
-    cam =  gltf2_blender_gather_cameras.gather_camera(blender_object.data, export_settings)
+    cam =  gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
 
     if len(export_settings['current_paths']) > 0:
-        export_settings['KHR_animation_pointer']['cameras'][id(blender_object.data)] = {}
-        export_settings['KHR_animation_pointer']['cameras'][id(blender_object.data)]['paths'] = export_settings['current_paths'].copy()
-        export_settings['KHR_animation_pointer']['cameras'][id(blender_object.data)]['glTF_camera'] = cam
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)] = {}
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['glTF_camera'] = cam
 
     export_settings['current_paths'] = {}
 
@@ -179,11 +184,18 @@ def __find_parent_joint(joints, name):
     return None
 
 
-def __gather_extensions(blender_object, export_settings):
+def __gather_extensions(vnode, export_settings):
+    blender_object = vnode.blender_object
     extensions = {}
 
-    if export_settings["gltf_lights"] and (blender_object.type == "LAMP" or blender_object.type == "LIGHT"):
+    blender_lamp = None
+    if export_settings["gltf_lights"] and vnode.blender_type == VExportNode.INSTANCE:
+        if vnode.data.type in LIGHTS:
+            blender_lamp = vnode.data
+    elif export_settings["gltf_lights"] and blender_object is not None and (blender_object.type == "LAMP" or blender_object.type == "LIGHT"):
         blender_lamp = blender_object.data
+
+    if blender_lamp is not None:
         light = gltf2_blender_gather_lights.gather_lights_punctual(
             blender_lamp,
             export_settings
@@ -220,83 +232,99 @@ def __gather_matrix(blender_object, export_settings):
     # return blender_object.matrix_local
     return []
 
-
 def __gather_mesh(vnode, blender_object, export_settings):
-    if blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
+    if vnode.blender_type == VExportNode.COLLECTION:
+        return None
+    if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
         return __gather_mesh_from_nonmesh(blender_object, export_settings)
+    if blender_object is None and type(vnode.data).__name__ not in ["Mesh"]:
+        return None #TODO
+    if blender_object is None:
+        # GN instance
+        blender_mesh = vnode.data
+        # Keep materials from the tmp mesh, but if no material, keep from object
+        materials = tuple(mat for mat in blender_mesh.materials)
+        if len(materials) == 1 and materials[0] is None:
+            materials = tuple(ms.material for ms in vnode.original_object.material_slots)
 
-    if blender_object.type != "MESH":
-        return None
-
-    # For duplis instancer, when show is off -> export as empty
-    if vnode.force_as_empty is True:
-        return None
-
-    # Be sure that object is valid (no NaN for example)
-    res = blender_object.data.validate()
-    if res is True:
-        print_console("WARNING", "Mesh " + blender_object.data.name + " is not valid, and may be exported wrongly")
-
-    modifiers = blender_object.modifiers
-    if len(modifiers) == 0:
+        uuid_for_skined_data = None
         modifiers = None
 
+        if blender_mesh is None:
+            return None
 
-    if export_settings['gltf_apply']:
-        if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
+    else:
+        if blender_object.type != "MESH":
+            return None
+        # For duplis instancer, when show is off -> export as empty
+        if vnode.force_as_empty is True:
+            return None
+        # Be sure that object is valid (no NaN for example)
+        res = blender_object.data.validate()
+        if res is True:
+            print_console("WARNING", "Mesh " + blender_object.data.name + " is not valid, and may be exported wrongly")
+
+        modifiers = blender_object.modifiers
+        if len(modifiers) == 0:
+            modifiers = None
+
+
+        if export_settings['gltf_apply']:
+            if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
+                blender_mesh = blender_object.data
+                # Keep materials from object, as no modifiers are applied, so no risk that
+                # modifiers changed them
+                materials = tuple(ms.material for ms in blender_object.material_slots)
+            else:
+                armature_modifiers = {}
+                if export_settings['gltf_skins']:
+                    # temporarily disable Armature modifiers if exporting skins
+                    for idx, modifier in enumerate(blender_object.modifiers):
+                        if modifier.type == 'ARMATURE':
+                            armature_modifiers[idx] = modifier.show_viewport
+                            modifier.show_viewport = False
+
+                depsgraph = bpy.context.evaluated_depsgraph_get()
+                blender_mesh_owner = blender_object.evaluated_get(depsgraph)
+                blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
+                for prop in blender_object.data.keys():
+                    blender_mesh[prop] = blender_object.data[prop]
+
+                if export_settings['gltf_skins']:
+                    # restore Armature modifiers
+                    for idx, show_viewport in armature_modifiers.items():
+                        blender_object.modifiers[idx].show_viewport = show_viewport
+
+                # Keep materials from the newly created tmp mesh, but if no materials, keep from object
+                materials = tuple(mat for mat in blender_mesh.materials)
+                if len(materials) == 1 and materials[0] is None:
+                    materials = tuple(ms.material for ms in blender_object.material_slots)
+
+        else:
             blender_mesh = blender_object.data
+            if not export_settings['gltf_skins']:
+                modifiers = None
+            else:
+                # Check if there is an armature modidier
+                if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
+                    modifiers = None
+
             # Keep materials from object, as no modifiers are applied, so no risk that
             # modifiers changed them
             materials = tuple(ms.material for ms in blender_object.material_slots)
-        else:
-            armature_modifiers = {}
-            if export_settings['gltf_skins']:
-                # temporarily disable Armature modifiers if exporting skins
-                for idx, modifier in enumerate(blender_object.modifiers):
-                    if modifier.type == 'ARMATURE':
-                        armature_modifiers[idx] = modifier.show_viewport
-                        modifier.show_viewport = False
 
-            depsgraph = bpy.context.evaluated_depsgraph_get()
-            blender_mesh_owner = blender_object.evaluated_get(depsgraph)
-            blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
-            for prop in blender_object.data.keys():
-                blender_mesh[prop] = blender_object.data[prop]
-
-            if export_settings['gltf_skins']:
-                # restore Armature modifiers
-                for idx, show_viewport in armature_modifiers.items():
-                    blender_object.modifiers[idx].show_viewport = show_viewport
-
-            # Keep materials from the newly created tmp mesh
-            materials = tuple(mat for mat in blender_mesh.materials)
-            if len(materials) == 1 and materials[0] is None:
-                    materials = tuple(ms.material for ms in blender_object.material_slots)
-    else:
-        blender_mesh = blender_object.data
-        # If no skin are exported, no need to have vertex group, this will create a cache miss
-        if not export_settings['gltf_skins']:
-            modifiers = None
-        else:
-            # Check if there is an armature modidier
-            if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
-                modifiers = None
-        # Keep materials from object, as no modifiers are applied, so no risk that
-        # modifiers changed them
-        materials = tuple(ms.material for ms in blender_object.material_slots)
-
-    # retrieve armature
-    # Because mesh data will be transforms to skeleton space,
-    # we can't instantiate multiple object at different location, skined by same armature
-    uuid_for_skined_data = None
-    if export_settings['gltf_skins']:
-        for idx, modifier in enumerate(blender_object.modifiers):
-            if modifier.type == 'ARMATURE':
-                uuid_for_skined_data = vnode.uuid
+        # retrieve armature
+        # Because mesh data will be transforms to skeleton space,
+        # we can't instantiate multiple object at different location, skined by same armature
+        uuid_for_skined_data = None
+        if export_settings['gltf_skins']:
+            for idx, modifier in enumerate(blender_object.modifiers):
+                if modifier.type == 'ARMATURE':
+                    uuid_for_skined_data = vnode.uuid
 
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                    uuid_for_skined_data,
-                                                   blender_object.vertex_groups,
+                                                   blender_object.vertex_groups if blender_object else None,
                                                    modifiers,
                                                    materials,
                                                    None,
@@ -354,10 +382,12 @@ def __gather_mesh_from_nonmesh(blender_object, export_settings):
 
 def __gather_name(blender_object, export_settings):
 
+    new_name = blender_object.name if blender_object else "GN Instance"
+
     class GltfHookName:
         def __init__(self, name):
             self.name = name
-    gltf_hook_name = GltfHookName(blender_object.name)
+    gltf_hook_name = GltfHookName(new_name)
 
     export_user_extensions('gather_node_name_hook', export_settings, gltf_hook_name, blender_object)
     return gltf_hook_name.name
@@ -385,7 +415,7 @@ def __gather_trans_rot_scale(vnode, export_settings):
     rot = __convert_swizzle_rotation(rot, export_settings)
     sca = __convert_swizzle_scale(sca, export_settings)
 
-    if vnode.blender_object.instance_type == 'COLLECTION' and vnode.blender_object.instance_collection:
+    if vnode.blender_object and vnode.blender_type != VExportNode.COLLECTION and vnode.blender_object.instance_type == 'COLLECTION' and vnode.blender_object.instance_collection:
         offset = -__convert_swizzle_location(
             vnode.blender_object.instance_collection.instance_offset, export_settings)
 
@@ -413,8 +443,12 @@ def __gather_trans_rot_scale(vnode, export_settings):
     return translation, rotation, scale
 
 def gather_skin(vnode, export_settings):
+
+    if export_settings['vtree'].nodes[vnode].blender_type == VExportNode.COLLECTION:
+        return None
+
     blender_object = export_settings['vtree'].nodes[vnode].blender_object
-    modifiers = {m.type: m for m in blender_object.modifiers}
+    modifiers = {m.type: m for m in blender_object.modifiers} if blender_object else {}
     if "ARMATURE" not in modifiers or modifiers["ARMATURE"].object is None:
         return None
 

@@ -25,6 +25,7 @@ from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_specular import specular
 from .gltf2_blender_KHR_materials_sheen import sheen
+from .gltf2_blender_KHR_materials_anisotropy import anisotropy
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
@@ -187,6 +188,14 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         specular_tint_socket=pbr_node.inputs['Specular Tint']
     )
 
+    anisotropy(
+        mh,
+        location=locs['anisotropy'],
+        anisotropy_socket=pbr_node.inputs['Anisotropic'],
+        anisotropy_rotation_socket=pbr_node.inputs['Anisotropic Rotation'],
+        anisotropy_tangent_socket=pbr_node.inputs['Tangent']
+    )
+
     sheen(
         mh,
         location_sheenTint=locs['sheenColorTexture'],
@@ -231,6 +240,11 @@ def calc_locations(mh):
         specular_ext = {}
 
     try:
+        anisotropy_ext = mh.pymat.extensions['KHR_materials_anisotropy']
+    except:
+        anisotropy_ext = {}
+
+    try:
         sheen_ext = mh.pymat.extensions['KHR_materials_sheen']
     except:
         sheen_ext = {}
@@ -252,6 +266,9 @@ def calc_locations(mh):
         y -= height
     locs['specularColorTexture'] = (x, y)
     if 'specularColorTexture' in specular_ext:
+        y -= height
+    locs['anisotropy'] = (x, y)
+    if 'anisotropyTexture' in anisotropy_ext:
         y -= height
     locs['sheenRoughnessTexture'] = (x, y)
     if 'sheenRoughnessTexture' in sheen_ext:
