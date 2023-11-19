@@ -561,38 +561,3 @@ class GlTF2Exporter:
 
         # do nothing for any type that does not match a glTF schema (primitives)
         return node
-
-def fix_json(obj):
-    # TODO: move to custom JSON encoder
-    fixed = obj
-    if isinstance(obj, dict):
-        fixed = {}
-        for key, value in obj.items():
-            if key == 'extras' and value is not None:
-                fixed[key] = value
-                continue
-            if not __should_include_json_value(key, value):
-                continue
-            fixed[key] = fix_json(value)
-    elif isinstance(obj, list):
-        fixed = []
-        for value in obj:
-            fixed.append(fix_json(value))
-    elif isinstance(obj, float):
-        # force floats to int, if they are integers (prevent INTEGER_WRITTEN_AS_FLOAT validator warnings)
-        if int(obj) == obj:
-            return int(obj)
-    return fixed
-
-def __should_include_json_value(key, value):
-    allowed_empty_collections = ["KHR_materials_unlit", "KHR_materials_specular"]
-
-    if value is None:
-        return False
-    elif __is_empty_collection(value) and key not in allowed_empty_collections:
-        return False
-    return True
-
-
-def __is_empty_collection(value):
-    return (isinstance(value, dict) or isinstance(value, list)) and len(value) == 0

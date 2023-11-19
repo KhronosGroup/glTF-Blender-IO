@@ -66,7 +66,7 @@ def gather_material(blender_material, export_settings):
     # Reset exported images / textures nodes
     export_settings['exported_texture_nodes'] = []
     if blender_material.node_tree and blender_material.use_nodes:
-        nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+        nodes = get_material_nodes(blender_material.node_tree, [blender_material.node_tree], bpy.types.ShaderNodeTexImage)
     else:
         nodes = []
     for node in nodes:
@@ -113,7 +113,7 @@ def gather_material(blender_material, export_settings):
     # Get all textures nodes that are not used in the material
     if export_settings['gltf_unused_textures'] is True:
         if blender_material.node_tree and blender_material.use_nodes:
-            nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+            nodes = get_material_nodes(blender_material.node_tree, [blender_material.node_tree], bpy.types.ShaderNodeTexImage)
         else:
             nodes = []
         cpt_additional = 0
@@ -133,7 +133,7 @@ def gather_material(blender_material, export_settings):
 
         # Reset
         if blender_material.node_tree and blender_material.use_nodes:
-            nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeTexImage)
+            nodes = get_material_nodes(blender_material.node_tree, [blender_material.node_tree], bpy.types.ShaderNodeTexImage)
         else:
             nodes = []
         for node in nodes:

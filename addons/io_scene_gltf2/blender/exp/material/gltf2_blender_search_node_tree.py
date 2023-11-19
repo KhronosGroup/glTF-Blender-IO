@@ -619,9 +619,13 @@ def detect_anisotropy_nodes(
     if tex_ok is False:
         return False, None
 
+
+    strength, path = get_const_from_socket(NodeSocket(anisotropy_multiply_node.inputs[1], anisotropy_socket.group_path), 'VALUE')
+    rotation, path = get_const_from_socket(NodeSocket(anisotropy_rotation_node.inputs[1], anisotropy_socket.group_path), 'VALUE')
+
     return True, {
-        'anisotropyStrength': get_const_from_socket(NodeSocket(anisotropy_multiply_node.inputs[1], anisotropy_socket.group_path), 'VALUE'),
-        'anisotropyRotation': get_const_from_socket(NodeSocket(anisotropy_rotation_node.inputs[1], anisotropy_socket.group_path), 'VALUE'),
+        'anisotropyStrength': strength,
+        'anisotropyRotation': rotation,
         'tangent': tangent_node.node.uv_map,
         'tex_socket': NodeSocket(anisotropy_multiply_add_node.inputs[0], anisotropy_socket.group_path),
         }

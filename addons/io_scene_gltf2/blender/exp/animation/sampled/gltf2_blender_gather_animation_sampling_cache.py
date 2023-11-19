@@ -269,7 +269,12 @@ def get_cache_data(path: str,
             if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
                 continue
 
-            blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
+            blender_material = [m for m in bpy.data.materials if id(m) == mat]
+            if len(blender_material) == 0:
+                # This is not a material from Blender (coming from Geometry Node for example, so no animation on it)
+                continue
+            else:
+                blender_material = blender_material[0]
             if mat not in data.keys():
                 data[mat] = {}
 
