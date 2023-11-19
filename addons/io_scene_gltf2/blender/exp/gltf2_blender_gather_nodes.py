@@ -67,7 +67,7 @@ def gather_node(vnode, export_settings):
 
 
 def __gather_camera(vnode, export_settings):
-    if not export_settings['vnode'].blender_object:
+    if not vnode.blender_object:
         return
     if vnode.blender_type == VExportNode.COLLECTION:
         return None
