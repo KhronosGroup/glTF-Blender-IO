@@ -35,7 +35,7 @@ def export_volume(blender_material, export_settings):
         transmission_enabled = True
 
     if transmission_enabled is False:
-        return None, {}
+        return None, {}, {}
 
     volume_extension = {}
     has_thickness_texture = False
@@ -45,7 +45,7 @@ def export_volume(blender_material, export_settings):
     thickness_socket = get_socket_from_gltf_material_node(blender_material, 'Thickness')
     if thickness_socket.socket is None:
         # If no thickness (here because there is no glTF Material Output node), no volume extension export
-            return None, {}
+            return None, {}, {}
 
     density_socket = get_socket(blender_material, 'Density', volume=True)
     attenuation_color_socket = get_socket(blender_material, 'Color', volume=True)
@@ -64,7 +64,7 @@ def export_volume(blender_material, export_settings):
         val = thickness_socket.socket.default_value
         if val == 0.0:
             # If no thickness, no volume extension export
-            return None, {}
+            return None, {}, {}
         volume_extension['thicknessFactor'] = val
     elif has_image_node_from_socket(thickness_socket, export_settings):
         fac = get_factor_from_socket(thickness_socket, kind='VALUE')
@@ -76,8 +76,9 @@ def export_volume(blender_material, export_settings):
     if has_thickness_texture:
         thickness_slots = (thickness_socket,)
 
+    udim_info = {}
     if len(thickness_slots) > 0:
-        combined_texture, uvmap_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+        combined_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             thickness_socket,
             thickness_slots,
             (),
@@ -86,4 +87,4 @@ def export_volume(blender_material, export_settings):
         if has_thickness_texture:
             volume_extension['thicknessTexture'] = combined_texture
 
-    return Extension('KHR_materials_volume', volume_extension, False), {'thicknessTexture': uvmap_info}
+    return Extension('KHR_materials_volume', volume_extension, False), {'thicknessTexture': uvmap_info}, {'thicknessTexture': udim_info} if len(udim_info.keys()) > 0 else {}
