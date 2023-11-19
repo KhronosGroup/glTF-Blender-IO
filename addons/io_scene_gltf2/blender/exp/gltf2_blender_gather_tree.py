@@ -504,7 +504,10 @@ class VExportTree:
                 n.armature is not None and \
                 n.armature in self.nodes and \
                 n.blender_type == VExportNode.OBJECT and \
+                n.blender_object.type == "MESH" and \
                 hasattr(self.nodes[n.armature], "need_neutral_bone")]: #all skin meshes objects where neutral bone is needed
+                # Only for meshes, as curve can't have skin data (no weights pain available)
+
 
             if n.armature not in added_armatures:
 
