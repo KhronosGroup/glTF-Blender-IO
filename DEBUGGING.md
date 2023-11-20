@@ -10,7 +10,7 @@ These instructions are considered experimental.  They describe how to attach a P
 
 3. Launch VSCode, go to the "Extensions" tab, and install the `ms-python.python` extension from the "recommended" list.  (For more info see the [market page](https://marketplace.visualstudio.com/items?itemName=ms-python.python)).
 
-4. In the "Extensions" tab, install the Blender Development extension from JacquesLucke. (For more information see the [market page](https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development)  
+4. In the "Extensions" tab, install the Blender Development extension from JacquesLucke. (For more information see the [market page](https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development))
 
 5. Remove the existing `scripts/addons/io_scene_gltf2` folder from the Blender install folder, as this method will use the git source tree instead.
 
@@ -22,7 +22,7 @@ These instructions are considered experimental.  They describe how to attach a P
 
 
 ## Usage
- 
+
 In VSCode, open the command palette with `F1` or `Ctrl+Shift+P` (or `Cmd+Shift+P` on mac) to open the command palette. Type `Blender: Build and Start` into the command palette and select that option. In the next menu select `Choose a new Blender executable` and enter the path to the Blender executable to the version of your choice
 
 If this has been successful then Blender will launch and `Debug client attached` will be printed to the VSCode console.
@@ -48,4 +48,4 @@ See the documentation and video included with [blender-vscode](https://github.co
 
 ## Stop Debugging
 
-In VSCode, the far-right icon on the debug toolbar is a red square with a disconnected plug, with a "Disconnect" tool-tip.  Clicking this will detach the debugger and let Blender continue. However, as Blender was launched from VSCode, closing the shell that launched Blender (and therefore exiting VSCode) will close Blender. 
+In VSCode, the far-right icon on the debug toolbar is a red square with a disconnected plug, with a "Disconnect" tool-tip.  Clicking this will detach the debugger and let Blender continue. However, as Blender was launched from VSCode, closing the shell that launched Blender (and therefore exiting VSCode) will close Blender.
