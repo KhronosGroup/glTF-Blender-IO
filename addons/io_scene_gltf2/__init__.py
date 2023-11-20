@@ -371,7 +371,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False)
 
     export_colors: BoolProperty(
-        name='dummy',
+        name='Dummy',
         description='Keep for compatibility only',
         default=True
     )
