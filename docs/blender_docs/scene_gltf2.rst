@@ -864,6 +864,10 @@ GPU Instances
 Flatten Object Hierarchy
    Useful in case of non-decomposable TRS matrix. Only skined meshes will stay children of armature.
 
+Full Collection Hierarchy
+   Export collections as empty, keeping full hierarchy. If an object is in multiple collections,
+   it will be exported it only once, in the first collection it is found.
+
 Data - Mesh
 ^^^^^^^^^^^
 
@@ -884,6 +888,8 @@ Loose Edges
    Export loose edges as lines, using the material from the first material slot.
 Loose Points
    Export loose points as glTF points, using the material from the first material slot.
+Shared Accessor
+   For triangles, use shared accessor for indices. This is more efficient (smaller files when you have lots of materials).
 
 Data - Material
 ^^^^^^^^^^^^^^^
