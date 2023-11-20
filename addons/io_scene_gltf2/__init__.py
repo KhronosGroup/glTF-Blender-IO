@@ -363,8 +363,11 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False)
 
     export_unused_textures: BoolProperty(
-        name='Unused textures',
-        description='Export image texture nodes not assigned to any material',
+        name='Prepare Unused textures',
+        description=(
+            'Export image texture nodes not assigned to any material.'
+            'This feature is not standard, need an external extension to be included in the glTF file'
+        ),
         default=False)
 
     export_colors: BoolProperty(

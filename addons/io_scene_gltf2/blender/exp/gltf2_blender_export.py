@@ -76,10 +76,15 @@ def __export(export_settings):
         additional_json_textures = fix_json([i.to_dict() for i in exporter.additional_data.additional_textures])
 
         # Now that we have the final json, we can add the additional data
-        if len(additional_json_textures) > 0:
-            if json.get('extras') is None:
-                json['extras'] = {}
-            json['extras']['additionalTextures'] = additional_json_textures
+        # We can not do that for all people, because we don't want this extra to become "a standard"
+        # So let's use the "extras" field filled by a user extension
+
+        export_user_extensions('gather_gltf_additional_textures_hook', export_settings, json, additional_json_textures)
+
+        # if len(additional_json_textures) > 0:
+        #     if json.get('extras') is None:
+        #         json['extras'] = {}
+        #     json['extras']['additionalTextures'] = additional_json_textures
 
     return json, buffer
 
