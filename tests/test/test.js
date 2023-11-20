@@ -2150,7 +2150,8 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.textures.length, 20);
             });
 
-            it('exports addtional textures & images', function() {
+            // These tests are disabled because they require an user extension to be registered
+            /*it('exports addtional textures & images', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '33_unused_texture_and_image.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
@@ -2169,6 +2170,7 @@ describe('Exporter', function() {
                 assert.strictEqual(asset.materials.length, 1);
                 assert.strictEqual(asset.extras['additionalTextures'].length, 1);
             });
+            */
 
             it('exports addtional images', function() {
                 let gltfPath_1 = path.resolve(outDirPath, '33_unused_image.gltf');
