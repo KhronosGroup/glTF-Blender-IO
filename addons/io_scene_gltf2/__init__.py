@@ -365,13 +365,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_unused_textures: BoolProperty(
         name='Prepare Unused textures',
         description=(
-            'Export image texture nodes not assigned to any material.'
-            'This feature is not standard, need an external extension to be included in the glTF file'
+            'Export image texture nodes not assigned to any material. '
+            'This feature is not standard and needs an external extension to be included in the glTF file'
         ),
         default=False)
 
     export_colors: BoolProperty(
-        name='dummy',
+        name='Dummy',
         description='Keep for compatibility only',
         default=True
     )
@@ -535,7 +535,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_armature_object_remove: BoolProperty(
         name='Remove Armature Object',
         description=(
-            'Remove Armature object if possible.'
+            'Remove Armature object if possible. '
             'If Armature has multiple root bones, object will not be removed'
             ),
         default=False
@@ -759,8 +759,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False)
 
     export_hierarchy_full_collections: BoolProperty(
-        name='Full Collection hierarchy',
-        description='Export full hierarchy, including inbetween collection',
+        name='Full Collection Hierarchy',
+        description='Export full hierarchy, including intermediate collections',
         default=False
     )
 
