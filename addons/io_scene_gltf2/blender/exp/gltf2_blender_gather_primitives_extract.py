@@ -456,13 +456,15 @@ class PrimitiveCreator:
                     vc_color_name = material_info['vc_info']['color']
                 elif material_info['vc_info']['color_type'] == "active":
                     # Get active (render) Vertex Color
-                    vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+                    if self.blender_mesh.color_attributes.render_color_index != -1:
+                        vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
 
                 if material_info['vc_info']['alpha_type'] == "name":
                     vc_alpha_name = material_info['vc_info']['alpha']
                 elif material_info['vc_info']['alpha_type'] == "active":
                     # Get active (render) Vertex Color
-                    vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+                    if self.blender_mesh.color_attributes.render_color_index != -1:
+                        vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
 
                 if vc_color_name is not None:
 
