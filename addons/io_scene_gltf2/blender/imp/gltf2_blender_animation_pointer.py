@@ -568,6 +568,38 @@ class BlenderPointerAnim():
                 blender_path = specular_color_socket.socket.path_from_id() + ".default_value"
                 num_components = 3
 
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_anisotropy" and \
+                pointer_tab[5] == "anisotropyStrength":
+            anisotropy_socket = get_socket(asset['blender_nodetree'], True, 'Anisotropic')
+            if anisotropy_socket.socket.is_linked:
+                mix_node = anisotropy_socket.socket.links[0].from_node
+                if mix_node.type == "MATH":
+                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                    num_components = 1
+                else:
+                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = anisotropy_socket.socket.path_from_id() + ".default_value"
+                num_components = 1
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_anisotropy" and \
+                pointer_tab[5] == "anisotropyRotation":
+            anisotropy_rotation_socket = get_socket(asset['blender_nodetree'], True, 'Anisotropic Rotation')
+            if anisotropy_rotation_socket.socket.is_linked:
+                mix_node = anisotropy_rotation_socket.socket.links[0].from_node
+                if mix_node.type == "MATH":
+                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                    num_components = 1
+                else:
+                     print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+            else:
+                blender_path = anisotropy_rotation_socket.socket.path_from_id() + ".default_value"
+                num_components = 1
+
         if blender_path is None:
             return # Should not happen if all specification is managed
 

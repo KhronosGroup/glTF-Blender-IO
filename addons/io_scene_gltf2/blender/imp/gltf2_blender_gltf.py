@@ -171,6 +171,7 @@ class BlenderGlTF():
                         "KHR_materials_clearcoat",
                         "KHR_materials_sheen",
                         "KHR_materials_specular",
+                        "KHR_materials_anisotropy"
                         ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         mat.extensions[ext]["animations"] = {}
@@ -197,6 +198,7 @@ class BlenderGlTF():
                     mat.extensions["KHR_materials_clearcoat"].get("clearcoatTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
                     mat.extensions["KHR_materials_clearcoat"].get("clearcoatRoughnessTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
                     mat.extensions["KHR_materials_clearcoat"].get("clearcoatNormalTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
+                    mat.extensions["KHR_materials_anisotropy"].get("anisotropyTexture") if mat.extensions and "KHR_materials_anisotropy" in mat.extensions else None,
                 ]
 
                 for tex in [t for t in texs_ext if t is not None]:
@@ -525,6 +527,14 @@ class BlenderGlTF():
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+            pointer_tab[3] == "extensions" and \
+            pointer_tab[4] == "KHR_materials_anisotropy" and \
+            pointer_tab[5] in ["anisotropyStrength", "anisotropyRotation"]:
+            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_anisotropy"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_anisotropy"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_anisotropy"]["animations"][anim_idx].append(channel_idx)
 
     @staticmethod
     def find_unused_name(haystack, desired_name):

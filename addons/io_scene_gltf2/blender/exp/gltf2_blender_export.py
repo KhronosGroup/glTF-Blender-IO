@@ -268,7 +268,8 @@ def __should_include_json_value(key, value, export_settings):
          "KHR_materials_specular",
          "KHR_materials_transmission",
          "KHR_materials_volume",
-         "KHR_lights_punctual"
+         "KHR_lights_punctual",
+         "KHR_materials_anisotropy"
          ]
 
     if value is None:

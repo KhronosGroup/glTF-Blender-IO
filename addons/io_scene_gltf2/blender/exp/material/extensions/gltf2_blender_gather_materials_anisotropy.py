@@ -20,8 +20,6 @@ from ....com.gltf2_blender_conversion import get_anisotropy_rotation_blender_to_
 from ...material import gltf2_blender_gather_texture_info
 from ..gltf2_blender_search_node_tree import detect_anisotropy_nodes, get_socket, has_image_node_from_socket, get_factor_from_socket
 
-# TODOPointer: add needed pointer info
-
 def export_anisotropy(blender_material, export_settings):
 
     anisotropy_extension = {}
@@ -40,12 +38,26 @@ def export_anisotropy(blender_material, export_settings):
         anisotropyStrength = anisotropy_socket.socket.default_value
         if anisotropyStrength != 0.0:
             anisotropy_extension['anisotropyStrength'] = anisotropyStrength
+
+        # Storing path for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_anisotropy/anisotropyStrength"
+        export_settings['current_paths']["node_tree." + anisotropy_socket.socket.path_from_id() + ".default_value"] = path_
+
+
         anisotropyRotation = get_anisotropy_rotation_blender_to_gltf(anisotropic_rotation_socket.socket.default_value)
         if anisotropyRotation != 0.0:
             anisotropy_extension['anisotropyRotation'] = anisotropyRotation
 
-        if len(anisotropy_extension) == 0:
-            return None, {}, {}
+        # Storing path for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_anisotropy/anisotropyRotation"
+        export_settings['current_paths']["node_tree." + anisotropic_rotation_socket.socket.path_from_id() + ".default_value"] = path_
+
+        # Always export extension, even if no value, in case of animation
+        # If data are not animated, it will be removed later
 
         return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos, udim_infos
 
@@ -70,11 +82,25 @@ def export_anisotropy(blender_material, export_settings):
         elif fac != 0.0 and anisotropy_texture is not None:
             anisotropy_extension['anisotropyStrength'] = fac
 
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_anisotropy/anisotropyStrength"
+            export_settings['current_paths'][path] = path_
+
         fac, path = get_factor_from_socket(anisotropic_rotation_socket, kind='VALUE')
         if fac is None and anisotropy_texture is not None:
             pass # Rotation 0 is default
         elif fac != 0.0 and anisotropy_texture is not None:
             anisotropy_extension['anisotropyRotation'] = get_anisotropy_rotation_blender_to_gltf(fac)
+
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_anisotropy/anisotropyRotation"
+            export_settings['current_paths'][path] = path_
 
         anisotropy_extension['anisotropyTexture'] = anisotropy_texture
         uvmap_infos.update({'anisotropyTexture': uvmap_info})
@@ -84,10 +110,24 @@ def export_anisotropy(blender_material, export_settings):
 
     # Export from complex node setup
 
-    if anisotropy_data['anisotropyStrength'] != 0.0:
-        anisotropy_extension['anisotropyStrength'] = anisotropy_data['anisotropyStrength']
-    if anisotropy_data['anisotropyRotation'] != 0.0:
-        anisotropy_extension['anisotropyRotation'] = anisotropy_data['anisotropyRotation']
+    if anisotropy_data['anisotropyStrength'][0] != 0.0:
+        anisotropy_extension['anisotropyStrength'] = anisotropy_data['anisotropyStrength'][0]
+    if anisotropy_data['anisotropyRotation'][0] != 0.0:
+        anisotropy_extension['anisotropyRotation'] = anisotropy_data['anisotropyRotation'][0]
+
+    # Storing path for KHR_animation_pointer
+    if anisotropy_data['anisotropyStrength'][1] is not None:
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_anisotropy/anisotropyStrength"
+        export_settings['current_paths'][anisotropy_data['anisotropyStrength'][1]] = path_
+
+    # Storing path for KHR_animation_pointer
+    if anisotropy_data['anisotropyRotation'][1] is not None:
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/KHR_materials_anisotropy/anisotropyRotation"
+        export_settings['current_paths'][anisotropy_data['anisotropyRotation'][1]] = path_
 
     # Get texture data
     # No need to check here that we have a texture, this check is already done insode detect_anisotropy_nodes
@@ -100,6 +140,16 @@ def export_anisotropy(blender_material, export_settings):
     anisotropy_extension['anisotropyTexture'] = anisotropy_texture
     uvmap_infos.update({'anisotropyTexture': uvmap_info})
     udim_infos.update({'anisotropyTexture' : udim_info} if len(udim_info.keys()) > 0 else {})
+
+    if len(export_settings['current_texture_transform']) != 0:
+        for k in export_settings['current_texture_transform'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_texture_transform'][k]['length']
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_anisotropy/anisotropyTexture/extensions")
+            path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
+            export_settings['current_paths'][k] = path_
+
+    export_settings['current_texture_transform'] = {}
 
 
     return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos, udim_infos
@@ -127,6 +177,16 @@ def export_anisotropy_from_grayscale_textures(blender_material, export_settings)
 
     if anisotropyTexture is None:
         return None, {}
+
+    if len(export_settings['current_texture_transform']) != 0:
+        for k in export_settings['current_texture_transform'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_texture_transform'][k]['length']
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_anisotropy/anisotropyTexture/extensions")
+            path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
+            export_settings['current_paths'][k] = path_
+
+    export_settings['current_texture_transform'] = {}
 
     return anisotropyTexture, uvmap_info
 

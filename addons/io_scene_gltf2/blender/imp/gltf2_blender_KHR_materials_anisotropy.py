@@ -33,6 +33,8 @@ def anisotropy(
     x, y = location
     try:
         ext = mh.pymat.extensions['KHR_materials_anisotropy']
+        mh.pymat.extensions['KHR_materials_anisotropy']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_anisotropy']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
     except Exception:
         return
 
