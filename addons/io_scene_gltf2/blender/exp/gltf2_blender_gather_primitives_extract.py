@@ -962,6 +962,33 @@ class PrimitiveCreator:
             # Must calculate the type of the field : FLOAT_COLOR or BYTE_COLOR
             additional_fields.append(('COLOR_0' + str(i), gltf2_blender_conversion.get_numpy_type('FLOAT_COLOR' if max_index == 3 else 'BYTE_COLOR')))
 
+
+        if self.export_settings['gltf_loose_edges']:
+            additional_fields_edges = []
+            for i in range(max_index):
+                # Must calculate the type of the field : FLOAT_COLOR or BYTE_COLOR
+                additional_fields_edges.append(('COLOR_0' + str(i), gltf2_blender_conversion.get_numpy_type('FLOAT_COLOR' if max_index == 3 else 'BYTE_COLOR')))
+
+            new_dt = np.dtype(self.dots_edges.dtype.descr + additional_fields_edges)
+            dots_edges = np.zeros(self.dots_edges.shape, dtype=new_dt)
+            for f in self.dots_edges.dtype.names:
+                dots_edges[f] = self.dots_edges[f]
+
+            self.dots_edges = dots_edges
+
+        if self.export_settings['gltf_loose_points']:
+            additional_fields_points = []
+            for i in range(max_index):
+                # Must calculate the type of the field : FLOAT_COLOR or BYTE_COLOR
+                additional_fields_points.append(('COLOR_0' + str(i), gltf2_blender_conversion.get_numpy_type('FLOAT_COLOR' if max_index == 3 else 'BYTE_COLOR')))
+
+            new_dt = np.dtype(self.dots_points.dtype.descr + additional_fields_points)
+            dots_points = np.zeros(self.dots_points.shape, dtype=new_dt)
+            for f in self.dots_points.dtype.names:
+                dots_points[f] = self.dots_points[f]
+
+            self.dots_points = dots_points
+
         # Keep the existing custom attribute
         # Data will be exported twice, one for COLOR_O, one for the custom attribute
         new_dt = np.dtype(self.dots.dtype.descr + additional_fields)
@@ -976,7 +1003,7 @@ class PrimitiveCreator:
             self.dots['COLOR_0' +str(i)] = data_dots[:, i]
             if self.export_settings['gltf_loose_edges'] and attr.domain == "POINT":
                 self.dots_edges['COLOR_0' + str(i)] = data_dots_edges[:, i]
-            if self.export_settings['gltf_loose_points'] and attr['blender_domain'] == "POINT":
+            if self.export_settings['gltf_loose_points'] and attr.domain == "POINT":
                 self.dots_points['COLOR_0' + str(i)] = data_dots_points[:, i]
 
         # Add COLOR_0 in attribute list
