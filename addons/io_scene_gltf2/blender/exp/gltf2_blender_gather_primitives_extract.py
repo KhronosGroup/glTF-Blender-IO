@@ -482,7 +482,7 @@ class PrimitiveCreator:
                         # We need to check if we need to add alpha
                         add_alpha = vc_alpha_name is not None
                         mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
-                        add_alpha = add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                        add_alpha = mat is not None and add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
                         # Manage Vertex Color (RGB and Alpha if needed)
                         self.__manage_color_attribute(vc_color_name, vc_alpha_name if add_alpha else None)
                     else:
