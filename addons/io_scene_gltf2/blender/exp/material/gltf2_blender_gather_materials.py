@@ -555,6 +555,12 @@ def get_base_material(material_idx, materials, export_settings):
             mat,
             export_settings
         )
+
+    if material is None:
+        # If no material, the mesh can still have vertex color
+        # So, retrieving it
+        material_info["vc_info"] = {"color_type": "active", "alpha_type": "active"}
+
     return material, material_info
 
 def get_all_textures(idx=0):
