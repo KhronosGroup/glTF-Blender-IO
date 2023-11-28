@@ -58,6 +58,7 @@ from bpy.props import (StringProperty,
                        BoolProperty,
                        EnumProperty,
                        IntProperty,
+                       FloatProperty,
                        CollectionProperty)
 from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper, ExportHelper
@@ -164,6 +165,102 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         ),
         default=''
     )
+
+    # gltfpack properties
+    export_use_gltfpack: BoolProperty(
+        name='Use Gltfpack',
+        description='Use gltfpack to simplify the mesh and/or compress its textures',
+        default=False,
+    )
+
+    export_gltfpack_tc: BoolProperty(
+        name='KTX2 Compression',
+        description='Convert all textures to KTX2 with BasisU supercompression',
+        default=True,
+    )
+
+    export_gltfpack_tq: IntProperty(
+        name='Texture Encoding Quality',
+        description='Texture encoding quality',
+        default=8,
+        min=1,
+        max=10,
+    )
+
+    export_gltfpack_si: FloatProperty(
+        name='Mesh Simplification Ratio',
+        description='Simplify meshes targeting triangle count ratio',
+        default=1.0,
+        min=0.0,
+        max=1.0,
+    )
+
+    export_gltfpack_sa: BoolProperty(
+        name='Aggressive Mesh Simplification',
+        description='Aggressively simplify to the target ratio disregarding quality',
+        default=False,
+    )
+
+    export_gltfpack_slb: BoolProperty(
+        name='Lock Mesh Border Vertices',
+        description='Lock border vertices during simplification to avoid gaps on connected meshes',
+        default=False,
+    )
+
+    export_gltfpack_vp: IntProperty(
+        name='Position Quantization',
+        description='Use N-bit quantization for positions',
+        default=14,
+        min=1,
+        max=16,
+    )
+
+    export_gltfpack_vt: IntProperty(
+        name='Texture Coordinate Quantization',
+        description='Use N-bit quantization for texture coordinates',
+        default=12,
+        min=1,
+        max=16,
+    )
+
+    export_gltfpack_vn: IntProperty(
+        name='Normal/Tangent Quantization',
+        description='Use N-bit quantization for normals and tangents',
+        default=8,
+        min=1,
+        max=16,
+    )
+
+    export_gltfpack_vc: IntProperty(
+        name='Vertex Color Quantization',
+        description='Use N-bit quantization for colors',
+        default=8,
+        min=1,
+        max=16,
+    )
+
+    export_gltfpack_vpi: EnumProperty(
+        name='Vertex Position Attributes',
+        description='Type to use for vertex position attributes',
+        items=(('Integer', 'Integer', 'Use integer attributes for positions'),
+                ('Normalized', 'Normalized', 'Use normalized attributes for positions'),
+                ('Floating-point', 'Floating-point', 'Use floating-point attributes for positions')),
+        default='Integer',
+    )
+
+    export_gltfpack_noq: BoolProperty(
+        name='Disable Quantization',
+        description='Disable quantization; produces much larger glTF files with no extensions',
+        default=True,
+    )
+
+    # TODO: some stuff in Textures
+
+    # TODO: Animations
+
+    # TODO: Scene
+
+    # TODO: some stuff in Miscellaneous
 
     export_format: EnumProperty(
         name='Format',
@@ -975,6 +1072,25 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_hierarchy_full_collections'] = self.export_hierarchy_full_collections
 
+        # gltfpack stuff
+        export_settings['gltf_use_gltfpack'] = self.export_use_gltfpack
+        if self.export_use_gltfpack:
+            export_settings['gltf_gltfpack_tc'] = self.export_gltfpack_tc
+            export_settings['gltf_gltfpack_tq'] = self.export_gltfpack_tq
+
+            export_settings['gltf_gltfpack_si'] = self.export_gltfpack_si
+            export_settings['gltf_gltfpack_sa'] = self.export_gltfpack_sa
+            export_settings['gltf_gltfpack_slb'] = self.export_gltfpack_slb
+
+            export_settings['gltf_gltfpack_vp'] = self.export_gltfpack_vp
+            export_settings['gltf_gltfpack_vt'] = self.export_gltfpack_vt
+            export_settings['gltf_gltfpack_vn'] = self.export_gltfpack_vn
+            export_settings['gltf_gltfpack_vc'] = self.export_gltfpack_vc
+
+            export_settings['gltf_gltfpack_vpi'] = self.export_gltfpack_vpi
+
+            export_settings['gltf_gltfpack_noq'] = self.export_gltfpack_noq
+
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
             path_to_uri(os.path.splitext(os.path.basename(self.filepath))[0] + '.bin')
@@ -1042,6 +1158,56 @@ class GLTF_PT_export_main(bpy.types.Panel):
 
         layout.prop(operator, 'export_copyright')
         layout.prop(operator, 'will_save_settings')
+
+
+class GLTF_PT_export_gltfpack(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "gltfpack"
+    bl_parent_id = "FILE_PT_operator"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        gltfpack_path = context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui.strip()
+        if (gltfpack_path == ''): # gltfpack not setup in plugin preferences -> dont show any gltfpack relevant options in export dialog
+            return False;
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw(self, context):
+
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        col = layout.column(heading = "gltfpack", align = True)
+        col.prop(operator, 'export_use_gltfpack')
+
+        col = layout.column(heading = "Textures", align = True)
+        col.prop(operator, 'export_gltfpack_tc')
+        col.prop(operator, 'export_gltfpack_tq')
+        col = layout.column(heading = "Simplification", align = True)
+        col.prop(operator, 'export_gltfpack_si')
+        col.prop(operator, 'export_gltfpack_sa')
+        col.prop(operator, 'export_gltfpack_slb')
+        col = layout.column(heading = "Vertices", align = True)
+        col.prop(operator, 'export_gltfpack_vp')
+        col.prop(operator, 'export_gltfpack_vt')
+        col.prop(operator, 'export_gltfpack_vn')
+        col.prop(operator, 'export_gltfpack_vc')
+        col = layout.column(heading = "Vertex positions", align = True)
+        col.prop(operator, 'export_gltfpack_vpi')
+        #col = layout.column(heading = "Animations", align = True)
+        #col = layout.column(heading = "Scene", align = True)
+        col = layout.column(heading = "Miscellaneous", align = True)
+        col.prop(operator, 'export_gltfpack_noq')
 
 
 class GLTF_PT_export_include(bpy.types.Panel):
@@ -1933,20 +2099,27 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
     settings_node_ui : bpy.props.BoolProperty(
-            default= False,
-            description="Displays glTF Material Output node in Shader Editor (Menu Add > Output)"
-            )
+        default= False,
+        description="Displays glTF Material Output node in Shader Editor (Menu Add > Output)"
+    )
 
     KHR_materials_variants_ui : bpy.props.BoolProperty(
         default= False,
         description="Displays glTF UI to manage material variants",
         update=gltf_variant_ui_update
-        )
+    )
 
     animation_ui: bpy.props.BoolProperty(
         default=False,
         description="Display glTF UI to manage animations",
         update=gltf_animation_ui_update
+    )
+
+    gltfpack_path_ui: bpy.props.StringProperty(
+        default="",
+        name="glTFpack file path",
+        description="Path to gltfpack binary",
+        subtype='FILE_PATH'
     )
 
     def draw(self, context):
@@ -1955,6 +2128,8 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "settings_node_ui", text="Shader Editor Add-ons")
         row.prop(self, "KHR_materials_variants_ui", text="Material Variants")
         row.prop(self, "animation_ui", text="Animation UI")
+        row = layout.row()
+        row.prop(self, "gltfpack_path_ui", text="Path to gltfpack")
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
@@ -1983,6 +2158,7 @@ classes = (
     GLTF_PT_export_animation_shapekeys,
     GLTF_PT_export_animation_sampling,
     GLTF_PT_export_animation_optimize,
+    GLTF_PT_export_gltfpack,
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
     GLTF_PT_import_user_extensions,
@@ -1993,6 +2169,7 @@ classes = (
 
 def register():
     from .blender.com import gltf2_blender_ui as blender_ui
+
     for c in classes:
         bpy.utils.register_class(c)
     # bpy.utils.register_module(__name__)
