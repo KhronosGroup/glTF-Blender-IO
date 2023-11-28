@@ -123,8 +123,7 @@ def __create_buffer(exporter, export_settings):
 
 def __postprocess_with_gltfpack(export_settings):
 
-    gltfpack_path = bpy.context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui
-    gltfpack_binary_file_path = os.path.join(gltfpack_path, "gltfpack")
+    gltfpack_binary_file_path = bpy.context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui
 
     gltf_file_path = export_settings['gltf_filepath']
     gltf_file_base = os.path.splitext(os.path.basename(gltf_file_path))[0]
