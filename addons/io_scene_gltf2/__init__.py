@@ -222,7 +222,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         min=1,
         max=16,
     )
-    
+
     export_gltfpack_vn: IntProperty(
         name='Normal/Tangent Quantization',
         description='Use N-bit quantization for normals and tangents',
@@ -230,7 +230,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         min=1,
         max=16,
     )
-    
+
     export_gltfpack_vc: IntProperty(
         name='Vertex Color Quantization',
         description='Use N-bit quantization for colors',
@@ -238,7 +238,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         min=1,
         max=16,
     )
-    
+
     export_gltfpack_vpi: EnumProperty(
         name='Vertex Position Attributes',
         description='Type to use for vertex position attributes',
@@ -247,7 +247,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 ('Floating-point', 'Floating-point', 'Use floating-point attributes for positions')),
         default='Integer',
     )
-    
+
     export_gltfpack_noq: BoolProperty(
         name='Disable Quantization',
         description='Disable quantization; produces much larger glTF files with no extensions',
@@ -1175,21 +1175,21 @@ class GLTF_PT_export_gltfpack(bpy.types.Panel):
 
         sfile = context.space_data
         operator = sfile.active_operator
- 
+
         return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
 
     def draw(self, context):
-        
+
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
- 
+
         sfile = context.space_data
         operator = sfile.active_operator
 
         col = layout.column(heading = "gltfpack", align = True)
         col.prop(operator, 'export_use_gltfpack')
-    
+
         col = layout.column(heading = "Textures", align = True)
         col.prop(operator, 'export_gltfpack_tc')
         col.prop(operator, 'export_gltfpack_tq')
@@ -2137,7 +2137,6 @@ def menu_func_import(self, context):
 classes = (
     ExportGLTF2,
     GLTF_PT_export_main,
-    GLTF_PT_export_gltfpack,
     GLTF_PT_export_include,
     GLTF_PT_export_transform,
     GLTF_PT_export_data,
@@ -2158,6 +2157,7 @@ classes = (
     GLTF_PT_export_animation_shapekeys,
     GLTF_PT_export_animation_sampling,
     GLTF_PT_export_animation_optimize,
+    GLTF_PT_export_gltfpack,
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
     GLTF_PT_import_user_extensions,
