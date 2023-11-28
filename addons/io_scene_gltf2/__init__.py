@@ -2128,6 +2128,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "settings_node_ui", text="Shader Editor Add-ons")
         row.prop(self, "KHR_materials_variants_ui", text="Material Variants")
         row.prop(self, "animation_ui", text="Animation UI")
+        row = layout.row()
         row.prop(self, "gltfpack_path_ui", text="Path to gltfpack")
 
 def menu_func_import(self, context):
