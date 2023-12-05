@@ -286,6 +286,64 @@ class GlTF2Exporter:
 
             self.nodes_idx_to_remove.extend(insts)
 
+
+    def manage_gpu_instancing_nodes(self, export_settings):
+        if export_settings['gltf_gpu_instances'] is True:
+            for scene_num in range(len(self.__gltf.scenes)):
+                # Modify the scene data in case of EXT_mesh_gpu_instancing export
+
+                self.nodes_idx_to_remove = []
+                for node_idx in self.__gltf.scenes[scene_num].nodes:
+                    node = self.__gltf.nodes[node_idx]
+                    if node.mesh is None:
+                        self.manage_gpu_instancing(node)
+                    else:
+                        self.manage_gpu_instancing(node, also_mesh=True)
+                    for child_idx in node.children:
+                        child = self.__gltf.nodes[child_idx]
+                        self.manage_gpu_instancing(child, also_mesh=child.mesh is not None)
+
+                # Slides other nodes index
+
+                self.nodes_idx_to_remove.sort()
+                for node_idx in self.__gltf.scenes[scene_num].nodes:
+                    self.recursive_slide_node_idx(node_idx)
+
+                new_node_list = []
+                for node_idx in self.__gltf.scenes[scene_num].nodes:
+                    len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
+                    new_node_list.append(node_idx - len_)
+                self.__gltf.scenes[scene_num].nodes = new_node_list
+
+                for skin in self.__gltf.skins:
+                    new_joint_list = []
+                    for node_idx in skin.joints:
+                        len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
+                        new_joint_list.append(node_idx - len_)
+                    skin.joints = new_joint_list
+                    if skin.skeleton is not None:
+                        len_ = len([i for i in self.nodes_idx_to_remove if i < skin.skeleton])
+                        skin.skeleton = skin.skeleton - len_
+
+            # Remove animation channels that was targeting a node that will be removed
+            new_animation_list = []
+            for animation in self.__gltf.animations:
+                print("check anim to remove ?")
+                new_channel_list = []
+                for channel in animation.channels:
+                    if channel.target.node not in self.nodes_idx_to_remove:
+                        new_channel_list.append(channel)
+                animation.channels = new_channel_list
+                if len(animation.channels) > 0:
+                    new_animation_list.append(animation)
+            self.__gltf.animations = new_animation_list
+
+            #TODO: remove unused animation accessors?
+
+            # And now really remove nodes
+            self.__gltf.nodes = [node for idx, node in enumerate(self.__gltf.nodes) if idx not in self.nodes_idx_to_remove]
+
+
     def add_scene(self, scene: gltf2_io.Scene, active: bool = False, export_settings=None):
         """
         Add a scene to the glTF.
@@ -301,59 +359,6 @@ class GlTF2Exporter:
         scene_num = self.__traverse(scene)
         if active:
             self.__gltf.scene = scene_num
-
-        if export_settings['gltf_gpu_instances'] is True:
-            # Modify the scene data in case of EXT_mesh_gpu_instancing export
-
-            self.nodes_idx_to_remove = []
-            for node_idx in self.__gltf.scenes[scene_num].nodes:
-                node = self.__gltf.nodes[node_idx]
-                if node.mesh is None:
-                    self.manage_gpu_instancing(node)
-                else:
-                    self.manage_gpu_instancing(node, also_mesh=True)
-                for child_idx in node.children:
-                    child = self.__gltf.nodes[child_idx]
-                    self.manage_gpu_instancing(child, also_mesh=child.mesh is not None)
-
-            # Slides other nodes index
-
-            self.nodes_idx_to_remove.sort()
-            for node_idx in self.__gltf.scenes[scene_num].nodes:
-                self.recursive_slide_node_idx(node_idx)
-
-            new_node_list = []
-            for node_idx in self.__gltf.scenes[scene_num].nodes:
-                len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
-                new_node_list.append(node_idx - len_)
-            self.__gltf.scenes[scene_num].nodes = new_node_list
-
-            for skin in self.__gltf.skins:
-                new_joint_list = []
-                for node_idx in skin.joints:
-                    len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
-                    new_joint_list.append(node_idx - len_)
-                skin.joints = new_joint_list
-                if skin.skeleton is not None:
-                    len_ = len([i for i in self.nodes_idx_to_remove if i < skin.skeleton])
-                    skin.skeleton = skin.skeleton - len_
-
-            # Remove animation channels that was targeting a node that will be removed
-            new_animation_list = []
-            for animation in self.__gltf.animations:
-                new_channel_list = []
-                for channel in animation.channels:
-                    if channel.target.node not in self.nodes_idx_to_remove:
-                        new_channel_list.append(channel)
-                animation.channels = new_channel_list
-                if len(animation.channels) > 0:
-                    new_animation_list.append(animation)
-            self.__gltf.animations = new_animation_list
-
-            #TODO: remove unused animation accessors?
-
-            # And now really remove nodes
-            self.__gltf.nodes = [node for idx, node in enumerate(self.__gltf.nodes) if idx not in self.nodes_idx_to_remove]
 
     def recursive_slide_node_idx(self, node_idx):
         node = self.__gltf.nodes[node_idx]
@@ -489,8 +494,11 @@ class GlTF2Exporter:
         """
         # traverse nodes of a child of root property type and add them to the glTF root
         if type(node) in self.__childOfRootPropertyTypeLookup:
+            print(">1", node)
             node = self.__traverse_property(node)
+            print("node", node)
             idx = self.__to_reference(node)
+            print("idx", idx)
             # child of root properties are only present at root level --> replace with index in upper level
             return idx
 

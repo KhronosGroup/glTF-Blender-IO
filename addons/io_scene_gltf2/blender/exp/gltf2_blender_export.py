@@ -106,6 +106,7 @@ def __gather_gltf(exporter, export_settings):
         exporter.add_scene(scene, idx==active_scene_idx, export_settings=export_settings)
     for animation in animations:
         exporter.add_animation(animation)
+    exporter.manage_gpu_instancing_nodes(export_settings)
     exporter.traverse_unused_skins(unused_skins)
     exporter.traverse_additional_textures()
     exporter.traverse_additional_images()
