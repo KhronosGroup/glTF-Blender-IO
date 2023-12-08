@@ -148,7 +148,6 @@ def gather_base_color_texture(info, export_settings):
         unlit_texture, uvmap_info, udim_info, _  = gltf2_blender_gather_texture_info.gather_texture_info(
             sockets[0],
             sockets,
-            (),
             export_settings,
         )
 

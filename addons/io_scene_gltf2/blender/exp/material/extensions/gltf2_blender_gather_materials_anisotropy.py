@@ -92,7 +92,6 @@ def export_anisotropy(blender_material, export_settings):
     anisotropy_texture, uvmap_info , udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
         anisotropy_data['tex_socket'],
         (anisotropy_data['tex_socket'],),
-        (),
         export_settings,
     )
     anisotropy_extension['anisotropyTexture'] = anisotropy_texture
@@ -119,7 +118,6 @@ def export_anisotropy_from_grayscale_textures(blender_material, export_settings)
     anisotropyTexture, uvmap_info, _, _ = gltf2_blender_gather_texture_info.gather_texture_info(
         primary_socket,
         sockets,
-        (),
         export_settings,
         filter_type='ANY')
 

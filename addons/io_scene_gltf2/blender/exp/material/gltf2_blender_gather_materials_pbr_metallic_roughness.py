@@ -118,7 +118,7 @@ def __gather_base_color_texture(blender_material, export_settings):
     if not inputs:
         return None, {}, {}, None
 
-    tex, uvmap_info, udim_info, factor = gather_texture_info(inputs[0], inputs, (), export_settings)
+    tex, uvmap_info, udim_info, factor = gather_texture_info(inputs[0], inputs, export_settings)
     return tex, {'baseColorTexture': uvmap_info}, {'baseColorTexture': udim_info} if len(udim_info.keys()) > 0 else {}, factor
 
 
@@ -150,7 +150,6 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     hasMetal = metallic_socket.socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
     hasRough = roughness_socket.socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
-    default_sockets = ()
     # Warning: for default socket, do not use NodeSocket object, because it will break cache
     # Using directlty the Blender socket object
     if not hasMetal and not hasRough:
@@ -159,18 +158,14 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
             return None, {}, {}, None
     elif not hasMetal:
         texture_input = (roughness_socket,)
-        default_sockets = (metallic_socket.socket,)
     elif not hasRough:
         texture_input = (metallic_socket,)
-        default_sockets = (roughness_socket.socket,)
     else:
         texture_input = (metallic_socket, roughness_socket)
-        default_sockets = ()
 
     tex, uvmap_info, udim_info, factor = gather_texture_info(
         texture_input[0],
         orm_texture or texture_input,
-        default_sockets,
         export_settings,
     )
 
