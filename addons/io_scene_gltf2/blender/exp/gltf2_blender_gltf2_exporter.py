@@ -494,11 +494,8 @@ class GlTF2Exporter:
         """
         # traverse nodes of a child of root property type and add them to the glTF root
         if type(node) in self.__childOfRootPropertyTypeLookup:
-            print(">1", node)
             node = self.__traverse_property(node)
-            print("node", node)
             idx = self.__to_reference(node)
-            print("idx", idx)
             # child of root properties are only present at root level --> replace with index in upper level
             return idx
 
