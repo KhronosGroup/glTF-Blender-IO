@@ -73,4 +73,5 @@ gather_attribute_keep(self, keep_attribute, export_settings)
 gather_attribute_change(self, attribute, data, is_normalized_byte_color, export_settings)
 gather_attributes_change(self, attributes, export_settings)
 gather_gltf_additional_textures_hook(self, json, additioan_json_textures, export_settings)
+gather_node_mesh_hook(self, option, blender_object, export_settings)
 ```
