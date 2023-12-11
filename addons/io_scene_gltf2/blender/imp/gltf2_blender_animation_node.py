@@ -139,7 +139,7 @@ class BlenderNodeAnim():
                 if values[i].dot(values[i-1]) < 0:
                     values[i] = -values[i]
 
-        fps = bpy.context.scene.render.fps
+        fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
 
         coords = [0] * (2 * len(keys))
         coords[::2] = (key[0] * fps for key in keys)

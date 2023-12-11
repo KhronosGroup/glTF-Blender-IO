@@ -145,7 +145,7 @@ def __convert_keyframes(
         transform = matrix_parent_inverse
 
     values = []
-    fps = bpy.context.scene.render.fps
+    fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
     for keyframe in keyframes:
         # Transform the data and build gltf control points
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform, need_rotation_correction)

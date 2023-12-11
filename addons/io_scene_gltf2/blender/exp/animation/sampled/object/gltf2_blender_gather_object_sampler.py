@@ -88,7 +88,7 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
     if obj_uuid in export_settings['slide'].keys() and action_name in export_settings['slide'][obj_uuid].keys():
         for k in keyframes:
             k.frame += -export_settings['slide'][obj_uuid][action_name]
-            k.seconds = k.frame / bpy.context.scene.render.fps
+            k.seconds = k.frame / (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
 
     times = [k.seconds for k in keyframes]
     input = gather_accessor(
@@ -110,7 +110,7 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
 
 
     values = []
-    fps = bpy.context.scene.render.fps
+    fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
     for keyframe in keyframes:
 
         # Transform the data and build gltf control points
