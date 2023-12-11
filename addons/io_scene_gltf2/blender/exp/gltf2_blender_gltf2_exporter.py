@@ -328,7 +328,6 @@ class GlTF2Exporter:
             # Remove animation channels that was targeting a node that will be removed
             new_animation_list = []
             for animation in self.__gltf.animations:
-                print("check anim to remove ?")
                 new_channel_list = []
                 for channel in animation.channels:
                     if channel.target.node not in self.nodes_idx_to_remove:
