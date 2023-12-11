@@ -600,7 +600,7 @@ class SCENE_PT_gltf2_action_filter(bpy.types.Panel):
             row = col.column(align=True)
             row.operator("scene.gltf2_action_filter_refresh", icon="FILE_REFRESH", text="")
         else:
-            row.label(text="No Actions is .blend file")
+            row.label(text="No Actions in .blend file")
 
 ###############################################################################
 

@@ -75,7 +75,7 @@ def export_emission_texture(blender_material, export_settings):
     emissive = get_socket(blender_material.node_tree, blender_material.use_nodes, "Emissive")
     if emissive.socket is None:
         emissive = get_socket_from_gltf_material_node(blender_material.node_tree, blender_material.use_nodes, "Emissive")
-    emissive_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), (), export_settings)
+    emissive_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(emissive, (emissive,), export_settings)
 
     if len(export_settings['current_texture_transform']) != 0:
         for k in export_settings['current_texture_transform'].keys():

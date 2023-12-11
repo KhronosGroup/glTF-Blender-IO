@@ -889,7 +889,8 @@ Loose Edges
 Loose Points
    Export loose points as glTF points, using the material from the first material slot.
 Shared Accessor
-   For triangles, use shared accessor for indices. This is more efficient (smaller files when you have lots of materials).
+   For triangles, use shared accessor for indices. This is more efficient (smaller files when you have lots of
+   materials).
 
 Data - Material
 ^^^^^^^^^^^^^^^

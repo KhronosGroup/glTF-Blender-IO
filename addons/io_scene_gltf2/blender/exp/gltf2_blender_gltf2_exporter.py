@@ -286,57 +286,44 @@ class GlTF2Exporter:
 
             self.nodes_idx_to_remove.extend(insts)
 
-    def add_scene(self, scene: gltf2_io.Scene, active: bool = False, export_settings=None):
-        """
-        Add a scene to the glTF.
 
-        The scene should be built up with the generated glTF classes
-        :param scene: gltf2_io.Scene type. Root node of the scene graph
-        :param active: If true, sets the glTD.scene index to the added scene
-        :return: nothing
-        """
-        if self.__finalized:
-            raise RuntimeError("Tried to add scene to finalized glTF file")
-
-        scene_num = self.__traverse(scene)
-        if active:
-            self.__gltf.scene = scene_num
-
+    def manage_gpu_instancing_nodes(self, export_settings):
         if export_settings['gltf_gpu_instances'] is True:
-            # Modify the scene data in case of EXT_mesh_gpu_instancing export
+            for scene_num in range(len(self.__gltf.scenes)):
+                # Modify the scene data in case of EXT_mesh_gpu_instancing export
 
-            self.nodes_idx_to_remove = []
-            for node_idx in self.__gltf.scenes[scene_num].nodes:
-                node = self.__gltf.nodes[node_idx]
-                if node.mesh is None:
-                    self.manage_gpu_instancing(node)
-                else:
-                    self.manage_gpu_instancing(node, also_mesh=True)
-                for child_idx in node.children:
-                    child = self.__gltf.nodes[child_idx]
-                    self.manage_gpu_instancing(child, also_mesh=child.mesh is not None)
+                self.nodes_idx_to_remove = []
+                for node_idx in self.__gltf.scenes[scene_num].nodes:
+                    node = self.__gltf.nodes[node_idx]
+                    if node.mesh is None:
+                        self.manage_gpu_instancing(node)
+                    else:
+                        self.manage_gpu_instancing(node, also_mesh=True)
+                    for child_idx in node.children:
+                        child = self.__gltf.nodes[child_idx]
+                        self.manage_gpu_instancing(child, also_mesh=child.mesh is not None)
 
-            # Slides other nodes index
+                # Slides other nodes index
 
-            self.nodes_idx_to_remove.sort()
-            for node_idx in self.__gltf.scenes[scene_num].nodes:
-                self.recursive_slide_node_idx(node_idx)
+                self.nodes_idx_to_remove.sort()
+                for node_idx in self.__gltf.scenes[scene_num].nodes:
+                    self.recursive_slide_node_idx(node_idx)
 
-            new_node_list = []
-            for node_idx in self.__gltf.scenes[scene_num].nodes:
-                len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
-                new_node_list.append(node_idx - len_)
-            self.__gltf.scenes[scene_num].nodes = new_node_list
-
-            for skin in self.__gltf.skins:
-                new_joint_list = []
-                for node_idx in skin.joints:
+                new_node_list = []
+                for node_idx in self.__gltf.scenes[scene_num].nodes:
                     len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
-                    new_joint_list.append(node_idx - len_)
-                skin.joints = new_joint_list
-                if skin.skeleton is not None:
-                    len_ = len([i for i in self.nodes_idx_to_remove if i < skin.skeleton])
-                    skin.skeleton = skin.skeleton - len_
+                    new_node_list.append(node_idx - len_)
+                self.__gltf.scenes[scene_num].nodes = new_node_list
+
+                for skin in self.__gltf.skins:
+                    new_joint_list = []
+                    for node_idx in skin.joints:
+                        len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
+                        new_joint_list.append(node_idx - len_)
+                    skin.joints = new_joint_list
+                    if skin.skeleton is not None:
+                        len_ = len([i for i in self.nodes_idx_to_remove if i < skin.skeleton])
+                        skin.skeleton = skin.skeleton - len_
 
             # Remove animation channels that was targeting a node that will be removed
             new_animation_list = []
@@ -354,6 +341,23 @@ class GlTF2Exporter:
 
             # And now really remove nodes
             self.__gltf.nodes = [node for idx, node in enumerate(self.__gltf.nodes) if idx not in self.nodes_idx_to_remove]
+
+
+    def add_scene(self, scene: gltf2_io.Scene, active: bool = False, export_settings=None):
+        """
+        Add a scene to the glTF.
+
+        The scene should be built up with the generated glTF classes
+        :param scene: gltf2_io.Scene type. Root node of the scene graph
+        :param active: If true, sets the glTD.scene index to the added scene
+        :return: nothing
+        """
+        if self.__finalized:
+            raise RuntimeError("Tried to add scene to finalized glTF file")
+
+        scene_num = self.__traverse(scene)
+        if active:
+            self.__gltf.scene = scene_num
 
     def recursive_slide_node_idx(self, node_idx):
         node = self.__gltf.nodes[node_idx]

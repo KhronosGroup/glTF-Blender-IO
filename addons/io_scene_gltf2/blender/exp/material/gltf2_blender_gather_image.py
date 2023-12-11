@@ -28,13 +28,12 @@ from .gltf2_blender_search_node_tree import get_texture_node_from_socket, detect
 @cached
 def gather_image(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
-        default_sockets: typing.Tuple[bpy.types.NodeSocket],
         use_tile: bool,
         export_settings):
     if not __filter_image(blender_shader_sockets, export_settings):
         return None, None, None, None
 
-    image_data, udim_image = __get_image_data(blender_shader_sockets, default_sockets, use_tile, export_settings)
+    image_data, udim_image = __get_image_data(blender_shader_sockets, use_tile, export_settings)
 
     if udim_image is not None:
         # We are in a UDIM case, so we return no image data
@@ -204,7 +203,7 @@ def __gather_uri(image_data, mime_type, name, export_settings):
     return None, None
 
 
-def __get_image_data(sockets, default_sockets, use_tile, export_settings) -> ExportImage:
+def __get_image_data(sockets, use_tile, export_settings) -> ExportImage:
     # For shared resources, such as images, we just store the portion of data that is needed in the glTF property
     # in a helper class. During generation of the glTF in the exporter these will then be combined to actual binary
     # resources.
@@ -246,21 +245,14 @@ def __get_image_data(sockets, default_sockets, use_tile, export_settings) -> Exp
         # We are not in complex node setup, so we can try to get the image data from grayscale textures
         return __get_image_data_grayscale_anisotropy(sockets, results, export_settings), None
 
-    return __get_image_data_mapping(sockets, default_sockets, results, use_tile, export_settings), None
+    return __get_image_data_mapping(sockets, results, use_tile, export_settings), None
 
-def __get_image_data_mapping(sockets, default_sockets, results, use_tile, export_settings) -> ExportImage:
+def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> ExportImage:
     """
     Simple mapping
     Will fit for most of exported textures : RoughnessMetallic, Basecolor, normal, ...
     """
     composed_image = ExportImage()
-
-    default_metallic = None
-    default_roughness = None
-    if "Metallic" in [s.name for s in default_sockets]:
-        default_metallic = [s for s in default_sockets if s.name == "Metallic"][0].default_value
-    if "Roughness" in [s.name for s in default_sockets]:
-        default_roughness = [s for s in default_sockets if s.name == "Roughness"][0].default_value
 
     for result, socket in zip(results, sockets):
         # Assume that user know what he does, and that channels/images are already combined correctly for pbr
@@ -344,15 +336,9 @@ def __get_image_data_mapping(sockets, default_sockets, results, use_tile, export
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
                 if socket.socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
-                    if default_roughness is not None:
-                        composed_image.fill_with(Channel.G, default_roughness)
-                    else:
-                        composed_image.fill_white(Channel.G)
+                    composed_image.fill_white(Channel.G)
                 elif socket.socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
-                    if default_metallic is not None:
-                        composed_image.fill_with(Channel.B, default_metallic)
-                    else:
-                        composed_image.fill_white(Channel.B)
+                    composed_image.fill_white(Channel.B)
             else:
                 # copy full image...eventually following sockets might overwrite things
                 if use_tile is None:

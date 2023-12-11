@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import subprocess
 import time
 
 import bpy
@@ -215,6 +217,7 @@ def __gather_gltf(exporter, export_settings):
         exporter.add_scene(scene, idx==active_scene_idx, export_settings=export_settings)
     for animation in animations:
         exporter.add_animation(animation)
+    exporter.manage_gpu_instancing_nodes(export_settings)
     exporter.traverse_unused_skins(unused_skins)
     exporter.traverse_additional_textures()
     exporter.traverse_additional_images()
@@ -230,6 +233,70 @@ def __create_buffer(exporter, export_settings):
 
     return buffer
 
+def __postprocess_with_gltfpack(export_settings):
+
+    gltfpack_binary_file_path = bpy.context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui
+
+    gltf_file_path = export_settings['gltf_filepath']
+    gltf_file_base = os.path.splitext(os.path.basename(gltf_file_path))[0]
+    gltf_file_extension = os.path.splitext(os.path.basename(gltf_file_path))[1]
+    gltf_file_directory = os.path.dirname(gltf_file_path)
+    gltf_output_file_directory = os.path.join(gltf_file_directory, "gltfpacked")
+    if (os.path.exists(gltf_output_file_directory) is False):
+        os.makedirs(gltf_output_file_directory)
+
+    gltf_input_file_path = gltf_file_path
+    gltf_output_file_path = os.path.join(gltf_output_file_directory, gltf_file_base + gltf_file_extension)
+
+    options = []
+
+    if (export_settings['gltf_gltfpack_tc']):
+        options.append("-tc")
+
+        if (export_settings['gltf_gltfpack_tq']):
+            options.append("-tq")
+            options.append(f"{export_settings['gltf_gltfpack_tq']}")
+
+    if (export_settings['gltf_gltfpack_si'] != 1.0):
+        options.append("-si")
+        options.append(f"{export_settings['gltf_gltfpack_si']}")
+
+    if (export_settings['gltf_gltfpack_sa']):
+        options.append("-sa")
+
+    if (export_settings['gltf_gltfpack_slb']):
+        options.append("-slb")
+
+    if (export_settings['gltf_gltfpack_noq']):
+        options.append("-noq")
+    else:
+        options.append("-vp")
+        options.append(f"{export_settings['gltf_gltfpack_vp']}")
+        options.append("-vt")
+        options.append(f"{export_settings['gltf_gltfpack_vt']}")
+        options.append("-vn")
+        options.append(f"{export_settings['gltf_gltfpack_vn']}")
+        options.append("-vc")
+        options.append(f"{export_settings['gltf_gltfpack_vc']}")
+
+        match export_settings['gltf_gltfpack_vpi']:
+            case "Integer":
+                options.append("-vpi")
+            case "Normalized":
+                options.append("-vpn")
+            case "Floating-point":
+                options.append("-vpf")
+
+    parameters = []
+    parameters.append("-i")
+    parameters.append(gltf_input_file_path)
+    parameters.append("-o")
+    parameters.append(gltf_output_file_path)
+
+    try:
+        subprocess.run([gltfpack_binary_file_path] + options + parameters, check=True)
+    except subprocess.CalledProcessError as e:
+        print_console('ERROR', "Calling gltfpack was not successful")
 
 def __fix_json(obj, export_settings):
     # TODO: move to custom JSON encoder
@@ -306,6 +373,9 @@ def __write_file(json, buffer, export_settings):
             export_settings,
             gltf2_blender_json.BlenderJSONEncoder,
             buffer)
+        if (export_settings['gltf_use_gltfpack'] == True):
+            __postprocess_with_gltfpack(export_settings)
+
     except AssertionError as e:
         _, _, tb = sys.exc_info()
         traceback.print_tb(tb)  # Fixed format
