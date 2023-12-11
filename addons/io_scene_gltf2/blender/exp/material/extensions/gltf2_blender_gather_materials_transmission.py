@@ -52,7 +52,6 @@ def export_transmission(blender_material, export_settings):
         combined_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             transmission_socket,
             transmission_slots,
-            (),
             export_settings,
         )
         if has_transmission_texture:

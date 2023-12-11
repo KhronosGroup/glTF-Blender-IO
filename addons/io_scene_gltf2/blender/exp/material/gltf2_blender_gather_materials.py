@@ -78,13 +78,13 @@ def gather_material(blender_material, export_settings):
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, blender_material)
         return mat_unlit, {"uv_info": uvmap_info, "vc_info": vc_info, "udim_info": udim_info}
 
-    orm_texture, default_sockets = __gather_orm_texture(blender_material, export_settings)
+    orm_texture = __gather_orm_texture(blender_material, export_settings)
 
     emissive_factor = __gather_emissive_factor(blender_material, export_settings)
     emissive_texture, uvmap_info_emissive, udim_info_emissive = __gather_emissive_texture(blender_material, export_settings)
     extensions, uvmap_info_extensions, udim_info_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
     normal_texture, uvmap_info_normal, udim_info_normal = __gather_normal_texture(blender_material, export_settings)
-    occlusion_texture, uvmap_info_occlusion, udim_occlusion = __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings)
+    occlusion_texture, uvmap_info_occlusion, udim_occlusion = __gather_occlusion_texture(blender_material, orm_texture, export_settings)
     pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info, udim_info_prb_mr = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
 
     if any([i>1.0 for i in emissive_factor or []]) is True:
@@ -123,7 +123,7 @@ def gather_material(blender_material, export_settings):
                 continue
 
             s = NodeSocket(node[0].outputs[0], node[1])
-            tex, uv_info_additional, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), (), export_settings)
+            tex, uv_info_additional, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), export_settings)
             if tex is not None:
                 export_settings['exported_images'][node[0].image.name] = 1 # Fully used
                 uvmap_infos.update({'additional' + str(cpt_additional): uv_info_additional})
@@ -312,7 +312,7 @@ def __gather_orm_texture(blender_material, export_settings):
     if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
         occlusion = get_socket_from_gltf_material_node(blender_material, "Occlusion")
         if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
-            return None, None
+            return None
 
     metallic_socket = get_socket(blender_material, "Metallic")
     roughness_socket = get_socket(blender_material, "Roughness")
@@ -320,38 +320,34 @@ def __gather_orm_texture(blender_material, export_settings):
     hasMetal = metallic_socket.socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
     hasRough = roughness_socket.socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
-    default_sockets = ()
     # Warning: for default socket, do not use NodeSocket object, because it will break cache
     # Using directlty the Blender socket object
     if not hasMetal and not hasRough:
         metallic_roughness = get_socket_from_gltf_material_node(blender_material, "MetallicRoughness")
         if metallic_roughness.socket is None or not has_image_node_from_socket(metallic_roughness, export_settings):
-            return None, default_sockets
+            return None
         result = (occlusion, metallic_roughness)
     elif not hasMetal:
         result = (occlusion, roughness_socket)
-        default_sockets = (metallic_socket.socket,)
     elif not hasRough:
         result = (occlusion, metallic_socket)
-        default_sockets = (roughness_socket.socket,)
     else:
         result = (occlusion, roughness_socket, metallic_socket)
-        default_sockets = ()
 
     if not gltf2_blender_gather_texture_info.check_same_size_images(result, export_settings):
         print_console("INFO",
             "Occlusion and metal-roughness texture will be exported separately "
             "(use same-sized images if you want them combined)")
-        return None, ()
+        return None
 
     # Double-check this will past the filter in texture_info
-    info, _, _, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, default_sockets, export_settings)
+    info, _, _, _ = gltf2_blender_gather_texture_info.gather_texture_info(result[0], result, export_settings)
     if info is None:
-        return None, ()
+        return None
 
-    return result, default_sockets
+    return result
 
-def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, export_settings):
+def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
     occlusion = get_socket(blender_material, "Occlusion")
     if occlusion.socket is None:
         occlusion = get_socket_from_gltf_material_node(blender_material, "Occlusion")
@@ -360,7 +356,6 @@ def __gather_occlusion_texture(blender_material, orm_texture, default_sockets, e
     occlusion_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
         occlusion,
         orm_texture or (occlusion,),
-        default_sockets,
         export_settings)
     return occlusion_texture, \
             {"occlusionTexture" : uvmap_info}, {'occlusionTexture': udim_info } if len(udim_info.keys()) > 0 else {}
