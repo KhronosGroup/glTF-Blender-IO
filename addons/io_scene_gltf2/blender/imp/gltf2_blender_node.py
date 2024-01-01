@@ -240,7 +240,7 @@ class BlenderNode():
             if gltf.import_settings['bone_heuristic'] == "BLENDER":
                 pose_bone.custom_shape = bpy.data.objects[gltf.bone_shape]
                 armature_min_dim = min([blender_arma.dimensions[0] / blender_arma.scale[0], blender_arma.dimensions[1]  / blender_arma.scale[1], blender_arma.dimensions[2] / blender_arma.scale[2]])
-                pose_bone.custom_shape_scale_xyz = Vector([armature_max_dim * 0.05] * 3)
+                pose_bone.custom_shape_scale_xyz = Vector([armature_min_dim * 0.05] * 3)
                 pose_bone.use_custom_shape_bone_size = False
 
     @staticmethod
