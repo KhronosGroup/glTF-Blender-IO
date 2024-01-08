@@ -471,6 +471,12 @@ def get_vertex_color_info(color_socket, alpha_socket, export_settings):
                     attribute_color_type = "active"
                 elif use_vc is True and use_active is None and attribute_color is not None:
                     attribute_color_type = "name"
+            elif node.node.type in ["ATTRIBUTE", "VERTEX_COLOR"]:
+                use_vc, attribute_color, use_active = get_attribute_name(NodeSocket(node.node.outputs[0], node.group_path), export_settings)
+                if use_vc is True and use_active is True:
+                    attribute_color_type = "active"
+                elif use_vc is True and use_active is None and attribute_color is not None:
+                    attribute_color_type = "name"
 
     if alpha_socket is not None and alpha_socket.socket is not None:
         node = previous_node(alpha_socket)
@@ -483,6 +489,12 @@ def get_vertex_color_info(color_socket, alpha_socket, export_settings):
                     attribute_alpha_type = "active"
                 elif use_vc is True and use_active is None and attribute_alpha is not None:
                     attribute_alpha_type = "name"
+            elif node.node.type in ["ATTRIBUTE", "VERTEX_COLOR"]:
+                use_vc, attribute_color, use_active = get_attribute_name(NodeSocket(node.node.outputs[0], node.group_path), export_settings)
+                if use_vc is True and use_active is True:
+                    attribute_color_type = "active"
+                elif use_vc is True and use_active is None and attribute_color is not None:
+                    attribute_color_type = "name"
 
     return {"color": attribute_color, "alpha": attribute_alpha, "color_type": attribute_color_type, "alpha_type": attribute_alpha_type}
 
