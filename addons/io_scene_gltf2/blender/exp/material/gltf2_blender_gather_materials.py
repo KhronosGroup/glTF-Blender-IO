@@ -47,8 +47,11 @@ def get_material_cache_key(blender_material, export_settings):
     # Use id of material
     # Do not use bpy.types that can be unhashable
     # Do not use material name, that can be not unique (when linked)
+    # We use here the id of original material as for apply modifier, the material has a new id
+    # So, when no modifier applied => original is the same id
+    # And when modifier applied => new one is different id, but original is still the same
     return (
-      (id(blender_material),),
+      (id(blender_material.original),),
     )
 
 @cached_by_key(key=get_material_cache_key)
