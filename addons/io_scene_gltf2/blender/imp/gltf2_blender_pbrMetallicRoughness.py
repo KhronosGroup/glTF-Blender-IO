@@ -179,35 +179,12 @@ def calc_locations(mh):
     height = 460  # height of each block
     locs = {}
 
-    try:
-        clearcoat_ext = mh.pymat.extensions['KHR_materials_clearcoat']
-    except Exception:
-        clearcoat_ext = {}
-
-    try:
-        transmission_ext = mh.pymat.exntesions['KHR_materials_transmission']
-    except:
-        transmission_ext = {}
-
-    try:
-        volume_ext = mh.pymat.extensions['KHR_materials_volume']
-    except Exception:
-        volume_ext = {}
-
-    try:
-        specular_ext = mh.pymat.extensions['KHR_materials_specular']
-    except:
-        specular_ext = {}
-
-    try:
-        anisotropy_ext = mh.pymat.extensions['KHR_materials_anisotropy']
-    except:
-        anisotropy_ext = {}
-
-    try:
-        sheen_ext = mh.pymat.extensions['KHR_materials_sheen']
-    except:
-        sheen_ext = {}
+    clearcoat_ext = mh.get_ext('KHR_materials_clearcoat', {})
+    transmission_ext = mh.get_ext('KHR_materials_transmission', {})
+    volume_ext = mh.get_ext('KHR_materials_volume', {})
+    specular_ext = mh.get_ext('KHR_materials_specular', {})
+    anisotropy_ext = mh.get_ext('KHR_materials_anisotropy', {})
+    sheen_ext = mh.get_ext('KHR_materials_sheen', {})
 
     locs['base_color'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
