@@ -26,29 +26,8 @@ from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_specular import specular
 from .gltf2_blender_KHR_materials_sheen import sheen
 from .gltf2_blender_KHR_materials_anisotropy import anisotropy
-
-class MaterialHelper:
-    """Helper class. Stores material stuff to be passed around everywhere."""
-    def __init__(self, gltf, pymat, mat, vertex_color):
-        self.gltf = gltf
-        self.pymat = pymat
-        self.mat = mat
-        self.node_tree = mat.node_tree
-        self.vertex_color = vertex_color
-        if pymat.pbr_metallic_roughness is None:
-            pymat.pbr_metallic_roughness = \
-                MaterialPBRMetallicRoughness.from_dict({})
-        self.settings_node = None
-
-    def is_opaque(self):
-        alpha_mode = self.pymat.alpha_mode
-        return alpha_mode is None or alpha_mode == 'OPAQUE'
-
-    def needs_emissive(self):
-        return (
-            self.pymat.emissive_texture is not None or
-            (self.pymat.emissive_factor or [0, 0, 0]) != [0, 0, 0]
-        )
+from .gltf2_blender_material_utils import \
+    MaterialHelper, scalar_factor_and_texture, color_factor_and_texture, normal_map
 
 
 def pbr_metallic_roughness(mh: MaterialHelper):
