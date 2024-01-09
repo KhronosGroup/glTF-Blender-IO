@@ -20,7 +20,6 @@ from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_sett
 from .gltf2_blender_texture import texture
 from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
-from .gltf2_blender_KHR_materials_specular import specular
 from .gltf2_blender_KHR_materials_sheen import sheen
 from .gltf2_blender_KHR_materials_anisotropy import anisotropy
 from .gltf2_blender_material_utils import \
@@ -117,13 +116,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             thickness_socket=mh.settings_node.inputs[1] if mh.settings_node else None
         )
 
-    specular(
-        mh,
-        location_specular=locs['specularTexture'],
-        location_specular_tint=locs['specularColorTexture'],
-        specular_socket=pbr_node.inputs['Specular IOR Level'],
-        specular_tint_socket=pbr_node.inputs['Specular Tint']
-    )
+    specular(mh, locs, pbr_node)
 
     anisotropy(
         mh,
@@ -196,6 +189,30 @@ def transmission(mh, locs, pbr_node):
         factor=factor,
         tex_info=ext.get('transmissionTexture'),
         channel=0,  # Red
+    )
+
+
+def specular(mh, locs, pbr_node):
+    ext = mh.get_ext('KHR_materials_specular', {})
+
+    # blender.IORLevel = 0.5 * gltf.specular
+    scalar_factor_and_texture(
+        mh,
+        location=locs['specularTexture'],
+        label='Specular',
+        socket=pbr_node.inputs['Specular IOR Level'],
+        factor=0.5 * ext.get('specularFactor', 1),
+        tex_info=ext.get('specularTexture'),
+        channel=4,  # Alpha
+    )
+
+    color_factor_and_texture(
+        mh,
+        location=locs['specularColorTexture'],
+        label='Specular Color',
+        socket=pbr_node.inputs['Specular Tint'],
+        factor=ext.get('specularColorFactor', [1, 1, 1]),
+        tex_info=ext.get('specularColorTexture'),
     )
 
 
