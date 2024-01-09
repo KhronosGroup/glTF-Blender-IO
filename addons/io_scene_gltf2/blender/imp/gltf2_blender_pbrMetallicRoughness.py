@@ -18,8 +18,6 @@ from ...io.com.gltf2_io_constants import GLTF_IOR
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
 from .gltf2_blender_texture import texture
-from .gltf2_blender_KHR_materials_clearcoat import \
-    clearcoat, clearcoat_roughness, clearcoat_normal
 from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_specular import specular
@@ -107,23 +105,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             occlusion_socket=mh.settings_node.inputs['Occlusion'],
         )
 
-    clearcoat(
-        mh,
-        location=locs['clearcoat'],
-        clearcoat_socket=pbr_node.inputs['Coat Weight'],
-    )
-
-    clearcoat_roughness(
-        mh,
-        location=locs['clearcoat_roughness'],
-        roughness_socket=pbr_node.inputs['Coat Roughness'],
-    )
-
-    clearcoat_normal(
-        mh,
-        location=locs['clearcoat_normal'],
-        normal_socket=pbr_node.inputs['Coat Normal'],
-    )
+    clearcoat(mh, locs, pbr_node)
 
     transmission(mh, locs, pbr_node)
 
@@ -163,6 +145,38 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     ior(
         mh,
         ior_socket=pbr_node.inputs['IOR']
+    )
+
+
+def clearcoat(mh, locs, pbr_node):
+    ext = mh.get_ext('KHR_materials_clearcoat', {})
+
+    scalar_factor_and_texture(
+        mh,
+        location=locs['clearcoat'],
+        label='Clearcoat',
+        socket=pbr_node.inputs['Coat Weight'],
+        factor=ext.get('clearcoatFactor', 0),
+        tex_info=ext.get('clearcoatTexture'),
+        channel=0,  # Red
+    )
+
+    scalar_factor_and_texture(
+        mh,
+        location=locs['clearcoat_roughness'],
+        label='Clearcoat Roughness',
+        socket=pbr_node.inputs['Coat Roughness'],
+        factor=ext.get('clearcoatRoughnessFactor', 0),
+        tex_info=ext.get('clearcoatRoughnessTexture'),
+        channel=1,  # Green
+    )
+
+    normal_map(
+        mh,
+        location=locs['clearcoat_normal'],
+        label='Clearcoat Normal',
+        socket=pbr_node.inputs['Coat Normal'],
+        tex_info=ext.get('clearcoatNormalTexture'),
     )
 
 
