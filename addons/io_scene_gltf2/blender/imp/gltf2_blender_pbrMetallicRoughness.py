@@ -294,60 +294,24 @@ def calc_locations(mh):
 
 # [Texture] => [Emissive Factor] =>
 def emission(mh: MaterialHelper, location, color_socket, strength_socket):
-    x, y = location
-    emissive_factor = mh.pymat.emissive_factor or [0, 0, 0]
+    factor = mh.pymat.emissive_factor or [0, 0, 0]
+    ext = mh.get_ext('KHR_materials_emissive_strength', {})
+    strength = ext.get('emissiveStrength', 1)
 
-    strength = 1
-    try:
-        # Get strength from KHR_materials_emissive_strength if exists
-        strength = mh.pymat.extensions['KHR_materials_emissive_strength']['emissiveStrength']
-    except Exception:
-        pass
+    if factor[0] == factor[1] == factor[2]:
+        # Fold greyscale factor into strength
+        strength *= factor[0]
+        factor = [1, 1, 1]
 
-    if color_socket is None:
-        return
-
-    if mh.pymat.emissive_texture is None:
-        if emissive_factor == [0, 0, 0]:
-            # Keep as close as possible to the default Blender value when there is no emission
-            color_socket.default_value = [1,1,1,1]
-            strength_socket.default_value = 0
-            return
-        color_socket.default_value = emissive_factor + [1]
-        strength_socket.default_value = strength
-        return
-
-    # Put grayscale emissive factors into the Emission Strength
-    e0, e1, e2 = emissive_factor
-    if strength_socket and e0 == e1 == e2:
-        strength_socket.default_value = e0 * strength
-
-    # Otherwise, use a multiply node for it
-    else:
-        if emissive_factor != [1, 1, 1]:
-            node = mh.node_tree.nodes.new('ShaderNodeMix')
-            node.label = 'Emissive Factor'
-            node.data_type = 'RGBA'
-            node.location = x - 140, y
-            node.blend_type = 'MULTIPLY'
-            # Outputs
-            mh.node_tree.links.new(color_socket, node.outputs[2])
-            # Inputs
-            node.inputs['Factor'].default_value = 1.0
-            color_socket = node.inputs[6]
-            node.inputs[7].default_value = emissive_factor + [1]
-
-            x -= 200
-
-        strength_socket.default_value = strength
-
-    texture(
+    color_factor_and_texture(
         mh,
+        location,
+        label='Emissive',
+        socket=color_socket,
+        factor=factor,
         tex_info=mh.pymat.emissive_texture,
-        label='EMISSIVE',
-        location=(x, y),
-        color_socket=color_socket,
     )
+    strength_socket.default_value = strength
 
 
 #      [Texture] => [Mix Colors] => [Color Factor] =>
