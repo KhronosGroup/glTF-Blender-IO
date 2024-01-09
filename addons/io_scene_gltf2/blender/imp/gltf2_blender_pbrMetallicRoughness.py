@@ -20,7 +20,6 @@ from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_sett
 from .gltf2_blender_texture import texture
 from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
-from .gltf2_blender_KHR_materials_sheen import sheen
 from .gltf2_blender_KHR_materials_anisotropy import anisotropy
 from .gltf2_blender_material_utils import \
     MaterialHelper, scalar_factor_and_texture, color_factor_and_texture, normal_map
@@ -126,14 +125,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         anisotropy_tangent_socket=pbr_node.inputs['Tangent']
     )
 
-    sheen(
-        mh,
-        location_sheenTint=locs['sheenColorTexture'],
-        location_sheenRoughness=locs['sheenRoughnessTexture'],
-        sheen_socket=pbr_node.inputs['Sheen Weight'],
-        sheenTint_socket=pbr_node.inputs['Sheen Tint'],
-        sheenRoughness_socket=pbr_node.inputs['Sheen Roughness']
-    )
+    sheen(mh, locs, pbr_node)
 
     ior(
         mh,
@@ -213,6 +205,33 @@ def specular(mh, locs, pbr_node):
         socket=pbr_node.inputs['Specular Tint'],
         factor=ext.get('specularColorFactor', [1, 1, 1]),
         tex_info=ext.get('specularColorTexture'),
+    )
+
+
+def sheen(mh, locs, pbr_node):
+    ext = mh.get_ext('KHR_materials_sheen')
+    if ext is None:
+        return
+
+    pbr_node.inputs['Sheen Weight'].default_value = 1
+
+    color_factor_and_texture(
+        mh,
+        location=locs['sheenColorTexture'],
+        label='Sheen Color',
+        socket=pbr_node.inputs['Sheen Tint'],
+        factor=ext.get('sheenColorFactor', [0, 0, 0]),
+        tex_info=ext.get('sheenColorTexture'),
+    )
+
+    scalar_factor_and_texture(
+        mh,
+        location=locs['sheenRoughnessTexture'],
+        label='Sheen Roughness',
+        socket=pbr_node.inputs['Sheen Roughness'],
+        factor=ext.get('sheenRoughnessFactor', 0),
+        tex_info=ext.get('sheenRoughnessTexture'),
+        channel=4,  # Alpha
     )
 
 
