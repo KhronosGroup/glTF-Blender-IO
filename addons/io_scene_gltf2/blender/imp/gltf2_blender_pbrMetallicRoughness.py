@@ -18,7 +18,6 @@ from ...io.com.gltf2_io_constants import GLTF_IOR
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
 from .gltf2_blender_texture import texture
-from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_anisotropy import anisotropy
 from .gltf2_blender_material_utils import \
@@ -30,10 +29,6 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
     pbr_node.location = 10, 300
     additional_location = 40, -370 # For occlusion and/or volume / original PBR extensions
-
-    # Set IOR to 1.5, this is the default in glTF
-    # This value may be overridden later if IOR extension is set on file
-    pbr_node.inputs['IOR'].default_value = GLTF_IOR
 
     if mh.pymat.occlusion_texture is not None:
         if mh.settings_node is None:
@@ -127,10 +122,10 @@ def pbr_metallic_roughness(mh: MaterialHelper):
 
     sheen(mh, locs, pbr_node)
 
-    ior(
-        mh,
-        ior_socket=pbr_node.inputs['IOR']
-    )
+    # IOR
+    ior_ext = mh.get_ext('KHR_materials_ior', {})
+    ior = ior_ext.get('ior', GLTF_IOR)
+    pbr_node.inputs['IOR'].default_value = ior
 
 
 def clearcoat(mh, locs, pbr_node):
