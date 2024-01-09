@@ -20,7 +20,6 @@ from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_sett
 from .gltf2_blender_texture import texture
 from .gltf2_blender_KHR_materials_clearcoat import \
     clearcoat, clearcoat_roughness, clearcoat_normal
-from .gltf2_blender_KHR_materials_transmission import transmission
 from .gltf2_blender_KHR_materials_ior import ior
 from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_specular import specular
@@ -126,11 +125,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         normal_socket=pbr_node.inputs['Coat Normal'],
     )
 
-    transmission(
-        mh,
-        location=locs['transmission'],
-        transmission_socket=pbr_node.inputs['Transmission Weight']
-    )
+    transmission(mh, locs, pbr_node)
 
     if need_volume_node:
         volume(
@@ -168,6 +163,25 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     ior(
         mh,
         ior_socket=pbr_node.inputs['IOR']
+    )
+
+
+def transmission(mh, locs, pbr_node):
+    ext = mh.get_ext('KHR_materials_transmission', {})
+    factor = ext.get('transmissionFactor', 0)
+
+    if factor > 0:
+        # Activate screen refraction (for Eevee)
+        mh.mat.use_screen_refraction = True
+
+    scalar_factor_and_texture(
+        mh,
+        location=locs['transmission'],
+        label='Transmission',
+        socket=pbr_node.inputs['Transmission Weight'],
+        factor=factor,
+        tex_info=ext.get('transmissionTexture'),
+        channel=0,  # Red
     )
 
 
