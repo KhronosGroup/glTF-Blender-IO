@@ -522,40 +522,12 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
 
 # [Texture] => [Normal Map] =>
 def normal(mh: MaterialHelper, location, normal_socket):
-    x,y = location
-    tex_info = mh.pymat.normal_texture
-
-    if tex_info is None:
-        return
-
-    # Normal map
-    node = mh.node_tree.nodes.new('ShaderNodeNormalMap')
-    node.location = x - 150, y - 40
-    # Set UVMap
-    uv_idx = tex_info.tex_coord or 0
-    try:
-        uv_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
-    except Exception:
-        pass
-    node.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
-    # Set strength
-    scale = tex_info.scale
-    scale = scale if scale is not None else 1
-    node.inputs['Strength'].default_value = scale
-    # Outputs
-    mh.node_tree.links.new(normal_socket, node.outputs['Normal'])
-    # Inputs
-    color_socket = node.inputs['Color']
-
-    x -= 200
-
-    texture(
+    normal_map(
         mh,
-        tex_info=tex_info,
-        label='NORMALMAP',
-        location=(x, y),
-        is_data=True,
-        color_socket=color_socket,
+        location=location,
+        label='Normal Map',
+        socket=normal_socket,
+        tex_info=mh.pymat.normal_texture,
     )
 
 
