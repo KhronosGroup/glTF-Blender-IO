@@ -18,7 +18,6 @@ from ...io.com.gltf2_io_constants import GLTF_IOR
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
 from .gltf2_blender_texture import texture
-from .gltf2_blender_KHR_materials_volume import volume
 from .gltf2_blender_KHR_materials_anisotropy import anisotropy
 from .gltf2_blender_material_utils import \
     MaterialHelper, scalar_factor_and_texture, color_factor_and_texture, normal_map
@@ -176,6 +175,28 @@ def transmission(mh, locs, pbr_node):
         factor=factor,
         tex_info=ext.get('transmissionTexture'),
         channel=0,  # Red
+    )
+
+
+def volume(mh, location, volume_socket, thickness_socket):
+    # Based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
+    ext = mh.get_ext('KHR_materials_volume', {})
+
+    color = ext.get('attenuationColor', [1, 1, 1])
+    volume_socket.node.inputs[0].default_value = [*color, 1]
+
+    distance = ext.get('attenuationDistance', float('inf'))
+    density = 1 / distance
+    volume_socket.node.inputs[1].default_value = density
+
+    scalar_factor_and_texture(
+        mh,
+        location=location,
+        label='Thickness',
+        socket=thickness_socket,
+        factor=ext.get('thicknessFactor', 0),
+        tex_info=ext.get('thicknessTexture'),
+        channel=1,  # Green
     )
 
 
