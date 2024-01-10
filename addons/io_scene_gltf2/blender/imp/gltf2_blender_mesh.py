@@ -323,7 +323,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     mesh.polygons.foreach_set('loop_total', loop_totals)
 
     for uv_i in range(num_uvs):
-        name = f'UV{uv_idx}'
+        name = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
         layer = mesh.uv_layers.new(name=name)
 
         if layer is None:
