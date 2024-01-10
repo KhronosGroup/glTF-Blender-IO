@@ -145,7 +145,7 @@ def clearcoat_normal(mh, location, normal_socket):
         uv_idx = tex_info.extensions['KHR_texture_transform']['texCoord']
     except Exception:
         pass
-    node.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
+    node.uv_map = f'UV{uv_idx}'
     # Set strength
     scale = tex_info.scale
     scale = scale if scale is not None else 1
