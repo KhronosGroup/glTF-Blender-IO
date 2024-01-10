@@ -192,7 +192,7 @@ def texture(
     if uv_idx != 0 or needs_uv_map:
         uv_map = mh.node_tree.nodes.new('ShaderNodeUVMap')
         uv_map.location = x - 160, y - 70
-        uv_map.uv_map = f'UV{uv_idx}'
+        uv_map.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
         # Outputs
         mh.node_tree.links.new(uv_socket, uv_map.outputs[0])
 
