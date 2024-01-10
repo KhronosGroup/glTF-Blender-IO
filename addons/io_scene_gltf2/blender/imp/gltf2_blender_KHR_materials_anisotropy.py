@@ -65,7 +65,7 @@ def anisotropy(
         except Exception:
             pass
 
-    node.uv_map = 'UVMap' if uv_idx == 0 else 'UVMap.%03d' % uv_idx
+    node.uv_map = f'UV{uv_idx}'
     mh.node_tree.links.new(anisotropy_tangent_socket, node.outputs['Tangent'])
 
 
