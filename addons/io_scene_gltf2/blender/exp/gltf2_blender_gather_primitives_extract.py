@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bpy
 import numpy as np
 from copy import deepcopy
 from mathutils import Vector
@@ -1138,14 +1139,76 @@ class PrimitiveCreator:
         self.dots[attr['gltf_attribute_name'] + '1'] = uvs[:, 1]
         del uvs
 
+    def __get_normals_from_shape_keys(self, key_blocks):
+        """
+        Access to shape key normals through ShapeKey.normals_split_get() is slow because it returns a tuple. As a
+        workaround, a temporary copy of the mesh is made and then each shape key's normals can be extracted from the
+        mesh by copying the shape key's coordinates into the mesh's 'position' attribute, updating the mesh's normals
+        and finally extracting the normals from the mesh's `corner_normals` property.
+        """
+        if len(self.blender_mesh.vertices) == 0:
+            # Add a zero-length normals array for each shape key.
+            for _ in range(len(key_blocks)):
+                ns = np.empty((0, 3), dtype=np.float32)
+                self.morph_normals.append(ns)
+            return
+
+        # Rather than creating a copy of `self.blender_mesh`, which would also copy the shape keys, create a
+        # temporary mesh owned by the Object with Object.to_mesh() because that only copies the mesh.
+        # Creating a copy avoids modifying the mesh that is being exported.
+        if self.blender_object and self.blender_object.data == self.blender_mesh:
+            tmp_object = None
+            tmp_mesh = self.blender_object.to_mesh()
+        else:
+            # Create a temporary object with the mesh as its data.
+            tmp_object = bpy.data.objects.new("", self.blender_mesh)
+            tmp_mesh = tmp_object.to_mesh()
+
+        # Re-usable storage array for shape key coordinates.
+        coordinates_storage = np.empty(len(self.blender_mesh.vertices) * 3, dtype=np.float32)
+
+        def put_shape_key_normals_into(shape_key, normals_array):
+            # Workaround for slow access to shape key normals through ShapeKey.normals_split_get():
+            # Copy the shape key coordinates into the position attribute.
+            shape_key.points.foreach_get('co', coordinates_storage)
+            tmp_mesh.attributes['position'].data.foreach_set('vector', coordinates_storage)
+            # Force normals to be recalculated.
+            tmp_mesh.update()
+            # Extract corner normals from the mesh.
+            tmp_mesh.corner_normals.foreach_get('vector', normals_array)
+
+        # Set self.normals from the normals of the relative key of the first shape key.
+        base_key = key_blocks[0].relative_key
+        put_shape_key_normals_into(base_key, self.normals)
+
+        # Get and append the normals for the shape keys.
+        for key_block in key_blocks:
+            if key_block == base_key:
+                # The shape key's normals were already retrieved and set into `self.normals`, so copy `self.normals`.
+                ns = self.normals.copy()
+            else:
+                ns = np.empty_like(self.normals)
+                put_shape_key_normals_into(key_block, ns)
+            ns = ns.reshape(len(self.blender_mesh.loops), 3)
+            ns = np.round(ns, ROUNDING_DIGIT)
+            self.morph_normals.append(ns)
+
+        # Clean up temporary data.
+        if tmp_object is None:
+            # Clear the temporary mesh created by `self.blender_object.to_mesh()`.
+            self.blender_object.to_mesh_clear()
+        else:
+            # Remove the temporary Object.
+            bpy.data.objects.remove(tmp_object, do_unlink=False, do_id_user=False, do_ui_user=False)
+
     def __get_normals(self):
         """Get normal for each loop."""
         key_blocks = self.key_blocks if self.use_morph_normals else []
+        self.normals = np.empty(len(self.blender_mesh.loops) * 3, dtype=np.float32)
+        self.morph_normals = []
         if key_blocks:
-            self.normals = key_blocks[0].relative_key.normals_split_get()
-            self.normals = np.array(self.normals, dtype=np.float32)
+            self.__get_normals_from_shape_keys(key_blocks)
         else:
-            self.normals = np.empty(len(self.blender_mesh.loops) * 3, dtype=np.float32)
             self.blender_mesh.loops.foreach_get('normal', self.normals)
 
         self.normals = self.normals.reshape(len(self.blender_mesh.loops), 3)
@@ -1153,13 +1216,6 @@ class PrimitiveCreator:
         self.normals = np.round(self.normals, ROUNDING_DIGIT)
         # Force normalization of normals in case some normals are not (why ?)
         PrimitiveCreator.normalize_vecs(self.normals)
-
-        self.morph_normals = []
-        for key_block in key_blocks:
-            ns = np.array(key_block.normals_split_get(), dtype=np.float32)
-            ns = ns.reshape(len(self.blender_mesh.loops), 3)
-            ns = np.round(ns, ROUNDING_DIGIT)
-            self.morph_normals.append(ns)
 
         # Transform for skinning
         if self.armature and self.blender_object:
