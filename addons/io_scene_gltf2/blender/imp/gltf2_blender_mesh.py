@@ -21,6 +21,7 @@ from ...io.imp.gltf2_io_binary import BinaryData
 from ...io.com.gltf2_io_constants import DataType, ComponentType
 from ...blender.com.gltf2_blender_conversion import get_attribute_type
 from ..com.gltf2_blender_extras import set_extras
+from ..com.gltf2_blender_conversion import fast_structured_np_unique
 from .gltf2_blender_material import BlenderMaterial
 from .gltf2_io_draco_compression_extension import decode_primitive
 
@@ -776,7 +777,7 @@ def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk
         dots['sk%dy' % i] = locs[:, 1]
         dots['sk%dz' % i] = locs[:, 2]
 
-    unique_dots, unique_ind, inv_indices = np.unique(dots, return_index=True, return_inverse=True)
+    unique_dots, unique_ind, inv_indices = fast_structured_np_unique(dots, return_index=True, return_inverse=True)
 
     loop_vidxs = inv_indices[loop_vidxs]
     edge_vidxs = inv_indices[edge_vidxs]
