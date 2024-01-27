@@ -321,9 +321,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
     # All polys are tris
     loop_starts = np.arange(0, 3 * num_faces, step=3)
-    loop_totals = np.full(num_faces, 3)
     mesh.polygons.foreach_set('loop_start', loop_starts)
-    mesh.polygons.foreach_set('loop_total', loop_totals)
 
     for uv_i in range(num_uvs):
         name = 'UVMap' if uv_i == 0 else 'UVMap.%03d' % uv_i
