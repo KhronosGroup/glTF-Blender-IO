@@ -158,6 +158,8 @@ def __gather_interpolation(
     elif len(keyframes) == 1:
         if node_channel_is_animated is False:
             return "STEP"
+        elif node_channel_interpolation == "CUBICSPLINE":
+            return "LINEAR" # We can't have a single keyframe with CUBICSPLINE
         else:
             return node_channel_interpolation
     else:
