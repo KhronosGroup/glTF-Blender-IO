@@ -580,12 +580,18 @@ def points_edges_tris(mode, indices):
         #   3---2
         #  / \ / \
         # 4---0---1
-        # TODO: numpyify
-        tris = np.array([
-            (indices[0], indices[i], indices[i + 1])
-            for i in range(1, len(indices) - 1)
-        ])
-        tris = squish(tris)
+        # in: 01234
+        # out: 012023034
+        # out (viewed as triplets): 012, 023, 034
+        # Start filled with the first index
+        # 000, 000, 000
+        tris = np.full((len(indices) - 2) * 3, indices[0], dtype=np.uint32)
+        # _1_, _2_, _3_ <- _123_
+        # 010, 020, 030
+        tris[1::3] = indices[1:-1]
+        # __2, __3, __4 <- __234
+        # 012, 023, 034
+        tris[2::3] = indices[2:]
 
     else:
         raise Exception('primitive mode unimplemented: %d' % mode)
