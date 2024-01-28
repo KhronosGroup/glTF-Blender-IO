@@ -578,6 +578,10 @@ class VExportTree:
                 hasattr(self.nodes[n.armature], "need_neutral_bone")]: #all skin meshes objects where neutral bone is needed
                 # Only for meshes, as curve can't have skin data (no weights pain available)
 
+            # Be sure to add it to really exported meshes
+            if n.node.skin is None:
+                print("WARNING: {} has no skin, skipping adding neutral bone data on it.".format(n.blender_object.name))
+                continue
 
             if n.armature not in added_armatures:
 
