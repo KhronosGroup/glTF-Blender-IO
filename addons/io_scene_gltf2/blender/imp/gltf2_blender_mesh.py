@@ -652,6 +652,15 @@ def normalize_vecs(vectors):
     norms = np.linalg.norm(vectors, axis=1, keepdims=True)
     np.divide(vectors, norms, out=vectors, where=norms != 0)
 
+def attribute_ensure(attributes, name, data_type, domain):
+    attribute = attributes.get(name)
+    if attribute is None:
+        return attributes.new(name, data_type, domain)
+    if attribute.domain == domain and attribute.data_type == data_type:
+        return attribute
+    # There is an existing attribute, but it has the wrong domain or data_type.
+    attributes.remove(attribute)
+    return attributes.new(name, data_type, domain)
 
 def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     num_polys = len(mesh.polygons)
