@@ -544,15 +544,36 @@ def points_edges_tris(mode, indices):
         # 0---2---4
         #  \ / \ /
         #   1---3
-        # TODO: numpyify
-        def alternate(i, xs):
-            even = i % 2 == 0
-            return xs if even else (xs[0], xs[2], xs[1])
-        tris = np.array([
-            alternate(i, (indices[i], indices[i + 1], indices[i + 2]))
-            for i in range(0, len(indices) - 2)
-        ])
-        tris = squish(tris)
+        # in: 01234
+        # out: 012132234
+        # out (viewed as triplets): 012, 132, 234
+        tris = np.empty((len(indices) - 2) * 3, dtype=np.uint32)
+        # 012__
+        first_indices = indices[:-2]
+        # _123_
+        second_indices = indices[1:-1]
+        # __234
+        third_indices = indices[2:]
+
+        # Each triplet starts with the first index
+        # 0__, 1__, 2__ <- 012__
+        tris[0::3] = first_indices
+
+        # Even triplets end with the next two indices in order
+        # _1_, ___, _3_ <- _1_3_ <- _123_
+        # 01_, 1__, 23_
+        tris[1::6] = second_indices[0::2]
+        # __2, ___, __4 <- __2_4 <- __234
+        # 012, 1__, 234
+        tris[2::6] = third_indices[0::2]
+
+        # Odd triplets end with the next two indices in reverse order
+        # ___, _3_, ___ <- ___3_ <- __234
+        # 012, 13_, 234
+        tris[4::6] = third_indices[1::2]
+        # ___, __2, ___ <- __2__ <- _123_
+        # 012, 132, 234
+        tris[5::6] = second_indices[1::2]
 
     elif mode == 6:
         # TRIANGLE FAN
