@@ -38,7 +38,7 @@ class BlenderWeightAnim():
 
         node = gltf.data.nodes[node_idx]
         obj = vnode.blender_object
-        fps = bpy.context.scene.render.fps
+        fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
 
         animation = gltf.data.animations[anim_idx]
 
