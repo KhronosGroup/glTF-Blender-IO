@@ -693,7 +693,7 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     poly_sharps = np.empty(num_polys, dtype=bool)
 
     poly_normals = np.empty(num_polys * 3, dtype=np.float32)
-    mesh.polygons.foreach_get('normal', poly_normals)
+    mesh.polygon_normals.foreach_get('vector', poly_normals)
     poly_normals = poly_normals.reshape(num_polys, 3)
 
     f = 0

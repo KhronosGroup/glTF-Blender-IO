@@ -1163,7 +1163,7 @@ class PrimitiveCreator:
             self.normals = np.array(self.normals, dtype=np.float32)
         else:
             self.normals = np.empty(len(self.blender_mesh.loops) * 3, dtype=np.float32)
-            self.blender_mesh.loops.foreach_get('normal', self.normals)
+            self.blender_mesh.corner_normals.foreach_get('vector', self.normals)
 
         self.normals = self.normals.reshape(len(self.blender_mesh.loops), 3)
 
