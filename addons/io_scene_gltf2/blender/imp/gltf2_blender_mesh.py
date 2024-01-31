@@ -572,9 +572,10 @@ def points_edges_tris(mode, indices):
     return points, edges, tris
 
 
-def squish(array):
-    """Squish nD array into 1D array (required by foreach_set)."""
-    return array.reshape(array.size)
+def squish(array, dtype=None):
+    """Squish nD array into a C-contiguous (required for faster access with the buffer protocol in foreach_set) 1D array
+    (required by foreach_set). Optionally converting the array to a different dtype."""
+    return np.ascontiguousarray(array, dtype=dtype).reshape(array.size)
 
 
 def colors_rgb_to_rgba(rgb):
