@@ -1134,7 +1134,7 @@ class PrimitiveCreator:
     def __get_uvs_attribute(self, blender_uv_idx, attr):
         layer = self.blender_mesh.uv_layers[blender_uv_idx]
         uvs = np.empty(len(self.blender_mesh.loops) * 2, dtype=np.float32)
-        layer.data.foreach_get('uv', uvs)
+        layer.uv.foreach_get('vector', uvs)
         uvs = uvs.reshape(len(self.blender_mesh.loops), 2)
 
         # Blender UV space -> glTF UV space

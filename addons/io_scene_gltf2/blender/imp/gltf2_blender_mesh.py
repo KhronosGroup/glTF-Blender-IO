@@ -330,7 +330,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             print("WARNING: UV map is ignored because the maximum number of UV layers has been reached.")
             break
 
-        layer.data.foreach_set('uv', squish(loop_uvs[uv_i]))
+        layer.uv.foreach_set('vector', squish(loop_uvs[uv_i], np.float32))
 
     for col_i in range(num_cols):
         name = 'Color' if col_i == 0 else 'Color.%03d' % col_i
