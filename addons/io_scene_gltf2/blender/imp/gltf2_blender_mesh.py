@@ -314,7 +314,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     corner_vert_attribute.data.foreach_set('value', squish(loop_vidxs, np.intc))
 
     mesh.edges.add(len(edge_vidxs) // 2)
-    mesh.edges.foreach_set('vertices', edge_vidxs)
+    edge_verts_attribute = attribute_ensure(mesh.attributes, '.edge_verts', 'INT32_2D', 'EDGE')
+    edge_verts_attribute.data.foreach_set('value', squish(edge_vidxs, np.intc))
 
     mesh.polygons.add(num_faces)
 
