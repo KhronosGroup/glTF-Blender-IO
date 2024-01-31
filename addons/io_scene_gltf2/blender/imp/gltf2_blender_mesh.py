@@ -306,7 +306,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     # Start creating things
 
     mesh.vertices.add(len(vert_locs))
-    mesh.vertices.foreach_set('co', squish(vert_locs))
+    position_attribute = attribute_ensure(mesh.attributes, 'position', 'FLOAT_VECTOR', 'POINT')
+    position_attribute.data.foreach_set('vector', squish(vert_locs, np.float32))
 
     mesh.loops.add(len(loop_vidxs))
     mesh.loops.foreach_set('vertex_index', loop_vidxs)
