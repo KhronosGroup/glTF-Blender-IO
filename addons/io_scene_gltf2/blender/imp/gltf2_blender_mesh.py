@@ -334,14 +334,9 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
     for col_i in range(num_cols):
         name = 'Color' if col_i == 0 else 'Color.%03d' % col_i
-        layer = mesh.vertex_colors.new(name=name)
+        layer = mesh.color_attributes.new(name, 'BYTE_COLOR', 'CORNER')
 
-        if layer is None:
-            print("WARNING: Vertex colors are ignored because the maximum number of vertex color layers has been "
-                "reached.")
-            break
-
-        mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
+        layer.data.foreach_set('color', squish(loop_cols[col_i], np.float32))
 
     # Make sure the first Vertex Color Attribute is the rendered one
     if num_cols > 0:
