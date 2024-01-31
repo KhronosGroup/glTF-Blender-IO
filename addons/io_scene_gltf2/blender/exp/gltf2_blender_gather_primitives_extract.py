@@ -892,7 +892,7 @@ class PrimitiveCreator:
     def __get_positions(self):
         self.locs = np.empty(len(self.blender_mesh.vertices) * 3, dtype=np.float32)
         if self.key_blocks:
-            source = self.key_blocks[0].relative_key.data
+            source = self.key_blocks[0].relative_key.points
             foreach_attribute = 'co'
         else:
             position_attribute = gltf2_blender_conversion.get_attribute(self.blender_mesh.attributes, 'position', 'FLOAT_VECTOR', 'POINT')
@@ -905,7 +905,7 @@ class PrimitiveCreator:
         self.morph_locs = []
         for key_block in self.key_blocks:
             vs = np.empty(len(self.blender_mesh.vertices) * 3, dtype=np.float32)
-            key_block.data.foreach_get('co', vs)
+            key_block.points.foreach_get('co', vs)
             vs = vs.reshape(len(self.blender_mesh.vertices), 3)
             self.morph_locs.append(vs)
 
