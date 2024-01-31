@@ -344,10 +344,12 @@ class PrimitiveCreator:
 
 
     def populate_dots_data(self):
-        vidxs = np.empty(len(self.blender_mesh.loops))
-        self.blender_mesh.loops.foreach_get('vertex_index', vidxs)
-        self.dots['vertex_index'] = vidxs
-        del vidxs
+        corner_vertex_indices = gltf2_blender_conversion.get_attribute(self.blender_mesh.attributes, '.corner_vert', 'INT', 'CORNER')
+        if corner_vertex_indices:
+            vidxs = np.empty(len(self.blender_mesh.loops), dtype=np.intc)
+            corner_vertex_indices.data.foreach_get('value', vidxs)
+            self.dots['vertex_index'] = vidxs
+            del vidxs
 
         for attr in self.blender_attributes:
             if 'skip_getting_to_dots' in attr:
