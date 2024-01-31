@@ -674,14 +674,15 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
         return
 
     if gltf.import_settings['import_shading'] == "SMOOTH":
-        poly_smooths = np.full(num_polys, True)
+        poly_sharps = np.full(num_polys, False)
         f = 0
         for prim in pymesh.primitives:
             if 'NORMAL' not in prim.attributes:
                 # Primitives with no NORMALs should use flat shading
-                poly_smooths[f:f + prim.num_faces].fill(False)
+                poly_sharps[f:f + prim.num_faces].fill(True)
             f += prim.num_faces
-        mesh.polygons.foreach_set('use_smooth', poly_smooths)
+        sharp_face_attribute = attribute_ensure(mesh.attributes, 'sharp_face', 'BOOLEAN', 'FACE')
+        sharp_face_attribute.data.foreach_set('value', poly_sharps)
         return
 
     assert gltf.import_settings['import_shading'] == "NORMALS"
@@ -689,7 +690,7 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     # Try to guess which polys should be flat based on the fact that all the
     # loop normals for a flat poly are = the poly's normal.
 
-    poly_smooths = np.empty(num_polys, dtype=bool)
+    poly_sharps = np.empty(num_polys, dtype=bool)
 
     poly_normals = np.empty(num_polys * 3, dtype=np.float32)
     mesh.polygons.foreach_get('normal', poly_normals)
@@ -699,7 +700,7 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     for prim in pymesh.primitives:
         if 'NORMAL' not in prim.attributes:
             # Primitives with no NORMALs should use flat shading
-            poly_smooths[f:f + prim.num_faces].fill(False)
+            poly_sharps[f:f + prim.num_faces].fill(True)
             f += prim.num_faces
             continue
 
@@ -722,11 +723,12 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
         dot_prods = np.sum(vert_ns * poly_ns, axis=1)
         np.logical_or(smooth, dot_prods <= 0.9999999, out=smooth)
 
-        poly_smooths[f:f + prim.num_faces] = smooth
+        np.logical_not(smooth, out=poly_sharps[f:f + prim.num_faces])
 
         f += prim.num_faces
 
-    mesh.polygons.foreach_set('use_smooth', poly_smooths)
+    sharp_face_attribute = attribute_ensure(mesh.attributes, 'sharp_face', 'BOOLEAN', 'FACE')
+    sharp_face_attribute.data.foreach_set('value', poly_sharps)
 
 
 def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs, attribute_data):
