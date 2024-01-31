@@ -390,7 +390,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                 and 'mappings' in prim.extensions['KHR_materials_variants'].keys()
 
     if has_materials:
-        material_indices = np.empty(num_faces, dtype=np.uint32)
+        bl_material_index_dtype = np.intc
+        material_indices = np.empty(num_faces, dtype=bl_material_index_dtype)
         empty_material_slot_index = None
         f = 0
 
@@ -453,7 +454,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                         vari = variant_primitive.variants.add()
                         vari.variant.variant_idx = variant
 
-        mesh.polygons.foreach_set('material_index', material_indices)
+        material_index_attribute = attribute_ensure(mesh.attributes, 'material_index', 'INT', 'FACE')
+        material_index_attribute.data.foreach_set('value', material_indices)
 
     # Custom Attributes
     for idx, attr in enumerate(attributes):
