@@ -104,7 +104,7 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
     if armature_uuid in export_settings['slide'].keys() and action_name in export_settings['slide'][armature_uuid].keys():
         for k in keyframes:
             k.frame += -export_settings['slide'][armature_uuid][action_name]
-            k.seconds = k.frame / bpy.context.scene.render.fps
+            k.seconds = k.frame / (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
 
     times = [k.seconds for k in keyframes]
     input =  gather_accessor(
@@ -155,7 +155,7 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
     transform = correction_matrix_local
 
     values = []
-    fps = bpy.context.scene.render.fps
+    fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
     for keyframe in keyframes:
         # Transform the data and build gltf control points
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform, False)
@@ -216,6 +216,8 @@ def __gather_interpolation(node_channel_is_animated, node_channel_interpolation,
     elif len(keyframes) == 1:
         if node_channel_is_animated is False:
             return "STEP"
+        elif node_channel_interpolation == "CUBICSPLINE":
+            return "LINEAR" # We can't have a single keyframe with CUBICSPLINE
         else:
             return node_channel_interpolation
     else:

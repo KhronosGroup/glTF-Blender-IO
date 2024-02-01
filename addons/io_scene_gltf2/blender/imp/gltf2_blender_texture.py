@@ -49,25 +49,7 @@ def texture(
 
     # Get image
     if forced_image is None:
-
-        if mh.gltf.import_settings['import_webp_texture'] is True:
-            # Get the WebP image if there is one
-            if pytexture.extensions \
-                    and 'EXT_texture_webp' in pytexture.extensions \
-                    and pytexture.extensions['EXT_texture_webp']['source'] is not None:
-                source = pytexture.extensions['EXT_texture_webp']['source']
-            elif pytexture.source is not None:
-                source = pytexture.source
-        else:
-            source = pytexture.source
-
-        if mh.gltf.import_settings['import_webp_texture'] is False and source is None:
-            # In case webp is not used as a fallback, use this as main texture
-            if pytexture.extensions \
-                    and 'EXT_texture_webp' in pytexture.extensions \
-                    and pytexture.extensions['EXT_texture_webp']['source'] is not None:
-                source = pytexture.extensions['EXT_texture_webp']['source']
-
+        source = get_source(mh, pytexture)
         if source is not None:
             BlenderImage.create(mh.gltf, source)
             pyimg = mh.gltf.data.images[source]
@@ -218,6 +200,20 @@ def texture(
         mh.node_tree.links.new(uv_socket, uv_map.outputs[0])
 
     import_user_extensions('gather_import_texture_after_hook', mh.gltf, pytexture, mh.node_tree, mh, tex_info, location, label, color_socket, alpha_socket, is_data)
+
+
+def get_source(mh, pytexture):
+    src = pytexture.source
+    try:
+        webp_src = pytexture.extensions['EXT_texture_webp']['source']
+    except Exception:
+        webp_src = None
+
+    if mh.gltf.import_settings['import_webp_texture']:
+        return webp_src if webp_src is not None else src
+    else:
+        return src if src is not None else webp_src
+
 
 def set_filtering(tex_img, pysampler):
     """Set the filtering/interpolation on an Image Texture from the glTf sampler."""

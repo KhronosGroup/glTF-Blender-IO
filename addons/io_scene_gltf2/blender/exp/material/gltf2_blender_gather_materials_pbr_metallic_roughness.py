@@ -193,8 +193,10 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
     # Using directlty the Blender socket object
     if not hasMetal and not hasRough:
         metallic_roughness = get_socket_from_gltf_material_node(blender_material.node_tree, blender_material.use_nodes, "MetallicRoughness")
-        if metallic_roughness is None or not has_image_node_from_socket(metallic_roughness, export_settings):
+        if metallic_roughness.socket is None or not has_image_node_from_socket(metallic_roughness, export_settings):
             return None, {}, {}, None
+        else:
+            texture_input = (metallic_roughness, metallic_roughness)
     elif not hasMetal:
         texture_input = (roughness_socket,)
     elif not hasRough:
@@ -203,6 +205,7 @@ def __gather_metallic_roughness_texture(blender_material, orm_texture, export_se
         texture_input = (metallic_socket, roughness_socket)
 
     tex, uvmap_info, udim_info, factor = gather_texture_info(
+
         texture_input[0],
         orm_texture or texture_input,
         export_settings,

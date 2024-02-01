@@ -945,7 +945,6 @@ def get_cache_data(path: str,
                         del _render
 
                         val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
-                        print(val)
                         data[cam][cam]['value'][path][frame] = val
                     else:
                         # classic case

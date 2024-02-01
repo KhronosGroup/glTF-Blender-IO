@@ -333,7 +333,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         layer.data.foreach_set('uv', squish(loop_uvs[uv_i]))
 
     for col_i in range(num_cols):
-        name = 'Col' if col_i == 0 else 'Col.%03d' % col_i
+        name = 'Color' if col_i == 0 else 'Color.%03d' % col_i
         layer = mesh.vertex_colors.new(name=name)
 
         if layer is None:

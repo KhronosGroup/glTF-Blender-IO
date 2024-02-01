@@ -39,13 +39,27 @@ def gather_node(vnode, export_settings):
     if skin is not None:
         vnode.skin = skin
 
+
+    # Hook to check if we should export mesh or not (force it to None)
+    class GltfHookNodeMesh:
+        def __init__(self):
+            self.export_mesh = True
+
+    gltf_hook_node_mesh = GltfHookNodeMesh()
+
+    export_user_extensions('gather_node_mesh_hook', export_settings, gltf_hook_node_mesh, blender_object)
+    if gltf_hook_node_mesh.export_mesh is True:
+        mesh = __gather_mesh(vnode, blender_object, export_settings)
+    else:
+        mesh = None
+
     node = gltf2_io.Node(
         camera=__gather_camera(vnode, export_settings),
         children=__gather_children(vnode, export_settings),
         extensions=__gather_extensions(vnode, export_settings),
         extras=__gather_extras(blender_object, export_settings),
         matrix=__gather_matrix(blender_object, export_settings),
-        mesh=__gather_mesh(vnode, blender_object, export_settings),
+        mesh=mesh,
         name=__gather_name(blender_object, export_settings),
         rotation=None,
         scale=None,

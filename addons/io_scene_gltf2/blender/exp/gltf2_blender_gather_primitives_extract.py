@@ -422,11 +422,19 @@ class PrimitiveCreator:
             # Now we need to get data and populate
             for attr in self.uvmap_attribute_list:
                 if attr + str(0) not in self.dots.dtype.names: # In case user exports custom attributes, we may have it already
-                    # Vector in custom Attributes are Vector3, but keeping only the first two data
-                    data = np.empty(len(self.blender_mesh.loops) * 3, gltf2_blender_conversion.get_numpy_type('FLOAT2'))
-                    self.blender_mesh.attributes[attr].data.foreach_get('vector', data)
-                    data = data.reshape(-1, 3)
-                    data = data[:,:2]
+                    # Vector in custom Attributes are Vector2 or Vector3 (but keeping only the first two data)
+                    if self.blender_mesh.attributes[attr].data_type == "FLOAT_VECTOR":
+                        data = np.empty(len(self.blender_mesh.loops) * 3, gltf2_blender_conversion.get_numpy_type('FLOAT2'))
+                        self.blender_mesh.attributes[attr].data.foreach_get('vector', data)
+                        data = data.reshape(-1, 3)
+                        data = data[:,:2]
+                    elif self.blender_mesh.attributes[attr].data_type == "FLOAT2":
+                        data = np.empty(len(self.blender_mesh.loops) * 2, gltf2_blender_conversion.get_numpy_type('FLOAT2'))
+                        self.blender_mesh.attributes[attr].data.foreach_get('vector', data)
+                        data = data.reshape(-1, 2)
+                    else:
+                        print_console('WARNING', 'We are not managing this case yet (UVMap as custom attribute for unknown type)')
+                        continue
                     # Blender UV space -> glTF UV space
                     # u,v -> u,1-v
                     data[:, 1] *= -1

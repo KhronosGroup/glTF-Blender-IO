@@ -19,9 +19,9 @@ from ...com import gltf2_blender_math
 
 class Keyframe:
     def __init__(self, channels: typing.Tuple[bpy.types.FCurve], frame: float, bake_channel: typing.Union[str, None]):
-        self.seconds = frame / bpy.context.scene.render.fps
+        self.seconds = frame / (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
         self.frame = frame
-        self.fps = bpy.context.scene.render.fps
+        self.fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
         self.__length_morph = 0
         # Note: channels has some None items only for SK if some SK are not animated
         if bake_channel is None:
