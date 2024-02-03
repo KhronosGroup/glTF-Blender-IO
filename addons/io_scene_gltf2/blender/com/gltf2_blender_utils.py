@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import numpy as np
+
 def fast_structured_np_unique(arr, *args, **kwargs):
     """
     np.unique optimized for structured arrays when a sorted result is not required.
