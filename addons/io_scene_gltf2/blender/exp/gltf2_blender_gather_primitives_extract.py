@@ -21,6 +21,7 @@ from ...io.com.gltf2_io_constants import ROUNDING_DIGIT
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ...io.com import gltf2_io_constants
 from ..com import gltf2_blender_conversion
+from ..com.gltf2_blender_utils import fast_structured_np_unique
 from .material.gltf2_blender_gather_materials import get_base_material, get_material_from_idx, get_active_uvmap_index, get_new_material_texture_shared
 from .material.gltf2_blender_gather_texture_info import gather_udim_texture_info
 from . import gltf2_blender_gather_skins
@@ -639,7 +640,7 @@ class PrimitiveCreator:
 
     def primitive_creation_shared(self):
         primitives = []
-        self.dots, shared_dot_indices = gltf2_blender_conversion.fast_structured_np_unique(self.dots, return_inverse=True)
+        self.dots, shared_dot_indices = fast_structured_np_unique(self.dots, return_inverse=True)
 
         self.blender_idxs = self.dots['vertex_index']
 
@@ -714,7 +715,7 @@ class PrimitiveCreator:
             # Extract just dots used by this primitive, deduplicate them, and
             # calculate indices into this deduplicated list.
             self.prim_dots = self.dots[dot_indices]
-            self.prim_dots, indices = gltf2_blender_conversion.fast_structured_np_unique(self.prim_dots, return_inverse=True)
+            self.prim_dots, indices = fast_structured_np_unique(self.prim_dots, return_inverse=True)
 
             if len(self.prim_dots) == 0:
                 continue
@@ -788,7 +789,7 @@ class PrimitiveCreator:
             if self.blender_idxs_edges.shape[0] > 0:
                 # Export one glTF vert per unique Blender vert in a loose edge
                 self.blender_idxs = self.blender_idxs_edges
-                dots_edges, indices = gltf2_blender_conversion.fast_structured_np_unique(self.dots_edges, return_inverse=True)
+                dots_edges, indices = fast_structured_np_unique(self.dots_edges, return_inverse=True)
                 self.blender_idxs = np.unique(self.blender_idxs_edges)
 
                 self.attributes_edges_points = {}
