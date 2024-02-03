@@ -607,7 +607,7 @@ def base_color(
         if needs_alpha_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
             node.label = 'Alpha Factor'
-            node.location = x - 140, y - 200
+            node.location = x - 140, y - 230
             # Outputs
             mh.node_tree.links.new(alpha_socket, node.outputs[0])
             # Inputs
@@ -640,7 +640,7 @@ def base_color(
         if alpha_socket is not None:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
             node.label = 'Mix Vertex Alpha'
-            node.location = x - 140, y - 200
+            node.location = x - 140, y - 230
             node.operation = 'MULTIPLY'
             # Outputs
             mh.node_tree.links.new(alpha_socket, node.outputs[0])

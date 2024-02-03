@@ -18,32 +18,45 @@ from .gltf2_blender_pbrMetallicRoughness import base_color, make_output_nodes
 def unlit(mh):
     """Creates node tree for unlit materials."""
     # Emission node for the base color
-    emission_node = mh.node_tree.nodes.new('ShaderNodeEmission')
+    emission_node = mh.nodes.new('ShaderNodeEmission')
     emission_node.location = 10, 126
 
-    # Lightpath trick: makes Emission visible only to camera rays.
+    # Create a "Lightpath trick": makes Emission visible only to
+    # camera rays, so it won't "glow" in Cycles.
+    #
     # [Is Camera Ray] => [Mix] =>
     #   [Transparent] => [   ]
     #      [Emission] => [   ]
-    lightpath_node = mh.node_tree.nodes.new('ShaderNodeLightPath')
-    transparent_node = mh.node_tree.nodes.new('ShaderNodeBsdfTransparent')
-    mix_node = mh.node_tree.nodes.new('ShaderNodeMixShader')
+    lightpath_node = mh.nodes.new('ShaderNodeLightPath')
+    transparent_node = mh.nodes.new('ShaderNodeBsdfTransparent')
+    mix_node = mh.nodes.new('ShaderNodeMixShader')
     lightpath_node.location = 10, 600
     transparent_node.location = 10, 240
     mix_node.location = 260, 320
-    mh.node_tree.links.new(mix_node.inputs['Fac'], lightpath_node.outputs['Is Camera Ray'])
-    mh.node_tree.links.new(mix_node.inputs[1], transparent_node.outputs[0])
-    mh.node_tree.links.new(mix_node.inputs[2], emission_node.outputs[0])
+    mh.links.new(mix_node.inputs['Fac'], lightpath_node.outputs['Is Camera Ray'])
+    mh.links.new(mix_node.inputs[1], transparent_node.outputs[0])
+    mh.links.new(mix_node.inputs[2], emission_node.outputs[0])
 
-    _emission_socket, alpha_socket, _ = make_output_nodes(
-        mh,
-        location=(420, 280) if mh.is_opaque() else (150, 130),
-        additional_location=None, #No additional location needed for Unlit
-        shader_socket=mix_node.outputs[0],
-        make_emission_socket=False,
-        make_alpha_socket=not mh.is_opaque(),
-        make_volume_socket=None # Not possible to have KHR_materials_volume with unlit
-    )
+    # Material output
+    alpha_socket = None
+    out_node = mh.nodes.new('ShaderNodeOutputMaterial')
+    if mh.is_opaque():
+        out_node.location = 490, 290
+        mh.links.new(out_node.inputs[0], mix_node.outputs[0])
+    else:
+        # Create a "Mix with Transparent" setup so there's a
+        # place to put Alpha.
+        #
+        #         Alpha => [Mix] => [Output]
+        # [Transparent] => [   ]
+        #         Color => [   ]
+        mix2_node = mh.nodes.new('ShaderNodeMixShader')
+        alpha_socket = mix2_node.inputs['Fac']
+        mix2_node.location = 490, -50
+        out_node.location = 700, -70
+        mh.links.new(mix2_node.inputs[1], transparent_node.outputs[0])
+        mh.links.new(mix2_node.inputs[2], mix_node.outputs[0])
+        mh.links.new(out_node.inputs[0], mix2_node.outputs[0])
 
     base_color(
         mh,

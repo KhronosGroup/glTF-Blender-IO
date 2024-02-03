@@ -21,6 +21,7 @@ from ...io.imp.gltf2_io_binary import BinaryData
 from ...io.com.gltf2_io_constants import DataType, ComponentType
 from ...blender.com.gltf2_blender_conversion import get_attribute_type
 from ..com.gltf2_blender_extras import set_extras
+from ..com.gltf2_blender_utils import fast_structured_np_unique
 from .gltf2_blender_material import BlenderMaterial
 from .gltf2_io_draco_compression_extension import decode_primitive
 
@@ -306,21 +307,22 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     # Start creating things
 
     mesh.vertices.add(len(vert_locs))
-    mesh.vertices.foreach_set('co', squish(vert_locs))
+    position_attribute = attribute_ensure(mesh.attributes, 'position', 'FLOAT_VECTOR', 'POINT')
+    position_attribute.data.foreach_set('vector', squish(vert_locs, np.float32))
 
     mesh.loops.add(len(loop_vidxs))
-    mesh.loops.foreach_set('vertex_index', loop_vidxs)
+    corner_vert_attribute = attribute_ensure(mesh.attributes, '.corner_vert', 'INT', 'CORNER')
+    corner_vert_attribute.data.foreach_set('value', squish(loop_vidxs, np.intc))
 
     mesh.edges.add(len(edge_vidxs) // 2)
-    mesh.edges.foreach_set('vertices', edge_vidxs)
+    edge_verts_attribute = attribute_ensure(mesh.attributes, '.edge_verts', 'INT32_2D', 'EDGE')
+    edge_verts_attribute.data.foreach_set('value', squish(edge_vidxs, np.intc))
 
     mesh.polygons.add(num_faces)
 
     # All polys are tris
     loop_starts = np.arange(0, 3 * num_faces, step=3)
-    loop_totals = np.full(num_faces, 3)
     mesh.polygons.foreach_set('loop_start', loop_starts)
-    mesh.polygons.foreach_set('loop_total', loop_totals)
 
     for uv_i in range(num_uvs):
         name = 'UVMap' if uv_i == 0 else 'UVMap.%03d' % uv_i
@@ -330,18 +332,13 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             print("WARNING: UV map is ignored because the maximum number of UV layers has been reached.")
             break
 
-        layer.data.foreach_set('uv', squish(loop_uvs[uv_i]))
+        layer.uv.foreach_set('vector', squish(loop_uvs[uv_i], np.float32))
 
     for col_i in range(num_cols):
         name = 'Color' if col_i == 0 else 'Color.%03d' % col_i
-        layer = mesh.vertex_colors.new(name=name)
+        layer = mesh.color_attributes.new(name, 'BYTE_COLOR', 'CORNER')
 
-        if layer is None:
-            print("WARNING: Vertex colors are ignored because the maximum number of vertex color layers has been "
-                "reached.")
-            break
-
-        mesh.color_attributes[layer.name].data.foreach_set('color', squish(loop_cols[col_i]))
+        layer.data.foreach_set('color', squish(loop_cols[col_i], np.float32))
 
     # Make sure the first Vertex Color Attribute is the rendered one
     if num_cols > 0:
@@ -380,7 +377,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
 
             ob.shape_key_add(name=sk_name)
             key_block = mesh.shape_keys.key_blocks[sk_name]
-            key_block.data.foreach_set('co', squish(sk_vert_locs[sk_i]))
+            key_block.points.foreach_set('co', squish(sk_vert_locs[sk_i], np.float32))
 
             sk_i += 1
 
@@ -395,7 +392,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                 and 'mappings' in prim.extensions['KHR_materials_variants'].keys()
 
     if has_materials:
-        material_indices = np.empty(num_faces, dtype=np.uint32)
+        bl_material_index_dtype = np.intc
+        material_indices = np.empty(num_faces, dtype=bl_material_index_dtype)
         empty_material_slot_index = None
         f = 0
 
@@ -458,7 +456,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                         vari = variant_primitive.variants.add()
                         vari.variant.variant_idx = variant
 
-        mesh.polygons.foreach_set('material_index', material_indices)
+        material_index_attribute = attribute_ensure(mesh.attributes, 'material_index', 'INT', 'FACE')
+        material_index_attribute.data.foreach_set('value', material_indices)
 
     # Custom Attributes
     for idx, attr in enumerate(attributes):
@@ -544,27 +543,54 @@ def points_edges_tris(mode, indices):
         # 0---2---4
         #  \ / \ /
         #   1---3
-        # TODO: numpyify
-        def alternate(i, xs):
-            even = i % 2 == 0
-            return xs if even else (xs[0], xs[2], xs[1])
-        tris = np.array([
-            alternate(i, (indices[i], indices[i + 1], indices[i + 2]))
-            for i in range(0, len(indices) - 2)
-        ])
-        tris = squish(tris)
+        # in: 01234
+        # out: 012132234
+        # out (viewed as triplets): 012, 132, 234
+        tris = np.empty((len(indices) - 2) * 3, dtype=np.uint32)
+        # 012__
+        first_indices = indices[:-2]
+        # _123_
+        second_indices = indices[1:-1]
+        # __234
+        third_indices = indices[2:]
+
+        # Each triplet starts with the first index
+        # 0__, 1__, 2__ <- 012__
+        tris[0::3] = first_indices
+
+        # Even triplets end with the next two indices in order
+        # _1_, ___, _3_ <- _1_3_ <- _123_
+        # 01_, 1__, 23_
+        tris[1::6] = second_indices[0::2]
+        # __2, ___, __4 <- __2_4 <- __234
+        # 012, 1__, 234
+        tris[2::6] = third_indices[0::2]
+
+        # Odd triplets end with the next two indices in reverse order
+        # ___, _3_, ___ <- ___3_ <- __234
+        # 012, 13_, 234
+        tris[4::6] = third_indices[1::2]
+        # ___, __2, ___ <- __2__ <- _123_
+        # 012, 132, 234
+        tris[5::6] = second_indices[1::2]
 
     elif mode == 6:
         # TRIANGLE FAN
         #   3---2
         #  / \ / \
         # 4---0---1
-        # TODO: numpyify
-        tris = np.array([
-            (indices[0], indices[i], indices[i + 1])
-            for i in range(1, len(indices) - 1)
-        ])
-        tris = squish(tris)
+        # in: 01234
+        # out: 012023034
+        # out (viewed as triplets): 012, 023, 034
+        # Start filled with the first index
+        # 000, 000, 000
+        tris = np.full((len(indices) - 2) * 3, indices[0], dtype=np.uint32)
+        # _1_, _2_, _3_ <- _123_
+        # 010, 020, 030
+        tris[1::3] = indices[1:-1]
+        # __2, __3, __4 <- __234
+        # 012, 023, 034
+        tris[2::3] = indices[2:]
 
     else:
         raise Exception('primitive mode unimplemented: %d' % mode)
@@ -572,9 +598,10 @@ def points_edges_tris(mode, indices):
     return points, edges, tris
 
 
-def squish(array):
-    """Squish nD array into 1D array (required by foreach_set)."""
-    return array.reshape(array.size)
+def squish(array, dtype=None):
+    """Squish nD array into a C-contiguous (required for faster access with the buffer protocol in foreach_set) 1D array
+    (required by foreach_set). Optionally converting the array to a different dtype."""
+    return np.ascontiguousarray(array, dtype=dtype).reshape(array.size)
 
 
 def colors_rgb_to_rgba(rgb):
@@ -656,6 +683,15 @@ def normalize_vecs(vectors):
     norms = np.linalg.norm(vectors, axis=1, keepdims=True)
     np.divide(vectors, norms, out=vectors, where=norms != 0)
 
+def attribute_ensure(attributes, name, data_type, domain):
+    attribute = attributes.get(name)
+    if attribute is None:
+        return attributes.new(name, data_type, domain)
+    if attribute.domain == domain and attribute.data_type == data_type:
+        return attribute
+    # There is an existing attribute, but it has the wrong domain or data_type.
+    attributes.remove(attribute)
+    return attributes.new(name, data_type, domain)
 
 def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     num_polys = len(mesh.polygons)
@@ -666,14 +702,15 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
         return
 
     if gltf.import_settings['import_shading'] == "SMOOTH":
-        poly_smooths = np.full(num_polys, True)
+        poly_sharps = np.full(num_polys, False)
         f = 0
         for prim in pymesh.primitives:
             if 'NORMAL' not in prim.attributes:
                 # Primitives with no NORMALs should use flat shading
-                poly_smooths[f:f + prim.num_faces].fill(False)
+                poly_sharps[f:f + prim.num_faces].fill(True)
             f += prim.num_faces
-        mesh.polygons.foreach_set('use_smooth', poly_smooths)
+        sharp_face_attribute = attribute_ensure(mesh.attributes, 'sharp_face', 'BOOLEAN', 'FACE')
+        sharp_face_attribute.data.foreach_set('value', poly_sharps)
         return
 
     assert gltf.import_settings['import_shading'] == "NORMALS"
@@ -681,17 +718,17 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
     # Try to guess which polys should be flat based on the fact that all the
     # loop normals for a flat poly are = the poly's normal.
 
-    poly_smooths = np.empty(num_polys, dtype=bool)
+    poly_sharps = np.empty(num_polys, dtype=bool)
 
     poly_normals = np.empty(num_polys * 3, dtype=np.float32)
-    mesh.polygons.foreach_get('normal', poly_normals)
+    mesh.polygon_normals.foreach_get('vector', poly_normals)
     poly_normals = poly_normals.reshape(num_polys, 3)
 
     f = 0
     for prim in pymesh.primitives:
         if 'NORMAL' not in prim.attributes:
             # Primitives with no NORMALs should use flat shading
-            poly_smooths[f:f + prim.num_faces].fill(False)
+            poly_sharps[f:f + prim.num_faces].fill(True)
             f += prim.num_faces
             continue
 
@@ -714,11 +751,12 @@ def set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs):
         dot_prods = np.sum(vert_ns * poly_ns, axis=1)
         np.logical_or(smooth, dot_prods <= 0.9999999, out=smooth)
 
-        poly_smooths[f:f + prim.num_faces] = smooth
+        np.logical_not(smooth, out=poly_sharps[f:f + prim.num_faces])
 
         f += prim.num_faces
 
-    mesh.polygons.foreach_set('use_smooth', poly_smooths)
+    sharp_face_attribute = attribute_ensure(mesh.attributes, 'sharp_face', 'BOOLEAN', 'FACE')
+    sharp_face_attribute.data.foreach_set('value', poly_sharps)
 
 
 def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk_vert_locs, loop_vidxs, edge_vidxs, attribute_data):
@@ -776,7 +814,7 @@ def merge_duplicate_verts(vert_locs, vert_normals, vert_joints, vert_weights, sk
         dots['sk%dy' % i] = locs[:, 1]
         dots['sk%dz' % i] = locs[:, 2]
 
-    unique_dots, unique_ind, inv_indices = np.unique(dots, return_index=True, return_inverse=True)
+    unique_dots, unique_ind, inv_indices = fast_structured_np_unique(dots, return_index=True, return_inverse=True)
 
     loop_vidxs = inv_indices[loop_vidxs]
     edge_vidxs = inv_indices[edge_vidxs]
