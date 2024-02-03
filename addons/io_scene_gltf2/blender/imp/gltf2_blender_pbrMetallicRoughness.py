@@ -25,41 +25,32 @@ from .gltf2_blender_material_utils import \
 
 def pbr_metallic_roughness(mh: MaterialHelper):
     """Creates node tree for pbrMetallicRoughness materials."""
-    pbr_node = mh.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
+    pbr_node = mh.nodes.new('ShaderNodeBsdfPrincipled')
+    out_node = mh.nodes.new('ShaderNodeOutputMaterial')
     pbr_node.location = 10, 300
-    additional_location = 40, -370 # For occlusion and/or volume / original PBR extensions
+    out_node.location = 300, 300
+    mh.links.new(pbr_node.outputs[0], out_node.inputs[0])
+
+    need_volume_node = False  # need a place to attach volume?
+    need_settings_node = False  # need a place to attach occlusion/thickness?
 
     if mh.pymat.occlusion_texture is not None:
-        if mh.settings_node is None:
-            mh.settings_node = make_settings_node(mh)
-            mh.settings_node.location = additional_location
-            mh.settings_node.width = 180
-            additional_location = additional_location[0], additional_location[1] - 150
+        need_settings_node = True
 
-    need_volume_node = False
-    if mh.pymat.extensions and 'KHR_materials_volume' in mh.pymat.extensions:
-        if 'thicknessFactor' in mh.pymat.extensions['KHR_materials_volume'] \
-            and mh.pymat.extensions['KHR_materials_volume']['thicknessFactor'] != 0.0:
-
+    if volume_ext := mh.get_ext('KHR_materials_volume'):
+        if volume_ext.get('thicknessFactor', 0) != 0:
             need_volume_node = True
+            need_settings_node = True
 
-            # We also need glTF Material Output Node, to set thicknessFactor and thicknessTexture
-            if mh.settings_node is None:
-                mh.settings_node = make_settings_node(mh)
-                mh.settings_node.location = additional_location
-                mh.settings_node.width = 180
-                additional_location = additional_location[0], additional_location[1] - 150
+    if need_settings_node:
+        mh.settings_node = make_settings_node(mh)
+        mh.settings_node.location = 40, -370
+        mh.settings_node.width = 180
 
-    _, _, volume_socket  = make_output_nodes(
-        mh,
-        location=(250, 260),
-        additional_location=additional_location,
-        shader_socket=pbr_node.outputs[0],
-        make_emission_socket=False, # is managed by Principled shader node
-        make_alpha_socket=False, # is managed by Principled shader node
-        make_volume_socket=need_volume_node
-    )
-
+    if need_volume_node:
+        volume_node = mh.nodes.new('ShaderNodeVolumeAbsorption')
+        volume_node.location = 40, -520 if need_settings_node else -370
+        mh.links.new(out_node.inputs[1], volume_node.outputs[0])
 
     locs = calc_locations(mh)
 
@@ -105,7 +96,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         volume(
             mh,
             location=locs['volume_thickness'],
-            volume_socket=volume_socket,
+            volume_node=volume_node,
             thickness_socket=mh.settings_node.inputs[1] if mh.settings_node else None
         )
 
@@ -178,16 +169,16 @@ def transmission(mh, locs, pbr_node):
     )
 
 
-def volume(mh, location, volume_socket, thickness_socket):
+def volume(mh, location, volume_node, thickness_socket):
     # Based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
     ext = mh.get_ext('KHR_materials_volume', {})
 
     color = ext.get('attenuationColor', [1, 1, 1])
-    volume_socket.node.inputs[0].default_value = [*color, 1]
+    volume_node.inputs[0].default_value = [*color, 1]
 
     distance = ext.get('attenuationDistance', float('inf'))
     density = 1 / distance
-    volume_socket.node.inputs[1].default_value = density
+    volume_node.inputs[1].default_value = density
 
     scalar_factor_and_texture(
         mh,
@@ -590,98 +581,6 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
         is_data=True,
         color_socket=color_socket,
     )
-
-
-# => [Add Emission] => [Mix Alpha] => [Material Output] if needed, only for SpecGlossiness
-# => [Volume] => [Add Shader] => [Material Output] if needed
-# => [Sheen] => [Add Shader] => [Material Output] if needed
-def make_output_nodes(
-    mh: MaterialHelper,
-    location,
-    additional_location,
-    shader_socket,
-    make_emission_socket,
-    make_alpha_socket,
-    make_volume_socket
-):
-    """
-    Creates the Material Output node and connects shader_socket to it.
-    If requested, it can also create places to hookup the emission/alpha
-    in between shader_socket and the Output node too.
-
-    :return: a pair containing the sockets you should put emission and alpha
-    in (None if not requested).
-    """
-    x, y = location
-    emission_socket = None
-    alpha_socket = None
-
-    # Create an Emission node and add it to the shader.
-    if make_emission_socket:
-        # Emission
-        node = mh.node_tree.nodes.new('ShaderNodeEmission')
-        node.location = x + 50, y + 250
-        # Inputs
-        emission_socket = node.inputs[0]
-        # Outputs
-        emission_output = node.outputs[0]
-
-        # Add
-        node = mh.node_tree.nodes.new('ShaderNodeAddShader')
-        node.location = x + 250, y + 160
-        # Inputs
-        mh.node_tree.links.new(node.inputs[0], emission_output)
-        mh.node_tree.links.new(node.inputs[1], shader_socket)
-        # Outputs
-        shader_socket = node.outputs[0]
-
-        if make_alpha_socket:
-            x += 200
-            y += 175
-        else:
-            x += 380
-            y += 125
-
-    # Mix with a Transparent BSDF. Mixing factor is the alpha value.
-    if make_alpha_socket:
-        # Transparent BSDF
-        node = mh.node_tree.nodes.new('ShaderNodeBsdfTransparent')
-        node.location = x + 100, y - 350
-        # Outputs
-        transparent_out = node.outputs[0]
-
-        # Mix
-        node = mh.node_tree.nodes.new('ShaderNodeMixShader')
-        node.location = x + 340, y - 180
-        # Inputs
-        alpha_socket = node.inputs[0]
-        mh.node_tree.links.new(node.inputs[1], transparent_out)
-        mh.node_tree.links.new(node.inputs[2], shader_socket)
-        # Outputs
-        shader_socket = node.outputs[0]
-
-
-        x += 480
-        y -= 210
-
-    # Material output
-    node_output = mh.node_tree.nodes.new('ShaderNodeOutputMaterial')
-    node_output.location = x + 70, y + 10
-
-    # Outputs
-    mh.node_tree.links.new(node_output.inputs[0], shader_socket)
-
-    # Volume Node
-    volume_socket = None
-    if make_volume_socket:
-        node = mh.node_tree.nodes.new('ShaderNodeVolumeAbsorption')
-        node.location = additional_location
-        # Outputs
-        mh.node_tree.links.new(node_output.inputs[1], node.outputs[0])
-        volume_socket = node.outputs[0]
-
-
-    return emission_socket, alpha_socket, volume_socket
 
 
 def make_settings_node(mh):
