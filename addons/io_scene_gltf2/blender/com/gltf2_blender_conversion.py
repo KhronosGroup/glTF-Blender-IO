@@ -149,6 +149,13 @@ def get_attribute_type(component_type, data_type):
     else:
         pass
 
+def get_attribute(attributes, name, data_type, domain):
+    attribute = attributes.get(name)
+    if attribute is not None and attribute.data_type == data_type and attribute.domain == domain:
+        return attribute
+    else:
+        return None
+
 def get_gltf_interpolation(interpolation):
         return {
         "BEZIER": "CUBICSPLINE",
