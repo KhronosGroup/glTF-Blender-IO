@@ -639,7 +639,7 @@ class PrimitiveCreator:
 
     def primitive_creation_shared(self):
         primitives = []
-        self.dots, shared_dot_indices = np.unique(self.dots, return_inverse=True)
+        self.dots, shared_dot_indices = gltf2_blender_conversion.fast_structured_np_unique(self.dots, return_inverse=True)
 
         self.blender_idxs = self.dots['vertex_index']
 
@@ -714,7 +714,7 @@ class PrimitiveCreator:
             # Extract just dots used by this primitive, deduplicate them, and
             # calculate indices into this deduplicated list.
             self.prim_dots = self.dots[dot_indices]
-            self.prim_dots, indices = np.unique(self.prim_dots, return_inverse=True)
+            self.prim_dots, indices = gltf2_blender_conversion.fast_structured_np_unique(self.prim_dots, return_inverse=True)
 
             if len(self.prim_dots) == 0:
                 continue
@@ -788,7 +788,7 @@ class PrimitiveCreator:
             if self.blender_idxs_edges.shape[0] > 0:
                 # Export one glTF vert per unique Blender vert in a loose edge
                 self.blender_idxs = self.blender_idxs_edges
-                dots_edges, indices = np.unique(self.dots_edges, return_inverse=True)
+                dots_edges, indices = gltf2_blender_conversion.fast_structured_np_unique(self.dots_edges, return_inverse=True)
                 self.blender_idxs = np.unique(self.blender_idxs_edges)
 
                 self.attributes_edges_points = {}
