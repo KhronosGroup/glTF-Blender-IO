@@ -44,6 +44,7 @@ class BlenderImage():
             blender_image = create_from_data(gltf, img_idx)
 
         if blender_image:
+            blender_image.alpha_mode = 'CHANNEL_PACKED'
             img.blender_image_name = blender_image.name
 
         import_user_extensions('gather_import_image_after_hook', gltf, img, blender_image)
