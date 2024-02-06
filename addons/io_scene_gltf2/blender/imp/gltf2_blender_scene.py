@@ -33,8 +33,6 @@ class BlenderScene():
         gltf.blender_scene = scene.name
         if bpy.context.collection.name in bpy.data.collections: # avoid master collection
             gltf.blender_active_collection = bpy.context.collection.name
-        if scene.render.engine not in ['CYCLES', 'BLENDER_EEVEE']:
-            scene.render.engine = "BLENDER_EEVEE"
 
         if gltf.data.scene is not None:
             import_user_extensions('gather_import_scene_before_hook', gltf, gltf.data.scenes[gltf.data.scene], scene)
