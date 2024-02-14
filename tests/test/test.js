@@ -1295,7 +1295,7 @@ describe('Exporter', function() {
 
                 const anim1 = asset.animations.filter(a => a.name === 'Obj1')[0].samplers[obj1].output;
                 const anim2 = asset.animations.filter(a => a.name === 'Obj2')[0].samplers[obj2].output;
-                const anim2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].samplers[obj2].output;
+                const anim2_2 = asset.animations.filter(a => a.name === 'Obj2_2')[0].samplers[obj2_2].output;
 
                 let bufferCache = {};
                 const outputData1 = getAccessorData(gltfPath, asset, anim1, bufferCache);

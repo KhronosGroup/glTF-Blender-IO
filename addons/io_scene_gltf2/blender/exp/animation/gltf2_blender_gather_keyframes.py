@@ -25,12 +25,21 @@ class Keyframe:
         self.__length_morph = 0
         # Note: channels has some None items only for SK if some SK are not animated
         if bake_channel is None:
-            self.target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
-            if self.target != "value":
-                self.__indices = [c.array_index for c in channels]
+            if not all([c == None for c in channels]):
+                self.target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
+                if self.target != "value":
+                    self.__indices = [c.array_index for c in channels]
+                else:
+                    self.__indices = [i for i, c in enumerate(channels) if c is not None]
+                    self.__length_morph = len(channels)
             else:
-                self.__indices = [i for i, c in enumerate(channels) if c is not None]
+                # If all channels are None (baking evaluate SK case)
+                self.target = "value"
+                self.__indices = []
                 self.__length_morph = len(channels)
+                for i in range(self.get_target_len()):
+                    self.__indices.append(i)
+
         else:
             if bake_channel == "value":
                 self.__length_morph = len(channels)
