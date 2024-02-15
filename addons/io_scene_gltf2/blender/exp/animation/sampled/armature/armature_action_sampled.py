@@ -18,6 +18,7 @@ from ......io.exp.gltf2_io_user_extensions import export_user_extensions
 from ......io.com.gltf2_io_debug import print_console
 from ......io.com import gltf2_io
 from .....com.gltf2_blender_extras import generate_extras
+from ...fcurves.gltf2_blender_gather_fcurves_sampler import gather_animation_fcurves_sampler
 from .armature_channels import gather_armature_sampled_channels
 
 
@@ -32,8 +33,9 @@ def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Op
     name = __gather_name(blender_action, armature_uuid, cache_key, export_settings)
 
     try:
+        channels, extra_channels = __gather_channels(armature_uuid, blender_action.name if blender_action else cache_key, export_settings)
         animation = gltf2_io.Animation(
-            channels=__gather_channels(armature_uuid, blender_action.name if blender_action else cache_key, export_settings),
+            channels=channels,
             extensions=None,
             extras=__gather_extras(blender_action, export_settings),
             name=name,
@@ -45,15 +47,28 @@ def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Op
 
     export_user_extensions('pre_gather_animation_hook', export_settings, animation, blender_action, blender_object)
 
+
+    extra_samplers = []
+    if export_settings['gltf_export_extra_animations']:
+        for chan in [chan for chan in extra_channels.values() if len(chan['properties']) != 0]:
+            for channel_group_name, channel_group in chan['properties'].items():
+
+                # No glTF channel here, as we don't have any target
+                # Trying to retrieve sampler directly
+                sampler = gather_animation_fcurves_sampler(armature_uuid, tuple(channel_group), None, None, True, export_settings)
+                if sampler is not None:
+                    extra_samplers.append((channel_group_name, sampler))
+
+
     if not animation.channels:
-        return None
+        return None, extra_samplers
 
     # To allow reuse of samplers in one animation : This will be done later, when we know all channels are here
 
     export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object) # For compatibility for older version
     export_user_extensions('animation_action_armature_sampled', export_settings, animation, blender_object, blender_action, cache_key)
 
-    return animation
+    return animation, extra_samplers
 
 def __gather_name(blender_action: bpy.types.Action,
                   armature_uuid: str,

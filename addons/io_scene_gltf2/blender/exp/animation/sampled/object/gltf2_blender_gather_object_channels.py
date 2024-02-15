@@ -25,11 +25,15 @@ from .gltf2_blender_gather_object_channel_target import gather_object_sampled_ch
 
 def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
+    extra_channels = {}
+
+    # Bake situation does not export any extra animation channels, as we bake TRS + weights on Track or scene level, without direct
+    # Access to fcurve and action data
 
     list_of_animated_channels = {}
     if object_uuid != blender_action_name and blender_action_name in bpy.data.actions:
         # Not bake situation
-        channels_animated, to_be_sampled = get_channel_groups(object_uuid, bpy.data.actions[blender_action_name], export_settings)
+        channels_animated, to_be_sampled, extra_channels = get_channel_groups(object_uuid, bpy.data.actions[blender_action_name], export_settings)
         for chan in [chan for chan in channels_animated.values() if chan['bone'] is None]:
             for prop in chan['properties'].keys():
                 list_of_animated_channels[
@@ -55,7 +59,7 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, e
     export_user_extensions('animation_gather_object_channel', export_settings, blender_object, blender_action_name)
 
 
-    return channels if len(channels) > 0 else None
+    return channels if len(channels) > 0 else None, extra_channels
 
 @cached
 def gather_sampled_object_channel(

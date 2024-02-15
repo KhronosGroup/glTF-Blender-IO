@@ -78,7 +78,7 @@ def gather_scene_animations(export_settings):
         if blender_object and blender_object.type != "ARMATURE":
             # We have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
-                channels = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
+                channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
                 if channels is not None:
                     total_channels.extend(channels)
             if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
@@ -100,11 +100,11 @@ def gather_scene_animations(export_settings):
         elif blender_object is None:
             # This is GN instances
             # Currently, not checking if this instance is skinned.... #TODO
-            channels = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
+            channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
         else:
-                channels = gather_armature_sampled_channels(obj_uuid, obj_uuid, export_settings)
+                channels, _ = gather_armature_sampled_channels(obj_uuid, obj_uuid, export_settings)
                 if channels is not None:
                     total_channels.extend(channels)
 

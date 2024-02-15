@@ -26,7 +26,7 @@ def gather_animation_fcurves(
 
     name = __gather_name(blender_action, export_settings)
 
-    channels, to_be_sampled = __gather_channels_fcurves(obj_uuid, blender_action, export_settings)
+    channels, to_be_sampled, extra_samplers = __gather_channels_fcurves(obj_uuid, blender_action, export_settings)
 
     animation = gltf2_io.Animation(
         channels=channels,
@@ -37,12 +37,12 @@ def gather_animation_fcurves(
     )
 
     if not animation.channels:
-        return None, to_be_sampled
+        return None, to_be_sampled, extra_samplers
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
     export_user_extensions('animation_gather_fcurve', export_settings, blender_object, blender_action)
 
-    return animation, to_be_sampled
+    return animation, to_be_sampled, extra_samplers
 
 def __gather_name(blender_action: bpy.types.Action,
                   export_settings
