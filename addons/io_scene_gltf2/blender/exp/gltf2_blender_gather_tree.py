@@ -64,6 +64,7 @@ class VExportNode:
 
         self.blender_object = None
         self.blender_bone = None
+        self.leaf_reference = None # For leaf bones only
 
         self.force_as_empty = False # Used for instancer display
 
@@ -561,12 +562,41 @@ class VExportTree:
             del n.armature_needed
 
     def bake_armature_bone_list(self):
+
+        self.add_leaf_bones() # TODOLEAFBONE add an option
+
         # Used to store data in armature vnode
         # If armature is removed from export
         # Data are still available, even if armature is not exported (so bones are re-parented)
         for n in [n for n in self.nodes.values() if n.blender_type == VExportNode.ARMATURE]:
+
             self.get_all_bones(n.uuid)
             self.get_root_bones_uuid(n.uuid)
+
+    def add_leaf_bones(self):
+
+
+        for bone_uuid in [n for n in self.nodes if self.nodes[n].blender_type == VExportNode.BONE \
+                and len(self.nodes[n].children) == 0]:
+
+            bone_node = self.nodes[bone_uuid]
+
+            # Add a new node
+            node = VExportNode()
+            node.uuid = str(uuid.uuid4())
+            node.parent_uuid = bone_uuid
+            node.parent_bone_uuid = bone_uuid
+            node.blender_object = bone_node.blender_object
+            node.armature = bone_node.armature
+            node.blender_type = VExportNode.BONE
+            node.leaf_reference = bone_uuid
+            node.keep_tag = True
+
+            node.matrix_world = bone_node.matrix_world.copy() # TODOLEAFBONE translate to tail of the bone_node
+
+            self.add_children(bone_uuid, node.uuid)
+            self.add_node(node)
+
 
     def add_neutral_bones(self):
         added_armatures = []
