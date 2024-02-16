@@ -592,7 +592,7 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
-    # Note : Like in FLX exporter:
+    # Note : Like in FBX exporter:
     # - Object with animation data will get all actions
     # - Object without animation will not get any action
 
