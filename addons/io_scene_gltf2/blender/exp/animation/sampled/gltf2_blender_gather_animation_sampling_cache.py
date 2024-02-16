@@ -104,7 +104,7 @@ def get_cache_data(path: str,
 
             if export_settings['vtree'].nodes[obj_uuid].blender_type != VExportNode.COLLECTION:
                 if blender_obj and blender_obj.animation_data and blender_obj.animation_data.action \
-                        and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                        and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
                     if blender_obj.animation_data.action.name not in data[obj_uuid].keys():
                         data[obj_uuid][blender_obj.animation_data.action.name] = {}
                         data[obj_uuid][blender_obj.animation_data.action.name]['matrix'] = {}
@@ -135,7 +135,7 @@ def get_cache_data(path: str,
             if blender_obj and blender_obj.type == "ARMATURE":
                 bones = export_settings['vtree'].get_all_bones(obj_uuid)
                 if blender_obj.animation_data and blender_obj.animation_data.action \
-                        and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                        and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
                     if 'bone' not in data[obj_uuid][blender_obj.animation_data.action.name].keys():
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'] = {}
                 elif blender_obj.animation_data \
@@ -165,7 +165,7 @@ def get_cache_data(path: str,
                             matrix = matrix @ blender_obj.matrix_world
 
                     if blender_obj.animation_data and blender_obj.animation_data.action \
-                            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
                         if blender_bone.name not in data[obj_uuid][blender_obj.animation_data.action.name]['bone'].keys():
                             data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name] = {}
                         data[obj_uuid][blender_obj.animation_data.action.name]['bone'][blender_bone.name][frame] = matrix
@@ -197,7 +197,7 @@ def get_cache_data(path: str,
             and blender_obj.data.shape_keys is not None \
             and blender_obj.data.shape_keys.animation_data is not None \
             and blender_obj.data.shape_keys.animation_data.action is not None \
-            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
 
                 if blender_obj.data.shape_keys.animation_data.action.name not in data[obj_uuid].keys():
                     data[obj_uuid][blender_obj.data.shape_keys.animation_data.action.name] = {}
@@ -243,7 +243,7 @@ def get_cache_data(path: str,
                     if dr_obj not in data.keys():
                         data[dr_obj] = {}
                     if blender_obj.animation_data and blender_obj.animation_data.action \
-                            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                            and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
                         if obj_uuid + "_" + blender_obj.animation_data.action.name not in data[dr_obj]: # Using uuid of armature + armature animation name as animation name
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name] = {}
                             data[dr_obj][obj_uuid + "_" + blender_obj.animation_data.action.name]['sk'] = {}

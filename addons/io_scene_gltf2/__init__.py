@@ -594,6 +594,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         'Export actions (actives and on NLA tracks) as separate animations'),
         ('ACTIVE_ACTIONS', 'Active actions merged',
         'All the currently assigned actions become one glTF animation'),
+        ('BROADCAST', 'Broadcast actions',
+        'Broadcast all compatible actions to all objects'),
         ('NLA_TRACKS', 'NLA Tracks',
         'Export individual NLA Tracks as separate animation'),
         ('SCENE', 'Scene',
@@ -1648,7 +1650,7 @@ class GLTF_PT_export_animation(bpy.types.Panel):
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
 
         row = layout.row()
-        row.active = operator.export_force_sampling and operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS']
+        row.active = operator.export_force_sampling and operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'BROACAST']
         row.prop(operator, 'export_bake_animation')
         if operator.export_animation_mode == "SCENE":
             layout.prop(operator, 'export_anim_scene_split_object')
@@ -1707,11 +1709,11 @@ class GLTF_PT_export_animation_ranges(bpy.types.Panel):
 
         layout.prop(operator, 'export_current_frame')
         row = layout.row()
-        row.active = operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'NLA_TRACKS']
+        row.active = operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'BROADCAST', 'NLA_TRACKS']
         row.prop(operator, 'export_frame_range')
         layout.prop(operator, 'export_anim_slide_to_zero')
         row = layout.row()
-        row.active = operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'NLA_TRACKS']
+        row.active = operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'BROADCAST', 'NLA_TRACKS']
         layout.prop(operator, 'export_negative_frame')
 
 class GLTF_PT_export_animation_armature(bpy.types.Panel):
@@ -1791,7 +1793,7 @@ class GLTF_PT_export_animation_sampling(bpy.types.Panel):
     def draw_header(self, context):
         sfile = context.space_data
         operator = sfile.active_operator
-        self.layout.active = operator.export_animations and operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS']
+        self.layout.active = operator.export_animations and operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'BROADCAST']
         self.layout.prop(operator, "export_force_sampling", text="")
 
     def draw(self, context):
