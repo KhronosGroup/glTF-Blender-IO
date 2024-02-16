@@ -595,7 +595,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         ('ACTIVE_ACTIONS', 'Active actions merged',
         'All the currently assigned actions become one glTF animation'),
         ('BROADCAST', 'Broadcast actions',
-        'Broadcast all compatible actions to all objects'),
+        'Broadcast all compatible actions to all objects. '
+        'Animated objects will get all actions compatible with them, '
+        'others will get no animation at all'),
         ('NLA_TRACKS', 'NLA Tracks',
         'Export individual NLA Tracks as separate animation'),
         ('SCENE', 'Scene',
