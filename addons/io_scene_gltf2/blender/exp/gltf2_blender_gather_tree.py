@@ -252,9 +252,13 @@ class VExportTree:
             if self.export_settings['gltf_rest_position_armature'] is False:
                 # Use pose bone for TRS
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
+                #TODOLEAFBONE on option only these 2 lines
+                node.matrix_world_tail = self.nodes[node.armature].matrix_world @ Matrix.Translation(blender_bone.tail)
+                node.matrix_world_tail = node.matrix_world_tail @ self.axis_basis_change
             else:
                 # Use edit bone for TRS --> REST pose will be used
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.bone.matrix_local
+                # Tail will be set after, as we need to be in edit mode
             node.matrix_world = node.matrix_world @ self.axis_basis_change
 
         if delta is True:
@@ -575,6 +579,20 @@ class VExportTree:
 
     def add_leaf_bones(self):
 
+        # If we are using rest pose, we need to get tail of editbone, going to edit mode for each armature
+        #TODOLEAFBONE on option only
+        if self.export_settings['gltf_rest_position_armature'] is True:
+            for obj_uuid in [n for n in self.nodes if self.nodes[n].blender_type == VExportNode.ARMATURE]:
+                armature = self.nodes[obj_uuid].blender_object
+                bpy.context.view_layer.objects.active = armature
+                bpy.ops.object.mode_set(mode="EDIT")
+
+                for bone in armature.data.edit_bones:
+                    if len(bone.children) == 0:
+                        self.nodes[self.nodes[obj_uuid].bones[bone.name]].matrix_world_tail = armature.matrix_world @ Matrix.Translation(bone.tail) @ self.axis_basis_change
+
+                bpy.ops.object.mode_set(mode="OBJECT")
+
 
         for bone_uuid in [n for n in self.nodes if self.nodes[n].blender_type == VExportNode.BONE \
                 and len(self.nodes[n].children) == 0]:
@@ -592,7 +610,7 @@ class VExportTree:
             node.leaf_reference = bone_uuid
             node.keep_tag = True
 
-            node.matrix_world = bone_node.matrix_world.copy() # TODOLEAFBONE translate to tail of the bone_node
+            node.matrix_world = bone_node.matrix_world_tail.copy()
 
             self.add_children(bone_uuid, node.uuid)
             self.add_node(node)
