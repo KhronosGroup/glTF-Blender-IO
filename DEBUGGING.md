@@ -16,7 +16,7 @@ These instructions are considered experimental.  They describe how to attach a P
 
 6. In Blender -> Edit -> Preferences -> Interface -> Display, there is a checkbox for "Developer Extras."  Turn that on.
 
-7. In Blender -> Edit -> Preferences -> Script Directories, click the "Add" button. Paste in the full path to the glTF-Blender-IO local git repository on your drive.  Save the preferences.
+7. In Blender -> Edit -> Preferences -> File Paths -> Script Directories, click the "Add" button. Paste in the full path to the glTF-Blender-IO local git repository on your drive.  Save the preferences.
 
 ![Debug settings screenshot](misc/Debug_settings.png)
 
