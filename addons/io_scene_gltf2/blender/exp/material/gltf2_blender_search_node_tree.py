@@ -198,11 +198,11 @@ def get_socket_from_gltf_material_node(blender_material: bpy.types.Material, nam
 class NodeNav:
     """Helper for navigating through node trees."""
     def __init__(self, node, in_socket=None, out_socket=None):
-        self.node = node             # Current node
-        self.out_socket = in_socket  # Socket through which we arrived at this node
-        self.in_socket = out_socket  # Socket through which we will leave this node
-        self.stack = []              # Stack of (group node, socket) pairs descended through to arrive here
-        self.moved = False           # Whether the last move_back call moved back or not
+        self.node = node              # Current node
+        self.out_socket = out_socket  # Socket through which we arrived at this node
+        self.in_socket = in_socket    # Socket through which we will leave this node
+        self.stack = []      # Stack of (group node, socket) pairs descended through to get here
+        self.moved = False   # Whether the last move_back call moved back or not
 
     def copy(self):
         new = NodeNav(self.node)
@@ -452,52 +452,15 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
 
     return NodeSocket(None, None)
 
+
+# Old, prefer NodeNav.get_factor in new code
 def get_factor_from_socket(socket, kind):
-    """
-    For baseColorFactor, metallicFactor, etc.
-    Get a constant value from a socket, or a constant value
-    from a MULTIPLY node just before the socket.
-    kind is either 'RGB' or 'VALUE'.
-    """
-    fac = get_const_from_socket(socket, kind)
-    if fac is not None:
-        return fac
+    return socket.to_node_nav().get_factor()
 
-    node = previous_node(socket)
-    if node.node is not None:
-        x1, x2 = None, None
-        if kind == 'RGB':
-            if node.node.type == 'MIX' and node.node.data_type == "RGBA" and node.node.blend_type == 'MULTIPLY':
-                # TODO: handle factor in inputs[0]?
-                x1 = get_const_from_socket(NodeSocket(node.node.inputs[6], node.group_path), kind)
-                x2 = get_const_from_socket(NodeSocket(node.node.inputs[7], node.group_path), kind)
-        if kind == 'VALUE':
-            if node.node.type == 'MATH' and node.node.operation == 'MULTIPLY':
-                x1 = get_const_from_socket(NodeSocket(node.node.inputs[0], node.group_path), kind)
-                x2 = get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind)
-        if x1 is not None and x2 is None: return x1
-        if x2 is not None and x1 is None: return x2
 
-    return None
-
+# Old, prefer NodeNav.get_constant in new code
 def get_const_from_socket(socket, kind):
-    if not socket.socket.is_linked:
-        if kind == 'RGB':
-            if socket.socket.type != 'RGBA': return None
-            return list(socket.socket.default_value)[:3]
-        if kind == 'VALUE':
-            if socket.socket.type != 'VALUE': return None
-            return socket.socket.default_value
-
-    # Handle connection to a constant RGB/Value node
-    prev_node = previous_node(socket)
-    if prev_node.node is not None:
-        if kind == 'RGB' and prev_node.node.type == 'RGB':
-            return list(prev_node.node.outputs[0].default_value)[:3]
-        if kind == 'VALUE' and prev_node.node.type == 'VALUE':
-            return prev_node.node.outputs[0].default_value
-
-    return None
+    return socket.to_node_nav().get_constant()
 
 
 def previous_socket(socket: NodeSocket):
