@@ -107,9 +107,9 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
                 axis_basis_change @
                 (
                     blender_armature_object.matrix_world @
-                    blender_armature_object.pose.bones[export_settings['vtree'].nodes[export_settings['vtree'].nodes[b].leaf_reference].blender_bone.name].bone.matrix_local
+                    export_settings['vtree'].nodes[export_settings['vtree'].nodes[b].leaf_reference].matrix_world_tail
                 )
-            ).inverted_safe() #TODOLEAFBONE move to the tail of the bone
+            ).inverted_safe()
             matrices.append(inverse_bind_matrix) # Leaf bone
 
     # flatten the matrices
