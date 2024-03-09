@@ -289,7 +289,6 @@ included in the export.
 
 
 
-
 Anisotropy
 ^^^^^^^^^^
 
