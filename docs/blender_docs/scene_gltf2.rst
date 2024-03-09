@@ -289,7 +289,6 @@ included in the export.
 
 
 
-
 Anisotropy
 ^^^^^^^^^^
 
@@ -769,6 +768,20 @@ referenced by the ``.gltf`` file.
 
    Be aware that sharing this format requires sharing all of these separate files
    together as a group.
+
+
+glTF Embedded (``.gltf``)
+-------------------------
+
+This produces a JSON text-based ``.gltf`` file, with all mesh data and
+image data encoded (using Base64) within the file. This form is useful if
+the asset must be shared over a plain-text-only connection.
+
+.. warning::
+
+   This is the least efficient of the available forms, and should only be used when required.
+   Available only when you activated it in addon preferences.
+
 
 Properties
 ==========
