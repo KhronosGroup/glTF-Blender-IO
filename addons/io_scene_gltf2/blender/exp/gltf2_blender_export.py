@@ -117,8 +117,11 @@ def __create_buffer(exporter, export_settings):
     if export_settings['gltf_format'] == 'GLB':
         buffer = exporter.finalize_buffer(export_settings['gltf_filedirectory'], is_glb=True)
     else:
-        exporter.finalize_buffer(export_settings['gltf_filedirectory'],
-                                 export_settings['gltf_binaryfilename'])
+        if export_settings['gltf_format'] == 'GLTF_EMBEDDED':
+            exporter.finalize_buffer(export_settings['gltf_filedirectory'])
+        else:
+            exporter.finalize_buffer(export_settings['gltf_filedirectory'],
+                                     export_settings['gltf_binaryfilename'])
 
     return buffer
 

@@ -131,6 +131,25 @@ def on_export_action_filter_changed(self, context):
         del bpy.types.Scene.gltf_action_filter_active
 
 
+def get_format_items(scene, context):
+
+
+    items = (('GLB', 'glTF Binary (.glb)',
+                'Exports a single file, with all data packed in binary form. '
+                'Most efficient and portable, but more difficult to edit later'),
+               ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
+                'Exports multiple files, with separate JSON, binary and texture data. '
+                'Easiest to edit later'))
+
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences \
+            and bpy.context.preferences.addons['io_scene_gltf2'].preferences['allow_embedded_format']:
+            # At initialization, the preferences are not yet loaded
+        items += (('GLTF_EMBEDDED', 'glTF Embedded (.gltf)',
+                    'Exports a single file, with all data packed in JSON. '
+                    'Less efficient than binary, but easier to edit later'
+                ),)
+
+    return items
 
 
 class ConvertGLTF2_Base:
@@ -264,17 +283,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_format: EnumProperty(
         name='Format',
-        items=(('GLB', 'glTF Binary (.glb)',
-                'Exports a single file, with all data packed in binary form. '
-                'Most efficient and portable, but more difficult to edit later'),
-               ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
-                'Exports multiple files, with separate JSON, binary and texture data. '
-                'Easiest to edit later')),
+        items=get_format_items,
         description=(
             'Output format. Binary is most efficient, '
             'but JSON may be easier to edit later'
         ),
-        default='GLB', #Warning => If you change the default, need to change the default filter too
+        default=0, #Warning => If you change the default, need to change the default filter too
         update=on_export_format_changed,
     )
 
@@ -1155,6 +1169,8 @@ class GLTF_PT_export_main(bpy.types.Panel):
             layout.prop(operator, 'export_keep_originals')
             if operator.export_keep_originals is False:
                 layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
+        if operator.export_format == 'GLTF_EMBEDDED':
+            layout.label(text="This is the least efficient of the available forms, and should only be used when required.", icon='ERROR')
 
         layout.prop(operator, 'export_copyright')
         layout.prop(operator, 'will_save_settings')
@@ -1171,7 +1187,7 @@ class GLTF_PT_export_gltfpack(bpy.types.Panel):
     def poll(cls, context):
         gltfpack_path = context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui.strip()
         if (gltfpack_path == ''): # gltfpack not setup in plugin preferences -> dont show any gltfpack relevant options in export dialog
-            return False;
+            return False
 
         sfile = context.space_data
         operator = sfile.active_operator
@@ -2122,6 +2138,12 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         subtype='FILE_PATH'
     )
 
+    allow_embedded_format: bpy.props.BoolProperty(
+        default = False,
+        name='Allow glTF Embedded format',
+        description="Allow glTF Embedded format"
+    )
+
     def draw(self, context):
         layout = self.layout
         row = layout.row()
@@ -2130,6 +2152,10 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         row.prop(self, "animation_ui", text="Animation UI")
         row = layout.row()
         row.prop(self, "gltfpack_path_ui", text="Path to gltfpack")
+        row = layout.row()
+        row.prop(self, "allow_embedded_format", text="Allow glTF Embedded format")
+        if self.allow_embedded_format:
+            layout.label(text="This is the least efficient of the available forms, and should only be used when required.", icon='ERROR')
 
 def menu_func_import(self, context):
     self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
