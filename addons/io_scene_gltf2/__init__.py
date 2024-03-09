@@ -142,8 +142,10 @@ def get_format_items(scene, context):
                 'Easiest to edit later'))
 
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences \
+            and "allow_embedded_format" in bpy.context.preferences.addons['io_scene_gltf2'].preferences \
             and bpy.context.preferences.addons['io_scene_gltf2'].preferences['allow_embedded_format']:
             # At initialization, the preferences are not yet loaded
+            # The second line check is needed until the PR is merge in Blender, for github CI tests
         items += (('GLTF_EMBEDDED', 'glTF Embedded (.gltf)',
                     'Exports a single file, with all data packed in JSON. '
                     'Less efficient than binary, but easier to edit later'
