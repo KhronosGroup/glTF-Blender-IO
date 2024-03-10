@@ -194,10 +194,209 @@ def get_socket_from_gltf_material_node(blender_material: bpy.types.Material, nam
 
     return NodeSocket(None, None)
 
+
+class NodeNav:
+    """Helper for navigating through node trees."""
+    def __init__(self, node, in_socket=None, out_socket=None):
+        self.node = node              # Current node
+        self.out_socket = out_socket  # Socket through which we arrived at this node
+        self.in_socket = in_socket    # Socket through which we will leave this node
+        self.stack = []      # Stack of (group node, socket) pairs descended through to get here
+        self.moved = False   # Whether the last move_back call moved back or not
+
+    def copy(self):
+        new = NodeNav(self.node)
+        new.assign(self)
+        return new
+
+    def assign(self, other):
+        self.node = other.node
+        self.in_socket = other.in_socket
+        self.out_socket = other.out_socket
+        self.stack = other.stack.copy()
+        self.moved = other.moved
+
+    def select_input_socket(self, in_soc):
+        """Selects an input socket.
+
+        Most operations that operate on the input socket can be passed an in_soc
+        parameter to select an input socket before running.
+        """
+        if in_soc is None:
+            # Keep current selected input socket
+            return
+        elif isinstance(in_soc, bpy.types.NodeSocket):
+            assert in_soc.node == self.node
+            self.in_socket = in_soc
+        elif isinstance(in_soc, int):
+            self.in_socket = self.node.inputs[in_soc]
+        else:
+            assert isinstance(in_soc, str)
+            # An identifier like "#A_Color" selects a socket by
+            # identifier. This is useful for sockets that cannot be
+            # selected because of non-unique names.
+            if in_soc.startswith('#'):
+                ident = in_soc.removeprefix('#')
+                for socket in self.node.inputs:
+                    if socket.identifier == ident:
+                        self.in_socket = socket
+                        return
+            # Select by regular name
+            self.in_socket = self.node.inputs[in_soc]
+
+    def get_out_socket_index(self):
+        assert self.out_socket
+        for i, soc in enumerate(self.node.outputs):
+            if soc == self.out_socket:
+                return i
+        assert False
+
+    def descend(self):
+        """Descend into a group node."""
+        if self.node and self.node.type == 'GROUP' and self.node.node_tree and self.out_socket:
+            i = self.get_out_socket_index()
+            self.stack.append((self.node, self.out_socket))
+            self.node = next(node for node in self.node.node_tree.nodes if node.type == 'GROUP_OUTPUT')
+            self.in_socket = self.node.inputs[i]
+            self.out_socket = None
+
+    def ascend(self):
+        """Ascend from a group input node back to the group node."""
+        if self.stack and self.node and self.node.type == 'GROUP_INPUT' and self.out_socket:
+            i = self.get_out_socket_index()
+            self.node, self.out_socket = self.stack.pop()
+            self.in_socket = self.node.inputs[i]
+
+    def move_back(self, in_soc=None):
+        """Move backwards through an input socket to the next node."""
+        self.moved = False
+
+        self.select_input_socket(in_soc)
+
+        if not self.in_socket or not self.in_socket.is_linked:
+            return
+
+        # Warning, slow! socket.links is O(total number of links)!
+        link = self.in_socket.links[0]
+
+        self.node = link.from_node
+        self.out_socket = link.from_socket
+        self.in_socket = None
+        self.moved = True
+
+        # Continue moving
+        if self.node.type == 'REROUTE':
+            self.move_back(0)
+        elif self.node.type == 'GROUP':
+            self.descend()
+            self.move_back()
+        elif self.node.type == 'GROUP_INPUT':
+            self.ascend()
+            self.move_back()
+
+    def peek_back(self, in_soc=None):
+        """Peeks backwards through an input socket without modifying self."""
+        s = self.copy()
+        s.select_input_socket(in_soc)
+        s.move_back()
+        return s
+
+    def get_constant(self, in_soc=None):
+        """Gets a constant from an input socket. Returns None if non-constant."""
+        self.select_input_socket(in_soc)
+
+        if not self.in_socket:
+            return None
+
+        # Get constant from unlinked socket's default value
+        if not self.in_socket.is_linked:
+            if self.in_socket.type == 'RGBA':
+                color = list(self.in_socket.default_value)
+                color = color[:3]  # drop unused alpha component (assumes shader tree)
+                return color
+
+            elif self.in_socket.type == 'SHADER':
+                # Treat unlinked shader sockets as black
+                return [0.0, 0.0, 0.0]
+
+            elif self.in_socket.type == 'VECTOR':
+                return list(self.in_socket.default_value)
+
+            elif self.in_socket.type == 'VALUE':
+                return self.in_socket.default_value
+
+            else:
+                return None
+
+        # Check for a constant in the next node
+        nav = self.peek_back()
+        if nav.moved:
+            if self.in_socket.type == 'RGBA':
+                if nav.node.type == 'RGB':
+                    color = list(nav.out_socket.default_value)
+                    color = color[:3]  # drop unused alpha component (assumes shader tree)
+                    return color
+
+            elif self.in_socket.type == 'VALUE':
+                if nav.node.type == 'VALUE':
+                    return nav.node.out_socket.default_value
+
+        return None
+
+    def get_factor(self, in_soc=None):
+        """Gets a factor, eg. metallicFactor. Either a constant or constant multiplier."""
+        self.select_input_socket(in_soc)
+
+        if not self.in_socket:
+            return None
+
+        # Constant
+        fac = self.get_constant()
+        if fac is not None:
+            return fac
+
+        # Multiplied by constant
+        nav = self.peek_back()
+        if nav.moved:
+            x1, x2 = None, None
+
+            if self.in_socket.type == 'RGBA':
+                is_mul = (
+                    nav.node.type == 'MIX' and
+                    nav.node.data_type == 'RGBA' and
+                    nav.node.blend_type == 'MULTIPLY'
+                )
+                if is_mul:
+                    # TODO: check factor is 1?
+                    x1 = nav.get_constant('#A_Color')
+                    x2 = nav.get_constant('#B_Color')
+
+            elif self.in_socket.type == 'VALUE':
+                if nav.node.type == 'MATH' and nav.node.operation == 'MULTIPLY':
+                    x1 = nav.get_constant(0)
+                    x2 = nav.get_constant(1)
+
+            if x1 is not None and x2 is None: return x1
+            if x2 is not None and x1 is None: return x2
+
+        return None
+
+
 class NodeSocket:
     def __init__(self, socket, group_path):
         self.socket = socket
         self.group_path = group_path
+
+    def to_node_nav(self):
+        assert self.socket
+        nav = NodeNav(
+            self.socket.node,
+            out_socket=self.socket if self.socket.is_output else None,
+            in_socket=self.socket if not self.socket.is_output else None,
+        )
+        # No output socket information
+        nav.stack = [(node, None) for node in self.group_path]
+        return nav
 
 class ShNode:
     def __init__(self, node, group_path):
@@ -253,52 +452,15 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
 
     return NodeSocket(None, None)
 
+
+# Old, prefer NodeNav.get_factor in new code
 def get_factor_from_socket(socket, kind):
-    """
-    For baseColorFactor, metallicFactor, etc.
-    Get a constant value from a socket, or a constant value
-    from a MULTIPLY node just before the socket.
-    kind is either 'RGB' or 'VALUE'.
-    """
-    fac = get_const_from_socket(socket, kind)
-    if fac is not None:
-        return fac
+    return socket.to_node_nav().get_factor()
 
-    node = previous_node(socket)
-    if node.node is not None:
-        x1, x2 = None, None
-        if kind == 'RGB':
-            if node.node.type == 'MIX' and node.node.data_type == "RGBA" and node.node.blend_type == 'MULTIPLY':
-                # TODO: handle factor in inputs[0]?
-                x1 = get_const_from_socket(NodeSocket(node.node.inputs[6], node.group_path), kind)
-                x2 = get_const_from_socket(NodeSocket(node.node.inputs[7], node.group_path), kind)
-        if kind == 'VALUE':
-            if node.node.type == 'MATH' and node.node.operation == 'MULTIPLY':
-                x1 = get_const_from_socket(NodeSocket(node.node.inputs[0], node.group_path), kind)
-                x2 = get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind)
-        if x1 is not None and x2 is None: return x1
-        if x2 is not None and x1 is None: return x2
 
-    return None
-
+# Old, prefer NodeNav.get_constant in new code
 def get_const_from_socket(socket, kind):
-    if not socket.socket.is_linked:
-        if kind == 'RGB':
-            if socket.socket.type != 'RGBA': return None
-            return list(socket.socket.default_value)[:3]
-        if kind == 'VALUE':
-            if socket.socket.type != 'VALUE': return None
-            return socket.socket.default_value
-
-    # Handle connection to a constant RGB/Value node
-    prev_node = previous_node(socket)
-    if prev_node.node is not None:
-        if kind == 'RGB' and prev_node.node.type == 'RGB':
-            return list(prev_node.node.outputs[0].default_value)[:3]
-        if kind == 'VALUE' and prev_node.node.type == 'VALUE':
-            return prev_node.node.outputs[0].default_value
-
-    return None
+    return socket.to_node_nav().get_constant()
 
 
 def previous_socket(socket: NodeSocket):
