@@ -271,6 +271,25 @@ def gather_action_animations(  obj_uuid: int,
         current_use_nla = blender_object.animation_data.use_nla
         blender_object.animation_data.use_nla = False
 
+    # Try to disable all except armature in viewport, for performance
+    if export_settings['gltf_optimize_armature_disable_viewport'] \
+            and export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
+
+        # If the skinned mesh has driver(s), we can't disable it to bake armature.
+        need_to_enable_again = False
+        sk_drivers = get_sk_drivers(obj_uuid, export_settings)
+        if len(sk_drivers) == 0:
+            need_to_enable_again = True
+            # Before baking, disabling from viewport all meshes
+            for obj in [n.blender_object for n in export_settings['vtree'].nodes.values() if n.blender_type in
+                        [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
+                obj.hide_viewport = True
+            export_settings['vtree'].nodes[obj_uuid].blender_object.hide_viewport = False
+        else:
+            print_console("WARNING", "Can't disable viewport because of drivers")
+            export_settings['gltf_optimize_armature_disable_viewport'] = False # We changed the option here, so we don't need to re-check it later, during
+
+
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, False)
 
 ######## Export
@@ -306,9 +325,9 @@ def gather_action_animations(  obj_uuid: int,
 
         if export_settings['gltf_force_sampling'] is True:
             if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
-                animation = gather_action_armature_sampled(obj_uuid, blender_action, None, export_settings)
+                animation, extra_samplers = gather_action_armature_sampled(obj_uuid, blender_action, None, export_settings)
             elif on_type == "OBJECT":
-                animation = gather_action_object_sampled(obj_uuid, blender_action, None, export_settings)
+                animation, extra_samplers = gather_action_object_sampled(obj_uuid, blender_action, None, export_settings)
             else:
                 animation = gather_action_sk_sampled(obj_uuid, blender_action, None, export_settings)
         else:
@@ -317,7 +336,7 @@ def gather_action_animations(  obj_uuid: int,
             #  - animation on fcurves
             #  - fcurve that cannot be handled not sampled, to be sampled
             # to_be_sampled is : (object_uuid , type , prop, optional(bone.name) )
-            animation, to_be_sampled = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
+            animation, to_be_sampled, extra_samplers = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
             for (obj_uuid, type_, prop, bone) in to_be_sampled:
                 if type_ == "BONE":
                     channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, get_gltf_interpolation("LINEAR"), export_settings)
@@ -344,6 +363,11 @@ def gather_action_animations(  obj_uuid: int,
                     if channel is not None:
                         animation.channels.append(channel)
 
+        # Add extra samplers
+        # Because this is not core glTF specification, you can add extra samplers using hook
+        if export_settings['gltf_export_extra_animations'] and len(extra_samplers) != 0:
+            export_user_extensions('extra_animation_manage', export_settings, extra_samplers, obj_uuid, blender_object, blender_action, animation)
+
         # If we are in a SK animation, and we need to bake (if there also in TRS anim)
         if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0 and on_type == "SHAPEKEY":
             if export_settings['gltf_bake_animation'] is True and export_settings['gltf_force_sampling'] is True:
@@ -353,7 +377,7 @@ def gather_action_animations(  obj_uuid: int,
                     if obj_uuid not in export_settings['ranges'].keys():
                         export_settings['ranges'][obj_uuid] = {}
                     export_settings['ranges'][obj_uuid][obj_uuid] = export_settings['ranges'][obj_uuid][blender_action.name]
-                    channels = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
+                    channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
                     if channels is not None:
                         if animation is None:
                             animation = gltf2_io.Animation(
@@ -441,6 +465,15 @@ def gather_action_animations(  obj_uuid: int,
     if blender_object and current_world_matrix is not None:
         blender_object.matrix_world = current_world_matrix
 
+    if export_settings['gltf_optimize_armature_disable_viewport'] \
+            and export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
+        if need_to_enable_again is True:
+            # And now, restoring meshes in viewport
+            for node, obj in [(n, n.blender_object) for n in export_settings['vtree'].nodes.values() if n.blender_type in
+                        [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
+                obj.hide_viewport = node.default_hide_viewport
+            export_settings['vtree'].nodes[obj_uuid].blender_object.hide_viewport = export_settings['vtree'].nodes[obj_uuid].default_hide_viewport
+
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, True)
 
     return animations, tracks
@@ -456,6 +489,9 @@ def __get_blender_actions(obj_uuid: str,
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
+
+    if export_settings['gltf_animation_mode'] == "BROADCAST":
+        return __get_blender_actions_broadcast(obj_uuid, export_settings)
 
     if blender_object and blender_object.animation_data is not None:
         # Collect active action.
@@ -581,3 +617,72 @@ def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
         return generate_extras(blender_action)
     return None
+
+def __get_blender_actions_broadcast(obj_uuid, export_settings):
+    blender_actions = []
+    blender_tracks = {}
+    action_on_type = {}
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+    # Note : Like in FBX exporter:
+    # - Object with animation data will get all actions
+    # - Object without animation will not get any action
+
+    # Collect all actions
+    for blender_action in bpy.data.actions:
+        if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                and id(blender_action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+            continue # We ignore this action
+
+        # Keep all actions on objects (no Shapekey animation, No armature animation (on bones))
+        if blender_action.id_root == "OBJECT": #TRS and Bone animations
+            if blender_object.animation_data is None:
+                continue
+            if blender_object and blender_object.type == "ARMATURE" and __is_armature_action(blender_action):
+                blender_actions.append(blender_action)
+                blender_tracks[blender_action.name] = None
+                action_on_type[blender_action.name] = "OBJECT"
+            elif blender_object.type == "MESH":
+                if not __is_armature_action(blender_action):
+                    blender_actions.append(blender_action)
+                    blender_tracks[blender_action.name] = None
+                    action_on_type[blender_action.name] = "OBJECT"
+        elif blender_action.id_root == "KEY":
+            if blender_object.type != "MESH" or blender_object.data is None or blender_object.data.shape_keys is None or blender_object.data.shape_keys.animation_data is None:
+                continue
+            # Checking that the object has some SK and some animation on it
+            if blender_object is None:
+                continue
+            if blender_object.type != "MESH":
+                continue
+            if blender_object.data is None or blender_object.data.shape_keys is None:
+                continue
+            blender_actions.append(blender_action)
+            blender_tracks[blender_action.name] = None
+            action_on_type[blender_action.name] = "SHAPEKEY"
+
+
+    # Use a class to get parameters, to be able to modify them
+    class GatherActionHookParameters:
+        def __init__(self, blender_actions, blender_tracks, action_on_type):
+            self.blender_actions = blender_actions
+            self.blender_tracks = blender_tracks
+            self.action_on_type = action_on_type
+
+    gatheractionhookparams = GatherActionHookParameters(blender_actions, blender_tracks, action_on_type)
+
+    export_user_extensions('gather_actions_hook', export_settings, blender_object, gatheractionhookparams)
+
+    # Get params back from hooks
+    blender_actions = gatheractionhookparams.blender_actions
+    blender_tracks = gatheractionhookparams.blender_tracks
+    action_on_type = gatheractionhookparams.action_on_type
+
+    # Remove duplicate actions.
+    blender_actions = list(set(blender_actions))
+    # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
+    blender_actions.sort(key = lambda a: a.name.lower())
+
+    return [(blender_action, blender_tracks[blender_action.name], action_on_type[blender_action.name]) for blender_action in blender_actions]
+

@@ -28,6 +28,7 @@ from .armature_sampler import gather_bone_sampled_animation_sampler
 
 def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
+    extra_channels = {}
 
     # Then bake all bones
     bones_to_be_animated = []
@@ -38,7 +39,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
     list_of_animated_bone_channels = {}
     if armature_uuid != blender_action_name and blender_action_name in bpy.data.actions:
         # Not bake situation
-        channels_animated, to_be_sampled = get_channel_groups(armature_uuid, bpy.data.actions[blender_action_name], export_settings)
+        channels_animated, to_be_sampled, extra_channels = get_channel_groups(armature_uuid, bpy.data.actions[blender_action_name], export_settings)
         for chan in [chan for chan in channels_animated.values() if chan['bone'] is not None]:
             for prop in chan['properties'].keys():
                 list_of_animated_bone_channels[
@@ -98,7 +99,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
         if channel is not None:
             channels.append(channel)
 
-    return channels
+    return channels, extra_channels
 
 def gather_sampled_bone_channel(
         armature_uuid: str,
@@ -162,7 +163,7 @@ def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_
 def __gather_armature_object_channel(obj_uuid: str, blender_action, export_settings):
     channels = []
 
-    channels_animated, to_be_sampled = get_channel_groups(obj_uuid, blender_action, export_settings)
+    channels_animated, to_be_sampled, extra_channels = get_channel_groups(obj_uuid, blender_action, export_settings)
     # Remove all channel linked to bones, keep only directly object channels
     channels_animated = [c for c in channels_animated.values() if c['type'] == "OBJECT"]
     to_be_sampled = [c for c in to_be_sampled if c[1] == "OBJECT"]

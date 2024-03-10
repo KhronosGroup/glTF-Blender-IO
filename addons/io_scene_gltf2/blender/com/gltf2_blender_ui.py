@@ -574,7 +574,7 @@ class SCENE_PT_gltf2_action_filter(bpy.types.Panel):
     def poll(self, context):
         sfile = context.space_data
         operator = sfile.active_operator
-        return operator.export_animation_mode in ["ACTIONS", "ACTIVE_ACTIONS"]
+        return operator.export_animation_mode in ["ACTIONS", "ACTIVE_ACTIONS", "BROADCAST"]
 
     def draw_header(self, context):
         sfile = context.space_data
