@@ -271,6 +271,25 @@ def gather_action_animations(  obj_uuid: int,
         current_use_nla = blender_object.animation_data.use_nla
         blender_object.animation_data.use_nla = False
 
+    # Try to disable all except armature in viewport, for performance
+    if export_settings['gltf_optimize_armature_disable_viewport'] \
+            and export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
+
+        # If the skinned mesh has driver(s), we can't disable it to bake armature.
+        need_to_enable_again = False
+        sk_drivers = get_sk_drivers(obj_uuid, export_settings)
+        if len(sk_drivers) == 0:
+            need_to_enable_again = True
+            # Before baking, disabling from viewport all meshes
+            for obj in [n.blender_object for n in export_settings['vtree'].nodes.values() if n.blender_type in
+                        [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
+                obj.hide_viewport = True
+            export_settings['vtree'].nodes[obj_uuid].blender_object.hide_viewport = False
+        else:
+            print_console("WARNING", "Can't disable viewport because of drivers")
+            export_settings['gltf_optimize_armature_disable_viewport'] = False # We changed the option here, so we don't need to re-check it later, during
+
+
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, False)
 
 ######## Export
@@ -440,6 +459,15 @@ def gather_action_animations(  obj_uuid: int,
 
     if blender_object and current_world_matrix is not None:
         blender_object.matrix_world = current_world_matrix
+
+    if export_settings['gltf_optimize_armature_disable_viewport'] \
+            and export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
+        if need_to_enable_again is True:
+            # And now, restoring meshes in viewport
+            for node, obj in [(n, n.blender_object) for n in export_settings['vtree'].nodes.values() if n.blender_type in
+                        [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
+                obj.hide_viewport = node.default_hide_viewport
+            export_settings['vtree'].nodes[obj_uuid].blender_object.hide_viewport = export_settings['vtree'].nodes[obj_uuid].default_hide_viewport
 
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, True)
 

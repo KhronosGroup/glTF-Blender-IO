@@ -50,7 +50,8 @@ def gather_animation_fcurves_channels(
     return channels, to_be_sampled
 
 
-def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_settings):
+def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_settings, no_sample_option=False):
+    # no_sample_option is used when we want to retrieve all SK channels, to be evaluate.
     targets = {}
 
 
@@ -158,7 +159,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         # Check if the property can be exported without sampling
         new_properties = {}
         for prop in target_data['properties'].keys():
-            if needs_baking(obj_uuid, target_data['properties'][prop], export_settings) is True:
+            if no_sample_option is False and needs_baking(obj_uuid, target_data['properties'][prop], export_settings) is True:
                 to_be_sampled.append((obj_uuid, target_data['type'], get_channel_from_target(get_target(prop)), target_data['bone'])) # bone can be None if not a bone :)
             else:
                 new_properties[prop] = target_data['properties'][prop]
