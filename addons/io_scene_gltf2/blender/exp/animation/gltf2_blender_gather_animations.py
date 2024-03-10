@@ -24,7 +24,7 @@ def gather_animations(export_settings):
     export_settings['ranges'] = {}
     export_settings['slide'] = {}
 
-    if export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+    if export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
         return gather_actions_animations(export_settings)
     elif export_settings['gltf_animation_mode'] == "SCENE":
         return gather_scene_animations(export_settings)

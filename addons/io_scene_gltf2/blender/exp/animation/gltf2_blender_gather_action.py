@@ -485,6 +485,9 @@ def __get_blender_actions(obj_uuid: str,
 
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
 
+    if export_settings['gltf_animation_mode'] == "BROADCAST":
+        return __get_blender_actions_broadcast(obj_uuid, export_settings)
+
     if blender_object and blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
@@ -609,3 +612,72 @@ def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
         return generate_extras(blender_action)
     return None
+
+def __get_blender_actions_broadcast(obj_uuid, export_settings):
+    blender_actions = []
+    blender_tracks = {}
+    action_on_type = {}
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+    # Note : Like in FBX exporter:
+    # - Object with animation data will get all actions
+    # - Object without animation will not get any action
+
+    # Collect all actions
+    for blender_action in bpy.data.actions:
+        if hasattr(bpy.data.scenes[0], "gltf_action_filter") \
+                and id(blender_action) in [id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+            continue # We ignore this action
+
+        # Keep all actions on objects (no Shapekey animation, No armature animation (on bones))
+        if blender_action.id_root == "OBJECT": #TRS and Bone animations
+            if blender_object.animation_data is None:
+                continue
+            if blender_object and blender_object.type == "ARMATURE" and __is_armature_action(blender_action):
+                blender_actions.append(blender_action)
+                blender_tracks[blender_action.name] = None
+                action_on_type[blender_action.name] = "OBJECT"
+            elif blender_object.type == "MESH":
+                if not __is_armature_action(blender_action):
+                    blender_actions.append(blender_action)
+                    blender_tracks[blender_action.name] = None
+                    action_on_type[blender_action.name] = "OBJECT"
+        elif blender_action.id_root == "KEY":
+            if blender_object.type != "MESH" or blender_object.data is None or blender_object.data.shape_keys is None or blender_object.data.shape_keys.animation_data is None:
+                continue
+            # Checking that the object has some SK and some animation on it
+            if blender_object is None:
+                continue
+            if blender_object.type != "MESH":
+                continue
+            if blender_object.data is None or blender_object.data.shape_keys is None:
+                continue
+            blender_actions.append(blender_action)
+            blender_tracks[blender_action.name] = None
+            action_on_type[blender_action.name] = "SHAPEKEY"
+
+
+    # Use a class to get parameters, to be able to modify them
+    class GatherActionHookParameters:
+        def __init__(self, blender_actions, blender_tracks, action_on_type):
+            self.blender_actions = blender_actions
+            self.blender_tracks = blender_tracks
+            self.action_on_type = action_on_type
+
+    gatheractionhookparams = GatherActionHookParameters(blender_actions, blender_tracks, action_on_type)
+
+    export_user_extensions('gather_actions_hook', export_settings, blender_object, gatheractionhookparams)
+
+    # Get params back from hooks
+    blender_actions = gatheractionhookparams.blender_actions
+    blender_tracks = gatheractionhookparams.blender_tracks
+    action_on_type = gatheractionhookparams.action_on_type
+
+    # Remove duplicate actions.
+    blender_actions = list(set(blender_actions))
+    # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
+    blender_actions.sort(key = lambda a: a.name.lower())
+
+    return [(blender_action, blender_tracks[blender_action.name], action_on_type[blender_action.name]) for blender_action in blender_actions]
+
