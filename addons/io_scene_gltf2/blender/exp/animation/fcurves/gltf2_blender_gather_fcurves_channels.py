@@ -33,26 +33,40 @@ def gather_animation_fcurves_channels(
         export_settings
         ):
 
-    channels_to_perform, to_be_sampled = get_channel_groups(obj_uuid, blender_action, export_settings)
+    channels_to_perform, to_be_sampled, extra_channels_to_perform = get_channel_groups(obj_uuid, blender_action, export_settings)
 
     custom_range = None
     if blender_action.use_frame_range:
         custom_range = (blender_action.frame_start, blender_action.frame_end)
 
     channels = []
-    for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0 and chan['type'] != "EXTRA"]:
+    extra_samplers = []
+
+    for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
         for channel_group in chan['properties'].values():
             channel = __gather_animation_fcurve_channel(chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
             if channel is not None:
                 channels.append(channel)
 
 
-    return channels, to_be_sampled
+    if export_settings['gltf_export_extra_animations']:
+        for chan in [chan for chan in extra_channels_to_perform.values() if len(chan['properties']) != 0]:
+            for channel_group_name, channel_group in chan['properties'].items():
+
+                # No glTF channel here, as we don't have any target
+                # Trying to retrieve sampler directly
+                sampler = __gather_sampler(obj_uuid, tuple(channel_group), None, custom_range, True, export_settings)
+                if sampler is not None:
+                    extra_samplers.append((channel_group_name, sampler, "OBJECT", None))
+
+
+    return channels, to_be_sampled, extra_samplers
 
 
 def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_settings, no_sample_option=False):
     # no_sample_option is used when we want to retrieve all SK channels, to be evaluate.
     targets = {}
+    targets_extra = {}
 
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
@@ -79,13 +93,26 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         # find the object affected by this action
         # object_path : blank for blender_object itself, key_blocks["<name>"] for SK, pose.bones["<name>"] for bones
         if not object_path:
-            target = blender_object
-            type_ = "OBJECT"
+            if fcurve.data_path.startswith("["):
+                target = blender_object
+                type_ = "EXTRA"
+            else:
+                target = blender_object
+                type_ = "OBJECT"
         else:
             try:
                 target = get_object_from_datapath(blender_object, object_path)
+
                 if blender_object.type == "ARMATURE" and fcurve.data_path.startswith("pose.bones["):
-                    type_ = "BONE"
+                    if target_property is not None:
+                        if get_target(target_property) is not None:
+                            type_ = "BONE"
+                        else:
+                            type_ = "EXTRA"
+                    else:
+                        type_ = "EXTRA"
+
+
                 else:
                     type_ = "EXTRA"
                 if blender_object.type == "MESH" and object_path.startswith("key_blocks"):
@@ -117,6 +144,25 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         rotation, rotation_modes = get_rotation_modes(target_property)
         if rotation and target.rotation_mode not in rotation_modes:
             multiple_rotation_mode_detected[target] = True
+            continue
+
+        if type_ == "EXTRA":
+            # No group by property, because we are going to export fcurve separately
+            # We are going to evaluate fcurve, so no check if need to be sampled
+            if target_property is None:
+                target_property = fcurve.data_path
+            if not target_property.startswith("pose.bones["):
+                target_property = fcurve.data_path
+            target_data = targets_extra.get(target, {})
+            target_data['type'] = type_
+            target_data['bone'] = target.name
+            target_data['obj_uuid'] = obj_uuid
+            target_properties = target_data.get('properties', {})
+            channels = target_properties.get(target_property, [])
+            channels.append(fcurve)
+            target_properties[target_property] = channels
+            target_data['properties'] = target_properties
+            targets_extra[target] = target_data
             continue
 
         # group channels by target object and affected property of the target
@@ -176,7 +222,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
 
     to_be_sampled = list(set(to_be_sampled))
 
-    return targets, to_be_sampled
+    return targets, to_be_sampled, targets_extra
 
 
 def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender_object: bpy.types.Object):
@@ -237,7 +283,7 @@ def __gather_animation_fcurve_channel(obj_uuid: str,
 
     __target= __gather_target(obj_uuid, channel_group, bone, export_settings)
     if __target.path is not None:
-        sampler = __gather_sampler(obj_uuid, channel_group, bone, custom_range, export_settings)
+        sampler = __gather_sampler(obj_uuid, channel_group, bone, custom_range, False, export_settings)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
@@ -272,9 +318,10 @@ def __gather_sampler(obj_uuid: str,
                     channel_group: typing.Tuple[bpy.types.FCurve],
                     bone: typing.Optional[str],
                     custom_range: typing.Optional[set],
+                    extra_mode: bool,
                     export_settings) -> gltf2_io.AnimationSampler:
 
-    return gather_animation_fcurves_sampler(obj_uuid, channel_group, bone, custom_range, export_settings)
+    return gather_animation_fcurves_sampler(obj_uuid, channel_group, bone, custom_range, extra_mode, export_settings)
 
 def needs_baking(obj_uuid: str,
                  channels: typing.Tuple[bpy.types.FCurve],

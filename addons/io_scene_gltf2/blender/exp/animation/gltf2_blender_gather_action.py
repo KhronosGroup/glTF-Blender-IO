@@ -325,9 +325,9 @@ def gather_action_animations(  obj_uuid: int,
 
         if export_settings['gltf_force_sampling'] is True:
             if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
-                animation = gather_action_armature_sampled(obj_uuid, blender_action, None, export_settings)
+                animation, extra_samplers = gather_action_armature_sampled(obj_uuid, blender_action, None, export_settings)
             elif on_type == "OBJECT":
-                animation = gather_action_object_sampled(obj_uuid, blender_action, None, export_settings)
+                animation, extra_samplers = gather_action_object_sampled(obj_uuid, blender_action, None, export_settings)
             else:
                 animation = gather_action_sk_sampled(obj_uuid, blender_action, None, export_settings)
         else:
@@ -336,7 +336,7 @@ def gather_action_animations(  obj_uuid: int,
             #  - animation on fcurves
             #  - fcurve that cannot be handled not sampled, to be sampled
             # to_be_sampled is : (object_uuid , type , prop, optional(bone.name) )
-            animation, to_be_sampled = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
+            animation, to_be_sampled, extra_samplers = gather_animation_fcurves(obj_uuid, blender_action, export_settings)
             for (obj_uuid, type_, prop, bone) in to_be_sampled:
                 if type_ == "BONE":
                     channel = gather_sampled_bone_channel(obj_uuid, bone, prop, blender_action.name, True, get_gltf_interpolation("LINEAR"), export_settings)
@@ -363,6 +363,11 @@ def gather_action_animations(  obj_uuid: int,
                     if channel is not None:
                         animation.channels.append(channel)
 
+        # Add extra samplers
+        # Because this is not core glTF specification, you can add extra samplers using hook
+        if export_settings['gltf_export_extra_animations'] and len(extra_samplers) != 0:
+            export_user_extensions('extra_animation_manage', export_settings, extra_samplers, obj_uuid, blender_object, blender_action, animation)
+
         # If we are in a SK animation, and we need to bake (if there also in TRS anim)
         if len([a for a in blender_actions if a[2] == "OBJECT"]) == 0 and on_type == "SHAPEKEY":
             if export_settings['gltf_bake_animation'] is True and export_settings['gltf_force_sampling'] is True:
@@ -372,7 +377,7 @@ def gather_action_animations(  obj_uuid: int,
                     if obj_uuid not in export_settings['ranges'].keys():
                         export_settings['ranges'][obj_uuid] = {}
                     export_settings['ranges'][obj_uuid][obj_uuid] = export_settings['ranges'][obj_uuid][blender_action.name]
-                    channels = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
+                    channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
                     if channels is not None:
                         if animation is None:
                             animation = gltf2_io.Animation(

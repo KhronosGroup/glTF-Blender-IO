@@ -66,10 +66,7 @@ class Keyframe:
             "rotation_quaternion": 4,
             "scale": 3,
             "value": self.__length_morph
-        }.get(self.target)
-
-        if length is None:
-            raise RuntimeError("Animations with target type '{}' are not supported.".format(self.target))
+        }.get(self.target, 1)
 
         return length
 

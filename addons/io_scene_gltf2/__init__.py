@@ -890,6 +890,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_extra_animations: BoolProperty(
+        name='Prepare extra animations',
+        description=(
+            'Export additional animations'
+            'This feature is not standard and needs an external extension to be included in the glTF file'
+            ),
+        default=False
+    )
+
     # Custom scene property for saving settings
     scene_key = "glTF2ExportSettings"
 
@@ -1061,6 +1070,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_bake_animation'] = self.export_bake_animation
             export_settings['gltf_negative_frames'] = self.export_negative_frame
             export_settings['gltf_anim_slide_to_zero'] = self.export_anim_slide_to_zero
+            export_settings['gltf_export_extra_animations'] = self.export_extra_animations
         else:
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_force_sampling'] = False
@@ -1072,6 +1082,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_export_anim_single_armature'] = False
             export_settings['gltf_export_reset_pose_bones'] = False
             export_settings['gltf_export_reset_sk_data'] = False
+            export_settings['gltf_export_extra_animations'] = False
         export_settings['gltf_skins'] = self.export_skins
         if self.export_skins:
             export_settings['gltf_all_vertex_influences'] = self.export_all_influences
@@ -1875,6 +1886,33 @@ class GLTF_PT_export_animation_optimize(bpy.types.Panel):
         row = layout.row()
         row.prop(operator, 'export_optimize_armature_disable_viewport')
 
+class GLTF_PT_export_animation_extra(bpy.types.Panel):
+    bl_space_type = 'FILE_BROWSER'
+    bl_region_type = 'TOOL_PROPS'
+    bl_label = "Extra Animations"
+    bl_parent_id = "GLTF_PT_export_animation"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf" and \
+            operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS']
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        sfile = context.space_data
+        operator = sfile.active_operator
+
+        layout.active = operator.export_animations
+
+        layout.prop(operator, 'export_extra_animations')
+
 
 class GLTF_PT_export_user_extensions(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
@@ -2204,6 +2242,7 @@ classes = (
     GLTF_PT_export_animation_shapekeys,
     GLTF_PT_export_animation_sampling,
     GLTF_PT_export_animation_optimize,
+    GLTF_PT_export_animation_extra,
     GLTF_PT_export_gltfpack,
     GLTF_PT_export_user_extensions,
     ImportGLTF2,

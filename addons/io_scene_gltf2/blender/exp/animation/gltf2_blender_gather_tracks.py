@@ -57,6 +57,9 @@ def gather_track_animations(  obj_uuid: int,
 
     animations = []
 
+    # Bake situation does not export any extra animation channels, as we bake TRS + weights on Track or scene level, without direct
+    # Access to fcurve and action data
+
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
     # Collect all tracks affecting this object.
     blender_tracks = __get_blender_tracks(obj_uuid, export_settings)

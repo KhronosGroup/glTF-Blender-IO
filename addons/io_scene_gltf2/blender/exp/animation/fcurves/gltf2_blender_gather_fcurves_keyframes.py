@@ -26,11 +26,12 @@ def gather_fcurve_keyframes(
         channel_group: typing.Tuple[bpy.types.FCurve],
         bone: typing.Optional[str],
         custom_range: typing.Optional[set],
+        extra_mode: bool,
         export_settings):
 
     keyframes = []
 
-    non_keyed_values = gather_non_keyed_values(obj_uuid, channel_group, bone, export_settings)
+    non_keyed_values = gather_non_keyed_values(obj_uuid, channel_group, bone, extra_mode, export_settings)
 
     # Just use the keyframes as they are specified in blender
     # Note: channels has some None items only for SK if some SK are not animated
@@ -101,8 +102,13 @@ def gather_non_keyed_values(
         obj_uuid: str,
         channel_group: typing.Tuple[bpy.types.FCurve],
         bone: typing.Optional[str],
+        extra_mode: bool,
         export_settings
         ) ->  typing.Tuple[typing.Optional[float]]:
+
+    if extra_mode is True:
+        # No need to check if there are non non keyed values, as we export fcurve independently
+        return [None]
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
@@ -142,7 +148,7 @@ def gather_non_keyed_values(
             if i in indices:
                 non_keyed_values.append(None)
             else:
-                if bone is None is None:
+                if bone is None:
                     non_keyed_values.append({
                         "delta_location" : blender_object.delta_location,
                         "delta_rotation_euler" : blender_object.delta_rotation_euler,
