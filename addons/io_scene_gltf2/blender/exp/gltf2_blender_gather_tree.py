@@ -257,9 +257,9 @@ class VExportTree:
             if self.export_settings['gltf_rest_position_armature'] is False:
                 # Use pose bone for TRS
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
-                #TODOLEAFBONE on option only these 2 lines
-                node.matrix_world_tail = self.nodes[node.armature].matrix_world @ Matrix.Translation(blender_bone.tail)
-                node.matrix_world_tail = node.matrix_world_tail @ self.axis_basis_change
+                if self.export_settings['gltf_leaf_bone'] is True:
+                    node.matrix_world_tail = self.nodes[node.armature].matrix_world @ Matrix.Translation(blender_bone.tail)
+                    node.matrix_world_tail = node.matrix_world_tail @ self.axis_basis_change
             else:
                 # Use edit bone for TRS --> REST pose will be used
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.bone.matrix_local
@@ -572,7 +572,8 @@ class VExportTree:
 
     def bake_armature_bone_list(self):
 
-        self.add_leaf_bones() # TODOLEAFBONE add an option
+        if self.export_settings['gltf_leaf_bone'] is True:
+            self.add_leaf_bones()
 
         # Used to store data in armature vnode
         # If armature is removed from export
@@ -585,7 +586,6 @@ class VExportTree:
     def add_leaf_bones(self):
 
         # If we are using rest pose, we need to get tail of editbone, going to edit mode for each armature
-        #TODOLEAFBONE on option only
         if self.export_settings['gltf_rest_position_armature'] is True:
             for obj_uuid in [n for n in self.nodes if self.nodes[n].blender_type == VExportNode.ARMATURE]:
                 armature = self.nodes[obj_uuid].blender_object
