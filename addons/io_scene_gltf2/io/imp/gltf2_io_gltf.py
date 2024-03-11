@@ -42,11 +42,9 @@ class glTFImporter():
         self.variant_mapping = {} # Used to map between mgltf material idx and blender material, for Variants
 
         if 'loglevel' not in self.import_settings.keys():
-            self.import_settings['loglevel'] = logging.ERROR
+            self.import_settings['loglevel'] = logging.CRITICAL
 
-        log = Log(import_settings['loglevel'])
-        self.log = log.logger
-        self.log_handler = log.hdlr
+        self.log = Log(import_settings['loglevel'])
 
         # TODO: move to a com place?
         self.extensions_managed = [

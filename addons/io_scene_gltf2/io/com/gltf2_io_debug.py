@@ -18,12 +18,13 @@
 
 import time
 import logging
+import logging.handlers
 
 #
 # Globals
 #
 
-OUTPUT_LEVELS = ['ERROR', 'WARNING', 'INFO', 'PROFILE', 'DEBUG', 'VERBOSE']
+OUTPUT_LEVELS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'PROFILE', 'DEBUG', 'NOTSET']
 
 g_current_output_level = 'DEBUG'
 g_profile_started = False
@@ -119,8 +120,54 @@ def profile_end(label=None):
 class Log:
     def __init__(self, loglevel):
         self.logger = logging.getLogger('glTFImporter')
-        self.hdlr = logging.StreamHandler()
+
+        # For console display
+        self.console_handler = logging.StreamHandler()
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-        self.hdlr.setFormatter(formatter)
-        self.logger.addHandler(self.hdlr)
+        self.console_handler.setFormatter(formatter)
+
+        # For popup display
+        self.popup_handler = logging.handlers.MemoryHandler(1024*10)
+
+        self.logger.addHandler(self.console_handler)
+        #self.logger.addHandler(self.popup_handler) => Make sure to not attach the popup handler to the logger
+
         self.logger.setLevel(int(loglevel))
+
+    def error(self, message, popup=False):
+        self.logger.error(message)
+        if popup:
+            self.popup_handler.buffer.append(('ERROR', message))
+
+    def warning(self, message, popup=False):
+        self.logger.warning(message)
+        if popup:
+            self.popup_handler.buffer.append(('WARNING', message))
+
+    def info(self, message, popup=False):
+        self.logger.info(message)
+        if popup:
+            self.popup_handler.buffer.append(('INFO', message))
+
+    def debug(self, message, popup=False):
+        self.logger.debug(message)
+        if popup:
+            self.popup_handler.buffer.append(('DEBUG', message))
+
+    def critical(self, message, popup=False):
+        self.logger.critical(message)
+        if popup:
+            self.popup_handler.buffer.append(('ERROR', message)) # There is no Critical level in Blender, so we use error
+
+    def profile(self, message, popup=False): # There is no profile level in logging, so we use info
+        self.logger.info(message)
+        if popup:
+            self.popup_handler.buffer.append(('PROFILE', message))
+
+    def messages(self):
+        return self.popup_handler.buffer
+
+    def flush(self):
+        self.logger.removeHandler(self.console_handler)
+        self.popup_handler.flush()
+        self.logger.removeHandler(self.popup_handler)

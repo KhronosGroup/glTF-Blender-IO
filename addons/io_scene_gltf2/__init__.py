@@ -2120,14 +2120,18 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             gltf_importer.read()
             gltf_importer.checks()
 
-            print("Data are loaded, start creating Blender stuff")
+            gltf_importer.log.info("Data are loaded, start creating Blender stuff")
 
             start_time = time.time()
             BlenderGlTF.create(gltf_importer)
             elapsed_s = "{:.2f}s".format(time.time() - start_time)
-            print("glTF import finished in " + elapsed_s)
+            gltf_importer.log.info("glTF import finished in " + elapsed_s)
 
-            gltf_importer.log.removeHandler(gltf_importer.log_handler)
+            # Display popup log, if any
+            for message_type, message in gltf_importer.log.messages():
+                self.report({message_type}, message)
+
+            gltf_importer.log.flush()
 
             return {'FINISHED'}
 
@@ -2137,16 +2141,16 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
 
     def set_debug_log(self):
         import logging
-        if bpy.app.debug_value == 0:
-            self.loglevel = logging.CRITICAL
-        elif bpy.app.debug_value == 1:
-            self.loglevel = logging.ERROR
-        elif bpy.app.debug_value == 2:
-            self.loglevel = logging.WARNING
-        elif bpy.app.debug_value == 3:
+        if bpy.app.debug_value == 0:      # Default values => Display all messages except debug ones
             self.loglevel = logging.INFO
-        else:
-            self.loglevel = logging.NOTSET
+        elif bpy.app.debug_value == 1:
+            self.loglevel = logging.WARNING
+        elif bpy.app.debug_value == 2:
+            self.loglevel = logging.ERROR
+        elif bpy.app.debug_value == 3:
+            self.loglevel = logging.CRITICAL
+        elif bpy.app.debug_value == 4:
+            self.loglevel = logging.DEBUG
 
 
 class GLTF2_filter_action(bpy.types.PropertyGroup):
