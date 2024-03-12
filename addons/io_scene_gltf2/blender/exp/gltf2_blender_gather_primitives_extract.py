@@ -87,7 +87,7 @@ class PrimitiveCreator:
                     self.blender_mesh.calc_tangents()
                     self.use_tangents = True
                 except Exception:
-                    self.export_settings['log'].warning("Could not calculate tangents. Please try to triangulate the mesh first.")
+                    self.export_settings['log'].warning("{}: Could not calculate tangents. Please try to triangulate the mesh first.".format(self.blender_mesh.name), popup=True)
 
         self.tex_coord_max = 0
         if self.export_settings['gltf_texcoords']:
