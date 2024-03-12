@@ -58,6 +58,13 @@ def export_volume(blender_material, export_settings):
         density, path = get_const_from_default_value_socket(density_socket, kind='VALUE')
         volume_extension['attenuationDistance'] = 1.0 / density if density != 0 else None # infinity (Using None as glTF default)
 
+        # Storing path for KHR_animation_pointer
+        if path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_volume/attenuationDistance"
+            export_settings['current_paths'][path] = path_
+
 
     if isinstance(thickness_socket.socket, bpy.types.NodeSocket) and not thickness_socket.socket.is_linked:
         val = thickness_socket.socket.default_value
