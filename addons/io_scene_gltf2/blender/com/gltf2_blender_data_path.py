@@ -15,11 +15,19 @@
 
 def get_target_property_name(data_path: str) -> str:
     """Retrieve target property."""
-    return data_path.rsplit('.', 1)[-1]
+
+    if data_path.endswith("]"):
+        return None
+    else:
+        return data_path.rsplit('.', 1)[-1]
 
 
 def get_target_object_path(data_path: str) -> str:
     """Retrieve target object data path without property"""
+    if data_path.endswith("]"):
+        return data_path.rsplit('[', 1)[0]
+    elif data_path.startswith("pose.bones["):
+        return data_path[:data_path.find('"]')] + '"]'
     path_split = data_path.rsplit('.', 1)
     self_targeting = len(path_split) < 2
     if self_targeting:

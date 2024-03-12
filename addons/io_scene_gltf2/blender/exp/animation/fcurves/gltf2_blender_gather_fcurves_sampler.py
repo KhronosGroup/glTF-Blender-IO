@@ -33,6 +33,7 @@ def gather_animation_fcurves_sampler(
         channel_group: typing.Tuple[bpy.types.FCurve],
         bone: typing.Optional[str],
         custom_range: typing.Optional[set],
+        extra_mode: bool,
         export_settings
         ) -> gltf2_io.AnimationSampler:
 
@@ -43,6 +44,7 @@ def gather_animation_fcurves_sampler(
         channel_group,
         bone,
         custom_range,
+        extra_mode,
         export_settings)
 
     if keyframes is None:
@@ -50,7 +52,7 @@ def gather_animation_fcurves_sampler(
         return None
 
     # Now we are raw input/output, we need to convert to glTF data
-    input, output = __convert_keyframes(obj_uuid, channel_group, bone, keyframes, export_settings)
+    input, output = __convert_keyframes(obj_uuid, channel_group, bone, keyframes, extra_mode, export_settings)
 
     sampler = gltf2_io.AnimationSampler(
         extensions=None,
@@ -72,16 +74,18 @@ def __gather_keyframes(
         channel_group: typing.Tuple[bpy.types.FCurve],
         bone: typing.Optional[str],
         custom_range: typing.Optional[set],
+        extra_mode: bool,
         export_settings
         ):
 
-    return gather_fcurve_keyframes(obj_uuid, channel_group, bone, custom_range, export_settings)
+    return gather_fcurve_keyframes(obj_uuid, channel_group, bone, custom_range, extra_mode, export_settings)
 
 def __convert_keyframes(
         obj_uuid: str,
         channel_group: typing.Tuple[bpy.types.FCurve],
         bone_name: typing.Optional[str],
         keyframes,
+        extra_mode: bool,
         export_settings):
 
     times = [k.seconds for k in keyframes]
@@ -147,6 +151,17 @@ def __convert_keyframes(
     values = []
     fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
     for keyframe in keyframes:
+
+        if extra_mode is True:
+            # Export as is, without trying to convert
+            keyframe_value = keyframe.value
+            if keyframe.in_tangent is not None:
+                keyframe_value = keyframe.in_tangent + keyframe_value
+            if keyframe.out_tangent is not None:
+                keyframe_value = keyframe_value + keyframe.out_tangent
+            values += keyframe_value
+            continue
+
         # Transform the data and build gltf control points
         value = gltf2_blender_math.transform(keyframe.value, target_datapath, transform, need_rotation_correction)
         if is_yup and bone_name is None:
