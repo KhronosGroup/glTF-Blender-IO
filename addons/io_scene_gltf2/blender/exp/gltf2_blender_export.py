@@ -58,8 +58,6 @@ def save(context, export_settings):
     if not export_settings['gltf_current_frame']:
         bpy.context.scene.frame_set(int(original_frame))
 
-    export_settings['log'].flush()
-
     return {'FINISHED'}
 
 

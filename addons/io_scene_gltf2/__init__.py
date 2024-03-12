@@ -1172,7 +1172,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # Initialize logging for export
         export_settings['log'] = Log(export_settings['loglevel'])
 
-        return gltf2_blender_export.save(context, export_settings)
+        res = gltf2_blender_export.save(context, export_settings)
+
+        # Display popup log, if any
+        for message_type, message in export_settings['log'].messages():
+            self.report({message_type}, message)
+
+        export_settings['log'].flush()
+
+        return res
 
     def draw(self, context):
         pass # Is needed to get panels available
