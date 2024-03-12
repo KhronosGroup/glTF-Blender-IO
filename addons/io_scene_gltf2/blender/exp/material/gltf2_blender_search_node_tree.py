@@ -306,27 +306,27 @@ class NodeNav:
         self.select_input_socket(in_soc)
 
         if not self.in_socket:
-            return None
+            return None, None
 
         # Get constant from unlinked socket's default value
         if not self.in_socket.is_linked:
             if self.in_socket.type == 'RGBA':
                 color = list(self.in_socket.default_value)
                 color = color[:3]  # drop unused alpha component (assumes shader tree)
-                return color
+                return color, "node_tree." + self.in_socket.path_from_id() + ".default_value"
 
             elif self.in_socket.type == 'SHADER':
                 # Treat unlinked shader sockets as black
-                return [0.0, 0.0, 0.0]
+                return [0.0, 0.0, 0.0], None
 
             elif self.in_socket.type == 'VECTOR':
-                return list(self.in_socket.default_value)
+                return list(self.in_socket.default_value), None
 
             elif self.in_socket.type == 'VALUE':
-                return self.in_socket.default_value
+                return self.in_socket.default_value, "node_tree." + self.in_socket.path_from_id() + ".default_value"
 
             else:
-                return None
+                return None, None
 
         # Check for a constant in the next node
         nav = self.peek_back()
@@ -335,11 +335,11 @@ class NodeNav:
                 if nav.node.type == 'RGB':
                     color = list(nav.out_socket.default_value)
                     color = color[:3]  # drop unused alpha component (assumes shader tree)
-                    return color
+                    return color, "node_tree." + nav.out_socket.path_from_id() + ".default_value"
 
             elif self.in_socket.type == 'VALUE':
                 if nav.node.type == 'VALUE':
-                    return nav.node.out_socket.default_value
+                    return nav.node.out_socket.default_value, "node_tree." + nav.node.out_socket.path_from_id() + ".default_value"
 
         return None
 
@@ -348,12 +348,12 @@ class NodeNav:
         self.select_input_socket(in_soc)
 
         if not self.in_socket:
-            return None
+            return None, None
 
         # Constant
-        fac = self.get_constant()
+        fac, path = self.get_constant()
         if fac is not None:
-            return fac
+            return fac, path
 
         # Multiplied by constant
         nav = self.peek_back()
@@ -368,18 +368,18 @@ class NodeNav:
                 )
                 if is_mul:
                     # TODO: check factor is 1?
-                    x1 = nav.get_constant('#A_Color')
-                    x2 = nav.get_constant('#B_Color')
+                    x1, path_1 = nav.get_constant('#A_Color')
+                    x2, path_2 = nav.get_constant('#B_Color')
 
             elif self.in_socket.type == 'VALUE':
                 if nav.node.type == 'MATH' and nav.node.operation == 'MULTIPLY':
-                    x1 = nav.get_constant(0)
-                    x2 = nav.get_constant(1)
+                    x1, path_1 = nav.get_constant(0)
+                    x2, path_2 = nav.get_constant(1)
 
-            if x1 is not None and x2 is None: return x1
-            if x2 is not None and x1 is None: return x2
+            if x1 is not None and x2 is None: return x1, path_1
+            if x2 is not None and x1 is None: return x2, path_2
 
-        return None
+        return None, None
 
 
 class NodeSocket:
