@@ -46,7 +46,7 @@ def gather_lights_punctual(blender_lamp, export_settings) -> Optional[Dict[str, 
 
 def __filter_lights_punctual(blender_lamp, export_settings) -> bool:
     if blender_lamp.type in ["HEMI", "AREA"]:
-        gltf2_io_debug.print_console("WARNING", "Unsupported light source {}".format(blender_lamp.type))
+        export_settings['log'].warning("Unsupported light source {}".format(blender_lamp.type))
         return False
 
     return True
@@ -73,8 +73,7 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
                 quadratic_falloff_node = result[0].shader_node
                 emission_strength = quadratic_falloff_node.inputs["Strength"].default_value / (math.pi * 4.0)
             else:
-                gltf2_io_debug.print_console('WARNING',
-                                             'No quadratic light falloff node attached to emission strength property')
+                export_settings['log'].warning('No quadratic light falloff node attached to emission strength property')
                 emission_strength = blender_lamp.energy
         else:
             emission_strength = emission_node.inputs["Strength"].default_value

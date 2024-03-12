@@ -965,6 +965,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     def execute(self, context):
         import os
         import datetime
+        import logging
+        from .io.com.gltf2_io_debug import Log
         from .blender.exp import gltf2_blender_export
         from .io.com.gltf2_io_path import path_to_uri
 
@@ -975,6 +977,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         # All custom export settings are stored in this container.
         export_settings = {}
+
+        export_settings['loglevel'] = logging.INFO
 
         export_settings['exported_images'] = {}
         export_settings['exported_texture_nodes'] = []
@@ -1163,6 +1167,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_user_extensions'] = user_extensions
         export_settings['pre_export_callbacks'] = pre_export_callbacks
         export_settings['post_export_callbacks'] = post_export_callbacks
+
+
+        # Initialize logging for export
+        export_settings['log'] = Log(export_settings['loglevel'])
 
         return gltf2_blender_export.save(context, export_settings)
 

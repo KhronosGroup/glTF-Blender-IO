@@ -21,7 +21,6 @@ from mathutils import Vector, Matrix
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ...com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name, get_gltf_old_group_node_name
 from ....blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
-from io_scene_gltf2.io.com import gltf2_io_debug
 import typing
 
 
@@ -504,9 +503,9 @@ def previous_node(socket: NodeSocket):
         return ShNode(prev_socket.socket.node, prev_socket.group_path)
     return ShNode(None, None)
 
-def get_texture_transform_from_mapping_node(mapping_node):
+def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     if mapping_node.node.vector_type not in ["TEXTURE", "POINT", "VECTOR"]:
-        gltf2_io_debug.print_console("WARNING",
+        export_settings['log'].warning(
             "Skipping exporting texture transform because it had type " +
             mapping_node.node.vector_type + "; recommend using POINT instead"
         )
@@ -516,7 +515,7 @@ def get_texture_transform_from_mapping_node(mapping_node):
     rotation_0, rotation_1 = mapping_node.node.inputs['Rotation'].default_value[0], mapping_node.node.inputs['Rotation'].default_value[1]
     if  rotation_0 or rotation_1:
         # TODO: can we handle this?
-        gltf2_io_debug.print_console("WARNING",
+        export_settings['log'].warning(
             "Skipping exporting texture transform because it had non-zero "
             "rotations in the X/Y direction; only a Z rotation can be exported!"
         )
@@ -552,7 +551,7 @@ def get_texture_transform_from_mapping_node(mapping_node):
 
         mapping_transform = inverted(mapping_transform)
         if mapping_transform is None:
-            gltf2_io_debug.print_console("WARNING",
+            export_settings['log'].warning(
                 "Skipping exporting texture transform with type TEXTURE because "
                 "we couldn't convert it to TRS; recommend using POINT instead"
             )

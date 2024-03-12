@@ -15,7 +15,6 @@
 import bpy
 import typing
 from ....io.com import gltf2_io
-from ....io.com.gltf2_io_debug import print_console
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
 from ....blender.com.gltf2_blender_conversion import get_gltf_interpolation
 from ...com.gltf2_blender_data_path import is_bone_anim_channel
@@ -286,7 +285,7 @@ def gather_action_animations(  obj_uuid: int,
                 obj.hide_viewport = True
             export_settings['vtree'].nodes[obj_uuid].blender_object.hide_viewport = False
         else:
-            print_console("WARNING", "Can't disable viewport because of drivers")
+            export_settings['log'].warning("Can't disable viewport because of drivers")
             export_settings['gltf_optimize_armature_disable_viewport'] = False # We changed the option here, so we don't need to re-check it later, during
 
 
@@ -310,7 +309,7 @@ def gather_action_animations(  obj_uuid: int,
                     export_user_extensions('post_animation_switch_hook', export_settings, blender_object, blender_action, track_name, on_type)
                 except:
                     error = "Action is readonly. Please check NLA editor"
-                    print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
+                    export_settings['log'].warning("Animation '{}' could not be exported. Cause: {}".format(blender_action.name, error))
                     continue
 
         if on_type == "SHAPEKEY":
@@ -347,7 +346,7 @@ def gather_action_animations(  obj_uuid: int,
                 elif type_ == "EXTRA":
                     channel = None
                 else:
-                    print("Type unknown. Should not happen")
+                    export_settings['log'].error("Type unknown. Should not happen")
 
                 if animation is None and channel is not None:
                     # If all channels need to be sampled, no animation was created

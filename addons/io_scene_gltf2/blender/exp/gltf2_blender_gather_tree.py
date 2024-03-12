@@ -191,8 +191,10 @@ class VExportTree:
                 if parent_uuid is None or not self.nodes[parent_uuid].blender_type == VExportNode.ARMATURE:
                     # correct workflow is to parent skinned mesh to armature, but ...
                     # all users don't use correct workflow
-                    print("WARNING: Armature must be the parent of skinned mesh")
-                    print("Armature is selected by its name, but may be false in case of instances")
+                    self.export_settings['log'].warning(
+                        "Armature must be the parent of skinned mesh"
+                        "Armature is selected by its name, but may be false in case of instances"
+                    )
                     # Search an armature by name, and use the first found
                     # This will be done after all objects are setup
                     node.armature_needed = modifiers["ARMATURE"].object.name
@@ -433,7 +435,7 @@ class VExportTree:
         elif parent_keep_tag is False:
             self.nodes[uuid].keep_tag = False
         else:
-            print("This should not happen!")
+            self.export_settings['log'].error("This should not happen")
 
         for child in self.nodes[uuid].children:
             if self.nodes[uuid].blender_type == VExportNode.INST_COLLECTION or self.nodes[uuid].is_instancier == VExportNode.INSTANCIER:
@@ -585,7 +587,7 @@ class VExportTree:
 
             # Be sure to add it to really exported meshes
             if n.node.skin is None:
-                print("WARNING: {} has no skin, skipping adding neutral bone data on it.".format(n.blender_object.name))
+                self.export_settings['log'].warning("{} has no skin, skipping adding neutral bone data on it.".format(n.blender_object.name))
                 continue
 
             if n.armature not in added_armatures:
@@ -701,5 +703,5 @@ class VExportTree:
             if len(self.get_root_bones_uuid(arma_uuid)) > 1:
                 # We can't remove armature
                 self.export_settings['gltf_armature_object_remove'] = False
-                print("WARNING: We can't remove armature object because some armatures have multiple root bones.")
+                self.export_settings['log'].warning("We can't remove armature object because some armatures have multiple root bones.")
                 break

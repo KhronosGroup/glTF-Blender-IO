@@ -19,5 +19,5 @@ def import_user_extensions(hook_name, gltf, *args):
             try:
                 hook(*args, gltf)
             except Exception as e:
-                print(hook_name, "fails on", extension)
-                print(str(e))
+                gltf.log.error(hook_name, "fails on", extension)
+                gltf.log.error(str(e))

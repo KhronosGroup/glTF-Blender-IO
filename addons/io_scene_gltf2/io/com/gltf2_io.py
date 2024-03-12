@@ -52,7 +52,7 @@ def from_union(fs, x):
         tb_info = traceback.extract_tb(tb)
         for tbi in tb_info:
             filename, line, func, text = tbi
-            gltf2_io_debug.print_console('ERROR', 'An error occurred on line {} in statement {}'.format(line, text))
+            print('ERROR', 'An error occurred on line {} in statement {}'.format(line, text))
     assert False
 
 

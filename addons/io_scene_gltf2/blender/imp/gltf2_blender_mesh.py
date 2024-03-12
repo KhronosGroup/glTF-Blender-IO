@@ -16,7 +16,6 @@ import bpy
 from mathutils import Matrix
 import numpy as np
 from ...io.imp.gltf2_io_user_extensions import import_user_extensions
-from ...io.com.gltf2_io_debug import print_console
 from ...io.imp.gltf2_io_binary import BinaryData
 from ...io.com.gltf2_io_constants import DataType, ComponentType
 from ...blender.com.gltf2_blender_conversion import get_attribute_type
@@ -167,7 +166,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         vert_index_base = len(vert_locs)
 
         if prim.extensions is not None and 'KHR_draco_mesh_compression' in prim.extensions:
-            print_console('INFO', 'Draco Decoder: Decode primitive {}'.format(pymesh.name or '[unnamed]'))
+
+            gltf.log.info('Draco Decoder: Decode primitive {}'.format(pymesh.name or '[unnamed]'))
             decode_primitive(gltf, prim)
 
         import_user_extensions('gather_import_decode_primitive', gltf, pymesh, prim, skin_idx)
@@ -329,7 +329,7 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         layer = mesh.uv_layers.new(name=name)
 
         if layer is None:
-            print("WARNING: UV map is ignored because the maximum number of UV layers has been reached.")
+            gltf.log.warning("WARNING: UV map is ignored because the maximum number of UV layers has been reached.")
             break
 
         layer.uv.foreach_set('vector', squish(loop_uvs[uv_i], np.float32))
@@ -649,7 +649,7 @@ def skin_into_bind_pose(gltf, skin_idx, vert_joints, vert_weights, locs, vert_no
     # We set all weight ( aka 1.0 ) to the first bone
     zeros_indices = np.where(weight_sums == 0)[0]
     if zeros_indices.shape[0] > 0:
-        print_console('ERROR', 'File is invalid: Some vertices are not assigned to bone(s) ')
+        gltf.log.error('File is invalid: Some vertices are not assigned to bone(s) ')
         vert_weights[0][:, 0][zeros_indices] = 1.0 # Assign to first bone with all weight
 
         # Reprocess IBM for these vertices

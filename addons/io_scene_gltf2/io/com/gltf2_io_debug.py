@@ -24,58 +24,16 @@ import logging.handlers
 # Globals
 #
 
-OUTPUT_LEVELS = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'PROFILE', 'DEBUG', 'NOTSET']
-
-g_current_output_level = 'DEBUG'
 g_profile_started = False
 g_profile_start = 0.0
 g_profile_end = 0.0
 g_profile_delta = 0.0
 
-#
-# Functions
-#
-
-
-def set_output_level(level):
-    """Set an output debug level."""
-    global g_current_output_level
-
-    if OUTPUT_LEVELS.index(level) < 0:
-        return
-
-    g_current_output_level = level
-
-
-def print_console(level, output):
-    """Print to Blender console with a given header and output."""
-    global OUTPUT_LEVELS
-    global g_current_output_level
-
-    if OUTPUT_LEVELS.index(level) > OUTPUT_LEVELS.index(g_current_output_level):
-        return
-
-    print(get_timestamp() + " | " + level + ': ' + output)
-
-
-def print_newline():
-    """Print a new line to Blender console."""
-    print()
 
 
 def get_timestamp():
     current_time = time.gmtime()
     return time.strftime("%H:%M:%S", current_time)
-
-
-def print_timestamp(label=None):
-    """Print a timestamp to Blender console."""
-    output = 'Timestamp: ' + get_timestamp()
-
-    if label is not None:
-        output = output + ' (' + label + ')'
-
-    print_console('PROFILE', output)
 
 
 def profile_start():
@@ -84,7 +42,7 @@ def profile_start():
     global g_profile_started
 
     if g_profile_started:
-        print_console('ERROR', 'Profiling already started')
+        print('ERROR', 'Profiling already started')
         return
 
     g_profile_started = True
@@ -99,7 +57,7 @@ def profile_end(label=None):
     global g_profile_started
 
     if not g_profile_started:
-        print_console('ERROR', 'Profiling not started')
+        print('ERROR', 'Profiling not started')
         return
 
     g_profile_started = False
@@ -112,18 +70,16 @@ def profile_end(label=None):
     if label is not None:
         output = output + ' (' + label + ')'
 
-    print_console('PROFILE', output)
+    print('PROFILE', output)
 
 
-# TODO: need to have a unique system for logging importer/exporter
-# TODO: this logger is used for importer, but in io and in blender part, but is written here in a _io_ file
 class Log:
     def __init__(self, loglevel):
         self.logger = logging.getLogger('glTFImporter')
 
         # For console display
         self.console_handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        formatter = logging.Formatter('%(asctime)s | %(levelname)s: %(message)s', "%H:%M:%S")
         self.console_handler.setFormatter(formatter)
 
         # For popup display
