@@ -1965,7 +1965,7 @@ def menu_func_export(self, context):
     self.layout.operator(ExportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
 
 
-class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
+class ImportGLTF2(Operator, ConvertGLTF2_Base):
     """Load a glTF 2.0 file"""
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
@@ -1973,9 +1973,23 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
 
     filter_glob: StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
+    filepath: StringProperty(
+        name="File Path",
+        description="Filepath used for importing the file",
+        maxlen=1024,
+        subtype='FILE_PATH',
+        options={'SKIP_SAVE'},
+    )
+
+    directory: StringProperty(
+        subtype='FILE_PATH',
+        options={'SKIP_SAVE'},
+    )
+
     files: CollectionProperty(
         name="File Path",
         type=bpy.types.OperatorFileListElement,
+        options={'SKIP_SAVE'},
     )
 
     loglevel: IntProperty(
@@ -2072,7 +2086,11 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
                 pass
 
         self.has_active_importer_extensions = len(importer_extension_panel_unregister_functors) > 0
-        return ImportHelper.invoke(self, context, event)
+
+        if self.filepath or self.directory:
+            return self.execute(context)
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
     def execute(self, context):
         return self.import_gltf2(context)
@@ -2100,7 +2118,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         if self.files:
             # Multiple file import
             ret = {'CANCELLED'}
-            dirname = os.path.dirname(self.filepath)
+            dirname = self.directory
             for file in self.files:
                 path = os.path.join(dirname, file.name)
                 if self.unit_import(path, import_settings) == {'FINISHED'}:
@@ -2147,6 +2165,16 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             self.loglevel = logging.INFO
         else:
             self.loglevel = logging.NOTSET
+
+
+class SCENE_FH_gltf_import(bpy.types.FileHandler):
+    bl_label = "File handler for glTF import"
+    bl_import_operator = "import_scene.gltf"
+    bl_file_extensions = ".gltf;.glb"
+
+    @classmethod
+    def poll_drop(cls, context):
+        return (context.area and context.area.type == 'VIEW_3D')
 
 
 class GLTF2_filter_action(bpy.types.PropertyGroup):
@@ -2246,6 +2274,7 @@ classes = (
     GLTF_PT_export_gltfpack,
     GLTF_PT_export_user_extensions,
     ImportGLTF2,
+    SCENE_FH_gltf_import,
     GLTF_PT_import_user_extensions,
     GLTF2_filter_action,
     GLTF_AddonPreferences
