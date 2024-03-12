@@ -50,7 +50,7 @@ def export_volume(blender_material, export_settings):
         # Storing path for KHR_animation_pointer
         if path is not None:
             path_ = {}
-            path_['length'] = 1
+            path_['length'] = 3
             path_['path'] = "/materials/XXX/extensions/KHR_materials_volume/attenuationColor"
             export_settings['current_paths'][path] = path_
 
