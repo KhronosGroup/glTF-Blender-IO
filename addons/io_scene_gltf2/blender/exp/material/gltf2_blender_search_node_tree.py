@@ -341,7 +341,7 @@ class NodeNav:
                 if nav.node.type == 'VALUE':
                     return nav.node.out_socket.default_value, "node_tree." + nav.node.out_socket.path_from_id() + ".default_value"
 
-        return None
+        return None, None
 
     def get_factor(self, in_soc=None):
         """Gets a factor, eg. metallicFactor. Either a constant or constant multiplier."""
