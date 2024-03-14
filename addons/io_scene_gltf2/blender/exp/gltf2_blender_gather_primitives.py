@@ -16,7 +16,6 @@ import bpy
 from typing import List, Optional, Tuple
 import numpy as np
 from ...io.com import gltf2_io, gltf2_io_constants, gltf2_io_extensions
-from ...io.com.gltf2_io_debug import print_console
 from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.exp import gltf2_io_binary_data
 from .gltf2_blender_gather_cache import cached, cached_by_key
@@ -203,7 +202,7 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
         component_type = gltf2_io_constants.ComponentType.UnsignedInt
         indices = indices.astype(np.uint32, copy=False)
     else:
-        print_console('ERROR', 'A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
+        export_settings['log'].error('A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
         return None
 
     element_type = gltf2_io_constants.DataType.Scalar

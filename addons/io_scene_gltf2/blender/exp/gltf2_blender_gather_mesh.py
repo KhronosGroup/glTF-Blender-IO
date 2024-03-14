@@ -16,7 +16,6 @@ import bpy
 from typing import Optional, Dict, List, Any, Tuple
 from ...io.com import gltf2_io
 from ...blender.com.gltf2_blender_data_path import get_sk_exported
-from ...io.com.gltf2_io_debug import print_console
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 from . import gltf2_blender_gather_primitives
@@ -69,7 +68,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
     )
 
     if len(mesh.primitives) == 0:
-        print_console("WARNING", "Mesh '{}' has no primitives and will be omitted.".format(mesh.name))
+        export_settings['log'].warning("Mesh '{}' has no primitives and will be omitted.".format(mesh.name))
         return None
 
     blender_object = None

@@ -178,9 +178,10 @@ def __gather_name(blender_shader_sockets, export_settings):
 def __gather_sampler(blender_shader_sockets, export_settings):
     shader_nodes = [get_texture_node_from_socket(socket, export_settings) for socket in blender_shader_sockets]
     if len(shader_nodes) > 1:
-        gltf2_io_debug.print_console("WARNING",
-                                     "More than one shader node tex image used for a texture. "
-                                     "The resulting glTF sampler will behave like the first shader node tex image.")
+        export_settings['log'].warning(
+            "More than one shader node tex image used for a texture. "
+            "The resulting glTF sampler will behave like the first shader node tex image."
+        )
     first_valid_shader_node = next(filter(lambda x: x is not None, shader_nodes))
 
     # group_path can't be a list, so transform it to str

@@ -16,7 +16,6 @@ import bpy
 import typing
 from .....io.exp.gltf2_io_user_extensions import export_user_extensions
 from .....blender.com.gltf2_blender_data_path import skip_sk
-from .....io.com import gltf2_io_debug
 from .....io.com import gltf2_io
 from ....exp.gltf2_blender_gather_cache import cached
 from ....com.gltf2_blender_data_path import get_target_object_path, get_target_property_name, get_rotation_modes
@@ -86,7 +85,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
             # example of target_property : location, rotation_quaternion, value
             target_property = get_target_property_name(fcurve.data_path)
         except:
-            gltf2_io_debug.print_console("WARNING", "Invalid animation fcurve name on action {}".format(blender_action.name))
+            export_settings['log'].warning("Invalid animation fcurve data path on action {}".format(blender_action.name))
             continue
         object_path = get_target_object_path(fcurve.data_path)
 
@@ -133,10 +132,10 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
                         type_ = "SK"
                     except:
                         # Something is wrong, for example a bone animation is linked to an object mesh...
-                        gltf2_io_debug.print_console("WARNING", "Animation target {} not found".format(object_path))
+                        export_settings['log'].warning("Invalid animation fcurve data path on action {}".format(blender_action.name))
                         continue
                 else:
-                    gltf2_io_debug.print_console("WARNING", "Animation target {} not found".format(object_path))
+                    export_settings['log'].warning("Animation target {} not found".format(object_path))
                     continue
 
         # Detect that object or bone are not multiple keyed for euler and quaternion
@@ -179,7 +178,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         targets[target] = target_data
 
     for targ in multiple_rotation_mode_detected.keys():
-        gltf2_io_debug.print_console("WARNING", "Multiple rotation mode detected for {}".format(targ.name))
+        export_settings['log'].warning("Multiple rotation mode detected for {}".format(targ.name))
 
     # Now that all curves are extracted,
     #    - check that there is no normal + delta transforms
@@ -339,24 +338,24 @@ def needs_baking(obj_uuid: str,
     # Sampling due to unsupported interpolation
     interpolation = [c for c in channels if c is not None][0].keyframe_points[0].interpolation
     if interpolation not in ["BEZIER", "LINEAR", "CONSTANT"]:
-        gltf2_io_debug.print_console("WARNING",
-                                     "Baking animation because of an unsupported interpolation method: {}".format(
-                                         interpolation)
-                                     )
+        export_settings['log'].warning(
+            "Baking animation because of an unsupported interpolation method: {}".format(interpolation)
+        )
         return True
 
     if any(any(k.interpolation != interpolation for k in c.keyframe_points) for c in channels if c is not None):
         # There are different interpolation methods in one action group
-        gltf2_io_debug.print_console("WARNING",
-                                     "Baking animation because there are keyframes with different "
+        export_settings['log'].warning(
+            "Baking animation because there are keyframes with different "
                                      "interpolation methods in one channel"
-                                     )
+        )
         return True
 
     if not all_equal([len(c.keyframe_points) for c in channels if c is not None]):
-        gltf2_io_debug.print_console("WARNING",
-                                     "Baking animation because the number of keyframes is not "
-                                     "equal for all channel tracks")
+        export_settings['log'].warning(
+            "Baking animation because the number of keyframes is not "
+            "equal for all channel tracks"
+        )
         return True
 
     if len([c for c in channels if c is not None][0].keyframe_points) <= 1:
@@ -365,8 +364,7 @@ def needs_baking(obj_uuid: str,
 
     if not all_equal(list(zip([[k.co[0] for k in c.keyframe_points] for c in channels if c is not None]))):
         # The channels have differently located keyframes
-        gltf2_io_debug.print_console("WARNING",
-                                     "Baking animation because of differently located keyframes in one channel")
+        export_settings['log'].warning("Baking animation because of differently located keyframes in one channel")
         return True
 
     if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
@@ -374,8 +372,7 @@ def needs_baking(obj_uuid: str,
         if isinstance(animation_target, bpy.types.PoseBone):
             if len(animation_target.constraints) != 0:
                 # Constraints such as IK act on the bone -> can not be represented in glTF atm
-                gltf2_io_debug.print_console("WARNING",
-                                             "Baking animation because of unsupported constraints acting on the bone")
+                export_settings['log'].warning("Baking animation because of unsupported constraints acting on the bone")
                 return True
 
     return False

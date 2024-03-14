@@ -20,7 +20,6 @@ import bpy
 import sys
 import traceback
 
-from ...io.com.gltf2_io_debug import print_console, print_newline
 from ...io.exp import gltf2_io_export
 from ...io.exp import gltf2_io_draco_compression_extension
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -39,7 +38,7 @@ def save(context, export_settings):
     if not export_settings['gltf_current_frame']:
         bpy.context.scene.frame_set(0)
 
-    __notify_start(context)
+    __notify_start(context, export_settings)
     start_time = time.time()
     pre_export_callbacks = export_settings["pre_export_callbacks"]
     for callback in pre_export_callbacks:
@@ -53,10 +52,11 @@ def save(context, export_settings):
     __write_file(json, buffer, export_settings)
 
     end_time = time.time()
-    __notify_end(context, end_time - start_time)
+    __notify_end(context, end_time - start_time, export_settings)
 
     if not export_settings['gltf_current_frame']:
         bpy.context.scene.frame_set(int(original_frame))
+
     return {'FINISHED'}
 
 
@@ -299,7 +299,7 @@ def __postprocess_with_gltfpack(export_settings):
     try:
         subprocess.run([gltfpack_binary_file_path] + options + parameters, check=True)
     except subprocess.CalledProcessError as e:
-        print_console('ERROR', "Calling gltfpack was not successful")
+        export_settings['log'].error("Calling gltfpack was not successful")
 
 def __fix_json(obj, export_settings):
     # TODO: move to custom JSON encoder
@@ -385,18 +385,18 @@ def __write_file(json, buffer, export_settings):
         tb_info = traceback.extract_tb(tb)
         for tbi in tb_info:
             filename, line, func, text = tbi
-            print_console('ERROR', 'An error occurred on line {} in statement {}'.format(line, text))
-        print_console('ERROR', str(e))
+            export_settings['log'].error('An error occurred on line {} in statement {}'.format(line, text))
+        export_settings['log'].error(str(e))
         raise e
 
 
-def __notify_start(context):
-    print_console('INFO', 'Starting glTF 2.0 export')
+def __notify_start(context, export_settings):
+    export_settings['log'].info('Starting glTF 2.0 export')
     context.window_manager.progress_begin(0, 100)
     context.window_manager.progress_update(0)
 
 
-def __notify_end(context, elapsed):
-    print_console('INFO', 'Finished glTF 2.0 export in {} s'.format(elapsed))
+def __notify_end(context, elapsed, export_settings):
+    export_settings['log'].info('Finished glTF 2.0 export in {} s'.format(elapsed))
     context.window_manager.progress_end()
-    print_newline()
+    print()

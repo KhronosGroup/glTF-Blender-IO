@@ -100,7 +100,17 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
 
     matrices = []
     for b in bones_uuid:
-        __collect_matrices(blender_armature_object.pose.bones[export_settings['vtree'].nodes[b].blender_bone.name])
+        if export_settings['vtree'].nodes[b].leaf_reference is None:
+            __collect_matrices(blender_armature_object.pose.bones[export_settings['vtree'].nodes[b].blender_bone.name])
+        else:
+            inverse_bind_matrix = (
+                axis_basis_change @
+                (
+                    blender_armature_object.matrix_world @
+                    export_settings['vtree'].nodes[export_settings['vtree'].nodes[b].leaf_reference].matrix_world_tail
+                )
+            ).inverted_safe()
+            matrices.append(inverse_bind_matrix) # Leaf bone
 
     # flatten the matrices
     inverse_matrices = []

@@ -18,7 +18,6 @@ from mathutils import Matrix
 from ....blender.com.gltf2_blender_data_path import get_sk_exported
 from ....io.com import gltf2_io
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
-from ....io.com.gltf2_io_debug import print_console
 from ..gltf2_blender_gather_tree import VExportNode
 from .sampled.armature.armature_action_sampled import gather_action_armature_sampled
 from .sampled.object.gltf2_blender_gather_object_action_sampled import gather_action_object_sampled
@@ -143,7 +142,7 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
 
             for channel in animations[anim_idx].channels:
                 if (channel.target.node, channel.target.path) in already_animated:
-                    print_console("WARNING", "Some strips have same channel animation ({}), on node {} !".format(channel.target.path, channel.target.node.name))
+                    export_settings['log'].warning("Some strips have same channel animation ({}), on node {} !".format(channel.target.path, channel.target.node.name))
                     continue
                 animations[base_animation_idx].channels.append(channel)
                 animations[base_animation_idx].channels[-1].sampler = animations[base_animation_idx].channels[-1].sampler + offset_sampler

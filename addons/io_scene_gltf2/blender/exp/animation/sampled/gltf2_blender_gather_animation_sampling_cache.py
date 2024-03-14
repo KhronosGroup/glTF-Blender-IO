@@ -168,7 +168,7 @@ def get_cache_data(path: str,
                     if 'bone' not in data[obj_uuid][obj_uuid].keys():
                         data[obj_uuid][obj_uuid]['bone'] = {}
 
-                for bone_uuid in bones:
+                for bone_uuid in [bone for bone in bones if export_settings['vtree'].nodes[bone].leaf_reference is None]:
                     blender_bone = export_settings['vtree'].nodes[bone_uuid].blender_bone
 
                     if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
