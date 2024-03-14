@@ -64,6 +64,7 @@ class VExportNode:
 
         self.blender_object = None
         self.blender_bone = None
+        self.leaf_reference = None # For leaf bones only
 
         self.default_hide_viewport = False # Need to store the default value for meshes in case of animation baking on armature
 
@@ -256,9 +257,13 @@ class VExportTree:
             if self.export_settings['gltf_rest_position_armature'] is False:
                 # Use pose bone for TRS
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
+                if self.export_settings['gltf_leaf_bone'] is True:
+                    node.matrix_world_tail = self.nodes[node.armature].matrix_world @ Matrix.Translation(blender_bone.tail)
+                    node.matrix_world_tail = node.matrix_world_tail @ self.axis_basis_change
             else:
                 # Use edit bone for TRS --> REST pose will be used
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.bone.matrix_local
+                # Tail will be set after, as we need to be in edit mode
             node.matrix_world = node.matrix_world @ self.axis_basis_change
 
         if delta is True:
@@ -566,12 +571,55 @@ class VExportTree:
             del n.armature_needed
 
     def bake_armature_bone_list(self):
+
+        if self.export_settings['gltf_leaf_bone'] is True:
+            self.add_leaf_bones()
+
         # Used to store data in armature vnode
         # If armature is removed from export
         # Data are still available, even if armature is not exported (so bones are re-parented)
         for n in [n for n in self.nodes.values() if n.blender_type == VExportNode.ARMATURE]:
+
             self.get_all_bones(n.uuid)
             self.get_root_bones_uuid(n.uuid)
+
+    def add_leaf_bones(self):
+
+        # If we are using rest pose, we need to get tail of editbone, going to edit mode for each armature
+        if self.export_settings['gltf_rest_position_armature'] is True:
+            for obj_uuid in [n for n in self.nodes if self.nodes[n].blender_type == VExportNode.ARMATURE]:
+                armature = self.nodes[obj_uuid].blender_object
+                bpy.context.view_layer.objects.active = armature
+                bpy.ops.object.mode_set(mode="EDIT")
+
+                for bone in armature.data.edit_bones:
+                    if len(bone.children) == 0:
+                        self.nodes[self.nodes[obj_uuid].bones[bone.name]].matrix_world_tail = armature.matrix_world @ Matrix.Translation(bone.tail) @ self.axis_basis_change
+
+                bpy.ops.object.mode_set(mode="OBJECT")
+
+
+        for bone_uuid in [n for n in self.nodes if self.nodes[n].blender_type == VExportNode.BONE \
+                and len(self.nodes[n].children) == 0]:
+
+            bone_node = self.nodes[bone_uuid]
+
+            # Add a new node
+            node = VExportNode()
+            node.uuid = str(uuid.uuid4())
+            node.parent_uuid = bone_uuid
+            node.parent_bone_uuid = bone_uuid
+            node.blender_object = bone_node.blender_object
+            node.armature = bone_node.armature
+            node.blender_type = VExportNode.BONE
+            node.leaf_reference = bone_uuid
+            node.keep_tag = True
+
+            node.matrix_world = bone_node.matrix_world_tail.copy()
+
+            self.add_children(bone_uuid, node.uuid)
+            self.add_node(node)
+
 
     def add_neutral_bones(self):
         added_armatures = []

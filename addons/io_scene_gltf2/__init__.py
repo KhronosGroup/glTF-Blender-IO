@@ -658,6 +658,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_leaf_bone: BoolProperty(
+        name='Add Leaf Bones',
+        description=(
+        'Append a final bone to the end of each chain to specify last bone length '
+        '(use this when you intend to edit the armature from exported data)'
+        ),
+        default=False
+    )
+
     export_optimize_animation_size: BoolProperty(
         name='Optimize Animation Size',
         description=(
@@ -1045,6 +1054,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_flatten_bones_hierarchy'] = self.export_hierarchy_flatten_bones
         export_settings['gltf_flatten_obj_hierarchy'] = self.export_hierarchy_flatten_objs
         export_settings['gltf_armature_object_remove'] = self.export_armature_object_remove
+        export_settings['gltf_leaf_bone'] = self.export_leaf_bone
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
