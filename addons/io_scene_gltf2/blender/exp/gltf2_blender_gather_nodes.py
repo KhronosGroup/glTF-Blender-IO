@@ -16,7 +16,6 @@ import math
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
-from ...io.com.gltf2_io_debug import print_console
 from ...io.com import gltf2_io
 from ...io.com import gltf2_io_extensions
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -261,7 +260,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
         # Be sure that object is valid (no NaN for example)
         res = blender_object.data.validate()
         if res is True:
-            print_console("WARNING", "Mesh " + blender_object.data.name + " is not valid, and may be exported wrongly")
+            export_settings['log'].warning("Mesh " + blender_object.data.name + " is not valid, and may be exported wrongly")
 
         modifiers = blender_object.modifiers
         if len(modifiers) == 0:

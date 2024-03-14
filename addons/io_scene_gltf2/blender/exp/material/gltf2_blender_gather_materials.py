@@ -18,7 +18,6 @@ import bpy
 from ....io.com import gltf2_io
 from ....io.com.gltf2_io_extensions import Extension
 from ....io.exp.gltf2_io_user_extensions import export_user_extensions
-from ....io.com.gltf2_io_debug import print_console
 from ...com.gltf2_blender_extras import generate_extras
 from ..gltf2_blender_gather_cache import cached, cached_by_key
 from . import gltf2_blender_gather_materials_unlit
@@ -338,9 +337,10 @@ def __gather_orm_texture(blender_material, export_settings):
         result = (occlusion, roughness_socket, metallic_socket)
 
     if not gltf2_blender_gather_texture_info.check_same_size_images(result, export_settings):
-        print_console("INFO",
+        export_settings['log'].info(
             "Occlusion and metal-roughness texture will be exported separately "
-            "(use same-sized images if you want them combined)")
+            "(use same-sized images if you want them combined)"
+        )
         return None
 
     # Double-check this will past the filter in texture_info
@@ -518,7 +518,7 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
         elif tex.startswith("additional"):
             export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx'] + int(tex[10:])].tex_coord = ind
         else:
-            print_console("ERROR", "some Textures tex coord are not managed")
+            export_settings['log'].error("some Textures tex coord are not managed")
 
     export_settings['additional_texture_export_current_idx'] = len(export_settings['additional_texture_export'])
 

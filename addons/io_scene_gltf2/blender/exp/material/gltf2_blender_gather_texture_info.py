@@ -214,7 +214,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
 
     texture_transform = None
     if node.node and node.node.type == 'MAPPING':
-        texture_transform = get_texture_transform_from_mapping_node(node)
+        texture_transform = get_texture_transform_from_mapping_node(node, export_settings)
         node = previous_node(NodeSocket(node.node.inputs['Vector'], node.group_path))
 
     uvmap_info = {}

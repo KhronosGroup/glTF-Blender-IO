@@ -15,7 +15,6 @@
 import bpy
 import typing
 from ......io.exp.gltf2_io_user_extensions import export_user_extensions
-from ......io.com.gltf2_io_debug import print_console
 from ......io.com import gltf2_io
 from .....com.gltf2_blender_extras import generate_extras
 from ...fcurves.gltf2_blender_gather_fcurves_sampler import gather_animation_fcurves_sampler
@@ -42,7 +41,7 @@ def gather_action_armature_sampled(armature_uuid: str, blender_action: typing.Op
             samplers=[] # We need to gather the samplers after gathering all channels --> populate this list in __link_samplers
         )
     except RuntimeError as error:
-        print_console("WARNING", "Animation '{}' could not be exported. Cause: {}".format(name, error))
+        export_settings['log'].warning("Animation '{}' could not be exported. Cause: {}".format(name, error))
         return None
 
     export_user_extensions('pre_gather_animation_hook', export_settings, animation, blender_action, blender_object)
