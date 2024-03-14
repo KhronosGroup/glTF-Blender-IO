@@ -393,7 +393,7 @@ def __gather_orm_texture(blender_material, export_settings):
             export_settings['current_paths'][k] = path_
 
         #This case can't happen because we are going to keep only 1 UVMap
-        print_console("WARNING", "This case should not happen, please report a bug")
+        export_settings['log'].warning("This case should not happen, please report a bug")
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
