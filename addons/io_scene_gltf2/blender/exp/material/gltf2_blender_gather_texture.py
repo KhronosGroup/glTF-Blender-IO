@@ -41,7 +41,7 @@ def gather_texture(
     """
 
     if not __filter_texture(blender_shader_sockets, export_settings):
-        return None, None, False
+        return None, None, None
 
     source, webp_image, image_data, factor, udim_image = __gather_source(blender_shader_sockets, use_tile, export_settings)
 
