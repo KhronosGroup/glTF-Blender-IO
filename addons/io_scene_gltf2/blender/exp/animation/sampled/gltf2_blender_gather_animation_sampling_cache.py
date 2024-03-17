@@ -908,15 +908,22 @@ def get_cache_data(path: str,
                         data[cam][blender_camera.animation_data.action.name]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    _render = bpy.context.scene.render
+                    width = _render.pixel_aspect_x * _render.resolution_x
+                    height = _render.pixel_aspect_y * _render.resolution_y
+                    del _render
                     # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
                     if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
-                        _render = bpy.context.scene.render
-                        width = _render.pixel_aspect_x * _render.resolution_x
-                        height = _render.pixel_aspect_y * _render.resolution_y
-                        del _render
-
                         val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
                         data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val
+                    # Manage special case for xmag because it requires ortho_scale & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/xmag":
+                        val = blender_camera.ortho_scale
+                        data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val * (width / max(width, height)) / 2.0
+                    # Manage special case for ymag because it requires ortho_scale  & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/ymag":
+                        val = blender_camera.ortho_scale
+                        data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val * (height / max(width, height)) / 2.0
                     else:
                         # classic case
                         val = blender_camera.path_resolve(path)
@@ -933,15 +940,22 @@ def get_cache_data(path: str,
                         data[cam][action_name]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    _render = bpy.context.scene.render
+                    width = _render.pixel_aspect_x * _render.resolution_x
+                    height = _render.pixel_aspect_y * _render.resolution_y
+                    del _render
                     # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
                     if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
-                        _render = bpy.context.scene.render
-                        width = _render.pixel_aspect_x * _render.resolution_x
-                        height = _render.pixel_aspect_y * _render.resolution_y
-                        del _render
-
                         val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
                         data[cam][action_name]['value'][path][frame] = val
+                    # Manage special case for xmag because it requires ortho_scale & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/xmag":
+                        val = blender_camera.ortho_scale
+                        data[cam][action_name]['value'][path][frame] = val * (width / max(width, height)) / 2.0
+                    # Manage special case for ymag because it requires ortho_scale  & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/ymag":
+                        val = blender_camera.ortho_scale
+                        data[cam][action_name]['value'][path][frame] = val * (height / max(width, height)) / 2.0
                     else:
                         # classic case
                         val = blender_camera.path_resolve(path)
@@ -958,15 +972,22 @@ def get_cache_data(path: str,
                         data[cam][cam]['value'][path] = {}
 
                 for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    _render = bpy.context.scene.render
+                    width = _render.pixel_aspect_x * _render.resolution_x
+                    height = _render.pixel_aspect_y * _render.resolution_y
+                    del _render
                     # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
                     if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
-                        _render = bpy.context.scene.render
-                        width = _render.pixel_aspect_x * _render.resolution_x
-                        height = _render.pixel_aspect_y * _render.resolution_y
-                        del _render
-
                         val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
                         data[cam][cam]['value'][path][frame] = val
+                    # Manage special case for xmag because it requires ortho_scale & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/xmag":
+                        val = blender_camera.ortho_scale
+                        data[cam][cam]['value'][path][frame] = val * (width / max(width, height)) / 2.0
+                    # Manage special case for ymag because it requires ortho_scale  & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/ymag":
+                        val = blender_camera.ortho_scale
+                        data[cam][cam]['value'][path][frame] = val * (height / max(width, height)) / 2.0
                     else:
                         # classic case
                         val = blender_camera.path_resolve(path)

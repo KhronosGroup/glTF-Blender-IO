@@ -89,12 +89,12 @@ def __gather_orthographic(blender_camera, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/cameras/XXX/orthographic/xmag"
-        export_settings['current_paths']['ortho_scale'] = path_
+        export_settings['current_paths']['ortho_scale_x'] = path_
 
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/cameras/XXX/orthographic/ymag"
-        export_settings['current_paths']['ortho_scale'] = path_
+        export_settings['current_paths']['ortho_scale_y'] = path_
 
         path_ = {}
         path_['length'] = 1
