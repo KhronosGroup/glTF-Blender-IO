@@ -61,7 +61,7 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
 
         # Store data for KHR_animation_pointer
         path_ = {}
-        path_['length'] = 3 #TODOPointer: check if export is done correctly with 3 (or bad with 4)
+        path_['length'] = 3
         path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
         export_settings['current_paths']["node_tree." + emission_node.inputs["Color"].path_from_id() + ".default_value"] = path_
 

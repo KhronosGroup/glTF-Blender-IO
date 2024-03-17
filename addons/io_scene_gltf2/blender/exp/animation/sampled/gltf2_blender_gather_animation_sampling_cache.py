@@ -846,6 +846,9 @@ def get_cache_data(path: str,
                         if type(val).__name__ == "float":
                             data[light][blender_light.animation_data.action.name]['value'][path][frame] = val
                         else:
+                            # When color is coming from a node, it is 4 values (RGBA), so need to convert it to 3 values (RGB)
+                            if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['length'] == 3 and len(val) == 4:
+                                val = val[:3]
                             data[light][blender_light.animation_data.action.name]['value'][path][frame] = list(val)
 
             elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
@@ -867,6 +870,9 @@ def get_cache_data(path: str,
                         if type(val).__name__ == "float":
                             data[light][action_name]['value'][path][frame] = val
                         else:
+                            # When color is coming from a node, it is 4 values (RGBA), so need to convert it to 3 values (RGB)
+                            if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['length'] == 3 and len(val) == 4:
+                                val = val[:3]
                             data[light][action_name]['value'][path][frame] = list(val)
 
             else:
@@ -888,6 +894,9 @@ def get_cache_data(path: str,
                         if type(val).__name__ == "float":
                             data[light][light]['value'][path][frame] = val
                         else:
+                            # When color is coming from a node, it is 4 values (RGBA), so need to convert it to 3 values (RGB)
+                            if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['length'] == 3 and len(val) == 4:
+                                val = val[:3]
                             data[light][light]['value'][path][frame] = list(val)
 
         # After caching lights, caching cameras, for KHR_animation_pointer
