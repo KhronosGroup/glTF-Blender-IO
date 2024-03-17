@@ -12,12 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from math import sin, cos
+from math import sin, cos, tan, atan
+from mathutils import Matrix, Vector
 import numpy as np
 from ...io.com import gltf2_io_constants
 
 PBR_WATTS_TO_LUMENS = 683
 # Industry convention, biological peak at 555nm, scientific standard as part of SI candela definition.
+
+
+
+# This means use the inverse of the TRS transform.
+def inverted_trs_mapping_node(mapping_transform):
+    offset = mapping_transform["offset"]
+    rotation = mapping_transform["rotation"]
+    scale = mapping_transform["scale"]
+
+    # Inverse of a TRS is not always a TRS. This function will be right
+    # at least when the following don't occur.
+    if abs(rotation) > 1e-5 and abs(scale[0] - scale[1]) > 1e-5:
+        return None
+    if abs(scale[0]) < 1e-5 or abs(scale[1]) < 1e-5:
+        return None
+
+    new_offset = Matrix.Rotation(-rotation, 3, 'Z') @ Vector((-offset[0], -offset[1], 1))
+    new_offset[0] /= scale[0]; new_offset[1] /= scale[1]
+    return {
+        "offset": new_offset[0:2],
+        "rotation": -rotation,
+        "scale": [1/scale[0], 1/scale[1]],
+    }
 
 def texture_transform_blender_to_gltf(mapping_transform):
     """
@@ -170,3 +194,19 @@ def get_anisotropy_rotation_gltf_to_blender(rotation):
 def get_anisotropy_rotation_blender_to_gltf(rotation):
     # glTF rotation is in randian, Blender in 0 to 1
     return rotation * (2 * np.pi)
+
+
+def yvof_blender_to_gltf(angle, width, height, sensor_fit):
+
+    aspect_ratio = width / height
+
+    if width >= height:
+        if sensor_fit != 'VERTICAL':
+            return 2.0 * atan(tan(angle * 0.5) / aspect_ratio)
+        else:
+            return angle
+    else:
+        if sensor_fit != 'HORIZONTAL':
+            return angle
+        else:
+            return 2.0 * atan(tan(angle * 0.5) / aspect_ratio)

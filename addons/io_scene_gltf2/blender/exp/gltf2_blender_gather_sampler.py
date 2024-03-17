@@ -159,11 +159,11 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
         elif node.node.type == 'MATH':
             # Math node applies a manual wrap
             if (node.node.operation == 'PINGPONG' and
-                    get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE') == 1.0):  # scale = 1
+                    get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE')[0] == 1.0):  # scale = 1
                 wrap = TextureWrap.MirroredRepeat
             elif (node.node.operation == 'WRAP' and
-                    get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE') == 0.0 and  # min = 0
-                    get_const_from_socket(NodeSocket(node.node.inputs[2], node.group_path), kind='VALUE') == 1.0):    # max = 1
+                    get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE')[0] == 0.0 and  # min = 0
+                    get_const_from_socket(NodeSocket(node.node.inputs[2], node.group_path), kind='VALUE')[0] == 1.0):    # max = 1
                 wrap = TextureWrap.Repeat
             else:
                 return None

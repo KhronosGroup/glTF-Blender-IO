@@ -16,6 +16,7 @@ import mathutils
 import bpy
 import typing
 from .....blender.com.gltf2_blender_data_path import get_sk_exported
+from .....blender.com.gltf2_blender_conversion import inverted_trs_mapping_node, texture_transform_blender_to_gltf, yvof_blender_to_gltf
 from ...gltf2_blender_gather_cache import datacache
 from ...gltf2_blender_gather_tree import VExportNode
 from ..gltf2_blender_gather_drivers import get_sk_drivers
@@ -37,13 +38,13 @@ def get_cache_data(path: str,
     min_, max_ = get_range(blender_obj_uuid, action_name, export_settings)
 
     if only_gather_provided:
-        obj_uuids = [blender_obj_uuid]
+        obj_uuids = [blender_obj_uuid] if blender_obj_uuid in export_settings['vtree'].nodes.keys() else [] #If object is not in vtree, this is a material or light for pointers
     else:
         obj_uuids = [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]
 
     # For TRACK mode, we reset cache after each track export, so we don't need to keep others objects
     if export_settings['gltf_animation_mode'] in "NLA_TRACKS":
-        obj_uuids = [blender_obj_uuid]
+        obj_uuids = [blender_obj_uuid]  if blender_obj_uuid in export_settings['vtree'].nodes.keys() else [] #If object is not in vtree, this is a material or light for pointers
 
     # If there is only 1 object to cache, we can disable viewport for other objects (for performance)
     # This can be on these cases:
@@ -283,6 +284,726 @@ def get_cache_data(path: str,
                             data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'] = {}
                             data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None] = {}
                         data[dr_obj][obj_uuid + "_" + obj_uuid]['sk'][None][frame] = [k.value for k in get_sk_exported(driver_object.data.shape_keys.key_blocks)]
+
+        # After caching objects, caching materials, for KHR_animation_pointer
+        for mat in export_settings['KHR_animation_pointer']['materials'].keys():
+            if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
+                continue
+
+            blender_material = [m for m in bpy.data.materials if id(m) == mat]
+            if len(blender_material) == 0:
+                # This is not a material from Blender (coming from Geometry Node for example, so no animation on it)
+                continue
+            else:
+                blender_material = blender_material[0]
+            if mat not in data.keys():
+                data[mat] = {}
+
+            if blender_material.node_tree and blender_material.node_tree.animation_data and blender_material.node_tree.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+
+                if blender_material.node_tree.animation_data.action.name not in data[mat].keys():
+                    data[mat][blender_material.node_tree.animation_data.action.name] = {}
+                    data[mat][blender_material.node_tree.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path] = {}
+
+
+                baseColorFactor_alpha_merged_already_done = False
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if not path.startswith("node_tree"):
+                        continue
+
+                    # Manage special case where we merge baseColorFactor and alpha
+                    if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_color = blender_material.path_resolve(path)
+                        data_color = list(val_color)[:3]
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                        else:
+                            val_alpha = 1.0
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Manage special case where we merge baseColorFactor and alpha
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_alpha = blender_material.path_resolve(path)
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                            data_color = list(val_color)[:3]
+                        else:
+                            data_color = [1.0, 1.0, 1.0]
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("offset"):
+
+
+                        val_offset = blender_material.path_resolve(path)
+                        rotation_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "rotation"][0]
+                        val_rotation = blender_material.path_resolve(rotation_path)
+                        scale_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "scale"][0]
+                        val_scale = blender_material.path_resolve(scale_path)
+
+                        mapping_transform = {}
+                        mapping_transform["offset"] = [val_offset[0], val_offset[1]]
+                        mapping_transform["rotation"] = val_rotation
+                        mapping_transform["scale"] = [val_scale[0], val_scale[1]]
+
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "TEXTURE":
+                            mapping_transform = inverted_trs_mapping_node(mapping_transform)
+                            if mapping_transform is None:
+                                # Can not be converted to TRS, so ... keeping default values
+                                export_settings['log'].warning("Can not convert texture transform to TRS. Keeping default values.")
+                                mapping_transform = {}
+                                mapping_transform["offset"] = [0.0, 0.0]
+                                mapping_transform["rotation"] = 0.0
+                                mapping_transform["scale"] = [1.0, 1.0]
+                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "VECTOR":
+                            # Vectors don't get translated
+                            mapping_transform["offset"] = [0, 0]
+
+                        texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+
+
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = texture_transform['offset']
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][rotation_path][frame] = texture_transform['rotation']
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][scale_path][frame] = texture_transform['scale']
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("rotation"):
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = val
+                            mapping_transform["scale"] = [1, 1] # Placeholder, not needed
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = texture_transform['rotation']
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = 0.0 # Placeholder, not needed
+                            mapping_transform["scale"] = [val[0], val[1]]
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = texture_transform['rotation']
+
+                    # Manage special cases for specularFactor & specularColorFactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
+                        val = blender_material.path_resolve(path)
+                        val = val * 2.0
+                        if val > 1.0:
+                            fac = val
+                            val = 1.0
+                        else:
+                            fac = 1.0
+
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = val
+
+                        # Retrieve specularColorFactor
+                        colorfactor_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "specularColorFactor"][0]
+                        val_colorfactor = blender_material.path_resolve(colorfactor_path)
+                        if fac > 1.0:
+                            val_colorfactor = [i * fac for i in val_colorfactor]
+                        data[mat][blender_material.node_tree.animation_data.action.name]['value'][colorfactor_path][frame] = val_colorfactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor":
+                        # Already handled by specularFactor
+                        continue
+
+
+                    # Classic case
+                    else:
+                        val = blender_material.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = val
+                        else:
+                            data[mat][blender_material.node_tree.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[mat].keys():
+                    data[mat][action_name] = {}
+                    data[mat][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][action_name]['value'][path] = {}
+
+                baseColorFactor_alpha_merged_already_done = False
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if not path.startswith("node_tree"):
+                        continue
+
+                    # Manage special case where we merge baseColorFactor and alpha
+                    if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_color = blender_material.path_resolve(path)
+                        data_color = list(val_color)[:3]
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                        else:
+                            val_alpha = 1.0
+                        data[mat][action_name]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Manage special case where we merge baseColorFactor and alpha
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_alpha = blender_material.path_resolve(path)
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                            data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
+                        else:
+                            data_color = [1.0, 1.0, 1.0]
+                        data[mat][action_name]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("offset"):
+
+
+                        val_offset = blender_material.path_resolve(path)
+                        rotation_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "rotation"][0]
+                        val_rotation = blender_material.path_resolve(rotation_path)
+                        scale_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "scale"][0]
+                        val_scale = blender_material.path_resolve(scale_path)
+
+                        mapping_transform = {}
+                        mapping_transform["offset"] = [val_offset[0], val_offset[1]]
+                        mapping_transform["rotation"] = val_rotation
+                        mapping_transform["scale"] = [val_scale[0], val_scale[1]]
+
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "TEXTURE":
+                            mapping_transform = inverted_trs_mapping_node(mapping_transform)
+                            if mapping_transform is None:
+                                # Can not be converted to TRS, so ... keeping default values
+                                export_settings['log'].warning("Can not convert texture transform to TRS. Keeping default values.")
+                                mapping_transform = {}
+                                mapping_transform["offset"] = [0.0, 0.0]
+                                mapping_transform["rotation"] = 0.0
+                                mapping_transform["scale"] = [1.0, 1.0]
+                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "VECTOR":
+                            # Vectors don't get translated
+                            mapping_transform["offset"] = [0, 0]
+
+                        texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+
+
+                        data[mat][action_name]['value'][path][frame] = texture_transform['offset']
+                        data[mat][action_name]['value'][rotation_path][frame] = texture_transform['rotation']
+                        data[mat][action_name]['value'][scale_path][frame] = texture_transform['scale']
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("rotation"):
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = val
+                            mapping_transform["scale"] = [1, 1] # Placeholder, not needed
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][action_name]['value'][path][frame] = texture_transform['rotation']
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = 0.0 # Placeholder, not needed
+                            mapping_transform["scale"] = [val[0], val[1]]
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][action_name]['value'][path][frame] = texture_transform['rotation']
+
+                    # Manage special cases for specularFactor & specularColorFactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
+                        val = blender_material.path_resolve(path)
+                        val = val * 2.0
+                        if val > 1.0:
+                            fac = val
+                            val = 1.0
+                        else:
+                            fac = 1.0
+
+                        data[mat][action_name]['value'][path][frame] = val
+
+                        # Retrieve specularColorFactor
+                        colorfactor_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "specularColorFactor"][0]
+                        val_colorfactor = blender_material.path_resolve(colorfactor_path)
+                        if fac > 1.0:
+                            val_colorfactor = [i * fac for i in val_colorfactor]
+                        data[mat][action_name]['value'][colorfactor_path][frame] = val_colorfactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor":
+                        # Already handled by specularFactor
+                        continue
+
+                    # Classic case
+                    else:
+                        val = blender_material.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[mat][action_name]['value'][path][frame] = val
+                        else:
+                            data[mat][action_name]['value'][path][frame] = list(val)
+            else:
+                # case of baking materials (scene export).
+                # There is no animation, so use id as key
+                if mat not in data[mat].keys():
+                    data[mat][mat] = {}
+                    data[mat][mat]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][mat]['value'][path] = {}
+
+                baseColorFactor_alpha_merged_already_done = False
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if not path.startswith("node_tree"):
+                        continue
+
+                    # Manage special case where we merge baseColorFactor and alpha
+                    if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 3:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_color = blender_material.path_resolve(path)
+                        data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                        else:
+                            val_alpha = 1.0
+                        data[mat][mat]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+                    # Manage special case where we merge baseColorFactor and alpha
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length'] == 1:
+                        if baseColorFactor_alpha_merged_already_done is True:
+                            continue
+                        val_alpha = blender_material.path_resolve(path)
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
+                            val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                            data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
+                        else:
+                            data_color = [1.0, 1.0, 1.0]
+                        data[mat][mat]['value'][path][frame] = data_color + [val_alpha]
+                        baseColorFactor_alpha_merged_already_done = True
+
+                    # Manage special case for KHR_texture_transform offset, that needs rotation and scale too (and not only translation)
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("offset"):
+
+                        val_offset = blender_material.path_resolve(path)
+                        rotation_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "rotation"][0]
+                        val_rotation = blender_material.path_resolve(rotation_path)
+                        scale_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "scale"][0]
+                        val_scale = blender_material.path_resolve(scale_path)
+
+                        mapping_transform = {}
+                        mapping_transform["offset"] = [val_offset[0], val_offset[1]]
+                        mapping_transform["rotation"] = val_rotation
+                        mapping_transform["scale"] = [val_scale[0], val_scale[1]]
+
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "TEXTURE":
+                            mapping_transform = inverted_trs_mapping_node(mapping_transform)
+                            if mapping_transform is None:
+                                # Can not be converted to TRS, so ... keeping default values
+                                export_settings['log'].warning("Can not convert texture transform to TRS. Keeping default values.")
+                                mapping_transform = {}
+                                mapping_transform["offset"] = [0.0, 0.0]
+                                mapping_transform["rotation"] = 0.0
+                                mapping_transform["scale"] = [1.0, 1.0]
+                        elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] == "VECTOR":
+                            # Vectors don't get translated
+                            mapping_transform["offset"] = [0, 0]
+
+                        texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+
+
+                        data[mat][mat]['value'][path][frame] = texture_transform['offset']
+                        data[mat][mat]['value'][rotation_path][frame] = texture_transform['rotation']
+                        data[mat][mat]['value'][scale_path][frame] = texture_transform['scale']
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = val
+                            mapping_transform["scale"] = [1, 1] # Placeholder, not needed
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][mat]['value'][path][frame] = texture_transform['rotation']
+                    elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
+                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("scale"):
+                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['vector_type'] != "VECTOR":
+                            # Already handled by offset
+                            continue
+                        else:
+                            val = blender_material.path_resolve(path)
+                            mapping_transform = {}
+                            mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                            mapping_transform["rotation"] = 0.0 # Placeholder, not needed
+                            mapping_transform["scale"] = [val[0], val[1]]
+                            texture_transform = texture_transform_blender_to_gltf(mapping_transform)
+                            data[mat][mat]['value'][path][frame] = texture_transform['rotation']
+
+                    # Manage special cases for specularFactor & specularColorFactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularFactor":
+                        val = blender_material.path_resolve(path)
+                        val = val * 2.0
+                        if val > 1.0:
+                            fac = val
+                            val = 1.0
+                        else:
+                            fac = 1.0
+
+                        data[mat][mat]['value'][path][frame] = val
+
+                        # Retrieve specularColorFactor
+                        colorfactor_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
+                                                if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
+                                                    and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "specularColorFactor"][0]
+                        val_colorfactor = blender_material.path_resolve(colorfactor_path)
+                        if fac > 1.0:
+                            val_colorfactor = [i * fac for i in val_colorfactor]
+                        data[mat][mat]['value'][colorfactor_path][frame] = val_colorfactor
+                    elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor":
+                        # Already handled by specularFactor
+                        continue
+
+                    # Classic case
+                    else:
+                        val = blender_material.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[mat][mat]['value'][path][frame] = val
+                        else:
+                            data[mat][mat]['value'][path][frame] = list(val)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
+
+
+            if blender_material and blender_material.animation_data and blender_material.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                if blender_material.animation_data.action.name not in data[mat].keys():
+                    data[mat][blender_material.animation_data.action.name] = {}
+                    data[mat][blender_material.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][blender_material.animation_data.action.name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if path.startswith("node_tree"):
+                        continue
+
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][blender_material.animation_data.action.name]['value'][path][frame] = val
+                    else:
+                        data[mat][blender_material.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[mat].keys():
+                    data[mat][action_name] = {}
+                    data[mat][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][action_name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if path.startswith("node_tree"):
+                        continue
+
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][action_name]['value'][path][frame] = val
+                    else:
+                        data[mat][action_name]['value'][path][frame] = list(val)
+
+
+            else:
+                if mat not in data[mat].keys():
+                    data[mat][mat] = {}
+                    data[mat][mat]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+                        data[mat][mat]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys():
+
+                    if path.startswith("node_tree"):
+                        continue
+
+                    val = blender_material.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[mat][mat]['value'][path][frame] = val
+                    else:
+                        data[mat][mat]['value'][path][frame] = list(val)
+
+
+        # After caching materials, caching lights, for KHR_animation_pointer
+        for light in export_settings['KHR_animation_pointer']['lights'].keys():
+            if len(export_settings['KHR_animation_pointer']['lights'][light]['paths']) == 0:
+                continue
+
+            blender_light = [m for m in bpy.data.lights if id(m) == light][0]
+            if light not in data.keys():
+                data[light] = {}
+
+            if blender_light.node_tree and blender_light.node_tree.animation_data and blender_light.node_tree.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+
+                if blender_light.node_tree.animation_data.action.name not in data[light].keys():
+                    data[light][blender_light.node_tree.animation_data.action.name] = {}
+                    data[light][blender_light.node_tree.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][blender_light.node_tree.animation_data.action.name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][blender_light.node_tree.animation_data.action.name]['value'][path][frame] = val
+                    else:
+                        data[light][blender_light.node_tree.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[light].keys():
+                    data[light][action_name] = {}
+                    data[light][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][action_name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][action_name]['value'][path][frame] = val
+                    else:
+                        data[light][action_name]['value'][path][frame] = list(val)
+            else:
+                # case of baking materials (scene export).
+                # There is no animation, so use id as key
+
+                if light not in data[light].keys():
+                    data[light][light] = {}
+                    data[light][light]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][light]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    val = blender_light.path_resolve(path)
+                    if type(val).__name__ == "float":
+                        data[light][light]['value'][path][frame] = val
+                    else:
+                        data[light][light]['value'][path][frame] = list(val)
+
+            if blender_light and blender_light.animation_data and blender_light.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                if blender_light.animation_data.action.name not in data[light].keys():
+                    data[light][blender_light.animation_data.action.name] = {}
+                    data[light][blender_light.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][blender_light.animation_data.action.name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    # Manage special case for innerConeAngle because it requires spot_size & spot_blend
+                    if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/spot.innerConeAngle":
+                        val = blender_light.path_resolve(path)
+                        val_size = blender_light.path_resolve(export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['additional_path'])
+                        data[light][blender_light.animation_data.action.name]['value'][path][frame] = (val_size * 0.5) - ((val_size * 0.5) * val)
+                    else:
+                        # classic case
+                        val = blender_light.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[light][blender_light.animation_data.action.name]['value'][path][frame] = val
+                        else:
+                            # When color is coming from a node, it is 4 values (RGBA), so need to convert it to 3 values (RGB)
+                            if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['length'] == 3 and len(val) == 4:
+                                val = val[:3]
+                            data[light][blender_light.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[light].keys():
+                    data[light][action_name] = {}
+                    data[light][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][action_name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    # Manage special case for innerConeAngle because it requires spot_size & spot_blend
+                    if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/spot.innerConeAngle":
+                        val = blender_light.path_resolve(path)
+                        val_size = blender_light.path_resolve(export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['additional_path'])
+                        data[light][action_name]['value'][path][frame] = (val_size * 0.5) - ((val_size * 0.5) * val)
+                    else:
+                        # classic case
+                        val = blender_light.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[light][action_name]['value'][path][frame] = val
+                        else:
+                            # When color is coming from a node, it is 4 values (RGBA), so need to convert it to 3 values (RGB)
+                            if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['length'] == 3 and len(val) == 4:
+                                val = val[:3]
+                            data[light][action_name]['value'][path][frame] = list(val)
+
+            else:
+                if light not in data[light].keys():
+                    data[light][light] = {}
+                    data[light][light]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                        data[light][light]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['lights'][light]['paths'].keys():
+                    # Manage special case for innerConeAngle because it requires spot_size & spot_blend
+                    if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/spot.innerConeAngle":
+                        val = blender_light.path_resolve(path)
+                        val_size = blender_light.path_resolve(export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['additional_path'])
+                        data[light][light]['value'][path][frame] = (val_size * 0.5) - ((val_size * 0.5) * val)
+                    else:
+                        # classic case
+                        val = blender_light.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[light][light]['value'][path][frame] = val
+                        else:
+                            # When color is coming from a node, it is 4 values (RGBA), so need to convert it to 3 values (RGB)
+                            if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['length'] == 3 and len(val) == 4:
+                                val = val[:3]
+                            data[light][light]['value'][path][frame] = list(val)
+
+        # After caching lights, caching cameras, for KHR_animation_pointer
+        for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
+            if len(export_settings['KHR_animation_pointer']['cameras'][cam]['paths']) == 0:
+                continue
+
+            blender_camera = [m for m in bpy.data.cameras if id(m) == cam][0]
+            if cam not in data.keys():
+                data[cam] = {}
+
+            if blender_camera and blender_camera.animation_data and blender_camera.animation_data.action \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                if blender_camera.animation_data.action.name not in data[cam].keys():
+                    data[cam][blender_camera.animation_data.action.name] = {}
+                    data[cam][blender_camera.animation_data.action.name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                        data[cam][blender_camera.animation_data.action.name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    _render = bpy.context.scene.render
+                    width = _render.pixel_aspect_x * _render.resolution_x
+                    height = _render.pixel_aspect_y * _render.resolution_y
+                    del _render
+                    # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
+                    if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
+                        val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
+                        data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val
+                    # Manage special case for xmag because it requires ortho_scale & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/xmag":
+                        val = blender_camera.ortho_scale
+                        data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val * (width / max(width, height)) / 2.0
+                    # Manage special case for ymag because it requires ortho_scale  & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/ymag":
+                        val = blender_camera.ortho_scale
+                        data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val * (height / max(width, height)) / 2.0
+                    else:
+                        # classic case
+                        val = blender_camera.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = val
+                        else:
+                            data[cam][blender_camera.animation_data.action.name]['value'][path][frame] = list(val)
+
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                if action_name not in data[cam].keys():
+                    data[cam][action_name] = {}
+                    data[cam][action_name]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                        data[cam][action_name]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    _render = bpy.context.scene.render
+                    width = _render.pixel_aspect_x * _render.resolution_x
+                    height = _render.pixel_aspect_y * _render.resolution_y
+                    del _render
+                    # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
+                    if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
+                        val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
+                        data[cam][action_name]['value'][path][frame] = val
+                    # Manage special case for xmag because it requires ortho_scale & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/xmag":
+                        val = blender_camera.ortho_scale
+                        data[cam][action_name]['value'][path][frame] = val * (width / max(width, height)) / 2.0
+                    # Manage special case for ymag because it requires ortho_scale  & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/ymag":
+                        val = blender_camera.ortho_scale
+                        data[cam][action_name]['value'][path][frame] = val * (height / max(width, height)) / 2.0
+                    else:
+                        # classic case
+                        val = blender_camera.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[cam][action_name]['value'][path][frame] = val
+                        else:
+                            data[cam][action_name]['value'][path][frame] = list(val)
+
+            else:
+                if cam not in data[cam].keys():
+                    data[cam][cam] = {}
+                    data[cam][cam]['value'] = {}
+                    for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                        data[cam][cam]['value'][path] = {}
+
+                for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
+                    _render = bpy.context.scene.render
+                    width = _render.pixel_aspect_x * _render.resolution_x
+                    height = _render.pixel_aspect_y * _render.resolution_y
+                    del _render
+                    # Manage special case for yvof because it requires sensor_fit, aspect ratio, angle
+                    if export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/perspective/yfov":
+                        val = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
+                        data[cam][cam]['value'][path][frame] = val
+                    # Manage special case for xmag because it requires ortho_scale & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/xmag":
+                        val = blender_camera.ortho_scale
+                        data[cam][cam]['value'][path][frame] = val * (width / max(width, height)) / 2.0
+                    # Manage special case for ymag because it requires ortho_scale  & scene data
+                    elif export_settings['KHR_animation_pointer']['cameras'][cam]['paths'][path]['path'] == "/cameras/XXX/orthographic/ymag":
+                        val = blender_camera.ortho_scale
+                        data[cam][cam]['value'][path][frame] = val * (height / max(width, height)) / 2.0
+                    else:
+                        # classic case
+                        val = blender_camera.path_resolve(path)
+                        if type(val).__name__ == "float":
+                            data[cam][cam]['value'][path][frame] = val
+                        else:
+                            data[cam][cam]['value'][path][frame] = list(val)
 
         frame += step
 

@@ -15,6 +15,7 @@
 import bpy
 import math
 from ...io.com import gltf2_io
+from ...blender.com.gltf2_blender_conversion import yvof_blender_to_gltf
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 from .gltf2_blender_gather_cache import cached
@@ -24,6 +25,8 @@ from .gltf2_blender_gather_cache import cached
 def gather_camera(blender_camera, export_settings):
     if not __filter_camera(blender_camera, export_settings):
         return None
+
+    export_settings['current_paths'] = {} #For KHR_animation_pointer
 
     camera = gltf2_io.Camera(
         extensions=__gather_extensions(blender_camera, export_settings),
@@ -82,6 +85,27 @@ def __gather_orthographic(blender_camera, export_settings):
         orthographic.znear = blender_camera.clip_start
         orthographic.zfar = blender_camera.clip_end
 
+        # Store data for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/orthographic/xmag"
+        export_settings['current_paths']['ortho_scale_x'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/orthographic/ymag"
+        export_settings['current_paths']['ortho_scale_y'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/orthographic/zfar"
+        export_settings['current_paths']['clip_end'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/orthographic/znear"
+        export_settings['current_paths']['clip_start'] = path_
+
         return orthographic
     return None
 
@@ -103,19 +127,28 @@ def __gather_perspective(blender_camera, export_settings):
         perspective.aspect_ratio = width / height
         del _render
 
-        if width >= height:
-            if blender_camera.sensor_fit != 'VERTICAL':
-                perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspect_ratio)
-            else:
-                perspective.yfov = blender_camera.angle
-        else:
-            if blender_camera.sensor_fit != 'HORIZONTAL':
-                perspective.yfov = blender_camera.angle
-            else:
-                perspective.yfov = 2.0 * math.atan(math.tan(blender_camera.angle * 0.5) / perspective.aspect_ratio)
+        perspective.yfov = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
 
         perspective.znear = blender_camera.clip_start
         perspective.zfar = blender_camera.clip_end
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/perspective/zfar"
+        export_settings['current_paths']['clip_end'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/perspective/znear"
+        export_settings['current_paths']['clip_start'] = path_
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/cameras/XXX/perspective/yfov"
+        path_['sensor_fit'] = 'sensor_fit'
+        export_settings['current_paths']['angle'] = path_
+
+        # aspect ratio is not animatable in blender
 
         return perspective
     return None

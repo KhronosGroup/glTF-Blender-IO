@@ -14,7 +14,7 @@
 
 from re import M
 import bpy
-from ...io.com.gltf2_io_constants import GLTF_IOR
+from ...io.com.gltf2_io_constants import GLTF_IOR, BLENDER_COAT_ROUGHNESS
 from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
 from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
 from .gltf2_blender_texture import texture
@@ -41,6 +41,20 @@ def pbr_metallic_roughness(mh: MaterialHelper):
         if volume_ext.get('thicknessFactor', 0) != 0:
             need_volume_node = True
             need_settings_node = True
+
+    # We also need volume node for KHR_animation_pointer
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if mh.pymat.extensions and "KHR_materials_volume" in mh.pymat.extensions and len(mh.pymat.extensions["KHR_materials_volume"]["animations"]) > 0:
+            for anim_idx in mh.pymat.extensions["KHR_materials_volume"]["animations"].keys():
+                for channel_idx in mh.pymat.extensions["KHR_materials_volume"]["animations"][anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "extensions" and \
+                            pointer_tab[4] == "KHR_materials_volume" and \
+                            pointer_tab[5] in ["thicknessFactor", "attenuationDistance", "attenuationColor"]:
+                        need_volume_node = True
+                        need_settings_node = True
 
     if need_settings_node:
         mh.settings_node = make_settings_node(mh)
@@ -117,9 +131,30 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     ior = ior_ext.get('ior', GLTF_IOR)
     pbr_node.inputs['IOR'].default_value = ior
 
+    if len(ior_ext) > 0:
+        mh.pymat.extensions['KHR_materials_ior']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_ior']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
 
 def clearcoat(mh, locs, pbr_node):
     ext = mh.get_ext('KHR_materials_clearcoat', {})
+    if len(ext) > 0:
+        mh.pymat.extensions['KHR_materials_clearcoat']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_clearcoat']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
+
+    # We will need clearcoat factor (Mix node) if animated by KHR_animation_pointer (and standard case if clearcoatFactor != 1)
+    # Check if animated by KHR_animation_pointer
+    force_clearcoat_factor = False
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if mh.pymat.extensions and "KHR_materials_clearcoat" in mh.pymat.extensions and len(mh.pymat.extensions["KHR_materials_clearcoat"]["animations"]) > 0:
+            for anim_idx in mh.pymat.extensions["KHR_materials_clearcoat"]["animations"].keys():
+                for channel_idx in mh.pymat.extensions["KHR_materials_clearcoat"]["animations"][anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "extensions" and \
+                            pointer_tab[4] == "KHR_materials_clearcoat" and \
+                            pointer_tab[5] == "clearcoatFactor":
+                        force_clearcoat_factor = True
 
     scalar_factor_and_texture(
         mh,
@@ -129,17 +164,51 @@ def clearcoat(mh, locs, pbr_node):
         factor=ext.get('clearcoatFactor', 0),
         tex_info=ext.get('clearcoatTexture'),
         channel=0,  # Red
+        force_mix_node=force_clearcoat_factor
     )
+
+    if len(ext) > 0:
+        tex_info = TextureInfo.from_dict(ext.get('clearcoatTexture')) if ext.get('clearcoatTexture') is not None else None
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
+
+
+    # We will need clearcoatRoughness factor (Mix node) if animated by KHR_animation_pointer (and standard case if clearcoatRoughnessFactor != 1)
+    force_clearcoat_roughness_factor = False
+    # Check if animated by KHR_animation_pointer
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if mh.pymat.extensions and "KHR_materials_clearcoat" in mh.pymat.extensions and len(mh.pymat.extensions["KHR_materials_clearcoat"]["animations"]) > 0:
+            for anim_idx in mh.pymat.extensions["KHR_materials_clearcoat"]["animations"].keys():
+                for channel_idx in mh.pymat.extensions["KHR_materials_clearcoat"]["animations"][anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "extensions" and \
+                            pointer_tab[4] == "KHR_materials_clearcoat" and \
+                            pointer_tab[5] == "clearcoatRoughnessFactor":
+                        force_clearcoat_roughness_factor = True
 
     scalar_factor_and_texture(
         mh,
         location=locs['clearcoat_roughness'],
         label='Clearcoat Roughness',
         socket=pbr_node.inputs['Coat Roughness'],
-        factor=ext.get('clearcoatRoughnessFactor', 0),
+        factor=ext.get('clearcoatRoughnessFactor', BLENDER_COAT_ROUGHNESS if ext.get('clearcoatRoughnessTexture') is None else 0),
         tex_info=ext.get('clearcoatRoughnessTexture'),
         channel=1,  # Green
+        force_mix_node=force_clearcoat_roughness_factor
     )
+
+    if len(ext) > 0:
+        tex_info = TextureInfo.from_dict(ext.get('clearcoatRoughnessTexture')) if ext.get('clearcoatRoughnessTexture') is not None else None
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
 
     normal_map(
         mh,
@@ -154,7 +223,26 @@ def transmission(mh, locs, pbr_node):
     ext = mh.get_ext('KHR_materials_transmission', {})
     factor = ext.get('transmissionFactor', 0)
 
-    if factor > 0:
+    if len(ext)> 0:
+        mh.pymat.extensions['KHR_materials_transmission']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_transmission']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
+
+    # We need transmission if animated by KHR_animation_pointer
+    force_transmission = False
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if mh.pymat.extensions and "KHR_materials_transmission" in mh.pymat.extensions and len(mh.pymat.extensions["KHR_materials_transmission"]["animations"]) > 0:
+            for anim_idx in mh.pymat.extensions["KHR_materials_transmission"]["animations"].keys():
+                for channel_idx in mh.pymat.extensions["KHR_materials_transmission"]["animations"][anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "extensions" and \
+                            pointer_tab[4] == "KHR_materials_transmission" and \
+                            pointer_tab[5] == "transmissionFactor":
+                        force_transmission = True
+
+
+    if factor > 0 or force_transmission is True:
         # Activate screen refraction (for Eevee)
         mh.mat.use_screen_refraction = True
 
@@ -166,12 +254,26 @@ def transmission(mh, locs, pbr_node):
         factor=factor,
         tex_info=ext.get('transmissionTexture'),
         channel=0,  # Red
+        force_mix_node=force_transmission,
     )
+
+    if len(ext) > 0:
+        tex_info = TextureInfo.from_dict(ext.get('transmissionTexture')) if ext.get('transmissionTexture') is not None else None
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_transmission']['transmissionTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
 
 
 def volume(mh, location, volume_node, thickness_socket):
     # Based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
     ext = mh.get_ext('KHR_materials_volume', {})
+
+    if len(ext) > 0:
+        mh.pymat.extensions['KHR_materials_volume']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_volume']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
+
 
     color = ext.get('attenuationColor', [1, 1, 1])
     volume_node.inputs[0].default_value = [*color, 1]
@@ -179,6 +281,20 @@ def volume(mh, location, volume_node, thickness_socket):
     distance = ext.get('attenuationDistance', float('inf'))
     density = 1 / distance
     volume_node.inputs[1].default_value = density
+
+    # We also need math node if thickness factor is animated in KHR_animation_pointer
+    force_math_node = False
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.extensions["KHR_materials_volume"]["animations"]) > 0:
+            for anim_idx in mh.pymat.extensions["KHR_materials_volume"]["animations"].keys():
+                for channel_idx in mh.pymat.extensions["KHR_materials_volume"]["animations"][anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "extensions" and \
+                            pointer_tab[4] == "KHR_materials_volume" and \
+                            pointer_tab[5] == "thicknessFactor":
+                        force_math_node = True
 
     scalar_factor_and_texture(
         mh,
@@ -188,11 +304,24 @@ def volume(mh, location, volume_node, thickness_socket):
         factor=ext.get('thicknessFactor', 0),
         tex_info=ext.get('thicknessTexture'),
         channel=1,  # Green
+        force_mix_node=force_math_node,
     )
+
+    if len(ext) > 0:
+        tex_info = TextureInfo.from_dict(ext.get('thicknessTexture')) if ext.get('thicknessTexture') is not None else None
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_volume']['thicknessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
 
 
 def specular(mh, locs, pbr_node):
     ext = mh.get_ext('KHR_materials_specular', {})
+
+    if len(ext) > 0:
+        mh.pymat.extensions['KHR_materials_specular']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_specular']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
 
     # blender.IORLevel = 0.5 * gltf.specular
     scalar_factor_and_texture(
@@ -205,6 +334,13 @@ def specular(mh, locs, pbr_node):
         channel=4,  # Alpha
     )
 
+    if len(ext) > 0:
+        tex_info = TextureInfo.from_dict(ext.get('specularTexture')) if ext.get('specularTexture') is not None else None
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_specular']['specularTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
     color_factor_and_texture(
         mh,
         location=locs['specularColorTexture'],
@@ -215,10 +351,21 @@ def specular(mh, locs, pbr_node):
     )
 
 
+    if len(ext) > 0:
+        tex_info = TextureInfo.from_dict(ext.get('specularColorTexture')) if ext.get('specularColorTexture') is not None else None
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_specular']['specularColorTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
+
 def sheen(mh, locs, pbr_node):
     ext = mh.get_ext('KHR_materials_sheen')
     if ext is None:
         return
+
+    mh.pymat.extensions['KHR_materials_sheen']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+    mh.pymat.extensions['KHR_materials_sheen']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
 
     pbr_node.inputs['Sheen Weight'].default_value = 1
 
@@ -231,6 +378,13 @@ def sheen(mh, locs, pbr_node):
         tex_info=ext.get('sheenColorTexture'),
     )
 
+    if len(ext) > 0:
+        tex_info = TextureInfo.from_dict(ext.get('sheenColorTexture')) if ext.get('sheenColorTexture') is not None else None
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_sheen']['sheenColorTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
     scalar_factor_and_texture(
         mh,
         location=locs['sheenRoughnessTexture'],
@@ -240,6 +394,15 @@ def sheen(mh, locs, pbr_node):
         tex_info=ext.get('sheenRoughnessTexture'),
         channel=4,  # Alpha
     )
+
+    if len(ext) > 0:
+        tex_info = TextureInfo.from_dict(ext.get('sheenRoughnessTexture')) if ext.get('sheenRoughnessTexture') is not None else None
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_sheen']['sheenRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+
+
 
 
 def calc_locations(mh):
@@ -323,11 +486,27 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     factor = mh.pymat.emissive_factor or [0, 0, 0]
     ext = mh.get_ext('KHR_materials_emissive_strength', {})
     strength = ext.get('emissiveStrength', 1)
+    if len(ext) > 0:
+        mh.pymat.extensions['KHR_materials_emissive_strength']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_emissive_strength']['blender_mat'] = mh.mat # Needed for KHR_animation_pointer
 
     if factor[0] == factor[1] == factor[2]:
         # Fold greyscale factor into strength
         strength *= factor[0]
         factor = [1, 1, 1]
+
+    # We need to check if emissive factor is animated via KHR_animation_pointer
+    # Because if not, we can use direct socket or mix node, depending if there is a texture or not, or if factor is grayscale
+    force_mix_node = False
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.animations) > 0:
+            for anim_idx in mh.pymat.animations.keys():
+                for channel_idx in mh.pymat.animations[anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 4 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "emissiveFactor":
+                        force_mix_node = True
 
     color_factor_and_texture(
         mh,
@@ -336,8 +515,10 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
         socket=color_socket,
         factor=factor,
         tex_info=mh.pymat.emissive_texture,
+        force_mix_node=force_mix_node,
     )
     strength_socket.default_value = strength
+
 
 
 #      [Texture] => [Mix Colors] => [Color Factor] =>
@@ -379,6 +560,22 @@ def base_color(
     # Mix in base color factor
     needs_color_factor = base_color_factor[:3] != [1, 1, 1]
     needs_alpha_factor = base_color_factor[3] != 1.0 and alpha_socket is not None
+
+    # We need to check if base color factor is animated via KHR_animation_pointer
+    # Because if not, we can use direct socket or mix node, depending if there is a texture or not
+    # If there is an animation, we need to force creation of a mix node and math node, for color and alpha
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.pbr_metallic_roughness.animations) > 0:
+            for anim_idx in mh.pymat.pbr_metallic_roughness.animations.keys():
+                for channel_idx in mh.pymat.pbr_metallic_roughness.animations[anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "pbrMetallicRoughness" and \
+                            pointer_tab[4]  == "baseColorFactor":
+                        needs_color_factor = True
+                        needs_alpha_factor = True if alpha_socket is not None else False
+
     if needs_color_factor or needs_alpha_factor:
         if needs_color_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMix')
@@ -479,9 +676,32 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
         roughness_socket.default_value = rough_factor
         return
 
-    if metal_factor != 1.0 or rough_factor != 1.0:
+
+    need_metal_factor = metal_factor != 1.0
+    need_rough_factor = rough_factor != 1.0
+
+    # We need to check if factor is animated via KHR_animation_pointer
+    # Because if not, we can use direct socket or mix node, depending if there is a texture or not
+    # If there is an animation, we need to force creation of a mix node and math node, for metal or rough
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.pbr_metallic_roughness.animations) > 0:
+            for anim_idx in mh.pymat.pbr_metallic_roughness.animations.keys():
+                for channel_idx in mh.pymat.pbr_metallic_roughness.animations[anim_idx]:
+                    channel = mh.gltf.data.pbr_metallic_roughness.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "pbrMetallicRoughness" and \
+                            pointer_tab[4]  == "roughnessFactor":
+                        need_rough_factor = True
+                    if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "pbrMetallicRoughness" and \
+                            pointer_tab[4]  == "metallicFactor":
+                        need_metal_factor = True
+
+
+    if need_metal_factor or need_rough_factor:
         # Mix metal factor
-        if metal_factor != 1.0:
+        if need_metal_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
             node.label = 'Metallic Factor'
             node.location = x - 140, y
@@ -493,7 +713,7 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
             node.inputs[1].default_value = metal_factor
 
         # Mix rough factor
-        if rough_factor != 1.0:
+        if need_rough_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
             node.label = 'Roughness Factor'
             node.location = x - 140, y - 200
@@ -529,12 +749,17 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
 
 # [Texture] => [Normal Map] =>
 def normal(mh: MaterialHelper, location, normal_socket):
+    tex_info = mh.pymat.normal_texture
+    if tex_info is not None:
+        tex_info.blender_nodetree = mh.mat.node_tree #Used in case of for KHR_animation_pointer
+        tex_info.blender_mat = mh.mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
+
     normal_map(
         mh,
         location=location,
         label='Normal Map',
         socket=normal_socket,
-        tex_info=mh.pymat.normal_texture,
+        tex_info=tex_info,
     )
 
 
@@ -547,7 +772,24 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
 
     strength = mh.pymat.occlusion_texture.strength
     if strength is None: strength = 1.0
-    if strength != 1.0:
+
+    strength_needed = strength != 1.0
+
+    # We need to check if occlusion strength is animated via KHR_animation_pointer
+    # Because if not, we can use direct socket or mix node, depending if there is a texture or not
+    # If there is an animation, we need to force creation of a mix node and math node, for strength
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if len(mh.pymat.occlusion_texture.animations) > 0:
+            for anim_idx in mh.pymat.occlusion_texture.animations.keys():
+                for channel_idx in mh.pymat.occlusion_texture.animations[anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "occlusionTexture" and \
+                            pointer_tab[4] == "strength":
+                        strength_needed = True
+
+    if strength_needed:
         # Mix with white
         node = mh.node_tree.nodes.new('ShaderNodeMix')
         node.label = 'Occlusion Strength'
@@ -555,7 +797,7 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
         node.location = x - 140, y
         node.blend_type = 'MIX'
         # Outputs
-        mh.node_tree.links.new(occlusion_socket, node.outputs[0])
+        mh.node_tree.links.new(occlusion_socket, node.outputs[2])
         # Inputs
         node.inputs['Factor'].default_value = strength
         node.inputs[6].default_value = [1, 1, 1, 1]
@@ -572,6 +814,9 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
     color_socket = node.inputs[0]
 
     x -= 200
+
+    mh.pymat.occlusion_texture.blender_nodetree = mh.mat.node_tree #Used in case of for KHR_animation_pointer
+    mh.pymat.occlusion_texture.blender_mat = mh.mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
 
     texture(
         mh,

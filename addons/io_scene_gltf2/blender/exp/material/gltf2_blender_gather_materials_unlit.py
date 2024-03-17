@@ -28,7 +28,7 @@ def detect_shadeless_material(blender_material, export_settings):
     if not blender_material.use_nodes: return None
 
     # Old Background node detection (unlikely to happen)
-    bg_socket = get_socket(blender_material, "Background")
+    bg_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, "Background")
     if bg_socket.socket is not None:
         return {'rgb_socket': bg_socket}
 
@@ -48,7 +48,7 @@ def detect_shadeless_material(blender_material, export_settings):
     else:
         return None
 
-    socket = NodeSocket(socket, [blender_material])
+    socket = NodeSocket(socket, [blender_material.node_tree])
 
     # Be careful not to misidentify a lightpath trick as mix-alpha.
     result = __detect_lightpath_trick(socket)
@@ -125,9 +125,9 @@ def gather_base_color_factor(info, export_settings):
     rgb, alpha = None, None
 
     if 'rgb_socket' in info:
-        rgb = get_factor_from_socket(info['rgb_socket'], kind='RGB')
+        rgb, path = get_factor_from_socket(info['rgb_socket'], kind='RGB')
     if 'alpha_socket' in info:
-        alpha = get_factor_from_socket(info['alpha_socket'], kind='VALUE')
+        alpha, path = get_factor_from_socket(info['alpha_socket'], kind='VALUE')
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0

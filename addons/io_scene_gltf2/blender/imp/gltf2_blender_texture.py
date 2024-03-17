@@ -145,6 +145,25 @@ def texture(
 
     # UV Transform (for KHR_texture_transform)
     needs_tex_transform = 'KHR_texture_transform' in (tex_info.extensions or {})
+
+    # We also need to create tex transform if this property is animated in KHR_animation_pointer
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            if len(tex_info.extensions["KHR_texture_transform"]["animations"]) > 0:
+                for anim_idx in tex_info.extensions["KHR_texture_transform"]["animations"].keys():
+                    for channel_idx in tex_info.extensions["KHR_texture_transform"]["animations"][anim_idx]:
+                        channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                        if len(pointer_tab) >= 7 and pointer_tab[1] == "materials" and \
+                                pointer_tab[-3] == "extensions" and \
+                                pointer_tab[-2] == "KHR_texture_transform" and \
+                                pointer_tab[-1] in ["scale", "offset", "rotation"]:
+                            needs_tex_transform = True
+                            # Store multiple channel data, as we will need all channels to convert to blender data when animated
+                            if "multiple_channels" not in tex_info.extensions['KHR_texture_transform'].keys():
+                                tex_info.extensions['KHR_texture_transform']["multiple_channels"] = {}
+                            tex_info.extensions['KHR_texture_transform']["multiple_channels"][pointer_tab[-1]] = (anim_idx, channel_idx)
+
     if needs_tex_transform:
         mapping = mh.node_tree.nodes.new('ShaderNodeMapping')
         mapping.location = x - 160, y + 30
@@ -164,6 +183,8 @@ def texture(
 
         x -= 260
         needs_uv_map = True
+
+        tex_info.extensions['KHR_texture_transform']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
 
     # UV Map
     uv_idx = tex_info.tex_coord or 0

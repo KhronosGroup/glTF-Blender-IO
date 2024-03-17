@@ -45,6 +45,8 @@ class BlenderLight():
 
         set_extras(light, pylight.get('extras'))
 
+        pylight['blender_object_data'] = light # Needed in case of KHR_animation_pointer
+
         return light
 
     @staticmethod
@@ -57,25 +59,29 @@ class BlenderLight():
         sun = bpy.data.lights.new(name=pylight['name'], type="SUN")
 
         if 'intensity' in pylight.keys():
-            if gltf.import_settings['export_import_convert_lighting_mode'] == 'SPEC':
-                sun.energy = pylight['intensity'] / PBR_WATTS_TO_LUMENS
-            elif gltf.import_settings['export_import_convert_lighting_mode'] == 'COMPAT':
-                sun.energy = pylight['intensity']
-            elif gltf.import_settings['export_import_convert_lighting_mode'] == 'RAW':
-                sun.energy = pylight['intensity']
-            else:
-                raise ValueError(gltf.import_settings['export_import_convert_lighting_mode'])
+            sun.energy = BlenderLight.calc_energy_directional(gltf, pylight['intensity'])
 
         return sun
 
     @staticmethod
-    def _calc_energy_pointlike(gltf, pylight):
+    def calc_energy_directional(gltf, pylight_data):
         if gltf.import_settings['export_import_convert_lighting_mode'] == 'SPEC':
-            return pylight['intensity'] / PBR_WATTS_TO_LUMENS * 4 * pi
+            return pylight_data / PBR_WATTS_TO_LUMENS
         elif gltf.import_settings['export_import_convert_lighting_mode'] == 'COMPAT':
-            return pylight['intensity'] * 4 * pi
+            return pylight_data
         elif gltf.import_settings['export_import_convert_lighting_mode'] == 'RAW':
-            return pylight['intensity']
+            return pylight_data
+        else:
+            raise ValueError(gltf.import_settings['export_import_convert_lighting_mode'])
+
+    @staticmethod
+    def calc_energy_pointlike(gltf, pylight_data):
+        if gltf.import_settings['export_import_convert_lighting_mode'] == 'SPEC':
+            return pylight_data / PBR_WATTS_TO_LUMENS * 4 * pi
+        elif gltf.import_settings['export_import_convert_lighting_mode'] == 'COMPAT':
+            return pylight_data * 4 * pi
+        elif gltf.import_settings['export_import_convert_lighting_mode'] == 'RAW':
+            return pylight_data
         else:
             raise ValueError(gltf.import_settings['export_import_convert_lighting_mode'])
 
@@ -89,7 +95,7 @@ class BlenderLight():
         point = bpy.data.lights.new(name=pylight['name'], type="POINT")
 
         if 'intensity' in pylight.keys():
-            point.energy = BlenderLight._calc_energy_pointlike(gltf, pylight)
+            point.energy = BlenderLight.calc_energy_pointlike(gltf, pylight['intensity'])
 
         return point
 
@@ -104,16 +110,40 @@ class BlenderLight():
 
         # Angles
         if 'spot' in pylight.keys() and 'outerConeAngle' in pylight['spot']:
-            spot.spot_size = pylight['spot']['outerConeAngle'] * 2
+            spot.spot_size = BlenderLight.calc_spot_cone_outer(gltf, pylight['spot']['outerConeAngle'])
         else:
             spot.spot_size = pi / 2
 
         if 'spot' in pylight.keys() and 'innerConeAngle' in pylight['spot']:
-            spot.spot_blend = 1 - ( pylight['spot']['innerConeAngle'] / pylight['spot']['outerConeAngle'] )
+            spot.spot_blend = BlenderLight.calc_spot_cone_inner(gltf, pylight['spot']['outerConeAngle'], pylight['spot']['innerConeAngle'])
         else:
             spot.spot_blend = 1.0
 
         if 'intensity' in pylight.keys():
-            spot.energy = BlenderLight._calc_energy_pointlike(gltf, pylight)
+            spot.energy = BlenderLight.calc_energy_pointlike(gltf, pylight['intensity'])
+
+        # Store multiple channel data, as we will need all channels to convert to blender data when animated by KHR_animation_pointer
+        if gltf.data.extensions_used is not None and "KHR_animation_pointer" in gltf.data.extensions_used:
+            if len(pylight['animations']) > 0:
+                for anim_idx in pylight['animations'].keys():
+                    for channel_idx in pylight['animations'][anim_idx]:
+                        channel = gltf.data.animations[anim_idx].channels[channel_idx]
+                        pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                        if len(pointer_tab) == 6 and pointer_tab[1] == "extensions" and \
+                                pointer_tab[2] == "KHR_lights_punctual" and \
+                                pointer_tab[3] == "lights" and \
+                                pointer_tab[5] in ["spot.innerConeAngle", "spot.outerConeAngle"]:
+                            # Store multiple channel data, as we will need all channels to convert to blender data when animated
+                            if "multiple_channels" not in pylight.keys():
+                                pylight['multiple_channels'] = {}
+                            pylight['multiple_channels'][pointer_tab[5]] = (anim_idx, channel_idx)
 
         return spot
+
+    @staticmethod
+    def calc_spot_cone_outer(gltf, outercone):
+        return outercone * 2
+
+    @staticmethod
+    def calc_spot_cone_inner(gltf, outercone, innercone):
+        return 1 - ( innercone / outercone )
