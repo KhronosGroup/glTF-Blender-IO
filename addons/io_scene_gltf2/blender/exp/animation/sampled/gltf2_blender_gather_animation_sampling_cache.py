@@ -365,7 +365,7 @@ def get_cache_data(path: str,
                             mapping_transform = inverted_trs_mapping_node(mapping_transform)
                             if mapping_transform is None:
                                 # Can not be converted to TRS, so ... keeping default values
-                                # TODOPointer: Add warning
+                                export_settings['log'].warning("Can not convert texture transform to TRS. Keeping default values.")
                                 mapping_transform = {}
                                 mapping_transform["offset"] = [0.0, 0.0]
                                 mapping_transform["rotation"] = 0.0
@@ -503,7 +503,7 @@ def get_cache_data(path: str,
                             mapping_transform = inverted_trs_mapping_node(mapping_transform)
                             if mapping_transform is None:
                                 # Can not be converted to TRS, so ... keeping default values
-                                # TODOPointer: Add warning
+                                export_settings['log'].warning("Can not convert texture transform to TRS. Keeping default values.")
                                 mapping_transform = {}
                                 mapping_transform["offset"] = [0.0, 0.0]
                                 mapping_transform["rotation"] = 0.0
@@ -641,7 +641,7 @@ def get_cache_data(path: str,
                             mapping_transform = inverted_trs_mapping_node(mapping_transform)
                             if mapping_transform is None:
                                 # Can not be converted to TRS, so ... keeping default values
-                                # TODOPointer: Add warning
+                                export_settings['log'].warning("Can not convert texture transform to TRS. Keeping default values.")
                                 mapping_transform = {}
                                 mapping_transform["offset"] = [0.0, 0.0]
                                 mapping_transform["rotation"] = 0.0
