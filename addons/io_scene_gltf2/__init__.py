@@ -1733,7 +1733,7 @@ class GLTF_PT_export_animation(bpy.types.Panel):
             layout.prop(operator, 'export_anim_scene_split_object')
 
         row = layout.row()
-        row.prop(operator, 'export_convert_animation_pointer') # TODOPointer UI, where ?
+        row.prop(operator, 'export_convert_animation_pointer')
 
 class GLTF_PT_export_animation_notes(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
