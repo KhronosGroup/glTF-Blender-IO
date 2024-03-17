@@ -224,7 +224,7 @@ class BlenderGlTF():
                 # Pick pair-wise unique name for each animation to use as a name
                 # for its NLA tracks.
                 desired_name = anim.name or "Anim_%d" % anim_idx
-                #TODOPointer : for camera and light, we need to split TRS anim and data/pointer anim names
+                # TRS animations & Pointer will be created as separate tracks
                 anim.track_name = BlenderGlTF.find_unused_name(track_names, desired_name)
                 track_names.add(anim.track_name)
 
