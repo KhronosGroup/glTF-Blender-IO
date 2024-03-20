@@ -18,7 +18,8 @@ from .gltf2_blender_search_node_tree import \
     NodeSocket, \
     previous_socket, \
     previous_node, \
-    get_factor_from_socket
+    get_factor_from_socket, \
+    gather_alpha_info
 
 def detect_shadeless_material(blender_material, export_settings):
     """Detect if this material is "shadeless" ie. should be exported
@@ -127,7 +128,8 @@ def gather_base_color_factor(info, export_settings):
     if 'rgb_socket' in info:
         rgb = get_factor_from_socket(info['rgb_socket'], kind='RGB')
     if 'alpha_socket' in info:
-        alpha = get_factor_from_socket(info['alpha_socket'], kind='VALUE')
+        alpha_info = gather_alpha_info(info['alpha_socket'].to_node_nav())
+        alpha = alpha_info['alphaFactor']
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0
