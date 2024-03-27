@@ -114,6 +114,8 @@ class VExportTree:
 
         self.tree_troncated = False
 
+        self.hidden_viewport = []
+
         self.axis_basis_change = Matrix.Identity(4)
         if self.export_settings['gltf_yup']:
             self.axis_basis_change = Matrix(
@@ -144,6 +146,15 @@ class VExportTree:
                 self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), False, blender_children)
         else:
             self.recursive_node_traverse(blender_scene.collection, None, None, Matrix.Identity(4), False, blender_children, is_collection=True)
+
+        # Make sure to have the right matrices for hidden objects
+        if len(self.hidden_viewport) > 0:
+            for (uuid, parent_coll_matrix_world) in self.hidden_viewport:
+                self.nodes[uuid].blender_object.hide_viewport = False
+            bpy.context.evaluated_depsgraph_get().update()
+            for (uuid, parent_coll_matrix_world) in self.hidden_viewport:
+                self.nodes[uuid].matrix_world = parent_coll_matrix_world @ self.nodes[uuid].blender_object.matrix_world.copy()
+                self.nodes[uuid].blender_object.hide_viewport = True
 
     def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, delta, blender_children, armature_uuid=None, dupli_world_matrix=None, data=None, original_object=None, is_collection=False, is_children_in_collection=False):
         node = VExportNode()
@@ -230,6 +241,12 @@ class VExportTree:
             if is_collection:
                 node.matrix_world = parent_coll_matrix_world.copy()
             else:
+                # If we export without restrict to visible objects, but if some objects are disable in viewport, the matrix will be wrong
+                # We need to ensure that the matrix is correct, by ensuring that the object is visible in viewport
+                # This will be done in a second step
+                if self.export_settings['gltf_visible'] is False and blender_object is not None and blender_object.hide_viewport is True:
+                    # So keeping data, we we will calculate the matrix later
+                    self.hidden_viewport.append((node.uuid, parent_coll_matrix_world))
                 node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
 
             # If object is parented to bone, and Rest pose is used for Armature, we need to keep the world matrix transformed relative relative to rest pose,
