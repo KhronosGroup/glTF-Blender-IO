@@ -425,6 +425,7 @@ class VExportTree:
         self.filter_tag()
         export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
+        self.remove_empty_collections() # Used only when exporting full collection hierarchy
         self.remove_filtered_nodes()
 
     def recursive_filter_tag(self, uuid, parent_keep_tag):
@@ -511,6 +512,10 @@ class VExportTree:
             # geometry node instances
             return True
 
+        if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
+            # Collections, can't be filtered => we always keep them
+            return True
+
         if self.export_settings['gltf_selected'] and self.nodes[uuid].blender_object.select_get() is False:
             return False
 
@@ -564,6 +569,24 @@ class VExportTree:
             self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True or (n.keep_tag is False and n.blender_type == VExportNode.ARMATURE)}
         else:
             self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True}
+
+
+    def remove_empty_collections(self):
+        def recursive_remove_empty_collections(uuid):
+            if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
+                if len(self.nodes[uuid].children) == 0:
+                    if self.nodes[uuid].parent_uuid is not None:
+                        self.nodes[self.nodes[uuid].parent_uuid].children.remove(uuid)
+                    else:
+                        self.roots.remove(uuid)
+                    self.nodes[uuid].keep_tag = False
+                else:
+                    for c in self.nodes[uuid].children:
+                        recursive_remove_empty_collections(c)
+
+        roots = self.roots.copy()
+        for r in roots:
+            recursive_remove_empty_collections(r)
 
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
