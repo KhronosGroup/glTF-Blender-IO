@@ -298,6 +298,12 @@ class VExportTree:
                     continue
                 else:
                     # Classic parenting
+
+                    # If we export full collection hierarchy, we need to ignore children that are not in the same collection
+                    if self.export_settings['gltf_hierarchy_full_collections'] is True:
+                        if child_object.users_collection[0].name != blender_object.users_collection[0].name:
+                            continue
+
                     self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children)
 
         # Collections
@@ -322,6 +328,11 @@ class VExportTree:
             for child in blender_object.objects:
                 if child.users_collection[0].name != blender_object.name:
                     continue
+
+                # Keep only object if it has no parent, or parent is not in the collection
+                if not (child.parent is None or child.parent.users_collection[0].name != blender_object.name):
+                    continue
+
                 self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, new_delta or delta, blender_children)
             # Manage children collections
             for child in blender_object.children:
