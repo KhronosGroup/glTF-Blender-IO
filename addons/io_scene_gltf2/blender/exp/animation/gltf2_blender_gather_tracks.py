@@ -64,6 +64,11 @@ def gather_track_animations(  obj_uuid: int,
     # Collect all tracks affecting this object.
     blender_tracks = __get_blender_tracks(obj_uuid, export_settings)
 
+    # If no tracks, return
+    # This will avoid to set / reset some data
+    if len(blender_tracks) == 0:
+        return animations, tracks
+
     ####### Keep current situation
     current_action = None
     current_sk_action = None
@@ -127,7 +132,7 @@ def gather_track_animations(  obj_uuid: int,
 
     ######## Export
 
-    # Export all collected actions.
+    # Export all collected tracks.
     for bl_tracks, track_name, on_type in blender_tracks:
         prepare_tracks_range(obj_uuid, bl_tracks, track_name, export_settings)
 
