@@ -115,7 +115,8 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     if export_settings['gltf_extras']:
         extras = generate_extras(blender_mesh) or {}
 
-    if export_settings['gltf_morph'] and blender_mesh.shape_keys:
+    # Not fore GN Instances
+    if export_settings['gltf_morph'] and blender_mesh.shape_keys and blender_mesh.users != 0:
         morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
         if morph_max > 0:
             extras['targetNames'] = [k.name for k in get_sk_exported(blender_mesh.shape_keys.key_blocks)]
@@ -155,6 +156,10 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
                      export_settings
                      ) -> Optional[List[float]]:
     if not export_settings['gltf_morph'] or not blender_mesh.shape_keys:
+        return None
+
+    # Not fore GN Instances
+    if blender_mesh.users == 0:
         return None
 
     morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
