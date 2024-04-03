@@ -1182,7 +1182,22 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # Initialize logging for export
         export_settings['log'] = Log(export_settings['loglevel'])
 
-        res = gltf2_blender_export.save(context, export_settings)
+
+        profile = bpy.app.debug_value == 102
+        if profile:
+            import cProfile, pstats, io
+            from pstats import SortKey
+            pr = cProfile.Profile()
+            pr.enable()
+            res = gltf2_blender_export.save(context, export_settings)
+            pr.disable()
+            s = io.StringIO()
+            sortby = SortKey.TIME
+            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            ps.print_stats()
+            print(s.getvalue())
+        else:
+            res = gltf2_blender_export.save(context, export_settings)
 
         # Display popup log, if any
         for message_type, message in export_settings['log'].messages():
