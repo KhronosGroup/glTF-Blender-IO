@@ -580,35 +580,18 @@ class SCENE_UL_gltf2_filter_action(bpy.types.UIList):
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
 
-class SCENE_PT_gltf2_action_filter(bpy.types.Panel):
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Action Filter"
-    bl_parent_id = "GLTF_PT_export_animation"
-    bl_options = {'DEFAULT_CLOSED'}
+def export_panel_animation_action_filter(layout, operator):
+    if operator.export_animation_mode not in ["ACTIONS", "ACTIVE_ACTIONS", "BROADCAST"]:
+        return
 
-    @classmethod
-    def poll(self, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        return operator.export_animation_mode in ["ACTIONS", "ACTIVE_ACTIONS", "BROADCAST"]
+    header, body = layout.panel("GLTF_export_action_filter", default_closed=True)
+    header.use_property_split = False
+    header.prop(operator, "export_action_filter", text="")
+    header.label(text="Action Filter")
+    if body and operator.export_action_filter:
+        body.active = operator.export_animations and operator.export_action_filter
 
-    def draw_header(self, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        self.layout.prop(operator, "export_action_filter", text="")
-
-    def draw(self, context):
-        layout = self.layout
-        row = layout.row()
-
-        sfile = context.space_data
-        operator = sfile.active_operator
-
-        if operator.export_action_filter is False:
-            return
-
-        layout.active = operator.export_animations and operator.export_action_filter
+        row = body.row()
 
         if len(bpy.data.actions) > 0:
             row.template_list("SCENE_UL_gltf2_filter_action", "", bpy.data.scenes[0], "gltf_action_filter", bpy.data.scenes[0], "gltf_action_filter_active")
@@ -625,7 +608,6 @@ def register():
     bpy.types.NODE_MT_category_shader_output.append(add_gltf_settings_to_menu)
     bpy.utils.register_class(SCENE_OT_gltf2_action_filter_refresh)
     bpy.utils.register_class(SCENE_UL_gltf2_filter_action)
-    bpy.utils.register_class(SCENE_PT_gltf2_action_filter)
 
 def variant_register():
     bpy.utils.register_class(SCENE_OT_gltf2_display_variant)
@@ -653,7 +635,6 @@ def variant_register():
 
 def unregister():
     bpy.utils.unregister_class(NODE_OT_GLTF_SETTINGS)
-    bpy.utils.unregister_class(SCENE_PT_gltf2_action_filter)
     bpy.utils.unregister_class(SCENE_UL_gltf2_filter_action)
     bpy.utils.unregister_class(SCENE_OT_gltf2_action_filter_refresh)
 
