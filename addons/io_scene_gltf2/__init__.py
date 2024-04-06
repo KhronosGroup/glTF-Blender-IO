@@ -1434,6 +1434,7 @@ def export_panel_animation(layout, operator):
         row.prop(operator, 'export_bake_animation')
         if operator.export_animation_mode == "SCENE":
             body.prop(operator, 'export_anim_scene_split_object')
+        row = body.row()
         row.prop(operator, 'export_convert_animation_pointer')
 
         if operator.export_animation_mode in ["NLA_TRACKS", "SCENE"]:
