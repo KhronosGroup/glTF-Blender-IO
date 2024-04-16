@@ -552,15 +552,24 @@ class VExportTree:
             if all([c.hide_render for c in self.nodes[uuid].blender_object.users_collection]):
                 return False
 
-        if self.export_settings['gltf_active_collection'] and not self.export_settings['gltf_active_collection_with_nested']:
-            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.objects)
+        # If we are given a collection, use all objects from it
+        if self.export_settings['gltf_collection']:
+            local_collection = bpy.data.collections.get((self.export_settings['gltf_collection'], None))
+            if not local_collection:
+                return False
+            found = any(x == self.nodes[uuid].blender_object for x in local_collection.all_objects)
             if not found:
                 return False
+        else:
+            if self.export_settings['gltf_active_collection'] and not self.export_settings['gltf_active_collection_with_nested']:
+                found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.objects)
+                if not found:
+                    return False
 
-        if self.export_settings['gltf_active_collection'] and self.export_settings['gltf_active_collection_with_nested']:
-            found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
-            if not found:
-                return False
+            if self.export_settings['gltf_active_collection'] and self.export_settings['gltf_active_collection_with_nested']:
+                found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
+                if not found:
+                    return False
 
         if BLENDER_GLTF_SPECIAL_COLLECTION in bpy.data.collections and self.nodes[uuid].blender_object.name in \
                 bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].objects:
