@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 2, 15),
+    "version": (4, 2, 19),
     'blender': (4, 2, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -558,6 +558,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    collection: StringProperty(
+        name="Source Collection",
+        description="Export only objects from this collection (and its children)",
+        default="",
+        )
+
     export_extras: BoolProperty(
         name='Custom Properties',
         description='Export custom properties as glTF extras',
@@ -975,6 +981,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             'use_mesh_edges',
             'use_mesh_vertices',
             'use_active_scene',
+            'collection',
         ]
         all_props = self.properties
         export_props = {
@@ -1057,6 +1064,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         else:
             export_settings['gltf_active_collection_with_nested'] = False
         export_settings['gltf_active_scene'] = self.use_active_scene
+        export_settings['gltf_collection'] = self.collection
 
         export_settings['gltf_selected'] = self.use_selection
         export_settings['gltf_layers'] = True  # self.export_layers
@@ -1196,7 +1204,22 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # Initialize logging for export
         export_settings['log'] = Log(export_settings['loglevel'])
 
-        res = gltf2_blender_export.save(context, export_settings)
+
+        profile = bpy.app.debug_value == 102
+        if profile:
+            import cProfile, pstats, io
+            from pstats import SortKey
+            pr = cProfile.Profile()
+            pr.enable()
+            res = gltf2_blender_export.save(context, export_settings)
+            pr.disable()
+            s = io.StringIO()
+            sortby = SortKey.TIME
+            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            ps.print_stats()
+            print(s.getvalue())
+        else:
+            res = gltf2_blender_export.save(context, export_settings)
 
         # Display popup log, if any
         for message_type, message in export_settings['log'].messages():
@@ -1212,8 +1235,11 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
-        export_main(layout, operator)
-        export_panel_include(layout, operator)
+        # Are we inside the File browser
+        is_file_browser = context.space_data.type == 'FILE_BROWSER'
+
+        export_main(layout, operator, is_file_browser)
+        export_panel_include(layout, operator, is_file_browser)
         export_panel_transform(layout, operator)
         export_panel_data(layout, operator)
         export_panel_animation(layout, operator)
@@ -1223,7 +1249,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         if gltfpack_path != '':
             export_panel_gltfpack(layout, operator)
 
-def export_main(layout, operator):
+def export_main(layout, operator, is_file_browser):
     layout.prop(operator, 'export_format')
     if operator.export_format == 'GLTF_SEPARATE':
         layout.prop(operator, 'export_keep_originals')
@@ -1233,21 +1259,23 @@ def export_main(layout, operator):
         layout.label(text="This is the least efficient of the available forms, and should only be used when required.", icon='ERROR')
 
     layout.prop(operator, 'export_copyright')
-    layout.prop(operator, 'will_save_settings')
+    if is_file_browser:
+        layout.prop(operator, 'will_save_settings')
 
 
-def export_panel_include(layout, operator):
+def export_panel_include(layout, operator, is_file_browser):
     header, body = layout.panel("GLTF_export_include", default_closed=True)
     header.label(text="Include")
     if body:
-        col = body.column(heading = "Limit to", align = True)
-        col.prop(operator, 'use_selection')
-        col.prop(operator, 'use_visible')
-        col.prop(operator, 'use_renderable')
-        col.prop(operator, 'use_active_collection')
-        if operator.use_active_collection:
-            col.prop(operator, 'use_active_collection_with_nested')
-        col.prop(operator, 'use_active_scene')
+        if is_file_browser:
+            col = body.column(heading = "Limit to", align = True)
+            col.prop(operator, 'use_selection')
+            col.prop(operator, 'use_visible')
+            col.prop(operator, 'use_renderable')
+            col.prop(operator, 'use_active_collection')
+            if operator.use_active_collection:
+                col.prop(operator, 'use_active_collection_with_nested')
+            col.prop(operator, 'use_active_scene')
 
         col = body.column(heading = "Data", align = True)
         col.prop(operator, 'export_extras')
@@ -1841,6 +1869,7 @@ class IO_FH_gltf2(bpy.types.FileHandler):
     bl_idname = "IO_FH_gltf2"
     bl_label = "glTF 2.0"
     bl_import_operator = "import_scene.gltf"
+    bl_export_operator = "export_scene.gltf"
     bl_file_extensions = ".glb;.gltf"
 
     @classmethod

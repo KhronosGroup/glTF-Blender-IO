@@ -130,7 +130,11 @@ class PrimitiveCreator:
 
         self.key_blocks = []
         # List of SK that are going to be exported, actually
-        if self.blender_mesh.shape_keys and self.export_settings['gltf_morph']:
+        # We need to check if we are in a GN Instance, because for GN instances, it seems that shape keys are preserved,
+        # even if we apply modifiers
+        # (For classic objects, shape keys are not preserved if we apply modifiers)
+        # We can check it by checking if the mesh is used by a user
+        if self.blender_mesh.shape_keys and self.export_settings['gltf_morph'] and self.blender_mesh.users != 0:
             self.key_blocks = get_sk_exported(self.blender_mesh.shape_keys.key_blocks)
 
         # Fetch vert positions and bone data (joint,weights)
