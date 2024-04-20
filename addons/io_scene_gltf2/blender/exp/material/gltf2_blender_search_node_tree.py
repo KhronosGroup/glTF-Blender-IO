@@ -642,10 +642,10 @@ def get_vertex_color_info(color_socket, alpha_socket, export_settings):
     if alpha_socket is not None and alpha_socket.socket is not None:
         node = previous_node(alpha_socket)
         if node.node is not None:
-            if node.node.type == 'MIX' and node.node.data_type == "FLOAT" and node.node.blend_type == 'MULTIPLY':
-                use_vc, attribute_alpha, use_active = get_attribute_name(NodeSocket(node.node.inputs[2], node.group_path), export_settings)
+            if node.node.type == 'MATH' and node.node.operation == 'MULTIPLY':
+                use_vc, attribute_alpha, use_active = get_attribute_name(NodeSocket(node.node.inputs[0], node.group_path), export_settings)
                 if use_vc is False:
-                    use_vc, attribute_alpha, use_active = get_attribute_name(NodeSocket(node.node.inputs[3], node.group_path), export_settings)
+                    use_vc, attribute_alpha, use_active = get_attribute_name(NodeSocket(node.node.inputs[1], node.group_path), export_settings)
                 if use_vc is True and use_active is True:
                     attribute_alpha_type = "active"
                 elif use_vc is True and use_active is None and attribute_alpha is not None:
