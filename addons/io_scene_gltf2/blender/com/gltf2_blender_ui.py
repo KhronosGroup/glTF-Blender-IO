@@ -450,8 +450,6 @@ class SCENE_OT_gltf2_remove_material_variant(bpy.types.Operator):
 
 ################ glTF Animation ###########################################
 
-#TODOPointer: Switching animation is currently not working for animation pointer
-
 class gltf2_animation_NLATrackNames(bpy.types.PropertyGroup):
     name : bpy.props.StringProperty(name="NLA Track Name")
 
