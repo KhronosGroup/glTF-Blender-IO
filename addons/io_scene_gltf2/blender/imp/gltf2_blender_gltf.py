@@ -433,6 +433,8 @@ class BlenderGlTF():
             pointer_tab[3] == "pbrMetallicRoughness" and \
             pointer_tab[4] in ["baseColorFactor", "roughnessFactor", "metallicFactor"]:
 
+            # This can be unlit (baseColorFactor) or pbr
+
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.animations.keys():
                 gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.animations[anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.animations[anim_idx].append(channel_idx)
@@ -443,6 +445,8 @@ class BlenderGlTF():
             pointer_tab[5] == "extensions" and \
             pointer_tab[6] == "KHR_texture_transform" and \
             pointer_tab[7] in ["scale", "offset"]:
+
+            # This can be unlit or pbr
 
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []

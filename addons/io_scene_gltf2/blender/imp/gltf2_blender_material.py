@@ -54,6 +54,8 @@ class BlenderMaterial():
         exts = pymaterial.extensions or {}
         if 'KHR_materials_unlit' in exts:
             unlit(mh)
+            pymaterial.pbr_metallic_roughness.blender_nodetree = mat.node_tree #Used in case of for KHR_animation_pointer
+            pymaterial.pbr_metallic_roughness.blender_mat = mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
         elif 'KHR_materials_pbrSpecularGlossiness' in exts:
             pbr_specular_glossiness(mh)
         else:

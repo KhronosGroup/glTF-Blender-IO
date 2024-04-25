@@ -17,6 +17,7 @@ from ...io.imp.gltf2_io_user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
 from ..exp.material.gltf2_blender_search_node_tree import NodeSocket, previous_node, from_socket, get_socket, FilterByType, get_socket_from_gltf_material_node, get_texture_node_from_socket #TODO move to COM
 from ..exp.gltf2_blender_gather_sampler import detect_manual_uv_wrapping #TODO move to COM
+from ..exp.material.gltf2_blender_gather_materials_unlit import detect_shadeless_material #TODO move to COM
 from ..com.gltf2_blender_conversion import texture_transform_gltf_to_blender
 from .gltf2_blender_animation_utils import make_fcurve
 from .gltf2_blender_light import BlenderLight
@@ -29,7 +30,7 @@ class BlenderPointerAnim():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def anim(gltf, anim_idx, asset, asset_idx, asset_type, name=None):
+    def anim(gltf, anim_idx, asset, asset_idx, asset_type, name=None, is_unlit=False):
         animation = gltf.data.animations[anim_idx]
 
         if asset_type in ["LIGHT", "TEX_TRANSFORM", "EXT"]:
@@ -43,10 +44,10 @@ class BlenderPointerAnim():
 
         for channel_idx in tab[anim_idx]:
             channel = animation.channels[channel_idx]
-            BlenderPointerAnim.do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type, name=name)
+            BlenderPointerAnim.do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type, name=name, is_unlit=is_unlit)
 
     @staticmethod
-    def do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type, name=None):
+    def do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type, name=None, is_unlit=False):
         animation = gltf.data.animations[anim_idx]
         pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
 
@@ -252,18 +253,31 @@ class BlenderPointerAnim():
             pointer_tab[4] in ["baseColorFactor", "roughnessFactor", "metallicFactor"]:
 
             if pointer_tab[4] == "baseColorFactor":
-                base_color_socket = get_socket(asset.blender_nodetree, True, "Base Color")
-                if base_color_socket.socket.is_linked:
-                    # We need to find the correct node value to animate (An Mix Factor node)
-                    mix_node = base_color_socket.links[0].from_node
-                    if mix_node.type == "MIX":
-                        blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
-                        num_components = 3 # Do not use alpha here, will be managed later
+
+                # This can be regular PBR, or unlit
+                if is_unlit is False:
+
+                    base_color_socket = get_socket(asset.blender_nodetree, True, "Base Color")
+                    if base_color_socket.socket.is_linked:
+                        # We need to find the correct node value to animate (An Mix Factor node)
+                        mix_node = base_color_socket.links[0].from_node
+                        if mix_node.type == "MIX":
+                            blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
+                            num_components = 3 # Do not use alpha here, will be managed later
+                        else:
+                            print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
                     else:
-                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
+                        blender_path = base_color_socket.socket.path_from_id() + ".default_value"
+                        num_components = 3 # Do not use alpha here, will be managed later
+
                 else:
-                    blender_path = base_color_socket.socket.path_from_id() + ".default_value"
-                    num_components = 3 # Do not use alpha here, will be managed later
+                    unlit_info = detect_shadeless_material(asset.blender_nodetree, True, {})
+                    if 'rgb_socket' in unlit_info:
+                        socket = unlit_info['rgb_socket']
+                        blender_path = socket.socket.path_from_id() + ".default_value"
+                        num_components = 3
+                    else:
+                        socket = NodeSocket(None, None)
 
             if pointer_tab[4] == "roughnessFactor":
                 roughness_socket = get_socket(asset.blender_nodetree, True, "Roughness")
@@ -300,7 +314,15 @@ class BlenderPointerAnim():
 
             socket = None
             if pointer_tab[-4] == "baseColorTexture":
-                socket = get_socket(asset['blender_nodetree'], True, "Base Color")
+                # This can be regular PBR, or unlit
+                if is_unlit is False:
+                    socket = get_socket(asset['blender_nodetree'], True, "Base Color")
+                else:
+                    unlit_info = detect_shadeless_material(asset['blender_nodetree'], True, {})
+                    if 'rgb_socket' in unlit_info:
+                        socket = unlit_info['rgb_socket']
+                    else:
+                        socket = NodeSocket(None, None)
             elif pointer_tab[-4] == "emissiveTexture":
                 socket = get_socket(asset.blender_nodetree, True, "Emission Color")
             elif pointer_tab[-4] == "normalTexture":
@@ -625,7 +647,12 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "pbrMetallicRoughness" and \
                 pointer_tab[4] == "baseColorFactor":
 
-            alpha_socket = get_socket(asset.blender_nodetree, True, "Alpha")
+            if is_unlit is False:
+                alpha_socket = get_socket(asset.blender_nodetree, True, "Alpha")
+            else:
+                unlit_info = detect_shadeless_material(asset.blender_nodetree, True, {})
+                if 'alpha_socket' in unlit_info:
+                    alpha_socket = unlit_info['alpha_socket']
             if alpha_socket.socket.is_linked:
                 # We need to find the correct node value to animate (An Mix Factor node)
                 mix_node = alpha_socket.socket.links[0].from_node

@@ -449,7 +449,7 @@ def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settin
 def __export_unlit(blender_material, export_settings):
     gltf2_unlit = gltf2_blender_gather_materials_unlit
 
-    info = gltf2_unlit.detect_shadeless_material(blender_material, export_settings)
+    info = gltf2_unlit.detect_shadeless_material(blender_material.node_tree, blender_material.use_nodes, export_settings)
     if info is None:
         return None, {}, {"color": None, "alpha": None, "color_type": None, "alpha_type": None}, {}
 
@@ -481,6 +481,16 @@ def __export_unlit(blender_material, export_settings):
     )
 
     export_user_extensions('gather_material_unlit_hook', export_settings, material, blender_material)
+
+    # Now we have exported the material itself, we need to store some additional data
+    # This will be used when trying to export some KHR_animation_pointer
+
+    if len(export_settings['current_paths']) > 0:
+        export_settings['KHR_animation_pointer']['materials'][id(blender_material)] = {}
+        export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['glTF_material'] = material
+
+    export_settings['current_paths'] = {}
 
     return material, uvmap_info, vc_info, udim_info
 
