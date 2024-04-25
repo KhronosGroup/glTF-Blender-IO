@@ -88,8 +88,6 @@ def get_cache_data(path: str,
     for node, obj in [(n, n.blender_object) for n in export_settings['vtree'].nodes.values() if n.blender_type in
                 [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
         obj.hide_viewport = node.default_hide_viewport
-    export_settings['vtree'].nodes[obj_uuids[0]].blender_object.hide_viewport = export_settings['vtree'].nodes[obj_uuids[0]].default_hide_viewport
-
 
     return data
 
