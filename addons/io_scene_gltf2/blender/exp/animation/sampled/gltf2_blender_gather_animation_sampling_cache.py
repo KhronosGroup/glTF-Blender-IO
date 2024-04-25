@@ -77,10 +77,11 @@ def get_cache_data(path: str,
         object_caching(data, obj_uuids, current_instance, action_name, frame, depsgraph, export_settings)
 
         # KHR_animation_pointer caching for materials, lights, cameras
-        material_nodetree_caching(data, action_name, frame, export_settings)
-        material_caching(data, action_name, frame, export_settings)
-        light_nodetree_caching(data, action_name, frame, export_settings)
-        camera_caching(data, action_name, frame, export_settings)
+        if export_settings['gltf_export_anim_pointer'] is True:
+            material_nodetree_caching(data, action_name, frame, export_settings)
+            material_caching(data, action_name, frame, export_settings)
+            light_nodetree_caching(data, action_name, frame, export_settings)
+            camera_caching(data, action_name, frame, export_settings)
 
         frame += step
 

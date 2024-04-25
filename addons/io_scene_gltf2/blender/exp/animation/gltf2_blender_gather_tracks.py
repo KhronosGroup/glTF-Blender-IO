@@ -45,20 +45,21 @@ def gather_tracks_animations(export_settings):
         animations_, merged_tracks = gather_track_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
 
-    # Manage Material tracks (for KHR_animation_pointer)
-    for mat in export_settings['KHR_animation_pointer']['materials'].keys():
-        animations_, merged_tracks = gather_data_track_animations('materials', mat, merged_tracks, len(animations), export_settings)
-        animations += animations_
+    if export_settings['gltf_export_anim_pointer'] is True:
+        # Manage Material tracks (for KHR_animation_pointer)
+        for mat in export_settings['KHR_animation_pointer']['materials'].keys():
+            animations_, merged_tracks = gather_data_track_animations('materials', mat, merged_tracks, len(animations), export_settings)
+            animations += animations_
 
-    # Manage Cameras tracks (for KHR_animation_pointer)
-    for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
-        animations_, merged_tracks = gather_data_track_animations('cameras', cam, merged_tracks, len(animations), export_settings)
-        animations += animations_
+        # Manage Cameras tracks (for KHR_animation_pointer)
+        for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
+            animations_, merged_tracks = gather_data_track_animations('cameras', cam, merged_tracks, len(animations), export_settings)
+            animations += animations_
 
-    # Manage lights tracks (for KHR_animation_pointer)
-    for light in export_settings['KHR_animation_pointer']['lights'].keys():
-        animations_, merged_tracks = gather_data_track_animations('lights', light, merged_tracks, len(animations), export_settings)
-        animations += animations_
+        # Manage lights tracks (for KHR_animation_pointer)
+        for light in export_settings['KHR_animation_pointer']['lights'].keys():
+            animations_, merged_tracks = gather_data_track_animations('lights', light, merged_tracks, len(animations), export_settings)
+            animations += animations_
 
     new_animations = merge_tracks_perform(merged_tracks, animations, export_settings)
 

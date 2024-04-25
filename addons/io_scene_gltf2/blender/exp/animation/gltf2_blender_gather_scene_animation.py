@@ -123,22 +123,23 @@ def gather_scene_animations(export_settings):
 
             total_channels = []
 
-    # Export now KHR_animation_pointer for materials
-    for mat in export_settings['KHR_animation_pointer']['materials'].keys():
-        if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
-            continue
+    if export_settings['gltf_export_anim_pointer'] is True:
+        # Export now KHR_animation_pointer for materials
+        for mat in export_settings['KHR_animation_pointer']['materials'].keys():
+            if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
+                continue
 
-        blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
+            blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
 
-        export_settings['ranges'][id(blender_material)] = {}
-        export_settings['ranges'][id(blender_material)][id(blender_material)] = {'start': start_frame, 'end': end_frame}
+            export_settings['ranges'][id(blender_material)] = {}
+            export_settings['ranges'][id(blender_material)][id(blender_material)] = {'start': start_frame, 'end': end_frame}
 
-        if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
-            add_slide_data(start_frame, mat, mat, export_settings, add_drivers=False)
+            if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
+                add_slide_data(start_frame, mat, mat, export_settings, add_drivers=False)
 
-        channels = gather_data_sampled_channels('materials', mat, mat, None, export_settings)
-        if channels is not None:
-            total_channels.extend(channels)
+            channels = gather_data_sampled_channels('materials', mat, mat, None, export_settings)
+            if channels is not None:
+                total_channels.extend(channels)
 
         if export_settings['gltf_anim_scene_split_object'] is True:
             if len(total_channels) > 0:
