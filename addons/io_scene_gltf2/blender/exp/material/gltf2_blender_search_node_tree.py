@@ -338,7 +338,7 @@ class NodeNav:
 
             elif self.in_socket.type == 'VALUE':
                 if nav.node.type == 'VALUE':
-                    return nav.out_socket.default_value, "node_tree." + nav.node.out_socket.path_from_id() + ".default_value"
+                    return nav.out_socket.default_value, "node_tree." + nav.out_socket.path_from_id() + ".default_value"
 
         return None, None
 
