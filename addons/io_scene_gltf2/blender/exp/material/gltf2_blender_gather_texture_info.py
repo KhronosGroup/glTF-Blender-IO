@@ -35,12 +35,17 @@ from .gltf2_blender_search_node_tree import \
 # blender_shader_sockets would be the (O,R,M) sockets.
 
 def gather_texture_info(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
+    export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'DEFAULT', filter_type, export_settings)
 
 def gather_material_normal_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
+    export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
+    export_settings['current_normal_scale'] = {} # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'NORMAL', filter_type, export_settings)
 
 def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
+    export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
+    export_settings['current_occlusion_strength'] = {} # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'OCCLUSION', filter_type, export_settings)
 
 
@@ -164,9 +169,17 @@ def __gather_normal_scale(primary_socket, export_settings):
     if not result:
         return None
     strengthInput = result[0].shader_node.inputs['Strength']
+    normal_scale = None
     if not strengthInput.is_linked and strengthInput.default_value != 1:
-        return strengthInput.default_value
-    return None
+        normal_scale = strengthInput.default_value
+
+    # Storing path for KHR_animation_pointer
+    path_ = {}
+    path_['length'] = 1
+    path_['path'] = "/materials/XXX/YYY/scale"
+    export_settings['current_normal_scale']["node_tree." + strengthInput.path_from_id() + ".default_value"] = path_
+
+    return normal_scale
 
 
 # MaterialOcclusionTextureInfo only
@@ -175,17 +188,29 @@ def __gather_occlusion_strength(primary_socket, export_settings):
     # primary_socket. The mix factor gives the occlusion strength.
     nav = primary_socket.to_node_nav()
     nav.move_back()
-    if nav.moved and nav.node.type == 'MIX' and nav.node.blend_type == 'MIX':
-        fac = nav.get_constant('Factor')
-        if fac is not None:
-            col1 = nav.get_constant('#A_Color')
-            col2 = nav.get_constant('#B_Color')
-            if col1 == [1.0, 1.0, 1.0] and col2 is None:
-                return fac
-            if col1 is None and col2 == [1.0, 1.0, 1.0]:
-                return 1.0 - fac  # reversed for reversed inputs
 
-    return None
+    reverse = False
+    strength = None
+
+    if nav.moved and nav.node.type == 'MIX' and nav.node.blend_type == 'MIX':
+        fac, path = nav.get_constant('Factor')
+        if fac is not None:
+            col1, _ = nav.get_constant('#A_Color')
+            col2, _ = nav.get_constant('#B_Color')
+            if col1 == [1.0, 1.0, 1.0] and col2 is None:
+                strength = fac
+            if col1 is None and col2 == [1.0, 1.0, 1.0]:
+                strength = 1.0 - fac  # reversed for reversed inputs
+                reverse = True
+
+        # Storing path for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/occlusionTexture/strength"
+        path_['reverse'] = reverse
+        export_settings['current_occlusion_strength'][path] = path_
+
+    return strength
 
 
 def __gather_index(blender_shader_sockets, use_tile, export_settings):

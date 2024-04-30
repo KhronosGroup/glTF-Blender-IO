@@ -190,7 +190,11 @@ def __gather_sampler(blender_shader_sockets, export_settings):
     sep_inside_item = "##~~gltf-inside-sep~~##"
     group_path_str = ""
     if len(first_valid_shader_node.group_path) > 0:
-        group_path_str += first_valid_shader_node.group_path[0].name
+        # Retrieving the blender material using this shader tree
+        for mat in bpy.data.materials:
+            if mat.use_nodes is True and id(mat.node_tree) == id(first_valid_shader_node.group_path[0]):
+                group_path_str += mat.name #TODO if linked, we can have multiple materials with same name...
+                break
     if len(first_valid_shader_node.group_path) > 1:
         for idx, i in enumerate(first_valid_shader_node.group_path[1:]):
             group_path_str += sep_item

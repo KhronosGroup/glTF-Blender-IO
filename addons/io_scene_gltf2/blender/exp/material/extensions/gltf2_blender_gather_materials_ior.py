@@ -17,7 +17,7 @@ from .....io.com.gltf2_io_constants import GLTF_IOR
 from ..gltf2_blender_search_node_tree import get_socket
 
 def export_ior(blender_material, extensions, export_settings):
-    ior_socket = get_socket(blender_material, 'IOR')
+    ior_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'IOR')
 
     if not ior_socket.socket:
         return None
@@ -27,8 +27,9 @@ def export_ior(blender_material, extensions, export_settings):
         # TODOExt: add warning?
         return None
 
-    if ior_socket.socket.default_value == GLTF_IOR:
-        return None
+    # Exporting IOR even if it is the default value
+    # It will be removed by the exporter if it is not animated
+    # (In case the first key is the default value, we need to keep the extension)
 
     # Export only if the following extensions are exported:
     need_to_export_ior = [
@@ -41,6 +42,14 @@ def export_ior(blender_material, extensions, export_settings):
         return None
 
     ior_extension = {}
-    ior_extension['ior'] = ior_socket.socket.default_value
+    if ior_socket.socket.default_value != GLTF_IOR:
+        ior_extension['ior'] = ior_socket.socket.default_value
+
+    # Storing path for KHR_animation_pointer
+    path_ = {}
+    path_['length'] = 1
+    path_['path'] = "/materials/XXX/extensions/KHR_materials_ior/ior"
+    export_settings['current_paths']["node_tree." + ior_socket.socket.path_from_id() + ".default_value"] = path_
+
 
     return Extension('KHR_materials_ior', ior_extension, False)

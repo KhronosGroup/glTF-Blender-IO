@@ -20,7 +20,7 @@ import bpy
 from mathutils import Vector, Matrix
 from io_scene_gltf2.blender.exp.gltf2_blender_gather_cache import cached
 from ...com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name, get_gltf_old_group_node_name
-from ....blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
+from ....blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf, inverted_trs_mapping_node
 import typing
 
 
@@ -149,11 +149,11 @@ def has_image_node_from_socket(socket, export_settings):
 def get_const_from_default_value_socket(socket, kind):
     if kind == 'RGB':
         if socket.socket.type != 'RGBA': return None
-        return list(socket.socket.default_value)[:3]
+        return list(socket.socket.default_value)[:3], "node_tree." + socket.socket.path_from_id() + ".default_value"
     if kind == 'VALUE':
         if socket.socket.type != 'VALUE': return None
-        return socket.socket.default_value
-    return None
+        return socket.socket.default_value, "node_tree." + socket.socket.path_from_id() + ".default_value"
+    return None, None
 
 #TODOSNode : @cached? If yes, need to use id of node tree, has this is probably not fully hashable
 # For now, not caching it. If we encounter performance issue, we will see later
@@ -174,7 +174,7 @@ def get_material_nodes(node_tree: bpy.types.NodeTree, group_path, type):
 
     return nodes
 
-def get_socket_from_gltf_material_node(blender_material: bpy.types.Material, name: str):
+def get_socket_from_gltf_material_node(blender_material_nodetree, use_nodes: bool, name: str):
     """
     For a given material input name, retrieve the corresponding node tree socket in the special glTF node group.
 
@@ -183,8 +183,8 @@ def get_socket_from_gltf_material_node(blender_material: bpy.types.Material, nam
     :return: a blender NodeSocket
     """
     gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
-    if blender_material.node_tree and blender_material.use_nodes:
-        nodes = get_material_nodes(blender_material.node_tree, [blender_material], bpy.types.ShaderNodeGroup)
+    if blender_material_nodetree and use_nodes:
+        nodes = get_material_nodes(blender_material_nodetree, [blender_material_nodetree], bpy.types.ShaderNodeGroup)
         # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
         nodes = [n for n in nodes if n[0].node_tree is not None and any([[n[0].node_tree.name.lower().startswith(g) for g in gltf_node_group_names]])]
         inputs = sum([[(input, node[1]) for input in node[0].inputs if input.name == name] for node in nodes], [])
@@ -305,27 +305,27 @@ class NodeNav:
         self.select_input_socket(in_soc)
 
         if not self.in_socket:
-            return None
+            return None, None
 
         # Get constant from unlinked socket's default value
         if not self.in_socket.is_linked:
             if self.in_socket.type == 'RGBA':
                 color = list(self.in_socket.default_value)
                 color = color[:3]  # drop unused alpha component (assumes shader tree)
-                return color
+                return color, "node_tree." + self.in_socket.path_from_id() + ".default_value"
 
             elif self.in_socket.type == 'SHADER':
                 # Treat unlinked shader sockets as black
-                return [0.0, 0.0, 0.0]
+                return [0.0, 0.0, 0.0], None
 
             elif self.in_socket.type == 'VECTOR':
-                return list(self.in_socket.default_value)
+                return list(self.in_socket.default_value), None
 
             elif self.in_socket.type == 'VALUE':
-                return self.in_socket.default_value
+                return self.in_socket.default_value, "node_tree." + self.in_socket.path_from_id() + ".default_value"
 
             else:
-                return None
+                return None, None
 
         # Check for a constant in the next node
         nav = self.peek_back()
@@ -334,25 +334,25 @@ class NodeNav:
                 if nav.node.type == 'RGB':
                     color = list(nav.out_socket.default_value)
                     color = color[:3]  # drop unused alpha component (assumes shader tree)
-                    return color
+                    return color, "node_tree." + nav.out_socket.path_from_id() + ".default_value"
 
             elif self.in_socket.type == 'VALUE':
                 if nav.node.type == 'VALUE':
-                    return nav.out_socket.default_value
+                    return nav.out_socket.default_value, "node_tree." + nav.out_socket.path_from_id() + ".default_value"
 
-        return None
+        return None, None
 
     def get_factor(self, in_soc=None):
         """Gets a factor, eg. metallicFactor. Either a constant or constant multiplier."""
         self.select_input_socket(in_soc)
 
         if not self.in_socket:
-            return None
+            return None, None
 
         # Constant
-        fac = self.get_constant()
+        fac, path = self.get_constant()
         if fac is not None:
-            return fac
+            return fac, path
 
         # Multiplied by constant
         nav = self.peek_back()
@@ -367,18 +367,18 @@ class NodeNav:
                 )
                 if is_mul:
                     # TODO: check factor is 1?
-                    x1 = nav.get_constant('#A_Color')
-                    x2 = nav.get_constant('#B_Color')
+                    x1, path_1 = nav.get_constant('#A_Color')
+                    x2, path_2 = nav.get_constant('#B_Color')
 
             elif self.in_socket.type == 'VALUE':
                 if nav.node.type == 'MATH' and nav.node.operation == 'MULTIPLY':
-                    x1 = nav.get_constant(0)
-                    x2 = nav.get_constant(1)
+                    x1, path_1 = nav.get_constant(0)
+                    x2, path_2 = nav.get_constant(1)
 
-            if x1 is not None and x2 is None: return x1
-            if x2 is not None and x1 is None: return x2
+            if x1 is not None and x2 is None: return x1, path_1
+            if x2 is not None and x1 is None: return x2, path_2
 
-        return None
+        return None, None
 
 
 class NodeSocket:
@@ -402,14 +402,14 @@ class ShNode:
         self.node = node
         self.group_path = group_path
 
-def get_node_socket(blender_material, type, name):
+def get_node_socket(blender_material_node_tree, type, name):
     """
     For a given material input name, retrieve the corresponding node tree socket for a given node type.
 
     :param blender_material: a blender material for which to get the socket
     :return: a blender NodeSocket for a given type
     """
-    nodes = get_material_nodes(blender_material.node_tree, [blender_material], type)
+    nodes = get_material_nodes(blender_material_node_tree, [blender_material_node_tree], type)
     #TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
     nodes = [node for node in nodes if check_if_is_linked_to_active_output(node[0].outputs[0], node[1])]
     inputs = sum([[(input, node[1]) for input in node[0].inputs if input.name == name] for node in nodes], [])
@@ -418,7 +418,7 @@ def get_node_socket(blender_material, type, name):
     return NodeSocket(None, None)
 
 
-def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
+def get_socket(blender_material_nodetree, use_nodes: bool, name: str, volume=False):
     """
     For a given material input name, retrieve the corresponding node tree socket.
 
@@ -426,16 +426,16 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
     :param name: the name of the socket
     :return: a blender NodeSocket
     """
-    if blender_material.node_tree and blender_material.use_nodes:
+    if blender_material_nodetree and use_nodes:
         #i = [input for input in blender_material.node_tree.inputs]
         #o = [output for output in blender_material.node_tree.outputs]
         if name == "Emissive":
             # Check for a dedicated Emission node first, it must supersede the newer built-in one
             # because the newer one is always present in all Principled BSDF materials.
-            emissive_socket = get_node_socket(blender_material, bpy.types.ShaderNodeEmission, "Color")
+            emissive_socket = get_node_socket(blender_material_nodetree, bpy.types.ShaderNodeEmission, "Color")
             if emissive_socket.socket is not None:
                 return emissive_socket
-            # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission socket.
+            # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission Color socket.
             name = "Emission Color"
             type = bpy.types.ShaderNodeBsdfPrincipled
         elif name == "Background":
@@ -447,7 +447,7 @@ def get_socket(blender_material: bpy.types.Material, name: str, volume=False):
             else:
                 type = bpy.types.ShaderNodeVolumeAbsorption
 
-        return get_node_socket(blender_material, type, name)
+        return get_node_socket(blender_material_nodetree, type, name)
 
     return NodeSocket(None, None)
 
@@ -528,28 +528,7 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     mapping_transform["scale"] = [mapping_node.node.inputs['Scale'].default_value[0], mapping_node.node.inputs['Scale'].default_value[1]]
 
     if mapping_node.node.vector_type == "TEXTURE":
-        # This means use the inverse of the TRS transform.
-        def inverted(mapping_transform):
-            offset = mapping_transform["offset"]
-            rotation = mapping_transform["rotation"]
-            scale = mapping_transform["scale"]
-
-            # Inverse of a TRS is not always a TRS. This function will be right
-            # at least when the following don't occur.
-            if abs(rotation) > 1e-5 and abs(scale[0] - scale[1]) > 1e-5:
-                return None
-            if abs(scale[0]) < 1e-5 or abs(scale[1]) < 1e-5:
-                return None
-
-            new_offset = Matrix.Rotation(-rotation, 3, 'Z') @ Vector((-offset[0], -offset[1], 1))
-            new_offset[0] /= scale[0]; new_offset[1] /= scale[1]
-            return {
-                "offset": new_offset[0:2],
-                "rotation": -rotation,
-                "scale": [1/scale[0], 1/scale[1]],
-            }
-
-        mapping_transform = inverted(mapping_transform)
+        mapping_transform = inverted_trs_mapping_node(mapping_transform)
         if mapping_transform is None:
             export_settings['log'].warning(
                 "Skipping exporting texture transform with type TEXTURE because "
@@ -570,8 +549,28 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     if texture_transform["rotation"] == 0:
         del(texture_transform["rotation"])
 
-    if len(texture_transform) == 0:
-        return None
+    # glTF Offset needs: offset, rotation, scale (note that Offset is not used for Vector mapping)
+    # glTF Rotation needs: rotation
+    # glTF Scale needs: scale
+
+    if mapping_node.node.vector_type != "VECTOR":
+        path_ = {}
+        path_['length'] = 2
+        path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
+        path_['vector_type'] = mapping_node.node.vector_type
+        export_settings['current_texture_transform']["node_tree." + mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
+
+    path_ = {}
+    path_['length'] = 2
+    path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/scale"
+    path_['vector_type'] = mapping_node.node.vector_type
+    export_settings['current_texture_transform']["node_tree." + mapping_node.node.inputs['Scale'].path_from_id() + ".default_value"] = path_
+
+    path_ = {}
+    path_['length'] = 1
+    path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/rotation"
+    path_['vector_type'] = mapping_node.node.vector_type
+    export_settings['current_texture_transform']["node_tree." + mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
 
     return texture_transform
 
@@ -793,9 +792,13 @@ def detect_anisotropy_nodes(
     if tex_ok is False:
         return False, None
 
+
+    strength, path_strength = get_const_from_socket(NodeSocket(anisotropy_multiply_node.inputs[1], anisotropy_socket.group_path), 'VALUE')
+    rotation, path_rotation = get_const_from_socket(NodeSocket(anisotropy_rotation_node.inputs[1], anisotropy_socket.group_path), 'VALUE')
+
     return True, {
-        'anisotropyStrength': get_const_from_socket(NodeSocket(anisotropy_multiply_node.inputs[1], anisotropy_socket.group_path), 'VALUE'),
-        'anisotropyRotation': get_const_from_socket(NodeSocket(anisotropy_rotation_node.inputs[1], anisotropy_socket.group_path), 'VALUE'),
+        'anisotropyStrength': (strength, path_strength),
+        'anisotropyRotation': (rotation, path_rotation),
         'tangent': tangent_node.node.uv_map,
         'tex_socket': NodeSocket(anisotropy_multiply_add_node.inputs[0], anisotropy_socket.group_path),
         }

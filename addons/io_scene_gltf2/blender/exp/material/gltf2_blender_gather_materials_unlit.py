@@ -20,15 +20,15 @@ from .gltf2_blender_search_node_tree import \
     previous_node, \
     get_factor_from_socket
 
-def detect_shadeless_material(blender_material, export_settings):
+def detect_shadeless_material(blender_material_node_tree, use_nodes, export_settings):
     """Detect if this material is "shadeless" ie. should be exported
     with KHR_materials_unlit. Returns None if not. Otherwise, returns
     a dict with info from parsing the node tree.
     """
-    if not blender_material.use_nodes: return None
+    if not use_nodes: return None
 
     # Old Background node detection (unlikely to happen)
-    bg_socket = get_socket(blender_material, "Background")
+    bg_socket = get_socket(blender_material_node_tree, use_nodes, "Background")
     if bg_socket.socket is not None:
         return {'rgb_socket': bg_socket}
 
@@ -41,14 +41,14 @@ def detect_shadeless_material(blender_material, export_settings):
     info = {}
 
     #TODOSNode this can be a function call
-    for node in blender_material.node_tree.nodes:
+    for node in blender_material_node_tree.nodes:
         if node.type == 'OUTPUT_MATERIAL' and node.is_active_output:
             socket = node.inputs[0]
             break
     else:
         return None
 
-    socket = NodeSocket(socket, [blender_material])
+    socket = NodeSocket(socket, [blender_material_node_tree])
 
     # Be careful not to misidentify a lightpath trick as mix-alpha.
     result = __detect_lightpath_trick(socket)
@@ -123,11 +123,21 @@ def __detect_lightpath_trick(socket):
 
 def gather_base_color_factor(info, export_settings):
     rgb, alpha = None, None
+    path, path_alpha = None, None
 
     if 'rgb_socket' in info:
-        rgb = get_factor_from_socket(info['rgb_socket'], kind='RGB')
+        rgb, path = get_factor_from_socket(info['rgb_socket'], kind='RGB')
     if 'alpha_socket' in info:
-        alpha = get_factor_from_socket(info['alpha_socket'], kind='VALUE')
+        alpha, path_alpha = get_factor_from_socket(info['alpha_socket'], kind='VALUE')
+
+    # Storing path for KHR_animation_pointer
+    if path is not None:
+        path_ = {}
+        path_['length'] = 3
+        path_['path'] = "/materials/XXX/pbrMetallicRoughness/baseColorFactor"
+        path_['additional_path'] = path_alpha
+        export_settings['current_paths'][path] = path_
+
 
     if rgb is None: rgb = [1.0, 1.0, 1.0]
     if alpha is None: alpha = 1.0
@@ -150,6 +160,16 @@ def gather_base_color_texture(info, export_settings):
             sockets,
             export_settings,
         )
+
+        if len(export_settings['current_texture_transform']) != 0:
+            for k in export_settings['current_texture_transform'].keys():
+                path_ = {}
+                path_['length'] = export_settings['current_texture_transform'][k]['length']
+                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "pbrMetallicRoughness/baseColorTexture/extensions")
+                path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
+                export_settings['current_paths'][k] = path_
+
+        export_settings['current_texture_transform'] = {}
 
         return unlit_texture, {'baseColorTexture': uvmap_info}, {'baseColorTexture':udim_info} if len(udim_info.keys()) > 0 else {}
     return None, {}, {}

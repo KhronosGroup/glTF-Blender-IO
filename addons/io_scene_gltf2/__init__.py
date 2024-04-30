@@ -615,6 +615,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    export_pointer_animation: BoolProperty(
+        name='Export Animation Pointer (Experimental)',
+        description='Export material, Light & Camera animation as Animation Pointer.',
+        default=False
+    )
+
     export_animation_mode: EnumProperty(
         name='Animation mode',
         items=(('ACTIONS', 'Actions',
@@ -877,6 +883,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         update=on_export_action_filter_changed,
     )
 
+    export_convert_animation_pointer: BoolProperty(
+        name='Convert TRS/weights to Animation Pointer',
+        description='Export TRS and weights as Animation Pointer. '
+                    'Using KHR_animation_pointer extension',
+        default=False
+    )
+
     # This parameter is only here for backward compatibility, as this option is removed in 3.6
     # This option does nothing, and is not displayed in UI
     # What you are looking for is probably "export_animation_mode"
@@ -1086,6 +1099,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             else:
                 export_settings['gltf_anim_scene_split_object'] = False
 
+            if export_settings['gltf_animation_mode'] in ['NLA_TRACKS', 'SCENE']:
+                export_settings['gltf_export_anim_pointer'] = self.export_pointer_animation
+                if self.export_pointer_animation:
+                    export_settings['gltf_trs_w_animation_pointer'] = self.export_convert_animation_pointer
+                else:
+                    export_settings['gltf_trs_w_animation_pointer'] = False
+            else:
+                export_settings['gltf_trs_w_animation_pointer'] = False
+                export_settings['gltf_export_anim_pointer'] = False
+
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
@@ -1132,6 +1155,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_lights'] = self.export_lights
         export_settings['gltf_lighting_mode'] = self.export_import_convert_lighting_mode
+
         export_settings['gltf_gpu_instances'] = self.export_gpu_instances
 
         export_settings['gltf_try_sparse_sk'] = self.export_try_sparse_sk
@@ -1453,6 +1477,7 @@ def export_panel_animation(layout, operator):
         row.prop(operator, 'export_bake_animation')
         if operator.export_animation_mode == "SCENE":
             body.prop(operator, 'export_anim_scene_split_object')
+        row = body.row()
 
         if operator.export_animation_mode in ["NLA_TRACKS", "SCENE"]:
             export_panel_animation_notes(body, operator)
@@ -1460,6 +1485,7 @@ def export_panel_animation(layout, operator):
         export_panel_animation_armature(body, operator)
         export_panel_animation_shapekeys(body, operator)
         export_panel_animation_sampling(body, operator)
+        export_panel_animation_pointer(body, operator)
         export_panel_animation_optimize(body, operator)
         if operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS']:
             export_panel_animation_extra(body, operator)
@@ -1530,6 +1556,18 @@ def export_panel_animation_sampling(layout, operator):
 
         body.prop(operator, 'export_frame_step')
 
+def export_panel_animation_pointer(layout, operator):
+    header, body = layout.panel("GLTF_export_animation_pointer", default_closed=True)
+    header.use_property_split = False
+    header.active = operator.export_animations and operator.export_animation_mode in ['NLA_TRACKS', 'SCENE']
+    header.prop(operator, "export_pointer_animation", text="")
+    header.label(text="Animation Pointer (Experimental)")
+    if body:
+
+
+        row = body.row()
+        row.active = operator.export_pointer_animation
+        row.prop(operator, 'export_convert_animation_pointer')
 
 def export_panel_animation_optimize(layout, operator):
     header, body = layout.panel("GLTF_export_animation_optimize", default_closed=True)

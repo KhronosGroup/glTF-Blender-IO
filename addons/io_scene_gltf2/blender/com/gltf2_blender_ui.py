@@ -450,7 +450,6 @@ class SCENE_OT_gltf2_remove_material_variant(bpy.types.Operator):
 
 ################ glTF Animation ###########################################
 
-
 class gltf2_animation_NLATrackNames(bpy.types.PropertyGroup):
     name : bpy.props.StringProperty(name="NLA Track Name")
 
@@ -502,6 +501,22 @@ class SCENE_OT_gltf2_animation_apply(bpy.types.Operator):
                 for track in [track for track in obj.data.shape_keys.animation_data.nla_tracks \
                         if track.name == track_name and len(track.strips) > 0 and track.strips[0].action is not None]:
                     obj.data.shape_keys.animation_data.action = track.strips[0].action
+
+            if obj.type in ["LIGHT", "CAMERA"] and obj.data and obj.data.animation_data:
+                obj.data.animation_data.action = None
+                for track in [track for track in obj.data.animation_data.nla_tracks \
+                        if track.name == track_name and len(track.strips) > 0 and track.strips[0].action is not None]:
+                    obj.data.animation_data.action = track.strips[0].action
+
+
+        for mat in bpy.data.materials:
+            if not mat.node_tree:
+                continue
+            if mat.node_tree.animation_data:
+                mat.node_tree.animation_data.action = None
+                for track in [track for track in mat.node_tree.animation_data.nla_tracks \
+                        if track.name == track_name and len(track.strips) > 0 and track.strips[0].action is not None]:
+                    mat.node_tree.animation_data.action = track.strips[0].action
 
         bpy.data.scenes[0].gltf2_animation_applied = self.index
         return {'FINISHED'}
