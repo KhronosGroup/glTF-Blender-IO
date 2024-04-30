@@ -260,10 +260,9 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
         udim_infos.update(udim_info_transmission)
 
     # KHR_materials_emissive_strength
-    if any([i>1.0 for i in emissive_factor or []]):
-        emissive_strength_extension = export_emission_strength_extension(emissive_factor, export_settings)
-        if emissive_strength_extension:
-            extensions["KHR_materials_emissive_strength"] = emissive_strength_extension
+    emissive_strength_extension = export_emission_strength_extension(emissive_factor, export_settings)
+    if emissive_strength_extension:
+        extensions["KHR_materials_emissive_strength"] = emissive_strength_extension
 
     # KHR_materials_volume
 

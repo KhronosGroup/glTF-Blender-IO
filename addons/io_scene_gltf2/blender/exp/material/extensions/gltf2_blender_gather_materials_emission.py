@@ -46,8 +46,9 @@ def export_emission_factor(blender_material, export_settings):
             strength_socket = emissive_socket.socket.node.inputs['Strength']
         elif 'Emission Strength' in emissive_socket.socket.node.inputs:
             strength_socket = emissive_socket.socket.node.inputs['Emission Strength']
+        strength, strength_path = get_const_from_default_value_socket(NodeSocket(strength_socket, emissive_socket.group_path), kind='VALUE')
         strength = (
-            get_const_from_socket(NodeSocket(strength_socket, emissive_socket.group_path), kind='VALUE')[0]
+            strength
             if strength_socket is not None
             else None
         )
@@ -65,7 +66,16 @@ def export_emission_factor(blender_material, export_settings):
             path_ = {}
             path_['length'] = 3
             path_['path'] = "/materials/XXX/emissiveFactor"
+            path_['strength_channel'] = strength_path
             export_settings['current_paths'][path] = path_
+
+        # Storing path for KHR_animation_pointer, for emissiveStrength (if needed)
+        if strength_path is not None:
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/extensions/KHR_materials_emissive_strength/emissiveStrength"
+            path_['factor_channel'] = path
+            export_settings['current_paths'][strength_path] = path_
 
         return factor
 
@@ -91,10 +101,11 @@ def export_emission_texture(blender_material, export_settings):
     return emissive_texture, {'emissiveTexture': uvmap_info}, {'emissiveTexture': udim_info} if len(udim_info.keys()) > 0 else {}
 
 def export_emission_strength_extension(emissive_factor, export_settings):
+    # Always export the extension if the emissive factor
+    # If the emissive factor is animated, we need to export the extension, even if the initial value is < 1.0
+    # We will check if the strength is animated and this extension is needed at end of the export
     emissive_strength_extension = {}
-    emissive_strength_extension['emissiveStrength'] = max(emissive_factor)
+    if any([i>1.0 for i in emissive_factor]):
+        emissive_strength_extension['emissiveStrength'] = max(emissive_factor)
 
     return Extension('KHR_materials_emissive_strength', emissive_strength_extension, False)
-
-#TODOPointer: if strength is animated, but default value is < 1.0, we are currently not exporting the extension
-# But if he animated value is sometimes > 1.0, we should export the extension, and use the extension value for the channel
