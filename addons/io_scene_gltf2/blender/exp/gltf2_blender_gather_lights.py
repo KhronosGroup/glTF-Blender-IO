@@ -27,6 +27,9 @@ from .material import gltf2_blender_search_node_tree
 
 @cached
 def gather_lights_punctual(blender_lamp, export_settings) -> Optional[Dict[str, Any]]:
+
+    export_settings['current_paths'] = {} #For KHR_animation_pointer
+
     if not __filter_lights_punctual(blender_lamp, export_settings):
         return None
 
@@ -55,7 +58,20 @@ def __filter_lights_punctual(blender_lamp, export_settings) -> bool:
 def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
     emission_node = __get_cycles_emission_node(blender_lamp)
     if emission_node is not None:
+
+        # Store data for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 3
+        path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
+        export_settings['current_paths']["node_tree." + emission_node.inputs["Color"].path_from_id() + ".default_value"] = path_
+
         return list(emission_node.inputs["Color"].default_value)[:3]
+
+    # Store data for KHR_animation_pointer
+    path_ = {}
+    path_['length'] = 3
+    path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
+    export_settings['current_paths']['color'] = path_
 
     return list(blender_lamp.color)
 
@@ -66,19 +82,49 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
         if blender_lamp.type != 'SUN':
             # When using cycles, the strength should be influenced by a LightFalloff node
             result = gltf2_blender_search_node_tree.from_socket(
-                gltf2_blender_search_node_tree.NodeSocket(emission_node.inputs.get("Strength"), blender_lamp),
+                gltf2_blender_search_node_tree.NodeSocket(emission_node.inputs.get("Strength"), blender_lamp.node_tree),
                 gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeLightFalloff)
             )
             if result:
                 quadratic_falloff_node = result[0].shader_node
                 emission_strength = quadratic_falloff_node.inputs["Strength"].default_value / (math.pi * 4.0)
+
+                # Store data for KHR_animation_pointer
+                path_ = {}
+                path_['length'] = 1
+                path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
+                path_['lamp_type'] = blender_lamp.type
+                export_settings['current_paths']["node_tree." + quadratic_falloff_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
+
             else:
                 export_settings['log'].warning('No quadratic light falloff node attached to emission strength property')
+
+                path_ = {}
+                path_['length'] = 1
+                path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
+                path_['lamp_type'] = blender_lamp.type
+                export_settings['current_paths']["energy"] = path_
+
                 emission_strength = blender_lamp.energy
         else:
             emission_strength = emission_node.inputs["Strength"].default_value
+
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
+            path_['lamp_type'] = blender_lamp.type
+            export_settings['current_paths']["node_tree." + emission_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
+
+
     else:
         emission_strength = blender_lamp.energy
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
+        path_['lamp_type'] = blender_lamp.type
+        export_settings['current_paths']["energy"] = path_
+
     if export_settings['gltf_lighting_mode'] == 'RAW':
         return emission_strength
     else:
@@ -111,6 +157,12 @@ def __gather_type(blender_lamp, _) -> str:
 
 def __gather_range(blender_lamp, export_settings) -> Optional[float]:
     if blender_lamp.use_custom_distance:
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/range"
+        export_settings['current_paths']["cutoff_distance"] = path_
+
         return blender_lamp.cutoff_distance
     return None
 
@@ -137,7 +189,7 @@ def __get_cycles_emission_node(blender_lamp) -> Optional[bpy.types.ShaderNodeEmi
                 if not currentNode.is_active_output:
                     continue
                 result = gltf2_blender_search_node_tree.from_socket(
-                    gltf2_blender_search_node_tree.NodeSocket(currentNode.inputs.get("Surface"), blender_lamp),
+                    gltf2_blender_search_node_tree.NodeSocket(currentNode.inputs.get("Surface"), blender_lamp.node_tree),
                     gltf2_blender_search_node_tree.FilterByType(bpy.types.ShaderNodeEmission)
                 )
                 if not result:

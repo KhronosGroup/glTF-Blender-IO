@@ -87,7 +87,16 @@ def __gather_camera(vnode, export_settings):
     if vnode.blender_object.type != 'CAMERA':
         return None
 
-    return gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
+    cam =  gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
+
+    if len(export_settings['current_paths']) > 0:
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)] = {}
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['glTF_camera'] = cam
+
+    export_settings['current_paths'] = {}
+
+    return cam
 
 
 def __gather_children(vnode, export_settings):
@@ -219,6 +228,12 @@ def __gather_extensions(vnode, export_settings):
                     "light": light_extension
                 }
             )
+            if len(export_settings['current_paths']) > 0:
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)] = {}
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['paths'] = export_settings['current_paths'].copy()
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['glTF_light'] = light_extension
+
+            export_settings['current_paths'] = {}
 
     return extensions if extensions else None
 

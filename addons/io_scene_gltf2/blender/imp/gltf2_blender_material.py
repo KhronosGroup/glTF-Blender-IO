@@ -54,15 +54,23 @@ class BlenderMaterial():
         exts = pymaterial.extensions or {}
         if 'KHR_materials_unlit' in exts:
             unlit(mh)
+            pymaterial.pbr_metallic_roughness.blender_nodetree = mat.node_tree #Used in case of for KHR_animation_pointer
+            pymaterial.pbr_metallic_roughness.blender_mat = mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
         elif 'KHR_materials_pbrSpecularGlossiness' in exts:
             pbr_specular_glossiness(mh)
         else:
             pbr_metallic_roughness(mh)
+            pymaterial.pbr_metallic_roughness.blender_nodetree = mat.node_tree #Used in case of for KHR_animation_pointer
+            pymaterial.pbr_metallic_roughness.blender_mat = mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
+
 
         # Manage KHR_materials_variants
         # We need to store link between material idx in glTF and Blender Material id
         if gltf.KHR_materials_variants is True:
             gltf.variant_mapping[str(material_idx) + str(vertex_color)] = mat
+
+        pymaterial.blender_nodetree = mat.node_tree #Used in case of for KHR_animation_pointer
+        pymaterial.blender_mat = mat #Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
 
         import_user_extensions('gather_import_material_after_hook', gltf, pymaterial, vertex_color, mat)
 
@@ -77,8 +85,7 @@ class BlenderMaterial():
             mat.blend_method = 'BLEND'
         elif alpha_mode == 'MASK':
             mat.blend_method = 'CLIP'
-            alpha_cutoff = pymaterial.alpha_cutoff
-            alpha_cutoff = alpha_cutoff if alpha_cutoff is not None else 0.5
+            alpha_cutoff = pymaterial.alpha_cutoff if pymaterial.alpha_cutoff is not None else 0.5
             mat.alpha_threshold = alpha_cutoff
 
     @staticmethod
