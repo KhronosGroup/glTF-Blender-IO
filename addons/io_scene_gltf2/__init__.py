@@ -488,9 +488,33 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         ),
         default=False)
 
-    export_colors: BoolProperty(
-        name='Dummy',
-        description='Keep for compatibility only',
+
+    export_vertex_color: EnumProperty(
+        name='Use Vertex Color',
+        items=(
+            ('MATERIAL', 'Material',
+            'Export vertex color when used by material'),
+            ('ACTIVE', 'Active',
+            'Export active vertex color'),
+            ('NONE', 'None',
+            'Do not export vertex color')),
+        description='How to export vertex color',
+        default='MATERIAL'
+    )
+
+    export_all_vertex_colors: BoolProperty(
+        name='Export all vertex colors',
+        description=(
+            'Export all vertex colors, even if not used by any material. '
+            'If no Vertex Color is used in the mesh materials, a fake COLOR_0 will be created, '
+            'in order to keep material unchanged'
+        ),
+        default=True
+    )
+
+    export_active_vertex_color_when_no_material: BoolProperty(
+        name='Export active vertex color when no material',
+        description='When there is no material on object, export active vertex color.',
         default=True
     )
 
@@ -1045,6 +1069,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_attributes'] = self.export_attributes
         export_settings['gltf_cameras'] = self.export_cameras
 
+        export_settings['gltf_vertex_color'] = self.export_vertex_color
+        export_settings['gltf_all_vertex_colors'] = self.export_all_vertex_colors
+        export_settings['gltf_active_vertex_color_when_no_material'] = self.export_active_vertex_color_when_no_material
+
         export_settings['gltf_unused_textures'] = self.export_unused_textures
         export_settings['gltf_unused_images'] = self.export_unused_images
 
@@ -1325,6 +1353,23 @@ def export_panel_data_mesh(layout, operator):
 
             col = body.column()
             col.prop(operator, 'export_shared_accessors')
+
+            header, sub_body = body.panel("GLTF_export_data_material_vertex_color", default_closed=True)
+            header.label(text="Vertex Colors")
+            if sub_body:
+                row = sub_body.row()
+                row.prop(operator, 'export_vertex_color')
+                if operator.export_vertex_color == "ACTIVE":
+                    row = sub_body.row()
+                    row.label(text="Note that fully compliant glTF 2.0 engine/viewer will use it as multiplicative factor for base color.", icon='ERROR')
+                    row = sub_body.row()
+                    row.label(text="If you want to use VC for any other purpose than vertex color, you should use custom attributes.")
+                row = sub_body.row()
+                row.active = operator.export_vertex_color != "NONE"
+                row.prop(operator, 'export_all_vertex_colors')
+                row = sub_body.row()
+                row.active = operator.export_vertex_color != "NONE"
+                row.prop(operator, 'export_active_vertex_color_when_no_material')
 
 
 def export_panel_data_material(layout, operator):
