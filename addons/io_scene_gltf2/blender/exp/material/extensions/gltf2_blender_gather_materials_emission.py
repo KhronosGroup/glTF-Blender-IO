@@ -42,11 +42,13 @@ def export_emission_factor(blender_material, export_settings):
 
         # Handle Emission Strength
         strength_socket = None
+        strength_path = None
         if emissive_socket.socket.node.type == 'EMISSION':
             strength_socket = emissive_socket.socket.node.inputs['Strength']
         elif 'Emission Strength' in emissive_socket.socket.node.inputs:
             strength_socket = emissive_socket.socket.node.inputs['Emission Strength']
-        strength, strength_path = get_const_from_default_value_socket(NodeSocket(strength_socket, emissive_socket.group_path), kind='VALUE')
+        if strength_socket is not None and isinstance(strength_socket, bpy.types.NodeSocket):
+            strength, strength_path = get_factor_from_socket(NodeSocket(strength_socket, emissive_socket.group_path), kind='VALUE')
         strength = (
             strength
             if strength_socket is not None
@@ -105,7 +107,7 @@ def export_emission_strength_extension(emissive_factor, export_settings):
     # If the emissive factor is animated, we need to export the extension, even if the initial value is < 1.0
     # We will check if the strength is animated and this extension is needed at end of the export
     emissive_strength_extension = {}
-    if any([i>1.0 for i in emissive_factor]):
+    if any([i>1.0 for i in emissive_factor or []]):
         emissive_strength_extension['emissiveStrength'] = max(emissive_factor)
 
     return Extension('KHR_materials_emissive_strength', emissive_strength_extension, False)
