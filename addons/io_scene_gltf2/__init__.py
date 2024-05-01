@@ -1083,8 +1083,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_cameras'] = self.export_cameras
 
         export_settings['gltf_vertex_color'] = self.export_vertex_color
-        export_settings['gltf_all_vertex_colors'] = self.export_all_vertex_colors
-        export_settings['gltf_active_vertex_color_when_no_material'] = self.export_active_vertex_color_when_no_material
+        if self.export_vertex_color == 'NONE':
+            export_settings['gltf_all_vertex_colors'] = False
+            export_settings['gltf_active_vertex_color_when_no_material'] = False
+        else:
+            export_settings['gltf_all_vertex_colors'] = self.export_all_vertex_colors
+            export_settings['gltf_active_vertex_color_when_no_material'] = self.export_active_vertex_color_when_no_material
 
         export_settings['gltf_unused_textures'] = self.export_unused_textures
         export_settings['gltf_unused_images'] = self.export_unused_images
