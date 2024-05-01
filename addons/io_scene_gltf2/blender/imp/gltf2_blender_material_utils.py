@@ -33,6 +33,8 @@ class MaterialHelper:
         if pymat.pbr_metallic_roughness is None:
             pymat.pbr_metallic_roughness = \
                 MaterialPBRMetallicRoughness.from_dict({})
+            # We need to initialize the animations array, for KHR_animation_pointer
+            pymat.pbr_metallic_roughness.animations = []
         self.settings_node = None
 
     def is_opaque(self):
