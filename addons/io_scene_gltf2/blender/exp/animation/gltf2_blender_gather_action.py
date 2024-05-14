@@ -426,6 +426,9 @@ def gather_action_animations(  obj_uuid: int,
             link_samplers(animation, export_settings)
             animations.append(animation)
 
+            # export user extensions for all types of animation
+            export_user_extensions('gather_animation_hook', export_settings, animation, blender_action, blender_object)
+
             # Store data for merging animation later
             if track_name is not None: # Do not take into account animation not in NLA
                 # Do not take into account default NLA track names
