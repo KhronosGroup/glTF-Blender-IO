@@ -479,11 +479,11 @@ def detect_alpha_clip(alpha_nav):
     # Detect 1 - (X < cutoff)
     # (There is no >= node)
     elif nav.node.type == 'MATH' and nav.node.operation == 'SUBTRACT':
-        if nav.get_constant(0) == 1.0:
+        if nav.get_constant(0)[0] == 1.0:
             nav2 = nav.peek_back(1)
             if nav2.moved and nav2.node.type == 'MATH':
-                in0 = nav2.get_constant(0)
-                in1 = nav2.get_constant(1)
+                in0 = nav2.get_constant(0)[0]
+                in1 = nav2.get_constant(1)[0]
                 # X < cutoff
                 if nav2.node.operation == 'LESS_THAN' and in0 is None and in1 is not None:
                     nav2.select_input_socket(0)
