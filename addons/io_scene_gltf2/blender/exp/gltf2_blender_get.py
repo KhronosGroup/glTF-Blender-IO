@@ -13,6 +13,11 @@
 # limitations under the License.
 
 import bpy
+from mathutils import Vector, Matrix
+from ...blender.com.gltf2_blender_conversion import texture_transform_blender_to_gltf
+from ...io.com import gltf2_io_debug
+from ..com.gltf2_blender_material_helpers import get_gltf_node_name, get_gltf_node_old_name
+from .material import gltf2_blender_search_node_tree
 
 def get_animation_target(action_group: bpy.types.ActionGroup):
     return action_group.channels[0].data_path.split('.')[-1]

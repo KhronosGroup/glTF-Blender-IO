@@ -16,7 +16,6 @@ import bpy
 from typing import List, Optional, Tuple
 import numpy as np
 from ...io.com import gltf2_io, gltf2_io_constants, gltf2_io_extensions
-from ...io.com.gltf2_io_debug import print_console
 from ...blender.com.gltf2_blender_data_path import get_sk_exported
 from ...io.exp import gltf2_io_binary_data
 from .gltf2_blender_gather_cache import cached, cached_by_key
@@ -73,6 +72,7 @@ def gather_primitives(
             # We already call this function, in order to retrieve uvmap info, if any
             # So here, only the cache will be used
             base_material, material_info = get_base_material(internal_primitive['material'], materials, export_settings)
+
             # Now, we can retrieve the real material, by checking attributes and active maps
             blender_mat = get_material_from_idx(internal_primitive['material'], materials, export_settings)
             material = get_final_material(blender_mesh, blender_mat, internal_primitive['uvmap_attributes_index'], base_material, material_info["uv_info"], export_settings)
@@ -202,7 +202,7 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
         component_type = gltf2_io_constants.ComponentType.UnsignedInt
         indices = indices.astype(np.uint32, copy=False)
     else:
-        print_console('ERROR', 'A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
+        export_settings['log'].error('A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
         return None
 
     element_type = gltf2_io_constants.DataType.Scalar
@@ -306,6 +306,7 @@ def __gather_extensions(blender_mesh,
             variants.append(variant_extension)
         if len(variants) > 0:
             if i.material:
+                export_settings['current_paths'] = {} #Used for KHR_animation_pointer.
                 base_material, material_info = gather_material(
                         i.material,
                         export_settings

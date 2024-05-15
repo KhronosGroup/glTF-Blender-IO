@@ -33,6 +33,8 @@ class MaterialHelper:
         if pymat.pbr_metallic_roughness is None:
             pymat.pbr_metallic_roughness = \
                 MaterialPBRMetallicRoughness.from_dict({})
+            # We need to initialize the animations array, for KHR_animation_pointer
+            pymat.pbr_metallic_roughness.animations = []
         self.settings_node = None
 
     def is_opaque(self):
@@ -57,10 +59,11 @@ def scalar_factor_and_texture(
     mh: MaterialHelper,
     location,
     label,
-    socket,         # socket to connect to
-    factor,         # scalar factor
-    tex_info,       # texture
-    channel,        # texture channel to use (0-4)
+    socket,                 # socket to connect to
+    factor,                 # scalar factor
+    tex_info,               # texture
+    channel,                # texture channel to use (0-4)
+    force_mix_node=False,   # Needed for KHR_animation_pointer
 ):
     if isinstance(tex_info, dict):
         tex_info = TextureInfo.from_dict(tex_info)
@@ -74,7 +77,7 @@ def scalar_factor_and_texture(
         socket.default_value = factor
         return
 
-    if factor != 1.0:
+    if factor != 1.0 or force_mix_node:
         node = mh.nodes.new('ShaderNodeMath')
         node.label = f'{label} Factor'
         node.location = x - 140, y
@@ -115,9 +118,10 @@ def color_factor_and_texture(
     mh: MaterialHelper,
     location,
     label,
-    socket,           # socket to connect to
-    factor,           # color factor
-    tex_info,         # texture
+    socket,                # socket to connect to
+    factor,                # color factor
+    tex_info,              # texture
+    force_mix_node=False,  # Needed for KHR_animation_pointer
 ):
     if isinstance(tex_info, dict):
         tex_info = TextureInfo.from_dict(tex_info)
@@ -131,7 +135,7 @@ def color_factor_and_texture(
         socket.default_value = [*factor, 1]
         return
 
-    if factor != [1, 1, 1]:
+    if factor != [1, 1, 1] or force_mix_node:
         node = mh.nodes.new('ShaderNodeMix')
         node.data_type = 'RGBA'
         node.label = f'{label} Factor'

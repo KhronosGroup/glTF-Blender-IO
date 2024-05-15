@@ -481,6 +481,26 @@ class GlTF2Exporter:
                 #     for extension_name in new_value.keys():
                 #         self.__append_unique_and_get_index(self.__gltf.extensions_used, extension_name)
                 #         self.__append_unique_and_get_index(self.__gltf.extensions_required, extension_name)
+
+            if self.export_settings['gltf_trs_w_animation_pointer'] is True:
+                if type(node) == gltf2_io.AnimationChannelTarget:
+                    if node.path in ["translation", "rotation", "scale", "weights"]:
+                        if node.extensions is None:
+                            node.extensions = {}
+                        node.extensions["KHR_animation_pointer"] = {"pointer": "/nodes/" + str(node.node) + "/" + node.path}
+                        node.node = None
+                        node.path = "pointer"
+                        self.__append_unique_and_get_index(self.__gltf.extensions_used, "KHR_animation_pointer")
+
+            if type(node) == gltf2_io.AnimationChannelTarget:
+                if node.path not in ["translation", "rotation", "scale", "weights"] and node.path != "pointer":
+                    if node.extensions is None:
+                        node.extensions = {}
+                    node.extensions["KHR_animation_pointer"] = {"pointer": node.path.replace("XXX", str(node.node))}
+                    node.node = None
+                    node.path = "pointer"
+                    self.__append_unique_and_get_index(self.__gltf.extensions_used, "KHR_animation_pointer")
+
             return node
 
 
@@ -545,38 +565,3 @@ class GlTF2Exporter:
 
         # do nothing for any type that does not match a glTF schema (primitives)
         return node
-
-def fix_json(obj):
-    # TODO: move to custom JSON encoder
-    fixed = obj
-    if isinstance(obj, dict):
-        fixed = {}
-        for key, value in obj.items():
-            if key == 'extras' and value is not None:
-                fixed[key] = value
-                continue
-            if not __should_include_json_value(key, value):
-                continue
-            fixed[key] = fix_json(value)
-    elif isinstance(obj, list):
-        fixed = []
-        for value in obj:
-            fixed.append(fix_json(value))
-    elif isinstance(obj, float):
-        # force floats to int, if they are integers (prevent INTEGER_WRITTEN_AS_FLOAT validator warnings)
-        if int(obj) == obj:
-            return int(obj)
-    return fixed
-
-def __should_include_json_value(key, value):
-    allowed_empty_collections = ["KHR_materials_unlit", "KHR_materials_specular"]
-
-    if value is None:
-        return False
-    elif __is_empty_collection(value) and key not in allowed_empty_collections:
-        return False
-    return True
-
-
-def __is_empty_collection(value):
-    return (isinstance(value, dict) or isinstance(value, list)) and len(value) == 0

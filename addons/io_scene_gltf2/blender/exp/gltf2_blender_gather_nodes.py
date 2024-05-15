@@ -16,7 +16,6 @@ import math
 import bpy
 from mathutils import Matrix, Quaternion, Vector
 
-from ...io.com.gltf2_io_debug import print_console
 from ...io.com import gltf2_io
 from ...io.com import gltf2_io_extensions
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
@@ -88,7 +87,16 @@ def __gather_camera(vnode, export_settings):
     if vnode.blender_object.type != 'CAMERA':
         return None
 
-    return gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
+    cam =  gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
+
+    if len(export_settings['current_paths']) > 0:
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)] = {}
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['glTF_camera'] = cam
+
+    export_settings['current_paths'] = {}
+
+    return cam
 
 
 def __gather_children(vnode, export_settings):
@@ -194,7 +202,10 @@ def __gather_extensions(vnode, export_settings):
     extensions = {}
 
     blender_lamp = None
-    if export_settings["gltf_lights"] and vnode.blender_type == VExportNode.INSTANCE:
+    if vnode.blender_type == VExportNode.COLLECTION:
+        return None
+
+    if export_settings["gltf_lights"] and vnode.blender_type == VExportNode.INSTANCE and vnode.data is not None:
         if vnode.data.type in LIGHTS:
             blender_lamp = vnode.data
     elif export_settings["gltf_lights"] and blender_object is not None and (blender_object.type == "LAMP" or blender_object.type == "LIGHT"):
@@ -217,6 +228,12 @@ def __gather_extensions(vnode, export_settings):
                     "light": light_extension
                 }
             )
+            if len(export_settings['current_paths']) > 0:
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)] = {}
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['paths'] = export_settings['current_paths'].copy()
+                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['glTF_light'] = light_extension
+
+            export_settings['current_paths'] = {}
 
     return extensions if extensions else None
 
@@ -261,7 +278,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
         # Be sure that object is valid (no NaN for example)
         res = blender_object.data.validate()
         if res is True:
-            print_console("WARNING", "Mesh " + blender_object.data.name + " is not valid, and may be exported wrongly")
+            export_settings['log'].warning("Mesh " + blender_object.data.name + " is not valid, and may be exported wrongly")
 
         modifiers = blender_object.modifiers
         if len(modifiers) == 0:

@@ -57,7 +57,7 @@ def gather_image(
         # In case we can't retrieve image (for example packed images, with original moved)
         # We don't create invalid image without uri
         factor_uri = None
-        if uri is None: return None, None, None, False
+        if uri is None: return None, None, None, None
 
     buffer_view, factor_buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -350,8 +350,7 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
     keys = list(composed_image.fills.keys()) # do not loop on dict, we may have to delete an element
     for k in [k for k in keys if isinstance(composed_image.fills[k], FillImage)]:
         if composed_image.fills[k].image.size[0] == 0 or composed_image.fills[k].image.size[1] == 0:
-            gltf2_io_debug.print_console("WARNING",
-                                         "Image '{}' has no size and cannot be exported.".format(
+            export_settings['log'].warning("Image '{}' has no size and cannot be exported.".format(
                                              composed_image.fills[k].image))
             del composed_image.fills[k]
 

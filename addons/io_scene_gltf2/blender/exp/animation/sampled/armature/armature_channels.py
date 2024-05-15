@@ -33,7 +33,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
     # Then bake all bones
     bones_to_be_animated = []
     bones_uuid = export_settings["vtree"].get_all_bones(armature_uuid)
-    bones_to_be_animated = [export_settings["vtree"].nodes[b].blender_bone.name for b in bones_uuid]
+    bones_to_be_animated = [export_settings["vtree"].nodes[b].blender_bone.name for b in bones_uuid if export_settings["vtree"].nodes[b].leaf_reference is None]
 
     # List of really animated bones is needed for optimization decision
     list_of_animated_bone_channels = {}

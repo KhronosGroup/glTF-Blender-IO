@@ -16,7 +16,6 @@ import bpy
 from typing import Optional, Dict, List, Any, Tuple
 from ...io.com import gltf2_io
 from ...blender.com.gltf2_blender_data_path import get_sk_exported
-from ...io.com.gltf2_io_debug import print_console
 from ...io.exp.gltf2_io_user_extensions import export_user_extensions
 from ..com.gltf2_blender_extras import generate_extras
 from . import gltf2_blender_gather_primitives
@@ -69,7 +68,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
     )
 
     if len(mesh.primitives) == 0:
-        print_console("WARNING", "Mesh '{}' has no primitives and will be omitted.".format(mesh.name))
+        export_settings['log'].warning("Mesh '{}' has no primitives and will be omitted.".format(mesh.name))
         return None
 
     blender_object = None
@@ -116,7 +115,8 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     if export_settings['gltf_extras']:
         extras = generate_extras(blender_mesh) or {}
 
-    if export_settings['gltf_morph'] and blender_mesh.shape_keys:
+    # Not for GN Instances
+    if export_settings['gltf_morph'] and blender_mesh.shape_keys and blender_mesh.users != 0:
         morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
         if morph_max > 0:
             extras['targetNames'] = [k.name for k in get_sk_exported(blender_mesh.shape_keys.key_blocks)]
@@ -156,6 +156,10 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
                      export_settings
                      ) -> Optional[List[float]]:
     if not export_settings['gltf_morph'] or not blender_mesh.shape_keys:
+        return None
+
+    # Not for GN Instances
+    if blender_mesh.users == 0:
         return None
 
     morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
