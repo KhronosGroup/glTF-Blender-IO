@@ -409,6 +409,7 @@ class PrimitiveCreator:
 
         self.uvmap_attribute_list = [] # Initialize here, in case we don't have any triangle primitive
 
+        no_materials = True
         materials_use_vc = None
         warning_already_displayed = False
         for material_idx in self.prim_indices.keys():
@@ -458,6 +459,8 @@ class PrimitiveCreator:
                 self.dots = dots
 
             mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
+            if mat is not None:
+                no_materials = False
 
             # There are multiple case to take into account for VC
             if self.export_settings['gltf_vertex_color'] == "NONE":
@@ -695,29 +698,31 @@ class PrimitiveCreator:
 
         # Now, we need to add additional Vertex Color if needed
         if self.export_settings['gltf_all_vertex_colors'] is True:
-            if len(self.vc_infos) == 0 and len(self.blender_mesh.color_attributes) > 0:
-                # We need to add a fake Vertex Color
-                self.vc_infos.append({
-                    'gltf_name': 'COLOR_0',
-                    'forced': True
-                })
-                self.vc_infos_index += 1
-
-            # Now, loop on existing Vertex Color, and add the missing ones
-            for vc in self.blender_mesh.color_attributes:
-                if vc.name not in [v['color'] for v in self.vc_infos if v['forced'] is False]:
-                    add_alpha = mat is not None and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+            if no_materials is False:
+                if len(self.vc_infos) == 0 and len(self.blender_mesh.color_attributes) > 0:
+                    # We need to add a fake Vertex Color
                     self.vc_infos.append({
-                        'color': vc.name,
-                        'alpha': vc.name,
-                        'add_alpha': False,
-                        'gltf_name': 'COLOR_' + str(self.vc_infos_index),
-                        'forced': False
+                        'gltf_name': 'COLOR_0',
+                        'forced': True
                     })
                     self.vc_infos_index += 1
 
-            # Now, we need to populate Vertex Color data
-            self.__manage_color_attributes()
+            # Now, loop on existing Vertex Color, and add the missing ones
+            if no_materials is False or (no_materials is True and self.export_settings['gltf_active_vertex_color_when_no_material'] is True):
+                for vc in self.blender_mesh.color_attributes:
+                    if vc.name not in [v['color'] for v in self.vc_infos if v['forced'] is False]:
+                        add_alpha = mat is not None and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                        self.vc_infos.append({
+                            'color': vc.name,
+                            'alpha': vc.name,
+                            'add_alpha': False,
+                            'gltf_name': 'COLOR_' + str(self.vc_infos_index),
+                            'forced': False
+                        })
+                        self.vc_infos_index += 1
+
+        # Now, we need to populate Vertex Color data
+        self.__manage_color_attributes()
 
         self.prim_indices = new_prim_indices
 
