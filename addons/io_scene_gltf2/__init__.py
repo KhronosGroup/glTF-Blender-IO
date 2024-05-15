@@ -617,7 +617,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_pointer_animation: BoolProperty(
         name='Export Animation Pointer (Experimental)',
-        description='Export material, Light & Camera animation as Animation Pointer.',
+        description='Export material, Light & Camera animation as Animation Pointer',
         default=False
     )
 
