@@ -288,7 +288,6 @@ Image Texture node connected, the ``KHR_materials_specular`` glTF extension will
 included in the export.
 
 
-
 Anisotropy
 ^^^^^^^^^^
 
@@ -674,7 +673,7 @@ Actions (default)
 ^^^^^^^^^^^^^^^^^
 
 An action will be exported if it is the active action on an object, or it is stashed to an NLA track
-(e.g. with the *Stash* or *Push Down* buttons in the :doc:`Action Editor </editors/dope_sheet/action>`).
+(e.g. with the *Stash* or *Push Down* buttons in the :doc:`Action Editor </editors/dope_sheet/modes/action>`).
 Actions which are **not** associated with an object in one of these ways are **not exported**.
 If you have multiple actions you want to export, make sure they are stashed!
 
