@@ -446,34 +446,42 @@ Leave this box unchecked for double-sided materials.
    The inverse of this setting controls glTF's ``DoubleSided`` flag.
 
 
-Blend Modes
+Alpha Modes
 ^^^^^^^^^^^
 
-The Base Color input can optionally supply alpha values.
-How these values are treated by glTF depends on the selected blend mode.
-
-With the EEVEE render engine selected, each material has a Blend Mode on
-the material settings panel. Use this setting to define how alpha values from
-the Base Color channel are treated in glTF. Three settings are supported by glTF:
+glTF has three alpha modes, depending on whether the alpha value is always 1, always 0 or
+1, or can be between 0 and 1. The exporter determines the alpha mode automatically from
+the nodes connected to the Alpha socket.
 
 Opaque
-   Alpha values are ignored.
-Alpha Blend
-   Lower alpha values cause blending with background objects.
-Alpha Clip
-   Alpha values below the *Clip Threshold* setting will cause portions
-   of the material to not be rendered at all. Everything else is rendered as opaque.
+   In *opaque mode*, the material alpha is always 1.
 
-.. figure:: /images/addons_import-export_scene-gltf2_material-alpha-blend.png
+  .. figure:: /images/addons_import-export_scene-gltf2_material-opaque.png
 
-   With the EEVEE engine selected, a material's blend modes are configurable.
+Mask
+   In *mask mode*, the material alpha is always 0 or 1. This creates "cutout"
+   transparency, where there is a hard edge between opaque and transparent regions, and
+   can be used for things like leaves or cloth with holes. To enable this mode, use a Math
+   node to round the alpha value to either 0 or 1.
 
-.. note::
+   .. figure:: /images/addons_import-export_scene-gltf2_material-round-alpha.png
 
-   Be aware that transparency (or *Alpha Blend* mode) is complex for real-time engines
-   to render, and may behave in unexpected ways after export. Where possible,
-   use *Alpha Clip* mode instead, or place *Opaque* polygons behind only
-   a single layer of *Alpha Blend* polygons.
+   Rounding snaps alpha values that are 0.5 or greater up to 1, and ones below 0.5 down to
+   0. It is also possible to use a cutoff value different than 0.5 by using Math nodes to
+   do `1 - (alpha < cutoff)`.
+
+   Mask mode is essentially the same as EEVEE's "Alpha Clip" blend mode, but is done with
+   shader nodes so it works in other render engines.
+
+Blend
+   Materials that use neither of these will use *blend mode*. Blend mode allows partially
+   transparent surfaces that tint the objects seen through them, like layers of colored
+   film. However, partial transparency is complex to render, and glTF viewers may show
+   visual artifacts in non-trivial scenes that use blend mode.
+
+   To avoid artifacts, it may be a good idea to separate out parts of a model that can use
+   opaque or mask mode, and use blend mode only on the parts where it is necessary, or to
+   use only a *single* layer of transparent polygons in front of opaque objects.
 
 
 UV Mapping
