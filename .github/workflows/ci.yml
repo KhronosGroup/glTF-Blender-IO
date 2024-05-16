@@ -61,7 +61,7 @@ jobs:
       run: |
         sudo ln -s /opt/blender/blender /usr/local/bin/blender
         blender --version
-        ADDON_DIR=/opt/blender/$BLENDER_MAJOR.$BLENDER_MINOR/scripts/addons
+        ADDON_DIR=/opt/blender/$BLENDER_MAJOR.$BLENDER_MINOR/scripts/addons_core
         rm -rf $ADDON_DIR/io_scene_gltf2
         cp -r addons/io_scene_gltf2 $ADDON_DIR
         cd tests
