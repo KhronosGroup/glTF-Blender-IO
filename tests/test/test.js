@@ -2650,7 +2650,7 @@ describe('Exporter', function () {
             });
 
             it('exports vertex color - Material nodetree - All - without export without mat', function () {
-                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_nodetree_all_no_nomat.gltf');
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_nodetree_all_without_nomat.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath));
 
                 let bufferCache = {};
@@ -3132,140 +3132,6 @@ describe('Exporter', function () {
                 colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
                 assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
                 assert.ok(!("COLOR_1" in primitive.attributes));
-
-            });
-
-            it('exports vertex color - Material nodetree - All - without export without mat', function () {
-                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_nodetree_all_without_nomat.gltf');
-                var asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                let bufferCache = {};
-
-                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
-                assert.ok(!("COLOR_0" in primitive.attributes));
-                assert.ok(!("COLOR_1" in primitive.attributes));
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
-                assert.ok(!("COLOR_0" in primitive.attributes));
-                assert.ok(!("COLOR_1" in primitive.attributes));
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
-                assert.ok(!("COLOR_0" in primitive.attributes));
-                assert.ok(!("COLOR_1" in primitive.attributes));
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
-                assert.ok(!("COLOR_0" in primitive.attributes));
-                assert.ok(!("COLOR_1" in primitive.attributes));
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
-                assert.ok(!("COLOR_0" in primitive.attributes));
-                assert.ok(!("COLOR_1" in primitive.attributes));
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 1.0]);
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 1.0]);
-                assert.ok("COLOR_2" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_2, bufferCache);
-                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok("COLOR_2" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_2, bufferCache);
-                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
-                assert.ok(!("COLOR_0" in primitive.attributes));
-                assert.ok(!("COLOR_1" in primitive.attributes));
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok(!("COLOR_1" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok(!("COLOR_1" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
-                assert.ok(!("COLOR_2" in primitive.attributes));
-
-                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
-                assert.ok("COLOR_0" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
-                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
-                assert.ok("COLOR_1" in primitive.attributes);
-                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
-                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
-                assert.ok(!("COLOR_2" in primitive.attributes));
 
             });
 
