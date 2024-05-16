@@ -412,6 +412,7 @@ class PrimitiveCreator:
         no_materials = True
         materials_use_vc = None
         warning_already_displayed = False
+        warning_already_displayed_vc_nodetree = False
         for material_idx in self.prim_indices.keys():
             base_material, material_info = get_base_material(material_idx, self.materials, self.export_settings)
 
@@ -508,6 +509,11 @@ class PrimitiveCreator:
                                 self.vc_infos_index += 1
                             else:
                                 pass # Using the same Vertex Color
+
+                    elif base_material is not None and self.export_settings['gltf_vertex_color'] == "MATERIAL":
+                        if warning_already_displayed_vc_nodetree is False:
+                            self.export_settings['log'].warning('The active Vertex Color will not be exported, as it is not used in the node tree of the material')
+                            warning_already_displayed_vc_nodetree = True
 
                 # There is only alpha Vertex Color in node tree
                 elif material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None:
