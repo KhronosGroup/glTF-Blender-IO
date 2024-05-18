@@ -149,6 +149,9 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
         case 5121:  // UNSIGNED_BYTE
             componentSize = 1;
             break;
+        case 5123:  // UNSIGNED_SHORT
+            componentSize = 2;
+            break;
         default:
             throw new Error("Untested accessor componentType " + accessor.componentType);
     }
@@ -184,6 +187,9 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
                     break;
                 case 5121:  // UNSIGNED_BYTE
                     accessorData.push(bufferViewData.readUInt8(o + j * componentSize));
+                    break;
+                case 5123:  // UNSIGNED_SHORT
+                    accessorData.push(bufferViewData.readUInt16LE(o + j * componentSize));
                     break;
                 default:
                     throw new Error("Untested accessor componentType " + accessor.componentType);

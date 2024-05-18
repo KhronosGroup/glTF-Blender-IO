@@ -413,6 +413,7 @@ class PrimitiveCreator:
         materials_use_vc = None
         warning_already_displayed = False
         warning_already_displayed_vc_nodetree = False
+        some_alpha = False
         for material_idx in self.prim_indices.keys():
             base_material, material_info = get_base_material(material_idx, self.materials, self.export_settings)
 
@@ -459,8 +460,7 @@ class PrimitiveCreator:
             if len(additional_fields) > 0:
                 self.dots = dots
 
-            mat = get_material_from_idx(material_idx, self.materials, self.export_settings)
-            if mat is not None:
+            if base_material is not None:
                 no_materials = False
 
             # There are multiple case to take into account for VC
@@ -497,8 +497,9 @@ class PrimitiveCreator:
 
                             elif materials_use_vc is None:
                                 materials_use_vc = vc_key
-                                add_alpha = vc_alpha_name is not None
-                                add_alpha = mat is not None and add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                                add_alpha = True # As we are using the active Vertex Color without checking node tree, we need to add alpha
+                                if add_alpha is True:
+                                    some_alpha = True
                                 self.vc_infos.append({
                                     'color': vc_color_name,
                                     'alpha': vc_alpha_name,
@@ -519,7 +520,7 @@ class PrimitiveCreator:
                 elif material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None:
                     self.export_settings['log'].warning('We are not managing this case for now (Vertex Color alpha without color)')
 
-                # There are some Vertex Color in node tree
+                # There are some Vertex Color in node tree (or there is no material)
                 else:
                     vc_color_name = None
                     vc_alpha_name = None
@@ -552,7 +553,9 @@ class PrimitiveCreator:
                         elif materials_use_vc is None:
                             materials_use_vc = vc_key
                             add_alpha = vc_alpha_name is not None
-                            add_alpha = mat is not None and add_alpha and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                            add_alpha = add_alpha and material_info['vc_info']['alpha_mode'] != "OPAQUE"
+                            if add_alpha is True:
+                                some_alpha = True
                             self.vc_infos.append({
                                 'color': vc_color_name,
                                 'alpha': vc_alpha_name,
@@ -717,11 +720,11 @@ class PrimitiveCreator:
             if no_materials is False or (no_materials is True and self.export_settings['gltf_active_vertex_color_when_no_material'] is True):
                 for vc in self.blender_mesh.color_attributes:
                     if vc.name not in [v['color'] for v in self.vc_infos if v['forced'] is False]:
-                        add_alpha = mat is not None and not (mat.blend_method is None or mat.blend_method == 'OPAQUE')
+                        add_alpha = some_alpha is True
                         self.vc_infos.append({
                             'color': vc.name,
                             'alpha': vc.name,
-                            'add_alpha': False,
+                            'add_alpha': add_alpha,
                             'gltf_name': 'COLOR_' + str(self.vc_infos_index),
                             'forced': False
                         })
