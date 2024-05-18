@@ -53,7 +53,7 @@ For import, glTF data is parsed and written into the Python glTF scene descripti
 Installation
 ------------
 
-The Khronos glTF 2.0 importer and exporter is enabled by default in [Blender 2.8](https://www.blender.org/2-8/) and higher. To reinstall it — for example, when testing recent or upcoming changes — copy the `addons/io_scene_gltf2` folder into the `scripts/addons/` directory of the Blender installation, then enable it under the *Add-ons* tab. For additional development documentation, see [Debugging](DEBUGGING.md).
+The Khronos glTF 2.0 importer and exporter is enabled by default in [Blender 2.8](https://www.blender.org/2-8/) and higher. To reinstall it — for example, when testing recent or upcoming changes — copy the `addons/io_scene_gltf2` folder into the `scripts/addons_core/` directory of the Blender installation, then enable it under the *Add-ons* tab. For additional development documentation, see [Debugging](DEBUGGING.md).
 
 Debugging
 ---------
