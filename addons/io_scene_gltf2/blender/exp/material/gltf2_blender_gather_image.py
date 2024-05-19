@@ -410,7 +410,7 @@ def __is_blender_image_a_webp(image: bpy.types.Image) -> bool:
 def get_gltf_image_from_blender_image(blender_image_name, export_settings):
     image_data = ExportImage.from_blender_image(bpy.data.images[blender_image_name])
 
-    name = __gather_name(image_data, export_settings)
+    name = __gather_name(image_data, None, export_settings)
     mime_type = __get_mime_type_of_image(blender_image_name, export_settings)
 
     uri, _ = __gather_uri(image_data, mime_type, name, export_settings)
