@@ -25,6 +25,7 @@ class Channel(enum.IntEnum):
     G = 1
     B = 2
     A = 3
+    RGB2BW = 4
 
 # These describe how an ExportImage's channels should be filled.
 
@@ -40,6 +41,11 @@ class FillImageTile:
         self.image = image
         self.tile = tile
         self.src_chan = src_chan
+
+class FillImageRGB2BW:
+    """Fills a channel from a Blender image, RGB 2 BW"""
+    def __init__(self, image: bpy.types.Image):
+        self.image = image
 
 class FillWhite:
     """Fills a channel with all ones (1.0)."""
@@ -123,6 +129,9 @@ class ExportImage:
 
     def fill_image_tile(self, image: bpy.types.Image, tile, dst_chan: Channel, src_chan: Channel):
         self.fills[dst_chan] = FillImageTile(image, tile, src_chan)
+
+    def fill_image_bw(self, image: bpy.types.Image, dst_chan: Channel):
+        self.fills[dst_chan] = FillImageRGB2BW(image)
 
     def store_data(self, identifier, data, type='Image'):
         if type == "Image": # This is an image
@@ -216,7 +225,7 @@ class ExportImage:
         # Find all Blender images used
         images = []
         for fill in self.fills.values():
-            if isinstance(fill, FillImage):
+            if isinstance(fill, FillImage) or isinstance(fill, FillImageRGB2BW):
                 if fill.image not in images:
                     images.append(fill.image)
                     export_settings['exported_images'][fill.image.name] = 2 # 2 = partially used
@@ -249,6 +258,8 @@ class ExportImage:
                     out_buf[int(dst_chan)::4] = tmp_buf[int(fill.src_chan)::4]
                 elif isinstance(fill, FillWith):
                     out_buf[int(dst_chan)::4] = fill.value
+                elif isinstance(fill, FillImageRGB2BW) and fill.image == image:
+                    out_buf[int(dst_chan)::4] = tmp_buf[0::4] * 0.2989 + tmp_buf[1::4] * 0.5870 + tmp_buf[2::4] * 0.1140
 
         tmp_buf = None  # GC this
 
