@@ -415,9 +415,7 @@ class PrimitiveCreator:
             self.uvmap_attribute_list = list(set([i['value'] for i in material_info["uv_info"].values() if 'type' in i.keys() and i['type'] == "Attribute" ]))
 
             # Check that attributes are not regular UVMaps
-            for uvmap in self.uvmap_attribute_list:
-                if uvmap in self.blender_mesh.uv_layers:
-                    self.uvmap_attribute_list.remove(uvmap)
+            self.uvmap_attribute_list = [i for i in self.uvmap_attribute_list if i not in self.blender_mesh.uv_layers.keys()]
 
             additional_fields = []
             for attr in self.uvmap_attribute_list:
