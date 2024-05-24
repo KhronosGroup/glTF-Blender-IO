@@ -172,10 +172,10 @@ may not be spare power for computing such things at render time.
 
 .. tip::
 
-   The easiest way to create the custom node group is to import an existing glTF model
-   that contains an occlusion map, such as
-   the `water bottle <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
-   or another existing model. A manually created custom node group can also be used.
+   If you enable Shader Editor Add-ons in preferences, you will be able to add this custom node group from Menu:
+   Add > Output > glTF Material Output
+
+   .. figure:: /images/addons_import-export_scene-gltf2_addon-preferences-shader.png
 
 glTF stores occlusion in the red (``R``) channel, allowing it to optionally share
 the same image with the roughness and metallic channels.
@@ -467,7 +467,7 @@ Mask
    .. figure:: /images/addons_import-export_scene-gltf2_material-round-alpha.png
 
    Rounding snaps alpha values that are 0.5 or greater up to 1, and ones below 0.5 down to
-   0. It is also possible to use a cutoff value different than 0.5 by using Math nodes to
+   1. It is also possible to use a cutoff value different than 0.5 by using Math nodes to
    do `1 - (alpha < cutoff)`.
 
    Mask mode is essentially the same as EEVEE's "Alpha Clip" blend mode, but is done with
@@ -900,8 +900,6 @@ Normals
    Export vertex normals with meshes.
 Tangents
    Export vertex tangents with meshes.
-Vertex Colors
-   Export Color Attributes with meshes.
 Attributes
    Export Attributes with meshes, when the name starts with underscore.
 Loose Edges
@@ -911,6 +909,18 @@ Loose Points
 Shared Accessor
    For triangles, use shared accessor for indices. This is more efficient (smaller files when you have lots of
    materials).
+
+Data - Mesh - Vertex Color
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Use Vertex Color
+   Material: Export vertex color when used in material node tree as Base Color multiplier. This is the default, and the most accurate regarding glTF specification.
+   Active: Export active vertex colors, even if not used in material node tree. A fully compliant glTF viewer should display this VC as Base Color multiplier.
+   None: Do not export vertex color.
+Export all vertex colors
+   Export all vertex colors, additional VC will be COLOR_1, COLOR_2, etc.
+Export active vertex color when no material
+   Export active vertex color when no material is assigned to the object.
+
 
 Data - Material
 ^^^^^^^^^^^^^^^

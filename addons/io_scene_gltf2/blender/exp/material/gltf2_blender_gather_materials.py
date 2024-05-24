@@ -64,7 +64,7 @@ def gather_material(blender_material, export_settings):
     :return: a glTF material
     """
     if not __filter_material(blender_material, export_settings):
-        return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None}, "udim_info": {}}
+        return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None, 'alpha_mode': "OPAQUE"}, "udim_info": {}}
 
     # Reset exported images / textures nodes
     export_settings['exported_texture_nodes'] = []
@@ -454,7 +454,7 @@ def __export_unlit(blender_material, export_settings):
 
     info = gltf2_unlit.detect_shadeless_material(blender_material.node_tree, blender_material.use_nodes, export_settings)
     if info is None:
-        return None, {}, {"color": None, "alpha": None, "color_type": None, "alpha_type": None}, {}
+        return None, {}, {"color": None, "alpha": None, "color_type": None, "alpha_type": None, "alpha_mode": "OPAQUE"}, {}
 
     base_color_texture, uvmap_info, udim_info = gltf2_unlit.gather_base_color_texture(info, export_settings)
 
@@ -537,7 +537,12 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
         elif v['type'] == 'Active':
             indices[m] = get_active_uvmap_index(mesh)
         elif v['type'] == "Attribute":
-            indices[m] = attr_indices[v['value']]
+            # This can be a regular UVMap or a custom attribute
+            i = mesh.uv_layers.find(v['value'])
+            if i >= 0:
+                indices[m] = i
+            else:
+                indices[m] = attr_indices[v['value']]
 
     # Now we have all needed indices, let's create a set that can be used for caching, so containing all possible textures
     all_textures = get_all_textures(additional_indices)
@@ -638,7 +643,8 @@ def get_base_material(material_idx, materials, export_settings):
             "color": None,
             "alpha": None,
             "color_type": None,
-            "alpha_type": None
+            "alpha_type": None,
+            "alpha_mode": "OPAQUE"
         },
         "udim_info": {}
     }
@@ -652,8 +658,12 @@ def get_base_material(material_idx, materials, export_settings):
 
     if material is None:
         # If no material, the mesh can still have vertex color
-        # So, retrieving it
-        material_info["vc_info"] = {"color_type": "active", "alpha_type": "active"}
+        # So, retrieving it if user request it
+        if export_settings['gltf_active_vertex_color_when_no_material'] is True:
+            material_info["vc_info"] = {"color_type": "active", "alpha_type": "active"}
+            # VC will have alpha, as there is no material to know if alpha is used or not
+            material_info["vc_info"]["alpha_mode"] = "BLEND"
+
 
     return material, material_info
 
