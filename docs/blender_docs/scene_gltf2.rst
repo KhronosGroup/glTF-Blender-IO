@@ -900,8 +900,6 @@ Normals
    Export vertex normals with meshes.
 Tangents
    Export vertex tangents with meshes.
-Vertex Colors
-   Export Color Attributes with meshes.
 Attributes
    Export Attributes with meshes, when the name starts with underscore.
 Loose Edges
@@ -911,6 +909,18 @@ Loose Points
 Shared Accessor
    For triangles, use shared accessor for indices. This is more efficient (smaller files when you have lots of
    materials).
+
+Data - Mesh - Vertex Color
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+Use Vertex Color
+   Material: Export vertex color when used in material node tree as Base Color multiplier. This is the default, and the most accurate regarding glTF specification.
+   Active: Export active vertex colors, even if not used in material node tree. A fully compliant glTF viewer should display this VC as Base Color multiplier.
+   None: Do not export vertex color.
+Export all vertex colors
+   Export all vertex colors, additional VC will be COLOR_1, COLOR_2, etc.
+Export active vertex color when no material
+   Export active vertex color when no material is assigned to the object.
+
 
 Data - Material
 ^^^^^^^^^^^^^^^

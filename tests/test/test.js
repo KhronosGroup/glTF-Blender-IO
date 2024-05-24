@@ -146,6 +146,12 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
         case 5126:  // FLOAT
             componentSize = 4;
             break;
+        case 5121:  // UNSIGNED_BYTE
+            componentSize = 1;
+            break;
+        case 5123:  // UNSIGNED_SHORT
+            componentSize = 2;
+            break;
         default:
             throw new Error("Untested accessor componentType " + accessor.componentType);
     }
@@ -175,7 +181,19 @@ function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
     const accessorData = [];
     for (let i = 0, o = byteOffset; i < count; ++i, o += stride) {
         for (let j = 0; j < numElements; ++j) {
-            accessorData.push(bufferViewData.readFloatLE(o + (j * componentSize)));
+            switch (accessor.componentType) {
+                case 5126:  // FLOAT
+                    accessorData.push(bufferViewData.readFloatLE(o + (j * componentSize)));
+                    break;
+                case 5121:  // UNSIGNED_BYTE
+                    accessorData.push(bufferViewData.readUInt8(o + j * componentSize));
+                    break;
+                case 5123:  // UNSIGNED_SHORT
+                    accessorData.push(bufferViewData.readUInt16LE(o + j * componentSize));
+                    break;
+                default:
+                    throw new Error("Untested accessor componentType " + accessor.componentType);
+            }
         }
     }
     return accessorData;
@@ -2197,936 +2215,1862 @@ describe('Exporter', function () {
                 assert.ok(!("extras" in asset));
             });
 
+            it('exports vertex color - None', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_none.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                // loop on each primitive, check if the vertex color is present
+                for (var i = 0; i < asset.meshes.length; i++) {
+                    assert.ok(!("COLOR_0" in asset.meshes[i].primitives[0].attributes));
+                }
+            });
+
+            it('exports vertex color - Active - Not all - export without mat', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_active_not_all.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                let colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+            });
+
+            it('exports vertex color - Active - Not all - no export without mat', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_active_not_all_no_nomat.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 0.1]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+            });
+
+            it('exports vertex color - Active - All - no export without mat', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_active_all_no_nomat.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+            });
+
+            it('exports vertex color - Active - All - with export without mat', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_active_all_with_nomat.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok("COLOR_1" in primitive.attributes);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+            });
+
+            it('exports vertex color - Material nodetree - All - without export without mat', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_nodetree_all_without_nomat.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 1.0]);
+                assert.ok("COLOR_2" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_2, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_2" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_2, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+            });
+
+            it('exports vertex color - Material nodetree - All - with export without mat', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_nodetree_all_with_nomat.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 1.0]);
+                assert.ok("COLOR_2" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_2, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_2" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_2, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok("COLOR_1" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_1, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+            });
+
+            it('exports vertex color - Material nodetree - Not All - with export without mat', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_nodetree_not_all_with_nomat.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+            });
+
+            it('exports vertex color - Material nodetree - Not All - without export without mat', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_nodetree_not_all_without_nomat.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                assert.ok(!("COLOR_2" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 0.0, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+
+            });
+
         });
     });
-});
 
-describe('Importer / Exporter (Roundtrip)', function () {
-    blenderVersions.forEach(function (blenderVersion) {
-        let variants = [
-            ['', ''],
-            ['_glb', '--glb']
-        ];
+    describe('Importer / Exporter (Roundtrip)', function () {
+        blenderVersions.forEach(function (blenderVersion) {
+            let variants = [
+                ['', ''],
+                ['_glb', '--glb']
+            ];
 
-        variants.forEach(function (variant) {
-            const args = variant[1];
-            describe(blenderVersion + '_roundtrip' + variant[0], function () {
-                let dirs = fs.readdirSync('roundtrip');
-                dirs.forEach((dir) => {
-                    if (!fs.statSync('roundtrip/' + dir).isDirectory())
-                        return;
+            variants.forEach(function (variant) {
+                const args = variant[1];
+                describe(blenderVersion + '_roundtrip' + variant[0], function () {
+                    let dirs = fs.readdirSync('roundtrip');
+                    dirs.forEach((dir) => {
+                        if (!fs.statSync('roundtrip/' + dir).isDirectory())
+                            return;
 
-                    it(dir, function (done) {
-                        let outDirName = 'out' + blenderVersion + variant[0];
-                        let gltfSrcPath = `roundtrip/${dir}/${dir}.gltf`;
-                        let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
-                        let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                        let gltfDstPath = path.resolve(outDirPath, `${dir}${ext}`);
-                        let gltfOptionsPath = `roundtrip/${dir}/${dir}_options.txt`;
-                        let gltfnovalidatorPath = `roundtrip/${dir}/${dir}_noval.txt`;
-                        let options = args;
-                        if (fs.existsSync(gltfOptionsPath)) {
-                            options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
-                        }
-                        //return done(); // uncomment to not roundtrip all files
-                        blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
-                            if (error) {
-                                if (options.indexOf("--no-validate") !== -1) { return done(); }
-                                return done(error);
+                        it(dir, function (done) {
+                            let outDirName = 'out' + blenderVersion + variant[0];
+                            let gltfSrcPath = `roundtrip/${dir}/${dir}.gltf`;
+                            let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
+                            let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                            let gltfDstPath = path.resolve(outDirPath, `${dir}${ext}`);
+                            let gltfOptionsPath = `roundtrip/${dir}/${dir}_options.txt`;
+                            let gltfnovalidatorPath = `roundtrip/${dir}/${dir}_noval.txt`;
+                            let options = args;
+                            if (fs.existsSync(gltfOptionsPath)) {
+                                options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                             }
-
-                            validateGltf(gltfSrcPath, (error, gltfSrcReport) => {
+                            //return done(); // uncomment to not roundtrip all files
+                            blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                                 if (error) {
                                     if (options.indexOf("--no-validate") !== -1) { return done(); }
                                     return done(error);
                                 }
 
-
-                                validateGltf(gltfDstPath, (error, gltfDstReport) => {
+                                validateGltf(gltfSrcPath, (error, gltfSrcReport) => {
                                     if (error) {
                                         if (options.indexOf("--no-validate") !== -1) { return done(); }
                                         return done(error);
                                     }
 
 
-                                    let reduceKeys = function (raw, allowed) {
-                                        return Object.keys(raw)
-                                            .filter(key => allowed.includes(key))
-                                            .reduce((obj, key) => {
-                                                obj[key] = raw[key];
-                                                return obj;
-                                            }, {});
-                                    };
+                                    validateGltf(gltfDstPath, (error, gltfDstReport) => {
+                                        if (error) {
+                                            if (options.indexOf("--no-validate") !== -1) { return done(); }
+                                            return done(error);
+                                        }
 
-                                    let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
-                                    let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
 
-                                    if (options.indexOf("--no-validate") !== -1) {
-                                        if (!fs.existsSync(gltfnovalidatorPath)) {
-                                            try {
-                                                assert.deepStrictEqual(dstInfo, srcInfo);
-                                            } catch (ex) {
-                                                done(new Error("Validation summary mismatch.\nExpected summary:\n" +
-                                                    JSON.stringify(srcInfo, null, '  ') +
-                                                    "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
-                                                return;
+                                        let reduceKeys = function (raw, allowed) {
+                                            return Object.keys(raw)
+                                                .filter(key => allowed.includes(key))
+                                                .reduce((obj, key) => {
+                                                    obj[key] = raw[key];
+                                                    return obj;
+                                                }, {});
+                                        };
+
+                                        let srcInfo = reduceKeys(gltfSrcReport.info, validator_info_keys);
+                                        let dstInfo = reduceKeys(gltfDstReport.info, validator_info_keys);
+
+                                        if (options.indexOf("--no-validate") !== -1) {
+                                            if (!fs.existsSync(gltfnovalidatorPath)) {
+                                                try {
+                                                    assert.deepStrictEqual(dstInfo, srcInfo);
+                                                } catch (ex) {
+                                                    done(new Error("Validation summary mismatch.\nExpected summary:\n" +
+                                                        JSON.stringify(srcInfo, null, '  ') +
+                                                        "\n\nActual summary:\n" + JSON.stringify(dstInfo, null, '  ')));
+                                                    return;
+                                                }
                                             }
                                         }
-                                    }
 
-                                    done();
+                                        done();
+                                    });
                                 });
-                            });
-                        }, options);
+                            }, options);
+                        });
                     });
                 });
             });
-        });
 
-        describe(blenderVersion + '_roundtrip_results', function () {
-            let outDirName = 'out' + blenderVersion;
+            describe(blenderVersion + '_roundtrip_results', function () {
+                let outDirName = 'out' + blenderVersion;
 
-            it('roundtrips alpha blend mode', function () {
-                let dir = '01_alpha_blend';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                it('roundtrips alpha blend mode', function () {
+                    let dir = '01_alpha_blend';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                assert.strictEqual(asset.materials.length, 2);
+                    assert.strictEqual(asset.materials.length, 2);
 
-                const opaqueMaterials = asset.materials.filter(m => m.name === 'Cube');
-                assert.strictEqual(opaqueMaterials.length, 1);
-                assert.strictEqual(opaqueMaterials[0].alphaMode, undefined);
+                    const opaqueMaterials = asset.materials.filter(m => m.name === 'Cube');
+                    assert.strictEqual(opaqueMaterials.length, 1);
+                    assert.strictEqual(opaqueMaterials[0].alphaMode, undefined);
 
-                const blendedMaterials = asset.materials.filter(m => m.name === 'Transparent_Plane');
-                assert.strictEqual(blendedMaterials.length, 1);
-                assert.strictEqual(blendedMaterials[0].alphaMode, 'BLEND');
-            });
-
-            it('roundtrips alpha mask mode', function () {
-                let dir = '01_alpha_mask';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-                assert.strictEqual(asset.materials[0].alphaMode, 'MASK');
-                assert.equalEpsilon(asset.materials[0].alphaCutoff, 0.42);
-            });
-
-            it('roundtrips the doubleSided flag', function () {
-                let dir = '01_single_vs_double_sided';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 2);
-
-                const singleSidedMaterials = asset.materials.filter(m => m.name === 'mat_single');
-                assert.strictEqual(singleSidedMaterials.length, 1);
-                assert.strictEqual(singleSidedMaterials[0].doubleSided, undefined);
-
-                const doubleSidedMaterials = asset.materials.filter(m => m.name === 'mat_double');
-                assert.strictEqual(doubleSidedMaterials.length, 1);
-                assert.strictEqual(doubleSidedMaterials[0].doubleSided, true);
-            });
-
-            it('roundtrips a morph target animation', function () {
-                let dir = '01_morphed_cube';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-                assert.strictEqual(asset.animations.length, 1);
-
-                const animation = asset.animations[0];
-                assert.strictEqual(animation.channels.length, 1);
-                assert.strictEqual(animation.samplers.length, 1);
-                assert.strictEqual(animation.channels[0].sampler, 0);
-                assert.strictEqual(animation.channels[0].target.path, 'weights');
-                assert.strictEqual(animation.samplers[0].interpolation, 'CUBICSPLINE');
-
-                const animatedNode = asset.nodes[animation.channels[0].target.node];
-                const animatedMesh = asset.meshes[animatedNode.mesh];
-                const targetNames = animatedMesh.extras.targetNames;
-                assert.strictEqual(targetNames.length, 2);
-                assert.notStrictEqual(targetNames.indexOf('Top'), -1);
-                assert.notStrictEqual(targetNames.indexOf('Bottom'), -1);
-
-                let bufferCache = {};
-                const inputData = getAccessorData(gltfPath, asset, animation.samplers[0].input, bufferCache);
-                const expectedInputData = [0, 1, 2];
-                assert.equalEpsilonArray(inputData, expectedInputData);
-
-                const outputData = getAccessorData(gltfPath, asset, animation.samplers[0].output, bufferCache);
-                const expectedOutputData = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0];
-                assert.equalEpsilonArray(outputData, expectedOutputData);
-            });
-
-            it('roundtrips a base color', function () {
-                let dir = '01_principled_material';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-                const textureIndex = asset.materials[0].pbrMetallicRoughness.baseColorTexture.index;
-                const imageIndex = asset.textures[textureIndex].source;
-
-                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_baseColor.png');
-                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_baseColor.png')));
-            });
-
-            it('roundtrips a normal map', function () {
-                let dir = '01_principled_material';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-                const textureIndex = asset.materials[0].normalTexture.index;
-                const imageIndex = asset.textures[textureIndex].source;
-
-                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_normal.png');
-                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
-            });
-
-            it('roundtrips an emissive map', function () {
-                let dir = '01_principled_material';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-                const textureIndex = asset.materials[0].emissiveTexture.index;
-                const imageIndex = asset.textures[textureIndex].source;
-
-                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_emissive.png');
-                assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
-                assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
-            });
-
-            it('roundtrips skin cylinder', function () {
-                let dir = '03_skinned_cylinder';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.meshes.length, 1); // be sure bone shape are not re-exported
-
-            });
-
-            it('roundtrips an OcclusionRoughnessMetallic texture', function () {
-                let dir = '08_combine_orm';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-
-                assert(fs.existsSync(path.resolve(outDirPath, '08_tiny-box-rgb.png')));
-            });
-
-            it('references the OcclusionRoughnessMetallic texture', function () {
-                let dir = '08_combine_orm';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-                assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
-                assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
-                assert.strictEqual(asset.textures.length, 1);
-                assert.strictEqual(asset.textures[0].source, 0);
-                assert.strictEqual(asset.images.length, 1);
-                assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
-            });
-
-            it('roundtrips occlusion strength', function () {
-                let dir = '13_occlusion_strength';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-                assert.equalEpsilon(asset.materials[0].occlusionTexture.strength, 0.25);
-            })
-
-            it('roundtrips two different UV maps for the same texture', function () {
-                let dir = '12_orm_two_uvmaps';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-                const material = asset.materials[0];
-                // Same texture
-                assert.strictEqual(material.occlusionTexture.index, 0);
-                assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
-                // Different UVMaps
-                assert.strictEqual(material.occlusionTexture.texCoord, 1);
-                assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord || 0, 0);
-            });
-
-            it('roundtrips baseColorFactor, etc. when used with textures', function () {
-                let dir = '11_factors_and_textures';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-
-                const mat = asset.materials[0];
-                const pbr = mat.pbrMetallicRoughness;
-
-                assert.equalEpsilon(mat.emissiveFactor[0], 1);
-                assert.equalEpsilon(mat.emissiveFactor[1], 0);
-                assert.equalEpsilon(mat.emissiveFactor[2], 0);
-
-                assert.equalEpsilon(pbr.baseColorFactor[0], 0);
-                assert.equalEpsilon(pbr.baseColorFactor[1], 1);
-                assert.equalEpsilon(pbr.baseColorFactor[2], 0);
-                assert.equalEpsilon(pbr.baseColorFactor[3], 0.5);
-
-                assert.equalEpsilon(pbr.metallicFactor, 0.25);
-                assert.equalEpsilon(pbr.roughnessFactor, 0.75);
-            });
-
-            it('roundtrips unlit base colors', function () {
-                let dir = '01_unlit';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 2);
-
-                const orange = asset.materials.find(mat => mat.name === 'Orange');
-                assert.ok('KHR_materials_unlit' in orange.extensions);
-                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[0], 1);
-                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[1], 0.217637640824031);
-                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[2], 0);
-                assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[3], 1);
-
-                const blue = asset.materials.find(mat => mat.name === 'Blue');
-                assert.ok('KHR_materials_unlit' in blue.extensions);
-                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[0], 0);
-                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[1], 0.217637640824031);
-                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[2], 1);
-                assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[3], 0.5);
-            });
-
-            it('roundtrips all texture transforms', function () {
-                let dir = '09_texture_transform';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 1);
-
-                const baseTransform = asset.materials[0].pbrMetallicRoughness.baseColorTexture.extensions.KHR_texture_transform;
-                assert.equalEpsilon(baseTransform.offset[0], 0.1);
-                assert.equalEpsilon(baseTransform.offset[1], 0.2);
-                assert.equalEpsilon(baseTransform.rotation, 0.3);
-                assert.equalEpsilon(baseTransform.scale[0], 4);
-                assert.equalEpsilon(baseTransform.scale[1], 5);
-
-                const mrTransform = asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.extensions.KHR_texture_transform;
-                assert.equalEpsilon(mrTransform.offset[0], 0.2);
-                assert.equalEpsilon(mrTransform.offset[1], 0.3);
-                assert.equalEpsilon(mrTransform.rotation, 0.4);
-                assert.equalEpsilon(mrTransform.scale[0], 5);
-                assert.equalEpsilon(mrTransform.scale[1], 6);
-
-                const normalTransform = asset.materials[0].normalTexture.extensions.KHR_texture_transform;
-                assert.equalEpsilon(normalTransform.offset[0], 0.3);
-                assert.equalEpsilon(normalTransform.offset[1], 0.4);
-                assert.equalEpsilon(normalTransform.rotation, 0.5);
-                assert.equalEpsilon(normalTransform.scale[0], 6);
-                assert.equalEpsilon(normalTransform.scale[1], 7);
-
-                const occlusionTransform = asset.materials[0].occlusionTexture.extensions.KHR_texture_transform;
-                assert.equalEpsilon(occlusionTransform.offset[0], 0.2);
-                assert.equalEpsilon(occlusionTransform.offset[1], 0.3);
-                assert.equalEpsilon(occlusionTransform.rotation, 0.4);
-                assert.equalEpsilon(occlusionTransform.scale[0], 5);
-                assert.equalEpsilon(occlusionTransform.scale[1], 6);
-
-                const emissiveTransform = asset.materials[0].emissiveTexture.extensions.KHR_texture_transform;
-                assert.equalEpsilon(emissiveTransform.offset[0], 0.5);
-                assert.equalEpsilon(emissiveTransform.offset[1], 0.6);
-                assert.equalEpsilon(emissiveTransform.rotation, 0.7);
-                assert.equalEpsilon(emissiveTransform.scale[0], 8);
-                assert.equalEpsilon(emissiveTransform.scale[1], 9);
-            });
-
-            it('roundtrips UNSIGNED_SHORT when count is 65535', function () {
-                let dir = '01_vertex_count_16bit';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.meshes.length, 1);
-                assert.strictEqual(asset.meshes[0].primitives.length, 1);
-
-                const primitive = asset.meshes[0].primitives[0];
-
-                // There are 65535 vertices, numbered 0 to 65534, avoiding the
-                // primitive restart value at 65535 (the highest 16-bit unsigned integer value).
-                assert.strictEqual(asset.accessors[primitive.attributes.POSITION].count, 65535);
-
-                // The indices componentType should be 5123 (UNSIGNED_SHORT).
-                assert.strictEqual(asset.accessors[primitive.indices].componentType, 5123);
-            });
-
-            it('roundtrips UNSIGNED_INT when count is 65536', function () {
-                let dir = '01_vertex_count_32bit';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.meshes.length, 1);
-                assert.strictEqual(asset.meshes[0].primitives.length, 1);
-
-                const primitive = asset.meshes[0].primitives[0];
-
-                // There are 65536 vertices, numbered 0 to 65535.  Because of the primitive
-                // restart value, 32-bit indicies are required at this point and beyond.
-                assert.strictEqual(asset.accessors[primitive.attributes.POSITION].count, 65536);
-
-                // The indices componentType should be 5125 (UNSIGNED_INT).
-                assert.strictEqual(asset.accessors[primitive.indices].componentType, 5125);
-            });
-
-            it('roundtrips some custom normals', function () {
-                let dir = '10_custom_normals';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-                assert.strictEqual(asset.meshes.length, 2);
-
-                let bufferCache = {};
-
-                const angleCubeMesh = asset.meshes.filter(m => m.name === 'AngleCube')[0];
-                const flatNormals = angleCubeMesh.primitives[0].attributes.NORMAL;
-                const flatNormalData = getAccessorData(gltfPath, asset, flatNormals, bufferCache);
-                const flatNormalHash = buildVectorHash(flatNormalData);
-
-                // In this mesh, the beveled cube has various angled edges.
-                // Several are not axis-aligned.
-                const expectedFlatNormalHash = {
-                    "0.000,1.000,0.000": 4,
-                    "-1.000,0.000,0.000": 4,
-                    "0.000,0.000,-1.000": 4,
-                    "0.000,-1.000,0.000": 4,
-                    "1.000,0.000,0.000": 4,
-                    "0.577,-0.577,0.577": 3,
-                    "0.577,0.577,0.577": 3,
-                    "0.577,-0.577,-0.577": 3,
-                    "0.577,0.577,-0.577": 3,
-                    "-0.577,-0.577,0.577": 3,
-                    "-0.577,0.577,0.577": 3,
-                    "-0.577,-0.577,-0.577": 3,
-                    "-0.577,0.577,-0.577": 3,
-                    "-0.707,0.707,0.000": 4,
-                    "0.000,0.707,0.707": 4,
-                    "0.707,0.000,0.707": 4,
-                    "-0.707,0.000,-0.707": 4,
-                    "0.707,0.000,-0.707": 4,
-                    "-0.707,0.000,0.707": 4,
-                    "0.000,-0.707,-0.707": 4,
-                    "0.707,-0.707,0.000": 4,
-                    "0.000,0.707,-0.707": 4,
-                    "-0.707,-0.707,0.000": 4,
-                    "0.000,-0.707,0.707": 4,
-                    "0.707,0.707,0.000": 4,
-                    "0.000,0.000,1.000": 4
-                };
-                assert.deepStrictEqual(flatNormalHash, expectedFlatNormalHash);
-
-                const smoothCubeMesh = asset.meshes.filter(m => m.name === 'SmoothCube')[0];
-                const customNormals = smoothCubeMesh.primitives[0].attributes.NORMAL;
-                const customNormalData = getAccessorData(gltfPath, asset, customNormals, bufferCache);
-                const customNormalHash = buildVectorHash(customNormalData);
-
-                // In this mesh, the beveled cube has custom normals that are all
-                // axis-aligned to the nearest cube face.
-                const expectedCustomNormalHash = {
-                    "0.000,1.000,0.000": 16,
-                    "-1.000,0.000,0.000": 16,
-                    "0.000,0.000,-1.000": 16,
-                    "0.000,-1.000,0.000": 16,
-                    "1.000,0.000,0.000": 16,
-                    "0.000,0.000,1.000": 16
-                };
-                assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
-            });
-
-            it('roundtrips animation names', function () {
-                let dir = '07_nla-anim';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                const expectedAnimNames = ["Action2", "Action1", "Action3"];
-                const animNames = asset.animations.map(anim => anim.name);
-                assert.deepStrictEqual(animNames.sort(), expectedAnimNames.sort());
-            });
-
-            it('roundtrips texture wrap modes', function () {
-                let dir = '13_texture_wrapping';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                const materials = asset.materials;
-                assert.deepStrictEqual(materials.length, 2);
-
-                const mat1 = materials.find(mat => mat.name == 'Mirror x Mirror');
-                const tex1 = asset.textures[mat1.pbrMetallicRoughness.baseColorTexture.index];
-                const samp1 = asset.samplers[tex1.sampler];
-                assert.deepStrictEqual(samp1.wrapS, 33648);  // MIRRORED_REPEAT
-                assert.deepStrictEqual(samp1.wrapT, 33648);  // MIRRORED_REPEAT
-
-                const mat2 = materials.find(mat => mat.name == 'Repeat x Clamp');
-                const tex2 = asset.textures[mat2.pbrMetallicRoughness.baseColorTexture.index];
-                const samp2 = asset.samplers[tex2.sampler];
-                assert.deepStrictEqual(samp2.wrapS || 10497, 10497);  // REPEAT
-                assert.deepStrictEqual(samp2.wrapT, 33071);  // CLAMP_TO_EDGE
-            });
-
-            it('roundtrips emissive/emissive_strength', function () {
-                let dir = '14_emission_strength';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 18);
-
-                const SpecGloss = asset.materials.filter(m => m.name === "SpecGloss");
-
-                const SpecGlossEmissive = asset.materials.filter(m => m.name === "SpecGlossEmissive")[0];
-                assert.equalEpsilonArray(SpecGlossEmissive.emissiveFactor, [0.2, 0.1, 0.0]);
-
-                const SpecGlossEmissiveGray = asset.materials.filter(m => m.name === "SpecGlossEmissiveGray")[0];
-                assert.equalEpsilonArray(SpecGlossEmissiveGray.emissiveFactor, [0.3, 0.3, 0.3]);
-
-                const SpecGlossEmissiveGrayStrength = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayStrength")[0];
-                assert.equalEpsilon(SpecGlossEmissiveGrayStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
-
-                const SpecGlossEmissiveStrength = asset.materials.filter(m => m.name === "SpecGlossEmissiveStrength")[0];
-                assert.equalEpsilonArray(SpecGlossEmissiveStrength.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
-                assert.equalEpsilon(SpecGlossEmissiveStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
-
-                const pbrMetallicRoughness = asset.materials.filter(m => m.name === "pbrMetallicRoughness")[0];
-
-                const pbrEmissive = asset.materials.filter(m => m.name === "pbrEmissive")[0];
-                assert.equalEpsilonArray(pbrEmissive.emissiveFactor, [0.9, 0.8, 0.7]);
-
-                const pbrEmissiveGray = asset.materials.filter(m => m.name === "pbrEmissiveGray")[0];
-                assert.equalEpsilonArray(pbrEmissiveGray.emissiveFactor, [0.9, 0.9, 0.9]);
-
-                const pbrEmissiveGrayStrength = asset.materials.filter(m => m.name === "pbrEmissiveGrayStrength")[0];
-                assert.equalEpsilonArray(pbrEmissiveGrayStrength.emissiveFactor, [1.0, 1.0, 1.0]);
-                assert.equalEpsilon(pbrEmissiveGrayStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
-
-                const pbrEmissiveStrength = asset.materials.filter(m => m.name === "pbrEmissiveStrength")[0];
-                assert.equalEpsilonArray(pbrEmissiveStrength.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
-                assert.equalEpsilon(pbrEmissiveStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
-
-                const pbrEmissiveStrengthTexture = asset.materials.filter(m => m.name === "pbrEmissiveStrengthTexture")[0];
-                assert.equalEpsilonArray(pbrEmissiveStrengthTexture.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
-                assert.equalEpsilon(pbrEmissiveStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
-
-                const pbrEmissiveGrayStrengthTexture = asset.materials.filter(m => m.name === "pbrEmissiveGrayStrengthTexture")[0];
-                assert.equalEpsilonArray(pbrEmissiveGrayStrengthTexture.emissiveFactor, [1.0, 1.0, 1.0]);
-                assert.equalEpsilon(pbrEmissiveGrayStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
-
-                const pbrEmissiveTexture = asset.materials.filter(m => m.name === "pbrEmissiveTexture")[0];
-                assert.equalEpsilonArray(pbrEmissiveTexture.emissiveFactor, [0.9, 0.8, 0.7]);
-
-                const pbrEmissiveGrayTexture = asset.materials.filter(m => m.name === "pbrEmissiveGrayTexture")[0];
-                assert.equalEpsilonArray(pbrEmissiveGrayTexture.emissiveFactor, [0.9, 0.9, 0.9]);
-
-                const SpecGlossEmissiveTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveTexture")[0];
-                assert.equalEpsilonArray(SpecGlossEmissiveTexture.emissiveFactor, [0.9, 0.8, 0.7]);
-
-                const SpecGlossEmissiveGrayTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayTexture")[0];
-                assert.equalEpsilonArray(SpecGlossEmissiveGrayTexture.emissiveFactor, [0.9, 0.9, 0.9]);
-
-                const SpecGlossEmissiveGrayStrengthTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayStrengthTexture")[0];
-                assert.equalEpsilonArray(SpecGlossEmissiveGrayStrengthTexture.emissiveFactor, [1.0, 1.0, 1.0]);
-                assert.equalEpsilon(SpecGlossEmissiveGrayStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
-
-                const SpecGlossEmissiveStrengthTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveStrengthTexture")[0];
-                assert.equalEpsilonArray(SpecGlossEmissiveStrengthTexture.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
-                assert.equalEpsilon(SpecGlossEmissiveStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
-
-            });
-
-            it('roundtrips transmission', function () {
-                let dir = '15_transmission';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 5);
-
-                const pbr = asset.materials.filter(m => m.name === "pbr")[0];
-
-                const transmissionFactor = asset.materials.filter(m => m.name === "transmissionFactor")[0];
-                assert.equalEpsilon(transmissionFactor.extensions["KHR_materials_transmission"]["transmissionFactor"], 0.8);
-
-                const transmissionTexture = asset.materials.filter(m => m.name === "transmissionTexture")[0];
-                assert.equalEpsilon(transmissionTexture.extensions["KHR_materials_transmission"]["transmissionFactor"], 1.0);
-                assert.ok(transmissionTexture.extensions["KHR_materials_transmission"]["transmissionTexture"]["index"] <= 1);
-
-                const transmissionFactorTexture = asset.materials.filter(m => m.name === "transmissionFactorTexture")[0];
-                assert.equalEpsilon(transmissionFactorTexture.extensions["KHR_materials_transmission"]["transmissionFactor"], 0.7);
-                assert.ok(transmissionFactorTexture.extensions["KHR_materials_transmission"]["transmissionTexture"]["index"] <= 1);
-
-            });
-
-            it('roundtrips volume', function () {
-                let dir = '16_volume';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.materials.length, 20);
-
-                const thickness_025 = asset.materials.filter(m => m.name === "R2_ThicknessFac_0.25")[0];
-                assert.equalEpsilon(thickness_025.extensions['KHR_materials_volume']["thicknessFactor"], 0.25);
-                assert.equalEpsilon(thickness_025.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
-                assert.equalEpsilonArray(thickness_025.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in thickness_025.extensions['KHR_materials_volume']));
-
-                const thickness_050 = asset.materials.filter(m => m.name === "R2_ThicknessFac_0.50")[0];
-                assert.equalEpsilon(thickness_050.extensions['KHR_materials_volume']["thicknessFactor"], 0.5);
-                assert.equalEpsilon(thickness_050.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
-                assert.equalEpsilonArray(thickness_050.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in thickness_050.extensions['KHR_materials_volume']));
-
-                const thickness_10 = asset.materials.filter(m => m.name === "R2_and_R4_ThicknessFac_1.0")[0];
-                assert.equalEpsilon(thickness_10.extensions['KHR_materials_volume']["thicknessFactor"], 1.0);
-                assert.equalEpsilon(thickness_10.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
-                assert.equalEpsilonArray(thickness_10.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in thickness_10.extensions['KHR_materials_volume']));
-
-                const thickness_15 = asset.materials.filter(m => m.name === "R2_ThicknessFac_1.5")[0];
-                assert.equalEpsilon(thickness_15.extensions['KHR_materials_volume']["thicknessFactor"], 1.5);
-                assert.equalEpsilon(thickness_15.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
-                assert.equalEpsilonArray(thickness_15.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in thickness_15.extensions['KHR_materials_volume']));
-
-                const thickness_20 = asset.materials.filter(m => m.name === "R2_ThicknessFac_2.0")[0];
-                assert.equalEpsilon(thickness_20.extensions['KHR_materials_volume']["thicknessFactor"], 2.0);
-                assert.equalEpsilon(thickness_20.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
-                assert.equalEpsilonArray(thickness_20.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in thickness_20.extensions['KHR_materials_volume']));
-
-                const tick_2_text = asset.materials.filter(m => m.name === "R3_ThicknessTex_Mat")[0];
-                assert.equalEpsilon(tick_2_text.extensions['KHR_materials_volume']["thicknessFactor"], 2);
-                assert.equalEpsilon(tick_2_text.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
-                assert.equalEpsilonArray(tick_2_text.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok("thicknessTexture" in tick_2_text.extensions['KHR_materials_volume']);
-
-                const dist_025 = asset.materials.filter(m => m.name === "R5_Attenuation_0.25")[0];
-                assert.equalEpsilon(dist_025.extensions['KHR_materials_volume']["thicknessFactor"], 1);
-                assert.equalEpsilon(dist_025.extensions['KHR_materials_volume']["attenuationDistance"], 4.0);
-                assert.equalEpsilonArray(dist_025.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in dist_025.extensions['KHR_materials_volume']));
-
-                const dist_05 = asset.materials.filter(m => m.name === "R5_Attenuation_0.50")[0];
-                assert.equalEpsilon(dist_05.extensions['KHR_materials_volume']["thicknessFactor"], 1);
-                assert.equalEpsilon(dist_05.extensions['KHR_materials_volume']["attenuationDistance"], 2.0);
-                assert.equalEpsilonArray(dist_05.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in dist_05.extensions['KHR_materials_volume']));
-
-                const dist_10 = asset.materials.filter(m => m.name === "R5_Attenuation_1.0")[0];
-                assert.equalEpsilon(dist_10.extensions['KHR_materials_volume']["thicknessFactor"], 1);
-                assert.equalEpsilon(dist_10.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
-                assert.equalEpsilonArray(dist_10.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in dist_10.extensions['KHR_materials_volume']));
-
-                const dist_15 = asset.materials.filter(m => m.name === "R5_Attenuation_1.5")[0];
-                assert.equalEpsilon(dist_15.extensions['KHR_materials_volume']["thicknessFactor"], 1);
-                assert.equalEpsilon(dist_15.extensions['KHR_materials_volume']["attenuationDistance"], 0.6666666666666666);
-                assert.equalEpsilonArray(dist_15.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in dist_15.extensions['KHR_materials_volume']));
-
-                const dist_20 = asset.materials.filter(m => m.name === "R5_Attenuation_2.0")[0];
-                assert.equalEpsilon(dist_20.extensions['KHR_materials_volume']["thicknessFactor"], 1);
-                assert.equalEpsilon(dist_20.extensions['KHR_materials_volume']["attenuationDistance"], 0.5);
-                assert.equalEpsilonArray(dist_20.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
-                assert.ok(!("thicknessTexture" in dist_20.extensions['KHR_materials_volume']));
-
-                const NoThickness = asset.materials.filter(m => m.name === "NoThickness")[0];
-                assert.ok(!("KHR_materials_volume" in NoThickness.extensions));
-
-                const Thicknesszero = asset.materials.filter(m => m.name === "Thicknesszero")[0];
-                assert.ok(!("KHR_materials_volume" in Thicknesszero.extensions));
-
-            });
-
-            it('roundtrips ior', function () {
-                let dir = '17_ior';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                const pbr = asset.materials.find(mat => mat.name === 'pbr');
-                assert.strictEqual(pbr.extensions, undefined);
-
-                const ior_2_no_transmission = asset.materials.find(mat => mat.name === 'ior_2_no_transmission');
-                assert.strictEqual(ior_2_no_transmission.extensions, undefined);
-
-                const ior_2 = asset.materials.find(mat => mat.name === 'ior_2');
-                assert.ok("KHR_materials_ior" in ior_2.extensions);
-
-                const ior_145 = asset.materials.find(mat => mat.name === 'ior_1.45');
-                assert.ok("KHR_materials_ior" in ior_145.extensions);
-
-                const ior_15 = asset.materials.find(mat => mat.name === 'ior_1.5');
-                assert.ok(!("KHR_materials_ior" in ior_15.extensions));
-
-            });
-
-            it('roundtrips Variants', function () {
-                let dir = '18_variants';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                const variant_blue_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Blue");
-                const variant_red_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Red");
-
-
-                const mat_blue_index = asset.materials.findIndex(mat => mat.name === "Blue");
-                const mat_green_index = asset.materials.findIndex(mat => mat.name === "Green");
-                const mat_white_index = asset.materials.findIndex(mat => mat.name === "White");
-                const mat_orange_index = asset.materials.findIndex(mat => mat.name === "Orange");
-                const mat_red_index = asset.materials.findIndex(mat => mat.name === "Red");
-                const prim_blue = asset.meshes[0].primitives.find(prim => prim.material === mat_blue_index);
-                const prim_green = asset.meshes[0].primitives.find(prim => prim.material === mat_green_index);
-                const prim_white = asset.meshes[0].primitives.find(prim => prim.material === mat_white_index);
-
-                assert.strictEqual(asset.extensions['KHR_materials_variants']['variants'].length, 2);
-
-                assert.strictEqual(prim_blue.extensions['KHR_materials_variants']['mappings'].length, 2);
-                prim_blue.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
-                    assert.strictEqual(mapping.variants.length, 1);
+                    const blendedMaterials = asset.materials.filter(m => m.name === 'Transparent_Plane');
+                    assert.strictEqual(blendedMaterials.length, 1);
+                    assert.strictEqual(blendedMaterials[0].alphaMode, 'BLEND');
                 });
-                const map_1 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_red_index);
-                assert.strictEqual(map_1.variants[0], variant_red_index);
-                const map_2 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_blue_index);
-                assert.strictEqual(map_2.variants[0], variant_blue_index);
 
-                assert.strictEqual(prim_green.extensions['KHR_materials_variants']['mappings'].length, 2);
-                prim_green.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
-                    assert.strictEqual(mapping.variants.length, 1);
+                it('roundtrips alpha mask mode', function () {
+                    let dir = '01_alpha_mask';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    assert.strictEqual(asset.materials[0].alphaMode, 'MASK');
+                    assert.equalEpsilon(asset.materials[0].alphaCutoff, 0.42);
                 });
-                const map_3 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_orange_index);
-                assert.strictEqual(map_3.variants[0], variant_red_index);
-                const map_4 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_green_index);
-                assert.strictEqual(map_4.variants[0], variant_blue_index);
 
-                assert.strictEqual(prim_white.extensions['KHR_materials_variants']['mappings'].length, 1);
-                prim_white.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
-                    assert.strictEqual(mapping.variants.length, 2);
+                it('roundtrips the doubleSided flag', function () {
+                    let dir = '01_single_vs_double_sided';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 2);
+
+                    const singleSidedMaterials = asset.materials.filter(m => m.name === 'mat_single');
+                    assert.strictEqual(singleSidedMaterials.length, 1);
+                    assert.strictEqual(singleSidedMaterials[0].doubleSided, undefined);
+
+                    const doubleSidedMaterials = asset.materials.filter(m => m.name === 'mat_double');
+                    assert.strictEqual(doubleSidedMaterials.length, 1);
+                    assert.strictEqual(doubleSidedMaterials[0].doubleSided, true);
                 });
-                const map_5 = prim_white.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_white_index);
-                assert.ok(variant_red_index in map_5.variants);
-                assert.ok(variant_blue_index in map_5.variants);
+
+                it('roundtrips a morph target animation', function () {
+                    let dir = '01_morphed_cube';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+                    assert.strictEqual(asset.animations.length, 1);
+
+                    const animation = asset.animations[0];
+                    assert.strictEqual(animation.channels.length, 1);
+                    assert.strictEqual(animation.samplers.length, 1);
+                    assert.strictEqual(animation.channels[0].sampler, 0);
+                    assert.strictEqual(animation.channels[0].target.path, 'weights');
+                    assert.strictEqual(animation.samplers[0].interpolation, 'CUBICSPLINE');
+
+                    const animatedNode = asset.nodes[animation.channels[0].target.node];
+                    const animatedMesh = asset.meshes[animatedNode.mesh];
+                    const targetNames = animatedMesh.extras.targetNames;
+                    assert.strictEqual(targetNames.length, 2);
+                    assert.notStrictEqual(targetNames.indexOf('Top'), -1);
+                    assert.notStrictEqual(targetNames.indexOf('Bottom'), -1);
+
+                    let bufferCache = {};
+                    const inputData = getAccessorData(gltfPath, asset, animation.samplers[0].input, bufferCache);
+                    const expectedInputData = [0, 1, 2];
+                    assert.equalEpsilonArray(inputData, expectedInputData);
+
+                    const outputData = getAccessorData(gltfPath, asset, animation.samplers[0].output, bufferCache);
+                    const expectedOutputData = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0];
+                    assert.equalEpsilonArray(outputData, expectedOutputData);
+                });
+
+                it('roundtrips a base color', function () {
+                    let dir = '01_principled_material';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    const textureIndex = asset.materials[0].pbrMetallicRoughness.baseColorTexture.index;
+                    const imageIndex = asset.textures[textureIndex].source;
+
+                    assert.strictEqual(asset.images[imageIndex].uri, '01_principled_baseColor.png');
+                    assert(fs.existsSync(path.resolve(outDirPath, '01_principled_baseColor.png')));
+                });
+
+                it('roundtrips a normal map', function () {
+                    let dir = '01_principled_material';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    const textureIndex = asset.materials[0].normalTexture.index;
+                    const imageIndex = asset.textures[textureIndex].source;
+
+                    assert.strictEqual(asset.images[imageIndex].uri, '01_principled_normal.png');
+                    assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
+                });
+
+                it('roundtrips an emissive map', function () {
+                    let dir = '01_principled_material';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    const textureIndex = asset.materials[0].emissiveTexture.index;
+                    const imageIndex = asset.textures[textureIndex].source;
+
+                    assert.strictEqual(asset.images[imageIndex].uri, '01_principled_emissive.png');
+                    assert.deepStrictEqual(asset.materials[0].emissiveFactor, [1, 1, 1]);
+                    assert(fs.existsSync(path.resolve(outDirPath, '01_principled_emissive.png')));
+                });
+
+                it('roundtrips skin cylinder', function () {
+                    let dir = '03_skinned_cylinder';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.meshes.length, 1); // be sure bone shape are not re-exported
+
+                });
+
+                it('roundtrips an OcclusionRoughnessMetallic texture', function () {
+                    let dir = '08_combine_orm';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+
+                    assert(fs.existsSync(path.resolve(outDirPath, '08_tiny-box-rgb.png')));
+                });
+
+                it('references the OcclusionRoughnessMetallic texture', function () {
+                    let dir = '08_combine_orm';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    assert.strictEqual(asset.materials[0].occlusionTexture.index, 0);
+                    assert.strictEqual(asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                    assert.strictEqual(asset.textures.length, 1);
+                    assert.strictEqual(asset.textures[0].source, 0);
+                    assert.strictEqual(asset.images.length, 1);
+                    assert.strictEqual(asset.images[0].uri, '08_tiny-box-rgb.png');
+                });
+
+                it('roundtrips occlusion strength', function () {
+                    let dir = '13_occlusion_strength';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    assert.equalEpsilon(asset.materials[0].occlusionTexture.strength, 0.25);
+                })
+
+                it('roundtrips two different UV maps for the same texture', function () {
+                    let dir = '12_orm_two_uvmaps';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+                    const material = asset.materials[0];
+                    // Same texture
+                    assert.strictEqual(material.occlusionTexture.index, 0);
+                    assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.index, 0);
+                    // Different UVMaps
+                    assert.strictEqual(material.occlusionTexture.texCoord, 1);
+                    assert.strictEqual(material.pbrMetallicRoughness.metallicRoughnessTexture.texCoord || 0, 0);
+                });
+
+                it('roundtrips baseColorFactor, etc. when used with textures', function () {
+                    let dir = '11_factors_and_textures';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+
+                    const mat = asset.materials[0];
+                    const pbr = mat.pbrMetallicRoughness;
+
+                    assert.equalEpsilon(mat.emissiveFactor[0], 1);
+                    assert.equalEpsilon(mat.emissiveFactor[1], 0);
+                    assert.equalEpsilon(mat.emissiveFactor[2], 0);
+
+                    assert.equalEpsilon(pbr.baseColorFactor[0], 0);
+                    assert.equalEpsilon(pbr.baseColorFactor[1], 1);
+                    assert.equalEpsilon(pbr.baseColorFactor[2], 0);
+                    assert.equalEpsilon(pbr.baseColorFactor[3], 0.5);
+
+                    assert.equalEpsilon(pbr.metallicFactor, 0.25);
+                    assert.equalEpsilon(pbr.roughnessFactor, 0.75);
+                });
+
+                it('roundtrips unlit base colors', function () {
+                    let dir = '01_unlit';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 2);
+
+                    const orange = asset.materials.find(mat => mat.name === 'Orange');
+                    assert.ok('KHR_materials_unlit' in orange.extensions);
+                    assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[0], 1);
+                    assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[1], 0.217637640824031);
+                    assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[2], 0);
+                    assert.equalEpsilon(orange.pbrMetallicRoughness.baseColorFactor[3], 1);
+
+                    const blue = asset.materials.find(mat => mat.name === 'Blue');
+                    assert.ok('KHR_materials_unlit' in blue.extensions);
+                    assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[0], 0);
+                    assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[1], 0.217637640824031);
+                    assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[2], 1);
+                    assert.equalEpsilon(blue.pbrMetallicRoughness.baseColorFactor[3], 0.5);
+                });
+
+                it('roundtrips all texture transforms', function () {
+                    let dir = '09_texture_transform';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 1);
+
+                    const baseTransform = asset.materials[0].pbrMetallicRoughness.baseColorTexture.extensions.KHR_texture_transform;
+                    assert.equalEpsilon(baseTransform.offset[0], 0.1);
+                    assert.equalEpsilon(baseTransform.offset[1], 0.2);
+                    assert.equalEpsilon(baseTransform.rotation, 0.3);
+                    assert.equalEpsilon(baseTransform.scale[0], 4);
+                    assert.equalEpsilon(baseTransform.scale[1], 5);
+
+                    const mrTransform = asset.materials[0].pbrMetallicRoughness.metallicRoughnessTexture.extensions.KHR_texture_transform;
+                    assert.equalEpsilon(mrTransform.offset[0], 0.2);
+                    assert.equalEpsilon(mrTransform.offset[1], 0.3);
+                    assert.equalEpsilon(mrTransform.rotation, 0.4);
+                    assert.equalEpsilon(mrTransform.scale[0], 5);
+                    assert.equalEpsilon(mrTransform.scale[1], 6);
+
+                    const normalTransform = asset.materials[0].normalTexture.extensions.KHR_texture_transform;
+                    assert.equalEpsilon(normalTransform.offset[0], 0.3);
+                    assert.equalEpsilon(normalTransform.offset[1], 0.4);
+                    assert.equalEpsilon(normalTransform.rotation, 0.5);
+                    assert.equalEpsilon(normalTransform.scale[0], 6);
+                    assert.equalEpsilon(normalTransform.scale[1], 7);
+
+                    const occlusionTransform = asset.materials[0].occlusionTexture.extensions.KHR_texture_transform;
+                    assert.equalEpsilon(occlusionTransform.offset[0], 0.2);
+                    assert.equalEpsilon(occlusionTransform.offset[1], 0.3);
+                    assert.equalEpsilon(occlusionTransform.rotation, 0.4);
+                    assert.equalEpsilon(occlusionTransform.scale[0], 5);
+                    assert.equalEpsilon(occlusionTransform.scale[1], 6);
+
+                    const emissiveTransform = asset.materials[0].emissiveTexture.extensions.KHR_texture_transform;
+                    assert.equalEpsilon(emissiveTransform.offset[0], 0.5);
+                    assert.equalEpsilon(emissiveTransform.offset[1], 0.6);
+                    assert.equalEpsilon(emissiveTransform.rotation, 0.7);
+                    assert.equalEpsilon(emissiveTransform.scale[0], 8);
+                    assert.equalEpsilon(emissiveTransform.scale[1], 9);
+                });
+
+                it('roundtrips UNSIGNED_SHORT when count is 65535', function () {
+                    let dir = '01_vertex_count_16bit';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.meshes.length, 1);
+                    assert.strictEqual(asset.meshes[0].primitives.length, 1);
+
+                    const primitive = asset.meshes[0].primitives[0];
+
+                    // There are 65535 vertices, numbered 0 to 65534, avoiding the
+                    // primitive restart value at 65535 (the highest 16-bit unsigned integer value).
+                    assert.strictEqual(asset.accessors[primitive.attributes.POSITION].count, 65535);
+
+                    // The indices componentType should be 5123 (UNSIGNED_SHORT).
+                    assert.strictEqual(asset.accessors[primitive.indices].componentType, 5123);
+                });
+
+                it('roundtrips UNSIGNED_INT when count is 65536', function () {
+                    let dir = '01_vertex_count_32bit';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.meshes.length, 1);
+                    assert.strictEqual(asset.meshes[0].primitives.length, 1);
+
+                    const primitive = asset.meshes[0].primitives[0];
+
+                    // There are 65536 vertices, numbered 0 to 65535.  Because of the primitive
+                    // restart value, 32-bit indicies are required at this point and beyond.
+                    assert.strictEqual(asset.accessors[primitive.attributes.POSITION].count, 65536);
+
+                    // The indices componentType should be 5125 (UNSIGNED_INT).
+                    assert.strictEqual(asset.accessors[primitive.indices].componentType, 5125);
+                });
+
+                it('roundtrips some custom normals', function () {
+                    let dir = '10_custom_normals';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+                    assert.strictEqual(asset.meshes.length, 2);
+
+                    let bufferCache = {};
+
+                    const angleCubeMesh = asset.meshes.filter(m => m.name === 'AngleCube')[0];
+                    const flatNormals = angleCubeMesh.primitives[0].attributes.NORMAL;
+                    const flatNormalData = getAccessorData(gltfPath, asset, flatNormals, bufferCache);
+                    const flatNormalHash = buildVectorHash(flatNormalData);
+
+                    // In this mesh, the beveled cube has various angled edges.
+                    // Several are not axis-aligned.
+                    const expectedFlatNormalHash = {
+                        "0.000,1.000,0.000": 4,
+                        "-1.000,0.000,0.000": 4,
+                        "0.000,0.000,-1.000": 4,
+                        "0.000,-1.000,0.000": 4,
+                        "1.000,0.000,0.000": 4,
+                        "0.577,-0.577,0.577": 3,
+                        "0.577,0.577,0.577": 3,
+                        "0.577,-0.577,-0.577": 3,
+                        "0.577,0.577,-0.577": 3,
+                        "-0.577,-0.577,0.577": 3,
+                        "-0.577,0.577,0.577": 3,
+                        "-0.577,-0.577,-0.577": 3,
+                        "-0.577,0.577,-0.577": 3,
+                        "-0.707,0.707,0.000": 4,
+                        "0.000,0.707,0.707": 4,
+                        "0.707,0.000,0.707": 4,
+                        "-0.707,0.000,-0.707": 4,
+                        "0.707,0.000,-0.707": 4,
+                        "-0.707,0.000,0.707": 4,
+                        "0.000,-0.707,-0.707": 4,
+                        "0.707,-0.707,0.000": 4,
+                        "0.000,0.707,-0.707": 4,
+                        "-0.707,-0.707,0.000": 4,
+                        "0.000,-0.707,0.707": 4,
+                        "0.707,0.707,0.000": 4,
+                        "0.000,0.000,1.000": 4
+                    };
+                    assert.deepStrictEqual(flatNormalHash, expectedFlatNormalHash);
+
+                    const smoothCubeMesh = asset.meshes.filter(m => m.name === 'SmoothCube')[0];
+                    const customNormals = smoothCubeMesh.primitives[0].attributes.NORMAL;
+                    const customNormalData = getAccessorData(gltfPath, asset, customNormals, bufferCache);
+                    const customNormalHash = buildVectorHash(customNormalData);
+
+                    // In this mesh, the beveled cube has custom normals that are all
+                    // axis-aligned to the nearest cube face.
+                    const expectedCustomNormalHash = {
+                        "0.000,1.000,0.000": 16,
+                        "-1.000,0.000,0.000": 16,
+                        "0.000,0.000,-1.000": 16,
+                        "0.000,-1.000,0.000": 16,
+                        "1.000,0.000,0.000": 16,
+                        "0.000,0.000,1.000": 16
+                    };
+                    assert.deepStrictEqual(customNormalHash, expectedCustomNormalHash);
+                });
+
+                it('roundtrips animation names', function () {
+                    let dir = '07_nla-anim';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const expectedAnimNames = ["Action2", "Action1", "Action3"];
+                    const animNames = asset.animations.map(anim => anim.name);
+                    assert.deepStrictEqual(animNames.sort(), expectedAnimNames.sort());
+                });
+
+                it('roundtrips texture wrap modes', function () {
+                    let dir = '13_texture_wrapping';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const materials = asset.materials;
+                    assert.deepStrictEqual(materials.length, 2);
+
+                    const mat1 = materials.find(mat => mat.name == 'Mirror x Mirror');
+                    const tex1 = asset.textures[mat1.pbrMetallicRoughness.baseColorTexture.index];
+                    const samp1 = asset.samplers[tex1.sampler];
+                    assert.deepStrictEqual(samp1.wrapS, 33648);  // MIRRORED_REPEAT
+                    assert.deepStrictEqual(samp1.wrapT, 33648);  // MIRRORED_REPEAT
+
+                    const mat2 = materials.find(mat => mat.name == 'Repeat x Clamp');
+                    const tex2 = asset.textures[mat2.pbrMetallicRoughness.baseColorTexture.index];
+                    const samp2 = asset.samplers[tex2.sampler];
+                    assert.deepStrictEqual(samp2.wrapS || 10497, 10497);  // REPEAT
+                    assert.deepStrictEqual(samp2.wrapT, 33071);  // CLAMP_TO_EDGE
+                });
+
+                it('roundtrips emissive/emissive_strength', function () {
+                    let dir = '14_emission_strength';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 18);
+
+                    const SpecGloss = asset.materials.filter(m => m.name === "SpecGloss");
+
+                    const SpecGlossEmissive = asset.materials.filter(m => m.name === "SpecGlossEmissive")[0];
+                    assert.equalEpsilonArray(SpecGlossEmissive.emissiveFactor, [0.2, 0.1, 0.0]);
+
+                    const SpecGlossEmissiveGray = asset.materials.filter(m => m.name === "SpecGlossEmissiveGray")[0];
+                    assert.equalEpsilonArray(SpecGlossEmissiveGray.emissiveFactor, [0.3, 0.3, 0.3]);
+
+                    const SpecGlossEmissiveGrayStrength = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayStrength")[0];
+                    assert.equalEpsilon(SpecGlossEmissiveGrayStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                    const SpecGlossEmissiveStrength = asset.materials.filter(m => m.name === "SpecGlossEmissiveStrength")[0];
+                    assert.equalEpsilonArray(SpecGlossEmissiveStrength.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
+                    assert.equalEpsilon(SpecGlossEmissiveStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                    const pbrMetallicRoughness = asset.materials.filter(m => m.name === "pbrMetallicRoughness")[0];
+
+                    const pbrEmissive = asset.materials.filter(m => m.name === "pbrEmissive")[0];
+                    assert.equalEpsilonArray(pbrEmissive.emissiveFactor, [0.9, 0.8, 0.7]);
+
+                    const pbrEmissiveGray = asset.materials.filter(m => m.name === "pbrEmissiveGray")[0];
+                    assert.equalEpsilonArray(pbrEmissiveGray.emissiveFactor, [0.9, 0.9, 0.9]);
+
+                    const pbrEmissiveGrayStrength = asset.materials.filter(m => m.name === "pbrEmissiveGrayStrength")[0];
+                    assert.equalEpsilonArray(pbrEmissiveGrayStrength.emissiveFactor, [1.0, 1.0, 1.0]);
+                    assert.equalEpsilon(pbrEmissiveGrayStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                    const pbrEmissiveStrength = asset.materials.filter(m => m.name === "pbrEmissiveStrength")[0];
+                    assert.equalEpsilonArray(pbrEmissiveStrength.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
+                    assert.equalEpsilon(pbrEmissiveStrength.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                    const pbrEmissiveStrengthTexture = asset.materials.filter(m => m.name === "pbrEmissiveStrengthTexture")[0];
+                    assert.equalEpsilonArray(pbrEmissiveStrengthTexture.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
+                    assert.equalEpsilon(pbrEmissiveStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                    const pbrEmissiveGrayStrengthTexture = asset.materials.filter(m => m.name === "pbrEmissiveGrayStrengthTexture")[0];
+                    assert.equalEpsilonArray(pbrEmissiveGrayStrengthTexture.emissiveFactor, [1.0, 1.0, 1.0]);
+                    assert.equalEpsilon(pbrEmissiveGrayStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                    const pbrEmissiveTexture = asset.materials.filter(m => m.name === "pbrEmissiveTexture")[0];
+                    assert.equalEpsilonArray(pbrEmissiveTexture.emissiveFactor, [0.9, 0.8, 0.7]);
+
+                    const pbrEmissiveGrayTexture = asset.materials.filter(m => m.name === "pbrEmissiveGrayTexture")[0];
+                    assert.equalEpsilonArray(pbrEmissiveGrayTexture.emissiveFactor, [0.9, 0.9, 0.9]);
+
+                    const SpecGlossEmissiveTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveTexture")[0];
+                    assert.equalEpsilonArray(SpecGlossEmissiveTexture.emissiveFactor, [0.9, 0.8, 0.7]);
+
+                    const SpecGlossEmissiveGrayTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayTexture")[0];
+                    assert.equalEpsilonArray(SpecGlossEmissiveGrayTexture.emissiveFactor, [0.9, 0.9, 0.9]);
+
+                    const SpecGlossEmissiveGrayStrengthTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveGrayStrengthTexture")[0];
+                    assert.equalEpsilonArray(SpecGlossEmissiveGrayStrengthTexture.emissiveFactor, [1.0, 1.0, 1.0]);
+                    assert.equalEpsilon(SpecGlossEmissiveGrayStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                    const SpecGlossEmissiveStrengthTexture = asset.materials.filter(m => m.name === "SpecGlossEmissiveStrengthTexture")[0];
+                    assert.equalEpsilonArray(SpecGlossEmissiveStrengthTexture.emissiveFactor, [1.0, 0.88888888, 0.7777777777]);
+                    assert.equalEpsilon(SpecGlossEmissiveStrengthTexture.extensions["KHR_materials_emissive_strength"]["emissiveStrength"], 4.5);
+
+                });
+
+                it('roundtrips transmission', function () {
+                    let dir = '15_transmission';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 5);
+
+                    const pbr = asset.materials.filter(m => m.name === "pbr")[0];
+
+                    const transmissionFactor = asset.materials.filter(m => m.name === "transmissionFactor")[0];
+                    assert.equalEpsilon(transmissionFactor.extensions["KHR_materials_transmission"]["transmissionFactor"], 0.8);
+
+                    const transmissionTexture = asset.materials.filter(m => m.name === "transmissionTexture")[0];
+                    assert.equalEpsilon(transmissionTexture.extensions["KHR_materials_transmission"]["transmissionFactor"], 1.0);
+                    assert.ok(transmissionTexture.extensions["KHR_materials_transmission"]["transmissionTexture"]["index"] <= 1);
+
+                    const transmissionFactorTexture = asset.materials.filter(m => m.name === "transmissionFactorTexture")[0];
+                    assert.equalEpsilon(transmissionFactorTexture.extensions["KHR_materials_transmission"]["transmissionFactor"], 0.7);
+                    assert.ok(transmissionFactorTexture.extensions["KHR_materials_transmission"]["transmissionTexture"]["index"] <= 1);
+
+                });
+
+                it('roundtrips volume', function () {
+                    let dir = '16_volume';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.materials.length, 20);
+
+                    const thickness_025 = asset.materials.filter(m => m.name === "R2_ThicknessFac_0.25")[0];
+                    assert.equalEpsilon(thickness_025.extensions['KHR_materials_volume']["thicknessFactor"], 0.25);
+                    assert.equalEpsilon(thickness_025.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                    assert.equalEpsilonArray(thickness_025.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in thickness_025.extensions['KHR_materials_volume']));
+
+                    const thickness_050 = asset.materials.filter(m => m.name === "R2_ThicknessFac_0.50")[0];
+                    assert.equalEpsilon(thickness_050.extensions['KHR_materials_volume']["thicknessFactor"], 0.5);
+                    assert.equalEpsilon(thickness_050.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                    assert.equalEpsilonArray(thickness_050.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in thickness_050.extensions['KHR_materials_volume']));
+
+                    const thickness_10 = asset.materials.filter(m => m.name === "R2_and_R4_ThicknessFac_1.0")[0];
+                    assert.equalEpsilon(thickness_10.extensions['KHR_materials_volume']["thicknessFactor"], 1.0);
+                    assert.equalEpsilon(thickness_10.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                    assert.equalEpsilonArray(thickness_10.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in thickness_10.extensions['KHR_materials_volume']));
+
+                    const thickness_15 = asset.materials.filter(m => m.name === "R2_ThicknessFac_1.5")[0];
+                    assert.equalEpsilon(thickness_15.extensions['KHR_materials_volume']["thicknessFactor"], 1.5);
+                    assert.equalEpsilon(thickness_15.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                    assert.equalEpsilonArray(thickness_15.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in thickness_15.extensions['KHR_materials_volume']));
+
+                    const thickness_20 = asset.materials.filter(m => m.name === "R2_ThicknessFac_2.0")[0];
+                    assert.equalEpsilon(thickness_20.extensions['KHR_materials_volume']["thicknessFactor"], 2.0);
+                    assert.equalEpsilon(thickness_20.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                    assert.equalEpsilonArray(thickness_20.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in thickness_20.extensions['KHR_materials_volume']));
+
+                    const tick_2_text = asset.materials.filter(m => m.name === "R3_ThicknessTex_Mat")[0];
+                    assert.equalEpsilon(tick_2_text.extensions['KHR_materials_volume']["thicknessFactor"], 2);
+                    assert.equalEpsilon(tick_2_text.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                    assert.equalEpsilonArray(tick_2_text.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok("thicknessTexture" in tick_2_text.extensions['KHR_materials_volume']);
+
+                    const dist_025 = asset.materials.filter(m => m.name === "R5_Attenuation_0.25")[0];
+                    assert.equalEpsilon(dist_025.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                    assert.equalEpsilon(dist_025.extensions['KHR_materials_volume']["attenuationDistance"], 4.0);
+                    assert.equalEpsilonArray(dist_025.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in dist_025.extensions['KHR_materials_volume']));
+
+                    const dist_05 = asset.materials.filter(m => m.name === "R5_Attenuation_0.50")[0];
+                    assert.equalEpsilon(dist_05.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                    assert.equalEpsilon(dist_05.extensions['KHR_materials_volume']["attenuationDistance"], 2.0);
+                    assert.equalEpsilonArray(dist_05.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in dist_05.extensions['KHR_materials_volume']));
+
+                    const dist_10 = asset.materials.filter(m => m.name === "R5_Attenuation_1.0")[0];
+                    assert.equalEpsilon(dist_10.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                    assert.equalEpsilon(dist_10.extensions['KHR_materials_volume']["attenuationDistance"], 1.0);
+                    assert.equalEpsilonArray(dist_10.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in dist_10.extensions['KHR_materials_volume']));
+
+                    const dist_15 = asset.materials.filter(m => m.name === "R5_Attenuation_1.5")[0];
+                    assert.equalEpsilon(dist_15.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                    assert.equalEpsilon(dist_15.extensions['KHR_materials_volume']["attenuationDistance"], 0.6666666666666666);
+                    assert.equalEpsilonArray(dist_15.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in dist_15.extensions['KHR_materials_volume']));
+
+                    const dist_20 = asset.materials.filter(m => m.name === "R5_Attenuation_2.0")[0];
+                    assert.equalEpsilon(dist_20.extensions['KHR_materials_volume']["thicknessFactor"], 1);
+                    assert.equalEpsilon(dist_20.extensions['KHR_materials_volume']["attenuationDistance"], 0.5);
+                    assert.equalEpsilonArray(dist_20.extensions['KHR_materials_volume']["attenuationColor"], [0.1, 0.5, 0.9]);
+                    assert.ok(!("thicknessTexture" in dist_20.extensions['KHR_materials_volume']));
+
+                    const NoThickness = asset.materials.filter(m => m.name === "NoThickness")[0];
+                    assert.ok(!("KHR_materials_volume" in NoThickness.extensions));
+
+                    const Thicknesszero = asset.materials.filter(m => m.name === "Thicknesszero")[0];
+                    assert.ok(!("KHR_materials_volume" in Thicknesszero.extensions));
+
+                });
+
+                it('roundtrips ior', function () {
+                    let dir = '17_ior';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const pbr = asset.materials.find(mat => mat.name === 'pbr');
+                    assert.strictEqual(pbr.extensions, undefined);
+
+                    const ior_2_no_transmission = asset.materials.find(mat => mat.name === 'ior_2_no_transmission');
+                    assert.strictEqual(ior_2_no_transmission.extensions, undefined);
+
+                    const ior_2 = asset.materials.find(mat => mat.name === 'ior_2');
+                    assert.ok("KHR_materials_ior" in ior_2.extensions);
+
+                    const ior_145 = asset.materials.find(mat => mat.name === 'ior_1.45');
+                    assert.ok("KHR_materials_ior" in ior_145.extensions);
+
+                    const ior_15 = asset.materials.find(mat => mat.name === 'ior_1.5');
+                    assert.ok(!("KHR_materials_ior" in ior_15.extensions));
+
+                });
+
+                it('roundtrips Variants', function () {
+                    let dir = '18_variants';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const variant_blue_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Blue");
+                    const variant_red_index = asset.extensions['KHR_materials_variants']['variants'].findIndex(variant => variant.name === "Variant_Red");
+
+
+                    const mat_blue_index = asset.materials.findIndex(mat => mat.name === "Blue");
+                    const mat_green_index = asset.materials.findIndex(mat => mat.name === "Green");
+                    const mat_white_index = asset.materials.findIndex(mat => mat.name === "White");
+                    const mat_orange_index = asset.materials.findIndex(mat => mat.name === "Orange");
+                    const mat_red_index = asset.materials.findIndex(mat => mat.name === "Red");
+                    const prim_blue = asset.meshes[0].primitives.find(prim => prim.material === mat_blue_index);
+                    const prim_green = asset.meshes[0].primitives.find(prim => prim.material === mat_green_index);
+                    const prim_white = asset.meshes[0].primitives.find(prim => prim.material === mat_white_index);
+
+                    assert.strictEqual(asset.extensions['KHR_materials_variants']['variants'].length, 2);
+
+                    assert.strictEqual(prim_blue.extensions['KHR_materials_variants']['mappings'].length, 2);
+                    prim_blue.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
+                        assert.strictEqual(mapping.variants.length, 1);
+                    });
+                    const map_1 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_red_index);
+                    assert.strictEqual(map_1.variants[0], variant_red_index);
+                    const map_2 = prim_blue.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_blue_index);
+                    assert.strictEqual(map_2.variants[0], variant_blue_index);
+
+                    assert.strictEqual(prim_green.extensions['KHR_materials_variants']['mappings'].length, 2);
+                    prim_green.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
+                        assert.strictEqual(mapping.variants.length, 1);
+                    });
+                    const map_3 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_orange_index);
+                    assert.strictEqual(map_3.variants[0], variant_red_index);
+                    const map_4 = prim_green.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_green_index);
+                    assert.strictEqual(map_4.variants[0], variant_blue_index);
+
+                    assert.strictEqual(prim_white.extensions['KHR_materials_variants']['mappings'].length, 1);
+                    prim_white.extensions['KHR_materials_variants']['mappings'].forEach(function (mapping) {
+                        assert.strictEqual(mapping.variants.length, 2);
+                    });
+                    const map_5 = prim_white.extensions['KHR_materials_variants']['mappings'].find(mapping => mapping.material === mat_white_index);
+                    assert.ok(variant_red_index in map_5.variants);
+                    assert.ok(variant_blue_index in map_5.variants);
+
+                });
+
+                it('roundtrips Sheen', function () {
+
+                    let dir = '19_sheen';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const mat_NoSheen = asset.materials.find(mat => mat.name === "NoSheen");
+                    const mat_SheenDefault = asset.materials.find(mat => mat.name === "SheenDefault");
+                    const mat_SheenSigma = asset.materials.find(mat => mat.name === "SheenSigma");
+                    const mat_SheenTexture = asset.materials.find(mat => mat.name === "SheenTexture");
+                    const mat_SheenTextureFactor = asset.materials.find(mat => mat.name === "SheenTextureFactor");
+                    const mat_SheenSigmaTexture = asset.materials.find(mat => mat.name === "SheenSigmaTexture");
+                    const mat_SheenSigmaTextureFactor = asset.materials.find(mat => mat.name === "SheenSigmaTextureFactor");
+
+                    assert.strictEqual(mat_NoSheen.extensions, undefined);
+
+                    assert.ok(!("sheenRoughnessFactor" in mat_SheenDefault.extensions['KHR_materials_sheen']));
+                    assert.ok(!("sheenColorTexture" in mat_SheenDefault.extensions['KHR_materials_sheen']));
+                    assert.ok(!("sheenRoughnessTexture" in mat_SheenDefault.extensions['KHR_materials_sheen']));
+                    assert.equalEpsilonArray(mat_SheenDefault.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.1, 0.2, 0.3]);
+
+                    assert.ok(!("sheenColorTexture" in mat_SheenSigma.extensions['KHR_materials_sheen']));
+                    assert.ok(!("sheenRoughnessTexture" in mat_SheenSigma.extensions['KHR_materials_sheen']));
+                    assert.equalEpsilonArray(mat_SheenSigma.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.8, 0.8, 0.8]);
+                    assert.equalEpsilon(mat_SheenSigma.extensions['KHR_materials_sheen']['sheenRoughnessFactor'], 0.8);
+
+                    assert.ok("sheenColorTexture" in mat_SheenTexture.extensions['KHR_materials_sheen']);
+                    assert.ok(!("sheenColorFactor" in mat_SheenTexture.extensions['KHR_materials_sheen']));
+                    assert.ok(!("sheenRoughnessTexture" in mat_SheenTexture.extensions['KHR_materials_sheen']));
+
+                    assert.equalEpsilonArray(mat_SheenTextureFactor.extensions['KHR_materials_sheen']['sheenColorFactor'], [0.6, 0.7, 0.8]);
+                    assert.ok("sheenColorTexture" in mat_SheenTextureFactor.extensions['KHR_materials_sheen']);
+                    assert.ok(!("sheenRoughnessTexture" in mat_SheenTextureFactor.extensions['KHR_materials_sheen']));
+
+                    assert.ok("sheenRoughnessTexture" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']);
+                    assert.ok(!("sheenRoughnessFactor" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']));
+
+                    assert.ok("sheenRoughnessTexture" in mat_SheenSigmaTextureFactor.extensions['KHR_materials_sheen']);
+                    assert.equalEpsilon(mat_SheenSigmaTextureFactor.extensions['KHR_materials_sheen']['sheenRoughnessFactor'], 0.75);
+
+                });
+
+                it('roundtrips Specular Original', function () {
+
+                    let dir = '20_specular_original';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const mat_SpecDefault = asset.materials.find(mat => mat.name === "SpecDefault");
+                    const mat_Factor = asset.materials.find(mat => mat.name === "Factor");
+                    const mat_Color = asset.materials.find(mat => mat.name === "Color");
+                    const mat_SpecTex = asset.materials.find(mat => mat.name === "SpecTex");
+                    const mat_SpecTexFac = asset.materials.find(mat => mat.name === "SpecTexFac");
+                    const mat_SpecColorTex = asset.materials.find(mat => mat.name === "SpecColorTex");
+                    const mat_SpecColorTexFac = asset.materials.find(mat => mat.name === "SpecColorTexFac");
+
+                    assert.strictEqual(mat_SpecDefault.extensions, undefined);
+
+                    if ('specularColorFactor' in mat_Factor.extensions['KHR_materials_specular']) {
+                        assert.equalEpsilonArray(mat_Factor.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
+                    } else {
+                        assert.ok(!("specularColorFactor" in mat_Factor.extensions['KHR_materials_specular']));
+                    }
+                    assert.ok(!("specularTexture" in mat_Factor.extensions['KHR_materials_specular']));
+                    assert.ok(!("specularColorTexture" in mat_Factor.extensions['KHR_materials_specular']));
+                    assert.equalEpsilon(mat_Factor.extensions['KHR_materials_specular']['specularFactor'], 0.8);
+
+                    if ('specularFactor' in mat_Color.extensions['KHR_materials_specular']) {
+                        assert.equalEpsilon(mat_Color.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                    } else {
+                        assert.ok(!("specularFactor" in mat_Color.extensions['KHR_materials_specular']));
+                    }
+                    assert.equalEpsilonArray(mat_Color.extensions['KHR_materials_specular']['specularColorFactor'], [0.1, 0.2, 0.3]);
+                    assert.ok(!("specularTexture" in mat_Color.extensions['KHR_materials_specular']));
+                    assert.ok(!("specularColorTexture" in mat_Color.extensions['KHR_materials_specular']));
+
+                    if ('specularFactor' in mat_SpecTex.extensions['KHR_materials_specular']) {
+                        assert.equalEpsilon(mat_SpecTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                    } else {
+                        assert.ok(!("specularFactor" in mat_SpecTex.extensions['KHR_materials_specular']));
+                    }
+                    assert.ok("specularTexture" in mat_SpecTex.extensions['KHR_materials_specular']);
+                    assert.ok(!("specularColorTexture" in mat_SpecTex.extensions['KHR_materials_specular']));
+
+
+                    assert.equalEpsilon(mat_SpecTexFac.extensions['KHR_materials_specular']['specularFactor'], 0.75);
+                    assert.ok("specularTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']);
+                    assert.ok(!("specularColorTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']));
+
+                    if ('specularFactor' in mat_SpecColorTex.extensions['KHR_materials_specular']) {
+                        assert.equalEpsilon(mat_SpecColorTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                    } else {
+                        assert.ok(!("specularFactor" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+                    }
+                    assert.ok(!("specularTexture" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+                    assert.ok("specularColorTexture" in mat_SpecColorTex.extensions['KHR_materials_specular']);
+                    if ('specularColorFactor' in mat_SpecColorTex.extensions['KHR_materials_specular']) {
+                        assert.equalEpsilonArray(mat_SpecColorTex.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
+                    } else {
+                        assert.ok(!("specularColorFactor" in mat_SpecColorTex.extensions['KHR_materials_specular']));
+                    }
+
+                    if ('specularFactor' in mat_SpecColorTexFac.extensions['KHR_materials_specular']) {
+                        assert.equalEpsilon(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularFactor'], 1.0);
+                    } else {
+                        assert.ok(!("specularFactor" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
+                    }
+                    assert.ok(!("specularTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
+                    assert.ok("specularColorTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']);
+                    assert.equalEpsilonArray(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularColorFactor'], [0.2, 0.3, 0.4]);
+
+                });
+
+                it('roundtrips factors', function () {
+                    let dir = '22_factors';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const mat = asset.materials[0];
+                    const pbr = mat.pbrMetallicRoughness;
+
+                    assert.equalEpsilonArray(mat.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.1, 0.2, 0.3]);
+                    assert.equalEpsilon(mat.extensions['KHR_materials_sheen']["sheenRoughnessFactor"], 0.5);
+                    assert.equalEpsilonArray(pbr.baseColorFactor, [0.5, 0.6, 0.7, 0.123]);
+                    assert.equalEpsilon(mat.extensions['KHR_materials_clearcoat']["clearcoatFactor"], 0.234);
+                    assert.equalEpsilon(mat.extensions['KHR_materials_clearcoat']["clearcoatRoughnessFactor"], 0.345);
+                    assert.equalEpsilon(mat.extensions['KHR_materials_transmission']["transmissionFactor"], 0.36);
+                    assert.equalEpsilonArray(mat.emissiveFactor, [0.4, 0.5, 0.6]);
+                    assert.equalEpsilon(pbr.metallicFactor, 0.2);
+                    assert.equalEpsilon(pbr.roughnessFactor, 0.3);
+                    assert.equalEpsilon(mat.extensions['KHR_materials_volume']["thicknessFactor"], 0.9);
+                    assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
+                    assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
+
+                });
+
+                it('roundtrips multi prim vertex attribute', function () {
+                    let dir = '23_multi_prim_vertex_attribute';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.meshes.length, 1);
+                    assert.strictEqual(asset.meshes[0].primitives.length, 2);
+                    const primitive1 = asset.meshes[0].primitives[0];
+                    assert.strictEqual(asset.accessors[primitive1.attributes['_PRESSURE']].count, 12);
+                    const primitive2 = asset.meshes[0].primitives[1];
+                    assert.strictEqual(asset.accessors[primitive2.attributes['_PRESSURE']].count, 4);
+                });
+
+                it('roundtrips gpu instances', function () {
+                    let dir = '24_gpu_instancing';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    assert.strictEqual(asset.meshes.length, 2);
+                    assert.strictEqual(asset.nodes.length, 6);
+
+                });
+
+                it('roundtrips anisotropy', function () {
+                    let dir = '25_anisotropy';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const mat_roughness_0_5 = asset.materials.find(mat => mat.name === "roughness 0.5");
+                    assert.equalEpsilon(mat_roughness_0_5.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
+                    assert.ok("anisotropyTexture" in mat_roughness_0_5.extensions['KHR_materials_anisotropy']);
+                    assert.ok(!("anisotropyRotation" in mat_roughness_0_5.extensions['KHR_materials_anisotropy']));
+
+                    const mat_roughness_1_0 = asset.materials.find(mat => mat.name === "roughness 1.0");
+                    assert.equalEpsilon(mat_roughness_1_0.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
+                    assert.equalEpsilon(mat_roughness_1_0.extensions['KHR_materials_anisotropy']["anisotropyRotation"], 0.349);
+                    assert.ok("anisotropyTexture" in mat_roughness_1_0.extensions['KHR_materials_anisotropy']);
+
+                    const tan_text = asset.materials.find(mat => mat.name === "Aniso Tan + Texture");
+                    assert.equalEpsilon(tan_text.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 0.8);
+                    assert.ok(!("anisotropyRotation" in tan_text.extensions['KHR_materials_anisotropy']));
+                    assert.ok("anisotropyTexture" in tan_text.extensions['KHR_materials_anisotropy']);
+
+                    const tan_rot = asset.materials.find(mat => mat.name === "Aniso Tan + Rotation + Texture");
+                    assert.equalEpsilon(tan_rot.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
+                    assert.equalEpsilon(tan_rot.extensions['KHR_materials_anisotropy']["anisotropyRotation"], 0.349065840);
+                    assert.ok("anisotropyTexture" in tan_rot.extensions['KHR_materials_anisotropy']);
+
+                });
 
             });
-
-            it('roundtrips Sheen', function () {
-
-                let dir = '19_sheen';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                const mat_NoSheen = asset.materials.find(mat => mat.name === "NoSheen");
-                const mat_SheenDefault = asset.materials.find(mat => mat.name === "SheenDefault");
-                const mat_SheenSigma = asset.materials.find(mat => mat.name === "SheenSigma");
-                const mat_SheenTexture = asset.materials.find(mat => mat.name === "SheenTexture");
-                const mat_SheenTextureFactor = asset.materials.find(mat => mat.name === "SheenTextureFactor");
-                const mat_SheenSigmaTexture = asset.materials.find(mat => mat.name === "SheenSigmaTexture");
-                const mat_SheenSigmaTextureFactor = asset.materials.find(mat => mat.name === "SheenSigmaTextureFactor");
-
-                assert.strictEqual(mat_NoSheen.extensions, undefined);
-
-                assert.ok(!("sheenRoughnessFactor" in mat_SheenDefault.extensions['KHR_materials_sheen']));
-                assert.ok(!("sheenColorTexture" in mat_SheenDefault.extensions['KHR_materials_sheen']));
-                assert.ok(!("sheenRoughnessTexture" in mat_SheenDefault.extensions['KHR_materials_sheen']));
-                assert.equalEpsilonArray(mat_SheenDefault.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.1, 0.2, 0.3]);
-
-                assert.ok(!("sheenColorTexture" in mat_SheenSigma.extensions['KHR_materials_sheen']));
-                assert.ok(!("sheenRoughnessTexture" in mat_SheenSigma.extensions['KHR_materials_sheen']));
-                assert.equalEpsilonArray(mat_SheenSigma.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.8, 0.8, 0.8]);
-                assert.equalEpsilon(mat_SheenSigma.extensions['KHR_materials_sheen']['sheenRoughnessFactor'], 0.8);
-
-                assert.ok("sheenColorTexture" in mat_SheenTexture.extensions['KHR_materials_sheen']);
-                assert.ok(!("sheenColorFactor" in mat_SheenTexture.extensions['KHR_materials_sheen']));
-                assert.ok(!("sheenRoughnessTexture" in mat_SheenTexture.extensions['KHR_materials_sheen']));
-
-                assert.equalEpsilonArray(mat_SheenTextureFactor.extensions['KHR_materials_sheen']['sheenColorFactor'], [0.6, 0.7, 0.8]);
-                assert.ok("sheenColorTexture" in mat_SheenTextureFactor.extensions['KHR_materials_sheen']);
-                assert.ok(!("sheenRoughnessTexture" in mat_SheenTextureFactor.extensions['KHR_materials_sheen']));
-
-                assert.ok("sheenRoughnessTexture" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']);
-                assert.ok(!("sheenRoughnessFactor" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']));
-
-                assert.ok("sheenRoughnessTexture" in mat_SheenSigmaTextureFactor.extensions['KHR_materials_sheen']);
-                assert.equalEpsilon(mat_SheenSigmaTextureFactor.extensions['KHR_materials_sheen']['sheenRoughnessFactor'], 0.75);
-
-            });
-
-            it('roundtrips Specular Original', function () {
-
-                let dir = '20_specular_original';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                const mat_SpecDefault = asset.materials.find(mat => mat.name === "SpecDefault");
-                const mat_Factor = asset.materials.find(mat => mat.name === "Factor");
-                const mat_Color = asset.materials.find(mat => mat.name === "Color");
-                const mat_SpecTex = asset.materials.find(mat => mat.name === "SpecTex");
-                const mat_SpecTexFac = asset.materials.find(mat => mat.name === "SpecTexFac");
-                const mat_SpecColorTex = asset.materials.find(mat => mat.name === "SpecColorTex");
-                const mat_SpecColorTexFac = asset.materials.find(mat => mat.name === "SpecColorTexFac");
-
-                assert.strictEqual(mat_SpecDefault.extensions, undefined);
-
-                if ('specularColorFactor' in mat_Factor.extensions['KHR_materials_specular']) {
-                    assert.equalEpsilonArray(mat_Factor.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
-                } else {
-                    assert.ok(!("specularColorFactor" in mat_Factor.extensions['KHR_materials_specular']));
-                }
-                assert.ok(!("specularTexture" in mat_Factor.extensions['KHR_materials_specular']));
-                assert.ok(!("specularColorTexture" in mat_Factor.extensions['KHR_materials_specular']));
-                assert.equalEpsilon(mat_Factor.extensions['KHR_materials_specular']['specularFactor'], 0.8);
-
-                if ('specularFactor' in mat_Color.extensions['KHR_materials_specular']) {
-                    assert.equalEpsilon(mat_Color.extensions['KHR_materials_specular']['specularFactor'], 1.0);
-                } else {
-                    assert.ok(!("specularFactor" in mat_Color.extensions['KHR_materials_specular']));
-                }
-                assert.equalEpsilonArray(mat_Color.extensions['KHR_materials_specular']['specularColorFactor'], [0.1, 0.2, 0.3]);
-                assert.ok(!("specularTexture" in mat_Color.extensions['KHR_materials_specular']));
-                assert.ok(!("specularColorTexture" in mat_Color.extensions['KHR_materials_specular']));
-
-                if ('specularFactor' in mat_SpecTex.extensions['KHR_materials_specular']) {
-                    assert.equalEpsilon(mat_SpecTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
-                } else {
-                    assert.ok(!("specularFactor" in mat_SpecTex.extensions['KHR_materials_specular']));
-                }
-                assert.ok("specularTexture" in mat_SpecTex.extensions['KHR_materials_specular']);
-                assert.ok(!("specularColorTexture" in mat_SpecTex.extensions['KHR_materials_specular']));
-
-
-                assert.equalEpsilon(mat_SpecTexFac.extensions['KHR_materials_specular']['specularFactor'], 0.75);
-                assert.ok("specularTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']);
-                assert.ok(!("specularColorTexture" in mat_SpecTexFac.extensions['KHR_materials_specular']));
-
-                if ('specularFactor' in mat_SpecColorTex.extensions['KHR_materials_specular']) {
-                    assert.equalEpsilon(mat_SpecColorTex.extensions['KHR_materials_specular']['specularFactor'], 1.0);
-                } else {
-                    assert.ok(!("specularFactor" in mat_SpecColorTex.extensions['KHR_materials_specular']));
-                }
-                assert.ok(!("specularTexture" in mat_SpecColorTex.extensions['KHR_materials_specular']));
-                assert.ok("specularColorTexture" in mat_SpecColorTex.extensions['KHR_materials_specular']);
-                if ('specularColorFactor' in mat_SpecColorTex.extensions['KHR_materials_specular']) {
-                    assert.equalEpsilonArray(mat_SpecColorTex.extensions['KHR_materials_specular']['specularColorFactor'], [1.0, 1.0, 1.0]);
-                } else {
-                    assert.ok(!("specularColorFactor" in mat_SpecColorTex.extensions['KHR_materials_specular']));
-                }
-
-                if ('specularFactor' in mat_SpecColorTexFac.extensions['KHR_materials_specular']) {
-                    assert.equalEpsilon(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularFactor'], 1.0);
-                } else {
-                    assert.ok(!("specularFactor" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
-                }
-                assert.ok(!("specularTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']));
-                assert.ok("specularColorTexture" in mat_SpecColorTexFac.extensions['KHR_materials_specular']);
-                assert.equalEpsilonArray(mat_SpecColorTexFac.extensions['KHR_materials_specular']['specularColorFactor'], [0.2, 0.3, 0.4]);
-
-            });
-
-            it('roundtrips factors', function () {
-                let dir = '22_factors';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                const mat = asset.materials[0];
-                const pbr = mat.pbrMetallicRoughness;
-
-                assert.equalEpsilonArray(mat.extensions['KHR_materials_sheen']["sheenColorFactor"], [0.1, 0.2, 0.3]);
-                assert.equalEpsilon(mat.extensions['KHR_materials_sheen']["sheenRoughnessFactor"], 0.5);
-                assert.equalEpsilonArray(pbr.baseColorFactor, [0.5, 0.6, 0.7, 0.123]);
-                assert.equalEpsilon(mat.extensions['KHR_materials_clearcoat']["clearcoatFactor"], 0.234);
-                assert.equalEpsilon(mat.extensions['KHR_materials_clearcoat']["clearcoatRoughnessFactor"], 0.345);
-                assert.equalEpsilon(mat.extensions['KHR_materials_transmission']["transmissionFactor"], 0.36);
-                assert.equalEpsilonArray(mat.emissiveFactor, [0.4, 0.5, 0.6]);
-                assert.equalEpsilon(pbr.metallicFactor, 0.2);
-                assert.equalEpsilon(pbr.roughnessFactor, 0.3);
-                assert.equalEpsilon(mat.extensions['KHR_materials_volume']["thicknessFactor"], 0.9);
-                assert.equalEpsilon(mat.extensions['KHR_materials_specular']["specularFactor"], 0.25);
-                assert.equalEpsilonArray(mat.extensions['KHR_materials_specular']["specularColorFactor"], [0.7, 0.6, 0.5]);
-
-            });
-
-            it('roundtrips multi prim vertex attribute', function () {
-                let dir = '23_multi_prim_vertex_attribute';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.meshes.length, 1);
-                assert.strictEqual(asset.meshes[0].primitives.length, 2);
-                const primitive1 = asset.meshes[0].primitives[0];
-                assert.strictEqual(asset.accessors[primitive1.attributes['_PRESSURE']].count, 12);
-                const primitive2 = asset.meshes[0].primitives[1];
-                assert.strictEqual(asset.accessors[primitive2.attributes['_PRESSURE']].count, 4);
-            });
-
-            it('roundtrips gpu instances', function () {
-                let dir = '24_gpu_instancing';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                assert.strictEqual(asset.meshes.length, 2);
-                assert.strictEqual(asset.nodes.length, 6);
-
-            });
-
-            it('roundtrips anisotropy', function () {
-                let dir = '25_anisotropy';
-                let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
-                let gltfPath = path.resolve(outDirPath, dir + '.gltf');
-                const asset = JSON.parse(fs.readFileSync(gltfPath));
-
-                const mat_roughness_0_5 = asset.materials.find(mat => mat.name === "roughness 0.5");
-                assert.equalEpsilon(mat_roughness_0_5.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
-                assert.ok("anisotropyTexture" in mat_roughness_0_5.extensions['KHR_materials_anisotropy']);
-                assert.ok(!("anisotropyRotation" in mat_roughness_0_5.extensions['KHR_materials_anisotropy']));
-
-                const mat_roughness_1_0 = asset.materials.find(mat => mat.name === "roughness 1.0");
-                assert.equalEpsilon(mat_roughness_1_0.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
-                assert.equalEpsilon(mat_roughness_1_0.extensions['KHR_materials_anisotropy']["anisotropyRotation"], 0.349);
-                assert.ok("anisotropyTexture" in mat_roughness_1_0.extensions['KHR_materials_anisotropy']);
-
-                const tan_text = asset.materials.find(mat => mat.name === "Aniso Tan + Texture");
-                assert.equalEpsilon(tan_text.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 0.8);
-                assert.ok(!("anisotropyRotation" in tan_text.extensions['KHR_materials_anisotropy']));
-                assert.ok("anisotropyTexture" in tan_text.extensions['KHR_materials_anisotropy']);
-
-                const tan_rot = asset.materials.find(mat => mat.name === "Aniso Tan + Rotation + Texture");
-                assert.equalEpsilon(tan_rot.extensions['KHR_materials_anisotropy']["anisotropyStrength"], 1.0);
-                assert.equalEpsilon(tan_rot.extensions['KHR_materials_anisotropy']["anisotropyRotation"], 0.349065840);
-                assert.ok("anisotropyTexture" in tan_rot.extensions['KHR_materials_anisotropy']);
-
-            });
-
         });
     });
 });
