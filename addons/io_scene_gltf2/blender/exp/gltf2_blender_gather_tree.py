@@ -312,6 +312,11 @@ class VExportTree:
                     if dupli_object.parent is not None:
                         continue
                     self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world, new_delta or delta, blender_children, is_children_in_collection=True)
+
+                # Some objects are parented to instance collection
+                for child in blender_children[blender_object]:
+                   self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, new_delta or delta, blender_children)
+
             else:
                 # Manage children objects
                 for child in blender_object.instance_collection.objects:
