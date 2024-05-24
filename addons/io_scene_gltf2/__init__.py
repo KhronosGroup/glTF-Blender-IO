@@ -1190,6 +1190,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             path_to_uri(os.path.splitext(os.path.basename(self.filepath))[0] + '.bin')
         )
 
+        export_settings['warning_joint_weight_exceed_already_displayed'] = False
+
         user_extensions = []
         pre_export_callbacks = []
         post_export_callbacks = []
