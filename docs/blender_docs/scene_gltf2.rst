@@ -872,6 +872,7 @@ Transform
 Y Up
    Export using glTF convention, +Y up.
 
+
 Data - Scene Graph
 ^^^^^^^^^^^^^^^^^^
 
@@ -887,6 +888,7 @@ Flatten Object Hierarchy
 Full Collection Hierarchy
    Export collections as empty, keeping full hierarchy. If an object is in multiple collections,
    it will be exported it only once, in the first collection it is found.
+
 
 Data - Mesh
 ^^^^^^^^^^^
@@ -910,12 +912,18 @@ Shared Accessor
    For triangles, use shared accessor for indices. This is more efficient (smaller files when you have lots of
    materials).
 
+
 Data - Mesh - Vertex Color
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 Use Vertex Color
-   Material: Export vertex color when used in material node tree as Base Color multiplier. This is the default, and the most accurate regarding glTF specification.
-   Active: Export active vertex colors, even if not used in material node tree. A fully compliant glTF viewer should display this VC as Base Color multiplier.
-   None: Do not export vertex color.
+   :Material:
+      Export vertex color when used in material node tree as Base Color multiplier.
+      This is the default, and the most accurate regarding glTF specification.
+   :Active:
+      Export active vertex colors, even if not used in material node tree.
+      A fully compliant glTF viewer should display this VC as Base Color multiplier.
+   :None:
+      Do not export vertex color.
 Export all vertex colors
    Export all vertex colors, additional VC will be COLOR_1, COLOR_2, etc.
 Export active vertex color when no material
