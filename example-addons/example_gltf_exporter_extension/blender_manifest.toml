@@ -1,0 +1,13 @@
+schema_version = "1.0.0"
+id = "GLTF_EXT_example_extension_export"
+name = "glTF user extension example for export"
+version = "0.0.1"
+tagline = "glTF user extension example for export"
+maintainer = "Community"
+type = "add-on"
+permissions = ["files"]
+tags = ["Import-Export"]
+blender_version_min = "4.2.0"
+license = ["SPDX:GPL-2.0-or-later"]
+website = "https://github.com/KhronosGroup/glTF-Blender-IO"
+copyright = ["The glTF-Blender-IO authors"]
