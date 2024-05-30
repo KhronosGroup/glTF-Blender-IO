@@ -1076,7 +1076,9 @@ Optimize Animation Size
 Force keeping channel for armature / bones
    if all keyframes are identical in a rig, force keeping the minimal animation.
 Force keeping channel for objects
-   if all keyframes are identical for object transformations, force keeping the minimal animation
+   if all keyframes are identical for object transformations, force keeping the minimal animation.
+Disable viewport for other objects
+   When exporting animations, disable viewport for other objects, for performance reasons, when possible.
 
 Animation - Filter
 ^^^^^^^^^^^^^^^^^^

@@ -737,11 +737,11 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
-    export_optimize_armature_disable_viewport: BoolProperty(
-        name='Disable viewport if possible',
+    export_optimize_disable_viewport: BoolProperty(
+        name='Disable viewport for other objects',
         description=(
-            "When exporting armature, disable viewport for other objects, "
-            "for performance. Drivers on shape keys for skined meshes prevent this optimization for now"
+            "When exporting animations, disable viewport for other objects, "
+            "for performance"
         ),
         default=False
     )
@@ -1145,7 +1145,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
             export_settings['gltf_optimize_animation_keep_object'] = self.export_optimize_animation_keep_anim_object
-            export_settings['gltf_optimize_armature_disable_viewport'] = self.export_optimize_armature_disable_viewport
+            export_settings['gltf_optimize_disable_viewport'] = self.export_optimize_disable_viewport
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
             export_settings['gltf_export_reset_sk_data'] = self.export_morph_reset_sk_data
@@ -1161,7 +1161,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_optimize_animation'] = False
             export_settings['gltf_optimize_animation_keep_armature'] = False
             export_settings['gltf_optimize_animation_keep_object'] = False
-            export_settings['gltf_optimize_armature_disable_viewport'] = False
+            export_settings['gltf_optimize_disable_viewport'] = False
             export_settings['gltf_export_anim_single_armature'] = False
             export_settings['gltf_export_reset_pose_bones'] = False
             export_settings['gltf_export_reset_sk_data'] = False
@@ -1638,7 +1638,7 @@ def export_panel_animation_optimize(layout, operator):
         row.prop(operator, 'export_optimize_animation_keep_anim_object')
 
         row = body.row()
-        row.prop(operator, 'export_optimize_armature_disable_viewport')
+        row.prop(operator, 'export_optimize_disable_viewport')
 
 
 def export_panel_animation_extra(layout, operator):
