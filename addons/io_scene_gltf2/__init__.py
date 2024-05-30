@@ -738,7 +738,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_optimize_disable_viewport: BoolProperty(
-        name='Disable viewport if possible',
+        name='Disable viewport for other objects',
         description=(
             "When exporting animations, disable viewport for other objects, "
             "for performance"
