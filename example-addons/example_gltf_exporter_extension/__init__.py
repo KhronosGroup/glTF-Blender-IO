@@ -40,64 +40,19 @@ def register():
     bpy.utils.register_class(ExampleExtensionProperties)
     bpy.types.Scene.ExampleExtensionProperties = bpy.props.PointerProperty(type=ExampleExtensionProperties)
 
-def register_panel():
-    # Register the panel on demand, we need to be sure to only register it once
-    # This is necessary because the panel is a child of the extensions panel,
-    # which may not be registered when we try to register this extension
-    try:
-        bpy.utils.register_class(GLTF_PT_UserExtensionPanel)
-    except Exception:
-        pass
-
-    # If the glTF exporter is disabled, we need to unregister the extension panel
-    # Just return a function to the exporter so it can unregister the panel
-    return unregister_panel
-
-
-def unregister_panel():
-    # Since panel is registered on demand, it is possible it is not registered
-    try:
-        bpy.utils.unregister_class(GLTF_PT_UserExtensionPanel)
-    except Exception:
-        pass
-
-
 def unregister():
-    unregister_panel()
     bpy.utils.unregister_class(ExampleExtensionProperties)
     del bpy.types.Scene.ExampleExtensionProperties
 
-class GLTF_PT_UserExtensionPanel(bpy.types.Panel):
 
-    bl_space_type = 'FILE_BROWSER'
-    bl_region_type = 'TOOL_PROPS'
-    bl_label = "Enabled"
-    bl_parent_id = "GLTF_PT_export_user_extensions"
-    bl_options = {'DEFAULT_CLOSED'}
+def draw(context, layout):
+    header, body = layout.panel("GLTF_addon_example_exporter", default_closed=False)
 
-    @classmethod
-    def poll(cls, context):
-        sfile = context.space_data
-        operator = sfile.active_operator
-        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+    props = bpy.context.scene.ExampleExtensionProperties
 
-    def draw_header(self, context):
-        props = bpy.context.scene.ExampleExtensionProperties
-        self.layout.prop(props, 'enabled')
-
-    def draw(self, context):
-        layout = self.layout
-        layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
-
-        props = bpy.context.scene.ExampleExtensionProperties
-        layout.active = props.enabled
-
-        box = layout.box()
-        box.label(text=glTF_extension_name)
-
-        props = bpy.context.scene.ExampleExtensionProperties
-        layout.prop(props, 'float_property', text="Some float value")
+    header.prop(props, 'enabled')
+    body.active = props.enabled
+    body.prop(props, 'float_property', text="Some float value")
 
 
 class glTF2ExportUserExtension:
