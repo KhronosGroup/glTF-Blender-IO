@@ -348,8 +348,7 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
                     else:
                         composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
                 else:
-                    # TODOUDIM: Not fully implemented yet
-                    composed_image.fill_image_tile(result.shader_node.image, export_settings['current_udim_info']['tile'], dst_chan, src_chan)
+                    composed_image.fill_image_bw_tile(result.shader_node.image, export_settings['current_udim_info']['tile'], dst_chan)
 
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
