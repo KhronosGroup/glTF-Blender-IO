@@ -17,6 +17,7 @@ import numpy as np
 
 from ..com.gltf2_io import Accessor
 from ..com.gltf2_io_constants import ComponentType, DataType
+from .gltf2_io_binary_meshopt import MeshoptDecompressor
 
 
 class BinaryData():
@@ -45,6 +46,10 @@ class BinaryData():
     def get_buffer_view(gltf, buffer_view_idx):
         """Get binary data for buffer view."""
         buffer_view = gltf.data.buffer_views[buffer_view_idx]
+
+        if 'EXT_meshopt_compression' in (buffer_view.extensions or {}):
+            return MeshoptDecompressor.get_buffer_view(gltf, buffer_view_idx)
+
 
         if buffer_view.buffer in gltf.buffers.keys():
             buffer = gltf.buffers[buffer_view.buffer]
