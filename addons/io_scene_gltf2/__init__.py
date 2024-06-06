@@ -1782,6 +1782,18 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default="BLENDER",
     )
 
+    disable_bone_shape: BoolProperty(
+        name='Disable Bone Shape',
+        description='Do not create bone shapes',
+        default=False,
+    )
+
+    bone_shape_scale_factor: FloatProperty(
+        name='Bone Shape Scale',
+        description='Scale factor for bone shapes',
+        default=1.0,
+    )
+
     guess_original_bind_pose: BoolProperty(
         name='Guess Original Bind Pose',
         description=(
@@ -1802,6 +1814,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     )
 
     def draw(self, context):
+        operator = self
         layout = self.layout
 
         layout.use_property_split = True
@@ -1811,9 +1824,9 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.prop(self, 'merge_vertices')
         layout.prop(self, 'import_shading')
         layout.prop(self, 'guess_original_bind_pose')
-        layout.prop(self, 'bone_heuristic')
         layout.prop(self, 'export_import_convert_lighting_mode')
         layout.prop(self, 'import_webp_texture')
+        import_bone_panel(layout, operator)
 
         import_panel_user_extension(context, layout)
 
@@ -1907,6 +1920,16 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             self.loglevel = logging.CRITICAL
         elif bpy.app.debug_value == 4:
             self.loglevel = logging.DEBUG
+
+def import_bone_panel(layout, operator):
+    header, body = layout.panel("GLTF_import_bone", default_closed=False)
+    header.label(text="Bones")
+    if body:
+        body.prop(operator, 'bone_heuristic')
+        if operator.bone_heuristic == 'BLENDER':
+            body.prop(operator, 'disable_bone_shape')
+            body.prop(operator, 'bone_shape_scale_factor')
+
 
 def import_panel_user_extension(context, layout):
     for draw in importer_extension_layout_draw.values():
