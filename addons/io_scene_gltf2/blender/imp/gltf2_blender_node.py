@@ -139,6 +139,10 @@ class BlenderNode():
         obj.show_in_front = True
         obj.data.relation_line_position = "HEAD"
 
+
+        if gltf.import_settings['disable_bone_shape'] is True:
+            return
+
         # Create a special collection (if not exists already)
         # Content of this collection will not be exported
         if BLENDER_GLTF_SPECIAL_COLLECTION not in bpy.data.collections:
