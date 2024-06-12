@@ -666,9 +666,9 @@ def get_base_material(material_idx, materials, export_settings):
             
             
     if export_settings['gltf_vertex_color'] == 'ACTIVE':
+        #if user requests it, will export active mesh vertex color, instead of material determined vertex color
     
         material_info["vc_info"] = {"color_type": "active", "alpha_type": "active"}
-        # VC will have alpha, if alpha is used or not
         material_info["vc_info"]["alpha_mode"] = "BLEND"
 
 
