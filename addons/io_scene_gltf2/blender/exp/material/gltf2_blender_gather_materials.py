@@ -656,21 +656,13 @@ def get_base_material(material_idx, materials, export_settings):
             export_settings
         )
 
-    if material is None:
-        # If no material, the mesh can still have vertex color
+    if (material is None and export_settings['gltf_active_vertex_color_when_no_material'] is True) or (export_settings['gltf_vertex_color'] == 'ACTIVE'):
+        # If no material implementation, the mesh can still have vertex color
         # So, retrieving it if user request it
-        if export_settings['gltf_active_vertex_color_when_no_material'] is True:
-            material_info["vc_info"] = {"color_type": "active", "alpha_type": "active"}
-            # VC will have alpha, as there is no material to know if alpha is used or not
-            material_info["vc_info"]["alpha_mode"] = "BLEND"
-            
-            
-    if export_settings['gltf_vertex_color'] == 'ACTIVE':
-        #if user requests it, will export active mesh vertex color, instead of material determined vertex color
-    
         material_info["vc_info"] = {"color_type": "active", "alpha_type": "active"}
+        # VC will have alpha, as there is no material to know if alpha is used or not
         material_info["vc_info"]["alpha_mode"] = "BLEND"
-
+          
 
 
     return material, material_info
