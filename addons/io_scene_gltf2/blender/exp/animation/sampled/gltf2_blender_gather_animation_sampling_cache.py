@@ -359,6 +359,11 @@ def armature_caching(data, obj_uuid, blender_obj, action_name, frame, export_set
 def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgraph, export_settings):
     for obj_uuid in obj_uuids:
         blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+        # Skip early if it's a Collection
+        if isinstance(blender_obj, bpy.types.Collection):
+            continue
+
         if blender_obj is None: #GN instance
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid not in current_instance.keys():
                 current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] = 0
