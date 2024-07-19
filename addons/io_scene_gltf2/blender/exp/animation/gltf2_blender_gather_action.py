@@ -519,7 +519,7 @@ def __get_blender_actions(obj_uuid: str,
     if export_settings['gltf_animation_mode'] == "BROADCAST":
         return __get_blender_actions_broadcast(obj_uuid, export_settings)
 
-    if blender_object and blender_object.animation_data is not None:
+    if blender_object and hasattr(blender_object, 'animation_data') and blender_object.animation_data is not None:
         # Collect active action.
         if blender_object.animation_data.action is not None:
 
@@ -555,7 +555,7 @@ def __get_blender_actions(obj_uuid: str,
                     action_on_type[strip.action.name] = "OBJECT"
 
     # For caching, actions linked to SK must be after actions about TRS
-    if export_settings['gltf_morph_anim'] and blender_object and blender_object.type == "MESH" \
+    if export_settings['gltf_morph_anim'] and blender_object and hasattr(blender_object, 'type') and blender_object.type == "MESH" \
             and blender_object.data is not None \
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
@@ -592,7 +592,7 @@ def __get_blender_actions(obj_uuid: str,
     # But only if armature has already some animation_data
     # If not, we says that this armature is never animated, so don't add these additional actions
     if export_settings['gltf_export_anim_single_armature'] is True:
-        if blender_object and blender_object.type == "ARMATURE" and blender_object.animation_data is not None:
+        if blender_object and hasattr(blender_object, 'type') and blender_object.type == "ARMATURE" and blender_object.animation_data is not None:
             if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
                 # Keep all actions on objects (no Shapekey animation)
                 for act in [a for a in bpy.data.actions if a.id_root == "OBJECT"]:
