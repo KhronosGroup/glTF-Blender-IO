@@ -41,6 +41,10 @@ def gather_actions_animations(export_settings):
     vtree = export_settings['vtree']
     for obj_uuid in vtree.get_all_objects():
 
+        # Do not manage real collections (if case of full hierarchy export)
+        if vtree.nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
+            continue
+
         # Do not manage not exported objects
         if vtree.nodes[obj_uuid].node is None:
             if export_settings["gltf_armature_object_remove"] is True:
@@ -78,6 +82,7 @@ def prepare_actions_range(export_settings):
     vtree = export_settings['vtree']
     for obj_uuid in vtree.get_all_objects():
 
+        # Do not manage real collections (if case of full hierarchy export)
         if vtree.nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
             continue
 
@@ -190,6 +195,10 @@ def prepare_actions_range(export_settings):
             and len(track_slide) > 0:
         # Need to store animation slides
         for obj_uuid in vtree.get_all_objects():
+
+            # Do not manage real collections (if case of full hierarchy export)
+            if vtree.nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
+                continue
 
             # Do not manage not exported objects
             if vtree.nodes[obj_uuid].node is None:
