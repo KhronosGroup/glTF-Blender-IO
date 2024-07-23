@@ -656,7 +656,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_pointer_animation: BoolProperty(
         name='Export Animation Pointer (Experimental)',
-        description='Export material, Light & Camera animation as Animation Pointer',
+        description='Export material, Light & Camera animation as Animation Pointer. '
+                    'Available only for baked animation mode \'NLA Tracks\' and \'Scene\'',
         default=False
     )
 
@@ -1642,10 +1643,8 @@ def export_panel_animation_pointer(layout, operator):
     header.prop(operator, "export_pointer_animation", text="")
     header.label(text="Animation Pointer (Experimental)")
     if body:
-
-
         row = body.row()
-        row.active = operator.export_pointer_animation
+        row.active = header.active and operator.export_pointer_animation
         row.prop(operator, 'export_convert_animation_pointer')
 
 def export_panel_animation_optimize(layout, operator):
