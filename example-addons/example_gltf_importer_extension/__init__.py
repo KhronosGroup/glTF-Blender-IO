@@ -36,12 +36,13 @@ class ExampleImporterExtensionProperties(bpy.types.PropertyGroup):
 
 def draw(context, layout):
     header, body = layout.panel("GLTF_addon_example_importer", default_closed=False)
+    header.use_property_split = False
 
     props = bpy.context.scene.ExampleImporterExtensionProperties
 
     header.prop(props, 'enabled')
-    body.active = props.enabled
-    body.prop(props, 'float_property', text="Some float value")
+    if body != None:
+        body.prop(props, 'float_property', text="Some float value")
 
 
 class glTF2ImportUserExtension:
