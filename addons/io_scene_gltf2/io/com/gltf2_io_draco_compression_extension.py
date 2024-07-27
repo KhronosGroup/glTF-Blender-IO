@@ -14,9 +14,22 @@
 
 import os
 import sys
+import glob
 from pathlib import Path
 import bpy
 
+def find_draco_dll_in_module():
+    bpy_path = Path(bpy.__file__).resolve()
+    bpy_dir = bpy_path.parents[4]
+    lib_dir = bpy_dir / 'lib'
+    
+    draco_files = glob.glob(str(lib_dir / 'libextern_draco.*'))
+    
+    if draco_files:
+        return Path(draco_files[0])
+    else:
+        return None
+    
 def dll_path() -> Path:
     """
     Get the DLL path depending on the underlying platform.
@@ -28,6 +41,7 @@ def dll_path() -> Path:
     python_version = 'python{v[0]}.{v[1]}'.format(v=sys.version_info)
 
     path = os.environ.get('BLENDER_EXTERN_DRACO_LIBRARY_PATH')
+    path = find_draco_dll_in_module()
     if path is None:
         path = {
             'win32': blender_root / python_lib / 'site-packages',
