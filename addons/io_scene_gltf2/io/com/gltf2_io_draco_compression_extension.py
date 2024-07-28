@@ -60,7 +60,6 @@ def dll_path() -> Path:
 
     if path is None or library_name is None:
         print('WARNING', 'Unsupported platform {}, Draco mesh compression is unavailable'.format(sys.platform))
-        return None
 
     return path / library_name
 
