@@ -35,17 +35,17 @@ def dll_path() -> Path:
     """
     lib_name = 'extern_draco'
     blender_root = Path(bpy.app.binary_path).parent
-    python_lib = Path(f'{bpy.app.version[0]}.{bpy.app.version[1]}/python/lib')
-    python_version = f'python{sys.version_info[0]}.{sys.version_info[1]}'
+    python_lib = Path('{v[0]}.{v[1]}/python/lib'.format(v=bpy.app.version))
+    python_version = 'python{v[0]}.{v[1]}'.format(v=sys.version_info)
 
     path = os.environ.get('BLENDER_EXTERN_DRACO_LIBRARY_PATH')
     if path is not None:
         return Path(path)
 
     library_name = {
-        'win32': f'{lib_name}.dll',
-        'linux': f'lib{lib_name}.so',
-        'darwin': f'lib{lib_name}.dylib'
+        'win32': '{}.dll'.format(lib_name),
+        'linux': 'lib{}.so'.format(lib_name),
+        'darwin': 'lib{}.dylib'.format(lib_name)
     }.get(sys.platform)
 
     path = find_draco_dll_in_module(library_name)
@@ -59,7 +59,7 @@ def dll_path() -> Path:
     }.get(sys.platform)
 
     if path is None or library_name is None:
-        print(f'WARNING: Unsupported platform {sys.platform}, Draco mesh compression is unavailable')
+        print('WARNING', 'Unsupported platform {}, Draco mesh compression is unavailable'.format(sys.platform))
         return None
 
     return path / library_name
