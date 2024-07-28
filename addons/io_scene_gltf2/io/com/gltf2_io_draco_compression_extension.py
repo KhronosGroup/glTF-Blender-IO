@@ -14,21 +14,19 @@
 
 import os
 import sys
-import glob
 from pathlib import Path
 import bpy
 
-def find_draco_dll_in_module():
+def find_draco_dll_in_module(library_name: str) -> Path:
     bpy_path = Path(bpy.__file__).resolve()
     bpy_dir = bpy_path.parents[4]
     lib_dir = bpy_dir / 'lib'
     
-    draco_files = glob.glob(str(lib_dir / 'libextern_draco.*'))
-    
-    if draco_files:
-        return Path(draco_files[0])
-    else:
-        return None
+    draco_path = lib_dir / library_name
+    if draco_path.exists():
+        return draco_path
+
+    return None
     
 def dll_path() -> Path:
     """
@@ -37,28 +35,32 @@ def dll_path() -> Path:
     """
     lib_name = 'extern_draco'
     blender_root = Path(bpy.app.binary_path).parent
-    python_lib = Path('{v[0]}.{v[1]}/python/lib'.format(v=bpy.app.version))
-    python_version = 'python{v[0]}.{v[1]}'.format(v=sys.version_info)
+    python_lib = Path(f'{bpy.app.version[0]}.{bpy.app.version[1]}/python/lib')
+    python_version = f'python{sys.version_info[0]}.{sys.version_info[1]}'
 
     path = os.environ.get('BLENDER_EXTERN_DRACO_LIBRARY_PATH')
-    path = find_draco_dll_in_module()
-    if path is None:
-        path = {
-            'win32': blender_root / python_lib / 'site-packages',
-            'linux': blender_root / python_lib / python_version / 'site-packages',
-            'darwin': blender_root.parent / 'Resources' / python_lib / python_version / 'site-packages'
-        }.get(sys.platform)
-    else:
+    if path is not None:
         return Path(path)
 
     library_name = {
-        'win32': '{}.dll'.format(lib_name),
-        'linux': 'lib{}.so'.format(lib_name),
-        'darwin': 'lib{}.dylib'.format(lib_name)
+        'win32': f'{lib_name}.dll',
+        'linux': f'lib{lib_name}.so',
+        'darwin': f'lib{lib_name}.dylib'
+    }.get(sys.platform)
+
+    path = find_draco_dll_in_module(library_name)
+    if path is not None:
+        return path
+
+    path = {
+        'win32': blender_root / python_lib / 'site-packages',
+        'linux': blender_root / python_lib / python_version / 'site-packages',
+        'darwin': blender_root.parent / 'Resources' / python_lib / python_version / 'site-packages'
     }.get(sys.platform)
 
     if path is None or library_name is None:
-        print('WARNING', 'Unsupported platform {}, Draco mesh compression is unavailable'.format(sys.platform))
+        print(f'WARNING: Unsupported platform {sys.platform}, Draco mesh compression is unavailable')
+        return None
 
     return path / library_name
 
