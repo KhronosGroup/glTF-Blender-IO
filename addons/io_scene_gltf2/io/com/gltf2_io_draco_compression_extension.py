@@ -18,6 +18,11 @@ from pathlib import Path
 import bpy
 
 def find_draco_dll_in_module(library_name: str) -> Path:
+    """
+    Get the extern Draco library if it exist in the default location used when
+    build PYthon as a module
+    :return: DLL/shared library path.
+    """
     bpy_path = Path(bpy.__file__).resolve()
     bpy_dir = bpy_path.parents[4]
     lib_dir = bpy_dir / 'lib'
