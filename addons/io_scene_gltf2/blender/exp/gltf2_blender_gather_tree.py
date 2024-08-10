@@ -461,7 +461,7 @@ class VExportTree:
         for child in self.nodes[uuid].children:
             if self.nodes[uuid].blender_type == VExportNode.INST_COLLECTION or self.nodes[uuid].is_instancier == VExportNode.INSTANCIER:
                 # We need to split children into 2 categories: real children, and objects inside the collection
-                if self.nodes[uuid].children_type[child] == VExportNode.CHILDREN_IS_IN_COLLECTION:
+                if self.nodes[uuid].children_type.get(child, VExportNode.CHILDREN_REAL) == VExportNode.CHILDREN_IS_IN_COLLECTION:
                     self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
                 else:
                     self.recursive_filter_tag(child, parent_keep_tag)
