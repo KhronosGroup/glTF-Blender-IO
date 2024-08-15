@@ -1499,6 +1499,8 @@ def export_panel_data_armature(layout, operator):
         row.prop(operator, 'export_armature_object_remove')
         row = body.row()
         row.prop(operator, 'export_hierarchy_flatten_bones')
+        row = body.row()
+        row.prop(operator, 'export_leaf_bone')
 
 
 def export_panel_data_skinning(layout, operator):
