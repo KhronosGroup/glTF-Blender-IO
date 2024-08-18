@@ -138,7 +138,10 @@ class PrimitiveCreator:
         # even if we apply modifiers
         # (For classic objects, shape keys are not preserved if we apply modifiers)
         # We can check it by checking if the mesh is used by a user
-        if self.blender_mesh.shape_keys and self.export_settings['gltf_morph'] and self.blender_mesh.users != 0:
+        # But ... in case we apply modifiers with only armature, the mesh is not used by a user
+        # But SK are still there
+        if self.blender_mesh.shape_keys and self.export_settings['gltf_morph'] and  \
+                (self.blender_mesh.users != 0 or ( self.armature is not None and self.blender_mesh.users == 0)):
             self.key_blocks = get_sk_exported(self.blender_mesh.shape_keys.key_blocks)
 
         # Fetch vert positions and bone data (joint,weights)
