@@ -303,10 +303,16 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 depsgraph = bpy.context.evaluated_depsgraph_get()
                 blender_mesh_owner = blender_object.evaluated_get(depsgraph)
                 blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
-                # Seems now (from 4.2) the custom properties are copied, so no need to copy them
+                # Seems now (from 4.2) the custom properties are copied when evaluate a mesh that will not be changed
+                # so no need to copy them in that case
                 # But we need to remove some properties that are not needed
-                for prop in [p for p in blender_object.data.keys() if p in BLACK_LIST]:
-                    del blender_mesh[prop]
+                if len(blender_mesh.keys()) == 0:
+                    # Copy custom properties
+                    for prop in [p for p in blender_object.data.keys() if p not in BLACK_LIST]:
+                        blender_mesh[prop] = blender_object.data[prop]
+                else:
+                    for prop in [p for p in blender_object.data.keys() if p in BLACK_LIST]:
+                        del blender_mesh[prop]
 
                 if export_settings['gltf_skins']:
                     # restore Armature modifiers
