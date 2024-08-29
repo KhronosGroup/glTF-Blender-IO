@@ -165,7 +165,7 @@ def get_format_items(scene, context):
 def is_draco_available():
     # Initialize on first use
     if not hasattr(is_draco_available, "draco_exists"):
-        from .io.com import gltf2_io_draco_compression_extension
+        from .io.com import draco as gltf2_io_draco_compression_extension
         is_draco_available.draco_exists = gltf2_io_draco_compression_extension.dll_exists()
 
     return is_draco_available.draco_exists
@@ -1040,9 +1040,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         import os
         import datetime
         import logging
-        from .io.com.gltf2_io_debug import Log
-        from .blender.exp import gltf2_blender_export
-        from .io.com.gltf2_io_path import path_to_uri
+        from .io.com.debug import Log
+        from .blender.exp import export as gltf2_blender_export
+        from .io.com.path import path_to_uri
 
         if self.will_save_settings:
             self.save_settings(context)
@@ -1881,7 +1881,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     def unit_import(self, filename, import_settings):
         import time
         from .io.imp.gltf2_io_gltf import glTFImporter, ImportError
-        from .blender.imp.gltf2_blender_gltf import BlenderGlTF
+        from .blender.imp.blender_gltf import BlenderGlTF
 
         try:
             gltf_importer = glTFImporter(filename, import_settings)

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import bpy
-from ..com.gltf2_blender_material_helpers import get_gltf_node_name, create_settings_group
+from ..com.material_helpers import get_gltf_node_name, create_settings_group
 
 ################ glTF Material Output node ###########################################
 
