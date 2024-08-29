@@ -365,7 +365,7 @@ class VExportTree:
                 self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=mat)
 
         # Geometry Nodes instances
-        # Maje sure to not check instances for instanced collection, because we will export what's inside the collection twice
+        # Make sure to not check instances for instanced collection, because we will export what's inside the collection twice
         if self.export_settings['gltf_gn_mesh'] is True and node.blender_type == VExportNode.OBJECT:
             # Do not force export as empty
             # Because GN graph can have both geometry and instances
