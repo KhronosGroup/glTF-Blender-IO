@@ -11,7 +11,7 @@ on:
 env:
   CI: true
   BLENDER_MAJOR: 4
-  BLENDER_MINOR: 2
+  BLENDER_MINOR: 3
 
 jobs:
   build:
