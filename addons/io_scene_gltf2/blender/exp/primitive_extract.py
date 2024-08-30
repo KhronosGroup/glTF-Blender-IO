@@ -739,7 +739,7 @@ class PrimitiveCreator:
                         else:
                             self.export_settings['log'].warning('We are not managing this case (UDIM for {})'.format(tex))
 
-                    self.additional_materials.append((new_material, material_info, int(str(id(base_material)) + str(u) + str(v))))
+                    self.additional_materials.append((new_material, material_info, int(str(id(base_material)) + str(u) + str(v)), "10" + str(v) + str(u+1)))
 
 
         # Now, we need to add additional Vertex Color if needed
