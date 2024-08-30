@@ -56,6 +56,7 @@ def draw(context, layout):
         body.prop(props, 'float_property', text="Some float value")
 
 
+# Note: the class must have this exact name
 class glTF2ExportUserExtension:
 
     def __init__(self):
