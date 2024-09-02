@@ -87,7 +87,7 @@ def from_bool(x):
 
 
 def to_float(x):
-    assert isinstance(x, float)
+    assert isinstance(x, (int, float)) and not isinstance(x, bool)
     return x
 
 
