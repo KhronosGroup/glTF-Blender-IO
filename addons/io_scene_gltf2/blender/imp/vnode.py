@@ -60,7 +60,7 @@ class VNode:
         self.rotation_after = Quaternion((1, 0, 0, 0))
         self.rotation_before = Quaternion((1, 0, 0, 0))
 
-        # Indices of the glTF node where the mesh, etc. came from.
+        # Index in the glTF "nodes" array where this mesh/camera/light came from
         # (They can get moved around.)
         self.mesh_node_idx = None
         self.camera_node_idx = None
