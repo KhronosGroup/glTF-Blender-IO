@@ -19,7 +19,7 @@ Next, define functions that contain the data of the extension you would like to 
 
 ```
 gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings)
-gather_animation_channel_hook(self, gltf2_animation_channel, channel, blender_object, action_name, node_channel_is_animated, export_settings)
+gather_animation_channel_hook(self, gltf2_animation_channel, channel, blender_object, bone, action_name, node_channel_is_animated, export_settings)
 gather_animation_channel_target_hook(self, gltf2_animation_channel_target, channels, blender_object, bake_bone, bake_channel, export_settings)
 gather_animation_sampler_hook(self, gltf2_sampler, blender_object, bone, action_name, node_channel_is_animated, export_settings)
 gather_asset_hook(self, gltf2_asset, export_settings)
@@ -54,7 +54,6 @@ animation_switch_loop_hook(self, blender_object, post, export_settings) # post =
 animation_track_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for track mode
 animation_gather_fcurve(self, blender_object, blender_action, export_settings)
 animation_action_object_sampled(self, gltf2_animation, blender_object, blender_action, cache_key, export_settings)
-gather_animation_channel_hook(self, animation_channel, channel, blender_object, node_channel_is_animated, export_settings)
 animation_gather_object_channel(self, blender_object, blender_action_name, export_settings)
 animation_gather_object_sampler(self, blender_object, action_name, export_settings)
 animation_action_sk_sampled(self, gltf2_animation, blender_object, blender_action, cache_key, export_settings)
