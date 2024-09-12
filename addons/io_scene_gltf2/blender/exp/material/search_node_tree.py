@@ -871,6 +871,9 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     return texture_transform
 
 def check_if_is_linked_to_active_output(shader_socket, group_path):
+
+    # Here, group_path must be copyed, because if there are muliply link that enter/exit a group node
+    # This will modify it, and we don't want to modify the original group_path (from the parameter) inside the loop
     for link in shader_socket.links:
 
         # If we are entering a node group
@@ -878,9 +881,10 @@ def check_if_is_linked_to_active_output(shader_socket, group_path):
             socket_name = link.to_socket.name
             sockets = [n for n in link.to_node.node_tree.nodes if n.type == "GROUP_INPUT"][0].outputs
             socket = [s for s in sockets if s.name == socket_name][0]
-            group_path.append(link.to_node)
+            new_group_path = group_path.copy()
+            new_group_path.append(link.to_node)
             #TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
-            ret = check_if_is_linked_to_active_output(socket, group_path) # recursive until find an output material node
+            ret = check_if_is_linked_to_active_output(socket, new_group_path) # recursive until find an output material node
             if ret is True:
                 return True
             continue
@@ -890,9 +894,9 @@ def check_if_is_linked_to_active_output(shader_socket, group_path):
             socket_name = link.to_socket.name
             sockets = group_path[-1].outputs
             socket = [s for s in sockets if s.name == socket_name][0]
-            group_path = group_path[:-1]
+            new_group_path = group_path[:-1]
             #TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
-            ret = check_if_is_linked_to_active_output(socket, group_path) # recursive until find an output material node
+            ret = check_if_is_linked_to_active_output(socket, new_group_path) # recursive until find an output material node
             if ret is True:
                 return True
             continue
