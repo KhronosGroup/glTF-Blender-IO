@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 3, 13),
+    "version": (4, 3, 32),
     'blender': (4, 2, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -170,6 +170,18 @@ def is_draco_available():
 
     return is_draco_available.draco_exists
 
+def set_debug_log():
+    import logging
+    if bpy.app.debug_value == 0:      # Default values => Display all messages except debug ones
+        return logging.INFO
+    elif bpy.app.debug_value == 1:
+        return logging.WARNING
+    elif bpy.app.debug_value == 2:
+        return logging.ERROR
+    elif bpy.app.debug_value == 3:
+        return logging.CRITICAL
+    elif bpy.app.debug_value == 4:
+        return logging.DEBUG
 
 class ConvertGLTF2_Base:
     """Base class containing options that should be exposed during both import and export."""
@@ -1008,7 +1020,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         for addon_name in preferences.addons.keys():
             try:
                 if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
-                    exporter_extension_layout_draw[addon_name] = sys.modules[addon_name].draw
+                    exporter_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_export if hasattr(sys.modules[addon_name], 'draw_export') else sys.modules[addon_name].draw
             except Exception:
                 pass
 
@@ -1052,7 +1064,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # All custom export settings are stored in this container.
         export_settings = {}
 
-        export_settings['loglevel'] = logging.INFO
+        export_settings['loglevel'] = set_debug_log()
 
         export_settings['exported_images'] = {}
         export_settings['exported_texture_nodes'] = []
@@ -1499,6 +1511,8 @@ def export_panel_data_armature(layout, operator):
         row.prop(operator, 'export_armature_object_remove')
         row = body.row()
         row.prop(operator, 'export_hierarchy_flatten_bones')
+        row = body.row()
+        row.prop(operator, 'export_leaf_bone')
 
 
 def export_panel_data_skinning(layout, operator):
@@ -1835,7 +1849,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         for addon_name in preferences.addons.keys():
             try:
                 if hasattr(sys.modules[addon_name], 'glTF2ImportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ImportUserExtensions'):
-                    importer_extension_layout_draw[addon_name] = sys.modules[addon_name].draw
+                    importer_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_import if hasattr(sys.modules[addon_name], 'draw_import') else sys.modules[addon_name].draw
             except Exception:
                 pass
 
@@ -1848,7 +1862,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     def import_gltf2(self, context):
         import os
 
-        self.set_debug_log()
+        self.loglevel = set_debug_log()
         import_settings = self.as_keywords()
 
         user_extensions = []
@@ -1907,18 +1921,6 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             self.report({'ERROR'}, e.args[0])
             return {'CANCELLED'}
 
-    def set_debug_log(self):
-        import logging
-        if bpy.app.debug_value == 0:      # Default values => Display all messages except debug ones
-            self.loglevel = logging.INFO
-        elif bpy.app.debug_value == 1:
-            self.loglevel = logging.WARNING
-        elif bpy.app.debug_value == 2:
-            self.loglevel = logging.ERROR
-        elif bpy.app.debug_value == 3:
-            self.loglevel = logging.CRITICAL
-        elif bpy.app.debug_value == 4:
-            self.loglevel = logging.DEBUG
 
 def import_bone_panel(layout, operator):
     header, body = layout.panel("GLTF_import_bone", default_closed=False)

@@ -9,6 +9,15 @@ glTF 2.0
    :Menu:      :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
 
 
+Enabling Add-on
+===============
+
+This add-on is enabled by default, in case it is not:
+
+#. Open Blender and go to :doc:`/editors/preferences/addons` section of the :doc:`/editors/preferences/index`.
+#. Search "glTF 2.0" and check the *Enable Extension* checkbox.
+
+
 Usage
 =====
 

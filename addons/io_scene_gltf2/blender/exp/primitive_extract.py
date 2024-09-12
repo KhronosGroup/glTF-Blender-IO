@@ -738,7 +738,7 @@ class PrimitiveCreator:
                         else:
                             self.export_settings['log'].warning('We are not managing this case (UDIM for {})'.format(tex))
 
-                    self.additional_materials.append((new_material, material_info, int(str(id(base_material)) + str(u) + str(v))))
+                    self.additional_materials.append((new_material, material_info, int(str(id(base_material)) + str(u) + str(v)), "10" + str(v) + str(u+1)))
 
 
         # Now, we need to add additional Vertex Color if needed
@@ -1281,6 +1281,12 @@ class PrimitiveCreator:
             data = data.reshape(-1, attr['len'])
         elif attr['blender_data_type'] == "FLOAT_VECTOR":
             self.blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('vector', data)
+            data = data.reshape(-1, attr['len'])
+        elif attr['blender_data_type'] == "QUATERNION":
+            self.blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('value', data)
+            data = data.reshape(-1, attr['len'])
+        elif attr['blender_data_type'] == "FLOAT4X4":
+            self.blender_mesh.attributes[attr['blender_attribute_index']].data.foreach_get('value', data)
             data = data.reshape(-1, attr['len'])
         elif attr['blender_data_type'] == "FLOAT_VECTOR_4": # Specific case for tangent
             pass
