@@ -54,7 +54,6 @@ animation_switch_loop_hook(self, blender_object, post, export_settings) # post =
 animation_track_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for track mode
 animation_gather_fcurve(self, blender_object, blender_action, export_settings)
 animation_action_object_sampled(self, gltf2_animation, blender_object, blender_action, cache_key, export_settings)
-gather_animation_channel_hook(self, animation_channel, channel, blender_object, node_channel_is_animated, export_settings)
 animation_gather_object_channel(self, blender_object, blender_action_name, export_settings)
 animation_gather_object_sampler(self, blender_object, action_name, export_settings)
 animation_action_sk_sampled(self, gltf2_animation, blender_object, blender_action, cache_key, export_settings)
