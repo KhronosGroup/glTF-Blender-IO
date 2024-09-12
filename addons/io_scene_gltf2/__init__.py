@@ -1008,7 +1008,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         for addon_name in preferences.addons.keys():
             try:
                 if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
-                    exporter_extension_layout_draw[addon_name] = sys.modules[addon_name].draw if hasattr(sys.modules[addon_name], 'draw_export') else sys.modules[addon_name].draw
+                    exporter_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_export if hasattr(sys.modules[addon_name], 'draw_export') else sys.modules[addon_name].draw
             except Exception:
                 pass
 
