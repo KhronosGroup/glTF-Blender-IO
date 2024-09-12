@@ -159,7 +159,7 @@ def __gather_weights(blender_mesh: bpy.types.Mesh,
         return None
 
     # Not for GN Instances
-    if blender_mesh.is_evaluated is True and blender_mesh.get('gltf2_mesh_applied'):
+    if blender_mesh.is_evaluated is True and blender_mesh.get('gltf2_mesh_applied') is None:
         return None
 
     morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
