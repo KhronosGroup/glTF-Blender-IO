@@ -305,6 +305,8 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
                 for prop in [p for p in blender_object.data.keys() if p not in BLACK_LIST]:
                     blender_mesh[prop] = blender_object.data[prop]
+                # Store that this evaluated mesh has been created by the exporter, and is not a GN instance mesh
+                blender_mesh['gltf2_mesh_applied'] = True
 
                 if export_settings['gltf_skins']:
                     # restore Armature modifiers
