@@ -45,7 +45,7 @@ def unregister():
     del bpy.types.Scene.ExampleExtensionProperties
 
 
-def draw(context, layout):
+def draw_export(context, layout):
     header, body = layout.panel("GLTF_addon_example_exporter", default_closed=False)
     header.use_property_split = False
 

@@ -34,7 +34,7 @@ class ExampleImporterExtensionProperties(bpy.types.PropertyGroup):
 
 
 
-def draw(context, layout):
+def draw_import(context, layout):
     header, body = layout.panel("GLTF_addon_example_importer", default_closed=False)
     header.use_property_split = False
 
