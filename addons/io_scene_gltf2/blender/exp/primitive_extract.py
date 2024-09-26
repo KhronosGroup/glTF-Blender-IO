@@ -934,9 +934,11 @@ class PrimitiveCreator:
                         self.attributes_edges_points[attr['gltf_attribute_name']] = {}
                         self.attributes_edges_points[attr['gltf_attribute_name']]["data"] = res
                         self.attributes_edges_points[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
-                        # Because we can have remove the alpha channel, we need to check the length of the data, and not be based on the Blender data type
-                        self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3 if attr['len'] == 3 else gltf2_io_constants.DataType.Vec4
-
+                        if attr['gltf_attribute_name'].startswith('COLOR_'):
+                            # Because we can have remove the alpha channel, we need to check the length of the data, and not be based on the Blender data type
+                            self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3 if attr['len'] == 3 else gltf2_io_constants.DataType.Vec4
+                        else:
+                            self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
 
                 if self.skin:
                     joints = [[] for _ in range(self.num_joint_sets)]
@@ -984,8 +986,11 @@ class PrimitiveCreator:
                         self.attributes_edges_points[attr['gltf_attribute_name']] = {}
                         self.attributes_edges_points[attr['gltf_attribute_name']]["data"] = res
                         self.attributes_edges_points[attr['gltf_attribute_name']]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
-                        # Because we can have remove the alpha channel, we need to check the length of the data, and not be based on the Blender data type
-                        self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3 if attr['len'] == 3 else gltf2_io_constants.DataType.Vec4
+                        if attr['gltf_attribute_name'].startswith('COLOR_'):
+                            # Because we can have remove the alpha channel, we need to check the length of the data, and not be based on the Blender data type
+                            self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_io_constants.DataType.Vec3 if attr['len'] == 3 else gltf2_io_constants.DataType.Vec4
+                        else:
+                            self.attributes_edges_points[attr['gltf_attribute_name']]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
 
                 if self.skin:
                     joints = [[] for _ in range(self.num_joint_sets)]
