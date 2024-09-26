@@ -752,10 +752,11 @@ class PrimitiveCreator:
             if no_materials is False or (no_materials is True and self.export_settings['gltf_active_vertex_color_when_no_material'] is True):
                 for vc in self.blender_mesh.color_attributes:
                     if vc.name not in [v['color'] for v in self.vc_infos if v['forced'] is False]:
+                        add_alpha = True # As we are using the active Vertex Color without checking node tree, we need to add alpha
                         self.vc_infos.append({
                             'color': vc.name,
                             'alpha': vc.name,
-                            'add_alpha': True, # As we are using the active Vertex Color without checking node tree, we need to add alpha in case there are some
+                            'add_alpha': add_alpha,
                             'gltf_name': 'COLOR_' + str(self.vc_infos_index),
                             'forced': False
                         })
