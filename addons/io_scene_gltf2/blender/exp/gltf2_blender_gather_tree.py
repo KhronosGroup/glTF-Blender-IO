@@ -162,7 +162,7 @@ class VExportTree:
             #       2. Old Dupli vertices feature
             # For any other case, children are real children
             if (self.nodes[parent_uuid].blender_type == VExportNode.INST_COLLECTION or original_object is not None) or \
-                    (self.nodes[parent_uuid].blender_type != VExportNode.COLLECTION self.nodes[parent_uuid].blender_object is not None and self.nodes[parent_uuid].blender_object.is_instancer is True):
+                    (self.nodes[parent_uuid].blender_type != VExportNode.COLLECTION and self.nodes[parent_uuid].blender_object is not None and self.nodes[parent_uuid].blender_object.is_instancer is True):
                 self.nodes[parent_uuid].children_type[node.uuid] = VExportNode.CHILDREN_IS_IN_COLLECTION if is_children_in_collection is True else VExportNode.CHILDREN_REAL
         else:
             self.roots.append(node.uuid)
