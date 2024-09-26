@@ -1,5 +1,6 @@
 Here you'll find information on how to add importer extensions from a glTF file from an external Blender addon.
 
+First, your importer must define a class with this exact name:
 
 ```python
 class glTF2ImportUserExtension:
