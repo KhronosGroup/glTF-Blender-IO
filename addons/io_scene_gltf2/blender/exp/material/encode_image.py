@@ -342,7 +342,8 @@ class ExportImage:
                 elif isinstance(fill, FillWith):
                     out_buf[int(dst_chan)::4] = fill.value
                 elif isinstance(fill, FillImageRGB2BW) and fill.image == image:
-                    out_buf[int(dst_chan)::4] = tmp_buf[0::4] * 0.2989 + tmp_buf[1::4] * 0.5870 + tmp_buf[2::4] * 0.1140
+                    # TODO : alpha multiply shoud happen depending on alpha mode of the image node
+                    out_buf[int(dst_chan)::4] = (tmp_buf[0::4] * 0.2989 + tmp_buf[1::4] * 0.5870 + tmp_buf[2::4] * 0.1140) * tmp_buf[3::4]
 
         tmp_buf = None  # GC this
 
