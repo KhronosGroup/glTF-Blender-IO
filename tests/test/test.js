@@ -249,7 +249,8 @@ describe('Exporter', function () {
         ];
 
         variants.forEach(function (variant) {
-            const args = variant[1];
+            var args = variant[1];
+            args += ' 2>&1 > /dev/null'; // avoid str overflows
             describe(blenderVersion + '_export' + variant[0], function () {
                 blenderSampleScenes.forEach((scene) => {
                     it(scene, function (done) {
