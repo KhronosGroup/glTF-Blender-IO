@@ -304,7 +304,8 @@ def __gather_extensions(blender_mesh,
                 variant_extension = gltf2_io_extensions.ChildOfRootExtension(
                 name="KHR_materials_variants",
                 path=["variants"],
-                extension=vari
+                extension=vari,
+                required=False
             )
             variants.append(variant_extension)
         if len(variants) > 0:
@@ -331,7 +332,8 @@ def __gather_extensions(blender_mesh,
             name="KHR_materials_variants",
             extension={
                 "mappings": mapping
-            }
+            },
+            required=False
         )
 
     return extensions if extensions else None
