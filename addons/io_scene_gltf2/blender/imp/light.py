@@ -19,6 +19,7 @@ from ...io.imp.user_extensions import import_user_extensions
 from ..com.conversion import PBR_WATTS_TO_LUMENS
 from ..com.extras import set_extras
 
+
 class BlenderLight():
     """Blender Light."""
     def __new__(cls, *args, **kwargs):
@@ -32,7 +33,7 @@ class BlenderLight():
         import_user_extensions('gather_import_light_before_hook', gltf, vnode, pylight)
 
         if pylight['type'] == "directional":
-            light = BlenderLight.create_directional(gltf, light_id) # ...Why not pass the pylight?
+            light = BlenderLight.create_directional(gltf, light_id)  # ...Why not pass the pylight?
         elif pylight['type'] == "point":
             light = BlenderLight.create_point(gltf, light_id)
         elif pylight['type'] == "spot":
@@ -45,7 +46,7 @@ class BlenderLight():
 
         set_extras(light, pylight.get('extras'))
 
-        pylight['blender_object_data'] = light # Needed in case of KHR_animation_pointer
+        pylight['blender_object_data'] = light  # Needed in case of KHR_animation_pointer
 
         return light
 
@@ -54,7 +55,7 @@ class BlenderLight():
         pylight = gltf.data.extensions['KHR_lights_punctual']['lights'][light_id]
 
         if 'name' not in pylight.keys():
-            pylight['name'] = "Sun" # Uh... Is it okay to mutate the import data?
+            pylight['name'] = "Sun"  # Uh... Is it okay to mutate the import data?
 
         sun = bpy.data.lights.new(name=pylight['name'], type="SUN")
 
@@ -113,13 +114,18 @@ class BlenderLight():
             gltf_default_outer_cone_angle = pi / 4
             gltf_default_inner_cone_angle = 0.0
 
-            spot.spot_size = BlenderLight.calc_spot_cone_outer(gltf, pylight['spot'].get('outerConeAngle', gltf_default_outer_cone_angle))
-            spot.spot_blend = BlenderLight.calc_spot_cone_inner(gltf, pylight['spot'].get('outerConeAngle', gltf_default_outer_cone_angle), pylight['spot'].get('innerConeAngle', gltf_default_inner_cone_angle))
+            spot.spot_size = BlenderLight.calc_spot_cone_outer(
+                gltf, pylight['spot'].get('outerConeAngle', gltf_default_outer_cone_angle))
+            spot.spot_blend = BlenderLight.calc_spot_cone_inner(
+                gltf, pylight['spot'].get(
+                    'outerConeAngle', gltf_default_outer_cone_angle), pylight['spot'].get(
+                    'innerConeAngle', gltf_default_inner_cone_angle))
 
         if 'intensity' in pylight.keys():
             spot.energy = BlenderLight.calc_energy_pointlike(gltf, pylight['intensity'])
 
-        # Store multiple channel data, as we will need all channels to convert to blender data when animated by KHR_animation_pointer
+        # Store multiple channel data, as we will need all channels to convert to
+        # blender data when animated by KHR_animation_pointer
         if gltf.data.extensions_used is not None and "KHR_animation_pointer" in gltf.data.extensions_used:
             if len(pylight['animations']) > 0:
                 for anim_idx in pylight['animations'].keys():
@@ -130,7 +136,8 @@ class BlenderLight():
                                 pointer_tab[2] == "KHR_lights_punctual" and \
                                 pointer_tab[3] == "lights" and \
                                 pointer_tab[5] in ["spot.innerConeAngle", "spot.outerConeAngle"]:
-                            # Store multiple channel data, as we will need all channels to convert to blender data when animated
+                            # Store multiple channel data, as we will need all channels to convert to
+                            # blender data when animated
                             if "multiple_channels" not in pylight.keys():
                                 pylight['multiple_channels'] = {}
                             pylight['multiple_channels'][pointer_tab[5]] = (anim_idx, channel_idx)
@@ -143,4 +150,4 @@ class BlenderLight():
 
     @staticmethod
     def calc_spot_cone_inner(gltf, outercone, innercone):
-        return 1 - ( innercone / outercone )
+        return 1 - (innercone / outercone)

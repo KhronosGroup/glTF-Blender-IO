@@ -28,9 +28,10 @@ def gather_animation_fcurves_channels(
         obj_uuid: int,
         blender_action: bpy.types.Action,
         export_settings
-        ):
+):
 
-    channels_to_perform, to_be_sampled, extra_channels_to_perform = get_channel_groups(obj_uuid, blender_action, export_settings)
+    channels_to_perform, to_be_sampled, extra_channels_to_perform = get_channel_groups(
+        obj_uuid, blender_action, export_settings)
 
     custom_range = None
     if blender_action.use_frame_range:
@@ -41,10 +42,10 @@ def gather_animation_fcurves_channels(
 
     for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
         for channel_group in chan['properties'].values():
-            channel = __gather_animation_fcurve_channel(chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
+            channel = __gather_animation_fcurve_channel(
+                chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
             if channel is not None:
                 channels.append(channel)
-
 
     if export_settings['gltf_export_extra_animations']:
         for chan in [chan for chan in extra_channels_to_perform.values() if len(chan['properties']) != 0]:
@@ -56,7 +57,6 @@ def gather_animation_fcurves_channels(
                 if sampler is not None:
                     extra_samplers.append((channel_group_name, sampler, "OBJECT", None))
 
-
     return channels, to_be_sampled, extra_samplers
 
 
@@ -65,14 +65,13 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
     targets = {}
     targets_extra = {}
 
-
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     # When mutliple rotation mode detected, keep the currently used
     multiple_rotation_mode_detected = {}
 
     # When both normal and delta are used --> Set to to_be_sampled list
-    to_be_sampled = [] # (object_uuid , type , prop, optional(bone.name) )
+    to_be_sampled = []  # (object_uuid , type , prop, optional(bone.name) )
 
     for fcurve in blender_action.fcurves:
         type_ = None
@@ -83,7 +82,9 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
             # example of target_property : location, rotation_quaternion, value
             target_property = get_target_property_name(fcurve.data_path)
         except:
-            export_settings['log'].warning("Invalid animation fcurve data path on action {}".format(blender_action.name))
+            export_settings['log'].warning(
+                "Invalid animation fcurve data path on action {}".format(
+                    blender_action.name))
             continue
         object_path = get_target_object_path(fcurve.data_path)
 
@@ -109,7 +110,6 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
                     else:
                         type_ = "EXTRA"
 
-
                 else:
                     type_ = "EXTRA"
                 if blender_object.type == "MESH" and object_path.startswith("key_blocks"):
@@ -130,7 +130,9 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
                         type_ = "SK"
                     except:
                         # Something is wrong, for example a bone animation is linked to an object mesh...
-                        export_settings['log'].warning("Invalid animation fcurve data path on action {}".format(blender_action.name))
+                        export_settings['log'].warning(
+                            "Invalid animation fcurve data path on action {}".format(
+                                blender_action.name))
                         continue
                 else:
                     export_settings['log'].warning("Animation target {} not found".format(object_path))
@@ -193,7 +195,8 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
             for prop in target_data['properties'].keys():
                 if len([get_target(p) for p in target_data['properties'] if get_target(p) == get_target(prop)]) > 1:
                     # normal + delta
-                    to_be_sampled.append((obj_uuid, target_data['type'] , get_channel_from_target(get_target(prop)), None)) #None, because no delta exists on Bones
+                    to_be_sampled.append((obj_uuid, target_data['type'], get_channel_from_target(
+                        get_target(prop)), None))  # None, because no delta exists on Bones
                 else:
                     new_properties[prop] = target_data['properties'][prop]
 
@@ -202,8 +205,10 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         # Check if the property can be exported without sampling
         new_properties = {}
         for prop in target_data['properties'].keys():
-            if no_sample_option is False and needs_baking(obj_uuid, target_data['properties'][prop], export_settings) is True:
-                to_be_sampled.append((obj_uuid, target_data['type'], get_channel_from_target(get_target(prop)), target_data['bone'])) # bone can be None if not a bone :)
+            if no_sample_option is False and needs_baking(
+                    obj_uuid, target_data['properties'][prop], export_settings) is True:
+                to_be_sampled.append((obj_uuid, target_data['type'], get_channel_from_target(
+                    get_target(prop)), target_data['bone']))  # bone can be None if not a bone :)
             else:
                 new_properties[prop] = target_data['properties'][prop]
 
@@ -212,7 +217,10 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, export_s
         # Make sure sort is correct for shapekeys
         if target_data['type'] == "SK":
             for prop in target_data['properties'].keys():
-                target_data['properties'][prop] = tuple(__get_channel_group_sorted(target_data['properties'][prop], export_settings['vtree'].nodes[obj_uuid].blender_object))
+                target_data['properties'][prop] = tuple(
+                    __get_channel_group_sorted(
+                        target_data['properties'][prop],
+                        export_settings['vtree'].nodes[obj_uuid].blender_object))
         else:
             for prop in target_data['properties'].keys():
                 target_data['properties'][prop] = tuple(target_data['properties'][prop])
@@ -262,7 +270,7 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
                 else:
                     all_sorted_channels.append(existing_idx[i])
 
-            if all([i is None for i in all_sorted_channels]): # all channel in error, and some non keyed SK
+            if all([i is None for i in all_sorted_channels]):  # all channel in error, and some non keyed SK
                 return channels             # This happen when an armature action is linked to a mesh object with non keyed SK
 
             return tuple(all_sorted_channels)
@@ -272,20 +280,19 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
 
 
 def __gather_animation_fcurve_channel(obj_uuid: str,
-                               channel_group: typing.Tuple[bpy.types.FCurve],
-                               bone: typing.Optional[str],
-                               custom_range: typing.Optional[set],
-                               export_settings
-                               ) -> typing.Union[gltf2_io.AnimationChannel, None]:
+                                      channel_group: typing.Tuple[bpy.types.FCurve],
+                                      bone: typing.Optional[str],
+                                      custom_range: typing.Optional[set],
+                                      export_settings
+                                      ) -> typing.Union[gltf2_io.AnimationChannel, None]:
 
-    __target= __gather_target(obj_uuid, channel_group, bone, export_settings)
+    __target = __gather_target(obj_uuid, channel_group, bone, export_settings)
     if __target.path is not None:
         sampler = __gather_sampler(obj_uuid, channel_group, bone, custom_range, False, export_settings)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
             return None
-
 
         animation_channel = gltf2_io.AnimationChannel(
             extensions=None,
@@ -296,7 +303,6 @@ def __gather_animation_fcurve_channel(obj_uuid: str,
 
         blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
         export_user_extensions('animation_gather_fcurve_channel_target', export_settings, blender_object, bone)
-
 
         return animation_channel
     return None
@@ -312,13 +318,14 @@ def __gather_target(obj_uuid: str,
 
 
 def __gather_sampler(obj_uuid: str,
-                    channel_group: typing.Tuple[bpy.types.FCurve],
-                    bone: typing.Optional[str],
-                    custom_range: typing.Optional[set],
-                    extra_mode: bool,
-                    export_settings) -> gltf2_io.AnimationSampler:
+                     channel_group: typing.Tuple[bpy.types.FCurve],
+                     bone: typing.Optional[str],
+                     custom_range: typing.Optional[set],
+                     extra_mode: bool,
+                     export_settings) -> gltf2_io.AnimationSampler:
 
     return gather_animation_fcurves_sampler(obj_uuid, channel_group, bone, custom_range, extra_mode, export_settings)
+
 
 def needs_baking(obj_uuid: str,
                  channels: typing.Tuple[bpy.types.FCurve],
@@ -345,7 +352,7 @@ def needs_baking(obj_uuid: str,
         # There are different interpolation methods in one action group
         export_settings['log'].warning(
             "Baking animation because there are keyframes with different "
-                                     "interpolation methods in one channel"
+            "interpolation methods in one channel"
         )
         return True
 
@@ -366,7 +373,9 @@ def needs_baking(obj_uuid: str,
         return True
 
     if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
-        animation_target = get_object_from_datapath(export_settings['vtree'].nodes[obj_uuid].blender_object, [c for c in channels if c is not None][0].data_path)
+        animation_target = get_object_from_datapath(
+            export_settings['vtree'].nodes[obj_uuid].blender_object, [
+                c for c in channels if c is not None][0].data_path)
         if isinstance(animation_target, bpy.types.PoseBone):
             if len(animation_target.constraints) != 0:
                 # Constraints such as IK act on the bone -> can not be represented in glTF atm

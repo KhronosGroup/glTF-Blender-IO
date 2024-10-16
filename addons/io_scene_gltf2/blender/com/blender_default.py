@@ -19,7 +19,7 @@ BLENDER_SPECULAR_TINT = 0.0
 BLENDER_GLTF_SPECIAL_COLLECTION = "glTF_not_exported"
 
 LIGHTS = {
-        "POINT": "point",
-        "SUN": "directional",
-        "SPOT": "spot"
-    }
+    "POINT": "point",
+    "SUN": "directional",
+    "SPOT": "spot"
+}

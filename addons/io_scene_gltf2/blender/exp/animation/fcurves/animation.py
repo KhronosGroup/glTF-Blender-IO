@@ -18,11 +18,12 @@ from .....io.exp.user_extensions import export_user_extensions
 from ....com.extras import generate_extras
 from .channels import gather_animation_fcurves_channels
 
+
 def gather_animation_fcurves(
         obj_uuid: str,
         blender_action: bpy.types.Action,
         export_settings
-        ):
+):
 
     name = __gather_name(blender_action, export_settings)
 
@@ -44,16 +45,19 @@ def gather_animation_fcurves(
 
     return animation, to_be_sampled, extra_samplers
 
+
 def __gather_name(blender_action: bpy.types.Action,
                   export_settings
                   ) -> str:
     return blender_action.name
+
 
 def __gather_channels_fcurves(
         obj_uuid: str,
         blender_action: bpy.types.Action,
         export_settings):
     return gather_animation_fcurves_channels(obj_uuid, blender_action, export_settings)
+
 
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:

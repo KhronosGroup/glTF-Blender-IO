@@ -19,11 +19,12 @@ from ...io.imp.user_extensions import import_user_extensions
 from ..com.conversion import texture_transform_gltf_to_blender
 from .image import BlenderImage
 
+
 def texture(
     mh,
     tex_info,
-    location, # Upper-right corner of the TexImage node
-    label, # Label for the TexImg node
+    location,  # Upper-right corner of the TexImage node
+    label,  # Label for the TexImg node
     color_socket,
     alpha_socket=None,
     is_data=False,
@@ -33,7 +34,8 @@ def texture(
     x, y = location
     pytexture = mh.gltf.data.textures[tex_info.index]
 
-    import_user_extensions('gather_import_texture_before_hook', mh.gltf, pytexture, mh, tex_info, location, label, color_socket, alpha_socket, is_data)
+    import_user_extensions('gather_import_texture_before_hook', mh.gltf, pytexture, mh,
+                           tex_info, location, label, color_socket, alpha_socket, is_data)
 
     if pytexture.sampler is not None:
         pysampler = mh.gltf.data.samplers[pytexture.sampler]
@@ -110,7 +112,7 @@ def texture(
             if wrap == TextureWrap.Repeat:
                 # WRAP node for REPEAT
                 math = mh.node_tree.nodes.new('ShaderNodeMath')
-                math.location = x - 140, y + 30 - i*200
+                math.location = x - 140, y + 30 - i * 200
                 math.operation = 'WRAP'
                 math.inputs[1].default_value = 0
                 math.inputs[2].default_value = 1
@@ -119,7 +121,7 @@ def texture(
             elif wrap == TextureWrap.MirroredRepeat:
                 # PINGPONG node for MIRRORED_REPEAT
                 math = mh.node_tree.nodes.new('ShaderNodeMath')
-                math.location = x - 140, y + 30 - i*200
+                math.location = x - 140, y + 30 - i * 200
                 math.operation = 'PINGPONG'
                 math.inputs[1].default_value = 1
                 mh.node_tree.links.new(socket, math.outputs[0])
@@ -159,10 +161,12 @@ def texture(
                                 pointer_tab[-2] == "KHR_texture_transform" and \
                                 pointer_tab[-1] in ["scale", "offset", "rotation"]:
                             needs_tex_transform = True
-                            # Store multiple channel data, as we will need all channels to convert to blender data when animated
+                            # Store multiple channel data, as we will need all channels to convert to
+                            # blender data when animated
                             if "multiple_channels" not in tex_info.extensions['KHR_texture_transform'].keys():
                                 tex_info.extensions['KHR_texture_transform']["multiple_channels"] = {}
-                            tex_info.extensions['KHR_texture_transform']["multiple_channels"][pointer_tab[-1]] = (anim_idx, channel_idx)
+                            tex_info.extensions['KHR_texture_transform']["multiple_channels"][pointer_tab[-1]
+                                                                                              ] = (anim_idx, channel_idx)
 
     if needs_tex_transform:
         mapping = mh.node_tree.nodes.new('ShaderNodeMapping')
@@ -184,7 +188,8 @@ def texture(
         x -= 260
         needs_uv_map = True
 
-        tex_info.extensions['KHR_texture_transform']['blender_nodetree'] = mh.node_tree # Needed for KHR_animation_pointer
+        # Needed for KHR_animation_pointer
+        tex_info.extensions['KHR_texture_transform']['blender_nodetree'] = mh.node_tree
 
     # UV Map
     uv_idx = tex_info.tex_coord or 0
@@ -199,7 +204,8 @@ def texture(
         # Outputs
         mh.node_tree.links.new(uv_socket, uv_map.outputs[0])
 
-    import_user_extensions('gather_import_texture_after_hook', mh.gltf, pytexture, mh.node_tree, mh, tex_info, location, label, color_socket, alpha_socket, is_data)
+    import_user_extensions('gather_import_texture_after_hook', mh.gltf, pytexture, mh.node_tree,
+                           mh, tex_info, location, label, color_socket, alpha_socket, is_data)
 
 
 def get_source(mh, pytexture):

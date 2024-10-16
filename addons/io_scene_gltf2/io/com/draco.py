@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 import bpy
 
+
 def dll_path() -> Path:
     """
     Get the DLL path depending on the underlying platform.
@@ -60,5 +61,8 @@ def dll_exists(quiet=False) -> bool:
         if exists:
             print('INFO', 'Draco mesh compression is available, use library at %s' % dll_path().absolute())
         else:
-            print('ERROR', 'Draco mesh compression is not available because library could not be found at %s' % dll_path().absolute())
+            print(
+                'ERROR',
+                'Draco mesh compression is not available because library could not be found at %s' %
+                dll_path().absolute())
     return exists

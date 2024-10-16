@@ -25,6 +25,7 @@ from ....cache import cached
 from ....tree import VExportNode
 from .keyframes import gather_bone_sampled_keyframes
 
+
 @cached
 def gather_bone_sampled_animation_sampler(
         armature_uuid: str,
@@ -34,7 +35,7 @@ def gather_bone_sampled_animation_sampler(
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
         export_settings
-        ):
+):
 
     pose_bone = export_settings['vtree'].nodes[armature_uuid].blender_object.pose.bones[bone]
 
@@ -57,19 +58,23 @@ def gather_bone_sampled_animation_sampler(
         extensions=None,
         extras=None,
         input=input,
-        interpolation=__gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings),
-        output=output
-    )
+        interpolation=__gather_interpolation(
+            node_channel_is_animated,
+            node_channel_interpolation,
+            keyframes,
+            export_settings),
+        output=output)
 
     export_user_extensions('gather_animation_sampler_hook',
-                            export_settings,
-                            sampler,
-                            export_settings['vtree'].nodes[armature_uuid].blender_object,
-                            pose_bone,
-                            action_name,
-                            node_channel_is_animated)
+                           export_settings,
+                           sampler,
+                           export_settings['vtree'].nodes[armature_uuid].blender_object,
+                           pose_bone,
+                           action_name,
+                           node_channel_is_animated)
 
     return sampler
+
 
 @cached
 def __gather_keyframes(
@@ -79,7 +84,7 @@ def __gather_keyframes(
         action_name: str,
         node_channel_is_animated: bool,
         export_settings
-        ):
+):
 
     keyframes = gather_bone_sampled_keyframes(
         armature_uuid,
@@ -96,18 +101,20 @@ def __gather_keyframes(
 
     return keyframes
 
+
 def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_name, export_settings):
 
     # Sliding can come from:
     # - option SLIDE for negative frames
     # - option to start animation at frame 0 for looping
-    if armature_uuid in export_settings['slide'].keys() and action_name in export_settings['slide'][armature_uuid].keys():
+    if armature_uuid in export_settings['slide'].keys(
+    ) and action_name in export_settings['slide'][armature_uuid].keys():
         for k in keyframes:
             k.frame += -export_settings['slide'][armature_uuid][action_name]
             k.seconds = k.frame / (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
 
     times = [k.seconds for k in keyframes]
-    input =  gather_accessor(
+    input = gather_accessor(
         gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float),
         gltf2_io_constants.ComponentType.Float,
         len(times),
@@ -134,7 +141,8 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
     else:
         # Bone is not at root of armature
         # There are 2 cases :
-        parent_uuid = export_settings['vtree'].nodes[export_settings['vtree'].nodes[armature_uuid].bones[bone.name]].parent_uuid
+        parent_uuid = export_settings['vtree'].nodes[export_settings['vtree']
+                                                     .nodes[armature_uuid].bones[bone.name]].parent_uuid
         if parent_uuid is not None and export_settings['vtree'].nodes[parent_uuid].blender_type == VExportNode.BONE:
             # export bone is not at root of armature neither
             blender_bone_parent = export_settings['vtree'].nodes[parent_uuid].blender_bone
@@ -148,9 +156,9 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
             if is_yup:
                 axis_basis_change = mathutils.Matrix(
                     ((1.0, 0.0, 0.0, 0.0),
-                    (0.0, 0.0, 1.0, 0.0),
-                    (0.0, -1.0, 0.0, 0.0),
-                    (0.0, 0.0, 0.0, 1.0)))
+                     (0.0, 0.0, 1.0, 0.0),
+                     (0.0, -1.0, 0.0, 0.0),
+                     (0.0, 0.0, 0.0, 1.0)))
             correction_matrix_local = axis_basis_change
     transform = correction_matrix_local
 
@@ -189,7 +197,7 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
     component_type = gltf2_io_constants.ComponentType.Float
     data_type = gltf2_io_constants.DataType.vec_type_from_num(len(keyframes[0].value))
 
-    output =  gltf2_io.Accessor(
+    output = gltf2_io.Accessor(
         buffer_view=gltf2_io_binary_data.BinaryData.from_list(values, component_type),
         byte_offset=None,
         component_type=component_type,
@@ -206,6 +214,7 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
 
     return input, output
 
+
 def __gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings):
 
     if len(keyframes) > 2:
@@ -217,7 +226,7 @@ def __gather_interpolation(node_channel_is_animated, node_channel_interpolation,
         if node_channel_is_animated is False:
             return "STEP"
         elif node_channel_interpolation == "CUBICSPLINE":
-            return "LINEAR" # We can't have a single keyframe with CUBICSPLINE
+            return "LINEAR"  # We can't have a single keyframe with CUBICSPLINE
         else:
             return node_channel_interpolation
     else:

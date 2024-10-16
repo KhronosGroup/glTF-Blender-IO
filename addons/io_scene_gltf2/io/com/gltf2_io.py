@@ -104,13 +104,16 @@ def extension_to_dict(obj):
         return {k: extension_to_dict(v) for (k, v) in obj.items()}
     return obj
 
+
 def from_extension(x):
     x = extension_to_dict(x)
     assert isinstance(x, dict)
     return x
 
+
 def from_extra(x):
     return extension_to_dict(x)
+
 
 class AccessorSparseIndices:
     """Index array of size `count` that points to those accessor attributes that deviate from

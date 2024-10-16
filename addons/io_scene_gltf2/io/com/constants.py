@@ -129,12 +129,14 @@ class TextureWrap(IntEnum):
     MirroredRepeat = 33648
     Repeat = 10497
 
+
 class BufferViewTarget(IntEnum):
     ARRAY_BUFFER = 34962
     ELEMENT_ARRAY_BUFFER = 34963
 
 #################
 # LEGACY DEFINES
+
 
 GLTF_VERSION = "2.0"
 

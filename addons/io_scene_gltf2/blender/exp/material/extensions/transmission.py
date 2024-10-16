@@ -20,6 +20,7 @@ from ..search_node_tree import \
     get_socket, \
     get_factor_from_socket
 
+
 def export_transmission(blender_material, export_settings):
     has_transmission_texture = False
 
@@ -28,14 +29,17 @@ def export_transmission(blender_material, export_settings):
 
     transmission_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Transmission Weight')
 
-    if transmission_socket.socket is not None and isinstance(transmission_socket.socket, bpy.types.NodeSocket) and not transmission_socket.socket.is_linked:
+    if transmission_socket.socket is not None and isinstance(
+            transmission_socket.socket,
+            bpy.types.NodeSocket) and not transmission_socket.socket.is_linked:
         if transmission_socket.socket.default_value != 0.0:
             transmission_extension['transmissionFactor'] = transmission_socket.socket.default_value
 
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_transmission/transmissionFactor"
-        export_settings['current_paths']["node_tree." + transmission_socket.socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + transmission_socket.socket.path_from_id() +
+                                         ".default_value"] = path_
 
     elif has_image_node_from_socket(transmission_socket, export_settings):
         fac, path = get_factor_from_socket(transmission_socket, kind='VALUE')
@@ -69,10 +73,14 @@ def export_transmission(blender_material, export_settings):
             for k in export_settings['current_texture_transform'].keys():
                 path_ = {}
                 path_['length'] = export_settings['current_texture_transform'][k]['length']
-                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_transmission/transmissionTexture/extensions")
+                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                    "YYY", "extensions/KHR_materials_transmission/transmissionTexture/extensions")
                 path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
                 export_settings['current_paths'][k] = path_
 
         export_settings['current_texture_transform'] = {}
 
-    return Extension('KHR_materials_transmission', transmission_extension, False), {'transmissionTexture': uvmap_info}, {'transmissionTexture': udim_info} if len(udim_info) > 0 else {}
+    return Extension(
+        'KHR_materials_transmission', transmission_extension, False), {
+        'transmissionTexture': uvmap_info}, {
+            'transmissionTexture': udim_info} if len(udim_info) > 0 else {}

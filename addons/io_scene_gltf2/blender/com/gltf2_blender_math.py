@@ -109,8 +109,8 @@ def swizzle_yup_value(value: typing.Any) -> typing.Any:
     return value
 
 
-def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Matrix = Matrix.Identity(4), need_rotation_correction: bool = False) -> typing \
-        .Union[Vector, Quaternion]:
+def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Matrix = Matrix.Identity(
+        4), need_rotation_correction: bool = False) -> typing .Union[Vector, Quaternion]:
     """Manage transformations."""
     target = get_target_property_name(data_path)
     transform_func = {
@@ -130,9 +130,10 @@ def transform(v: typing.Union[Vector, Quaternion], data_path: str, transform: Ma
     return transform_func(v, transform, need_rotation_correction)
 
 
-def transform_location(location: Vector, transform: Matrix = Matrix.Identity(4), need_rotation_correction:bool = False) -> Vector:
+def transform_location(location: Vector, transform: Matrix = Matrix.Identity(4),
+                       need_rotation_correction: bool = False) -> Vector:
     """Transform location."""
-    correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+    correction = Quaternion((2**0.5 / 2, -2**0.5 / 2, 0.0, 0.0))
     m = Matrix.Translation(location)
     if need_rotation_correction:
         m @= correction.to_matrix().to_4x4()
@@ -140,10 +141,11 @@ def transform_location(location: Vector, transform: Matrix = Matrix.Identity(4),
     return m.to_translation()
 
 
-def transform_rotation(rotation: Quaternion, transform: Matrix = Matrix.Identity(4), need_rotation_correction: bool = False) -> Quaternion:
+def transform_rotation(rotation: Quaternion, transform: Matrix = Matrix.Identity(4),
+                       need_rotation_correction: bool = False) -> Quaternion:
     """Transform rotation."""
     rotation.normalize()
-    correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+    correction = Quaternion((2**0.5 / 2, -2**0.5 / 2, 0.0, 0.0))
     m = rotation.to_matrix().to_4x4()
     if need_rotation_correction:
         m @= correction.to_matrix().to_4x4()
@@ -151,7 +153,8 @@ def transform_rotation(rotation: Quaternion, transform: Matrix = Matrix.Identity
     return m.to_quaternion()
 
 
-def transform_scale(scale: Vector, transform: Matrix = Matrix.Identity(4), need_rotation_correction: bool  = False) -> Vector:
+def transform_scale(scale: Vector, transform: Matrix = Matrix.Identity(4),
+                    need_rotation_correction: bool = False) -> Vector:
     """Transform scale."""
     m = Matrix.Identity(4)
     m[0][0] = scale.x
@@ -197,20 +200,20 @@ def nearby_signed_perm_matrix(rot):
     a, b, c = abs(x[0]), abs(x[1]), abs(x[2])
     i = 0 if a >= b and a >= c else 1 if b >= c else 2
     x[i] = 1 if x[i] > 0 else -1
-    x[(i+1) % 3] = 0
-    x[(i+2) % 3] = 0
+    x[(i + 1) % 3] = 0
+    x[(i + 2) % 3] = 0
 
     # Same for second row: only two columns to consider now.
-    a, b = abs(y[(i+1) % 3]), abs(y[(i+2) % 3])
-    j = (i+1) % 3 if a >= b else (i+2) % 3
+    a, b = abs(y[(i + 1) % 3]), abs(y[(i + 2) % 3])
+    j = (i + 1) % 3 if a >= b else (i + 2) % 3
     y[j] = 1 if y[j] > 0 else -1
-    y[(j+1) % 3] = 0
-    y[(j+2) % 3] = 0
+    y[(j + 1) % 3] = 0
+    y[(j + 2) % 3] = 0
 
     # Same for third row: only one column left
     k = (0 + 1 + 2) - i - j
     z[k] = 1 if z[k] > 0 else -1
-    z[(k+1) % 3] = 0
-    z[(k+2) % 3] = 0
+    z[(k + 1) % 3] = 0
+    z[(k + 2) % 3] = 0
 
     return m

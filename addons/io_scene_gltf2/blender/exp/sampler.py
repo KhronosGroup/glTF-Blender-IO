@@ -36,7 +36,6 @@ def gather_sampler(blender_shader_node: bpy.types.Node, group_path_str, export_s
         else:
             group_path.append(bpy.data.node_groups[subtab[0]].nodes[subtab[1]])
 
-
     wrap_s, wrap_t = __gather_wrap(blender_shader_node, group_path, export_settings)
 
     sampler = gltf2_io.Sampler(
@@ -121,8 +120,10 @@ def __gather_wrap(blender_shader_node, group_path, export_settings):
     # Take manual wrapping into account
     result = detect_manual_uv_wrapping(blender_shader_node, group_path)
     if result:
-        if result['wrap_s'] is not None: wrap_s = result['wrap_s']
-        if result['wrap_t'] is not None: wrap_t = result['wrap_t']
+        if result['wrap_s'] is not None:
+            wrap_s = result['wrap_s']
+        if result['wrap_t'] is not None:
+            wrap_t = result['wrap_t']
 
     # Omit if both are repeat
     if (wrap_s, wrap_t) == (TextureWrap.Repeat, TextureWrap.Repeat):
@@ -146,11 +147,13 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
     result = {}
 
     comb = previous_node(NodeSocket(blender_shader_node.inputs['Vector'], group_path))
-    if comb.node is None or comb.node.type != 'COMBXYZ': return None
+    if comb.node is None or comb.node.type != 'COMBXYZ':
+        return None
 
     for soc in ['X', 'Y']:
         node = previous_node(NodeSocket(comb.node.inputs[soc], comb.group_path))
-        if node.node is None: return None
+        if node.node is None:
+            return None
 
         if node.node.type == 'SEPXYZ':
             # Passed through without change
@@ -158,11 +161,12 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
             prev_socket = previous_socket(NodeSocket(comb.node.inputs[soc], comb.group_path))
         elif node.node.type == 'MATH':
             # Math node applies a manual wrap
-            if (node.node.operation == 'PINGPONG' and
-                    get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE')[0] == 1.0):  # scale = 1
+            if (node.node.operation == 'PINGPONG' and get_const_from_socket(NodeSocket(
+                    node.node.inputs[1], node.group_path), kind='VALUE')[0] == 1.0):  # scale = 1
                 wrap = TextureWrap.MirroredRepeat
             elif (node.node.operation == 'WRAP' and
-                    get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE')[0] == 0.0 and  # min = 0
+                    # min = 0
+                    get_const_from_socket(NodeSocket(node.node.inputs[1], node.group_path), kind='VALUE')[0] == 0.0 and
                     get_const_from_socket(NodeSocket(node.node.inputs[2], node.group_path), kind='VALUE')[0] == 1.0):    # max = 1
                 wrap = TextureWrap.Repeat
             else:
@@ -172,16 +176,20 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
         else:
             return None
 
-        if prev_socket.socket is None: return None
+        if prev_socket.socket is None:
+            return None
         prev_node = prev_socket.socket.node
-        if prev_node.type != 'SEPXYZ': return None
+        if prev_node.type != 'SEPXYZ':
+            return None
         # Make sure X goes to X, etc.
-        if prev_socket.socket.name != soc: return None
+        if prev_socket.socket.name != soc:
+            return None
         # Make sure both attach to the same SeparateXYZ node
         if soc == 'X':
             sep = prev_node
         else:
-            if sep != prev_node: return None
+            if sep != prev_node:
+                return None
 
         result['wrap_s' if soc == 'X' else 'wrap_t'] = wrap
 

@@ -21,6 +21,7 @@ from ...material import texture_info as gltf2_blender_gather_texture_info
 from ..search_node_tree import detect_anisotropy_nodes, get_socket, has_image_node_from_socket, get_factor_from_socket
 from ..encode_image import TmpImageGuard, make_temp_image_copy, StoreImage, StoreData
 
+
 def export_anisotropy(blender_material, export_settings):
 
     anisotropy_extension = {}
@@ -28,7 +29,10 @@ def export_anisotropy(blender_material, export_settings):
     udim_infos = {}
 
     anisotropy_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Anisotropic')
-    anisotropic_rotation_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Anisotropic Rotation')
+    anisotropic_rotation_socket = get_socket(
+        blender_material.node_tree,
+        blender_material.use_nodes,
+        'Anisotropic Rotation')
     anisotropy_tangent_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Tangent')
 
     if anisotropy_socket.socket is None or anisotropic_rotation_socket.socket is None or anisotropy_tangent_socket.socket is None:
@@ -44,8 +48,8 @@ def export_anisotropy(blender_material, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_anisotropy/anisotropyStrength"
-        export_settings['current_paths']["node_tree." + anisotropy_socket.socket.path_from_id() + ".default_value"] = path_
-
+        export_settings['current_paths']["node_tree." + anisotropy_socket.socket.path_from_id() +
+                                         ".default_value"] = path_
 
         anisotropyRotation = get_anisotropy_rotation_blender_to_gltf(anisotropic_rotation_socket.socket.default_value)
         if anisotropyRotation != 0.0:
@@ -55,7 +59,9 @@ def export_anisotropy(blender_material, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_anisotropy/anisotropyRotation"
-        export_settings['current_paths']["node_tree." + anisotropic_rotation_socket.socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." +
+                                         anisotropic_rotation_socket.socket.path_from_id() +
+                                         ".default_value"] = path_
 
         # Always export extension, even if no value, in case of animation
         # If data are not animated, it will be removed later
@@ -92,7 +98,7 @@ def export_anisotropy(blender_material, export_settings):
 
         fac, path = get_factor_from_socket(anisotropic_rotation_socket, kind='VALUE')
         if fac is None and anisotropy_texture is not None:
-            pass # Rotation 0 is default
+            pass  # Rotation 0 is default
         elif fac != 0.0 and anisotropy_texture is not None:
             anisotropy_extension['anisotropyRotation'] = get_anisotropy_rotation_blender_to_gltf(fac)
 
@@ -107,7 +113,6 @@ def export_anisotropy(blender_material, export_settings):
         uvmap_infos.update({'anisotropyTexture': uvmap_info})
 
         return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos, udim_infos
-
 
     # Export from complex node setup
 
@@ -132,33 +137,37 @@ def export_anisotropy(blender_material, export_settings):
 
     # Get texture data
     # No need to check here that we have a texture, this check is already done insode detect_anisotropy_nodes
-    anisotropy_texture, uvmap_info , udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+    anisotropy_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
         anisotropy_data['tex_socket'],
         (anisotropy_data['tex_socket'],),
         export_settings,
     )
     anisotropy_extension['anisotropyTexture'] = anisotropy_texture
     uvmap_infos.update({'anisotropyTexture': uvmap_info})
-    udim_infos.update({'anisotropyTexture' : udim_info} if len(udim_info.keys()) > 0 else {})
+    udim_infos.update({'anisotropyTexture': udim_info} if len(udim_info.keys()) > 0 else {})
 
     if len(export_settings['current_texture_transform']) != 0:
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
-            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_anisotropy/anisotropyTexture/extensions")
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                "YYY", "extensions/KHR_materials_anisotropy/anisotropyTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}
 
-
     return Extension('KHR_materials_anisotropy', anisotropy_extension, False), uvmap_infos, udim_infos
+
 
 def export_anisotropy_from_grayscale_textures(blender_material, export_settings):
     # There will be a texture, with a complex calculation (no direct channel mapping)
 
-    anisotropy_socket = get_socket(blender_material.node_tree, blender_material.use_nodes , 'Anisotropic')
-    anisotropic_rotation_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Anisotropic Rotation')
+    anisotropy_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Anisotropic')
+    anisotropic_rotation_socket = get_socket(
+        blender_material.node_tree,
+        blender_material.use_nodes,
+        'Anisotropic Rotation')
     anisotropy_tangent_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, 'Tangent')
 
     sockets = (anisotropy_socket, anisotropic_rotation_socket, anisotropy_tangent_socket)
@@ -181,7 +190,8 @@ def export_anisotropy_from_grayscale_textures(blender_material, export_settings)
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
-            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_anisotropy/anisotropyTexture/extensions")
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                "YYY", "extensions/KHR_materials_anisotropy/anisotropyTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
@@ -210,11 +220,14 @@ def grayscale_anisotropy_calculation(stored, export_settings):
     buffers = {}
 
     def rgb2gray(rgb):
-        r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
+        r, g, b = rgb[:, :, 0], rgb[:, :, 1], rgb[:, :, 2]
         gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
         return gray
 
-    for identifier, image in [(ident, store.image) for (ident, store) in stored.items() if isinstance(store, StoreImage)]:
+    for identifier, image in [
+        (ident, store.image) for (
+            ident, store) in stored.items() if isinstance(
+            store, StoreImage)]:
         tmp_buf = np.empty(width * height * 4, np.float32)
 
         if image.size[0] == width and image.size[1] == height:
@@ -231,25 +244,28 @@ def grayscale_anisotropy_calculation(stored, export_settings):
         buffers[identifier] = rgb2gray(buffers[identifier])
 
     for identifier, data in [(ident, data) for (ident, data) in stored.items() if isinstance(data, StoreData)]:
-        buffers[identifier] =  np.full((width, height), 1) # Set to white / 1.0, as value is set as factor
+        buffers[identifier] = np.full((width, height), 1)  # Set to white / 1.0, as value is set as factor
 
     # Combine the image
     out_buf = np.zeros((width, height, 4), np.float32)
-    out_buf[:,:,3] = 1.0  # A : Alpha
-    out_buf[:,:,2] = buffers['anisotropy']  # B : Strength (Anisotropic socket)
+    out_buf[:, :, 3] = 1.0  # A : Alpha
+    out_buf[:, :, 2] = buffers['anisotropy']  # B : Strength (Anisotropic socket)
 
     # Rotation needs to be converted from 0-1 to 0-2pi, and then vectorized it, normalized, and apply to R & G channels
     # with mapping
 
     buffers['anisotropic_rotation'] = buffers['anisotropic_rotation'] * 2 * np.pi
-    buffers['anisotropic_rotation'] = np.stack((np.cos(buffers['anisotropic_rotation']), np.sin(buffers['anisotropic_rotation'])), axis=-1)
-    buffers['anisotropic_rotation'] = buffers['anisotropic_rotation'] / np.linalg.norm(buffers['anisotropic_rotation'], axis=-1, keepdims=True)
+    buffers['anisotropic_rotation'] = np.stack(
+        (np.cos(
+            buffers['anisotropic_rotation']), np.sin(
+            buffers['anisotropic_rotation'])), axis=-1)
+    buffers['anisotropic_rotation'] = buffers['anisotropic_rotation'] / \
+        np.linalg.norm(buffers['anisotropic_rotation'], axis=-1, keepdims=True)
     buffers['anisotropic_rotation'] = (buffers['anisotropic_rotation'] + 1.0) / 2.0
 
-    out_buf[:,:,0] = buffers['anisotropic_rotation'][:,:,0]  # R : Rotation X
-    out_buf[:,:,1] = buffers['anisotropic_rotation'][:,:,1]  # G : Rotation Y
+    out_buf[:, :, 0] = buffers['anisotropic_rotation'][:, :, 0]  # R : Rotation X
+    out_buf[:, :, 1] = buffers['anisotropic_rotation'][:, :, 1]  # G : Rotation Y
 
     out_buf = np.reshape(out_buf, (width * height * 4))
-
 
     return np.float32(out_buf), width, height, None

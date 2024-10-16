@@ -23,11 +23,12 @@ from .sampled.shapekeys.channels import gather_sk_sampled_channels
 from .sampled.data.channels import gather_data_sampled_channels
 from .anim_utils import link_samplers, add_slide_data
 
+
 def gather_scene_animations(export_settings):
 
     # if there is no animation in file => no need to bake. Except if we are trying to bake GN instances
     if len(bpy.data.actions) == 0 and export_settings['gltf_gn_mesh'] is False:
-        #TODO : get a better filter by checking we really have some GN instances...
+        # TODO : get a better filter by checking we really have some GN instances...
         return []
 
     total_channels = []
@@ -37,9 +38,9 @@ def gather_scene_animations(export_settings):
     end_frame = bpy.context.scene.frame_end
 
     # The following options has no impact:
-        # - We force sampling & baking
-        # - Export_frame_range --> Because this is the case for SCENE mode, because we bake all scene frame range
-        # - CROP or SLIDE --> Scene don't have negative frames
+    # - We force sampling & baking
+    # - Export_frame_range --> Because this is the case for SCENE mode, because we bake all scene frame range
+    # - CROP or SLIDE --> Scene don't have negative frames
 
     # This mode will bake all objects like there are in the scene
     vtree = export_settings['vtree']
@@ -57,7 +58,8 @@ def gather_scene_animations(export_settings):
         if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
             continue
 
-        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object # blender_object can be None for GN instances
+        # blender_object can be None for GN instances
+        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
         export_settings['ranges'][obj_uuid] = {}
         export_settings['ranges'][obj_uuid][obj_uuid] = {'start': start_frame, 'end': end_frame}
@@ -105,9 +107,9 @@ def gather_scene_animations(export_settings):
             if channels is not None:
                 total_channels.extend(channels)
         else:
-                channels, _ = gather_armature_sampled_channels(obj_uuid, obj_uuid, export_settings)
-                if channels is not None:
-                    total_channels.extend(channels)
+            channels, _ = gather_armature_sampled_channels(obj_uuid, obj_uuid, export_settings)
+            if channels is not None:
+                total_channels.extend(channels)
 
         if export_settings['gltf_anim_scene_split_object'] is True:
             if len(total_channels) > 0:
@@ -132,7 +134,8 @@ def gather_scene_animations(export_settings):
             blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
 
             export_settings['ranges'][id(blender_material)] = {}
-            export_settings['ranges'][id(blender_material)][id(blender_material)] = {'start': start_frame, 'end': end_frame}
+            export_settings['ranges'][id(blender_material)][id(blender_material)] = {
+                'start': start_frame, 'end': end_frame}
 
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, mat, mat, export_settings, add_drivers=False)
@@ -186,7 +189,6 @@ def gather_scene_animations(export_settings):
 
             total_channels = []
 
-
     # Export now KHR_animation_pointer for cameras
     for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
         if len(export_settings['KHR_animation_pointer']['cameras'][cam]['paths']) == 0:
@@ -218,7 +220,6 @@ def gather_scene_animations(export_settings):
 
             total_channels = []
 
-
     if export_settings['gltf_anim_scene_split_object'] is False:
         if len(total_channels) > 0:
             animation = gltf2_io.Animation(
@@ -232,6 +233,7 @@ def gather_scene_animations(export_settings):
             animations.append(animation)
 
     return animations
+
 
 def __gather_extras(blender_asset, export_settings):
     if export_settings['gltf_extras']:

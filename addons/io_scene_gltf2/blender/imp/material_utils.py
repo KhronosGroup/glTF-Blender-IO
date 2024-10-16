@@ -22,6 +22,7 @@ from .texture import texture
 
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
+
     def __init__(self, gltf, pymat, mat, vertex_color):
         self.gltf = gltf
         self.pymat = pymat
@@ -174,7 +175,7 @@ def normal_map(
     if not tex_info:
         return
 
-    x,y = location
+    x, y = location
 
     # Normal map
     node = mh.nodes.new('ShaderNodeNormalMap')

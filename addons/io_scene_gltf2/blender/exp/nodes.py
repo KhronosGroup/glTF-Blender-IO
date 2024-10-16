@@ -30,6 +30,7 @@ from . import joints as gltf2_blender_gather_joints
 from . import lights as gltf2_blender_gather_lights
 from .tree import VExportNode
 
+
 def gather_node(vnode, export_settings):
 
     blender_object = vnode.blender_object
@@ -38,8 +39,8 @@ def gather_node(vnode, export_settings):
     if skin is not None:
         vnode.skin = skin
 
-
     # Hook to check if we should export mesh or not (force it to None)
+
     class GltfHookNodeMesh:
         def __init__(self):
             self.export_mesh = True
@@ -71,7 +72,6 @@ def gather_node(vnode, export_settings):
     if node.skin is None:
         node.translation, node.rotation, node.scale = __gather_trans_rot_scale(vnode, export_settings)
 
-
     export_user_extensions('gather_node_hook', export_settings, node, blender_object)
 
     vnode.node = node
@@ -87,11 +87,12 @@ def __gather_camera(vnode, export_settings):
     if vnode.blender_object.type != 'CAMERA':
         return None
 
-    cam =  gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
+    cam = gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
 
     if len(export_settings['current_paths']) > 0:
         export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)] = {}
-        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['cameras'][id(
+            vnode.blender_object.data)]['paths'] = export_settings['current_paths'].copy()
         export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['glTF_camera'] = cam
 
     export_settings['current_paths'] = {}
@@ -104,12 +105,12 @@ def __gather_children(vnode, export_settings):
 
     vtree = export_settings['vtree']
 
-
     armature_object_uuid = None
 
     # Standard Children / Collection
     if export_settings['gltf_armature_object_remove'] is False:
-        for c in [vtree.nodes[c] for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
+        for c in [vtree.nodes[c]
+                  for c in vnode.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE]:
             node = gather_node(c, export_settings)
             if node is not None:
                 children.append(node)
@@ -140,7 +141,6 @@ def __gather_children(vnode, export_settings):
             children.append(joint)
             root_joints.append(joint)
 
-
     if vnode.blender_type == gltf2_blender_gather_tree.VExportNode.ARMATURE \
             or armature_object_uuid is not None:
 
@@ -149,13 +149,15 @@ def __gather_children(vnode, export_settings):
 
     return children
 
+
 def get_objects_parented_to_bones(armature_object_uuid, root_joints, export_settings):
     vtree = export_settings['vtree']
     direct_bone_children = []
     for n in [vtree.nodes[i] for i in vtree.get_all_bones(armature_object_uuid)]:
-        direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type != gltf2_blender_gather_tree.VExportNode.BONE])
+        direct_bone_children.extend([c for c in n.children if vtree.nodes[c].blender_type !=
+                                    gltf2_blender_gather_tree.VExportNode.BONE])
 
-    for child in direct_bone_children: # List of object that are parented to bones
+    for child in direct_bone_children:  # List of object that are parented to bones
         # find parent joint
         parent_joint = __find_parent_joint(root_joints, vtree.nodes[child].blender_object.parent_bone)
         if not parent_joint:
@@ -164,13 +166,13 @@ def get_objects_parented_to_bones(armature_object_uuid, root_joints, export_sett
         if child_node is None:
             continue
 
-        mat = vtree.nodes[vtree.nodes[child].parent_bone_uuid].matrix_world.inverted_safe() @ vtree.nodes[child].matrix_world
+        mat = vtree.nodes[vtree.nodes[child].parent_bone_uuid].matrix_world.inverted_safe(
+        ) @ vtree.nodes[child].matrix_world
         loc, rot_quat, scale = mat.decompose()
 
         trans = __convert_swizzle_location(loc, export_settings)
         rot = __convert_swizzle_rotation(rot_quat, export_settings)
         sca = __convert_swizzle_scale(scale, export_settings)
-
 
         translation, rotation, scale = (None, None, None)
         if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
@@ -230,7 +232,8 @@ def __gather_extensions(vnode, export_settings):
             )
             if len(export_settings['current_paths']) > 0:
                 export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)] = {}
-                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['paths'] = export_settings['current_paths'].copy()
+                export_settings['KHR_animation_pointer']['lights'][id(
+                    blender_lamp)]['paths'] = export_settings['current_paths'].copy()
                 export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['glTF_light'] = light_extension
 
             export_settings['current_paths'] = {}
@@ -248,13 +251,14 @@ def __gather_matrix(blender_object, export_settings):
     # return blender_object.matrix_local
     return []
 
+
 def __gather_mesh(vnode, blender_object, export_settings):
     if vnode.blender_type == VExportNode.COLLECTION:
         return None
     if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
         return __gather_mesh_from_nonmesh(blender_object, export_settings)
     if blender_object is None and type(vnode.data).__name__ not in ["Mesh"]:
-        return None #TODO
+        return None  # TODO
     if blender_object is None:
         # GN instance
         blender_mesh = vnode.data
@@ -278,15 +282,15 @@ def __gather_mesh(vnode, blender_object, export_settings):
         # Be sure that object is valid (no NaN for example)
         res = blender_object.data.validate()
         if res is True:
-            export_settings['log'].warning("Mesh " + blender_object.data.name + " is not valid, and may be exported wrongly")
+            export_settings['log'].warning("Mesh " + blender_object.data.name +
+                                           " is not valid, and may be exported wrongly")
 
         modifiers = blender_object.modifiers
         if len(modifiers) == 0:
             modifiers = None
 
-
         if export_settings['gltf_apply']:
-            if modifiers is None: # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
+            if modifiers is None:  # If no modifier, use original mesh, it will instance all shared mesh in a single glTF mesh
                 blender_mesh = blender_object.data
                 # Keep materials from object, as no modifiers are applied, so no risk that
                 # modifiers changed them
@@ -416,6 +420,7 @@ def __gather_name(blender_object, export_settings):
     export_user_extensions('gather_node_name_hook', export_settings, gltf_hook_name, blender_object)
     return gltf_hook_name.name
 
+
 def __gather_trans_rot_scale(vnode, export_settings):
     if vnode.parent_uuid is None:
         # No parent, so matrix is world matrix, except if we export a collection
@@ -429,12 +434,15 @@ def __gather_trans_rot_scale(vnode, export_settings):
     else:
         # calculate local matrix
         if export_settings['vtree'].nodes[vnode.parent_uuid].skin is None:
-            trans, rot, sca = (export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
+            trans, rot, sca = (
+                export_settings['vtree'].nodes[vnode.parent_uuid].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
         else:
             # But ... if parent has skin, the parent TRS are not taken into account, so don't get local from parent, but from armature
             # It also depens if skined mesh is parented to armature or not
-            if export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
-                trans, rot, sca = (export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].armature].matrix_world.inverted_safe() @ vnode.matrix_world).decompose()
+            if export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid is not None and export_settings['vtree'].nodes[
+                    export_settings['vtree'].nodes[vnode.parent_uuid].parent_uuid].blender_type == VExportNode.ARMATURE:
+                trans, rot, sca = (export_settings['vtree'].nodes[export_settings['vtree'].nodes[vnode.parent_uuid].armature].matrix_world.inverted_safe(
+                ) @ vnode.matrix_world).decompose()
             else:
                 trans, rot, sca = vnode.matrix_world.decompose()
 
@@ -458,12 +466,19 @@ def __gather_trans_rot_scale(vnode, export_settings):
         trans = m.translation
 
     translation, rotation, scale = (None, None, None)
-    trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(trans[0], 0.0), gltf2_blender_math.round_if_near(trans[1], 0.0), \
-                                   gltf2_blender_math.round_if_near(trans[2], 0.0)
-    rot[0], rot[1], rot[2], rot[3] = gltf2_blender_math.round_if_near(rot[0], 1.0), gltf2_blender_math.round_if_near(rot[1], 0.0), \
-                                     gltf2_blender_math.round_if_near(rot[2], 0.0), gltf2_blender_math.round_if_near(rot[3], 0.0)
-    sca[0], sca[1], sca[2] = gltf2_blender_math.round_if_near(sca[0], 1.0), gltf2_blender_math.round_if_near(sca[1], 1.0), \
-                             gltf2_blender_math.round_if_near(sca[2], 1.0)
+    trans[0], trans[1], trans[2] = gltf2_blender_math.round_if_near(
+        trans[0], 0.0), gltf2_blender_math.round_if_near(
+        trans[1], 0.0), gltf2_blender_math.round_if_near(
+            trans[2], 0.0)
+    rot[0], rot[1], rot[2], rot[3] = gltf2_blender_math.round_if_near(
+        rot[0], 1.0), gltf2_blender_math.round_if_near(
+        rot[1], 0.0), gltf2_blender_math.round_if_near(
+            rot[2], 0.0), gltf2_blender_math.round_if_near(
+                rot[3], 0.0)
+    sca[0], sca[1], sca[2] = gltf2_blender_math.round_if_near(
+        sca[0], 1.0), gltf2_blender_math.round_if_near(
+        sca[1], 1.0), gltf2_blender_math.round_if_near(
+            sca[2], 1.0)
     if trans[0] != 0.0 or trans[1] != 0.0 or trans[2] != 0.0:
         translation = [trans[0], trans[1], trans[2]]
     if rot[0] != 1.0 or rot[1] != 0.0 or rot[2] != 0.0 or rot[3] != 0.0:
@@ -471,6 +486,7 @@ def __gather_trans_rot_scale(vnode, export_settings):
     if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
         scale = [sca[0], sca[1], sca[2]]
     return translation, rotation, scale
+
 
 def gather_skin(vnode, export_settings):
 
@@ -503,8 +519,8 @@ def gather_skin(vnode, export_settings):
     # and be bone parented to a bone of this armature
     # In that case, ignore the armature modifier, keep only the bone parenting
     if blender_object.parent is not None \
-    and blender_object.parent_type == 'BONE' \
-    and blender_object.parent.name == modifiers["ARMATURE"].object.name:
+            and blender_object.parent_type == 'BONE' \
+            and blender_object.parent.name == modifiers["ARMATURE"].object.name:
 
         return None
 
@@ -514,6 +530,7 @@ def gather_skin(vnode, export_settings):
 
 def __gather_weights(blender_object, export_settings):
     return None
+
 
 def __convert_swizzle_location(loc, export_settings):
     """Convert a location from Blender coordinate system to glTF coordinate system."""

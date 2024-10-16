@@ -17,6 +17,7 @@ from mathutils import Vector, Quaternion, Matrix
 from ...io.imp.gltf2_io_binary import BinaryData
 from ..com.gltf2_blender_math import scale_rot_swap_matrix, nearby_signed_perm_matrix
 
+
 def compute_vnodes(gltf):
     """Computes the tree of virtual nodes.
     Copies the glTF nodes into a tree of VNodes, then performs a series of
@@ -88,6 +89,7 @@ class VNode:
         m = scale_rot_swap_matrix(self.rotation_before)
         return [m @ scale for scale in base_scales]
 
+
 def local_rotation(gltf, vnode_id, rot):
     """Appends a local rotation to vnode's world transform:
     (new world transform) = (old world transform) @ (rot)
@@ -142,24 +144,24 @@ def init_vnodes(gltf):
     for root in roots:
         gltf.vnodes[root].parent = 'root'
 
+
 def manage_gpu_instancing(gltf, vnode, i, ext, mesh_id):
 
-
     trans_list = BinaryData.get_data_from_accessor(gltf, ext['attributes'].get('TRANSLATION', None)) \
-            if ext['attributes'].get('TRANSLATION', None) is not None else None
+        if ext['attributes'].get('TRANSLATION', None) is not None else None
 
     rot_list = BinaryData.get_data_from_accessor(gltf, ext['attributes'].get('ROTATION', None)) \
-            if ext['attributes'].get('ROTATION', None) is not None else None
+        if ext['attributes'].get('ROTATION', None) is not None else None
 
     scale_list = BinaryData.get_data_from_accessor(gltf, ext['attributes'].get('SCALE', None)) \
-            if ext['attributes'].get('SCALE', None) is not None else None
+        if ext['attributes'].get('SCALE', None) is not None else None
 
     # Retrieve the first available attribute to get the number of children
     val = next((elem for elem in [
-            trans_list,
-            rot_list,
-            scale_list,
-        ] if elem is not None), None)
+        trans_list,
+        rot_list,
+        scale_list,
+    ] if elem is not None), None)
 
     # Wwe can't have only custom properties
     if not val:
@@ -251,6 +253,7 @@ def mark_bones_and_armas(gltf):
 
     visit('root', cur_arma=None)
 
+
 def deepest_common_ancestor(gltf, vnode_ids):
     """Find the deepest (improper) ancestor of a set of vnodes."""
     path_to_ancestor = []  # path to deepest ancestor so far
@@ -262,6 +265,7 @@ def deepest_common_ancestor(gltf, vnode_ids):
             path_to_ancestor = longest_common_prefix(path, path_to_ancestor)
     return path_to_ancestor[-1]
 
+
 def path_from_root(gltf, vnode_id):
     """Returns the ids of all vnodes from the root to vnode_id."""
     path = []
@@ -270,6 +274,7 @@ def path_from_root(gltf, vnode_id):
         vnode_id = gltf.vnodes[vnode_id].parent
     path.reverse()
     return path
+
 
 def longest_common_prefix(list1, list2):
     i = 0
@@ -339,6 +344,7 @@ def move_skinned_meshes(gltf):
         gltf.vnodes[new_id].mesh_node_idx = vnode.mesh_node_idx
         vnode.mesh_node_idx = None
 
+
 def reparent(gltf, vnode_id, new_parent):
     """Moves a VNode to a new parent."""
     vnode = gltf.vnodes[vnode_id]
@@ -350,7 +356,6 @@ def reparent(gltf, vnode_id, new_parent):
         del parent_vnode.children[index]
     vnode.parent = new_parent
     gltf.vnodes[new_parent].children.append(vnode_id)
-
 
 
 def fixup_multitype_nodes(gltf):
@@ -409,8 +414,8 @@ def correct_cameras_and_lights(gltf):
 
     for id, vnode in gltf.vnodes.items():
         needs_correction = \
-           vnode.camera_node_idx is not None or \
-           vnode.light_node_idx is not None
+            vnode.camera_node_idx is not None or \
+            vnode.light_node_idx is not None
 
         if needs_correction:
             local_rotation(gltf, id, gltf.camera_correction)
@@ -482,7 +487,9 @@ def prettify_bones(gltf):
 
     visit('root')
 
+
 MIN_BONE_LENGTH = 0.004  # too small and bones get deleted
+
 
 def pick_bone_length(gltf, bone_id):
     """Heuristic for bone length."""
@@ -505,6 +512,7 @@ def pick_bone_length(gltf, bone_id):
 
     return 1
 
+
 def pick_bone_rotation(gltf, bone_id, parent_rot):
     """Heuristic for bone rotation.
     A bone's tip lies on its local +Y axis so rotating a bone let's us
@@ -514,9 +522,10 @@ def pick_bone_rotation(gltf, bone_id, parent_rot):
         return None
 
     if gltf.import_settings['bone_heuristic'] == 'BLENDER':
-        return Quaternion((2**0.5/2, 2**0.5/2, 0, 0))
+        return Quaternion((2**0.5 / 2, 2**0.5 / 2, 0, 0))
     elif gltf.import_settings['bone_heuristic'] in ['TEMPERANCE', 'FORTUNE']:
         return temperance(gltf, bone_id, parent_rot)
+
 
 def temperance(gltf, bone_id, parent_rot):
     vnode = gltf.vnodes[bone_id]
@@ -539,6 +548,7 @@ def temperance(gltf, bone_id, parent_rot):
         return rot
 
     return parent_rot
+
 
 def rotate_edit_bone(gltf, bone_id, rot):
     """Rotate one edit bone without affecting anything else."""

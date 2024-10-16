@@ -18,6 +18,7 @@ from ...io.com.gltf2_io import to_float, to_class
 
 class LightSpot:
     """light/spot"""
+
     def __init__(self, inner_cone_angle, outer_cone_angle):
         self.inner_cone_angle = inner_cone_angle
         self.outer_cone_angle = outer_cone_angle
@@ -38,6 +39,7 @@ class LightSpot:
 
 class Light:
     """defines a set of lights for use with glTF 2.0. Lights define light sources within a scene"""
+
     def __init__(self, color, intensity, spot, type, range, name, extensions, extras):
         self.color = color
         self.intensity = intensity

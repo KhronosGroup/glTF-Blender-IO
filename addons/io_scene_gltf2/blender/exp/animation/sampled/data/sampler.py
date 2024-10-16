@@ -21,6 +21,7 @@ from ....cache import cached
 from ....accessors import gather_accessor
 from .keyframes import gather_data_sampled_keyframes
 
+
 @cached
 def gather_data_sampled_animation_sampler(
         blender_type_data: str,
@@ -29,9 +30,9 @@ def gather_data_sampled_animation_sampler(
         action_name: str,
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
-        additional_key: str, # Used to differentiate between material / material node_tree
+        additional_key: str,  # Used to differentiate between material / material node_tree
         export_settings
-        ):
+):
 
     keyframes = __gather_keyframes(
         blender_type_data,
@@ -49,15 +50,11 @@ def gather_data_sampled_animation_sampler(
     # Now we are raw input/output, we need to convert to glTF data
     input, output = __convert_keyframes(blender_type_data, blender_id, channel, keyframes, action_name, export_settings)
 
-    sampler = gltf2_io.AnimationSampler(
-        extensions=None,
-        extras=None,
-        input=input,
-        interpolation=__gather_interpolation(blender_type_data, node_channel_is_animated, node_channel_interpolation, keyframes, export_settings),
-        output=output
-    )
+    sampler = gltf2_io.AnimationSampler(extensions=None, extras=None, input=input, interpolation=__gather_interpolation(
+        blender_type_data, node_channel_is_animated, node_channel_interpolation, keyframes, export_settings), output=output)
 
     return sampler
+
 
 def __gather_keyframes(
         blender_type_data,
@@ -65,7 +62,7 @@ def __gather_keyframes(
         channel,
         action_name,
         node_channel_is_animated,
-        additional_key, # Used to differentiate between material / material node_tree
+        additional_key,  # Used to differentiate between material / material node_tree
         export_settings):
 
     keyframes = gather_data_sampled_keyframes(
@@ -84,6 +81,7 @@ def __gather_keyframes(
 
     return keyframes
 
+
 def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, action_name, export_settings):
 
     # Sliding can come from:
@@ -95,7 +93,7 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
             k.seconds = k.frame / bpy.context.scene.render.fps
 
     times = [k.seconds for k in keyframes]
-    input =  gather_accessor(
+    input = gather_accessor(
         gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float),
         gltf2_io_constants.ComponentType.Float,
         len(times),
@@ -103,7 +101,6 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
         tuple([min(times)]),
         gltf2_io_constants.DataType.Scalar,
         export_settings)
-
 
     values = []
     for keyframe in keyframes:
@@ -117,7 +114,7 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
     else:
         data_type = gltf2_io_constants.DataType.vec_type_from_num(1)
 
-    output =  gltf2_io.Accessor(
+    output = gltf2_io.Accessor(
         buffer_view=gltf2_io_binary_data.BinaryData.from_list(values, component_type),
         byte_offset=None,
         component_type=component_type,
@@ -134,10 +131,16 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
 
     return input, output
 
-def __gather_interpolation(blender_type_data, node_channel_is_animated, node_channel_interpolation, keyframes, export_settings):
+
+def __gather_interpolation(
+        blender_type_data,
+        node_channel_is_animated,
+        node_channel_interpolation,
+        keyframes,
+        export_settings):
     # TODOPointer
     return 'LINEAR'
 
 
 def __convert_to_gltf(value):
-        return value if type(value).__name__ != "float" else [value]
+    return value if type(value).__name__ != "float" else [value]

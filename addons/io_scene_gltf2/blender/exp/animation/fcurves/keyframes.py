@@ -74,10 +74,11 @@ def gather_fcurve_keyframes(
                 # Note: I am not sure that linearity is never broken with quaternions and their normalization.
                 # Especially at sign swap it might occur that the value gets negated but the control point not.
                 # I have however not once encountered an issue with this.
-                key.in_tangent = [
-                    c.keyframe_points[i].co[1] + (c.keyframe_points[i].handle_left[1] - c.keyframe_points[i].co[1]) / (c.keyframe_points[i].handle_left[0] - c.keyframe_points[i].co[0])
-                    for c in channel_group if c is not None
-                ]
+                key.in_tangent = [c.keyframe_points[i].co[1] +
+                                  (c.keyframe_points[i].handle_left[1] -
+                                   c.keyframe_points[i].co[1]) /
+                                  (c.keyframe_points[i].handle_left[0] -
+                                   c.keyframe_points[i].co[0]) for c in channel_group if c is not None]
             # Construct the out tangent
             if frame == frames[-1]:
                 # end out-tangent should become all zero
@@ -85,10 +86,11 @@ def gather_fcurve_keyframes(
             else:
                 # otherwise construct an in tangent coordinate from the keyframes control points.
                 # This happens the same way how in tangents are handled above.
-                key.out_tangent = [
-                    c.keyframe_points[i].co[1] + (c.keyframe_points[i].handle_right[1] - c.keyframe_points[i].co[1]) / (c.keyframe_points[i].handle_right[0] - c.keyframe_points[i].co[0])
-                    for c in channel_group if c is not None
-                ]
+                key.out_tangent = [c.keyframe_points[i].co[1] +
+                                   (c.keyframe_points[i].handle_right[1] -
+                                    c.keyframe_points[i].co[1]) /
+                                   (c.keyframe_points[i].handle_right[0] -
+                                    c.keyframe_points[i].co[0]) for c in channel_group if c is not None]
 
             __complete_key_tangents(key, non_keyed_values)
 
@@ -103,7 +105,7 @@ def gather_non_keyed_values(
         bone: typing.Optional[str],
         extra_mode: bool,
         export_settings
-        ) ->  typing.Tuple[typing.Optional[float]]:
+) -> typing.Tuple[typing.Optional[float]]:
 
     if extra_mode is True:
         # No need to check if there are non non keyed values, as we export fcurve independently
@@ -117,7 +119,6 @@ def gather_non_keyed_values(
     if None not in channel_group:
         # classic case for object TRS or bone TRS
         # Or if all morph target are animated
-
 
         target = channel_group[0].data_path.split('.')[-1]
         if target == "value":
@@ -149,26 +150,26 @@ def gather_non_keyed_values(
             else:
                 if bone is None:
                     non_keyed_values.append({
-                        "delta_location" : blender_object.delta_location,
-                        "delta_rotation_euler" : blender_object.delta_rotation_euler,
+                        "delta_location": blender_object.delta_location,
+                        "delta_rotation_euler": blender_object.delta_rotation_euler,
                         "delta_rotation_quaternion": blender_object.delta_rotation_quaternion,
                         "delta_scale": blender_object.delta_scale,
-                        "location" : blender_object.location,
-                        "rotation_axis_angle" : blender_object.rotation_axis_angle,
-                        "rotation_euler" : blender_object.rotation_euler,
-                        "rotation_quaternion" : blender_object.rotation_quaternion,
-                        "scale" : blender_object.scale
+                        "location": blender_object.location,
+                        "rotation_axis_angle": blender_object.rotation_axis_angle,
+                        "rotation_euler": blender_object.rotation_euler,
+                        "rotation_quaternion": blender_object.rotation_quaternion,
+                        "scale": blender_object.scale
                     }[target][i])
                 else:
-                     # TODO, this is not working if the action is not active (NLA case for example) ?
-                     trans, rot, scale = blender_object.pose.bones[bone].matrix_basis.decompose()
-                     non_keyed_values.append({
+                    # TODO, this is not working if the action is not active (NLA case for example) ?
+                    trans, rot, scale = blender_object.pose.bones[bone].matrix_basis.decompose()
+                    non_keyed_values.append({
                         "location": trans,
                         "rotation_axis_angle": rot,
                         "rotation_euler": rot,
                         "rotation_quaternion": rot,
                         "scale": scale
-                        }[target][i])
+                    }[target][i])
 
         return tuple(non_keyed_values)
 
@@ -199,8 +200,9 @@ def complete_key(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[f
     """
     for i in range(0, key.get_target_len()):
         if i in key.get_indices():
-            continue # this is a keyed array_index or a SK animated
+            continue  # this is a keyed array_index or a SK animated
         key.set_value_index(i, non_keyed_values[i])
+
 
 def __complete_key_tangents(key: Keyframe, non_keyed_values: typing.Tuple[typing.Optional[float]]):
     """
@@ -208,7 +210,7 @@ def __complete_key_tangents(key: Keyframe, non_keyed_values: typing.Tuple[typing
     """
     for i in range(0, key.get_target_len()):
         if i in key.get_indices():
-            continue # this is a keyed array_index or a SK animated
+            continue  # this is a keyed array_index or a SK animated
         if key.in_tangent is not None:
             key.set_value_index_in(i, non_keyed_values[i])
         if key.out_tangent is not None:

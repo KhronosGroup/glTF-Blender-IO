@@ -18,6 +18,7 @@ from ....cache import cached
 from .channel_target import gather_sk_sampled_channel_target
 from .sampler import gather_sk_sampled_animation_sampler
 
+
 def gather_sk_sampled_channels(
         object_uuid: str,
         blender_action_name: str,
@@ -31,7 +32,7 @@ def gather_sk_sampled_channels(
         object_uuid,
         blender_action_name,
         export_settings
-        )
+    )
 
     if channel is not None:
         channels.append(channel)
@@ -41,14 +42,15 @@ def gather_sk_sampled_channels(
 
     return channels if len(channels) > 0 else None
 
+
 @cached
 def gather_sampled_sk_channel(
         obj_uuid: str,
         action_name: str,
         export_settings
-        ):
+):
 
-    __target= __gather_target(obj_uuid, export_settings)
+    __target = __gather_target(obj_uuid, export_settings)
     if __target.path is not None:
         sampler = __gather_sampler(obj_uuid, action_name, export_settings)
 
@@ -69,13 +71,15 @@ def gather_sampled_sk_channel(
         return animation_channel
     return None
 
+
 def __gather_target(obj_uuid: str, export_settings):
     return gather_sk_sampled_channel_target(
         obj_uuid, export_settings)
+
 
 def __gather_sampler(obj_uuid: str, action_name: str, export_settings):
     return gather_sk_sampled_animation_sampler(
         obj_uuid,
         action_name,
         export_settings
-        )
+    )
