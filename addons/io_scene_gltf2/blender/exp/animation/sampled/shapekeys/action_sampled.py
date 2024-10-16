@@ -19,7 +19,11 @@ from ......io.com import gltf2_io
 from .....com.extras import generate_extras
 from .channels import gather_sk_sampled_channels
 
-def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
+
+def gather_action_sk_sampled(object_uuid: str,
+                             blender_action: typing.Optional[bpy.types.Action],
+                             cache_key: str,
+                             export_settings):
 
     # If no animation in file, no need to bake
     if len(bpy.data.actions) == 0:
@@ -37,9 +41,16 @@ def gather_action_sk_sampled(object_uuid: str, blender_action: typing.Optional[b
         return None
 
     blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
-    export_user_extensions('animation_action_sk_sampled', export_settings, animation, blender_object, blender_action, cache_key)
+    export_user_extensions(
+        'animation_action_sk_sampled',
+        export_settings,
+        animation,
+        blender_object,
+        blender_action,
+        cache_key)
 
     return animation
+
 
 def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
     if blender_action:
@@ -49,8 +60,11 @@ def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Ac
     else:
         return cache_key
 
-def __gather_channels(object_uuid: str, blender_action_name: str, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
+
+def __gather_channels(object_uuid: str, blender_action_name: str,
+                      export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_sk_sampled_channels(object_uuid, blender_action_name, export_settings)
+
 
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:

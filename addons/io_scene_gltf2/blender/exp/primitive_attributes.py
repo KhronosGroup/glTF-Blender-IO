@@ -39,7 +39,7 @@ def gather_primitive_attributes(blender_primitive, export_settings):
         if (attribute.startswith("JOINTS_") or attribute.startswith("WEIGHTS_")) and skin_done is True:
             continue
         if attribute.startswith("MORPH_"):
-            continue # Target for morphs will be managed later
+            continue  # Target for morphs will be managed later
         attributes.update(__gather_attribute(blender_primitive, attribute, export_settings))
         if (attribute.startswith("JOINTS_") or attribute.startswith("WEIGHTS_")):
             skin_done = True
@@ -55,7 +55,11 @@ def __gather_skins(blender_primitive, export_settings):
 
     # Retrieve max set index
     max_bone_set_index = 0
-    while blender_primitive["attributes"].get('JOINTS_' + str(max_bone_set_index)) and blender_primitive["attributes"].get('WEIGHTS_' + str(max_bone_set_index)):
+    while blender_primitive["attributes"].get(
+        'JOINTS_' +
+        str(max_bone_set_index)) and blender_primitive["attributes"].get(
+        'WEIGHTS_' +
+            str(max_bone_set_index)):
         max_bone_set_index += 1
     max_bone_set_index -= 1
 
@@ -81,13 +85,15 @@ def __gather_skins(blender_primitive, export_settings):
         wanted_max_bone_set_index = max_bone_set_index
 
     # Set warning, for the case where there are more group of 4 weights needed
-    # Warning for the case where we are in the same group, will be done later (for example, 3 weights needed, but 2 wanted by user)
+    # Warning for the case where we are in the same group, will be done later
+    # (for example, 3 weights needed, but 2 wanted by user)
     if max_bone_set_index > wanted_max_bone_set_index:
         if export_settings['warning_joint_weight_exceed_already_displayed'] is False:
             export_settings['log'].warning(
                 "There are more than {} joint vertex influences."
-                                                    "The {} with highest weight will be used (and normalized).".format(export_settings['gltf_vertex_influences_nb'], export_settings['gltf_vertex_influences_nb'])
-            )
+                "The {} with highest weight will be used (and normalized).".format(
+                    export_settings['gltf_vertex_influences_nb'],
+                    export_settings['gltf_vertex_influences_nb']))
             export_settings['warning_joint_weight_exceed_already_displayed'] = True
 
         # Take into account only the first set of 4 weights
@@ -95,7 +101,7 @@ def __gather_skins(blender_primitive, export_settings):
 
     # Convert weights to numpy arrays, and setting joints
     weight_arrs = []
-    for s in range(0, max_bone_set_index+1):
+    for s in range(0, max_bone_set_index + 1):
 
         weight_id = 'WEIGHTS_' + str(s)
         weight = blender_primitive["attributes"][weight_id]
@@ -106,18 +112,19 @@ def __gather_skins(blender_primitive, export_settings):
         # And then, remove no more needed weights
         if s == max_bone_set_index and not export_settings['gltf_all_vertex_influences']:
             # Check how many to remove
-            to_remove = (wanted_max_bone_set_index+1)*4 - export_settings['gltf_vertex_influences_nb']
+            to_remove = (wanted_max_bone_set_index + 1) * 4 - export_settings['gltf_vertex_influences_nb']
             if to_remove > 0:
                 warning_done = False
                 for i in range(0, to_remove):
-                    idx =  4-1-i
+                    idx = 4 - 1 - i
                     if not all(weight[:, idx]):
                         if warning_done is False:
                             if export_settings['warning_joint_weight_exceed_already_displayed'] is False:
                                 export_settings['log'].warning(
-                                                    "There are more than {} joint vertex influences."
-                                                    "The {} with highest weight will be used (and normalized).".format(export_settings['gltf_vertex_influences_nb'], export_settings['gltf_vertex_influences_nb'])
-                                )
+                                    "There are more than {} joint vertex influences."
+                                    "The {} with highest weight will be used (and normalized).".format(
+                                        export_settings['gltf_vertex_influences_nb'],
+                                        export_settings['gltf_vertex_influences_nb']))
                                 export_settings['warning_joint_weight_exceed_already_displayed'] = True
                             warning_done = True
                     weight[:, idx] = 0.0
@@ -130,15 +137,15 @@ def __gather_skins(blender_primitive, export_settings):
         component_type = gltf2_io_constants.ComponentType.UnsignedShort
         if max(internal_joint) < 256:
             component_type = gltf2_io_constants.ComponentType.UnsignedByte
-        joints = np.array(internal_joint, dtype= gltf2_io_constants.ComponentType.to_numpy_dtype(component_type))
+        joints = np.array(internal_joint, dtype=gltf2_io_constants.ComponentType.to_numpy_dtype(component_type))
         joints = joints.reshape(-1, 4)
 
         if s == max_bone_set_index and not export_settings['gltf_all_vertex_influences']:
             # Check how many to remove
-            to_remove =(wanted_max_bone_set_index+1)*4 - export_settings['gltf_vertex_influences_nb']
+            to_remove = (wanted_max_bone_set_index + 1) * 4 - export_settings['gltf_vertex_influences_nb']
             if to_remove > 0:
                 for i in range(0, to_remove):
-                    idx =  4-1-i
+                    idx = 4 - 1 - i
                     joints[:, idx] = 0.0
 
         joint = array_to_accessor(
@@ -150,7 +157,7 @@ def __gather_skins(blender_primitive, export_settings):
         attributes[joint_id] = joint
 
     # Sum weights for each vertex
-    for s in range(0, max_bone_set_index+1):
+    for s in range(0, max_bone_set_index + 1):
         sums = weight_arrs[s].sum(axis=1)
         if s == 0:
             weight_total = sums
@@ -159,7 +166,7 @@ def __gather_skins(blender_primitive, export_settings):
 
     # Normalize weights so they sum to 1
     weight_total = weight_total.reshape(-1, 1)
-    for s in range(0, max_bone_set_index+1):
+    for s in range(0, max_bone_set_index + 1):
         weight_id = 'WEIGHTS_' + str(s)
         weight_arrs[s] /= weight_total
 
@@ -168,7 +175,7 @@ def __gather_skins(blender_primitive, export_settings):
             export_settings,
             component_type=gltf2_io_constants.ComponentType.Float,
             data_type=gltf2_io_constants.DataType.Vec4,
-            )
+        )
         attributes[weight_id] = weight
 
     return attributes
@@ -177,12 +184,12 @@ def __gather_skins(blender_primitive, export_settings):
 def __gather_attribute(blender_primitive, attribute, export_settings):
     data = blender_primitive["attributes"][attribute]
 
-
     include_max_and_mins = {
         "POSITION": True
     }
 
-    if (attribute.startswith("_") or attribute.startswith("COLOR_")) and blender_primitive["attributes"][attribute]['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
+    if (attribute.startswith("_") or attribute.startswith("COLOR_")
+        ) and blender_primitive["attributes"][attribute]['component_type'] == gltf2_io_constants.ComponentType.UnsignedShort:
         # Byte Color vertex color, need to normalize
 
         data['data'] *= 65535
@@ -191,11 +198,15 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
 
         export_user_extensions('gather_attribute_change', export_settings, attribute, data, True)
 
-        return { attribute : gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData(data['data'].tobytes(), gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
+        return {
+            attribute: gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData(
+                    data['data'].tobytes(),
+                    gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
                 byte_offset=None,
                 component_type=data['component_type'],
-                count=len(data['data']),
+                count=len(
+                    data['data']),
                 extensions=None,
                 extras=None,
                 max=None,
@@ -204,8 +215,7 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
                 normalized=True,
                 sparse=None,
                 type=data['data_type'],
-            )
-        }
+            )}
 
     elif attribute.startswith("COLOR_") and blender_primitive["attributes"][attribute]['component_type'] == gltf2_io_constants.ComponentType.UnsignedByte:
         # We are in special case where we fake a COLOR_0 attribute with UNSIGNED_BYTE
@@ -213,11 +223,15 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
 
         export_user_extensions('gather_attribute_change', export_settings, attribute, data, True)
 
-        return { attribute : gltf2_io.Accessor(
-                buffer_view=gltf2_io_binary_data.BinaryData(data['data'].tobytes(), gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
+        return {
+            attribute: gltf2_io.Accessor(
+                buffer_view=gltf2_io_binary_data.BinaryData(
+                    data['data'].tobytes(),
+                    gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER),
                 byte_offset=None,
                 component_type=data['component_type'],
-                count=len(data['data']),
+                count=len(
+                    data['data']),
                 extensions=None,
                 extras=None,
                 max=None,
@@ -226,8 +240,7 @@ def __gather_attribute(blender_primitive, attribute, export_settings):
                 normalized=True,
                 sparse=None,
                 type=data['data_type'],
-            )
-        }
+            )}
 
     elif attribute.startswith("JOINTS_") or attribute.startswith("WEIGHTS_"):
         return __gather_skins(blender_primitive, export_settings)

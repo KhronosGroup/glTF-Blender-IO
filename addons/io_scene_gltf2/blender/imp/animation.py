@@ -20,6 +20,7 @@ from .animation_pointer import BlenderPointerAnim
 from .animation_utils import simulate_stash, restore_animation_on_object
 from .vnode import VNode
 
+
 class BlenderAnimation():
     """Dispatch Animation to node or morph weights animation, or via KHR_animation_pointer"""
     def __new__(cls, *args, **kwargs):
@@ -58,12 +59,13 @@ class BlenderAnimation():
                 if mat.normal_texture is not None and len(mat.normal_texture.animations) != 0:
                     BlenderPointerAnim.anim(gltf, anim_idx, mat.normal_texture, mat_idx, 'MATERIAL_PBR', name=mat.name)
                 if mat.occlusion_texture is not None and len(mat.occlusion_texture.animations) != 0:
-                    BlenderPointerAnim.anim(gltf, anim_idx, mat.occlusion_texture, mat_idx, 'MATERIAL_PBR', name=mat.name)
+                    BlenderPointerAnim.anim(gltf, anim_idx, mat.occlusion_texture,
+                                            mat_idx, 'MATERIAL_PBR', name=mat.name)
                 if mat.pbr_metallic_roughness is not None and len(mat.pbr_metallic_roughness.animations) != 0:
                     # This can be a regulat PBR or unlit material
                     is_unlit = mat.extensions is not None and "KHR_materials_unlit" in mat.extensions
-                    BlenderPointerAnim.anim(gltf, anim_idx, mat.pbr_metallic_roughness, mat_idx, 'MATERIAL_PBR', name=mat.name, is_unlit=is_unlit)
-
+                    BlenderPointerAnim.anim(gltf, anim_idx, mat.pbr_metallic_roughness, mat_idx,
+                                            'MATERIAL_PBR', name=mat.name, is_unlit=is_unlit)
 
                 texs = [
                     mat.emissive_texture,
@@ -77,7 +79,14 @@ class BlenderAnimation():
                     if tex.extensions is not None and "KHR_texture_transform" in tex.extensions:
                         # This can be a regulat PBR or unlit material
                         is_unlit = mat.extensions is not None and "KHR_materials_unlit" in mat.extensions
-                        BlenderPointerAnim.anim(gltf, anim_idx, tex.extensions["KHR_texture_transform"], mat_idx, 'TEX_TRANSFORM', name=mat.name, is_unlit=is_unlit)
+                        BlenderPointerAnim.anim(
+                            gltf,
+                            anim_idx,
+                            tex.extensions["KHR_texture_transform"],
+                            mat_idx,
+                            'TEX_TRANSFORM',
+                            name=mat.name,
+                            is_unlit=is_unlit)
 
                 if mat.extensions is not None:
                     texs = [
@@ -95,11 +104,17 @@ class BlenderAnimation():
 
                     for tex in [t for t in texs if t is not None]:
                         if 'extensions' in tex and "KHR_texture_transform" in tex['extensions']:
-                            BlenderPointerAnim.anim(gltf, anim_idx, tex['extensions']["KHR_texture_transform"], mat_idx, 'TEX_TRANSFORM', name=mat.name)
+                            BlenderPointerAnim.anim(
+                                gltf,
+                                anim_idx,
+                                tex['extensions']["KHR_texture_transform"],
+                                mat_idx,
+                                'TEX_TRANSFORM',
+                                name=mat.name)
 
                 for ext in [
                         "KHR_materials_emissive_strength",
-                        #"KHR_materials_iridescence",
+                        # "KHR_materials_iridescence",
                         "KHR_materials_volume",
                         "KHR_materials_ior",
                         "KHR_materials_transmission",
@@ -107,7 +122,7 @@ class BlenderAnimation():
                         "KHR_materials_sheen",
                         "KHR_materials_specular",
                         "KHR_materials_anisotropy"
-                        ]:
+                ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         BlenderPointerAnim.anim(gltf, anim_idx, mat.extensions[ext], mat_idx, 'EXT', name=mat.name)
 
@@ -125,7 +140,7 @@ class BlenderAnimation():
             new_ = bpy.data.scenes[0].gltf2_animation_tracks.add()
             new_.name = track_name
         # reverse order, as animation are created in reverse order (because of NLA adding tracks are reverted)
-        bpy.data.scenes[0].gltf2_animation_tracks.move(len(bpy.data.scenes[0].gltf2_animation_tracks)-1, 0)
+        bpy.data.scenes[0].gltf2_animation_tracks.move(len(bpy.data.scenes[0].gltf2_animation_tracks) - 1, 0)
 
     @staticmethod
     def restore_animation(gltf, animation_name):

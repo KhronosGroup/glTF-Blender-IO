@@ -26,7 +26,7 @@ def gather_camera(blender_camera, export_settings):
     if not __filter_camera(blender_camera, export_settings):
         return None
 
-    export_settings['current_paths'] = {} #For KHR_animation_pointer
+    export_settings['current_paths'] = {}  # For KHR_animation_pointer
 
     camera = gltf2_io.Camera(
         extensions=__gather_extensions(blender_camera, export_settings),

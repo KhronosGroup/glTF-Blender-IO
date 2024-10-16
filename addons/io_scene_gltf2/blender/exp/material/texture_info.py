@@ -34,19 +34,35 @@ from .search_node_tree import \
 # occlusion the primary_socket would be the occlusion socket, and
 # blender_shader_sockets would be the (O,R,M) sockets.
 
+
 def gather_texture_info(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
-    export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
+    export_settings['current_texture_transform'] = {}  # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'DEFAULT', filter_type, export_settings)
 
-def gather_material_normal_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
-    export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
-    export_settings['current_normal_scale'] = {} # For KHR_animation_pointer
+
+def gather_material_normal_texture_info_class(
+        primary_socket,
+        blender_shader_sockets,
+        export_settings,
+        filter_type='ALL'):
+    export_settings['current_texture_transform'] = {}  # For KHR_animation_pointer
+    export_settings['current_normal_scale'] = {}  # For KHR_animation_pointer
     return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'NORMAL', filter_type, export_settings)
 
-def gather_material_occlusion_texture_info_class(primary_socket, blender_shader_sockets, export_settings, filter_type='ALL'):
-    export_settings['current_texture_transform'] = {} # For KHR_animation_pointer
-    export_settings['current_occlusion_strength'] = {} # For KHR_animation_pointer
-    return __gather_texture_info_helper(primary_socket, blender_shader_sockets, 'OCCLUSION', filter_type, export_settings)
+
+def gather_material_occlusion_texture_info_class(
+        primary_socket,
+        blender_shader_sockets,
+        export_settings,
+        filter_type='ALL'):
+    export_settings['current_texture_transform'] = {}  # For KHR_animation_pointer
+    export_settings['current_occlusion_strength'] = {}  # For KHR_animation_pointer
+    return __gather_texture_info_helper(
+        primary_socket,
+        blender_shader_sockets,
+        'OCCLUSION',
+        filter_type,
+        export_settings)
 
 
 @cached
@@ -71,7 +87,7 @@ def __gather_texture_info_helper(
         'extensions': __gather_extensions(tex_transform, export_settings),
         'extras': __gather_extras(blender_shader_sockets, export_settings),
         'index': index,
-        'tex_coord': None # This will be set later, as some data are dependant of mesh or object
+        'tex_coord': None  # This will be set later, as some data are dependant of mesh or object
     }
 
     if kind == 'DEFAULT':
@@ -92,6 +108,7 @@ def __gather_texture_info_helper(
 
     return texture_info, uvmap_info, udim_info, factor
 
+
 def gather_udim_texture_info(
         primary_socket: bpy.types.NodeSocket,
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
@@ -101,14 +118,15 @@ def gather_udim_texture_info(
 
     tex_transform, _ = __gather_texture_transform_and_tex_coord(primary_socket, export_settings)
     export_settings['current_udim_info'] = udim_info
-    index, _, _ = __gather_index(blender_shader_sockets, udim_info['image'].name + str(udim_info['tile']), export_settings)
+    index, _, _ = __gather_index(blender_shader_sockets,
+                                 udim_info['image'].name + str(udim_info['tile']), export_settings)
     export_settings['current_udim_info'] = {}
 
     fields = {
         'extensions': __gather_extensions(tex_transform, export_settings),
         'extras': __gather_extras(blender_shader_sockets, export_settings),
         'index': index,
-        'tex_coord': None # This will be set later, as some data are dependant of mesh or object
+        'tex_coord': None  # This will be set later, as some data are dependant of mesh or object
     }
 
     if tex in ["normalTexture", "clearcoatNormalTexture"]:

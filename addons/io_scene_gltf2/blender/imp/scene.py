@@ -31,7 +31,7 @@ class BlenderScene():
         """Scene creation."""
         scene = bpy.context.scene
         gltf.blender_scene = scene.name
-        if bpy.context.collection.name in bpy.data.collections: # avoid master collection
+        if bpy.context.collection.name in bpy.data.collections:  # avoid master collection
             gltf.blender_active_collection = bpy.context.collection.name
 
         if gltf.data.scene is not None:
@@ -87,13 +87,14 @@ class BlenderScene():
                 BlenderAnimation.restore_animation(gltf, anim_name)
 
                 if hasattr(bpy.data.scenes[0], "gltf2_animation_applied"):
-                    bpy.data.scenes[0].gltf2_animation_applied = bpy.data.scenes[0].gltf2_animation_tracks.find(gltf.data.animations[0].track_name)
+                    bpy.data.scenes[0].gltf2_animation_applied = bpy.data.scenes[0].gltf2_animation_tracks.find(
+                        gltf.data.animations[0].track_name)
 
     @staticmethod
     def select_imported_objects(gltf):
         """Select all (and only) the imported objects."""
         if bpy.ops.object.select_all.poll():
-           bpy.ops.object.select_all(action='DESELECT')
+            bpy.ops.object.select_all(action='DESELECT')
 
         for vnode in gltf.vnodes.values():
             if vnode.type == VNode.Object:

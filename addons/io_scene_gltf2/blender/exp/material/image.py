@@ -25,6 +25,7 @@ from ..cache import cached
 from .encode_image import Channel, ExportImage, FillImage, FillImageTile, FillImageRGB2BW
 from .search_node_tree import get_texture_node_from_socket, detect_anisotropy_nodes
 
+
 @cached
 def gather_image(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
@@ -64,7 +65,8 @@ def gather_image(
         # In case we can't retrieve image (for example packed images, with original moved)
         # We don't create invalid image without uri
         factor_uri = None
-        if uri is None: return None, None, None, None
+        if uri is None:
+            return None, None, None, None
 
     buffer_view, factor_buffer_view = __gather_buffer_view(image_data, mime_type, name, export_settings)
 
@@ -85,10 +87,12 @@ def gather_image(
     # We also return image_data, as it can be used to generate same file with another extension for WebP management
     return image, image_data, factor, None
 
+
 def __gather_original_uri(original_uri, library, export_settings):
     path_to_image = bpy.path.abspath(original_uri, library=library)
 
-    if not os.path.exists(path_to_image): return None
+    if not os.path.exists(path_to_image):
+        return None
     try:
         rel_path = os.path.relpath(
             path_to_image,
@@ -148,7 +152,7 @@ def __gather_mime_type(sockets, export_image, export_settings):
                 return "image/png"
 
     if export_settings["gltf_image_format"] == "AUTO":
-        if export_image.original is None: # We are going to create a new image
+        if export_image.original is None:  # We are going to create a new image
             image = export_image.blender_image(export_settings)
         else:
             # Using original image
@@ -227,7 +231,8 @@ def __get_image_data(sockets, use_tile, export_settings) -> ExportImage:
         # In that case, we return no texture data for now, and only get that this texture is UDIM
         # This will be used later
         if any([r.shader_node.image.source == "TILED" for r in results if r is not None and r.shader_node.image is not None]):
-            return ExportImage(), [r.shader_node.image for r in results if r is not None and r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
+            return ExportImage(), [
+                r.shader_node.image for r in results if r is not None and r.shader_node.image is not None and r.shader_node.image.source == "TILED"][0]
 
     # If we are here, we are in UDIM split process
     # Check if we need a simple mapping or more complex calculation
@@ -260,6 +265,7 @@ def __get_image_data(sockets, use_tile, export_settings) -> ExportImage:
 
     return __get_image_data_mapping(sockets, results, use_tile, export_settings), None
 
+
 def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> ExportImage:
     """
     Simple mapping
@@ -289,7 +295,6 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
                 if elem.from_socket.name == 'Alpha':
                     src_chan = Channel.A
 
-
             if src_chan is None:
                 # No SeparateColor node found, so take the specification channel that is needed
                 # So export is correct if user plug the texture directly to the socket
@@ -310,7 +315,7 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
                     src_chan = Channel.R
                 elif socket.socket.name == 'Coat Roughness':
                     src_chan = Channel.G
-                elif socket.socket.name == 'Thickness': # For KHR_materials_volume
+                elif socket.socket.name == 'Thickness':  # For KHR_materials_volume
                     src_chan = Channel.G
 
             if src_chan is None:
@@ -338,11 +343,11 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
                 dst_chan = Channel.R
             elif socket.socket.name == 'Coat Roughness':
                 dst_chan = Channel.G
-            elif socket.socket.name == 'Thickness': # For KHR_materials_volume
+            elif socket.socket.name == 'Thickness':  # For KHR_materials_volume
                 dst_chan = Channel.G
-            elif socket.socket.name == "Specular IOR Level": # For KHR_materials_specular
+            elif socket.socket.name == "Specular IOR Level":  # For KHR_materials_specular
                 dst_chan = Channel.A
-            elif socket.socket.name == "Sheen Roughness": # For KHR_materials_sheen
+            elif socket.socket.name == "Sheen Roughness":  # For KHR_materials_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:
@@ -353,9 +358,14 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
                         composed_image.fill_image(result.shader_node.image, dst_chan, src_chan)
                 else:
                     if src_chan == Channel.RGB2BW:
-                        composed_image.fill_image_bw_tile(result.shader_node.image, export_settings['current_udim_info']['tile'], dst_chan)
+                        composed_image.fill_image_bw_tile(
+                            result.shader_node.image, export_settings['current_udim_info']['tile'], dst_chan)
                     else:
-                        composed_image.fill_image_tile(result.shader_node.image, export_settings['current_udim_info']['tile'], dst_chan, src_chan)
+                        composed_image.fill_image_tile(
+                            result.shader_node.image,
+                            export_settings['current_udim_info']['tile'],
+                            dst_chan,
+                            src_chan)
 
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
@@ -371,11 +381,16 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
                     composed_image = ExportImage.from_blender_image_tile(export_settings)
 
     # Check that we don't have some empty channels (based on weird images without any size for example)
-    keys = list(composed_image.fills.keys()) # do not loop on dict, we may have to delete an element
-    for k in [k for k in keys if isinstance(composed_image.fills[k], FillImage) or isinstance(composed_image.fills[k], FillImageRGB2BW)]:
+    keys = list(composed_image.fills.keys())  # do not loop on dict, we may have to delete an element
+    for k in [
+        k for k in keys if isinstance(
+            composed_image.fills[k],
+            FillImage) or isinstance(
+            composed_image.fills[k],
+            FillImageRGB2BW)]:
         if composed_image.fills[k].image.size[0] == 0 or composed_image.fills[k].image.size[1] == 0:
             export_settings['log'].warning("Image '{}' has no size and cannot be exported.".format(
-                                             composed_image.fills[k].image))
+                composed_image.fills[k].image))
             del composed_image.fills[k]
 
     return composed_image
@@ -389,7 +404,8 @@ def __get_image_data_grayscale_anisotropy(sockets, results, export_settings) -> 
     composed_image = ExportImage()
     composed_image.set_calc(grayscale_anisotropy_calculation)
 
-    results = [get_texture_node_from_socket(socket, export_settings) for socket in sockets[:-1]] #No texture from tangent
+    results = [get_texture_node_from_socket(socket, export_settings)
+               for socket in sockets[:-1]]  # No texture from tangent
 
     mapping = {
         0: "anisotropy",
@@ -404,6 +420,7 @@ def __get_image_data_grayscale_anisotropy(sockets, results, export_settings) -> 
 
     return composed_image
 
+
 def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
     if image.source != 'FILE':
         return False
@@ -413,6 +430,7 @@ def __is_blender_image_a_jpeg(image: bpy.types.Image) -> bool:
         path = image.filepath_raw.lower()
         return path.endswith('.jpg') or path.endswith('.jpeg') or path.endswith('.jpe')
 
+
 def __is_blender_image_a_webp(image: bpy.types.Image) -> bool:
     if image.source != 'FILE':
         return False
@@ -421,6 +439,7 @@ def __is_blender_image_a_webp(image: bpy.types.Image) -> bool:
     else:
         path = image.filepath_raw.lower()
         return path.endswith('.webp')
+
 
 def get_gltf_image_from_blender_image(blender_image_name, export_settings):
     image_data = ExportImage.from_blender_image(bpy.data.images[blender_image_name])
@@ -439,6 +458,7 @@ def get_gltf_image_from_blender_image(blender_image_name, export_settings):
         name=name,
         uri=uri
     )
+
 
 def __get_mime_type_of_image(blender_image_name, export_settings):
 

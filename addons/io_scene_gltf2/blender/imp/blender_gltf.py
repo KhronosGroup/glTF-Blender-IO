@@ -17,6 +17,7 @@ from mathutils import Vector, Quaternion, Matrix
 from ...io.imp.user_extensions import import_user_extensions
 from .scene import BlenderScene
 
+
 class BlenderGlTF():
     """Main glTF import class."""
     def __new__(cls, *args, **kwargs):
@@ -30,7 +31,9 @@ class BlenderGlTF():
 
         profile = bpy.app.debug_value == 102
         if profile:
-            import cProfile, pstats, io
+            import cProfile
+            import pstats
+            import io
             from pstats import SortKey
             pr = cProfile.Profile()
             pr.enable()
@@ -62,23 +65,26 @@ class BlenderGlTF():
             def convert_loc(x): return u * Vector([x[0], -x[2], x[1]])
             def convert_quat(q): return Quaternion([q[3], q[0], -q[2], q[1]])
             def convert_scale(s): return Vector([s[0], s[2], s[1]])
+
             def convert_matrix(m):
                 return Matrix([
-                    [   m[0],   -m[ 8],    m[4],  m[12]*u],
-                    [  -m[2],    m[10],   -m[6], -m[14]*u],
-                    [   m[1],   -m[ 9],    m[5],  m[13]*u],
-                    [ m[3]/u, -m[11]/u,  m[7]/u,    m[15]],
+                    [m[0], -m[8], m[4], m[12] * u],
+                    [-m[2], m[10], -m[6], -m[14] * u],
+                    [m[1], -m[9], m[5], m[13] * u],
+                    [m[3] / u, -m[11] / u, m[7] / u, m[15]],
                 ])
 
             # Batch versions operate in place on a numpy array
             def convert_locs_batch(locs):
                 # x,y,z -> x,-z,y
-                locs[:, [1,2]] = locs[:, [2,1]]
+                locs[:, [1, 2]] = locs[:, [2, 1]]
                 locs[:, 1] *= -1
                 # Unit conversion
-                if u != 1: locs *= u
+                if u != 1:
+                    locs *= u
+
             def convert_normals_batch(ns):
-                ns[:, [1,2]] = ns[:, [2,1]]
+                ns[:, [1, 2]] = ns[:, [2, 1]]
                 ns[:, 1] *= -1
 
             # Correction for cameras and lights.
@@ -86,12 +92,13 @@ class BlenderGlTF():
             # glTF after Yup2Zup: right = +X, forward = +Y, up = +Z
             # Blender: right = +X, forward = -Z, up = +Y
             # Need to carry Blender --> glTF after Yup2Zup
-            gltf.camera_correction = Quaternion((2**0.5/2, 2**0.5/2, 0.0, 0.0))
+            gltf.camera_correction = Quaternion((2**0.5 / 2, 2**0.5 / 2, 0.0, 0.0))
 
         else:
             def convert_loc(x): return Vector(x)
             def convert_quat(q): return Quaternion([q[3], q[0], q[1], q[2]])
             def convert_scale(s): return Vector(s)
+
             def convert_matrix(m):
                 return Matrix([m[0::4], m[1::4], m[2::4], m[3::4]])
 
@@ -146,7 +153,7 @@ class BlenderGlTF():
             if gltf.data.meshes:
                 for mesh in gltf.data.meshes:
                     mesh.blender_name = {}  # caches Blender mesh name
-                    mesh.weight_animation_on_mesh = None # For KHR_animation_pointer, weights on mesh
+                    mesh.weight_animation_on_mesh = None  # For KHR_animation_pointer, weights on mesh
 
             for cam in gltf.data.cameras if gltf.data.cameras is not None else []:
                 cam.animations = {}
@@ -164,7 +171,7 @@ class BlenderGlTF():
 
                 for ext in [
                         "KHR_materials_emissive_strength",
-                        #"KHR_materials_iridescence",
+                        # "KHR_materials_iridescence",
                         "KHR_materials_volume",
                         "KHR_materials_ior",
                         "KHR_materials_transmission",
@@ -172,7 +179,7 @@ class BlenderGlTF():
                         "KHR_materials_sheen",
                         "KHR_materials_specular",
                         "KHR_materials_anisotropy"
-                        ]:
+                ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         mat.extensions[ext]["animations"] = {}
 
@@ -205,14 +212,12 @@ class BlenderGlTF():
                     if 'extensions' in tex and "KHR_texture_transform" in tex['extensions']:
                         tex['extensions']["KHR_texture_transform"]["animations"] = {}
 
-
             for light in gltf.data.extensions["KHR_lights_punctual"]["lights"] \
                 if gltf.data.extensions is not None and "KHR_lights_punctual" in gltf.data.extensions \
                     and "lights" in gltf.data.extensions["KHR_lights_punctual"] else []:
                 light["animations"] = {}
                 if "spot" in light:
                     light["spot"]["animations"] = {}
-
 
         # Dispatch animation
         if gltf.data.animations:
@@ -256,7 +261,7 @@ class BlenderGlTF():
         # Calculate names for each mesh's shapekeys
         for mesh in gltf.data.meshes or []:
             mesh.shapekey_names = []
-            used_names = set(['Basis']) #Be sure to not use 'Basis' name at import, this is a reserved name
+            used_names = set(['Basis'])  # Be sure to not use 'Basis' name at import, this is a reserved name
 
             # Look for primitive with morph targets
             for prim in (mesh.primitives or []):
@@ -278,7 +283,7 @@ class BlenderGlTF():
                     # Try to use name from extras.targetNames
                     try:
                         shapekey_name = str(mesh.extras['targetNames'][sk])
-                        if shapekey_name == "": # Issue when shapekey name is empty
+                        if shapekey_name == "":  # Issue when shapekey name is empty
                             shapekey_name = None
                     except Exception:
                         pass
@@ -311,14 +316,15 @@ class BlenderGlTF():
         if channel.target.extensions is None:
             return
 
-        if "KHR_animation_pointer" not in channel.target.extensions and "pointer" not in channel.target.extensions["KHR_animation_pointer"]:
+        if "KHR_animation_pointer" not in channel.target.extensions and "pointer" not in channel.target.extensions[
+                "KHR_animation_pointer"]:
             return
 
         pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
 
-
         ### Nodes and Meshes
-        if len(pointer_tab) >= 4 and pointer_tab[1] == "nodes" and pointer_tab[3] in ["translation", "rotation", "scale", "weights"]:
+        if len(pointer_tab) >= 4 and pointer_tab[1] == "nodes" and pointer_tab[3] in [
+                "translation", "rotation", "scale", "weights"]:
             if anim_idx not in gltf.data.nodes[int(pointer_tab[2])].animations.keys():
                 gltf.data.nodes[int(pointer_tab[2])].animations[anim_idx] = []
             gltf.data.nodes[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
@@ -327,111 +333,125 @@ class BlenderGlTF():
         elif len(pointer_tab) >= 4 and pointer_tab[1] == "meshes" and pointer_tab[3] == "weights":
             gltf.data.meshes[int(pointer_tab[2])].weight_animation_on_mesh = (anim_idx, channel_idx)
 
-        ### Camera
+        # Camera
         if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
-            pointer_tab[3] in ["perspective"] and \
-            pointer_tab[4] in ["yfov", "znear", "zfar"]:
+                pointer_tab[3] in ["perspective"] and \
+                pointer_tab[4] in ["yfov", "znear", "zfar"]:
 
             if anim_idx not in gltf.data.cameras[int(pointer_tab[2])].animations.keys():
                 gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx] = []
             gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and \
-            pointer_tab[3] in ["orthographic"] and \
-            pointer_tab[4] in ["ymag", "xmag"]:
+                pointer_tab[3] in ["orthographic"] and \
+                pointer_tab[4] in ["ymag", "xmag"]:
 
             if anim_idx not in gltf.data.cameras[int(pointer_tab[2])].animations.keys():
                 gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx] = []
             gltf.data.cameras[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
 
-        ### Light
+        # Light
         if len(pointer_tab) == 6 and pointer_tab[1] == "extensions" and \
-            pointer_tab[2] == "KHR_lights_punctual" and \
-            pointer_tab[3] == "lights" and \
-            pointer_tab[5] in ["intensity", "color", "range"]:
+                pointer_tab[2] == "KHR_lights_punctual" and \
+                pointer_tab[3] == "lights" and \
+                pointer_tab[5] in ["intensity", "color", "range"]:
 
-            if anim_idx not in gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"].keys():
+            if anim_idx not in gltf.data.extensions["KHR_lights_punctual"]["lights"][int(
+                    pointer_tab[4])]["animations"].keys():
                 gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx] = []
-            gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx].append(channel_idx)
+            gltf.data.extensions["KHR_lights_punctual"]["lights"][int(
+                pointer_tab[4])]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "extensions" and \
-            pointer_tab[2] == "KHR_lights_punctual" and \
-            pointer_tab[3] == "lights" and \
-            pointer_tab[5] in ["spot.outerConeAngle", "spot.innerConeAngle"]:
+                pointer_tab[2] == "KHR_lights_punctual" and \
+                pointer_tab[3] == "lights" and \
+                pointer_tab[5] in ["spot.outerConeAngle", "spot.innerConeAngle"]:
 
-            if anim_idx not in gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"].keys():
+            if anim_idx not in gltf.data.extensions["KHR_lights_punctual"]["lights"][int(
+                    pointer_tab[4])]["animations"].keys():
                 gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx] = []
-            gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["animations"][anim_idx].append(channel_idx)
+            gltf.data.extensions["KHR_lights_punctual"]["lights"][int(
+                pointer_tab[4])]["animations"][anim_idx].append(channel_idx)
 
-        #### Materials
+        # Materials
         if len(pointer_tab) == 4 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] in ["emissiveFactor", "alphaCutoff"]:
+                pointer_tab[3] in ["emissiveFactor", "alphaCutoff"]:
 
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].animations.keys():
                 gltf.data.materials[int(pointer_tab[2])].animations[anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].animations[anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "emissiveTexture" and \
-            pointer_tab[4] == "extensions" and \
-            pointer_tab[5] == "KHR_texture_transform" and \
-            pointer_tab[6] in ["scale", "offset"]:
+                pointer_tab[3] == "emissiveTexture" and \
+                pointer_tab[4] == "extensions" and \
+                pointer_tab[5] == "KHR_texture_transform" and \
+                pointer_tab[6] in ["scale", "offset"]:
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
-
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(
+                    pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(
+                pointer_tab[2])].emissive_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "normalTexture" and \
-            pointer_tab[4] == "scale":
+                pointer_tab[3] == "normalTexture" and \
+                pointer_tab[4] == "scale":
 
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].normal_texture.animations.keys():
                 gltf.data.materials[int(pointer_tab[2])].normal_texture.animations[anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].normal_texture.animations[anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "normalTexture" and \
-            pointer_tab[4] == "extensions" and \
-            pointer_tab[5] == "KHR_texture_transform" and \
-            pointer_tab[6] in ["scale", "offset"]:
+                pointer_tab[3] == "normalTexture" and \
+                pointer_tab[4] == "extensions" and \
+                pointer_tab[5] == "KHR_texture_transform" and \
+                pointer_tab[6] in ["scale", "offset"]:
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].normal_texture.extensions["KHR_texture_transform"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].normal_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].normal_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
-
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].normal_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].normal_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(
+                pointer_tab[2])].normal_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "occlusionTexture" and \
-            pointer_tab[4] == "strength":
+                pointer_tab[3] == "occlusionTexture" and \
+                pointer_tab[4] == "strength":
 
             if anim_idx not in gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations.keys():
                 gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations[anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].occlusion_texture.animations[anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "occlusionTexture" and \
-            pointer_tab[4] == "extensions" and \
-            pointer_tab[5] == "KHR_texture_transform" and \
-            pointer_tab[6] in ["scale", "offset"]:
+                pointer_tab[3] == "occlusionTexture" and \
+                pointer_tab[4] == "extensions" and \
+                pointer_tab[5] == "KHR_texture_transform" and \
+                pointer_tab[6] in ["scale", "offset"]:
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(
+                    pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(
+                pointer_tab[2])].occlusion_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 9 and pointer_tab[1] == "materials" and \
-            pointer_tab[-1] in ["scale", "offset"] and \
-            pointer_tab[-2] == "KHR_texture_transform" and \
-            pointer_tab[-3] == "extensions" and \
-            pointer_tab[3] == "extensions":
+                pointer_tab[-1] in ["scale", "offset"] and \
+                pointer_tab[-2] == "KHR_texture_transform" and \
+                pointer_tab[-3] == "extensions" and \
+                pointer_tab[3] == "extensions":
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]]['extensions']["KHR_texture_transform"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]]['extensions']["KHR_texture_transform"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]]['extensions']["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]]['extensions']["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]
+                                                                                    ]['extensions']["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions[pointer_tab[4]][pointer_tab[5]
+                                                                                ]['extensions']["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "pbrMetallicRoughness" and \
-            pointer_tab[4] in ["baseColorFactor", "roughnessFactor", "metallicFactor"]:
+                pointer_tab[3] == "pbrMetallicRoughness" and \
+                pointer_tab[4] in ["baseColorFactor", "roughnessFactor", "metallicFactor"]:
 
             # This can be unlit (baseColorFactor) or pbr
 
@@ -440,105 +460,135 @@ class BlenderGlTF():
             gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.animations[anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 8 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "pbrMetallicRoughness" and \
-            pointer_tab[4] == "baseColorTexture" and \
-            pointer_tab[5] == "extensions" and \
-            pointer_tab[6] == "KHR_texture_transform" and \
-            pointer_tab[7] in ["scale", "offset"]:
+                pointer_tab[3] == "pbrMetallicRoughness" and \
+                pointer_tab[4] == "baseColorTexture" and \
+                pointer_tab[5] == "extensions" and \
+                pointer_tab[6] == "KHR_texture_transform" and \
+                pointer_tab[7] in ["scale", "offset"]:
 
             # This can be unlit or pbr
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(
+                    pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(
+                pointer_tab[2])].pbr_metallic_roughness.base_color_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 8 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "pbrMetallicRoughness" and \
-            pointer_tab[4] == "metallicRoughnessTexture" and \
-            pointer_tab[5] == "extensions" and \
-            pointer_tab[6] == "KHR_texture_transform" and \
-            pointer_tab[7] in ["scale", "offset"]:
+                pointer_tab[3] == "pbrMetallicRoughness" and \
+                pointer_tab[4] == "metallicRoughnessTexture" and \
+                pointer_tab[5] == "extensions" and \
+                pointer_tab[6] == "KHR_texture_transform" and \
+                pointer_tab[7] in ["scale", "offset"]:
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
-
-        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_emissive_strength" and \
-            pointer_tab[5] == "emissiveStrength":
-
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_emissive_strength"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_emissive_strength"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_emissive_strength"]["animations"][anim_idx].append(channel_idx)
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"].keys():
+                gltf.data.materials[int(
+                    pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"][anim_idx] = []
+            gltf.data.materials[int(
+                pointer_tab[2])].pbr_metallic_roughness.metallic_roughness_texture.extensions["KHR_texture_transform"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_volume" and \
-            pointer_tab[5] in ["thicknessFactor", "attenuationDistance", "attenuationColor"]:
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_emissive_strength" and \
+                pointer_tab[5] == "emissiveStrength":
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_volume"]["animations"].keys():
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_emissive_strength"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["KHR_materials_emissive_strength"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_emissive_strength"]["animations"][anim_idx].append(
+                channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_volume" and \
+                pointer_tab[5] in ["thicknessFactor", "attenuationDistance", "attenuationColor"]:
+
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_volume"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_volume"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_volume"]["animations"][anim_idx].append(channel_idx)
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_volume"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_ior" and \
-            pointer_tab[5] == "ior":
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_ior" and \
+                pointer_tab[5] == "ior":
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_ior"]["animations"].keys():
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_ior"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_ior"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_ior"]["animations"][anim_idx].append(channel_idx)
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_ior"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_transmission" and \
-            pointer_tab[5] == "transmissionFactor":
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_transmission" and \
+                pointer_tab[5] == "transmissionFactor":
 
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"][anim_idx].append(channel_idx)
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["KHR_materials_transmission"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_transmission"]["animations"][anim_idx].append(
+                channel_idx)
 
         if len(pointer_tab) == 7 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_clearcoat" and \
-            pointer_tab[5] == "clearcoatNormalTexture" and \
-            pointer_tab[6] == "scale":
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx].append(channel_idx)
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_clearcoat" and \
+                pointer_tab[5] == "clearcoatNormalTexture" and \
+                pointer_tab[6] == "scale":
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["KHR_materials_clearcoat"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_clearcoat"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_clearcoat" and \
-            pointer_tab[5] in ["clearcoatFactor", "clearcoatRoughnessFactor"]:
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"][anim_idx].append(channel_idx)
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_clearcoat" and \
+                pointer_tab[5] in ["clearcoatFactor", "clearcoatRoughnessFactor"]:
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_clearcoat"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["KHR_materials_clearcoat"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_clearcoat"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_sheen" and \
-            pointer_tab[5] in ["sheenColorFactor", "sheenRoughnessFactor"]:
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"].keys():
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_sheen" and \
+                pointer_tab[5] in ["sheenColorFactor", "sheenRoughnessFactor"]:
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"].keys():
                 gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_sheen"]["animations"][anim_idx].append(channel_idx)
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_sheen"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_specular" and \
-            pointer_tab[5] in ["specularFactor", "specularColorFactor"]:
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_specular"]["animations"][anim_idx].append(channel_idx)
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_specular" and \
+                pointer_tab[5] in ["specularFactor", "specularColorFactor"]:
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_specular"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["KHR_materials_specular"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_specular"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
-            pointer_tab[3] == "extensions" and \
-            pointer_tab[4] == "KHR_materials_anisotropy" and \
-            pointer_tab[5] in ["anisotropyStrength", "anisotropyRotation"]:
-            if anim_idx not in gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_anisotropy"]["animations"].keys():
-                gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_anisotropy"]["animations"][anim_idx] = []
-            gltf.data.materials[int(pointer_tab[2])].extensions["KHR_materials_anisotropy"]["animations"][anim_idx].append(channel_idx)
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_anisotropy" and \
+                pointer_tab[5] in ["anisotropyStrength", "anisotropyRotation"]:
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_anisotropy"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["KHR_materials_anisotropy"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_anisotropy"]["animations"][anim_idx].append(channel_idx)
 
     @staticmethod
     def find_unused_name(haystack, desired_name):
@@ -561,7 +611,6 @@ class BlenderGlTF():
 
             suffix = '.%03d' % cntr
             cntr += 1
-
 
     @staticmethod
     def manage_material_variants(gltf):

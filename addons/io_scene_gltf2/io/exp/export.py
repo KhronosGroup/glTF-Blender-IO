@@ -70,7 +70,12 @@ def save_gltf(gltf, export_settings, encoder, glb_buffer):
     export_user_extensions('gather_gltf_encoded_hook', export_settings, gltf_format, sort_order)
 
     gltf_ordered = OrderedDict(sorted(gltf.items(), key=lambda item: sort_order.index(item[0])))
-    gltf_encoded = json.dumps(gltf_ordered, indent=gltf_format.indent, separators=gltf_format.separators, cls=encoder, allow_nan=False)
+    gltf_encoded = json.dumps(
+        gltf_ordered,
+        indent=gltf_format.indent,
+        separators=gltf_format.separators,
+        cls=encoder,
+        allow_nan=False)
 
     #
 

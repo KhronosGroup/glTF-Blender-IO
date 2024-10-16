@@ -22,29 +22,34 @@ from ...tree import VExportNode
 from ..drivers import get_sk_drivers
 
 # Warning : If you change some parameter here, need to be changed in cache system
+
+
 @datacache
 def get_cache_data(path: str,
-                      blender_obj_uuid: str,
-                      bone: typing.Optional[str],
-                      action_name: str,
-                      current_frame: int,
-                      step: int,
-                      export_settings,
-                      only_gather_provided=False
-                    ):
+                   blender_obj_uuid: str,
+                   bone: typing.Optional[str],
+                   action_name: str,
+                   current_frame: int,
+                   step: int,
+                   export_settings,
+                   only_gather_provided=False
+                   ):
 
     data = {}
 
     min_, max_ = get_range(blender_obj_uuid, action_name, export_settings)
 
     if only_gather_provided:
-        obj_uuids = [blender_obj_uuid] if blender_obj_uuid in export_settings['vtree'].nodes.keys() else [] #If object is not in vtree, this is a material or light for pointers
+        # If object is not in vtree, this is a material or light for pointers
+        obj_uuids = [blender_obj_uuid] if blender_obj_uuid in export_settings['vtree'].nodes.keys() else []
     else:
-        obj_uuids = [uid for (uid, n) in export_settings['vtree'].nodes.items() if n.blender_type not in [VExportNode.BONE]]
+        obj_uuids = [uid for (uid, n) in export_settings['vtree'].nodes.items()
+                     if n.blender_type not in [VExportNode.BONE]]
 
     # For TRACK mode, we reset cache after each track export, so we don't need to keep others objects
     if export_settings['gltf_animation_mode'] in "NLA_TRACKS":
-        obj_uuids = [blender_obj_uuid]  if blender_obj_uuid in export_settings['vtree'].nodes.keys() else [] #If object is not in vtree, this is a material or light for pointers
+        # If object is not in vtree, this is a material or light for pointers
+        obj_uuids = [blender_obj_uuid] if blender_obj_uuid in export_settings['vtree'].nodes.keys() else []
 
     # If there is only 1 object to cache, we can disable viewport for other objects (for performance)
     # This can be on these cases:
@@ -71,7 +76,7 @@ def get_cache_data(path: str,
     frame = min_
     while frame <= max_:
         bpy.context.scene.frame_set(int(frame))
-        current_instance = {} # For GN instances, we are going to track instances by their order in instance iterator
+        current_instance = {}  # For GN instances, we are going to track instances by their order in instance iterator
 
         object_caching(data, obj_uuids, current_instance, action_name, frame, depsgraph, export_settings)
 
@@ -86,12 +91,14 @@ def get_cache_data(path: str,
 
     # And now, restoring meshes in viewport
     for node, obj in [(n, n.blender_object) for n in export_settings['vtree'].nodes.values() if n.blender_type in
-                [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
+                      [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
         obj.hide_viewport = node.default_hide_viewport
 
     return data
 
 # For perf, we may be more precise, and get a list of ranges to be exported that include all needed frames
+
+
 def get_range(obj_uuid, key, export_settings):
     if export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
         return export_settings['ranges'][obj_uuid][key]['start'], export_settings['ranges'][obj_uuid][key]['end']
@@ -157,6 +164,7 @@ def material_caching(data, action_name, frame, export_settings):
             else:
                 data[key1][key2][key3][path][frame] = list(val)
 
+
 def material_nodetree_caching(data, action_name, frame, export_settings):
     # After caching objects, caching materials, for KHR_animation_pointer
     for mat in export_settings['KHR_animation_pointer']['materials'].keys():
@@ -175,7 +183,7 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
         if blender_material.node_tree and blender_material.node_tree.animation_data and blender_material.node_tree.animation_data.action \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
 
-                key1, key2, key3 = mat, blender_material.node_tree.animation_data.action.name, "value"
+            key1, key2, key3 = mat, blender_material.node_tree.animation_data.action.name, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
             key1, key2, key3 = mat, action_name, "value"
         else:
@@ -183,7 +191,6 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
             # There is no animation, so use id as key
 
             key1, key2, key3 = mat, mat, "value"
-
 
         if key2 not in data[key1].keys():
             data[key1][key2] = {}
@@ -203,9 +210,11 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
                 if baseColorFactor_alpha_merged_already_done is True:
                     continue
                 val_color = blender_material.path_resolve(path)
-                data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
+                data_color = list(val_color)[:export_settings['KHR_animation_pointer']
+                                             ['materials'][mat]['paths'][path]['length']]
                 if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
-                    val_alpha = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                    val_alpha = blender_material.path_resolve(
+                        export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
                 else:
                     val_alpha = 1.0
                 data[key1][key2][key3][path][frame] = data_color + [val_alpha]
@@ -217,25 +226,38 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
                     continue
                 val_alpha = blender_material.path_resolve(path)
                 if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'] is not None:
-                    val_color = blender_material.path_resolve(export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
-                    data_color = list(val_color)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths']['additional_path']['length']]
+                    val_color = blender_material.path_resolve(
+                        export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['additional_path'])
+                    data_color = list(val_color)[:export_settings['KHR_animation_pointer']
+                                                 ['materials'][mat]['paths']['additional_path']['length']]
                 else:
                     data_color = [1.0, 1.0, 1.0]
                 data[key1][key2][key3][path][frame] = data_color + [val_alpha]
                 baseColorFactor_alpha_merged_already_done = True
 
-            # Manage special case for KHR_texture_transform offset, that needs rotation and scale too (and not only translation)
+            # Manage special case for KHR_texture_transform offset, that needs
+            # rotation and scale too (and not only translation)
             elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
                     and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].endswith("offset"):
 
                 val_offset = blender_material.path_resolve(path)
-                rotation_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
-                                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
-                                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "rotation"][0]
+                rotation_path = [
+                    i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit(
+                        "/",
+                        1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit(
+                        "/",
+                        1)[0] and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit(
+                        "/",
+                        1)[1] == "rotation"][0]
                 val_rotation = blender_material.path_resolve(rotation_path)
-                scale_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
-                                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
-                                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "scale"][0]
+                scale_path = [
+                    i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit(
+                        "/",
+                        1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit(
+                        "/",
+                        1)[0] and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit(
+                        "/",
+                        1)[1] == "scale"][0]
                 val_scale = blender_material.path_resolve(scale_path)
 
                 mapping_transform = {}
@@ -247,7 +269,8 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
                     mapping_transform = inverted_trs_mapping_node(mapping_transform)
                     if mapping_transform is None:
                         # Can not be converted to TRS, so ... keeping default values
-                        export_settings['log'].warning("Can not convert texture transform to TRS. Keeping default values.")
+                        export_settings['log'].warning(
+                            "Can not convert texture transform to TRS. Keeping default values.")
                         mapping_transform = {}
                         mapping_transform["offset"] = [0.0, 0.0]
                         mapping_transform["rotation"] = 0.0
@@ -258,7 +281,6 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
 
                 texture_transform = texture_transform_blender_to_gltf(mapping_transform)
 
-
                 data[key1][key2][key3][path][frame] = texture_transform['offset']
                 data[key1][key2][key3][rotation_path][frame] = texture_transform['rotation']
                 data[key1][key2][key3][scale_path][frame] = texture_transform['scale']
@@ -268,9 +290,9 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
                 else:
                     val = blender_material.path_resolve(path)
                     mapping_transform = {}
-                    mapping_transform["offset"] = [0,0] # Placeholder, not needed
+                    mapping_transform["offset"] = [0, 0]  # Placeholder, not needed
                     mapping_transform["rotation"] = val
-                    mapping_transform["scale"] = [1, 1] # Placeholder, not needed
+                    mapping_transform["scale"] = [1, 1]  # Placeholder, not needed
                     texture_transform = texture_transform_blender_to_gltf(mapping_transform)
                     data[key1][key2][key3][path][frame] = texture_transform['rotation']
             elif "KHR_texture_transform" in export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] \
@@ -281,8 +303,8 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
                 else:
                     val = blender_material.path_resolve(path)
                     mapping_transform = {}
-                    mapping_transform["offset"] = [0,0] # Placeholder, not needed
-                    mapping_transform["rotation"] = 0.0 # Placeholder, not needed
+                    mapping_transform["offset"] = [0, 0]  # Placeholder, not needed
+                    mapping_transform["rotation"] = 0.0  # Placeholder, not needed
                     mapping_transform["scale"] = [val[0], val[1]]
                     texture_transform = texture_transform_blender_to_gltf(mapping_transform)
                     data[key1][key2][key3][path][frame] = texture_transform['rotation']
@@ -300,9 +322,14 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
                 data[key1][key2][key3][path][frame] = val
 
                 # Retrieve specularColorFactor
-                colorfactor_path = [i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() \
-                                        if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit("/", 1)[0] \
-                                            and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit("/", 1)[1] == "specularColorFactor"][0]
+                colorfactor_path = [
+                    i for i in export_settings['KHR_animation_pointer']['materials'][mat]['paths'].keys() if export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit(
+                        "/",
+                        1)[0] == export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'].rsplit(
+                        "/",
+                        1)[0] and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit(
+                        "/",
+                        1)[1] == "specularColorFactor"][0]
                 val_colorfactor = blender_material.path_resolve(colorfactor_path)
                 if fac > 1.0:
                     val_colorfactor = [i * fac for i in val_colorfactor]
@@ -317,7 +344,8 @@ def material_nodetree_caching(data, action_name, frame, export_settings):
                 if type(val).__name__ == "float":
                     data[key1][key2][key3][path][frame] = val
                 else:
-                    data[key1][key2][key3][path][frame] = list(val)[:export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
+                    data[key1][key2][key3][path][frame] = list(val)[
+                        :export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
 
 
 def armature_caching(data, obj_uuid, blender_obj, action_name, frame, export_settings):
@@ -337,8 +365,10 @@ def armature_caching(data, obj_uuid, blender_obj, action_name, frame, export_set
     for bone_uuid in [bone for bone in bones if export_settings['vtree'].nodes[bone].leaf_reference is None]:
         blender_bone = export_settings['vtree'].nodes[bone_uuid].blender_bone
 
-        if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
-            blender_bone_parent = export_settings['vtree'].nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_bone
+        if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[
+                export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
+            blender_bone_parent = export_settings['vtree'].nodes[export_settings['vtree']
+                                                                 .nodes[bone_uuid].parent_uuid].blender_bone
             rest_mat = blender_bone_parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local
             matrix = rest_mat.inverted_safe() @ blender_bone_parent.matrix.inverted_safe() @ blender_bone.matrix
         else:
@@ -356,6 +386,7 @@ def armature_caching(data, obj_uuid, blender_obj, action_name, frame, export_set
             data[key1][key2][key3][blender_bone.name] = {}
         data[key1][key2][key3][blender_bone.name][frame] = matrix
 
+
 def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgraph, export_settings):
     for obj_uuid in obj_uuids:
 
@@ -364,7 +395,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgr
             continue
 
         blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
-        if blender_obj is None: #GN instance
+        if blender_obj is None:  # GN instance
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid not in current_instance.keys():
                 current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] = 0
 
@@ -374,22 +405,29 @@ def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgr
         if export_settings['vtree'].nodes[obj_uuid].parent_uuid is None:
             parent_mat = mathutils.Matrix.Identity(4).freeze()
         else:
-            if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type not in [VExportNode.BONE]:
-                if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type != VExportNode.COLLECTION:
-                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+            if export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type not in [
+                    VExportNode.BONE]:
+                if export_settings['vtree'].nodes[export_settings['vtree']
+                                                  .nodes[obj_uuid].parent_uuid].blender_type != VExportNode.COLLECTION:
+                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree']
+                                                                .nodes[obj_uuid].parent_uuid].blender_object.matrix_world
                 else:
-                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].matrix_world
+                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree']
+                                                                .nodes[obj_uuid].parent_uuid].matrix_world
             else:
                 # Object animated is parented to a bone
-                blender_bone = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].blender_bone
-                armature_object = export_settings['vtree'].nodes[export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].armature].blender_object
+                blender_bone = export_settings['vtree'].nodes[export_settings['vtree']
+                                                              .nodes[obj_uuid].parent_bone_uuid].blender_bone
+                armature_object = export_settings['vtree'].nodes[export_settings['vtree']
+                                                                 .nodes[export_settings['vtree'].nodes[obj_uuid].parent_bone_uuid].armature].blender_object
                 axis_basis_change = mathutils.Matrix(
                     ((1.0, 0.0, 0.0, 0.0), (0.0, 0.0, 1.0, 0.0), (0.0, -1.0, 0.0, 0.0), (0.0, 0.0, 0.0, 1.0)))
 
                 parent_mat = armature_object.matrix_world @ blender_bone.matrix @ axis_basis_change
 
-        #For object inside collection (at root), matrix world is already expressed regarding collection parent
-        if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.INST_COLLECTION:
+        # For object inside collection (at root), matrix world is already expressed regarding collection parent
+        if export_settings['vtree'].nodes[obj_uuid].parent_uuid is not None and export_settings['vtree'].nodes[
+                export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_type == VExportNode.INST_COLLECTION:
             parent_mat = mathutils.Matrix.Identity(4).freeze()
 
         if blender_obj:
@@ -398,16 +436,16 @@ def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgr
             else:
                 mat = parent_mat.inverted_safe()
         else:
-            eval = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.evaluated_get(depsgraph)
+            eval = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.evaluated_get(
+                depsgraph)
             cpt_inst = 0
-            for inst in depsgraph.object_instances: # use only as iterator
+            for inst in depsgraph.object_instances:  # use only as iterator
                 if inst.parent == eval:
                     if current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] == cpt_inst:
                         mat = inst.matrix_world.copy()
                         current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] += 1
                         break
                     cpt_inst += 1
-
 
         if obj_uuid not in data.keys():
             data[obj_uuid] = {}
@@ -432,7 +470,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgr
         if blender_obj and blender_obj.type == "ARMATURE":
             armature_caching(data, obj_uuid, blender_obj, action_name, frame, export_settings)
 
-        elif blender_obj is None: # GN instances
+        elif blender_obj is None:  # GN instances
             # case of baking object, for GN instances
             # There is no animation, so use uuid of object as key
             key1, key2, key3, key4 = obj_uuid, obj_uuid, "matrix", None
@@ -443,20 +481,20 @@ def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgr
         # This will avoid to have to do it again when exporting SK animation
         cache_sk = False
         if export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
-        and blender_obj.data is not None \
-        and blender_obj.data.shape_keys is not None \
-        and blender_obj.data.shape_keys.animation_data is not None \
-        and blender_obj.data.shape_keys.animation_data.action is not None \
-        and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
+                and blender_obj.data is not None \
+                and blender_obj.data.shape_keys is not None \
+                and blender_obj.data.shape_keys.animation_data is not None \
+                and blender_obj.data.shape_keys.animation_data.action is not None \
+                and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
 
             key1, key2, key3, key4 = obj_uuid, blender_obj.data.shape_keys.animation_data.action.name, "sk", None
             cache_sk = True
 
         elif export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
-        and blender_obj.data is not None \
-        and blender_obj.data.shape_keys is not None \
-        and blender_obj.data.shape_keys.animation_data is not None \
-        and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                and blender_obj.data is not None \
+                and blender_obj.data.shape_keys is not None \
+                and blender_obj.data.shape_keys.animation_data is not None \
+                and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
 
             key1, key2, key3, key4 = obj_uuid, action_name, "sk", None
             cache_sk = True
@@ -472,7 +510,9 @@ def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgr
             if key3 not in data[key1][key2].keys():
                 data[key1][key2][key3] = {}
                 data[key1][key2][key3][key4] = {}
-            data[key1][key2][key3][key4][frame] = [k.value for k in get_sk_exported(blender_obj.data.shape_keys.key_blocks)]
+            data[key1][key2][key3][key4][frame] = [
+                k.value for k in get_sk_exported(
+                    blender_obj.data.shape_keys.key_blocks)]
             cache_sk = False
 
         # caching driver sk meshes
@@ -500,10 +540,14 @@ def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgr
                     initialize_data_dict(data, key1, key2, key3, key4)
                     if export_settings['gltf_optimize_disable_viewport'] is True:
                         # Retrieve data from custom properties instead of shape keys
-                        data[key1][key2][key3][key4][frame] = list(blender_obj['gltf_' + dr_obj]) # This include only exported SK
+                        data[key1][key2][key3][key4][frame] = list(
+                            blender_obj['gltf_' + dr_obj])  # This include only exported SK
                     else:
-                        data[key1][key2][key3][key4][frame] = [k.value for k in get_sk_exported(driver_object.data.shape_keys.key_blocks)]
+                        data[key1][key2][key3][key4][frame] = [
+                            k.value for k in get_sk_exported(
+                                driver_object.data.shape_keys.key_blocks)]
                     cache_sk = False
+
 
 def light_nodetree_caching(data, action_name, frame, export_settings):
     # After caching materials, caching lights, for KHR_animation_pointer
@@ -538,6 +582,7 @@ def light_nodetree_caching(data, action_name, frame, export_settings):
             else:
                 data[key1][key2][key3][path][frame] = list(val)
 
+
 def light_caching(data, action_name, frame, export_settings):
     # After caching materials, caching lights, for KHR_animation_pointer
     for light in export_settings['KHR_animation_pointer']['lights'].keys():
@@ -568,7 +613,8 @@ def light_caching(data, action_name, frame, export_settings):
             # Manage special case for innerConeAngle because it requires spot_size & spot_blend
             if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['path'] == "/extensions/KHR_lights_punctual/lights/XXX/spot.innerConeAngle":
                 val = blender_light.path_resolve(path)
-                val_size = blender_light.path_resolve(export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['additional_path'])
+                val_size = blender_light.path_resolve(
+                    export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['additional_path'])
                 data[key1][key2][key3][path][frame] = (val_size * 0.5) - ((val_size * 0.5) * val)
             else:
                 # classic case
@@ -577,9 +623,11 @@ def light_caching(data, action_name, frame, export_settings):
                     data[key1][key2][key3][path][frame] = val
                 else:
                     # When color is coming from a node, it is 4 values (RGBA), so need to convert it to 3 values (RGB)
-                    if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['length'] == 3 and len(val) == 4:
+                    if export_settings['KHR_animation_pointer']['lights'][light]['paths'][path]['length'] == 3 and len(
+                            val) == 4:
                         val = val[:3]
                     data[key1][key2][key3][path][frame] = list(val)
+
 
 def camera_caching(data, action_name, frame, export_settings):
     # After caching lights, caching cameras, for KHR_animation_pointer
@@ -606,7 +654,6 @@ def camera_caching(data, action_name, frame, export_settings):
             data[key1][key2][key3] = {}
             for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
                 data[key1][key2][key3][path] = {}
-
 
         for path in export_settings['KHR_animation_pointer']['cameras'][cam]['paths'].keys():
             _render = bpy.context.scene.render

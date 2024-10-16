@@ -30,7 +30,6 @@ g_profile_end = 0.0
 g_profile_delta = 0.0
 
 
-
 def get_timestamp():
     current_time = time.gmtime()
     return time.strftime("%H:%M:%S", current_time)
@@ -83,10 +82,10 @@ class Log:
         self.console_handler.setFormatter(formatter)
 
         # For popup display
-        self.popup_handler = logging.handlers.MemoryHandler(1024*10)
+        self.popup_handler = logging.handlers.MemoryHandler(1024 * 10)
 
         self.logger.addHandler(self.console_handler)
-        #self.logger.addHandler(self.popup_handler) => Make sure to not attach the popup handler to the logger
+        # self.logger.addHandler(self.popup_handler) => Make sure to not attach the popup handler to the logger
 
         self.logger.setLevel(int(loglevel))
 
@@ -113,9 +112,10 @@ class Log:
     def critical(self, message, popup=False):
         self.logger.critical(message)
         if popup:
-            self.popup_handler.buffer.append(('ERROR', message)) # There is no Critical level in Blender, so we use error
+            # There is no Critical level in Blender, so we use error
+            self.popup_handler.buffer.append(('ERROR', message))
 
-    def profile(self, message, popup=False): # There is no profile level in logging, so we use info
+    def profile(self, message, popup=False):  # There is no profile level in logging, so we use info
         self.logger.info(message)
         if popup:
             self.popup_handler.buffer.append(('PROFILE', message))

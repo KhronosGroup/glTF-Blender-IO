@@ -21,6 +21,7 @@ from . import joints as gltf2_blender_gather_joints
 from .tree import VExportNode
 from .cache import cached
 
+
 @cached
 def gather_skin(armature_uuid, export_settings):
     """
@@ -75,6 +76,7 @@ def __gather_extensions(blender_armature_object, export_settings):
 def __gather_extras(blender_armature_object, export_settings):
     return None
 
+
 def __gather_inverse_bind_matrices(armature_uuid, export_settings):
 
     blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
@@ -88,6 +90,7 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
     export_settings['vtree'].nodes[armature_uuid].matrix_world_armature = blender_armature_object.matrix_world.copy()
 
     bones_uuid = export_settings['vtree'].get_all_bones(armature_uuid)
+
     def __collect_matrices(bone):
         inverse_bind_matrix = (
             axis_basis_change @
@@ -110,7 +113,7 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
                     export_settings['vtree'].nodes[export_settings['vtree'].nodes[b].leaf_reference].matrix_world_tail
                 )
             ).inverted_safe()
-            matrices.append(inverse_bind_matrix) # Leaf bone
+            matrices.append(inverse_bind_matrix)  # Leaf bone
 
     # flatten the matrices
     inverse_matrices = []
@@ -134,7 +137,8 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
 def __gather_joints(armature_uuid, export_settings):
 
     all_armature_children = export_settings['vtree'].nodes[armature_uuid].children
-    root_bones_uuid = [c for c in all_armature_children if export_settings['vtree'].nodes[c].blender_type == VExportNode.BONE]
+    root_bones_uuid = [
+        c for c in all_armature_children if export_settings['vtree'].nodes[c].blender_type == VExportNode.BONE]
 
     # Create bone nodes
     for root_bone_uuid in root_bones_uuid:

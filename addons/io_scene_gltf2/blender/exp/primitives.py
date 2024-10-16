@@ -25,6 +25,7 @@ from .accessors import gather_accessor, array_to_accessor
 from .material.materials import get_final_material, gather_material, get_base_material, get_material_from_idx
 from .material.extensions import variants as ext_variants
 
+
 @cached
 def gather_primitive_cache_key(
         blender_mesh,
@@ -55,7 +56,7 @@ def gather_primitives(
         modifiers: Optional[bpy.types.ObjectModifiers],
         materials: Tuple[bpy.types.Material],
         export_settings
-        ) -> List[gltf2_io.MeshPrimitive]:
+) -> List[gltf2_io.MeshPrimitive]:
     """
     Extract the mesh primitives from a blender object
 
@@ -63,36 +64,51 @@ def gather_primitives(
     """
     primitives = []
 
-    blender_primitives, addional_materials_udim = __gather_cache_primitives(materials, blender_mesh, uuid_for_skined_data,
-        vertex_groups, modifiers, export_settings)
+    blender_primitives, addional_materials_udim = __gather_cache_primitives(
+        materials, blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
 
     for internal_primitive, udim_material in zip(blender_primitives, addional_materials_udim):
 
-        if udim_material is None : # classic case, not an udim material
+        if udim_material is None:  # classic case, not an udim material
             # We already call this function, in order to retrieve uvmap info, if any
             # So here, only the cache will be used
             base_material, material_info = get_base_material(internal_primitive['material'], materials, export_settings)
 
             # Now, we can retrieve the real material, by checking attributes and active maps
             blender_mat = get_material_from_idx(internal_primitive['material'], materials, export_settings)
-            material = get_final_material(blender_mesh, blender_mat, internal_primitive['uvmap_attributes_index'], base_material, material_info["uv_info"], export_settings)
+            material = get_final_material(
+                blender_mesh,
+                blender_mat,
+                internal_primitive['uvmap_attributes_index'],
+                base_material,
+                material_info["uv_info"],
+                export_settings)
         else:
             # UDIM case
             base_material, material_info, unique_material_id, tile = udim_material
-            material = get_final_material(blender_mesh, unique_material_id, internal_primitive['uvmap_attributes_index'], base_material, material_info["uv_info"], export_settings)
+            material = get_final_material(
+                blender_mesh,
+                unique_material_id,
+                internal_primitive['uvmap_attributes_index'],
+                base_material,
+                material_info["uv_info"],
+                export_settings)
 
             # Force change name of material to get the tile number in the name
             material.name = material.name + "." + tile
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
-            extensions=__gather_extensions(blender_mesh, internal_primitive['material'], internal_primitive['uvmap_attributes_index'], export_settings),
+            extensions=__gather_extensions(
+                blender_mesh,
+                internal_primitive['material'],
+                internal_primitive['uvmap_attributes_index'],
+                export_settings),
             extras=None,
             indices=internal_primitive['indices'],
             material=material,
             mode=internal_primitive['mode'],
-            targets=internal_primitive['targets']
-        )
+            targets=internal_primitive['targets'])
         primitives.append(primitive)
 
     return primitives
@@ -137,7 +153,6 @@ def __gather_cache_primitives(
     blender_primitives, additional_materials_udim, shared_attributes = gltf2_blender_gather_primitives_extract.extract_primitives(
         materials, blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, export_settings)
 
-
     if shared_attributes is not None:
 
         if len(blender_primitives) > 0:
@@ -175,16 +190,17 @@ def __gather_cache_primitives(
 
         for internal_primitive in blender_primitives:
             primitive = {
-                    "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
-                    "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
-                    "mode": internal_primitive.get('mode'),
-                    "material": internal_primitive.get('material'),
-                    "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
-                    "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
-                }
+                "attributes": __gather_attributes(internal_primitive, blender_mesh, modifiers, export_settings),
+                "indices": __gather_indices(internal_primitive, blender_mesh, modifiers, export_settings),
+                "mode": internal_primitive.get('mode'),
+                "material": internal_primitive.get('material'),
+                "targets": __gather_targets(internal_primitive, blender_mesh, modifiers, export_settings),
+                "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
+            }
             primitives.append(primitive)
 
     return primitives, additional_materials_udim
+
 
 def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings):
     indices = blender_primitive.get('indices')
@@ -205,11 +221,15 @@ def __gather_indices(blender_primitive, blender_mesh, modifiers, export_settings
         component_type = gltf2_io_constants.ComponentType.UnsignedInt
         indices = indices.astype(np.uint32, copy=False)
     else:
-        export_settings['log'].error('A mesh contains too many vertices (' + str(max_index) + ') and needs to be split before export.')
+        export_settings['log'].error(
+            'A mesh contains too many vertices (' +
+            str(max_index) +
+            ') and needs to be split before export.')
         return None
 
     element_type = gltf2_io_constants.DataType.Scalar
-    binary_data = gltf2_io_binary_data.BinaryData(indices.tobytes(), bufferViewTarget=gltf2_io_constants.BufferViewTarget.ELEMENT_ARRAY_BUFFER)
+    binary_data = gltf2_io_binary_data.BinaryData(
+        indices.tobytes(), bufferViewTarget=gltf2_io_constants.BufferViewTarget.ELEMENT_ARRAY_BUFFER)
     return gather_accessor(
         binary_data,
         component_type,
@@ -277,6 +297,7 @@ def __gather_targets(blender_primitive, blender_mesh, modifiers, export_settings
         return targets
     return None
 
+
 def __gather_extensions(blender_mesh,
                         material_idx: int,
                         attr_indices: dict,
@@ -302,25 +323,31 @@ def __gather_extensions(blender_mesh,
             vari = ext_variants.gather_variant(v.variant.variant_idx, export_settings)
             if vari is not None:
                 variant_extension = gltf2_io_extensions.ChildOfRootExtension(
-                name="KHR_materials_variants",
-                path=["variants"],
-                extension=vari
-            )
+                    name="KHR_materials_variants",
+                    path=["variants"],
+                    extension=vari
+                )
             variants.append(variant_extension)
         if len(variants) > 0:
             if i.material:
-                export_settings['current_paths'] = {} #Used for KHR_animation_pointer.
+                export_settings['current_paths'] = {}  # Used for KHR_animation_pointer.
                 base_material, material_info = gather_material(
-                        i.material,
-                        export_settings
-                    )
+                    i.material,
+                    export_settings
+                )
             else:
                 # empty slot
                 base_material = None
 
             if base_material is not None:
                 # Now, we can retrieve the real material, by checking attributes and active maps
-                mat = get_final_material(blender_mesh, i.material, attr_indices, base_material, material_info["uv_info"], export_settings)
+                mat = get_final_material(
+                    blender_mesh,
+                    i.material,
+                    attr_indices,
+                    base_material,
+                    material_info["uv_info"],
+                    export_settings)
             else:
                 mat = None
 

@@ -17,6 +17,7 @@ import bpy
 import mathutils
 from ...com import gltf2_blender_math
 
+
 class Keyframe:
     def __init__(self, channels: typing.Tuple[bpy.types.FCurve], frame: float, bake_channel: typing.Union[str, None]):
         self.seconds = frame / (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
@@ -25,7 +26,7 @@ class Keyframe:
         self.__length_morph = 0
         # Note: channels has some None items only for SK if some SK are not animated
         if bake_channel is None:
-            if not all([c == None for c in channels]):
+            if not all([c is None for c in channels]):
                 self.target = [c for c in channels if c is not None][0].data_path.split('.')[-1]
                 if self.target != "value":
                     self.__indices = [c.array_index for c in channels]
@@ -47,7 +48,6 @@ class Keyframe:
             self.__indices = []
             for i in range(self.get_target_len()):
                 self.__indices.append(i)
-
 
         # Data holders for virtual properties
         self.__value = None

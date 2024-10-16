@@ -15,8 +15,10 @@
 from ...io.com.gltf2_io import from_dict, from_union, from_none, from_float, from_str, from_list
 from ...io.com.gltf2_io import to_float, to_class
 
+
 class Variant:
     """defines variant for use with glTF 2.0."""
+
     def __init__(self, name, extensions, extras):
         self.name = name
         self.extensions = extensions

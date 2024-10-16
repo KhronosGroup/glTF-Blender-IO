@@ -24,6 +24,7 @@ from ...io.exp import binary_data as gltf2_io_binary_data
 from ..com.blender_default import BLENDER_GLTF_SPECIAL_COLLECTION
 from . import accessors as gltf2_blender_gather_accessors
 
+
 class VExportNode:
 
     OBJECT = 1
@@ -32,10 +33,9 @@ class VExportNode:
     LIGHT = 4
     CAMERA = 5
     COLLECTION = 6
-    INSTANCE = 7 # For instances of GN
+    INSTANCE = 7  # For instances of GN
 
     INST_COLLECTION = 8
-
 
     # Parent type, to be set on child regarding its parent
     NO_PARENT = 54
@@ -45,27 +45,25 @@ class VExportNode:
     PARENT_ROOT_BONE = 53
     PARENT_BONE_BONE = 55
 
-
     # Children type
     # Is used to split instance collection into 2 categories:
     CHILDREN_REAL = 90
     CHILDREN_IS_IN_COLLECTION = 91
 
-
     def __init__(self):
         self.children = []
-        self.children_type = {} # Used for children of instance collection
+        self.children_type = {}  # Used for children of instance collection
         self.blender_type = None
         self.matrix_world = None
         self.parent_type = None
 
         self.blender_object = None
         self.blender_bone = None
-        self.leaf_reference = None # For leaf bones only
+        self.leaf_reference = None  # For leaf bones only
 
-        self.default_hide_viewport = False # Need to store the default value for meshes in case of animation baking on armature
+        self.default_hide_viewport = False  # Need to store the default value for meshes in case of animation baking on armature
 
-        self.force_as_empty = False # Used for instancer display
+        self.force_as_empty = False  # Used for instancer display
 
         # Only for bone/bone and object parented to bone
         self.parent_bone_uuid = None
@@ -77,7 +75,7 @@ class VExportNode:
         self.bones = {}
 
         # For deformed object
-        self.armature = None # for deformed object and for bone
+        self.armature = None  # for deformed object and for bone
         self.skin = None
 
         # glTF
@@ -99,8 +97,19 @@ class VExportNode:
     def recursive_display(self, tree, mode):
         if mode == "simple":
             for c in self.children:
-                print(tree.nodes[c].uuid, self.blender_object.name if self.blender_object is not None else "GN" + self.data.name, "/", self.blender_bone.name if self.blender_bone else "", "-->", tree.nodes[c].blender_object.name if tree.nodes[c].blender_object else "GN" + tree.nodes[c].data.name, "/", tree.nodes[c].blender_bone.name if tree.nodes[c].blender_bone else "" )
+                print(
+                    tree.nodes[c].uuid,
+                    self.blender_object.name if self.blender_object is not None else "GN" +
+                    self.data.name,
+                    "/",
+                    self.blender_bone.name if self.blender_bone else "",
+                    "-->",
+                    tree.nodes[c].blender_object.name if tree.nodes[c].blender_object else "GN" +
+                    tree.nodes[c].data.name,
+                    "/",
+                    tree.nodes[c].blender_bone.name if tree.nodes[c].blender_bone else "")
                 tree.nodes[c].recursive_display(tree, mode)
+
 
 class VExportTree:
     def __init__(self, export_settings):
@@ -140,9 +149,29 @@ class VExportTree:
             for blender_object in [obj.original for obj in scene_eval.objects if obj.parent is None]:
                 self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), False, blender_children)
         else:
-            self.recursive_node_traverse(blender_scene.collection, None, None, Matrix.Identity(4), False, blender_children, is_collection=True)
+            self.recursive_node_traverse(
+                blender_scene.collection,
+                None,
+                None,
+                Matrix.Identity(4),
+                False,
+                blender_children,
+                is_collection=True)
 
-    def recursive_node_traverse(self, blender_object, blender_bone, parent_uuid, parent_coll_matrix_world, delta, blender_children, armature_uuid=None, dupli_world_matrix=None, data=None, original_object=None, is_collection=False, is_children_in_collection=False):
+    def recursive_node_traverse(
+            self,
+            blender_object,
+            blender_bone,
+            parent_uuid,
+            parent_coll_matrix_world,
+            delta,
+            blender_children,
+            armature_uuid=None,
+            dupli_world_matrix=None,
+            data=None,
+            original_object=None,
+            is_collection=False,
+            is_children_in_collection=False):
         node = VExportNode()
         node.uuid = str(uuid.uuid4())
         node.parent_uuid = parent_uuid
@@ -159,8 +188,8 @@ class VExportTree:
             #       1. GN instance
             #       2. Old Dupli vertices feature
             # For any other case, children are real children
-            if (self.nodes[parent_uuid].blender_type == VExportNode.INST_COLLECTION or original_object is not None) or \
-                    (self.nodes[parent_uuid].blender_type != VExportNode.COLLECTION and self.nodes[parent_uuid].blender_object is not None and self.nodes[parent_uuid].blender_object.is_instancer is True):
+            if (self.nodes[parent_uuid].blender_type == VExportNode.INST_COLLECTION or original_object is not None) or (self.nodes[parent_uuid].blender_type !=
+                                                                                                                        VExportNode.COLLECTION and self.nodes[parent_uuid].blender_object is not None and self.nodes[parent_uuid].blender_object.is_instancer is True):
                 self.nodes[parent_uuid].children_type[node.uuid] = VExportNode.CHILDREN_IS_IN_COLLECTION if is_children_in_collection is True else VExportNode.CHILDREN_REAL
             else:
                 # We are in a regular case where children are real children
@@ -169,7 +198,7 @@ class VExportTree:
             self.roots.append(node.uuid)
 
         # Set blender type
-        if blender_object is None: #GN instance
+        if blender_object is None:  # GN instance
             node.blender_type = VExportNode.INSTANCE
         elif blender_bone is not None:
             node.blender_type = VExportNode.BONE
@@ -216,7 +245,6 @@ class VExportTree:
         if parent_uuid is not None and self.nodes[parent_uuid].blender_type == VExportNode.BONE and node.blender_type == VExportNode.BONE:
             node.parent_bone_uuid = parent_uuid
 
-
         # Objects parented to bone
         if parent_uuid is not None and self.nodes[parent_uuid].blender_type == VExportNode.BONE and node.blender_type != VExportNode.BONE:
             node.parent_bone_uuid = parent_uuid
@@ -251,13 +279,13 @@ class VExportTree:
 
             if node.blender_type == VExportNode.CAMERA and self.export_settings['gltf_cameras']:
                 if self.export_settings['gltf_yup']:
-                    correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+                    correction = Quaternion((2**0.5 / 2, -2**0.5 / 2, 0.0, 0.0))
                 else:
                     correction = Matrix.Identity(4).to_quaternion()
                 node.matrix_world @= correction.to_matrix().to_4x4()
             elif node.blender_type == VExportNode.LIGHT and self.export_settings['gltf_lights']:
                 if self.export_settings['gltf_yup']:
-                    correction = Quaternion((2**0.5/2, -2**0.5/2, 0.0, 0.0))
+                    correction = Quaternion((2**0.5 / 2, -2**0.5 / 2, 0.0, 0.0))
                 else:
                     correction = Matrix.Identity(4).to_quaternion()
                 node.matrix_world @= correction.to_matrix().to_4x4()
@@ -266,7 +294,8 @@ class VExportTree:
                 # Use pose bone for TRS
                 node.matrix_world = self.nodes[node.armature].matrix_world @ blender_bone.matrix
                 if self.export_settings['gltf_leaf_bone'] is True:
-                    node.matrix_world_tail = self.nodes[node.armature].matrix_world @ Matrix.Translation(blender_bone.tail)
+                    node.matrix_world_tail = self.nodes[node.armature].matrix_world @ Matrix.Translation(
+                        blender_bone.tail)
                     node.matrix_world_tail = node.matrix_world_tail @ self.axis_basis_change
             else:
                 # Use edit bone for TRS --> REST pose will be used
@@ -305,36 +334,60 @@ class VExportTree:
                 else:
                     # Classic parenting
 
-                    # If we export full collection hierarchy, we need to ignore children that are not in the same collection
+                    # If we export full collection hierarchy, we need to ignore children that
+                    # are not in the same collection
                     if self.export_settings['gltf_hierarchy_full_collections'] is True:
                         if child_object.users_collection[0].name != blender_object.users_collection[0].name:
                             continue
 
-                    self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children)
+                    self.recursive_node_traverse(
+                        child_object,
+                        None,
+                        node.uuid,
+                        parent_coll_matrix_world,
+                        new_delta or delta,
+                        blender_children)
 
         # Collections
-        if is_collection is False and (blender_object.instance_type == 'COLLECTION' and blender_object.instance_collection):
+        if is_collection is False and (blender_object.instance_type ==
+                                       'COLLECTION' and blender_object.instance_collection):
             if self.export_settings['gltf_hierarchy_full_collections'] is False:
                 for dupli_object in blender_object.instance_collection.all_objects:
                     if dupli_object.parent is not None:
                         continue
-                    self.recursive_node_traverse(dupli_object, None, node.uuid, node.matrix_world, new_delta or delta, blender_children, is_children_in_collection=True)
+                    self.recursive_node_traverse(
+                        dupli_object,
+                        None,
+                        node.uuid,
+                        node.matrix_world,
+                        new_delta or delta,
+                        blender_children,
+                        is_children_in_collection=True)
 
                 # Some objects are parented to instance collection
                 for child in blender_children[blender_object]:
-                   self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, new_delta or delta, blender_children)
+                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
+                                                 new_delta or delta, blender_children)
 
             else:
                 # Manage children objects
                 for child in blender_object.instance_collection.objects:
                     if child.users_collection[0].name != blender_object.name:
                         continue
-                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, new_delta or delta, blender_children)
+                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
+                                                 new_delta or delta, blender_children)
                 # Manage children collections
                 for child in blender_object.instance_collection.children:
-                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, new_delta or delta, blender_children, is_collection=True)
+                    self.recursive_node_traverse(
+                        child,
+                        None,
+                        node.uuid,
+                        node.matrix_world,
+                        new_delta or delta,
+                        blender_children,
+                        is_collection=True)
 
-        if is_collection is True: # Only for gltf_hierarchy_full_collections == True
+        if is_collection is True:  # Only for gltf_hierarchy_full_collections == True
             # Manage children objects
             for child in blender_object.objects:
                 if child.users_collection[0].name != blender_object.name:
@@ -344,53 +397,104 @@ class VExportTree:
                 if not (child.parent is None or child.parent.users_collection[0].name != blender_object.name):
                     continue
 
-                self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, new_delta or delta, blender_children)
+                self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
+                                             new_delta or delta, blender_children)
             # Manage children collections
             for child in blender_object.children:
-                self.recursive_node_traverse(child, None, node.uuid, node.matrix_world, new_delta or delta, blender_children, is_collection=True)
-
+                self.recursive_node_traverse(
+                    child,
+                    None,
+                    node.uuid,
+                    node.matrix_world,
+                    new_delta or delta,
+                    blender_children,
+                    is_collection=True)
 
         # Armature : children are bones with no parent
         if is_collection is False and blender_object.type == "ARMATURE" and blender_bone is None:
             for b in [b for b in blender_object.pose.bones if b.parent is None]:
-                self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, node.uuid)
+                self.recursive_node_traverse(
+                    blender_object,
+                    b,
+                    node.uuid,
+                    parent_coll_matrix_world,
+                    new_delta or delta,
+                    blender_children,
+                    node.uuid)
 
         # Bones
         if is_collection is False and blender_object.type == "ARMATURE" and blender_bone is not None:
             for b in blender_bone.children:
-                self.recursive_node_traverse(blender_object, b, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, armature_uuid)
+                self.recursive_node_traverse(
+                    blender_object,
+                    b,
+                    node.uuid,
+                    parent_coll_matrix_world,
+                    new_delta or delta,
+                    blender_children,
+                    armature_uuid)
 
         # Object parented to bone
         if is_collection is False and blender_bone is not None:
-            for child_object in [c for c in blender_children[blender_object] if c.parent_type == "BONE" and c.parent_bone is not None and c.parent_bone == blender_bone.name]:
-                self.recursive_node_traverse(child_object, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children)
+            for child_object in [c for c in blender_children[blender_object] if c.parent_type ==
+                                 "BONE" and c.parent_bone is not None and c.parent_bone == blender_bone.name]:
+                self.recursive_node_traverse(
+                    child_object,
+                    None,
+                    node.uuid,
+                    parent_coll_matrix_world,
+                    new_delta or delta,
+                    blender_children)
 
         # Duplis
         if is_collection is False and blender_object.is_instancer is True and blender_object.instance_type != 'COLLECTION':
             depsgraph = bpy.context.evaluated_depsgraph_get()
-            for (dupl, mat) in [(dup.object.original, dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(dup.parent.original) == id(blender_object)]:
-                self.recursive_node_traverse(dupl, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=mat)
+            for (
+                dupl,
+                mat) in [
+                (dup.object.original,
+                 dup.matrix_world.copy()) for dup in depsgraph.object_instances if dup.parent and id(
+                    dup.parent.original) == id(blender_object)]:
+                self.recursive_node_traverse(
+                    dupl,
+                    None,
+                    node.uuid,
+                    parent_coll_matrix_world,
+                    new_delta or delta,
+                    blender_children,
+                    dupli_world_matrix=mat)
 
         # Geometry Nodes instances
-        # Make sure to not check instances for instanced collection, because we will export what's inside the collection twice
+        # Make sure to not check instances for instanced collection, because we
+        # will export what's inside the collection twice
         if self.export_settings['gltf_gn_mesh'] is True and node.blender_type == VExportNode.OBJECT:
             # Do not force export as empty
             # Because GN graph can have both geometry and instances
             depsgraph = bpy.context.evaluated_depsgraph_get()
             eval = blender_object.evaluated_get(depsgraph)
-            for inst in depsgraph.object_instances: # use only as iterator
+            for inst in depsgraph.object_instances:  # use only as iterator
                 if inst.parent == eval:
                     if not inst.is_instance:
                         continue
                     if type(inst.object.data).__name__ == "Mesh" and len(inst.object.data.vertices) == 0:
-                        continue # This is nested instances, and this mesh has no vertices, so is an instancier for other instances
+                        continue  # This is nested instances, and this mesh has no vertices, so is an instancier for other instances
                     node.is_instancer = True
-                    self.recursive_node_traverse(None, None, node.uuid, parent_coll_matrix_world, new_delta or delta, blender_children, dupli_world_matrix=inst.matrix_world.copy(), data=inst.object.data, original_object=blender_object, is_children_in_collection=True)
+                    self.recursive_node_traverse(
+                        None,
+                        None,
+                        node.uuid,
+                        parent_coll_matrix_world,
+                        new_delta or delta,
+                        blender_children,
+                        dupli_world_matrix=inst.matrix_world.copy(),
+                        data=inst.object.data,
+                        original_object=blender_object,
+                        is_children_in_collection=True)
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
 
-    def get_all_bones(self, uuid): #For armature only
+    def get_all_bones(self, uuid):  # For armature only
         if not hasattr(self.nodes[uuid], "all_bones"):
             if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
                 def recursive_get_all_bones(uuid):
@@ -406,19 +510,21 @@ class VExportTree:
                 for c_uuid in self.nodes[uuid].children:
                     tot.extend(recursive_get_all_bones(c_uuid))
                 self.nodes[uuid].all_bones = tot
-                return tot # Not really needed to return, we are just baking it before export really starts
+                return tot  # Not really needed to return, we are just baking it before export really starts
             else:
                 self.nodes[uuid].all_bones = []
                 return []
         else:
             return self.nodes[uuid].all_bones
 
-    def get_root_bones_uuid(self, uuid): #For armature only
+    def get_root_bones_uuid(self, uuid):  # For armature only
         if not hasattr(self.nodes[uuid], "root_bones_uuid"):
             if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
                 all_armature_children = self.nodes[uuid].children
-                self.nodes[uuid].root_bones_uuid = [c for c in all_armature_children if self.nodes[c].blender_type == VExportNode.BONE]
-                return self.nodes[uuid].root_bones_uuid # Not really needed to return, we are just baking it before export really starts
+                self.nodes[uuid].root_bones_uuid = [
+                    c for c in all_armature_children if self.nodes[c].blender_type == VExportNode.BONE]
+                # Not really needed to return, we are just baking it before export really starts
+                return self.nodes[uuid].root_bones_uuid
             else:
                 self.nodes[uuid].root_bones_uuid = []
                 return []
@@ -431,7 +537,12 @@ class VExportTree:
     def display(self, mode):
         if mode == "simple":
             for n in self.roots:
-                print(self.nodes[n].uuid, "Root", self.nodes[n].blender_object.name if self.nodes[n].blender_object else "GN instance", "/", self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "" )
+                print(
+                    self.nodes[n].uuid,
+                    "Root",
+                    self.nodes[n].blender_object.name if self.nodes[n].blender_object else "GN instance",
+                    "/",
+                    self.nodes[n].blender_bone.name if self.nodes[n].blender_bone else "")
                 self.nodes[n].recursive_display(self, mode)
 
     def filter_tag(self):
@@ -442,13 +553,13 @@ class VExportTree:
     def filter_perform(self):
         roots = self.roots.copy()
         for r in roots:
-            self.recursive_filter(r, None) # Root, so no parent
+            self.recursive_filter(r, None)  # Root, so no parent
 
     def filter(self):
         self.filter_tag()
         export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
-        self.remove_empty_collections() # Used only when exporting full collection hierarchy
+        self.remove_empty_collections()  # Used only when exporting full collection hierarchy
         self.remove_filtered_nodes()
 
     def recursive_filter_tag(self, uuid, parent_keep_tag):
@@ -458,7 +569,8 @@ class VExportTree:
         # for all objects of the collection instance.
         # But some properties (camera, lamp ...) are not defined at collection level
         if parent_keep_tag is None:
-            self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(uuid) and self.node_filter_inheritable_is_kept(uuid)
+            self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(
+                uuid) and self.node_filter_inheritable_is_kept(uuid)
         elif parent_keep_tag is True:
             self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(uuid)
         elif parent_keep_tag is False:
@@ -467,7 +579,7 @@ class VExportTree:
             self.export_settings['log'].error("This should not happen")
 
         for child in self.nodes[uuid].children:
-            if self.nodes[uuid].blender_type == VExportNode.INST_COLLECTION or self.nodes[uuid].is_instancer == True:
+            if self.nodes[uuid].blender_type == VExportNode.INST_COLLECTION or self.nodes[uuid].is_instancer:
                 # We need to split children into 2 categories: real children, and objects inside the collection
                 if self.nodes[uuid].children_type[child] == VExportNode.CHILDREN_IS_IN_COLLECTION:
                     self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
@@ -507,7 +619,6 @@ class VExportTree:
         for child in children:
             self.recursive_filter(child, new_parent_kept_uuid)
 
-
     def node_filter_not_inheritable_is_kept(self, uuid):
         # Export Camera or not
         if self.nodes[uuid].blender_type == VExportNode.CAMERA:
@@ -522,7 +633,8 @@ class VExportTree:
         # Export deform bones only
         if self.nodes[uuid].blender_type == VExportNode.BONE:
             if self.export_settings['gltf_def_bones'] is True and self.nodes[uuid].use_deform is False:
-                # Check if bone has some objected parented to bone. We need to keep it in that case, even if this is not a def bone
+                # Check if bone has some objected parented to bone. We need to keep it in
+                # that case, even if this is not a def bone
                 if len([c for c in self.nodes[uuid].children if self.nodes[c].blender_type != VExportNode.BONE]) != 0:
                     return True
                 return False
@@ -598,10 +710,10 @@ class VExportTree:
     def remove_filtered_nodes(self):
         if self.export_settings['gltf_armature_object_remove'] is True:
             # If we remove the Armature object
-            self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True or (n.keep_tag is False and n.blender_type == VExportNode.ARMATURE)}
+            self.nodes = {k: n for (k, n) in self.nodes.items() if n.keep_tag is True or (
+                n.keep_tag is False and n.blender_type == VExportNode.ARMATURE)}
         else:
-            self.nodes = {k:n for (k, n) in self.nodes.items() if n.keep_tag is True}
-
+            self.nodes = {k: n for (k, n) in self.nodes.items() if n.keep_tag is True}
 
     def remove_empty_collections(self):
         def recursive_remove_empty_collections(uuid):
@@ -622,7 +734,8 @@ class VExportTree:
 
     def search_missing_armature(self):
         for n in [n for n in self.nodes.values() if hasattr(n, "armature_needed") is True]:
-            candidates = [i for i in self.nodes.values() if i.blender_type == VExportNode.ARMATURE and i.blender_object.name == n.armature_needed]
+            candidates = [i for i in self.nodes.values() if i.blender_type ==
+                          VExportNode.ARMATURE and i.blender_object.name == n.armature_needed]
             if len(candidates) > 0:
                 n.armature = candidates[0].uuid
             del n.armature_needed
@@ -651,13 +764,13 @@ class VExportTree:
 
                 for bone in armature.data.edit_bones:
                     if len(bone.children) == 0:
-                        self.nodes[self.nodes[obj_uuid].bones[bone.name]].matrix_world_tail = armature.matrix_world @ Matrix.Translation(bone.tail) @ self.axis_basis_change
+                        self.nodes[self.nodes[obj_uuid].bones[bone.name]
+                                   ].matrix_world_tail = armature.matrix_world @ Matrix.Translation(bone.tail) @ self.axis_basis_change
 
                 bpy.ops.object.mode_set(mode="OBJECT")
 
-
-        for bone_uuid in [n for n in self.nodes if self.nodes[n].blender_type == VExportNode.BONE \
-                and len(self.nodes[n].children) == 0]:
+        for bone_uuid in [n for n in self.nodes if self.nodes[n].blender_type == VExportNode.BONE
+                          and len(self.nodes[n].children) == 0]:
 
             bone_node = self.nodes[bone_uuid]
 
@@ -677,25 +790,26 @@ class VExportTree:
             self.add_children(bone_uuid, node.uuid)
             self.add_node(node)
 
-
     def add_neutral_bones(self):
         added_armatures = []
-        for n in [n for n in self.nodes.values() if \
-                n.armature is not None and \
-                n.armature in self.nodes and \
-                n.blender_type == VExportNode.OBJECT and \
-                n.blender_object.type == "MESH" and \
-                hasattr(self.nodes[n.armature], "need_neutral_bone")]: #all skin meshes objects where neutral bone is needed
-                # Only for meshes, as curve can't have skin data (no weights pain available)
+        for n in [n for n in self.nodes.values() if
+                  n.armature is not None and
+                  n.armature in self.nodes and
+                  n.blender_type == VExportNode.OBJECT and
+                  n.blender_object.type == "MESH" and
+                  hasattr(self.nodes[n.armature], "need_neutral_bone")]:  # all skin meshes objects where neutral bone is needed
+            # Only for meshes, as curve can't have skin data (no weights pain available)
 
             # Be sure to add it to really exported meshes
             if n.node.skin is None:
-                self.export_settings['log'].warning("{} has no skin, skipping adding neutral bone data on it.".format(n.blender_object.name))
+                self.export_settings['log'].warning(
+                    "{} has no skin, skipping adding neutral bone data on it.".format(
+                        n.blender_object.name))
                 continue
 
             if n.armature not in added_armatures:
 
-                added_armatures.append(n.armature) # Make sure to not insert 2 times the neural bone
+                added_armatures.append(n.armature)  # Make sure to not insert 2 times the neural bone
 
                 # First add a new node
                 trans, rot, sca = self.axis_basis_change.decompose()
@@ -707,19 +821,19 @@ class VExportTree:
                 if sca[0] != 1.0 or sca[1] != 1.0 or sca[2] != 1.0:
                     scale = [sca[0], sca[1], sca[2]]
                 neutral_bone = gltf2_io.Node(
-                                camera=None,
-                                children=None,
-                                extensions=None,
-                                extras=None,
-                                matrix=None,
-                                mesh=None,
-                                name='neutral_bone',
-                                rotation=rotation,
-                                scale=scale,
-                                skin=None,
-                                translation=translation,
-                                weights=None
-                            )
+                    camera=None,
+                    children=None,
+                    extensions=None,
+                    extras=None,
+                    matrix=None,
+                    mesh=None,
+                    name='neutral_bone',
+                    rotation=rotation,
+                    scale=scale,
+                    skin=None,
+                    translation=translation,
+                    weights=None
+                )
                 # Add it to child list of armature
                 self.nodes[n.armature].node.children.append(neutral_bone)
 
@@ -735,10 +849,11 @@ class VExportTree:
                 matrix = []
                 for column in range(0, 4):
                     for row in range(0, 4):
-                            matrix.append(inverse_bind_matrix[row][column])
+                        matrix.append(inverse_bind_matrix[row][column])
 
                 array = np.append(array, np.array([matrix]), axis=0)
-                binary_data = gltf2_io_binary_data.BinaryData.from_list(array.flatten(), gltf2_io_constants.ComponentType.Float)
+                binary_data = gltf2_io_binary_data.BinaryData.from_list(
+                    array.flatten(), gltf2_io_constants.ComponentType.Float)
                 n.node.skin.inverse_bind_matrices = gltf2_blender_gather_accessors.gather_accessor(
                     binary_data,
                     gltf2_io_constants.ComponentType.Float,
@@ -748,6 +863,7 @@ class VExportTree:
                     gltf2_io_constants.DataType.Mat4,
                     self.export_settings
                 )
+
     def get_unused_skins(self):
         from .skins import gather_skin
         skins = []
@@ -755,7 +871,8 @@ class VExportTree:
             if self.export_settings['gltf_armature_object_remove'] is True:
                 if hasattr(n, "arma_exported") is False:
                     continue
-            if len([m for m in self.nodes.values() if m.keep_tag is True and m.blender_type == VExportNode.OBJECT and m.armature == n.uuid]) == 0:
+            if len([m for m in self.nodes.values() if m.keep_tag is True and m.blender_type ==
+                   VExportNode.OBJECT and m.armature == n.uuid]) == 0:
                 skin = gather_skin(n.uuid, self.export_settings)
                 skins.append(skin)
         return skins
@@ -764,8 +881,8 @@ class VExportTree:
         # Only if Variants are displayed and exported
         if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is False:
             return
-        objects = [self.nodes[o].blender_object for o in self.get_all_node_of_type(VExportNode.OBJECT) if self.nodes[o].blender_object.type == "MESH" \
-            and self.nodes[o].blender_object.data.get('gltf2_variant_default_materials') is not None]
+        objects = [self.nodes[o].blender_object for o in self.get_all_node_of_type(VExportNode.OBJECT) if self.nodes[o].blender_object.type == "MESH"
+                   and self.nodes[o].blender_object.data.get('gltf2_variant_default_materials') is not None]
         for obj in objects:
             # loop on material slots ( primitives )
             for mat_slot_idx, s in enumerate(obj.material_slots):
@@ -792,7 +909,7 @@ class VExportTree:
         # TODO: if we get real collection one day, we probably need to adapt this code
         for obj in self.get_all_objects():
             if self.nodes[obj].armature is not None and self.nodes[obj].parent_uuid == self.nodes[obj].armature:
-                continue # Keep skined meshs as children of armature
+                continue  # Keep skined meshs as children of armature
             if self.nodes[obj].parent_uuid is not None:
                 self.nodes[self.nodes[obj].parent_uuid].children.remove(obj)
                 self.nodes[obj].parent_uuid = None
@@ -806,7 +923,8 @@ class VExportTree:
             if len(self.get_root_bones_uuid(arma_uuid)) > 1:
                 # We can't remove armature
                 self.export_settings['gltf_armature_object_remove'] = False
-                self.export_settings['log'].warning("We can't remove armature object because some armatures have multiple root bones.")
+                self.export_settings['log'].warning(
+                    "We can't remove armature object because some armatures have multiple root bones.")
                 break
 
     def calculate_collection_center(self):
@@ -815,7 +933,12 @@ class VExportTree:
         # Are taken into account all objects that are direct root in the exported collection
         centers = []
 
-        for node in [n for n in self.nodes.values() if n.parent_uuid is None and n.blender_type in [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.LIGHT, VExportNode.CAMERA]]:
+        for node in [
+            n for n in self.nodes.values() if n.parent_uuid is None and n.blender_type in [
+                VExportNode.OBJECT,
+                VExportNode.ARMATURE,
+                VExportNode.LIGHT,
+                VExportNode.CAMERA]]:
             if node.matrix_world is not None:
                 centers.append(node.matrix_world.translation)
 

@@ -15,6 +15,7 @@
 from ....blender.com.data_path import get_sk_exported, skip_sk, get_target_object_path
 from ..cache import skdriverdiscovercache
 
+
 @skdriverdiscovercache
 def get_sk_drivers(blender_armature_uuid, export_settings):
 
@@ -35,6 +36,7 @@ def get_sk_drivers(blender_armature_uuid, export_settings):
             drivers.append(child_uuid)
 
     return drivers
+
 
 def get_driver_on_shapekey(blender_object_uuid, export_settings):
     if export_settings['vtree'].nodes[blender_object_uuid].blender_type == "BONE":

@@ -14,6 +14,7 @@
 
 import functools
 
+
 def cached_by_key(key):
     """
     Decorates functions whose result should be cached. Use it like:
@@ -78,6 +79,7 @@ def default_key(*args, **kwargs):
 def cached(func):
     return cached_by_key(key=default_key)(func)
 
+
 def datacache(func):
 
     def reset_all_cache():
@@ -121,12 +123,15 @@ def datacache(func):
         # all is already cached
         else:
             # Here are the key used: result[obj_uuid][action_name][path][bone][frame]
-            return func.__cache[cache_key_args[1]][cache_key_args[3]][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
+            return func.__cache[cache_key_args[1]][cache_key_args[3]
+                                                   ][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
     return wrapper_objectcache
+
 
 # TODO: replace "cached" with "unique" in all cases where the caching is functional and not only for performance reasons
 call_or_fetch = cached
 unique = cached
+
 
 def skdriverdiscovercache(func):
 
