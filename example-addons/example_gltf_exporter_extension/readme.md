@@ -62,6 +62,7 @@ animation_gather_sk_channels(self, blender_object, blender_action_name, export_s
 animation_gather_sk_channel(self, blender_object, blender_action_name, export_settings)
 animation_gather_fcurve_channel_target(self, blender_object, bone_name, export_settings)
 animation_gather_fcurve_channel_sampler(self, blender_object, bone_name, export_settings)
+animation_gather_fcurve_channel(self, blender_object, bone_name, channel_group, export_settings)
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
 gather_tree_filter_tag_hook(self, tree, export_settings)
