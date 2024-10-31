@@ -34,6 +34,7 @@ def find_draco_dll_in_module(library_name: str) -> Path:
 
     return None
 
+
 def dll_path() -> Path:
     """
     Get the DLL path depending on the underlying platform.
