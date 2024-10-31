@@ -323,11 +323,11 @@ def __gather_extensions(blender_mesh,
             vari = ext_variants.gather_variant(v.variant.variant_idx, export_settings)
             if vari is not None:
                 variant_extension = gltf2_io_extensions.ChildOfRootExtension(
-                name="KHR_materials_variants",
-                path=["variants"],
-                extension=vari,
-                required=False
-            )
+                    name="KHR_materials_variants",
+                    path=["variants"],
+                    extension=vari,
+                    required=False
+                )
             variants.append(variant_extension)
         if len(variants) > 0:
             if i.material:
