@@ -85,7 +85,8 @@ def decode_primitive(gltf, prim):
     # Read indices.
     index_accessor = gltf.data.accessors[prim.indices]
     if dll.decoderGetIndexCount(decoder) != index_accessor.count:
-        gltf.log.warning('Draco Decoder: Index count of accessor and decoded index count does not match. Updating accessor.')
+        gltf.log.warning(
+            'Draco Decoder: Index count of accessor and decoded index count does not match. Updating accessor.')
         index_accessor.count = dll.decoderGetIndexCount(decoder)
     if not dll.decoderReadIndices(decoder, index_accessor.component_type):
         gltf.log.error('Draco Decoder: Unable to decode indices. Skipping primitive {}.'.format(name))
@@ -111,12 +112,17 @@ def decode_primitive(gltf, prim):
     for attr_idx, attr in enumerate(extension['attributes']):
         dracoId = extension['attributes'][attr]
         if attr not in prim.attributes:
-            gltf.log.error('Draco Decoder: Draco attribute {} not in primitive attributes. Skipping primitive {}.'.format(attr, name))
+            gltf.log.error(
+                'Draco Decoder: Draco attribute {} not in primitive attributes. Skipping primitive {}.'.format(
+                    attr, name))
             return
 
         accessor = gltf.data.accessors[prim.attributes[attr]]
         if dll.decoderGetVertexCount(decoder) != accessor.count:
-            gltf.log.warning('Draco Decoder: Vertex count of accessor and decoded vertex count does not match for attribute {}. Updating accessor.'.format(attr, name))
+            gltf.log.warning(
+                'Draco Decoder: Vertex count of accessor and decoded vertex count does not match for attribute {}. Updating accessor.'.format(
+                    attr,
+                    name))
             accessor.count = dll.decoderGetVertexCount(decoder)
         if not dll.decoderReadAttribute(decoder, dracoId, accessor.component_type, accessor.type.encode()):
             gltf.log.error('Draco Decoder: Could not decode attribute {}. Skipping primitive {}.'.format(attr, name))

@@ -14,6 +14,7 @@
 
 import bpy
 
+
 def simulate_stash(obj, track_name, action, start_frame=None):
     # Simulate stash :
     # * add a track
@@ -30,6 +31,7 @@ def simulate_stash(obj, track_name, action, start_frame=None):
     new_track.lock = True
     new_track.mute = True
 
+
 def restore_animation_on_object(obj, anim_name):
     """ here, obj can be an object, shapekeys, camera or light data """
     if not getattr(obj, 'animation_data', None):
@@ -45,6 +47,7 @@ def restore_animation_on_object(obj, anim_name):
         return
 
     obj.animation_data.action = None
+
 
 def make_fcurve(action, co, data_path, index=0, group_name='', interpolation=None):
     try:
@@ -71,6 +74,6 @@ def make_fcurve(action, co, data_path, index=0, group_name='', interpolation=Non
         fcurve.keyframe_points.foreach_set('handle_left_type', [ty] * len(fcurve.keyframe_points))
         fcurve.keyframe_points.foreach_set('handle_right_type', [ty] * len(fcurve.keyframe_points))
 
-    fcurve.update() # force updating tangents (this may change when tangent will be managed)
+    fcurve.update()  # force updating tangents (this may change when tangent will be managed)
 
     return fcurve

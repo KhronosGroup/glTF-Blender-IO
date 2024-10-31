@@ -20,6 +20,7 @@ from ...io.imp.gltf2_io_binary import BinaryData
 from .animation_utils import make_fcurve
 from .vnode import VNode
 
+
 class BlenderNodeAnim():
     """Blender Object Animation."""
     def __new__(cls, *args, **kwargs):
@@ -42,12 +43,17 @@ class BlenderNodeAnim():
             if channel.target.path == "pointer" and channel.target.extensions is None:
                 continue
 
-            if channel.target.path == "pointer" and ("KHR_animation_pointer" not in channel.target.extensions or "pointer" not in channel.target.extensions["KHR_animation_pointer"]):
+            if channel.target.path == "pointer" and (
+                    "KHR_animation_pointer" not in channel.target.extensions or "pointer" not in channel.target.extensions["KHR_animation_pointer"]):
                 continue
 
             if channel.target.path == "pointer":
                 pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
-                if not(len(pointer_tab) >= 4 and pointer_tab[1] == "nodes" and pointer_tab[3] in ["translation", "rotation", "scale"]):
+                if not (
+                    len(pointer_tab) >= 4 and pointer_tab[1] == "nodes" and pointer_tab[3] in [
+                        "translation",
+                        "rotation",
+                        "scale"]):
                     continue
 
             BlenderNodeAnim.do_channel(gltf, anim_idx, node_idx, channel)
@@ -150,7 +156,7 @@ class BlenderNodeAnim():
         # adjacent antipodal quaternions.
         if path == 'rotation':
             for i in range(1, len(values)):
-                if values[i].dot(values[i-1]) < 0:
+                if values[i].dot(values[i - 1]) < 0:
                     values[i] = -values[i]
 
         fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
@@ -169,7 +175,8 @@ class BlenderNodeAnim():
                 interpolation=animation.samplers[channel.sampler].interpolation,
             )
 
-        import_user_extensions('gather_import_animation_channel_after_hook', gltf, animation, vnode, path, channel, action)
+        import_user_extensions('gather_import_animation_channel_after_hook',
+                               gltf, animation, vnode, path, channel, action)
 
     @staticmethod
     def get_or_create_action(gltf, node_idx, anim_name):

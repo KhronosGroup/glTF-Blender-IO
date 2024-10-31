@@ -667,7 +667,7 @@ To play the whole animation, you need to enable Solo (star icon) for all its tra
    There is currently no way to see the non-animated pose of a model that had animations.
 
 
-You can also use the animation switcher that can be found in DopeSheet editor.
+You can also use the animation switcher that can be found in :doc:`Dope Sheet editor </editors/dope_sheet/index>`.
 
 .. note::
 

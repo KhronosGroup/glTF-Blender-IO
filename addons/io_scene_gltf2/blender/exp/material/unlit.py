@@ -21,12 +21,14 @@ from .search_node_tree import \
     get_factor_from_socket, \
     gather_alpha_info
 
+
 def detect_shadeless_material(blender_material_node_tree, use_nodes, export_settings):
     """Detect if this material is "shadeless" ie. should be exported
     with KHR_materials_unlit. Returns None if not. Otherwise, returns
     a dict with info from parsing the node tree.
     """
-    if not use_nodes: return None
+    if not use_nodes:
+        return None
 
     # Old Background node detection (unlikely to happen)
     bg_socket = get_socket(blender_material_node_tree, use_nodes, "Background")
@@ -41,7 +43,7 @@ def detect_shadeless_material(blender_material_node_tree, use_nodes, export_sett
 
     info = {}
 
-    #TODOSNode this can be a function call
+    # TODOSNode this can be a function call
     for node in blender_material_node_tree.nodes:
         if node.type == 'OUTPUT_MATERIAL' and node.is_active_output:
             socket = node.inputs[0]
@@ -68,8 +70,10 @@ def detect_shadeless_material(blender_material_node_tree, use_nodes, export_sett
     # Check if a color socket, or connected to a color socket
     if socket.socket.type != 'RGBA':
         from_socket = previous_socket(socket)
-        if from_socket.socket is None: return None
-        if from_socket.socket.type != 'RGBA': return None
+        if from_socket.socket is None:
+            return None
+        if from_socket.socket.type != 'RGBA':
+            return None
 
     info['rgb_socket'] = socket
     return info
@@ -86,9 +90,11 @@ def __detect_mix_alpha(socket):
     # Returns None if not detected. Otherwise, a dict containing alpha_socket
     # and next_socket.
     prev = previous_node(socket)
-    if prev.node is None or prev.node.type != 'MIX_SHADER': return None
+    if prev.node is None or prev.node.type != 'MIX_SHADER':
+        return None
     in1 = previous_node(NodeSocket(prev.node.inputs[1], prev.group_path))
-    if in1.node is None or in1.node.type != 'BSDF_TRANSPARENT': return None
+    if in1.node is None or in1.node.type != 'BSDF_TRANSPARENT':
+        return None
     return {
         'alpha_socket': NodeSocket(prev.node.inputs[0], prev.group_path),
         'next_socket': NodeSocket(prev.node.inputs[2], prev.group_path),
@@ -108,10 +114,13 @@ def __detect_lightpath_trick(socket):
     # Returns None if not detected. Otherwise, a dict containing
     # next_socket.
     prev = previous_node(socket)
-    if prev.node is None or prev.node.type != 'MIX_SHADER': return None
+    if prev.node is None or prev.node.type != 'MIX_SHADER':
+        return None
     in0 = previous_socket(NodeSocket(prev.node.inputs[0], prev.group_path))
-    if in0.socket is None or in0.socket.node.type != 'LIGHT_PATH': return None
-    if in0.socket.name != 'Is Camera Ray': return None
+    if in0.socket is None or in0.socket.node.type != 'LIGHT_PATH':
+        return None
+    if in0.socket.name != 'Is Camera Ray':
+        return None
     next_socket = NodeSocket(prev.node.inputs[2], prev.group_path)
 
     # Detect emission
@@ -141,12 +150,14 @@ def gather_base_color_factor(info, export_settings):
         path_['additional_path'] = path_alpha
         export_settings['current_paths'][path] = path_
 
-
-    if rgb is None: rgb = [1.0, 1.0, 1.0]
-    if alpha is None: alpha = 1.0
+    if rgb is None:
+        rgb = [1.0, 1.0, 1.0]
+    if alpha is None:
+        alpha = 1.0
 
     rgba = [*rgb, alpha]
-    if rgba == [1, 1, 1, 1]: return None
+    if rgba == [1, 1, 1, 1]:
+        return None
     return rgba
 
 
@@ -158,7 +169,7 @@ def gather_base_color_texture(info, export_settings):
         # because gather_image determines how to pack images based on the
         # names of sockets, and the names are hard-coded to a Principled
         # style graph.
-        unlit_texture, uvmap_info, udim_info, _  = gltf2_blender_gather_texture_info.gather_texture_info(
+        unlit_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
             sockets[0],
             sockets,
             export_settings,
@@ -168,11 +179,15 @@ def gather_base_color_texture(info, export_settings):
             for k in export_settings['current_texture_transform'].keys():
                 path_ = {}
                 path_['length'] = export_settings['current_texture_transform'][k]['length']
-                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "pbrMetallicRoughness/baseColorTexture/extensions")
+                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                    "YYY", "pbrMetallicRoughness/baseColorTexture/extensions")
                 path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
                 export_settings['current_paths'][k] = path_
 
         export_settings['current_texture_transform'] = {}
 
-        return unlit_texture, {'baseColorTexture': uvmap_info}, {'baseColorTexture':udim_info} if len(udim_info.keys()) > 0 else {}
+        return unlit_texture, {
+            'baseColorTexture': uvmap_info}, {
+            'baseColorTexture': udim_info} if len(
+            udim_info.keys()) > 0 else {}
     return None, {}, {}

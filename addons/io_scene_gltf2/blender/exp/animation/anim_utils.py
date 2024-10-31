@@ -25,13 +25,14 @@ from .sampled.shapekeys.channels import gather_sampled_sk_channel
 from .sampled.data.channels import gather_data_sampled_channels
 from .drivers import get_sk_drivers
 
+
 def link_samplers(animation: gltf2_io.Animation, export_settings):
     """
     Move animation samplers to their own list and store their indices at their previous locations.
 
     After gathering, samplers are stored in the channels properties of the animation and need to be moved
     to their own list while storing an index into this list at the position where they previously were.
-    This behaviour is similar to that of the glTFExporter that traverses all nodes
+    This behavior is similar to that of the glTFExporter that traverses all nodes
     :param animation:
     :param export_settings:
     :return:
@@ -67,6 +68,7 @@ def reset_bone_matrix(blender_object, export_settings) -> None:
     for bone in blender_object.pose.bones:
         bone.matrix_basis = Matrix()
 
+
 def reset_sk_data(blender_object, blender_actions, export_settings) -> None:
     # Using NLA for SK is not so common
     # Reset to 0.0 will happen here only if there are at least 2 tracks to export
@@ -98,6 +100,7 @@ def add_slide_data(start_frame, uuid: int, key: str, export_settings, add_driver
                 export_settings['slide'][obj_dr] = {}
             export_settings['slide'][obj_dr][uuid + "_" + key] = start_frame
 
+
 def merge_tracks_perform(merged_tracks, animations, export_settings):
     to_delete_idx = []
     for merged_anim_track in merged_tracks.keys():
@@ -126,7 +129,11 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
 
             # Merging extensions
             # Provide a hook to handle extension merging since there is no way to know author intent
-            export_user_extensions('merge_animation_extensions_hook', export_settings, animations[anim_idx], animations[base_animation_idx])
+            export_user_extensions(
+                'merge_animation_extensions_hook',
+                export_settings,
+                animations[anim_idx],
+                animations[base_animation_idx])
 
             # Merging extras
             # Warning, some values can be overwritten if present in multiple merged animations
@@ -142,7 +149,9 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
 
             for channel in animations[anim_idx].channels:
                 if (channel.target.node, channel.target.path) in already_animated:
-                    export_settings['log'].warning("Some strips have same channel animation ({}), on node {} !".format(channel.target.path, channel.target.node.name))
+                    export_settings['log'].warning(
+                        "Some strips have same channel animation ({}), on node {} !".format(
+                            channel.target.path, channel.target.node.name))
                     continue
                 animations[base_animation_idx].channels.append(channel)
                 animations[base_animation_idx].channels[-1].sampler = animations[base_animation_idx].channels[-1].sampler + offset_sampler
@@ -172,6 +181,7 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
 
     return new_animations
 
+
 def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None):
 
     # Bake situation does not export any extra animation channels, as we bake TRS + weights on Track or scene level, without direct
@@ -187,7 +197,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
     # But we may need to bake
     # (Only when force sampling is ON)
     # If force sampling is OFF, can lead to inconsistent export anyway
-    if (export_settings['gltf_bake_animation'] is True \
+    if (export_settings['gltf_bake_animation'] is True
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS") \
             and blender_object and blender_object.type != "ARMATURE" and export_settings['gltf_force_sampling'] is True:
         animation = None
@@ -220,12 +230,12 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
                 if channel is not None:
                     if animation is None:
                         animation = gltf2_io.Animation(
-                                channels=[channel],
-                                extensions=None, # as other animations
-                                extras=None, # Because there is no animation to get extras from
-                                name=blender_object.name, # Use object name as animation name
-                                samplers=[]
-                            )
+                            channels=[channel],
+                            extensions=None,  # as other animations
+                            extras=None,  # Because there is no animation to get extras from
+                            name=blender_object.name,  # Use object name as animation name
+                            samplers=[]
+                        )
                     else:
                         animation.channels.append(channel)
 
@@ -233,7 +243,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
             link_samplers(animation, export_settings)
             return animation
 
-    elif (export_settings['gltf_bake_animation'] is True \
+    elif (export_settings['gltf_bake_animation'] is True
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS") \
             and blender_object \
             and blender_object.type == "ARMATURE" \
@@ -247,6 +257,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
             return animation
     return None
 
+
 def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, export_settings):
     # if there is no animation in file => no need to bake
     if len(bpy.data.actions) == 0:
@@ -255,7 +266,7 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, e
     total_channels = []
     animation = None
 
-    if (export_settings['gltf_bake_animation'] is True \
+    if (export_settings['gltf_bake_animation'] is True
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS"):
 
         if blender_type_data == "materials":
@@ -265,10 +276,10 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, e
         elif blender_type_data == "lights":
             blender_data_object = [i for i in bpy.data.lights if id(i) == blender_id][0]
         else:
-            pass # Should not happen
+            pass  # Should not happen
 
         # Export now KHR_animation_pointer for materials / light / camera
-        for i in [a for a in export_settings['KHR_animation_pointer'][blender_type_data].keys() if a==blender_id]:
+        for i in [a for a in export_settings['KHR_animation_pointer'][blender_type_data].keys() if a == blender_id]:
             if len(export_settings['KHR_animation_pointer'][blender_type_data][i]['paths']) == 0:
                 continue
 
@@ -279,9 +290,9 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, e
     if len(total_channels) > 0:
         animation = gltf2_io.Animation(
             channels=total_channels,
-            extensions=None, # as other animations
-            extras=None, # Because there is no animation to get extras from
-            name=blender_data_object.name, # Use object name as animation name
+            extensions=None,  # as other animations
+            extras=None,  # Because there is no animation to get extras from
+            name=blender_data_object.name,  # Use object name as animation name
             samplers=[]
         )
 

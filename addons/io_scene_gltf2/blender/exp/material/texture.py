@@ -43,7 +43,8 @@ def gather_texture(
     if not __filter_texture(blender_shader_sockets, export_settings):
         return None, None, None
 
-    source, webp_image, image_data, factor, udim_image = __gather_source(blender_shader_sockets, use_tile, export_settings)
+    source, webp_image, image_data, factor, udim_image = __gather_source(
+        blender_shader_sockets, use_tile, export_settings)
 
     exts, remove_source = __gather_extensions(blender_shader_sockets, source, webp_image, image_data, export_settings)
 
@@ -75,7 +76,6 @@ def __filter_texture(blender_shader_sockets, export_settings):
 def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, export_settings):
 
     extensions = {}
-
 
     remove_source = False
     required = False
@@ -156,6 +156,7 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, 
     else:
         return None, False
 
+
 @cached
 def __make_webp_image(buffer_view, extensions, extras, mime_type, name, uri, export_settings):
     return gltf2_io.Image(
@@ -166,6 +167,7 @@ def __make_webp_image(buffer_view, extensions, extras, mime_type, name, uri, exp
         name=name,
         uri=uri
     )
+
 
 def __gather_extras(blender_shader_sockets, export_settings):
     return None
@@ -193,7 +195,7 @@ def __gather_sampler(blender_shader_sockets, export_settings):
         # Retrieving the blender material using this shader tree
         for mat in bpy.data.materials:
             if mat.use_nodes is True and id(mat.node_tree) == id(first_valid_shader_node.group_path[0].original):
-                group_path_str += mat.name #TODO if linked, we can have multiple materials with same name...
+                group_path_str += mat.name  # TODO if linked, we can have multiple materials with same name...
                 break
     if len(first_valid_shader_node.group_path) > 1:
         for idx, i in enumerate(first_valid_shader_node.group_path[1:]):
@@ -213,7 +215,6 @@ def __gather_sampler(blender_shader_sockets, export_settings):
 
 def __gather_source(blender_shader_sockets, use_tile, export_settings):
     source, image_data, factor, udim_image = image.gather_image(blender_shader_sockets, use_tile, export_settings)
-
 
     if export_settings['gltf_keep_original_textures'] is False \
             and export_settings['gltf_image_format'] != "WEBP" \

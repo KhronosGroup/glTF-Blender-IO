@@ -39,7 +39,7 @@ class glTFImporter():
         self.accessor_cache = {}
         self.decode_accessor_cache = {}
         self.import_user_extensions = import_settings['import_user_extensions']
-        self.variant_mapping = {} # Used to map between mgltf material idx and blender material, for Variants
+        self.variant_mapping = {}  # Used to map between mgltf material idx and blender material, for Variants
 
         if 'loglevel' not in self.import_settings.keys():
             self.import_settings['loglevel'] = logging.CRITICAL
@@ -184,7 +184,6 @@ class glTFImporter():
             if data is None:
                 raise ImportError("Missing resource, '" + buffer.uri + "'.")
             self.buffers[buffer_idx] = data
-
 
         else:
             # GLB-stored buffer

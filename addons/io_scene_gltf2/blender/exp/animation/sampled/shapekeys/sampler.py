@@ -20,11 +20,12 @@ from .....com.gltf2_blender_math import mathutils_to_gltf
 from ....accessors import gather_accessor
 from .keyframes import gather_sk_sampled_keyframes
 
+
 def gather_sk_sampled_animation_sampler(
         obj_uuid,
         action_name,
         export_settings
-        ):
+):
 
     keyframes = __gather_keyframes(
         obj_uuid,
@@ -51,6 +52,7 @@ def gather_sk_sampled_animation_sampler(
 
     return sampler
 
+
 def __gather_keyframes(
         obj_uuid,
         action_name,
@@ -67,6 +69,7 @@ def __gather_keyframes(
         return None
 
     return keyframes
+
 
 def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
 
@@ -109,9 +112,10 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
         normalized=None,
         sparse=None,
         type=data_type
-        )
+    )
 
     return input, output
+
 
 def __gather_interpolation(export_settings):
     # TODO: check if the SK was animated with CONSTANT

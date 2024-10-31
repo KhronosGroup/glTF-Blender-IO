@@ -33,8 +33,10 @@ def export_specular(blender_material, export_settings):
     uvmap_infos = {}
     udim_infos = {}
 
-    specular_non_linked = specular_socket.socket is not None and isinstance(specular_socket.socket, bpy.types.NodeSocket) and not specular_socket.socket.is_linked
-    specularcolor_non_linked = speculartint_socket.socket is not None and isinstance(speculartint_socket.socket, bpy.types.NodeSocket) and not speculartint_socket.socket.is_linked
+    specular_non_linked = specular_socket.socket is not None and isinstance(
+        specular_socket.socket, bpy.types.NodeSocket) and not specular_socket.socket.is_linked
+    specularcolor_non_linked = speculartint_socket.socket is not None and isinstance(
+        speculartint_socket.socket, bpy.types.NodeSocket) and not speculartint_socket.socket.is_linked
 
     if specular_non_linked is True:
         fac = specular_socket.socket.default_value
@@ -42,16 +44,18 @@ def export_specular(blender_material, export_settings):
         if fac < 1.0:
             specular_extension['specularFactor'] = fac
         elif fac > 1.0:
-            # glTF specularFactor should be <= 1.0, so we will multiply ColorFactory by specularFactor, and set SpecularFactor to 1.0 (default value)
+            # glTF specularFactor should be <= 1.0, so we will multiply ColorFactory
+            # by specularFactor, and set SpecularFactor to 1.0 (default value)
             pass
         else:
-            pass # If fac == 1.0, no need to export specularFactor, the default value is 1.0
+            pass  # If fac == 1.0, no need to export specularFactor, the default value is 1.0
 
         # Storing path for KHR_animation_pointer
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularFactor"
-        export_settings['current_paths']["node_tree." + specular_socket.socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." +
+                                         specular_socket.socket.path_from_id() + ".default_value"] = path_
 
     else:
         # Factor
@@ -61,7 +65,8 @@ def export_specular(blender_material, export_settings):
             if fac is not None and fac < 1.0:
                 specular_extension['specularFactor'] = fac
             elif fac is not None and fac > 1.0:
-                # glTF specularFactor should be <= 1.0, so we will multiply ColorFactory by specularFactor, and set SpecularFactor to 1.0 (default value)
+                # glTF specularFactor should be <= 1.0, so we will multiply ColorFactory
+                # by specularFactor, and set SpecularFactor to 1.0 (default value)
                 pass
 
         if path is not None:
@@ -85,7 +90,8 @@ def export_specular(blender_material, export_settings):
                 for k in export_settings['current_texture_transform'].keys():
                     path_ = {}
                     path_['length'] = export_settings['current_texture_transform'][k]['length']
-                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_specular/specularTexture/extensions")
+                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                        "YYY", "extensions/KHR_materials_specular/specularTexture/extensions")
                     path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
                     export_settings['current_paths'][k] = path_
 
@@ -102,7 +108,8 @@ def export_specular(blender_material, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor"
-        export_settings['current_paths']["node_tree." + speculartint_socket.socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + speculartint_socket.socket.path_from_id() +
+                                         ".default_value"] = path_
     else:
         # Factor
         fac_color, path = get_factor_from_socket(speculartint_socket, kind='RGB')
@@ -133,7 +140,8 @@ def export_specular(blender_material, export_settings):
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
-            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_specular/specularColorTexture/extensions")
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                "YYY", "extensions/KHR_materials_specular/specularColorTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 

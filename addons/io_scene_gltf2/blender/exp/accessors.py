@@ -19,6 +19,7 @@ from ...io.com import constants as gltf2_io_constants
 from ...io.exp import binary_data as gltf2_io_binary_data
 from .cache import cached
 
+
 @cached
 def gather_accessor(buffer_view: gltf2_io_binary_data.BinaryData,
                     component_type: gltf2_io_constants.ComponentType,
@@ -42,6 +43,7 @@ def gather_accessor(buffer_view: gltf2_io_binary_data.BinaryData,
         type=type
     )
 
+
 def array_to_accessor(
         array,
         export_settings,
@@ -50,7 +52,7 @@ def array_to_accessor(
         include_max_and_min=False,
         sparse_type=None,
         normalized=None,
-        ):
+):
 
     # Not trying to check if sparse is better
     if sparse_type is None:
@@ -100,7 +102,7 @@ def array_to_accessor(
         )
     elif omit_sparse is True:
         if sparse_type == "SK" and export_settings['gltf_try_omit_sparse_sk'] is True:
-            sparse = None #sparse will be None, buffer_view too
+            sparse = None  # sparse will be None, buffer_view too
 
     amax = None
     amin = None
@@ -122,6 +124,7 @@ def array_to_accessor(
         sparse=sparse,
         type=data_type,
     )
+
 
 def __try_sparse_accessor(array):
     """

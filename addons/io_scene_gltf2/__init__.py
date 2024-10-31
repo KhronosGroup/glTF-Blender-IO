@@ -15,8 +15,8 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 3, 36),
-    'blender': (4, 2, 0),
+    "version": (4, 3, 40),
+    'blender': (4, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
@@ -26,12 +26,14 @@ bl_info = {
     'category': 'Import-Export',
 }
 
+
 def get_version_string():
     return str(bl_info['version'][0]) + '.' + str(bl_info['version'][1]) + '.' + str(bl_info['version'][2])
 
 #
 # Script reloading (if the user calls 'Reload Scripts' from Blender)
 #
+
 
 def reload_package(module_dict_main):
     import importlib
@@ -122,6 +124,7 @@ def on_export_format_changed(self, context):
     # Force update of file list, because update the filter does not update the real file list
     bpy.ops.file.refresh()
 
+
 def on_export_action_filter_changed(self, context):
     if self.export_action_filter is True:
         bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(type=GLTF2_filter_action)
@@ -141,23 +144,22 @@ def on_export_action_filter_changed(self, context):
 
 def get_format_items(scene, context):
 
-
     items = (('GLB', 'glTF Binary (.glb)',
-                'Exports a single file, with all data packed in binary form. '
-                'Most efficient and portable, but more difficult to edit later'),
-               ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
-                'Exports multiple files, with separate JSON, binary and texture data. '
-                'Easiest to edit later'))
+              'Exports a single file, with all data packed in binary form. '
+              'Most efficient and portable, but more difficult to edit later'),
+             ('GLTF_SEPARATE', 'glTF Separate (.gltf + .bin + textures)',
+              'Exports multiple files, with separate JSON, binary and texture data. '
+              'Easiest to edit later'))
 
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences \
             and "allow_embedded_format" in bpy.context.preferences.addons['io_scene_gltf2'].preferences \
             and bpy.context.preferences.addons['io_scene_gltf2'].preferences['allow_embedded_format']:
-            # At initialization, the preferences are not yet loaded
-            # The second line check is needed until the PR is merge in Blender, for github CI tests
+        # At initialization, the preferences are not yet loaded
+        # The second line check is needed until the PR is merge in Blender, for github CI tests
         items += (('GLTF_EMBEDDED', 'glTF Embedded (.gltf)',
-                    'Exports a single file, with all data packed in JSON. '
-                    'Less efficient than binary, but easier to edit later'
-                ),)
+                   'Exports a single file, with all data packed in JSON. '
+                   'Less efficient than binary, but easier to edit later'
+                   ),)
 
     return items
 
@@ -169,6 +171,7 @@ def is_draco_available():
         is_draco_available.draco_exists = gltf2_io_draco_compression_extension.dll_exists()
 
     return is_draco_available.draco_exists
+
 
 def set_debug_log():
     import logging
@@ -183,6 +186,7 @@ def set_debug_log():
     elif bpy.app.debug_value == 4:
         return logging.DEBUG
 
+
 class ConvertGLTF2_Base:
     """Base class containing options that should be exposed during both import and export."""
 
@@ -193,9 +197,10 @@ class ConvertGLTF2_Base:
             ('COMPAT', 'Unitless', 'Non-physical, unitless lighting. Useful when exposure controls are not available'),
             ('RAW', 'Raw (Deprecated)', 'Blender lighting strengths with no conversion'),
         ),
-        description='Optional backwards compatibility for non-standard render engines. Applies to lights',# TODO: and emissive materials',
+        description='Optional backwards compatibility for non-standard render engines. Applies to lights',  # TODO: and emissive materials',
         default='SPEC'
     )
+
 
 class ExportGLTF2_Base(ConvertGLTF2_Base):
     # TODO: refactor to avoid boilerplate
@@ -289,8 +294,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Vertex Position Attributes',
         description='Type to use for vertex position attributes',
         items=(('Integer', 'Integer', 'Use integer attributes for positions'),
-                ('Normalized', 'Normalized', 'Use normalized attributes for positions'),
-                ('Floating-point', 'Floating-point', 'Use floating-point attributes for positions')),
+               ('Normalized', 'Normalized', 'Use normalized attributes for positions'),
+               ('Floating-point', 'Floating-point', 'Use floating-point attributes for positions')),
         default='Integer',
     )
 
@@ -315,7 +320,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             'Output format. Binary is most efficient, '
             'but JSON may be easier to edit later'
         ),
-        default=0, #Warning => If you change the default, need to change the default filter too
+        default=0,  # Warning => If you change the default, need to change the default filter too
         update=on_export_format_changed,
     )
 
@@ -339,13 +344,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         items=(('AUTO', 'Automatic',
                 'Save PNGs as PNGs, JPEGs as JPEGs, WebPs as WebPs. '
                 'For other formats, use PNG'),
-                ('JPEG', 'JPEG Format (.jpg)',
+               ('JPEG', 'JPEG Format (.jpg)',
                 'Save images as JPEGs. (Images that need alpha are saved as PNGs though.) '
                 'Be aware of a possible loss in quality'),
-                ('WEBP', 'WebP Format',
+               ('WEBP', 'WebP Format',
                 'Save images as WebPs as main image (no fallback)'),
-                ('NONE', 'None',
-                 'Don\'t export images'),
+               ('NONE', 'None',
+                'Don\'t export images'),
                ),
         description=(
             'Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for web '
@@ -401,7 +406,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                      'WARNING: if you use more than one texture, '
                      'where pbr standard requires only one, only one texture will be used. '
                      'This can lead to unexpected results'
-        ),
+                     ),
         default=False,
     )
 
@@ -485,15 +490,18 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
     export_materials: EnumProperty(
         name='Materials',
-        items=(('EXPORT', 'Export',
-        'Export all materials used by included objects'),
-        ('PLACEHOLDER', 'Placeholder',
-        'Do not export materials, but write multiple primitive groups per mesh, keeping material slot information'),
-        ('NONE', 'No export',
-        'Do not export materials, and combine mesh primitive groups, losing material slot information')),
+        items=(
+            ('EXPORT',
+             'Export',
+             'Export all materials used by included objects'),
+            ('PLACEHOLDER',
+             'Placeholder',
+             'Do not export materials, but write multiple primitive groups per mesh, keeping material slot information'),
+            ('NONE',
+             'No export',
+             'Do not export materials, and combine mesh primitive groups, losing material slot information')),
         description='Export materials',
-        default='EXPORT'
-    )
+        default='EXPORT')
 
     export_unused_images: BoolProperty(
         name='Unused images',
@@ -508,16 +516,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         ),
         default=False)
 
-
     export_vertex_color: EnumProperty(
         name='Use Vertex Color',
         items=(
             ('MATERIAL', 'Material',
-            'Export vertex color when used by material'),
+             'Export vertex color when used by material'),
             ('ACTIVE', 'Active',
-            'Export active vertex color'),
+             'Export active vertex color'),
             ('NONE', 'None',
-            'Do not export vertex color')),
+             'Do not export vertex color')),
         description='How to export vertex color',
         default='MATERIAL'
     )
@@ -606,9 +613,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name="Source Collection",
         description="Export only objects from this collection (and its children)",
         default="",
-        )
+    )
 
-    #Not starting with "export_", as this is a collection only option
+    # Not starting with "export_", as this is a collection only option
     at_collection_center: BoolProperty(
         name="Export at Collection Center",
         description="Export at Collection center of mass of root objects of the collection",
@@ -676,18 +683,18 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_animation_mode: EnumProperty(
         name='Animation mode',
         items=(('ACTIONS', 'Actions',
-        'Export actions (actives and on NLA tracks) as separate animations'),
-        ('ACTIVE_ACTIONS', 'Active actions merged',
-        'All the currently assigned actions become one glTF animation'),
-        ('BROADCAST', 'Broadcast actions',
-        'Broadcast all compatible actions to all objects. '
-        'Animated objects will get all actions compatible with them, '
-        'others will get no animation at all'),
-        ('NLA_TRACKS', 'NLA Tracks',
-        'Export individual NLA Tracks as separate animation'),
-        ('SCENE', 'Scene',
-        'Export baked scene as a single animation')
-        ),
+                'Export actions (actives and on NLA tracks) as separate animations'),
+               ('ACTIVE_ACTIONS', 'Active actions merged',
+                'All the currently assigned actions become one glTF animation'),
+               ('BROADCAST', 'Broadcast actions',
+                'Broadcast all compatible actions to all objects. '
+                'Animated objects will get all actions compatible with them, '
+                'others will get no animation at all'),
+               ('NLA_TRACKS', 'NLA Tracks',
+                'Export individual NLA Tracks as separate animation'),
+               ('SCENE', 'Scene',
+                'Export baked scene as a single animation')
+               ),
         description='Export Animation mode',
         default='ACTIONS'
     )
@@ -723,15 +730,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         description=(
             'Remove Armature object if possible. '
             'If Armature has multiple root bones, object will not be removed'
-            ),
+        ),
         default=False
     )
 
     export_leaf_bone: BoolProperty(
         name='Add Leaf Bones',
         description=(
-        'Append a final bone to the end of each chain to specify last bone length '
-        '(use this when you intend to edit the armature from exported data)'
+            'Append a final bone to the end of each chain to specify last bone length '
+            '(use this when you intend to edit the armature from exported data)'
         ),
         default=False
     )
@@ -777,10 +784,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_negative_frame: EnumProperty(
         name='Negative Frames',
         items=(('SLIDE', 'Slide',
-        'Slide animation to start at frame 0'),
-        ('CROP', 'Crop',
-        'Keep only frames above frame 0'),
-        ),
+                'Slide animation to start at frame 0'),
+               ('CROP', 'Crop',
+                'Keep only frames above frame 0'),
+               ),
         description='Negative Frames are slid or cropped',
         default='SLIDE'
     )
@@ -980,7 +987,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         description=(
             'Export additional animations'
             'This feature is not standard and needs an external extension to be included in the glTF file'
-            ),
+        ),
         default=False
     )
 
@@ -1019,8 +1026,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         preferences = bpy.context.preferences
         for addon_name in preferences.addons.keys():
             try:
-                if hasattr(sys.modules[addon_name], 'glTF2ExportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ExportUserExtensions'):
-                    exporter_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_export if hasattr(sys.modules[addon_name], 'draw_export') else sys.modules[addon_name].draw
+                if hasattr(
+                        sys.modules[addon_name],
+                        'glTF2ExportUserExtension') or hasattr(
+                        sys.modules[addon_name],
+                        'glTF2ExportUserExtensions'):
+                    exporter_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_export if hasattr(
+                        sys.modules[addon_name], 'draw_export') else sys.modules[addon_name].draw
             except Exception:
                 pass
 
@@ -1279,14 +1291,14 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['pre_export_callbacks'] = pre_export_callbacks
         export_settings['post_export_callbacks'] = post_export_callbacks
 
-
         # Initialize logging for export
         export_settings['log'] = Log(export_settings['loglevel'])
 
-
         profile = bpy.app.debug_value == 102
         if profile:
-            import cProfile, pstats, io
+            import cProfile
+            import pstats
+            import io
             from pstats import SortKey
             pr = cProfile.Profile()
             pr.enable()
@@ -1331,6 +1343,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_panel_user_extension(context, layout)
 
+
 def export_main(layout, operator, is_file_browser):
     layout.prop(operator, 'export_format')
     if operator.export_format == 'GLTF_SEPARATE':
@@ -1338,11 +1351,14 @@ def export_main(layout, operator, is_file_browser):
         if operator.export_keep_originals is False:
             layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
     if operator.export_format == 'GLTF_EMBEDDED':
-        layout.label(text="This is the least efficient of the available forms, and should only be used when required.", icon='ERROR')
+        layout.label(
+            text="This is the least efficient of the available forms, and should only be used when required.",
+            icon='ERROR')
 
     layout.prop(operator, 'export_copyright')
     if is_file_browser:
         layout.prop(operator, 'will_save_settings')
+
 
 def export_panel_collection(layout, operator, is_file_browser):
     if is_file_browser:
@@ -1353,12 +1369,13 @@ def export_panel_collection(layout, operator, is_file_browser):
     if body:
         body.prop(operator, 'at_collection_center')
 
+
 def export_panel_include(layout, operator, is_file_browser):
     header, body = layout.panel("GLTF_export_include", default_closed=True)
     header.label(text="Include")
     if body:
         if is_file_browser:
-            col = body.column(heading = "Limit to", align = True)
+            col = body.column(heading="Limit to", align=True)
             col.prop(operator, 'use_selection')
             col.prop(operator, 'use_visible')
             col.prop(operator, 'use_renderable')
@@ -1367,7 +1384,7 @@ def export_panel_include(layout, operator, is_file_browser):
                 col.prop(operator, 'use_active_collection_with_nested')
             col.prop(operator, 'use_active_scene')
 
-        col = body.column(heading = "Data", align = True)
+        col = body.column(heading="Data", align=True)
         col.prop(operator, 'export_extras')
         col.prop(operator, 'export_cameras')
         col.prop(operator, 'export_lights')
@@ -1407,40 +1424,42 @@ def export_panel_data_scene_graph(layout, operator):
 
 
 def export_panel_data_mesh(layout, operator):
-        header, body = layout.panel("GLTF_export_data_mesh", default_closed=True)
-        header.label(text="Mesh")
-        if body:
-            body.prop(operator, 'export_apply')
-            body.prop(operator, 'export_texcoords')
-            body.prop(operator, 'export_normals')
-            col = body.column()
-            col.active = operator.export_normals
-            col.prop(operator, 'export_tangents')
-            body.prop(operator, 'export_attributes')
+    header, body = layout.panel("GLTF_export_data_mesh", default_closed=True)
+    header.label(text="Mesh")
+    if body:
+        body.prop(operator, 'export_apply')
+        body.prop(operator, 'export_texcoords')
+        body.prop(operator, 'export_normals')
+        col = body.column()
+        col.active = operator.export_normals
+        col.prop(operator, 'export_tangents')
+        body.prop(operator, 'export_attributes')
 
-            col = body.column()
-            col.prop(operator, 'use_mesh_edges')
-            col.prop(operator, 'use_mesh_vertices')
+        col = body.column()
+        col.prop(operator, 'use_mesh_edges')
+        col.prop(operator, 'use_mesh_vertices')
 
-            col = body.column()
-            col.prop(operator, 'export_shared_accessors')
+        col = body.column()
+        col.prop(operator, 'export_shared_accessors')
 
-            header, sub_body = body.panel("GLTF_export_data_material_vertex_color", default_closed=True)
-            header.label(text="Vertex Colors")
-            if sub_body:
+        header, sub_body = body.panel("GLTF_export_data_material_vertex_color", default_closed=True)
+        header.label(text="Vertex Colors")
+        if sub_body:
+            row = sub_body.row()
+            row.prop(operator, 'export_vertex_color')
+            if operator.export_vertex_color == "ACTIVE":
                 row = sub_body.row()
-                row.prop(operator, 'export_vertex_color')
-                if operator.export_vertex_color == "ACTIVE":
-                    row = sub_body.row()
-                    row.label(text="Note that fully compliant glTF 2.0 engine/viewer will use it as multiplicative factor for base color.", icon='ERROR')
-                    row = sub_body.row()
-                    row.label(text="If you want to use VC for any other purpose than vertex color, you should use custom attributes.")
+                row.label(
+                    text="Note that fully compliant glTF 2.0 engine/viewer will use it as multiplicative factor for base color.",
+                    icon='ERROR')
                 row = sub_body.row()
-                row.active = operator.export_vertex_color != "NONE"
-                row.prop(operator, 'export_all_vertex_colors')
-                row = sub_body.row()
-                row.active = operator.export_vertex_color != "NONE"
-                row.prop(operator, 'export_active_vertex_color_when_no_material')
+                row.label(text="If you want to use VC for any other purpose than vertex color, you should use custom attributes.")
+            row = sub_body.row()
+            row.active = operator.export_vertex_color != "NONE"
+            row.prop(operator, 'export_all_vertex_colors')
+            row = sub_body.row()
+            row.active = operator.export_vertex_color != "NONE"
+            row.prop(operator, 'export_active_vertex_color_when_no_material')
 
 
 def export_panel_data_material(layout, operator):
@@ -1567,7 +1586,8 @@ def export_panel_animation(layout, operator):
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
 
         row = body.row()
-        row.active = operator.export_force_sampling and operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'BROACAST']
+        row.active = operator.export_force_sampling and operator.export_animation_mode in [
+            'ACTIONS', 'ACTIVE_ACTIONS', 'BROACAST']
         row.prop(operator, 'export_bake_animation')
         if operator.export_animation_mode == "SCENE":
             body.prop(operator, 'export_anim_scene_split_object')
@@ -1650,6 +1670,7 @@ def export_panel_animation_sampling(layout, operator):
 
         body.prop(operator, 'export_frame_step')
 
+
 def export_panel_animation_pointer(layout, operator):
     header, body = layout.panel("GLTF_export_animation_pointer", default_closed=True)
     header.use_property_split = False
@@ -1660,6 +1681,7 @@ def export_panel_animation_pointer(layout, operator):
         row = body.row()
         row.active = header.active and operator.export_pointer_animation
         row.prop(operator, 'export_convert_animation_pointer')
+
 
 def export_panel_animation_optimize(layout, operator):
     header, body = layout.panel("GLTF_export_animation_optimize", default_closed=True)
@@ -1692,31 +1714,33 @@ def export_panel_gltfpack(layout, operator):
     header, body = layout.panel("GLTF_export_gltfpack", default_closed=True)
     header.label(text="gltfpack")
     if body:
-        col = body.column(heading = "gltfpack", align = True)
+        col = body.column(heading="gltfpack", align=True)
         col.prop(operator, 'export_use_gltfpack')
 
-        col = body.column(heading = "Textures", align = True)
+        col = body.column(heading="Textures", align=True)
         col.prop(operator, 'export_gltfpack_tc')
         col.prop(operator, 'export_gltfpack_tq')
-        col = body.column(heading = "Simplification", align = True)
+        col = body.column(heading="Simplification", align=True)
         col.prop(operator, 'export_gltfpack_si')
         col.prop(operator, 'export_gltfpack_sa')
         col.prop(operator, 'export_gltfpack_slb')
-        col = body.column(heading = "Vertices", align = True)
+        col = body.column(heading="Vertices", align=True)
         col.prop(operator, 'export_gltfpack_vp')
         col.prop(operator, 'export_gltfpack_vt')
         col.prop(operator, 'export_gltfpack_vn')
         col.prop(operator, 'export_gltfpack_vc')
-        col = body.column(heading = "Vertex positions", align = True)
+        col = body.column(heading="Vertex positions", align=True)
         col.prop(operator, 'export_gltfpack_vpi')
-        #col = body.column(heading = "Animations", align = True)
-        #col = body.column(heading = "Scene", align = True)
-        col = body.column(heading = "Miscellaneous", align = True)
+        # col = body.column(heading = "Animations", align = True)
+        # col = body.column(heading = "Scene", align = True)
+        col = body.column(heading="Miscellaneous", align=True)
         col.prop(operator, 'export_gltfpack_noq')
+
 
 def export_panel_user_extension(context, layout):
     for draw in exporter_extension_layout_draw.values():
         draw(context, layout)
+
 
 class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
     """Export scene as glTF 2.0 file"""
@@ -1848,8 +1872,13 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         preferences = bpy.context.preferences
         for addon_name in preferences.addons.keys():
             try:
-                if hasattr(sys.modules[addon_name], 'glTF2ImportUserExtension') or hasattr(sys.modules[addon_name], 'glTF2ImportUserExtensions'):
-                    importer_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_import if hasattr(sys.modules[addon_name], 'draw_import') else sys.modules[addon_name].draw
+                if hasattr(
+                        sys.modules[addon_name],
+                        'glTF2ImportUserExtension') or hasattr(
+                        sys.modules[addon_name],
+                        'glTF2ImportUserExtensions'):
+                    importer_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_import if hasattr(
+                        sys.modules[addon_name], 'draw_import') else sys.modules[addon_name].draw
             except Exception:
                 pass
 
@@ -1936,9 +1965,11 @@ def import_panel_user_extension(context, layout):
     for draw in importer_extension_layout_draw.values():
         draw(context, layout)
 
+
 class GLTF2_filter_action(bpy.types.PropertyGroup):
-    keep : bpy.props.BoolProperty(name="Keep Animation")
+    keep: bpy.props.BoolProperty(name="Keep Animation")
     action: bpy.props.PointerProperty(type=bpy.types.Action)
+
 
 def gltf_variant_ui_update(self, context):
     from .blender.com.gltf2_blender_ui import variant_register, variant_unregister
@@ -1948,6 +1979,7 @@ def gltf_variant_ui_update(self, context):
     else:
         variant_unregister()
 
+
 def gltf_animation_ui_update(self, context):
     from .blender.com.gltf2_blender_ui import anim_ui_register, anim_ui_unregister
     if self.animation_ui is True:
@@ -1956,16 +1988,17 @@ def gltf_animation_ui_update(self, context):
     else:
         anim_ui_unregister()
 
+
 class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
-    settings_node_ui : bpy.props.BoolProperty(
-        default= False,
+    settings_node_ui: bpy.props.BoolProperty(
+        default=False,
         description="Displays glTF Material Output node in Shader Editor (Menu Add > Output)"
     )
 
-    KHR_materials_variants_ui : bpy.props.BoolProperty(
-        default= False,
+    KHR_materials_variants_ui: bpy.props.BoolProperty(
+        default=False,
         description="Displays glTF UI to manage material variants",
         update=gltf_variant_ui_update
     )
@@ -1984,7 +2017,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
     )
 
     allow_embedded_format: bpy.props.BoolProperty(
-        default = False,
+        default=False,
         name='Allow glTF Embedded format',
         description="Allow glTF Embedded format"
     )
@@ -2000,7 +2033,9 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         row = layout.row()
         row.prop(self, "allow_embedded_format", text="Allow glTF Embedded format")
         if self.allow_embedded_format:
-            layout.label(text="This is the least efficient of the available forms, and should only be used when required.", icon='ERROR')
+            layout.label(
+                text="This is the least efficient of the available forms, and should only be used when required.",
+                icon='ERROR')
 
 
 class IO_FH_gltf2(bpy.types.FileHandler):

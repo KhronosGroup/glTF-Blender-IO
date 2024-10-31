@@ -26,37 +26,36 @@ from ..shapekeys.channels import gather_sampled_sk_channel
 from .channel_target import gather_armature_sampled_channel_target
 from .sampler import gather_bone_sampled_animation_sampler
 
-def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_settings)  -> typing.List[gltf2_io.AnimationChannel]:
+
+def gather_armature_sampled_channels(armature_uuid, blender_action_name,
+                                     export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
     extra_channels = {}
 
     # Then bake all bones
     bones_to_be_animated = []
     bones_uuid = export_settings["vtree"].get_all_bones(armature_uuid)
-    bones_to_be_animated = [export_settings["vtree"].nodes[b].blender_bone.name for b in bones_uuid if export_settings["vtree"].nodes[b].leaf_reference is None]
+    bones_to_be_animated = [
+        export_settings["vtree"].nodes[b].blender_bone.name for b in bones_uuid if export_settings["vtree"].nodes[b].leaf_reference is None]
 
     # List of really animated bones is needed for optimization decision
     list_of_animated_bone_channels = {}
     if armature_uuid != blender_action_name and blender_action_name in bpy.data.actions:
         # Not bake situation
-        channels_animated, to_be_sampled, extra_channels = get_channel_groups(armature_uuid, bpy.data.actions[blender_action_name], export_settings)
+        channels_animated, to_be_sampled, extra_channels = get_channel_groups(
+            armature_uuid, bpy.data.actions[blender_action_name], export_settings)
         for chan in [chan for chan in channels_animated.values() if chan['bone'] is not None]:
             for prop in chan['properties'].keys():
-                list_of_animated_bone_channels[
-                        (
-                            chan['bone'],
-                            get_channel_from_target(get_target(prop))
-                        )
-                    ] = get_gltf_interpolation(chan['properties'][prop][0].keyframe_points[0].interpolation) # Could be exported without sampling : keep interpolation
+                list_of_animated_bone_channels[(chan['bone'], get_channel_from_target(get_target(prop)))] = get_gltf_interpolation(
+                    chan['properties'][prop][0].keyframe_points[0].interpolation)  # Could be exported without sampling : keep interpolation
 
         for _, _, chan_prop, chan_bone in [chan for chan in to_be_sampled if chan[1] == "BONE"]:
             list_of_animated_bone_channels[
-                    (
-                        chan_bone,
-                        chan_prop,
-                    )
-                ] = get_gltf_interpolation("LINEAR") # if forced to be sampled, keep LINEAR interpolation
-
+                (
+                    chan_bone,
+                    chan_prop,
+                )
+            ] = get_gltf_interpolation("LINEAR")  # if forced to be sampled, keep LINEAR interpolation
 
     for bone in bones_to_be_animated:
         for p in ["location", "rotation_quaternion", "scale"]:
@@ -76,7 +75,8 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
     if blender_action_name == armature_uuid or export_settings['gltf_animation_mode'] in ["SCENE", "NLA_TRACKS"]:
         armature_channels = []
     else:
-        armature_channels = __gather_armature_object_channel(armature_uuid, bpy.data.actions[blender_action_name], export_settings)
+        armature_channels = __gather_armature_object_channel(
+            armature_uuid, bpy.data.actions[blender_action_name], export_settings)
 
     for p in ["location", "rotation_quaternion", "scale"]:
         armature_channel = gather_sampled_object_channel(
@@ -86,11 +86,10 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
             p in [a[0] for a in armature_channels],
             [c[1] for c in armature_channels if c[0] == p][0] if p in [a[0] for a in armature_channels] else "LINEAR",
             export_settings
-            )
+        )
 
         if armature_channel is not None:
             channels.append(armature_channel)
-
 
     # Retrieve channels for drivers, if needed
     drivers_to_manage = get_sk_drivers(armature_uuid, export_settings)
@@ -101,6 +100,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, export_
 
     return channels, extra_channels
 
+
 def gather_sampled_bone_channel(
         armature_uuid: str,
         bone: str,
@@ -109,11 +109,18 @@ def gather_sampled_bone_channel(
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
         export_settings
-        ):
+):
 
-    __target= __gather_target(armature_uuid, bone, channel, export_settings)
+    __target = __gather_target(armature_uuid, bone, channel, export_settings)
     if __target.path is not None:
-        sampler = __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_animated, node_channel_interpolation, export_settings)
+        sampler = __gather_sampler(
+            armature_uuid,
+            bone,
+            channel,
+            action_name,
+            node_channel_is_animated,
+            node_channel_interpolation,
+            export_settings)
 
         if sampler is None:
             # After check, no need to animate this node for this channel
@@ -149,7 +156,15 @@ def __gather_target(armature_uuid: str,
     return gather_armature_sampled_channel_target(
         armature_uuid, bone, channel, export_settings)
 
-def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_animated, node_channel_interpolation, export_settings):
+
+def __gather_sampler(
+        armature_uuid,
+        bone,
+        channel,
+        action_name,
+        node_channel_is_animated,
+        node_channel_interpolation,
+        export_settings):
     return gather_bone_sampled_animation_sampler(
         armature_uuid,
         bone,
@@ -158,7 +173,8 @@ def __gather_sampler(armature_uuid, bone, channel, action_name, node_channel_is_
         node_channel_is_animated,
         node_channel_interpolation,
         export_settings
-        )
+    )
+
 
 def __gather_armature_object_channel(obj_uuid: str, blender_action, export_settings):
     channels = []
@@ -170,13 +186,14 @@ def __gather_armature_object_channel(obj_uuid: str, blender_action, export_setti
 
     original_channels = []
     for c in channels_animated:
-        original_channels.extend([(prop, c['properties'][prop][0].keyframe_points[0].interpolation) for prop in c['properties'].keys()])
+        original_channels.extend([(prop, c['properties'][prop][0].keyframe_points[0].interpolation)
+                                 for prop in c['properties'].keys()])
 
     for c, inter in original_channels:
         channels.append(
             (
                 {
-                    "location":"location",
+                    "location": "location",
                     "rotation_quaternion": "rotation_quaternion",
                     "rotation_euler": "rotation_quaternion",
                     "scale": "scale",
@@ -186,14 +203,14 @@ def __gather_armature_object_channel(obj_uuid: str, blender_action, export_setti
                     "delta_rotation_quaternion": "rotation_quaternion"
                 }.get(c),
                 get_gltf_interpolation(inter)
-                )
             )
+        )
 
     for c in to_be_sampled:
         channels.append(
             (
                 {
-                    "location":"location",
+                    "location": "location",
                     "rotation_quaternion": "rotation_quaternion",
                     "rotation_euler": "rotation_quaternion",
                     "scale": "scale",
@@ -202,8 +219,8 @@ def __gather_armature_object_channel(obj_uuid: str, blender_action, export_setti
                     "delta_rotation_euler": "rotation_quaternion",
                     "delta_rotation_quaternion": "rotation_quaternion"
                 }.get(c[2]),
-                get_gltf_interpolation("LINEAR") # Forced to be sampled, so use LINEAR
-                )
+                get_gltf_interpolation("LINEAR")  # Forced to be sampled, so use LINEAR
+            )
         )
 
     return channels

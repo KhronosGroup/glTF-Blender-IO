@@ -88,7 +88,6 @@ class BinaryData():
 
         return array
 
-
     @staticmethod
     def decode_accessor_internal(accessor):
         # Is use internally when accessor binary data is not yet in a glTF buffer_view
@@ -109,15 +108,13 @@ class BinaryData():
         stride = default_stride
 
         array = np.frombuffer(
-                    buffer_data,
-                    dtype=np.dtype(dtype).newbyteorder('<'),
-                    count=accessor.count * component_nb,
-                )
+            buffer_data,
+            dtype=np.dtype(dtype).newbyteorder('<'),
+            count=accessor.count * component_nb,
+        )
         array = array.reshape(accessor.count, component_nb)
 
         return array
-
-
 
     @staticmethod
     def decode_accessor_obj(gltf, accessor):

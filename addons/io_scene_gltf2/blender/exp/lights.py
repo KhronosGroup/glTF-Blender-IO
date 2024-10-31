@@ -28,7 +28,7 @@ from .material import search_node_tree
 @cached
 def gather_lights_punctual(blender_lamp, export_settings) -> Optional[Dict[str, Any]]:
 
-    export_settings['current_paths'] = {} #For KHR_animation_pointer
+    export_settings['current_paths'] = {}  # For KHR_animation_pointer
 
     if not __filter_lights_punctual(blender_lamp, export_settings):
         return None
@@ -63,7 +63,8 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
         path_ = {}
         path_['length'] = 3
         path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
-        export_settings['current_paths']["node_tree." + emission_node.inputs["Color"].path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + emission_node.inputs["Color"].path_from_id() +
+                                         ".default_value"] = path_
 
         return list(emission_node.inputs["Color"].default_value)[:3]
 
@@ -94,7 +95,9 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
                 path_['length'] = 1
                 path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
                 path_['lamp_type'] = blender_lamp.type
-                export_settings['current_paths']["node_tree." + quadratic_falloff_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
+                export_settings['current_paths']["node_tree." +
+                                                 quadratic_falloff_node.inputs["Strength"].path_from_id() +
+                                                 ".default_value"] = path_
 
             else:
                 export_settings['log'].warning('No quadratic light falloff node attached to emission strength property')
@@ -113,8 +116,9 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
             path_['length'] = 1
             path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/intensity"
             path_['lamp_type'] = blender_lamp.type
-            export_settings['current_paths']["node_tree." + emission_node.inputs["Strength"].path_from_id() + ".default_value"] = path_
-
+            export_settings['current_paths']["node_tree." +
+                                             emission_node.inputs["Strength"].path_from_id() +
+                                             ".default_value"] = path_
 
     else:
         emission_strength = blender_lamp.energy
@@ -128,18 +132,20 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
     if export_settings['gltf_lighting_mode'] == 'RAW':
         return emission_strength
     else:
-        # Assume at this point the computed strength is still in the appropriate watt-related SI unit, which if everything up to here was done with physical basis it hopefully should be.
-        if blender_lamp.type == 'SUN': # W/m^2 in Blender to lm/m^2 for GLTF/KHR_lights_punctual.
+        # Assume at this point the computed strength is still in the appropriate
+        # watt-related SI unit, which if everything up to here was done with
+        # physical basis it hopefully should be.
+        if blender_lamp.type == 'SUN':  # W/m^2 in Blender to lm/m^2 for GLTF/KHR_lights_punctual.
             emission_luminous = emission_strength
         else:
             # Other than directional, only point and spot lamps are supported by GLTF.
             # In Blender, points are omnidirectional W, and spots are specified as if they're points.
             # Point and spot should both be lm/r^2 in GLTF.
-            emission_luminous = emission_strength / (4*math.pi)
+            emission_luminous = emission_strength / (4 * math.pi)
         if export_settings['gltf_lighting_mode'] == 'SPEC':
             emission_luminous *= PBR_WATTS_TO_LUMENS
         elif export_settings['gltf_lighting_mode'] == 'COMPAT':
-            pass # Just so we have an exhaustive tree to catch bugged values.
+            pass  # Just so we have an exhaustive tree to catch bugged values.
         else:
             raise ValueError(export_settings['gltf_lighting_mode'])
         return emission_luminous

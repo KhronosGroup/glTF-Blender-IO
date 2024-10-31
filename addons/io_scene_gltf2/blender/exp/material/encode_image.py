@@ -29,51 +29,66 @@ class Channel(enum.IntEnum):
 
 # These describe how an ExportImage's channels should be filled.
 
+
 class FillImage:
     """Fills a channel with the channel src_chan from a Blender image."""
+
     def __init__(self, image: bpy.types.Image, src_chan: Channel):
         self.image = image
         self.src_chan = src_chan
 
+
 class FillImageTile:
     """Fills a channel with the channel src_chan from a Blender UDIM image."""
+
     def __init__(self, image: bpy.types.Image, tile, src_chan: Channel):
         self.image = image
         self.tile = tile
         self.src_chan = src_chan
 
+
 class FillImageRGB2BWTile:
     """Fills a channel from a Blender UDIM image, RGB 2 BW"""
+
     def __init__(self, image: bpy.types.Image, tile):
         self.image = image
         self.tile = tile
 
+
 class FillImageRGB2BW:
     """Fills a channel from a Blender image, RGB 2 BW"""
+
     def __init__(self, image: bpy.types.Image):
         self.image = image
+
 
 class FillWhite:
     """Fills a channel with all ones (1.0)."""
     pass
 
+
 class FillWith:
     """Fills a channel with all same values"""
+
     def __init__(self, value):
         self.value = value
+
 
 class StoreData:
     def __init__(self, data):
         """Store numeric data (not an image channel"""
         self.data = data
 
+
 class StoreImage:
     """
     Store a channel with the channel src_chan from a Blender image.
     This channel will be used for numpy calculation (no direct channel mapping)
     """
+
     def __init__(self, image: bpy.types.Image):
         self.image = image
+
 
 class ExportImage:
     """Custom image class.
@@ -104,11 +119,11 @@ class ExportImage:
         self.fills = {}
         self.stored = {}
 
-        self.original = original # In case of keeping original texture images
+        self.original = original  # In case of keeping original texture images
         self.numpy_calc = None
 
     def set_calc(self, numpy_calc):
-        self.numpy_calc = numpy_calc # In case of numpy calculation (no direct channel mapping)
+        self.numpy_calc = numpy_calc  # In case of numpy calculation (no direct channel mapping)
 
     @staticmethod
     def from_blender_image(image: bpy.types.Image):
@@ -122,7 +137,11 @@ class ExportImage:
         export_image = ExportImage()
         original_udim = export_settings['current_udim_info']['image']
         for chan in range(original_udim.channels):
-            export_image.fill_image_tile(original_udim, export_settings['current_udim_info']['tile'], dst_chan=chan, src_chan=chan)
+            export_image.fill_image_tile(
+                original_udim,
+                export_settings['current_udim_info']['tile'],
+                dst_chan=chan,
+                src_chan=chan)
 
         return export_image
 
@@ -143,9 +162,9 @@ class ExportImage:
         self.fills[dst_chan] = FillImageRGB2BWTile(image, tile)
 
     def store_data(self, identifier, data, type='Image'):
-        if type == "Image": # This is an image
+        if type == "Image":  # This is an image
             self.stored[identifier] = StoreImage(data)
-        else: # This is a numeric value
+        else:  # This is a numeric value
             self.stored[identifier] = StoreData(data)
 
     def fill_white(self, dst_chan: Channel):
@@ -171,7 +190,7 @@ class ExportImage:
         if self.__on_happy_path():
             # Store that this image is fully exported (used to export or not not used images)
             for fill in self.fills.values():
-                export_settings['exported_images'][fill.image.name] = 1 # Fully used
+                export_settings['exported_images'][fill.image.name] = 1  # Fully used
                 break
 
             for fill in self.fills.values():
@@ -207,7 +226,7 @@ class ExportImage:
         if self.__on_happy_path():
             # Store that this image is fully exported (used to export or not not used images)
             for fill in self.fills.values():
-                export_settings['exported_images'][fill.image.name] = 1 # Fully used
+                export_settings['exported_images'][fill.image.name] = 1  # Fully used
                 break
             return self.__encode_happy(export_settings), None
 
@@ -228,11 +247,12 @@ class ExportImage:
         return self.__encode_from_image(self.blender_image(export_settings), export_settings)
 
     def __encode_happy_tile(self, export_settings) -> bytes:
-        return self.__encode_from_image_tile(self.fills[list(self.fills.keys())[0]].image, export_settings['current_udim_info']['tile'], export_settings)
+        return self.__encode_from_image_tile(
+            self.fills[list(self.fills.keys())[0]].image, export_settings['current_udim_info']['tile'], export_settings)
 
     def __unhappy_is_udim(self):
-        return any(isinstance(fill, FillImageTile) or isinstance(fill, FillImageRGB2BWTile) for fill in self.fills.values())
-
+        return any(isinstance(fill, FillImageTile) or isinstance(fill, FillImageRGB2BWTile)
+                   for fill in self.fills.values())
 
     def __encode_unhappy_udim(self, export_settings) -> bytes:
         # We need to assemble the image out of channels.
@@ -243,7 +263,7 @@ class ExportImage:
             if isinstance(fill, FillImageTile) or isinstance(fill, FillImageRGB2BWTile):
                 if fill.image not in images:
                     images.append((fill.image, fill.tile))
-                    export_settings['exported_images'][fill.image.name] = 2 # 2 = partially used
+                    export_settings['exported_images'][fill.image.name] = 2  # 2 = partially used
 
         if not images:
             # No ImageFills; use a 1x1 white pixel
@@ -298,9 +318,6 @@ class ExportImage:
 
         return self.__encode_from_numpy_array(out_buf, (width, height), export_settings)
 
-
-
-
     def __encode_unhappy(self, export_settings) -> bytes:
         # We need to assemble the image out of channels.
         # Do it with numpy and image.pixels.
@@ -311,7 +328,7 @@ class ExportImage:
             if isinstance(fill, FillImage) or isinstance(fill, FillImageRGB2BW):
                 if fill.image not in images:
                     images.append(fill.image)
-                    export_settings['exported_images'][fill.image.name] = 2 # 2 = partially used
+                    export_settings['exported_images'][fill.image.name] = 2  # 2 = partially used
 
         if not images:
             # No ImageFills; use a 1x1 white pixel
@@ -343,6 +360,8 @@ class ExportImage:
                     out_buf[int(dst_chan)::4] = fill.value
                 elif isinstance(fill, FillImageRGB2BW) and fill.image == image:
                     out_buf[int(dst_chan)::4] = tmp_buf[0::4] * 0.2989 + tmp_buf[1::4] * 0.5870 + tmp_buf[2::4] * 0.1140
+                    if image.alpha_mode in ["STRAIGHT", "PREMUL"]:
+                        out_buf[int(dst_chan)::4] *= tmp_buf[3::4]
 
         tmp_buf = None  # GC this
 
@@ -413,6 +432,7 @@ class ExportImage:
 
         # We don't manage UDIM packed image, so this could not happen to be here
 
+
 def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_settings) -> bytes:
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpfilename = tmpdirname + '/img'
@@ -432,6 +452,7 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_sett
 
 class TmpImageGuard:
     """Guard to automatically clean up temp images (use it with `with`)."""
+
     def __init__(self):
         self.image = None
 
@@ -452,7 +473,7 @@ def make_temp_image_copy(guard: TmpImageGuard, src_image: bpy.types.Image):
     # See #1564 and T95616
     tmp_image.scale(*src_image.size)
 
-    if src_image.is_dirty: # Warning, img size change doesn't make it dirty, see T95616
+    if src_image.is_dirty:  # Warning, img size change doesn't make it dirty, see T95616
         # Unsaved changes aren't copied by .copy(), so do them ourselves
         tmp_buf = np.empty(src_image.size[0] * src_image.size[1] * 4, np.float32)
         src_image.pixels.foreach_get(tmp_buf)

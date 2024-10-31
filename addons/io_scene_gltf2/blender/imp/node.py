@@ -22,6 +22,7 @@ from .camera import BlenderCamera
 from .light import BlenderLight
 from .vnode import VNode
 
+
 class BlenderNode():
     """Blender Node."""
     def __new__(cls, *args, **kwargs):
@@ -139,7 +140,6 @@ class BlenderNode():
         obj.show_in_front = True
         obj.data.relation_line_position = "HEAD"
 
-
         if gltf.import_settings['disable_bone_shape'] is True:
             return
 
@@ -147,12 +147,16 @@ class BlenderNode():
         # Content of this collection will not be exported
         if BLENDER_GLTF_SPECIAL_COLLECTION not in bpy.data.collections:
             bpy.data.collections.new(BLENDER_GLTF_SPECIAL_COLLECTION)
-            bpy.data.scenes[gltf.blender_scene].collection.children.link(bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION])
+            bpy.data.scenes[gltf.blender_scene].collection.children.link(
+                bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION])
             bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].hide_viewport = True
             bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].hide_render = True
 
         # Create an icosphere, and assign it to the collection
-        bpy.ops.mesh.primitive_ico_sphere_add(radius=1, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+        bpy.ops.mesh.primitive_ico_sphere_add(
+            radius=1, enter_editmode=False, align='WORLD', location=(
+                0, 0, 0), scale=(
+                1, 1, 1))
         bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].objects.link(bpy.context.object)
         gltf.bone_shape = bpy.context.object.name
         bpy.context.collection.objects.unlink(bpy.context.object)
@@ -176,6 +180,7 @@ class BlenderNode():
 
         # Find all bones for this arma
         bone_ids = []
+
         def visit(id):  # Depth-first walk
             if gltf.vnodes[id].type == VNode.Bone:
                 bone_ids.append(id)
@@ -243,8 +248,12 @@ class BlenderNode():
 
             if gltf.import_settings['bone_heuristic'] == "BLENDER" and gltf.import_settings['disable_bone_shape'] is False:
                 pose_bone.custom_shape = bpy.data.objects[gltf.bone_shape]
-                armature_min_dim = min([blender_arma.dimensions[0] / blender_arma.scale[0], blender_arma.dimensions[1]  / blender_arma.scale[1], blender_arma.dimensions[2] / blender_arma.scale[2]])
-                pose_bone.custom_shape_scale_xyz = Vector([armature_min_dim * 0.05] * 3) * gltf.import_settings['bone_shape_scale_factor']
+                armature_min_dim = min([blender_arma.dimensions[0] /
+                                        blender_arma.scale[0], blender_arma.dimensions[1] /
+                                        blender_arma.scale[1], blender_arma.dimensions[2] /
+                                        blender_arma.scale[2]])
+                pose_bone.custom_shape_scale_xyz = Vector(
+                    [armature_min_dim * 0.05] * 3) * gltf.import_settings['bone_shape_scale_factor']
                 pose_bone.use_custom_shape_bone_size = False
 
     @staticmethod
@@ -307,8 +316,10 @@ class BlenderNode():
             if pymesh.shapekey_names[i] is not None:
                 kb = obj.data.shape_keys.key_blocks[pymesh.shapekey_names[i]]
                 # extend range if needed
-                if weight < kb.slider_min: kb.slider_min = weight
-                if weight > kb.slider_max: kb.slider_max = weight
+                if weight < kb.slider_min:
+                    kb.slider_min = weight
+                if weight > kb.slider_max:
+                    kb.slider_max = weight
                 kb.value = weight
 
                 # Store default weight

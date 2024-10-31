@@ -20,7 +20,11 @@ from .....com.extras import generate_extras
 from ...fcurves.sampler import gather_animation_fcurves_sampler
 from .channels import gather_object_sampled_channels
 
-def gather_action_object_sampled(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
+
+def gather_action_object_sampled(object_uuid: str,
+                                 blender_action: typing.Optional[bpy.types.Action],
+                                 cache_key: str,
+                                 export_settings):
 
     extra_samplers = []
 
@@ -28,7 +32,8 @@ def gather_action_object_sampled(object_uuid: str, blender_action: typing.Option
     if len(bpy.data.actions) == 0:
         return None, extra_samplers
 
-    channels, extra_channels = __gather_channels(object_uuid, blender_action.name if blender_action else cache_key, export_settings)
+    channels, extra_channels = __gather_channels(
+        object_uuid, blender_action.name if blender_action else cache_key, export_settings)
     animation = gltf2_io.Animation(
         channels=channels,
         extensions=None,
@@ -43,19 +48,25 @@ def gather_action_object_sampled(object_uuid: str, blender_action: typing.Option
 
                 # No glTF channel here, as we don't have any target
                 # Trying to retrieve sampler directly
-                sampler = gather_animation_fcurves_sampler(object_uuid, tuple(channel_group), None, None, True, export_settings)
+                sampler = gather_animation_fcurves_sampler(
+                    object_uuid, tuple(channel_group), None, None, True, export_settings)
                 if sampler is not None:
                     extra_samplers.append((channel_group_name, sampler, "OBJECT", None))
-
-
 
     if not animation.channels:
         return None, extra_samplers
 
     blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
-    export_user_extensions('animation_action_object_sampled', export_settings, animation, blender_object, blender_action, cache_key)
+    export_user_extensions(
+        'animation_action_object_sampled',
+        export_settings,
+        animation,
+        blender_object,
+        blender_action,
+        cache_key)
 
     return animation, extra_samplers
+
 
 def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
     if blender_action:
@@ -65,8 +76,11 @@ def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Ac
     else:
         return cache_key
 
-def __gather_channels(object_uuid: str, blender_action_name: str, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
+
+def __gather_channels(object_uuid: str, blender_action_name: str,
+                      export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_object_sampled_channels(object_uuid, blender_action_name, export_settings)
+
 
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:

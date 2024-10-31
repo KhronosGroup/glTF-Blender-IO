@@ -31,7 +31,8 @@ class BlenderWeightAnim():
 
         node_idx = vnode.mesh_node_idx
 
-        import_user_extensions('gather_import_animation_weight_before_hook', gltf, vnode, gltf.data.animations[anim_idx])
+        import_user_extensions('gather_import_animation_weight_before_hook',
+                               gltf, vnode, gltf.data.animations[anim_idx])
 
         if node_idx is None:
             return
@@ -79,7 +80,7 @@ class BlenderWeightAnim():
         coords[::2] = (key[0] * fps for key in keys)
 
         for sk in range(nb_targets):
-            if pymesh.shapekey_names[sk] is not None: # Do not animate shapekeys not created
+            if pymesh.shapekey_names[sk] is not None:  # Do not animate shapekeys not created
                 coords[1::2] = (values[offset + stride * i + sk][0] for i in range(len(keys)))
                 kb_name = pymesh.shapekey_names[sk]
                 data_path = 'key_blocks["%s"].value' % bpy.utils.escape_identifier(kb_name)
@@ -96,7 +97,9 @@ class BlenderWeightAnim():
                 kb = obj.data.shape_keys.key_blocks[kb_name]
                 min_weight = min(coords[1:2])
                 max_weight = max(coords[1:2])
-                if min_weight < kb.slider_min: kb.slider_min = min_weight
-                if max_weight > kb.slider_max: kb.slider_max = max_weight
+                if min_weight < kb.slider_min:
+                    kb.slider_min = min_weight
+                if max_weight > kb.slider_max:
+                    kb.slider_max = max_weight
 
         import_user_extensions('gather_import_animation_weight_after_hook', gltf, vnode, animation)

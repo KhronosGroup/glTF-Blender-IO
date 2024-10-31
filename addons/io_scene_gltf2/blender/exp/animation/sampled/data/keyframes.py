@@ -29,11 +29,11 @@ def gather_data_sampled_keyframes(
         channel,
         action_name,
         node_channel_is_animated: bool,
-        additional_key, # Used to differentiate between material / material node_tree
+        additional_key,  # Used to differentiate between material / material node_tree
         export_settings):
 
     start_frame = export_settings['ranges'][blender_id][action_name]['start']
-    end_frame  = export_settings['ranges'][blender_id][action_name]['end']
+    end_frame = export_settings['ranges'][blender_id][action_name]['end']
 
     keyframes = []
 
@@ -81,16 +81,17 @@ def gather_data_sampled_keyframes(
                 )
 
                 value = [f * strength for f in value]
-                if any([i>1.0 for i in value or []]):
+                if any([i > 1.0 for i in value or []]):
                     # Clamp to range [0,1]
                     # Official glTF clamp to range [0,1]
                     # If we are outside, we need to use extension KHR_materials_emissive_strength
                     strength = max(value)
                     value = [f / strength for f in value]
                 else:
-                    pass # Don't need to do anything, as we are in the range [0,1]
+                    pass  # Don't need to do anything, as we are in the range [0,1]
 
-            if export_settings['KHR_animation_pointer']['materials'][blender_id]['paths'][channel]['path'] == "/materials/XXX/extensions/KHR_materials_emissive_strength/emissiveStrength":
+            if export_settings['KHR_animation_pointer']['materials'][blender_id]['paths'][channel][
+                    'path'] == "/materials/XXX/extensions/KHR_materials_emissive_strength/emissiveStrength":
                 # We need to retrieve the emissive factor
                 factor = get_cache_data(
                     'value',
@@ -103,14 +104,13 @@ def gather_data_sampled_keyframes(
                 )
 
                 factor = [f * value for f in factor]
-                if any([i>1.0 for i in factor or []]):
+                if any([i > 1.0 for i in factor or []]):
                     # Clamp to range [0,1]
                     # Official glTF clamp to range [0,1]
                     # If we are outside, we need to use extension KHR_materials_emissive_strength
                     value = max(factor)
                 else:
-                    value = 1.0 # no need to have an emissiveStrength extension for this frame
-
+                    value = 1.0  # no need to have an emissiveStrength extension for this frame
 
             # For specularFactor and specularColorFactor, we already multiplied it by 2.0, and clamp it to 1.0 (and adapt specularColor accordingly)
             # This is done in cache retrieval
@@ -132,8 +132,6 @@ def gather_data_sampled_keyframes(
 
         # Camera yvof is calculated in cache retrieval, as it requires sensor_fit, angle, aspect ratio
 
-
-
         key.value_total = value
         keyframes.append(key)
         frame += step
@@ -145,8 +143,10 @@ def gather_data_sampled_keyframes(
     cst = fcurve_is_constant(keyframes)
     return None if cst is True else keyframes
 
+
 def fcurve_is_constant(keyframes):
     if type(keyframes[0].value).__name__ == "float":
         return all([j < 0.0001 for j in np.ptp([[k.value] for k in keyframes], axis=0)])
     else:
-        return all([j < 0.0001 for j in np.ptp([[k.value[i] for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])
+        return all([j < 0.0001 for j in np.ptp([[k.value[i]
+                   for i in range(len(keyframes[0].value))] for k in keyframes], axis=0)])

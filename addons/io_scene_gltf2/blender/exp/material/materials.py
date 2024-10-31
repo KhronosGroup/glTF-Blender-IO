@@ -42,6 +42,7 @@ from .search_node_tree import \
     get_vertex_color_info, \
     gather_alpha_info
 
+
 @cached
 def get_material_cache_key(blender_material, export_settings):
     # Use id of material
@@ -51,8 +52,9 @@ def get_material_cache_key(blender_material, export_settings):
     # So, when no modifier applied => original is the same id
     # And when modifier applied => new one is different id, but original is still the same
     return (
-      (id(blender_material.original),),
+        (id(blender_material.original),),
     )
+
 
 @cached_by_key(key=get_material_cache_key)
 def gather_material(blender_material, export_settings):
@@ -64,17 +66,20 @@ def gather_material(blender_material, export_settings):
     :return: a glTF material
     """
     if not __filter_material(blender_material, export_settings):
-        return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None, 'alpha_mode': "OPAQUE"}, "udim_info": {}}
+        return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None,
+                                                 'color_type': None, 'alpha_type': None, 'alpha_mode': "OPAQUE"}, "udim_info": {}}
 
     # Reset exported images / textures nodes
     export_settings['exported_texture_nodes'] = []
     if blender_material.node_tree and blender_material.use_nodes:
-        nodes = get_material_nodes(blender_material.node_tree, [blender_material.node_tree], bpy.types.ShaderNodeTexImage)
+        nodes = get_material_nodes(
+            blender_material.node_tree, [
+                blender_material.node_tree], bpy.types.ShaderNodeTexImage)
     else:
         nodes = []
     for node in nodes:
         if node[0].get("used", None) is not None:
-            del(node[0]['used'])
+            del (node[0]['used'])
 
     mat_unlit, uvmap_info, vc_info, udim_info = __export_unlit(blender_material, export_settings)
     if mat_unlit is not None:
@@ -84,13 +89,17 @@ def gather_material(blender_material, export_settings):
     orm_texture = __gather_orm_texture(blender_material, export_settings)
 
     emissive_factor = __gather_emissive_factor(blender_material, export_settings)
-    emissive_texture, uvmap_info_emissive, udim_info_emissive = __gather_emissive_texture(blender_material, export_settings)
-    extensions, uvmap_info_extensions, udim_info_extensions = __gather_extensions(blender_material, emissive_factor, export_settings)
+    emissive_texture, uvmap_info_emissive, udim_info_emissive = __gather_emissive_texture(
+        blender_material, export_settings)
+    extensions, uvmap_info_extensions, udim_info_extensions = __gather_extensions(
+        blender_material, emissive_factor, export_settings)
     normal_texture, uvmap_info_normal, udim_info_normal = __gather_normal_texture(blender_material, export_settings)
-    occlusion_texture, uvmap_info_occlusion, udim_occlusion = __gather_occlusion_texture(blender_material, orm_texture, export_settings)
-    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info, udim_info_prb_mr = __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings)
+    occlusion_texture, uvmap_info_occlusion, udim_occlusion = __gather_occlusion_texture(
+        blender_material, orm_texture, export_settings)
+    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info, udim_info_prb_mr = __gather_pbr_metallic_roughness(
+        blender_material, orm_texture, export_settings)
 
-    if any([i>1.0 for i in emissive_factor or []]) is True:
+    if any([i > 1.0 for i in emissive_factor or []]) is True:
         # Strength is set on extension
         emission_strength = max(emissive_factor)
         emissive_factor = [f / emission_strength for f in emissive_factor]
@@ -121,19 +130,22 @@ def gather_material(blender_material, export_settings):
     # Get all textures nodes that are not used in the material
     if export_settings['gltf_unused_textures'] is True:
         if blender_material.node_tree and blender_material.use_nodes:
-            nodes = get_material_nodes(blender_material.node_tree, [blender_material.node_tree], bpy.types.ShaderNodeTexImage)
+            nodes = get_material_nodes(
+                blender_material.node_tree, [
+                    blender_material.node_tree], bpy.types.ShaderNodeTexImage)
         else:
             nodes = []
         cpt_additional = 0
         for node in nodes:
             if node[0].get("used", None) is not None:
-                del(node[0]['used'])
+                del (node[0]['used'])
                 continue
 
             s = NodeSocket(node[0].outputs[0], node[1])
-            tex, uv_info_additional, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(s, (s,), export_settings)
+            tex, uv_info_additional, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+                s, (s,), export_settings)
             if tex is not None:
-                export_settings['exported_images'][node[0].image.name] = 1 # Fully used
+                export_settings['exported_images'][node[0].image.name] = 1  # Fully used
                 uvmap_infos.update({'additional' + str(cpt_additional): uv_info_additional})
                 udim_infos.update({'additional' + str(cpt_additional): udim_info})
                 cpt_additional += 1
@@ -141,12 +153,14 @@ def gather_material(blender_material, export_settings):
 
         # Reset
         if blender_material.node_tree and blender_material.use_nodes:
-            nodes = get_material_nodes(blender_material.node_tree, [blender_material.node_tree], bpy.types.ShaderNodeTexImage)
+            nodes = get_material_nodes(
+                blender_material.node_tree, [
+                    blender_material.node_tree], bpy.types.ShaderNodeTexImage)
         else:
             nodes = []
         for node in nodes:
             if node[0].get("used", None) is not None:
-                del(node[0]['used'])
+                del (node[0]['used'])
 
     uvmap_infos.update(uvmap_info_emissive)
     uvmap_infos.update(uvmap_info_extensions)
@@ -161,11 +175,13 @@ def gather_material(blender_material, export_settings):
     udim_infos.update(udim_occlusion)
     udim_infos.update(udim_info_extensions)
 
-
     # If emissive is set, from an emissive node (not PBR)
     # We need to set manually default values for
     # pbr_metallic_roughness.baseColor
-    if material.emissive_factor is not None and get_node_socket(blender_material.node_tree, bpy.types.ShaderNodeBsdfPrincipled, "Base Color").socket is None:
+    if material.emissive_factor is not None and get_node_socket(
+            blender_material.node_tree,
+            bpy.types.ShaderNodeBsdfPrincipled,
+            "Base Color").socket is None:
         material.pbr_metallic_roughness = gltf2_pbr_metallic_roughness.get_default_pbr_for_emissive_node()
 
     export_user_extensions('gather_material_hook', export_settings, material, blender_material)
@@ -175,7 +191,8 @@ def gather_material(blender_material, export_settings):
 
     if len(export_settings['current_paths']) > 0:
         export_settings['KHR_animation_pointer']['materials'][id(blender_material)] = {}
-        export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['materials'][id(
+            blender_material)]['paths'] = export_settings['current_paths'].copy()
         export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['glTF_material'] = material
 
     export_settings['current_paths'] = {}
@@ -184,23 +201,26 @@ def gather_material(blender_material, export_settings):
 
 
 def get_new_material_texture_shared(base, node):
-        if node is None:
-            return
-        if callable(node) is True:
-            return
-        if node.__str__().startswith('__'):
-            return
-        if type(node) in [gltf2_io.TextureInfo, gltf2_io.MaterialOcclusionTextureInfoClass, gltf2_io.MaterialNormalTextureInfoClass]:
-            node.index = base.index
+    if node is None:
+        return
+    if callable(node) is True:
+        return
+    if node.__str__().startswith('__'):
+        return
+    if type(node) in [gltf2_io.TextureInfo,
+                      gltf2_io.MaterialOcclusionTextureInfoClass,
+                      gltf2_io.MaterialNormalTextureInfoClass]:
+        node.index = base.index
+    else:
+        if hasattr(node, '__dict__'):
+            for attr, value in node.__dict__.items():
+                get_new_material_texture_shared(getattr(base, attr), value)
         else:
-            if hasattr(node, '__dict__'):
-                for attr, value in node.__dict__.items():
-                    get_new_material_texture_shared(getattr(base, attr), value)
-            else:
-                # For extensions (on a dict)
-                if type(node).__name__ == 'dict':
-                    for i in node.keys():
-                        get_new_material_texture_shared(base[i], node[i])
+            # For extensions (on a dict)
+            if type(node).__name__ == 'dict':
+                for i in node.keys():
+                    get_new_material_texture_shared(base[i], node[i])
+
 
 def __filter_material(blender_material, export_settings):
     return export_settings['gltf_materials']
@@ -238,6 +258,7 @@ def __gather_double_sided(blender_material, extensions, export_settings):
 def __gather_emissive_factor(blender_material, export_settings):
     return export_emission_factor(blender_material, export_settings)
 
+
 def __gather_emissive_texture(blender_material, export_settings):
     return export_emission_texture(blender_material, export_settings)
 
@@ -270,7 +291,7 @@ def __gather_extensions(blender_material, emissive_factor, export_settings):
 
     # KHR_materials_volume
 
-    volume_extension, uvmap_info, udim_info  = export_volume(blender_material, export_settings)
+    volume_extension, uvmap_info, udim_info = export_volume(blender_material, export_settings)
     if volume_extension:
         extensions["KHR_materials_volume"] = volume_extension
         uvmap_infos.update(uvmap_info)
@@ -318,16 +339,15 @@ def __gather_name(blender_material, export_settings):
 
 def __gather_normal_texture(blender_material, export_settings):
     normal = get_socket(blender_material.node_tree, blender_material.use_nodes, "Normal")
-    normal_texture, uvmap_info, udim_info, _  = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
-        normal,
-        (normal,),
-        export_settings)
+    normal_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
+        normal, (normal,), export_settings)
 
     if len(export_settings['current_texture_transform']) != 0:
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
-            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "normalTexture/extensions")
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                "YYY", "normalTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
@@ -342,7 +362,10 @@ def __gather_normal_texture(blender_material, export_settings):
 
     export_settings['current_normal_scale'] = {}
 
-    return normal_texture, {"normalTexture" : uvmap_info}, {'normalTexture': udim_info } if len(udim_info.keys()) > 0 else {}
+    return normal_texture, {
+        "normalTexture": uvmap_info}, {
+        'normalTexture': udim_info} if len(
+            udim_info.keys()) > 0 else {}
 
 
 def __gather_orm_texture(blender_material, export_settings):
@@ -351,7 +374,8 @@ def __gather_orm_texture(blender_material, export_settings):
 
     occlusion = get_socket(blender_material.node_tree, blender_material.use_nodes, "Occlusion")
     if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
-        occlusion = get_socket_from_gltf_material_node(blender_material.node_tree, blender_material.use_nodes, "Occlusion")
+        occlusion = get_socket_from_gltf_material_node(
+            blender_material.node_tree, blender_material.use_nodes, "Occlusion")
         if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
             return None
 
@@ -364,7 +388,8 @@ def __gather_orm_texture(blender_material, export_settings):
     # Warning: for default socket, do not use NodeSocket object, because it will break cache
     # Using directlty the Blender socket object
     if not hasMetal and not hasRough:
-        metallic_roughness = get_socket_from_gltf_material_node(blender_material.node_tree, blender_material.use_nodes, "MetallicRoughness")
+        metallic_roughness = get_socket_from_gltf_material_node(
+            blender_material.node_tree, blender_material.use_nodes, "MetallicRoughness")
         if metallic_roughness.socket is None or not has_image_node_from_socket(metallic_roughness, export_settings):
             return None
         result = (occlusion, metallic_roughness)
@@ -391,16 +416,18 @@ def __gather_orm_texture(blender_material, export_settings):
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
-            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "occlusionTexture/extensions")
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                "YYY", "occlusionTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
-        #This case can't happen because we are going to keep only 1 UVMap
+        # This case can't happen because we are going to keep only 1 UVMap
         export_settings['log'].warning("This case should not happen, please report a bug")
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
-            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "pbrMetallicRoughness/metallicRoughnessTexture/extensions")
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                "YYY", "pbrMetallicRoughness/metallicRoughnessTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
@@ -408,16 +435,16 @@ def __gather_orm_texture(blender_material, export_settings):
 
     return result
 
+
 def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
     occlusion = get_socket(blender_material.node_tree, blender_material.use_nodes, "Occlusion")
     if occlusion.socket is None:
-        occlusion = get_socket_from_gltf_material_node(blender_material.node_tree, blender_material.use_nodes, "Occlusion")
+        occlusion = get_socket_from_gltf_material_node(
+            blender_material.node_tree, blender_material.use_nodes, "Occlusion")
     if occlusion.socket is None:
         return None, {}, {}
     occlusion_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(
-        occlusion,
-        orm_texture or (occlusion,),
-        export_settings)
+        occlusion, orm_texture or (occlusion,), export_settings)
 
     if len(export_settings['current_occlusion_strength']) != 0:
         for k in export_settings['current_occlusion_strength'].keys():
@@ -433,14 +460,15 @@ def __gather_occlusion_texture(blender_material, orm_texture, export_settings):
         for k in export_settings['current_texture_transform'].keys():
             path_ = {}
             path_['length'] = export_settings['current_texture_transform'][k]['length']
-            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "occlusionTexture/extensions")
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                "YYY", "occlusionTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
             export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}
 
     return occlusion_texture, \
-            {"occlusionTexture" : uvmap_info}, {'occlusionTexture': udim_info } if len(udim_info.keys()) > 0 else {}
+        {"occlusionTexture": uvmap_info}, {'occlusionTexture': udim_info} if len(udim_info.keys()) > 0 else {}
 
 
 def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
@@ -449,9 +477,13 @@ def __gather_pbr_metallic_roughness(blender_material, orm_texture, export_settin
         orm_texture,
         export_settings)
 
+
 def __export_unlit(blender_material, export_settings):
 
-    info = gltf2_unlit.detect_shadeless_material(blender_material.node_tree, blender_material.use_nodes, export_settings)
+    info = gltf2_unlit.detect_shadeless_material(
+        blender_material.node_tree,
+        blender_material.use_nodes,
+        export_settings)
     if info is None:
         return None, {}, {"color": None, "alpha": None, "color_type": None, "alpha_type": None, "alpha_mode": "OPAQUE"}, {}
 
@@ -494,12 +526,14 @@ def __export_unlit(blender_material, export_settings):
 
     if len(export_settings['current_paths']) > 0:
         export_settings['KHR_animation_pointer']['materials'][id(blender_material)] = {}
-        export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['paths'] = export_settings['current_paths'].copy()
+        export_settings['KHR_animation_pointer']['materials'][id(
+            blender_material)]['paths'] = export_settings['current_paths'].copy()
         export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['glTF_material'] = material
 
     export_settings['current_paths'] = {}
 
     return material, uvmap_info, vc_info, udim_info
+
 
 def get_active_uvmap_index(blender_mesh):
     # retrieve active render UVMap
@@ -523,7 +557,7 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
         if m.startswith("additional") and additional_indices <= int(m[10:]):
             additional_indices = +1
 
-        if not 'type' in v.keys():
+        if 'type' not in v.keys():
             continue
 
         if v['type'] == 'Fixed':
@@ -543,7 +577,8 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
             else:
                 indices[m] = attr_indices[v['value']]
 
-    # Now we have all needed indices, let's create a set that can be used for caching, so containing all possible textures
+    # Now we have all needed indices, let's create a set that can be used for
+    # caching, so containing all possible textures
     all_textures = get_all_textures(additional_indices)
 
     caching_indices = []
@@ -561,9 +596,10 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
 @cached
 def caching_material_tex_indices(blender_material, material, caching_indices, export_settings):
     return (
-      (id(blender_material),),
-      (caching_indices,)
+        (id(blender_material),),
+        (caching_indices,)
     )
+
 
 @cached_by_key(key=caching_material_tex_indices)
 def __get_final_material_with_indices(blender_material, base_material, caching_indices, export_settings):
@@ -584,37 +620,53 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
 
         # Need to check if texture is not None, because it can be the case for UDIM on non managed UDIM textures
         if tex == "emissiveTexture":
-            if material.emissive_texture: material.emissive_texture.tex_coord = ind
+            if material.emissive_texture:
+                material.emissive_texture.tex_coord = ind
         elif tex == "normalTexture":
-            if material.normal_texture: material.normal_texture.tex_coord = ind
+            if material.normal_texture:
+                material.normal_texture.tex_coord = ind
         elif tex == "occlusionTexture":
-            if material.occlusion_texture: material.occlusion_texture.tex_coord = ind
+            if material.occlusion_texture:
+                material.occlusion_texture.tex_coord = ind
         elif tex == "baseColorTexture":
-            if material.pbr_metallic_roughness.base_color_texture: material.pbr_metallic_roughness.base_color_texture.tex_coord = ind
+            if material.pbr_metallic_roughness.base_color_texture:
+                material.pbr_metallic_roughness.base_color_texture.tex_coord = ind
         elif tex == "metallicRoughnessTexture":
-            if material.pbr_metallic_roughness.metallic_roughness_texture: material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = ind
+            if material.pbr_metallic_roughness.metallic_roughness_texture:
+                material.pbr_metallic_roughness.metallic_roughness_texture.tex_coord = ind
         elif tex == "clearcoatTexture":
-            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture']: material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture']:
+                material.extensions["KHR_materials_clearcoat"].extension['clearcoatTexture'].tex_coord = ind
         elif tex == "clearcoatRoughnessTexture":
-            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture']: material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture']:
+                material.extensions["KHR_materials_clearcoat"].extension['clearcoatRoughnessTexture'].tex_coord = ind
         elif tex == "clearcoatNormalTexture":
-            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture']: material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture']:
+                material.extensions["KHR_materials_clearcoat"].extension['clearcoatNormalTexture'].tex_coord = ind
         elif tex == "transmissionTexture":
-            if material.extensions["KHR_materials_transmission"].extension['transmissionTexture']: material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_transmission"].extension['transmissionTexture']:
+                material.extensions["KHR_materials_transmission"].extension['transmissionTexture'].tex_coord = ind
         elif tex == "specularTexture":
-            if material.extensions["KHR_materials_specular"].extension['specularTexture']: material.extensions["KHR_materials_specular"].extension['specularTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_specular"].extension['specularTexture']:
+                material.extensions["KHR_materials_specular"].extension['specularTexture'].tex_coord = ind
         elif tex == "specularColorTexture":
-            if material.extensions["KHR_materials_specular"].extension['specularColorTexture']: material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_specular"].extension['specularColorTexture']:
+                material.extensions["KHR_materials_specular"].extension['specularColorTexture'].tex_coord = ind
         elif tex == "sheenColorTexture":
-            if material.extensions["KHR_materials_sheen"].extension['sheenColorTexture']: material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_sheen"].extension['sheenColorTexture']:
+                material.extensions["KHR_materials_sheen"].extension['sheenColorTexture'].tex_coord = ind
         elif tex == "sheenRoughnessTexture":
-            if material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture']: material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture']:
+                material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = ind
         elif tex == "thicknessTexture":
-            if material.extensions["KHR_materials_volume"].extension['thicknessTexture']: material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
+            if material.extensions["KHR_materials_volume"].extension['thicknessTexture']:
+                material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
         elif tex == "anisotropyTexture":
-            if material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture']: material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'].tex_coord = ind
+            if material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture']:
+                material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'].tex_coord = ind
         elif tex.startswith("additional"):
-            export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx'] + int(tex[10:])].tex_coord = ind
+            export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx'] +
+                                                         int(tex[10:])].tex_coord = ind
         else:
             export_settings['log'].error("some Textures tex coord are not managed")
 
@@ -630,6 +682,7 @@ def get_material_from_idx(material_idx, materials, export_settings):
             i = material_idx if material_idx < len(materials) else -1
             mat = materials[i]
     return mat
+
 
 def get_base_material(material_idx, materials, export_settings):
 
@@ -663,8 +716,8 @@ def get_base_material(material_idx, materials, export_settings):
             # VC will have alpha, as there is no material to know if alpha is used or not
             material_info["vc_info"]["alpha_mode"] = "BLEND"
 
-
     return material, material_info
+
 
 def get_all_textures(idx=0):
     # Make sure to have all texture here, always in same order

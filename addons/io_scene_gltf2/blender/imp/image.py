@@ -103,6 +103,7 @@ def create_from_data(gltf, img_idx):
 
     return blender_image
 
+
 def _placeholder_image(name, path):
     image = bpy.data.images.new(name, 128, 128)
     # allow the path to be resolved later

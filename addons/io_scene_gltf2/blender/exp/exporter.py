@@ -26,9 +26,11 @@ from ...io.exp.user_extensions import export_user_extensions
 from .accessors import gather_accessor
 from .material.image import get_gltf_image_from_blender_image
 
+
 class AdditionalData:
     def __init__(self):
         additional_textures = []
+
 
 class GlTF2Exporter:
     """
@@ -73,7 +75,6 @@ class GlTF2Exporter:
             skins=[],
             textures=[]
         )
-
 
         self.additional_data = AdditionalData()
 
@@ -174,7 +175,6 @@ class GlTF2Exporter:
             with open(dst_path, 'wb') as f:
                 f.write(image.data)
 
-
     def manage_gpu_instancing(self, node, also_mesh=False):
         instances = {}
         for child_idx in node.children:
@@ -188,7 +188,7 @@ class GlTF2Exporter:
 
         # For now, manage instances only if there are all children of same object
         # And this instances don't have any children
-        instances = {k:v for k, v in instances.items() if len(v) > 1}
+        instances = {k: v for k, v in instances.items() if len(v) > 1}
 
         holders = []
         if len(instances.keys()) == 1 and also_mesh is False:
@@ -229,9 +229,9 @@ class GlTF2Exporter:
             scale = []
             for inst_node_idx in insts:
                 inst_node = self.__gltf.nodes[inst_node_idx]
-                t = inst_node.translation if inst_node.translation is not None else [0,0,0]
-                r = inst_node.rotation if inst_node.rotation is not None else [0,0,0,1]
-                s = inst_node.scale if inst_node.scale is not None else [1,1,1]
+                t = inst_node.translation if inst_node.translation is not None else [0, 0, 0]
+                r = inst_node.rotation if inst_node.rotation is not None else [0, 0, 0, 1]
+                s = inst_node.scale if inst_node.scale is not None else [1, 1, 1]
                 for i in t:
                     translation.append(i)
                 for i in r:
@@ -273,7 +273,8 @@ class GlTF2Exporter:
             # Add extension to the Node, and traverse it
             if not holder.extensions:
                 holder.extensions = {}
-            holder.extensions["EXT_mesh_gpu_instancing"] = gltf2_io_extensions.Extension('EXT_mesh_gpu_instancing', ext, False)
+            holder.extensions["EXT_mesh_gpu_instancing"] = gltf2_io_extensions.Extension(
+                'EXT_mesh_gpu_instancing', ext, False)
             holder.mesh = inst_key
             self.__traverse(holder.extensions)
 
@@ -285,7 +286,6 @@ class GlTF2Exporter:
             node.children = new_children
 
             self.nodes_idx_to_remove.extend(insts)
-
 
     def manage_gpu_instancing_nodes(self, export_settings):
         if export_settings['gltf_gpu_instances'] is True:
@@ -337,11 +337,11 @@ class GlTF2Exporter:
                     new_animation_list.append(animation)
             self.__gltf.animations = new_animation_list
 
-            #TODO: remove unused animation accessors?
+            # TODO: remove unused animation accessors?
 
             # And now really remove nodes
-            self.__gltf.nodes = [node for idx, node in enumerate(self.__gltf.nodes) if idx not in self.nodes_idx_to_remove]
-
+            self.__gltf.nodes = [node for idx, node in enumerate(
+                self.__gltf.nodes) if idx not in self.nodes_idx_to_remove]
 
     def add_scene(self, scene: gltf2_io.Scene, active: bool = False, export_settings=None):
         """
@@ -366,7 +366,6 @@ class GlTF2Exporter:
         for child_idx in node.children:
             len_ = len([i for i in self.nodes_idx_to_remove if i < child_idx])
             new_node_children.append(child_idx - len_)
-
 
         for child_idx in node.children:
             self.recursive_slide_node_idx(child_idx)
@@ -467,42 +466,40 @@ class GlTF2Exporter:
         d[key] = d_key
         return cls.__get_key_path(d[key], keypath, default)
 
-
     def traverse_extensions(self):
         self.__traverse(self.__gltf.extensions)
 
     def __traverse_property(self, node):
-            for member_name in [a for a in dir(node) if not a.startswith('__') and not callable(getattr(node, a))]:
-                new_value = self.__traverse(getattr(node, member_name))
-                setattr(node, member_name, new_value)  # usually this is the same as before
+        for member_name in [a for a in dir(node) if not a.startswith('__') and not callable(getattr(node, a))]:
+            new_value = self.__traverse(getattr(node, member_name))
+            setattr(node, member_name, new_value)  # usually this is the same as before
 
-                # # TODO: maybe with extensions hooks we can find a more elegant solution
-                # if member_name == "extensions" and new_value is not None:
-                #     for extension_name in new_value.keys():
-                #         self.__append_unique_and_get_index(self.__gltf.extensions_used, extension_name)
-                #         self.__append_unique_and_get_index(self.__gltf.extensions_required, extension_name)
+            # # TODO: maybe with extensions hooks we can find a more elegant solution
+            # if member_name == "extensions" and new_value is not None:
+            #     for extension_name in new_value.keys():
+            #         self.__append_unique_and_get_index(self.__gltf.extensions_used, extension_name)
+            #         self.__append_unique_and_get_index(self.__gltf.extensions_required, extension_name)
 
-            if self.export_settings['gltf_trs_w_animation_pointer'] is True:
-                if type(node) == gltf2_io.AnimationChannelTarget:
-                    if node.path in ["translation", "rotation", "scale", "weights"]:
-                        if node.extensions is None:
-                            node.extensions = {}
-                        node.extensions["KHR_animation_pointer"] = {"pointer": "/nodes/" + str(node.node) + "/" + node.path}
-                        node.node = None
-                        node.path = "pointer"
-                        self.__append_unique_and_get_index(self.__gltf.extensions_used, "KHR_animation_pointer")
-
+        if self.export_settings['gltf_trs_w_animation_pointer'] is True:
             if type(node) == gltf2_io.AnimationChannelTarget:
-                if node.path not in ["translation", "rotation", "scale", "weights"] and node.path != "pointer":
+                if node.path in ["translation", "rotation", "scale", "weights"]:
                     if node.extensions is None:
                         node.extensions = {}
-                    node.extensions["KHR_animation_pointer"] = {"pointer": node.path.replace("XXX", str(node.node))}
+                    node.extensions["KHR_animation_pointer"] = {"pointer": "/nodes/" + str(node.node) + "/" + node.path}
                     node.node = None
                     node.path = "pointer"
                     self.__append_unique_and_get_index(self.__gltf.extensions_used, "KHR_animation_pointer")
 
-            return node
+        if type(node) == gltf2_io.AnimationChannelTarget:
+            if node.path not in ["translation", "rotation", "scale", "weights"] and node.path != "pointer":
+                if node.extensions is None:
+                    node.extensions = {}
+                node.extensions["KHR_animation_pointer"] = {"pointer": node.path.replace("XXX", str(node.node))}
+                node.node = None
+                node.path = "pointer"
+                self.__append_unique_and_get_index(self.__gltf.extensions_used, "KHR_animation_pointer")
 
+        return node
 
     def __traverse(self, node):
         """

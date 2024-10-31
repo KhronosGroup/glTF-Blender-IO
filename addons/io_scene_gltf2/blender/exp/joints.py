@@ -48,6 +48,7 @@ def __convert_swizzle_scale(scale, export_settings):
     else:
         return Vector((scale[0], scale[1], scale[2]))
 
+
 @cached
 def gather_joint_vnode(vnode, export_settings):
     """
@@ -62,7 +63,8 @@ def gather_joint_vnode(vnode, export_settings):
 
     if export_settings['gltf_armature_object_remove'] is True:
         if vtree.nodes[vnode].parent_uuid is not None:
-            mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe() @ vtree.nodes[vnode].matrix_world
+            mat = vtree.nodes[vtree.nodes[vnode].parent_uuid].matrix_world.inverted_safe(
+            ) @ vtree.nodes[vnode].matrix_world
         else:
             mat = vtree.nodes[vnode].matrix_world
     else:
@@ -85,7 +87,8 @@ def gather_joint_vnode(vnode, export_settings):
     # traverse into children
     children = []
 
-    for bone_uuid in [c for c in vtree.nodes[vnode].children if vtree.nodes[c].blender_type == gltf2_blender_gather_tree.VExportNode.BONE]:
+    for bone_uuid in [c for c in vtree.nodes[vnode].children if vtree.nodes[c].blender_type ==
+                      gltf2_blender_gather_tree.VExportNode.BONE]:
         children.append(gather_joint_vnode(bone_uuid, export_settings))
 
     # finally add to the joints array containing all the joints in the hierarchy
@@ -109,6 +112,7 @@ def gather_joint_vnode(vnode, export_settings):
     vtree.nodes[vnode].node = node
 
     return node
+
 
 def __gather_extras(blender_bone, export_settings):
     if export_settings['gltf_extras']:

@@ -135,18 +135,24 @@ def __encode_primitive(primitive, dll, export_settings, encoded_primitives_cache
     draco_ids = {}
     for attr_name in attributes:
         attr = attributes[attr_name]
-        draco_id = dll.encoderSetAttribute(encoder, attr_name.encode(), attr.component_type, attr.type.encode(), attr.buffer_view.data, attr.normalized)
+        draco_id = dll.encoderSetAttribute(
+            encoder,
+            attr_name.encode(),
+            attr.component_type,
+            attr.type.encode(),
+            attr.buffer_view.data,
+            attr.normalized)
         draco_ids[attr_name] = draco_id
 
     dll.encoderSetIndices(encoder, indices.component_type, indices.count, indices.buffer_view.data)
 
     dll.encoderSetCompressionLevel(encoder, export_settings['gltf_draco_mesh_compression_level'])
     dll.encoderSetQuantizationBits(encoder,
-        export_settings['gltf_draco_position_quantization'],
-        export_settings['gltf_draco_normal_quantization'],
-        export_settings['gltf_draco_texcoord_quantization'],
-        export_settings['gltf_draco_color_quantization'],
-        export_settings['gltf_draco_generic_quantization'])
+                                   export_settings['gltf_draco_position_quantization'],
+                                   export_settings['gltf_draco_normal_quantization'],
+                                   export_settings['gltf_draco_texcoord_quantization'],
+                                   export_settings['gltf_draco_color_quantization'],
+                                   export_settings['gltf_draco_generic_quantization'])
 
     preserve_triangle_order = primitive.targets is not None and len(primitive.targets) > 0
     if not dll.encoderEncode(encoder, preserve_triangle_order):

@@ -25,6 +25,7 @@ from ....cache import cached
 from ....accessors import gather_accessor
 from .keyframes import gather_object_sampled_keyframes
 
+
 @cached
 def gather_object_sampled_animation_sampler(
         obj_uuid: str,
@@ -33,7 +34,7 @@ def gather_object_sampled_animation_sampler(
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
         export_settings
-        ):
+):
 
     keyframes = __gather_keyframes(
         obj_uuid,
@@ -53,14 +54,18 @@ def gather_object_sampled_animation_sampler(
         extensions=None,
         extras=None,
         input=input,
-        interpolation=__gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings),
-        output=output
-    )
+        interpolation=__gather_interpolation(
+            node_channel_is_animated,
+            node_channel_interpolation,
+            keyframes,
+            export_settings),
+        output=output)
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
     export_user_extensions('animation_gather_object_sampler', export_settings, blender_object, action_name)
 
     return sampler
+
 
 def __gather_keyframes(
         obj_uuid: str,
@@ -68,7 +73,7 @@ def __gather_keyframes(
         action_name: str,
         node_channel_is_animated: bool,
         export_settings
-        ):
+):
 
     keyframes = gather_object_sampled_keyframes(
         obj_uuid,
@@ -79,6 +84,7 @@ def __gather_keyframes(
     )
 
     return keyframes
+
 
 def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str, export_settings):
 
@@ -105,9 +111,9 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
     object_path = get_target_object_path(channel)
     transform = mathutils.Matrix.Identity(4)
 
-    need_rotation_correction = (export_settings['gltf_cameras'] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.CAMERA) or \
-        (export_settings['gltf_lights'] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.LIGHT)
-
+    need_rotation_correction = (
+        export_settings['gltf_cameras'] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.CAMERA) or (
+        export_settings['gltf_lights'] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.LIGHT)
 
     values = []
     fps = (bpy.context.scene.render.fps * bpy.context.scene.render.fps_base)
@@ -144,6 +150,7 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
 
     return input, output
 
+
 def __gather_interpolation(
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
@@ -159,7 +166,7 @@ def __gather_interpolation(
         if node_channel_is_animated is False:
             return "STEP"
         elif node_channel_interpolation == "CUBICSPLINE":
-            return "LINEAR" # We can't have a single keyframe with CUBICSPLINE
+            return "LINEAR"  # We can't have a single keyframe with CUBICSPLINE
         else:
             return node_channel_interpolation
     else:

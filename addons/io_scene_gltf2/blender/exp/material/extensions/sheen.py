@@ -37,11 +37,12 @@ def export_sheen(blender_material, export_settings):
     uvmap_infos = {}
     udim_infos = {}
 
-    #TODOExt : What to do if sheen_socket is linked? or is not between 0 and 1?
+    # TODOExt : What to do if sheen_socket is linked? or is not between 0 and 1?
 
-    sheenTint_non_linked = sheenTint_socket.socket is not None and isinstance(sheenTint_socket.socket, bpy.types.NodeSocket) and not sheenTint_socket.socket.is_linked
-    sheenRoughness_non_linked = sheenRoughness_socket.socket is not None and isinstance(sheenRoughness_socket.socket, bpy.types.NodeSocket) and not sheenRoughness_socket.socket.is_linked
-
+    sheenTint_non_linked = sheenTint_socket.socket is not None and isinstance(
+        sheenTint_socket.socket, bpy.types.NodeSocket) and not sheenTint_socket.socket.is_linked
+    sheenRoughness_non_linked = sheenRoughness_socket.socket is not None and isinstance(
+        sheenRoughness_socket.socket, bpy.types.NodeSocket) and not sheenRoughness_socket.socket.is_linked
 
     if sheenTint_non_linked is True:
         color = sheenTint_socket.socket.default_value[:3]
@@ -52,13 +53,14 @@ def export_sheen(blender_material, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_sheen/sheenColorFactor"
-        export_settings['current_paths']["node_tree." + sheenTint_socket.socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + sheenTint_socket.socket.path_from_id() +
+                                         ".default_value"] = path_
 
     else:
         # Factor
         fac, path = get_factor_from_socket(sheenTint_socket, kind='RGB')
         if fac is None:
-            fac = [1.0, 1.0, 1.0] # Default is 0.0/0.0/0.0, so we need to set it to 1 if no factor
+            fac = [1.0, 1.0, 1.0]  # Default is 0.0/0.0/0.0, so we need to set it to 1 if no factor
         if fac is not None and fac != [0.0, 0.0, 0.0]:
             sheen_extension['sheenColorFactor'] = fac
 
@@ -72,10 +74,7 @@ def export_sheen(blender_material, export_settings):
         # Texture
         if has_image_node_from_socket(sheenTint_socket, export_settings):
             original_sheenColor_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
-                sheenTint_socket,
-                (sheenTint_socket,),
-                export_settings,
-            )
+                sheenTint_socket, (sheenTint_socket,), export_settings, )
             sheen_extension['sheenColorTexture'] = original_sheenColor_texture
             uvmap_infos.update({'sheenColorTexture': uvmap_info})
             udim_infos.update({'sheenColorTexture': udim_info} if len(udim_info) > 0 else {})
@@ -84,7 +83,8 @@ def export_sheen(blender_material, export_settings):
                 for k in export_settings['current_texture_transform'].keys():
                     path_ = {}
                     path_['length'] = export_settings['current_texture_transform'][k]['length']
-                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_sheen/sheenColorTexture/extensions")
+                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                        "YYY", "extensions/KHR_materials_sheen/sheenColorTexture/extensions")
                     path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
                     export_settings['current_paths'][k] = path_
 
@@ -99,13 +99,14 @@ def export_sheen(blender_material, export_settings):
         path_ = {}
         path_['length'] = 1
         path_['path'] = "/materials/XXX/extensions/KHR_materials_sheen/sheenRoughnessFactor"
-        export_settings['current_paths']["node_tree." + sheenRoughness_socket.socket.path_from_id() + ".default_value"] = path_
+        export_settings['current_paths']["node_tree." + sheenRoughness_socket.socket.path_from_id() +
+                                         ".default_value"] = path_
 
     else:
         # Factor
         fac, path = get_factor_from_socket(sheenRoughness_socket, kind='VALUE')
         if fac is None:
-            fac = 1.0 # Default is 0.0 so we need to set it to 1.0 if no factor
+            fac = 1.0  # Default is 0.0 so we need to set it to 1.0 if no factor
         if fac is not None and fac != 0.0:
             sheen_extension['sheenRoughnessFactor'] = fac
 
@@ -118,11 +119,8 @@ def export_sheen(blender_material, export_settings):
 
         # Texture
         if has_image_node_from_socket(sheenRoughness_socket, export_settings):
-            original_sheenRoughness_texture, uvmap_info , udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
-                sheenRoughness_socket,
-                (sheenRoughness_socket,),
-                export_settings,
-            )
+            original_sheenRoughness_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
+                sheenRoughness_socket, (sheenRoughness_socket,), export_settings, )
             sheen_extension['sheenRoughnessTexture'] = original_sheenRoughness_texture
             uvmap_infos.update({'sheenRoughnessTexture': uvmap_info})
             udim_infos.update({'sheenRoughnessTexture': udim_info} if len(udim_info) > 0 else {})
@@ -131,7 +129,8 @@ def export_sheen(blender_material, export_settings):
                 for k in export_settings['current_texture_transform'].keys():
                     path_ = {}
                     path_['length'] = export_settings['current_texture_transform'][k]['length']
-                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace("YYY", "extensions/KHR_materials_sheen/sheenRoughnessTexture/extensions")
+                    path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                        "YYY", "extensions/KHR_materials_sheen/sheenRoughnessTexture/extensions")
                     path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
                     export_settings['current_paths'][k] = path_
 

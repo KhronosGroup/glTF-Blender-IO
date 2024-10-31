@@ -21,7 +21,6 @@ PBR_WATTS_TO_LUMENS = 683
 # Industry convention, biological peak at 555nm, scientific standard as part of SI candela definition.
 
 
-
 # This means use the inverse of the TRS transform.
 def inverted_trs_mapping_node(mapping_transform):
     offset = mapping_transform["offset"]
@@ -36,12 +35,14 @@ def inverted_trs_mapping_node(mapping_transform):
         return None
 
     new_offset = Matrix.Rotation(-rotation, 3, 'Z') @ Vector((-offset[0], -offset[1], 1))
-    new_offset[0] /= scale[0]; new_offset[1] /= scale[1]
+    new_offset[0] /= scale[0]
+    new_offset[1] /= scale[1]
     return {
         "offset": new_offset[0:2],
         "rotation": -rotation,
-        "scale": [1/scale[0], 1/scale[1]],
+        "scale": [1 / scale[0], 1 / scale[1]],
     }
+
 
 def texture_transform_blender_to_gltf(mapping_transform):
     """
@@ -60,6 +61,7 @@ def texture_transform_blender_to_gltf(mapping_transform):
         'scale': [scale[0], scale[1]],
     }
 
+
 def texture_transform_gltf_to_blender(texture_transform):
     """
     Converts a KHR_texture_transform into the equivalent offset/rotation/scale
@@ -77,6 +79,7 @@ def texture_transform_gltf_to_blender(texture_transform):
         'scale': [scale[0], scale[1]],
     }
 
+
 def get_target(property):
     return {
         "delta_location": "translation",
@@ -91,6 +94,7 @@ def get_target(property):
         "value": "weights"
     }.get(property, None)
 
+
 def get_component_type(attribute_component_type):
     return {
         "INT8": gltf2_io_constants.ComponentType.Float,
@@ -101,11 +105,12 @@ def get_component_type(attribute_component_type):
         "FLOAT_VECTOR_4": gltf2_io_constants.ComponentType.Float,
         "QUATERNION": gltf2_io_constants.ComponentType.Float,
         "FLOAT4X4": gltf2_io_constants.ComponentType.Float,
-        "INT": gltf2_io_constants.ComponentType.Float, # No signed Int in glTF accessor
+        "INT": gltf2_io_constants.ComponentType.Float,  # No signed Int in glTF accessor
         "FLOAT": gltf2_io_constants.ComponentType.Float,
         "BOOLEAN": gltf2_io_constants.ComponentType.Float,
         "UNSIGNED_BYTE": gltf2_io_constants.ComponentType.UnsignedByte
     }.get(attribute_component_type)
+
 
 def get_channel_from_target(target):
     return {
@@ -113,6 +118,7 @@ def get_channel_from_target(target):
         "translation": "location",
         "scale": "scale"
     }.get(target)
+
 
 def get_data_type(attribute_component_type):
     return {
@@ -129,6 +135,7 @@ def get_data_type(attribute_component_type):
         "BOOLEAN": gltf2_io_constants.DataType.Scalar,
     }.get(attribute_component_type)
 
+
 def get_data_length(attribute_component_type):
     return {
         "INT8": 1,
@@ -144,6 +151,7 @@ def get_data_length(attribute_component_type):
         "BOOLEAN": 1
     }.get(attribute_component_type)
 
+
 def get_numpy_type(attribute_component_type):
     return {
         "INT8": np.float32,
@@ -154,17 +162,18 @@ def get_numpy_type(attribute_component_type):
         "FLOAT_VECTOR_4": np.float32,
         "QUATERNION": np.float32,
         "FLOAT4X4": np.float32,
-        "INT": np.float32, #signed integer are not supported by glTF
+        "INT": np.float32,  # signed integer are not supported by glTF
         "FLOAT": np.float32,
         "BOOLEAN": np.float32,
         "UNSIGNED_BYTE": np.uint8,
     }.get(attribute_component_type)
 
+
 def get_attribute_type(component_type, data_type):
     if gltf2_io_constants.DataType.num_elements(data_type) == 1:
         return {
             gltf2_io_constants.ComponentType.Float: "FLOAT",
-            gltf2_io_constants.ComponentType.UnsignedByte: "INT" # What is the best for compatibility?
+            gltf2_io_constants.ComponentType.UnsignedByte: "INT"  # What is the best for compatibility?
         }.get(component_type, None)
     elif gltf2_io_constants.DataType.num_elements(data_type) == 2:
         return {
@@ -178,7 +187,7 @@ def get_attribute_type(component_type, data_type):
         return {
             gltf2_io_constants.ComponentType.Float: "FLOAT_COLOR",
             gltf2_io_constants.ComponentType.UnsignedShort: "BYTE_COLOR",
-            gltf2_io_constants.ComponentType.UnsignedByte: "BYTE_COLOR" # What is the best for compatibility?
+            gltf2_io_constants.ComponentType.UnsignedByte: "BYTE_COLOR"  # What is the best for compatibility?
         }.get(component_type, None)
     elif gltf2_io_constants.DataType.num_elements(data_type) == 16:
         return {
@@ -187,6 +196,7 @@ def get_attribute_type(component_type, data_type):
     else:
         pass
 
+
 def get_attribute(attributes, name, data_type, domain):
     attribute = attributes.get(name)
     if attribute is not None and attribute.data_type == data_type and attribute.domain == domain:
@@ -194,16 +204,19 @@ def get_attribute(attributes, name, data_type, domain):
     else:
         return None
 
+
 def get_gltf_interpolation(interpolation):
-        return {
+    return {
         "BEZIER": "CUBICSPLINE",
         "LINEAR": "LINEAR",
         "CONSTANT": "STEP"
     }.get(interpolation, "LINEAR")
 
+
 def get_anisotropy_rotation_gltf_to_blender(rotation):
     # glTF rotation is in randian, Blender in 0 to 1
     return rotation / (2 * np.pi)
+
 
 def get_anisotropy_rotation_blender_to_gltf(rotation):
     # glTF rotation is in randian, Blender in 0 to 1
