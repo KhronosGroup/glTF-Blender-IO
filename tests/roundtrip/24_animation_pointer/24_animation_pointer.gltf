@@ -4883,7 +4883,7 @@
 			  "path": "pointer",
 			  "extensions": {
 				"KHR_animation_pointer": {
-				  "pointer": "/materials/5/normalTexture/scale"
+				  "pointer": "/materials/5/normalTexture/offset"
 				}
 			  }
 			}
@@ -7507,10 +7507,7 @@
 			"KHR_texture_transform": {}
 		  }
 		},
-		"name": "PBRProperties-NormalScale",
-		"extensions": {
-		  "KHR_texture_transform": {}
-		}
+		"name": "PBRProperties-NormalScale"
 	  },
 	  {
 		"pbrMetallicRoughness": {
@@ -7549,10 +7546,7 @@
 		  },
 		  "metallicFactor": 0.0
 		},
-		"name": "TextureTransform",
-		"extensions": {
-		  "KHR_texture_transform": {}
-		}
+		"name": "TextureTransform"
 	  },
 	  {
 		"pbrMetallicRoughness": {
