@@ -5,7 +5,7 @@
   "dependencies": {},
   "devDependencies": {
     "eslint": "^9.3.0",
-    "gltf-validator": "^2.0.0-dev.3.9",
+    "gltf-validator": "2.0.0-dev.3.9",
     "mocha": "^10.4.0",
     "mochawesome": "^7.1.3"
   },
