@@ -528,7 +528,7 @@ class VExportTree:
                         c for c in root_bones_uuid if self.nodes[c].use_deform is True]
                 if cache:
                     self.nodes[uuid].root_bones_uuid = root_bones_uuid
-                # in cache of caching (first time), we return the value even if not needed
+                # in case of caching (first call), we return the value even if not needed
                 # (because we call the function only to cache the value)
                 return root_bones_uuid
             else:
