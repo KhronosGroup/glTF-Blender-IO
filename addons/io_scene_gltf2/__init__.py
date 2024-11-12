@@ -778,7 +778,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_optimize_animation_keep_anim_data: BoolProperty(
         name='Force keeping channel for data',
         description=(
-            "If all keyframes are identical for properites (exported via KHR_animation_pointer), "
+            "If all keyframes are identical for properties (exported via KHR_animation_pointer), "
             "force keeping the minimal animation"
         ),
         default=False
@@ -1228,6 +1228,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_optimize_animation'] = False
             export_settings['gltf_optimize_animation_keep_armature'] = False
             export_settings['gltf_optimize_animation_keep_object'] = False
+            export_settings['gltf_optimize_animation_keep_data'] = False
             export_settings['gltf_optimize_disable_viewport'] = False
             export_settings['gltf_export_anim_single_armature'] = False
             export_settings['gltf_export_reset_pose_bones'] = False
