@@ -88,7 +88,8 @@ def gather_data_sampled_keyframes(
                     strength = max(value)
                     value = [f / strength for f in value]
                 else:
-                    pass  # Don't need to do anything, as we are in the range [0,1]
+                    # Don't need to do anything, as we are in the range [0,1]
+                    pass
 
             if export_settings['KHR_animation_pointer']['materials'][blender_id]['paths'][channel][
                     'path'] == "/materials/XXX/extensions/KHR_materials_emissive_strength/emissiveStrength":
@@ -147,7 +148,12 @@ def gather_data_sampled_keyframes(
         return None
 
     cst = fcurve_is_constant(keyframes)
-    return None if cst is True else keyframes
+
+    if export_settings['gltf_optimize_animation_keep_data'] is False:
+        return None if cst is True else keyframes
+    else:
+        # Keep at least 2 keyframes if data are not changing
+        return [keyframes[0], keyframes[-1]] if cst is True and len(keyframes) >= 2 else keyframes
 
 
 def fcurve_is_constant(keyframes):

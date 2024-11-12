@@ -12,6 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from bpy_extras.io_utils import ImportHelper, ExportHelper, poll_file_object_drop
+from bpy.types import Operator
+from bpy.props import (StringProperty,
+                       BoolProperty,
+                       EnumProperty,
+                       IntProperty,
+                       FloatProperty,
+                       CollectionProperty)
+import bpy
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
@@ -54,16 +63,6 @@ def reload_package(module_dict_main):
 
 if "bpy" in locals():
     reload_package(locals())
-
-import bpy
-from bpy.props import (StringProperty,
-                       BoolProperty,
-                       EnumProperty,
-                       IntProperty,
-                       FloatProperty,
-                       CollectionProperty)
-from bpy.types import Operator
-from bpy_extras.io_utils import ImportHelper, ExportHelper, poll_file_object_drop
 
 
 #
@@ -127,7 +126,8 @@ def on_export_format_changed(self, context):
 
 def on_export_action_filter_changed(self, context):
     if self.export_action_filter is True:
-        bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(type=GLTF2_filter_action)
+        bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(
+            type=GLTF2_filter_action)
         bpy.types.Scene.gltf_action_filter_active = bpy.props.IntProperty()
 
         for action in bpy.data.actions:
@@ -194,10 +194,13 @@ class ConvertGLTF2_Base:
         name='Lighting Mode',
         items=(
             ('SPEC', 'Standard', 'Physically-based glTF lighting units (cd, lx, nt)'),
-            ('COMPAT', 'Unitless', 'Non-physical, unitless lighting. Useful when exposure controls are not available'),
-            ('RAW', 'Raw (Deprecated)', 'Blender lighting strengths with no conversion'),
+            ('COMPAT', 'Unitless',
+             'Non-physical, unitless lighting. Useful when exposure controls are not available'),
+            ('RAW', 'Raw (Deprecated)',
+             'Blender lighting strengths with no conversion'),
         ),
-        description='Optional backwards compatibility for non-standard render engines. Applies to lights',  # TODO: and emissive materials',
+        # TODO: and emissive materials',
+        description='Optional backwards compatibility for non-standard render engines. Applies to lights',
         default='SPEC'
     )
 
@@ -772,6 +775,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_optimize_animation_keep_anim_data: BoolProperty(
+        name='Force keeping channel for data',
+        description=(
+            "If all keyframes are identical for properites (exported via KHR_animation_pointer), "
+            "force keeping the minimal animation"
+        ),
+        default=False
+    )
+
     export_optimize_disable_viewport: BoolProperty(
         name='Disable viewport for other objects',
         description=(
@@ -1025,7 +1037,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                     self.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
 
             except (AttributeError, TypeError):
-                self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
+                self.report(
+                    {"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
 
         import sys
@@ -1042,7 +1055,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             except Exception:
                 pass
 
-        self.has_active_exporter_extensions = len(exporter_extension_layout_draw.keys()) > 0
+        self.has_active_exporter_extensions = len(
+            exporter_extension_layout_draw.keys()) > 0
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
@@ -1096,7 +1110,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['timestamp'] = datetime.datetime.now()
         export_settings['gltf_export_id'] = self.gltf_export_id
         export_settings['gltf_filepath'] = self.filepath
-        export_settings['gltf_filedirectory'] = os.path.dirname(export_settings['gltf_filepath']) + '/'
+        export_settings['gltf_filedirectory'] = os.path.dirname(
+            export_settings['gltf_filepath']) + '/'
         export_settings['gltf_texturedirectory'] = os.path.join(
             export_settings['gltf_filedirectory'],
             self.export_texture_dir,
@@ -1196,6 +1211,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
             export_settings['gltf_optimize_animation_keep_object'] = self.export_optimize_animation_keep_anim_object
+            export_settings['gltf_optimize_animation_keep_data'] = self.export_optimize_animation_keep_anim_data
             export_settings['gltf_optimize_disable_viewport'] = self.export_optimize_disable_viewport
             export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
@@ -1270,7 +1286,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
-            path_to_uri(os.path.splitext(os.path.basename(self.filepath))[0] + '.bin')
+            path_to_uri(os.path.splitext(
+                os.path.basename(self.filepath))[0] + '.bin')
         )
 
         export_settings['warning_joint_weight_exceed_already_displayed'] = False
@@ -1347,7 +1364,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_panel_animation(layout, operator)
 
         # If gltfpack is not setup in plugin preferences -> don't show any gltfpack relevant options in export dialog
-        gltfpack_path = context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui.strip()
+        gltfpack_path = context.preferences.addons['io_scene_gltf2'].preferences.gltfpack_path_ui.strip(
+        )
         if gltfpack_path != '':
             export_panel_gltfpack(layout, operator)
 
@@ -1424,7 +1442,8 @@ def export_panel_data(layout, operator):
 
 
 def export_panel_data_scene_graph(layout, operator):
-    header, body = layout.panel("GLTF_export_data_scene_graph", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_data_scene_graph", default_closed=True)
     header.label(text="Scene Graph")
     if body:
         body.prop(operator, 'export_gn_mesh')
@@ -1452,7 +1471,8 @@ def export_panel_data_mesh(layout, operator):
         col = body.column()
         col.prop(operator, 'export_shared_accessors')
 
-        header, sub_body = body.panel("GLTF_export_data_material_vertex_color", default_closed=True)
+        header, sub_body = body.panel(
+            "GLTF_export_data_material_vertex_color", default_closed=True)
         header.label(text="Vertex Colors")
         if sub_body:
             row = sub_body.row()
@@ -1463,7 +1483,8 @@ def export_panel_data_mesh(layout, operator):
                     text="Note that fully compliant glTF 2.0 engine/viewer will use it as multiplicative factor for base color.",
                     icon='ERROR')
                 row = sub_body.row()
-                row.label(text="If you want to use VC for any other purpose than vertex color, you should use custom attributes.")
+                row.label(
+                    text="If you want to use VC for any other purpose than vertex color, you should use custom attributes.")
             row = sub_body.row()
             row.active = operator.export_vertex_color != "NONE"
             row.prop(operator, 'export_all_vertex_colors')
@@ -1473,7 +1494,8 @@ def export_panel_data_mesh(layout, operator):
 
 
 def export_panel_data_material(layout, operator):
-    header, body = layout.panel("GLTF_export_data_material", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_data_material", default_closed=True)
     header.label(text="Material")
     if body:
         body.prop(operator, 'export_materials')
@@ -1489,7 +1511,8 @@ def export_panel_data_material(layout, operator):
         col.active = operator.export_image_format != "WEBP"
         col.prop(operator, "export_image_webp_fallback")
 
-        header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
+        header, sub_body = body.panel(
+            "GLTF_export_data_material_unused", default_closed=True)
         header.label(text="Unused Textures & Images")
         if sub_body:
             row = sub_body.row()
@@ -1499,7 +1522,8 @@ def export_panel_data_material(layout, operator):
 
 
 def export_panel_data_shapekeys(layout, operator):
-    header, body = layout.panel("GLTF_export_data_shapekeys", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_data_shapekeys", default_closed=True)
     header.use_property_split = False
     header.prop(operator, "export_morph", text="")
     header.label(text="Shape Keys")
@@ -1512,7 +1536,8 @@ def export_panel_data_shapekeys(layout, operator):
         col.prop(operator, 'export_morph_tangent')
 
         # Data-Shape Keys-Optimize
-        header, sub_body = body.panel("GLTF_export_data_shapekeys_optimize", default_closed=True)
+        header, sub_body = body.panel(
+            "GLTF_export_data_shapekeys_optimize", default_closed=True)
         header.label(text="Optimize Shape Keys")
         if sub_body:
             row = sub_body.row()
@@ -1524,7 +1549,8 @@ def export_panel_data_shapekeys(layout, operator):
 
 
 def export_panel_data_armature(layout, operator):
-    header, body = layout.panel("GLTF_export_data_armature", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_data_armature", default_closed=True)
     header.label(text="Armature")
     if body:
         body.active = operator.export_skins
@@ -1535,7 +1561,8 @@ def export_panel_data_armature(layout, operator):
         row.active = operator.export_force_sampling
         row.prop(operator, 'export_def_bones')
         if operator.export_force_sampling is False and operator.export_def_bones is True:
-            body.label(text="Export only deformation bones is not possible when not sampling animation")
+            body.label(
+                text="Export only deformation bones is not possible when not sampling animation")
         row = body.row()
         row.prop(operator, 'export_armature_object_remove')
         row = body.row()
@@ -1545,7 +1572,8 @@ def export_panel_data_armature(layout, operator):
 
 
 def export_panel_data_skinning(layout, operator):
-    header, body = layout.panel("GLTF_export_data_skinning", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_data_skinning", default_closed=True)
     header.use_property_split = False
     header.prop(operator, "export_skins", text="")
     header.label(text="Skinning")
@@ -1559,14 +1587,16 @@ def export_panel_data_skinning(layout, operator):
 
 
 def export_panel_data_lighting(layout, operator):
-    header, body = layout.panel("GLTF_export_data_lighting", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_data_lighting", default_closed=True)
     header.label(text="Lighting")
     if body:
         body.prop(operator, 'export_import_convert_lighting_mode')
 
 
 def export_panel_data_compression(layout, operator):
-    header, body = layout.panel("GLTF_export_data_compression", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_data_compression", default_closed=True)
     header.use_property_split = False
     header.prop(operator, "export_draco_mesh_compression_enable", text="")
     header.label(text="Compression")
@@ -1576,7 +1606,8 @@ def export_panel_data_compression(layout, operator):
         body.prop(operator, 'export_draco_mesh_compression_level')
 
         col = body.column(align=True)
-        col.prop(operator, 'export_draco_position_quantization', text="Quantize Position")
+        col.prop(operator, 'export_draco_position_quantization',
+                 text="Quantize Position")
         col.prop(operator, 'export_draco_normal_quantization', text="Normal")
         col.prop(operator, 'export_draco_texcoord_quantization', text="Tex Coord")
         col.prop(operator, 'export_draco_color_quantization', text="Color")
@@ -1619,7 +1650,8 @@ def export_panel_animation(layout, operator):
 
 
 def export_panel_animation_notes(layout, operator):
-    header, body = layout.panel("GLTF_export_animation_notes", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_animation_notes", default_closed=True)
     header.label(text="Notes")
     if body:
         if operator.export_animation_mode == "SCENE":
@@ -1634,23 +1666,27 @@ def export_panel_animation_notes(layout, operator):
 
 
 def export_panel_animation_ranges(layout, operator):
-    header, body = layout.panel("GLTF_export_animation_ranges", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_animation_ranges", default_closed=True)
     header.label(text="Rest & Ranges")
     if body:
         body.active = operator.export_animations
 
         body.prop(operator, 'export_current_frame')
         row = body.row()
-        row.active = operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'BROADCAST', 'NLA_TRACKS']
+        row.active = operator.export_animation_mode in [
+            'ACTIONS', 'ACTIVE_ACTIONS', 'BROADCAST', 'NLA_TRACKS']
         row.prop(operator, 'export_frame_range')
         body.prop(operator, 'export_anim_slide_to_zero')
         row = body.row()
-        row.active = operator.export_animation_mode in ['ACTIONS', 'ACTIVE_ACTIONS', 'BROADCAST', 'NLA_TRACKS']
+        row.active = operator.export_animation_mode in [
+            'ACTIONS', 'ACTIVE_ACTIONS', 'BROADCAST', 'NLA_TRACKS']
         body.prop(operator, 'export_negative_frame')
 
 
 def export_panel_animation_armature(layout, operator):
-    header, body = layout.panel("GLTF_export_animation_armature", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_animation_armature", default_closed=True)
     header.label(text="Armature")
     if body:
         body.active = operator.export_animations
@@ -1660,7 +1696,8 @@ def export_panel_animation_armature(layout, operator):
 
 
 def export_panel_animation_shapekeys(layout, operator):
-    header, body = layout.panel("GLTF_export_animation_shapekeys", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_animation_shapekeys", default_closed=True)
     header.use_property_split = False
     header.prop(operator, "export_morph_animation", text="")
     header.label(text="Shape Keys Animation")
@@ -1671,7 +1708,8 @@ def export_panel_animation_shapekeys(layout, operator):
 
 
 def export_panel_animation_sampling(layout, operator):
-    header, body = layout.panel("GLTF_export_animation_sampling", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_animation_sampling", default_closed=True)
     header.use_property_split = False
     header.prop(operator, "export_force_sampling", text="")
     header.label(text="Sampling Animations")
@@ -1682,9 +1720,11 @@ def export_panel_animation_sampling(layout, operator):
 
 
 def export_panel_animation_pointer(layout, operator):
-    header, body = layout.panel("GLTF_export_animation_pointer", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_animation_pointer", default_closed=True)
     header.use_property_split = False
-    header.active = operator.export_animations and operator.export_animation_mode in ['NLA_TRACKS', 'SCENE']
+    header.active = operator.export_animations and operator.export_animation_mode in [
+        'NLA_TRACKS', 'SCENE']
     header.prop(operator, "export_pointer_animation", text="")
     header.label(text="Animation Pointer (Experimental)")
     if body:
@@ -1694,7 +1734,8 @@ def export_panel_animation_pointer(layout, operator):
 
 
 def export_panel_animation_optimize(layout, operator):
-    header, body = layout.panel("GLTF_export_animation_optimize", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_animation_optimize", default_closed=True)
     header.label(text="Optimize Animations")
     if body:
         body.active = operator.export_animations
@@ -1708,11 +1749,16 @@ def export_panel_animation_optimize(layout, operator):
         row.prop(operator, 'export_optimize_animation_keep_anim_object')
 
         row = body.row()
+        row.active = operator.export_pointer_animation
+        row.prop(operator, 'export_optimize_animation_keep_anim_data')
+
+        row = body.row()
         row.prop(operator, 'export_optimize_disable_viewport')
 
 
 def export_panel_animation_extra(layout, operator):
-    header, body = layout.panel("GLTF_export_animation_extra", default_closed=True)
+    header, body = layout.panel(
+        "GLTF_export_animation_extra", default_closed=True)
     header.label(text="Extra Animations")
     if body:
         body.active = operator.export_animations
@@ -1892,7 +1938,8 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             except Exception:
                 pass
 
-        self.has_active_importer_extensions = len(importer_extension_layout_draw.keys()) > 0
+        self.has_active_importer_extensions = len(
+            importer_extension_layout_draw.keys()) > 0
         return ImportHelper.invoke_popup(self, context)
 
     def execute(self, context):
@@ -1941,7 +1988,8 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             gltf_importer.read()
             gltf_importer.checks()
 
-            gltf_importer.log.info("Data are loaded, start creating Blender stuff")
+            gltf_importer.log.info(
+                "Data are loaded, start creating Blender stuff")
 
             start_time = time.time()
             BlenderGlTF.create(gltf_importer)
@@ -2041,7 +2089,8 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         row = layout.row()
         row.prop(self, "gltfpack_path_ui", text="Path to gltfpack")
         row = layout.row()
-        row.prop(self, "allow_embedded_format", text="Allow glTF Embedded format")
+        row.prop(self, "allow_embedded_format",
+                 text="Allow glTF Embedded format")
         if self.allow_embedded_format:
             layout.label(
                 text="This is the least efficient of the available forms, and should only be used when required.",
