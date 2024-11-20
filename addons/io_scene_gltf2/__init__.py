@@ -1860,6 +1860,12 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=False,
     )
 
+    import_select_created_objects: BoolProperty(
+        name='Select imported objects',
+        description='Select created objects at the end of the import',
+        default=True,
+    )
+
     def draw(self, context):
         operator = self
         layout = self.layout
@@ -1874,6 +1880,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.prop(self, 'export_import_convert_lighting_mode')
         layout.prop(self, 'import_webp_texture')
         import_bone_panel(layout, operator)
+        import_ux_panel(layout, operator)
 
         import_panel_user_extension(context, layout)
 
@@ -1969,6 +1976,12 @@ def import_bone_panel(layout, operator):
         if operator.bone_heuristic == 'BLENDER':
             body.prop(operator, 'disable_bone_shape')
             body.prop(operator, 'bone_shape_scale_factor')
+
+def import_ux_panel(layout, operator):
+    header, body = layout.panel("GLTF_import_ux", default_closed=False)
+    header.label(text="Pipeline")
+    if body:
+        body.prop(operator, 'import_select_created_objects')
 
 
 def import_panel_user_extension(context, layout):
