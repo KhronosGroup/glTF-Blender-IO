@@ -337,6 +337,8 @@ class MESH_PT_gltf2_mesh_variants(bpy.types.Panel):
 
     @classmethod
     def poll(self, context):
+        if not bpy.context.object:
+            return False
         return bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True \
             and len(bpy.context.object.material_slots) > 0
 
@@ -390,6 +392,8 @@ class SCENE_OT_gltf2_variant_slot_add(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
+        if not bpy.context.object:
+            return False
         return len(bpy.context.object.material_slots) > 0
 
     def execute(self, context):
@@ -422,6 +426,8 @@ class SCENE_OT_gltf2_material_to_variant(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
+        if not bpy.context.object:
+            return False
         return len(bpy.context.object.material_slots) > 0 and context.object.data.gltf2_variant_pointer != ""
 
     def execute(self, context):
@@ -462,6 +468,8 @@ class SCENE_OT_gltf2_remove_material_variant(bpy.types.Operator):
 
     @classmethod
     def poll(self, context):
+        if not bpy.context.object:
+            return False
         return len(bpy.context.object.material_slots) > 0 and len(bpy.context.object.data.gltf2_variant_mesh_data) > 0
 
     def execute(self, context):
