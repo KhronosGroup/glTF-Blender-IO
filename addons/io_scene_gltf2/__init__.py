@@ -1676,7 +1676,7 @@ def export_panel_animation_sampling(layout, operator):
     header.prop(operator, "export_force_sampling", text="")
     header.label(text="Sampling Animations")
     if body:
-        body.active = operator.export_animations
+        body.active = operator.export_animations and operator.export_force_sampling
 
         body.prop(operator, 'export_frame_step')
 
