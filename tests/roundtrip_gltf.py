@@ -46,19 +46,22 @@ try:
     if '--use-variants' in argv:
         bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
 
-    if '--export_not_shared_accessors' in argv:
-        export_shared_accessors = False
-    else:
-        export_shared_accessors = True
+    export_shared_accessors = False if '--export_not_shared_accessors' in argv else True
+    export_tangent = True if '--export-tangent' in argv else False
+    export_force_sample_anim = False if '--no-sample-anim' in argv else True
+    export_attributes = True if '--export-attributes' in argv else False
+    export_gpu_instances = True if '--export-gpu_instances' in argv else False
 
-    if '--no-sample-anim' in argv:
-        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_force_sampling=False)
-    elif '--export-attributes' in argv:
-        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_attributes=True, export_shared_accessors=export_shared_accessors)
-    elif '--export-gpu_instances' in argv:
-        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]), export_gpu_instances=True)
-    else:
-        bpy.ops.export_scene.gltf(export_format=export_format, filepath=os.path.join(output_dir, path_parts[1]))
+
+    bpy.ops.export_scene.gltf(
+        export_format=export_format,
+        filepath=os.path.join(output_dir, path_parts[1]),
+        export_shared_accessors=export_shared_accessors,
+        export_tangents=export_tangent,
+        export_force_sampling=export_force_sample_anim,
+        export_attributes=export_attributes,
+        export_gpu_instances=export_gpu_instances
+    )
 except Exception as err:
     print(err, file=sys.stderr)
     sys.exit(1)
