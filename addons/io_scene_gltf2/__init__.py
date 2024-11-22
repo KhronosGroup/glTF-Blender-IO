@@ -1384,8 +1384,8 @@ def export_panel_include(layout, operator, is_file_browser):
     header, body = layout.panel("GLTF_export_include", default_closed=True)
     header.label(text="Include")
     if body:
+        col = body.column(heading="Limit to", align=True)
         if is_file_browser:
-            col = body.column(heading="Limit to", align=True)
             col.prop(operator, 'use_selection')
             col.prop(operator, 'use_visible')
             col.prop(operator, 'use_renderable')
@@ -1393,7 +1393,8 @@ def export_panel_include(layout, operator, is_file_browser):
             if operator.use_active_collection:
                 col.prop(operator, 'use_active_collection_with_nested')
             col.prop(operator, 'use_active_scene')
-
+        else:
+            col.prop(operator, 'use_renderable')
         col = body.column(heading="Data", align=True)
         col.prop(operator, 'export_extras')
         col.prop(operator, 'export_cameras')
