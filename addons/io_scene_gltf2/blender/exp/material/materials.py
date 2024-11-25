@@ -589,7 +589,8 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
     material = __get_final_material_with_indices(blender_material, base_material, caching_indices, export_settings)
 
     # We need to set the material paths info with the real final material (material with all texCoord, etc.. set)
-    export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['glTF_material'] = material
+    if id(blender_material) in export_settings['KHR_animation_pointer']['materials']:
+        export_settings['KHR_animation_pointer']['materials'][id(blender_material)]['glTF_material'] = material
 
     return material
 
