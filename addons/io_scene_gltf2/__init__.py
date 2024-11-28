@@ -1860,6 +1860,13 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=False,
     )
 
+    import_scene_extras: BoolProperty(
+        name='Import Scene Extras',
+        description='Import scene extras as custom properties. '
+                    'Existing custom properties will be overwritten',
+        default=True,
+    )
+
     def draw(self, context):
         operator = self
         layout = self.layout
@@ -1873,6 +1880,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'export_import_convert_lighting_mode')
         layout.prop(self, 'import_webp_texture')
+        layout.prop(self, 'import_scene_extras')
         import_bone_panel(layout, operator)
 
         import_panel_user_extension(context, layout)
