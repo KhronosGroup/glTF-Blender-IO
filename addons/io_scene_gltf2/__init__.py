@@ -1483,10 +1483,10 @@ def export_panel_data_material(layout, operator):
         if operator.export_image_format in ["AUTO", "JPEG", "WEBP"]:
             col.prop(operator, 'export_image_quality')
         col = body.column()
-        col.active = operator.export_image_format != "WEBP"
+        col.active = operator.export_image_format != "WEBP" and not operator.export_materials in ['PLACEHOLDER', 'NONE']
         col.prop(operator, "export_image_add_webp")
         col = body.column()
-        col.active = operator.export_image_format != "WEBP"
+        col.active = operator.export_image_format != "WEBP"  and not operator.export_materials in ['PLACEHOLDER', 'NONE']
         col.prop(operator, "export_image_webp_fallback")
 
         header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
@@ -1676,7 +1676,7 @@ def export_panel_animation_sampling(layout, operator):
     header.prop(operator, "export_force_sampling", text="")
     header.label(text="Sampling Animations")
     if body:
-        body.active = operator.export_animations
+        body.active = operator.export_animations and operator.export_force_sampling
 
         body.prop(operator, 'export_frame_step')
 
