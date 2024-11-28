@@ -185,6 +185,8 @@ def set_debug_log():
         return logging.CRITICAL
     elif bpy.app.debug_value == 4:
         return logging.DEBUG
+    else:
+        return logging.INFO
 
 
 class ConvertGLTF2_Base:
