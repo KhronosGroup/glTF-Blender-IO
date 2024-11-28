@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 4, 12),
+    "version": (4, 4, 16),
     'blender': (4, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -1483,10 +1483,10 @@ def export_panel_data_material(layout, operator):
         if operator.export_image_format in ["AUTO", "JPEG", "WEBP"]:
             col.prop(operator, 'export_image_quality')
         col = body.column()
-        col.active = operator.export_image_format != "WEBP"
+        col.active = operator.export_image_format != "WEBP" and not operator.export_materials in ['PLACEHOLDER', 'NONE']
         col.prop(operator, "export_image_add_webp")
         col = body.column()
-        col.active = operator.export_image_format != "WEBP"
+        col.active = operator.export_image_format != "WEBP"  and not operator.export_materials in ['PLACEHOLDER', 'NONE']
         col.prop(operator, "export_image_webp_fallback")
 
         header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
@@ -1676,7 +1676,7 @@ def export_panel_animation_sampling(layout, operator):
     header.prop(operator, "export_force_sampling", text="")
     header.label(text="Sampling Animations")
     if body:
-        body.active = operator.export_animations
+        body.active = operator.export_animations and operator.export_force_sampling
 
         body.prop(operator, 'export_frame_step')
 
@@ -1866,6 +1866,13 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=True,
     )
 
+    import_scene_extras: BoolProperty(
+        name='Import Scene Extras',
+        description='Import scene extras as custom properties. '
+                    'Existing custom properties will be overwritten',
+        default=True,
+    )
+
     def draw(self, context):
         operator = self
         layout = self.layout
@@ -1879,6 +1886,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'export_import_convert_lighting_mode')
         layout.prop(self, 'import_webp_texture')
+        layout.prop(self, 'import_scene_extras')
         import_bone_panel(layout, operator)
         import_ux_panel(layout, operator)
 

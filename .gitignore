@@ -1,6 +1,7 @@
 .idea/
 addons/.idea/
 addons/io_scene_gltf2/.idea/
+addons/io_scene_gltf2/libextern_draco.so
 addons/blender-debugger-for-vscode/
 mochawesome-report
 /scenes/
