@@ -1882,11 +1882,10 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
-        layout.prop(self, 'import_pack_images')
         layout.prop(self, 'merge_vertices')
         layout.prop(self, 'import_shading')
         layout.prop(self, 'export_import_convert_lighting_mode')
-        layout.prop(self, 'import_webp_texture')
+        import_texture_panel(layout, operator)
         import_bone_panel(layout, operator)
         import_ux_panel(layout, operator)
 
@@ -1982,7 +1981,7 @@ def import_bone_panel(layout, operator):
     if body:
         body.prop(operator, 'bone_heuristic')
         if operator.bone_heuristic == 'BLENDER':
-            body.prop(self, 'guess_original_bind_pose')
+            body.prop(operator, 'guess_original_bind_pose')
             body.prop(operator, 'disable_bone_shape')
             body.prop(operator, 'bone_shape_scale_factor')
 
@@ -1992,6 +1991,13 @@ def import_ux_panel(layout, operator):
     if body:
         body.prop(operator, 'import_select_created_objects')
         body.prop(operator, 'import_scene_extras')
+
+def import_texture_panel(layout, operator):
+    header, body = layout.panel("GLTF_import_texture", default_closed=False)
+    header.label(text="Texture")
+    if body:
+        body.prop(operator, 'import_pack_images')
+        body.prop(operator, 'import_webp_texture')
 
 
 def import_panel_user_extension(context, layout):
