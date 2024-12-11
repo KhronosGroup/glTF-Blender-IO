@@ -1885,7 +1885,6 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.prop(self, 'import_pack_images')
         layout.prop(self, 'merge_vertices')
         layout.prop(self, 'import_shading')
-        layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'export_import_convert_lighting_mode')
         layout.prop(self, 'import_webp_texture')
         import_bone_panel(layout, operator)
@@ -1979,10 +1978,11 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
 
 def import_bone_panel(layout, operator):
     header, body = layout.panel("GLTF_import_bone", default_closed=False)
-    header.label(text="Bones")
+    header.label(text="Bones & Skin")
     if body:
         body.prop(operator, 'bone_heuristic')
         if operator.bone_heuristic == 'BLENDER':
+            body.prop(self, 'guess_original_bind_pose')
             body.prop(operator, 'disable_bone_shape')
             body.prop(operator, 'bone_shape_scale_factor')
 
