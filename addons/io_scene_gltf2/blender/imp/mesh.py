@@ -412,16 +412,19 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
         has_materials = any(prim.extensions is not None and 'KHR_materials_variants' in prim.extensions.keys()
                             for prim in pymesh.primitives)
 
-    has_variant = prim.extensions is not None and 'KHR_materials_variants' in prim.extensions.keys() \
-        and 'mappings' in prim.extensions['KHR_materials_variants'].keys()
+    we_can_merge_slots = True #TODO get it from import option
 
-    if has_materials:
+    if we_can_merge_slots:
         bl_material_index_dtype = np.intc
         material_indices = np.empty(num_faces, dtype=bl_material_index_dtype)
         empty_material_slot_index = None
         f = 0
 
         for idx_prim, prim in enumerate(pymesh.primitives):
+
+            has_variant = prim.extensions is not None and 'KHR_materials_variants' in prim.extensions.keys() \
+                and 'mappings' in prim.extensions['KHR_materials_variants'].keys()
+
             if prim.material is not None:
                 # Get the material
                 pymaterial = gltf.data.materials[prim.material]
@@ -431,22 +434,22 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
                 material_name = pymaterial.blender_material[vertex_color]
 
                 # Put material in slot (if not there)
-                if not has_variant:
+                if we_can_merge_slots is True and not has_variant:
                     if material_name not in mesh.materials:
                         mesh.materials.append(bpy.data.materials[material_name])
                     material_index = mesh.materials.find(material_name)
                 else:
-                    # In case of variant, do not merge slots
+                    # In case of variant, do not merge slots // or if user does not want to merge slots
                     mesh.materials.append(bpy.data.materials[material_name])
                     material_index = len(mesh.materials) - 1
             else:
-                if not has_variant:
+                if we_can_merge_slots is True and not has_variant:
                     if empty_material_slot_index is None:
                         mesh.materials.append(None)
                         empty_material_slot_index = len(mesh.materials) - 1
                     material_index = empty_material_slot_index
                 else:
-                    # In case of variant, do not merge slots
+                    # In case of variant, do not merge slots // or if user does not want to merge slots
                     mesh.materials.append(None)
                     material_index = len(mesh.materials) - 1
 
