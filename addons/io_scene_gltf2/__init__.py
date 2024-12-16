@@ -307,6 +307,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True,
     )
 
+    export_gltfpack_kn: BoolProperty(
+        name='Keep Named Nodes',
+        description='Restrict some optimization to keep named nodes and meshes attached to named nodes so that named nodes can be transformed externally',
+        default=False,
+    )
+
     # TODO: some stuff in Textures
 
     # TODO: Animations
@@ -1269,6 +1275,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_gltfpack_vpi'] = self.export_gltfpack_vpi
 
             export_settings['gltf_gltfpack_noq'] = self.export_gltfpack_noq
+            export_settings['gltf_gltfpack_kn'] = self.export_gltfpack_kn
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1747,7 +1754,7 @@ def export_panel_gltfpack(layout, operator):
         # col = body.column(heading = "Scene", align = True)
         col = body.column(heading="Miscellaneous", align=True)
         col.prop(operator, 'export_gltfpack_noq')
-
+        col.prop(operator, 'export_gltfpack_kn')
 
 def export_panel_user_extension(context, layout):
     for draw in exporter_extension_layout_draw.values():
