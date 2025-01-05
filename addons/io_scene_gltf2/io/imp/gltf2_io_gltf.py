@@ -40,6 +40,7 @@ class glTFImporter():
         self.decode_accessor_cache = {}
         self.import_user_extensions = import_settings['import_user_extensions']
         self.variant_mapping = {}  # Used to map between mgltf material idx and blender material, for Variants
+        self.created_materials = {}  # Used to store created materials, in case we need to create not used materials
 
         if 'loglevel' not in self.import_settings.keys():
             self.import_settings['loglevel'] = logging.CRITICAL

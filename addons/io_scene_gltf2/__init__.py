@@ -1862,6 +1862,12 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=False,
     )
 
+    import_unused_materials: BoolProperty(
+        name='Import Unused Materials',
+        description='Import materials not assigned to any mesh',
+        default=False,
+    )
+
     import_select_created_objects: BoolProperty(
         name='Select imported objects',
         description='Select created objects at the end of the import',
@@ -1888,6 +1894,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'export_import_convert_lighting_mode')
         layout.prop(self, 'import_webp_texture')
+        layout.prop(self, 'import_unused_materials')
         import_bone_panel(layout, operator)
         import_ux_panel(layout, operator)
 
