@@ -359,7 +359,8 @@ def gather_action_animations(obj_uuid: int,
         animation = bake_animation(obj_uuid, obj_uuid, export_settings)
         if animation is not None:
             animations.append(animation)
-        # TODOSLOT : return here? slot-1-B
+        # We can return early if no actions
+        return animations, tracks
 
 
     # Keep current situation and prepare export
