@@ -16,8 +16,7 @@ import bpy
 
 from ...io.imp.user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
-from .animation_utils import make_fcurve
-
+from .animation_utils import make_fcurve, get_or_create_action_and_slot
 
 class BlenderWeightAnim():
     """Blender ShapeKey Animation."""
@@ -57,10 +56,8 @@ class BlenderWeightAnim():
         else:
             return
 
-        name = animation.track_name + "_" + obj.name
-        action = bpy.data.actions.new(name)
-        action.id_root = "KEY"
-        gltf.needs_stash.append((obj.data.shape_keys, action))
+        path = channel.target.path
+        action, slot = get_or_create_action_and_slot(gltf, node_idx, anim_idx, path)
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
@@ -87,6 +84,7 @@ class BlenderWeightAnim():
 
                 make_fcurve(
                     action,
+                    slot,
                     coords,
                     data_path=data_path,
                     group_name="ShapeKeys",

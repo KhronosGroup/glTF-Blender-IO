@@ -17,7 +17,7 @@ from mathutils import Vector
 
 from ...io.imp.user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
-from .animation_utils import make_fcurve
+from .animation_utils import make_fcurve, get_or_create_action_and_slot
 from .vnode import VNode
 
 
@@ -69,7 +69,7 @@ class BlenderNodeAnim():
 
         import_user_extensions('gather_import_animation_channel_before_hook', gltf, animation, vnode, path, channel)
 
-        action = BlenderNodeAnim.get_or_create_action(gltf, node_idx, animation.track_name)
+        action, slot = get_or_create_action_and_slot(gltf, node_idx, anim_idx, path)
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
@@ -168,6 +168,7 @@ class BlenderNodeAnim():
             coords[1::2] = (vals[i] for vals in values)
             make_fcurve(
                 action,
+                slot,
                 coords,
                 data_path=blender_path,
                 index=i,
@@ -178,22 +179,3 @@ class BlenderNodeAnim():
         import_user_extensions('gather_import_animation_channel_after_hook',
                                gltf, animation, vnode, path, channel, action)
 
-    @staticmethod
-    def get_or_create_action(gltf, node_idx, anim_name):
-        vnode = gltf.vnodes[node_idx]
-
-        if vnode.type == VNode.Bone:
-            # For bones, the action goes on the armature.
-            vnode = gltf.vnodes[vnode.bone_arma]
-
-        obj = vnode.blender_object
-
-        action = gltf.action_cache.get(obj.name)
-        if not action:
-            name = anim_name + "_" + obj.name
-            action = bpy.data.actions.new(name)
-            action.id_root = 'OBJECT'
-            gltf.needs_stash.append((obj, action))
-            gltf.action_cache[obj.name] = action
-
-        return action

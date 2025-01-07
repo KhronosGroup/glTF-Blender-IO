@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import bpy
+from .vnode import VNode
 
-
-def simulate_stash(obj, track_name, action, start_frame=None):
+# TODOSLOT rename obj to data, as this can be obj, obj.data, material, material.node_tree, camera, light
+def simulate_stash(obj, track_name, action, action_slot, start_frame=None):
     # Simulate stash :
     # * add a track
     # * add an action on track
@@ -28,10 +29,11 @@ def simulate_stash(obj, track_name, action, start_frame=None):
     if start_frame is None:
         start_frame = bpy.context.scene.frame_start
     _strip = new_track.strips.new(action.name, start_frame, action)
+    _strip.action_slot = action_slot
     new_track.lock = True
     new_track.mute = True
 
-
+# TODOSLOT rename obj to data, as this can be obj, obj.data, material, material.node_tree, camera, light
 def restore_animation_on_object(obj, anim_name):
     """ here, obj can be an object, shapekeys, camera or light data """
     if not getattr(obj, 'animation_data', None):
@@ -44,7 +46,7 @@ def restore_animation_on_object(obj, anim_name):
             continue
 
         obj.animation_data.action = track.strips[0].action
-        obj.animation_data.action_slot = track.strips[0].action.slots[0] # For now, we only support one slot per action
+        obj.animation_data.action_slot = track.strips[0].action_slot
         return
 
     if obj.animation_data.action is not None:
@@ -52,9 +54,13 @@ def restore_animation_on_object(obj, anim_name):
     obj.animation_data.action = None
 
 
-def make_fcurve(action, co, data_path, index=0, group_name='', interpolation=None):
+def make_fcurve(action, slot, co, data_path, index=0, group_name='', interpolation=None):
+    channelbag = get_channelbag_for_slot(action, slot)
     try:
-        fcurve = action.fcurves.new(data_path=data_path, index=index, action_group=group_name)
+        fcurve = channelbag.fcurves.new(data_path=data_path, index=index)
+        # TODOSLOT group name: We can no more setting it at creation.
+        # Need to create an ActionGroup and add the fcurve to it
+        # Cf bpy.data.actions['CubeAction'].groups & fcurve.group
     except:
         # Some non valid files can have multiple target path
         return None
@@ -80,3 +86,95 @@ def make_fcurve(action, co, data_path, index=0, group_name='', interpolation=Non
     fcurve.update()  # force updating tangents (this may change when tangent will be managed)
 
     return fcurve
+
+def get_channelbag_for_slot(action, slot):
+    # This is on purpose limited to the first layer and strip. To support more
+    # than 1 layer, a rewrite of this operator is needed which ideally would
+    # happen in C++.
+    for layer in action.layers:
+        for strip in layer.strips:
+            channelbag = strip.channels(slot.handle)
+            return channelbag
+    return None
+
+def get_or_create_action_and_slot(gltf, node_idx, anim_idx, path):
+    animation = gltf.data.animations[anim_idx]
+    vnode = gltf.vnodes[node_idx]
+
+    if vnode.type == VNode.Bone:
+        # For bones, the action goes on the armature.
+        vnode = gltf.vnodes[vnode.bone_arma]
+
+    obj = vnode.blender_object
+
+    use_id = __get_id_from_path(path)
+
+    objects = gltf.action_cache.get(anim_idx)
+    if not objects:
+        # Nothing exists yet for this glTF animation
+        gltf.action_cache[anim_idx] = {}
+
+        # So create a new action
+        action = bpy.data.actions.new(animation.track_name)
+        action.layers.new('layer0')
+        action.layers[0].strips.new(type='KEYFRAME')
+
+        gltf.action_cache[anim_idx]['action'] = action
+        gltf.action_cache[anim_idx]['object_slots'] = {}
+
+    # We now have an action for the animation, check if we have slots for this object
+    slots = gltf.action_cache[anim_idx]['object_slots'].get(obj.name)
+    if not slots:
+
+        # We have no slots, create one
+
+        action = gltf.action_cache[anim_idx]['action']
+        if use_id == "OBJECT":
+            slot = action.slots.new(for_id=obj)
+            slot.name_display = obj.name
+            gltf.needs_stash.append((obj, action, slot))
+        elif use_id == "KEY":
+            slot = action.slots.new(for_id=obj.data.shape_keys)
+            # Do not change the display name of the shape key slot
+            # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
+            gltf.needs_stash.append((obj.data.shape_keys, action, slot))
+        else:
+            pass # TODOSLOT (cameras, lights, materials, material node trees)
+
+        action.layers[0].strips[0].channelbags.new(slot)
+
+        gltf.action_cache[anim_idx]['object_slots'][obj.name] = {}
+        gltf.action_cache[anim_idx]['object_slots'][obj.name][slot.id_root] = (action, slot)
+    else:
+        # We have slots, check if we have the right slot (based on id_root)
+        ac_sl = slots.get(use_id)
+        if not ac_sl:
+            action = gltf.action_cache[anim_idx]['action']
+            if use_id == "OBJECT":
+                slot = action.slots.new(for_id=obj)
+                slot.name_display = obj.name
+                gltf.needs_stash.append((obj, action, slot))
+            elif use_id == "KEY":
+                slot = action.slots.new(for_id=obj.data.shape_keys)
+                # Do not change the display name of the shape key slot
+                # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
+                gltf.needs_stash.append((obj.data.shape_keys, action, slot))
+            else:
+                pass # TODOSLOT (cameras, lights, materials, material node trees)
+
+            action.layers[0].strips[0].channelbags.new(slot)
+
+            gltf.action_cache[anim_idx]['object_slots'][obj.name][slot.id_root] = (action, slot)
+        else:
+            action, slot = ac_sl
+
+    # We now have action and slot, we can return the right slot
+    return action, slot
+
+def __get_id_from_path(path):
+    if path in ["translation", "rotation", "scale"]:
+        return "OBJECT"
+    elif path == "pointer":
+        return "pointer" #TODOSLOT (cameras, lights, materials, material node trees)
+    elif path == "weights":
+        return "KEY"
