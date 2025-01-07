@@ -45,10 +45,11 @@ class ActionsData:
             for slot in action.slots:
                 self.actions[id(action.action)].add_slot(slot.slot, slot.id_root, slot.track)
 
-    def sort(self): #TODOSLOT slot-1-B
-        pass #Implement sorting, to be sure to get:
-        # - SK or TRS first (see current code)
-        # Active action or NLA track (see current code)
+    def sort(self):
+        # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
+        self.actions.sort(key=lambda a: a.action.name.lower())
+        for action in self.actions.values():
+            action.sort()
 
     def exists(self, action, slot):
         if id(action) not in self.actions.keys():
@@ -84,8 +85,7 @@ class ActionData:
 
     def sort(self): #TODOSLOT slot-1-B
         pass #Implement sorting, to be sure to get:
-        # - SK or TRS first (see current code)
-        # Active action or NLA track (see current code)
+        # TRS first, and then SK
 
 class SlotData:
     def __init__(self, slot, id_root, track):
@@ -724,6 +724,7 @@ def gather_action_animations(obj_uuid: int,
     return animations, tracks
 
 
+# TODOSLOT slot-2-C. Do not create an action each time, but use the same action for all slots of the action
 @cached
 def __get_blender_actions(obj_uuid: str,
                           export_settings
@@ -867,6 +868,9 @@ def __get_blender_actions(obj_uuid: str,
     # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
     # TODOSLOT slot-1-B hook
     # blender_actions.sort(key=lambda a: a.name.lower())
+
+    # This will sort actions by name, and in each action, slot in right order
+    actions.sort()
 
     return actions
 
