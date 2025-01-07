@@ -108,7 +108,6 @@ def add_slide_data(start_frame, uuid: int, key: str, export_settings, add_driver
             export_settings['slide'][obj_dr][uuid + "_" + key] = start_frame
 
 
-# TODOSLOT slot-1-B : When merge by action, active actions should be merged too: bug (2 cubes on same TRS action)
 def merge_tracks_perform(merged_tracks, animations, export_settings):
     # Depending on the option choose, here "track" can be the NLA Track or the action name
     to_delete_idx = []
@@ -192,9 +191,6 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
 
 
 def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None):
-
-    # TODOSLOT slot-1-B : When baking (track or scene), we need to find a way to retrieve if there is an active action / slot on the object
-    # In order to get the real fcurve channel that are animated
 
     # Bake situation does not export any extra animation channels, as we bake TRS + weights on Track or scene level, without direct
     # Access to fcurve and action data
