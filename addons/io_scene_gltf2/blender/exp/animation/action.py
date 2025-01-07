@@ -94,6 +94,9 @@ class ActionData:
         sort_items = {'OBJECT': 1, 'KEY': 2}
         self.slots.sort(key=lambda x: sort_items.get(x.id_root))
 
+    def has_slots(self):
+        return len(self.slots) > 0
+
 
 class SlotData:
     def __init__(self, slot, id_root, track):
@@ -207,8 +210,9 @@ def prepare_actions_range(export_settings):
                     # To workaround Blender bug 107030, check manually
                     try:  # Avoid crash in case of strange/buggy fcurves
                         chanelbag = get_channelbag_for_slot(blender_action, slot.slot)
-                        start_frame = int(min([c.range()[0] for c in chanelbag.fcurves]))
-                        end_frame = int(max([c.range()[1] for c in chanelbag.fcurves]))
+                        fcurves = chanelbag.fcurves if chanelbag else []
+                        start_frame = int(min([c.range()[0] for c in fcurves]))
+                        end_frame = int(max([c.range()[1] for c in fcurves]))
                     except:
                         pass
 
@@ -745,7 +749,7 @@ def __get_blender_actions(obj_uuid: str,
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
 
     if export_settings['gltf_animation_mode'] == "BROADCAST":
-        return __get_blender_actions_broadcast(obj_uuid, export_settings) #TODOSLOT slot-1-D
+        return __get_blender_actions_broadcast(obj_uuid, export_settings)
 
     if blender_object and blender_object.animation_data is not None:
         # Collect active action.
@@ -894,10 +898,9 @@ def __gather_extras(blender_action, export_settings):
     return None
 
 
-def __get_blender_actions_broadcast(obj_uuid, export_settings): #TODOSLOT slot-1-D
-    blender_actions = []
-    blender_tracks = {}
-    action_on_type = {}
+def __get_blender_actions_broadcast(obj_uuid, export_settings):
+
+    blender_actions = ActionsData()
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
@@ -905,60 +908,59 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings): #TODOSLOT slot-1
     # - Object with animation data will get all actions
     # - Object without animation will not get any action
 
-    # Collect all actions
+    # Collect all actions and corresponding slots
     for blender_action in bpy.data.actions:
         if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(blender_action) in [
                 id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
-            continue  # We ignore this action
+            continue # We ignore this action
 
-        # Keep all actions on objects (no Shapekey animation, No armature animation (on bones))
-        if blender_action.id_root == "OBJECT":  # TRS and Bone animations #TODOSLOT slot-1-D
-            if blender_object.animation_data is None:
-                continue
-            if blender_object and blender_object.type == "ARMATURE" and __is_armature_action(blender_action): #TODOSLOT slot-1-D
-                blender_actions.append(blender_action)
-                blender_tracks[blender_action.name] = None
-                action_on_type[blender_action.name] = "OBJECT"
-            elif blender_object.type == "MESH":
-                if not __is_armature_action(blender_action): #TODOSLOT slot-1-D
-                    blender_actions.append(blender_action)
-                    blender_tracks[blender_action.name] = None
-                    action_on_type[blender_action.name] = "OBJECT"
-        elif blender_action.id_root == "KEY": #TODOSLOT slot-1-D
-            if blender_object.type != "MESH" or blender_object.data is None or blender_object.data.shape_keys is None or blender_object.data.shape_keys.animation_data is None:
-                continue
-            # Checking that the object has some SK and some animation on it
-            if blender_object is None:
-                continue
-            if blender_object.type != "MESH":
-                continue
-            if blender_object.data is None or blender_object.data.shape_keys is None:
-                continue
-            blender_actions.append(blender_action)
-            blender_tracks[blender_action.name] = None
-            action_on_type[blender_action.name] = "KEY"
+        new_action = ActionData(blender_action)
 
-    # Use a class to get parameters, to be able to modify them
+        for slot in blender_action.slots:
 
-    class GatherActionHookParameters:
-        def __init__(self, blender_actions, blender_tracks, action_on_type):
-            self.blender_actions = blender_actions
-            self.blender_tracks = blender_tracks
-            self.action_on_type = action_on_type
+            if slot.id_root == "OBJECT":
 
-    gatheractionhookparams = GatherActionHookParameters(blender_actions, blender_tracks, action_on_type)
+                # Do not export actions on objects without animation data
+                if blender_object.animation_data is None:
+                    continue
 
-    export_user_extensions('gather_actions_hook', export_settings, blender_object, gatheractionhookparams)
+                if blender_object and blender_object.type == "ARMATURE" and __is_armature_slot(blender_action, slot):
+                    new_action.add_slot(slot, slot.id_root, None)
+                elif blender_object and blender_object.type == "MESH" and not __is_armature_slot(blender_action, slot):
+                    new_action.add_slot(slot, slot.id_root, None)
 
-    # Get params back from hooks
-    blender_actions = gatheractionhookparams.blender_actions
-    blender_tracks = gatheractionhookparams.blender_tracks
-    action_on_type = gatheractionhookparams.action_on_type
+            elif slot.id_root == "KEY":
+                if blender_object.type != "MESH" or blender_object.data is None or blender_object.data.shape_keys is None or blender_object.data.shape_keys.animation_data is None:
+                    continue
+                # Checking that the object has some SK and some animation on it
+                if blender_object is None:
+                    continue
+                if blender_object.type != "MESH":
+                    continue
+                new_action.add_slot(slot, slot.id_root, None)
 
-    # Remove duplicate actions.
-    blender_actions = list(set(blender_actions))
-    # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
-    blender_actions.sort(key=lambda a: a.name.lower())
+            else:
+                pass # TODOSLOT slot-3
 
-    return [(blender_action, blender_tracks[blender_action.name], action_on_type[blender_action.name])
-            for blender_action in blender_actions]
+    # TODOSLOT hook
+    # # Use a class to get parameters, to be able to modify them
+
+    #     class GatherActionHookParameters:
+    #         def __init__(self, blender_actions, blender_tracks, action_on_type):
+    #             self.blender_actions = blender_actions
+    #             self.blender_tracks = blender_tracks
+    #             self.action_on_type = action_on_type
+
+    #     gatheractionhookparams = GatherActionHookParameters(blender_actions, blender_tracks, action_on_type)
+
+    #     export_user_extensions('gather_actions_hook', export_settings, blender_object, gatheractionhookparams)
+
+    #     # Get params back from hooks
+    #     blender_actions = gatheractionhookparams.blender_actions
+    #     blender_tracks = gatheractionhookparams.blender_tracks
+    #     action_on_type = gatheractionhookparams.action_on_type
+
+        if new_action.has_slots():
+            blender_actions.add_action(new_action)
+
+    return blender_actions

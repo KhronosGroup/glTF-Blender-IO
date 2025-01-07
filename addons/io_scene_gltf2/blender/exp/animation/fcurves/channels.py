@@ -75,7 +75,8 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, slot_han
     to_be_sampled = []  # (object_uuid , type , prop, optional(bone.name) )
 
     channelbag = __get_channelbag_for_slot_handle(blender_action, slot_handle)
-    for fcurve in channelbag.fcurves:
+    fcurves = channelbag.fcurves if channelbag else []
+    for fcurve in fcurves:
         type_ = None
         # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
         if len(fcurve.keyframe_points) == 0:
