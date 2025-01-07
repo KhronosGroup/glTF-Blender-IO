@@ -42,7 +42,7 @@ merge_animation_extensions_hook(self, gltf2_animation_source, gltf2_animation_de
 vtree_before_filter_hook(self, vtree, export_settings)
 vtree_after_filter_hook(self, vtree, export_settings)
 pre_gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings)
-gather_actions_hook(self, blender_object, params, export_settings) # params = blender_actions, blender_tracks, action_on_type
+gather_actions_hook(self, blender_object, params, export_settings) # params = ActionsData
 gather_tracks_hook(self, blender_object, params, export_settings) # params = blender_tracks, blender_tracks_names, track_on_type
 pre_gather_actions_hook(self, blender_object, export_settings) # For action mode
 pre_gather_tracks_hook(self, blender_object, export_settings) # For track mode

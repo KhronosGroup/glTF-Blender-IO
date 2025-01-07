@@ -62,6 +62,7 @@ def reset_bone_matrix(blender_object, export_settings) -> None:
 
     # Remove current action if any
     if blender_object.animation_data and blender_object.animation_data.action:
+        blender_object.animation_data.action_slot = None
         blender_object.animation_data.action = None
 
     # Resetting bones TRS to avoid to keep not keyed value on a future action set
@@ -75,8 +76,14 @@ def reset_sk_data(blender_object, blender_actions, export_settings) -> None:
     if export_settings['gltf_export_reset_sk_data'] is False:
         return
 
-    if len([i for i in blender_actions if i[2] == "SHAPEKEY"]) <= 1:
-        return
+    if type(blender_actions) == list:
+        # For tracks
+        if len([i for i in blender_actions if i[2] == "KEY"]) <= 1:
+            return
+    else:
+        # For actions
+        if len([i for i in blender_actions.values() if len([s for s in i.slots if s.id_root == "KEY"]) != 0]) <= 1:
+            return
 
     if blender_object.type != "MESH":
         return
@@ -299,3 +306,14 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, e
     if animation is not None and animation.channels:
         link_samplers(animation, export_settings)
         return animation
+
+
+def get_channelbag_for_slot(action, slot):
+    # This is on purpose limited to the first layer and strip. To support more
+    # than 1 layer, a rewrite of this operator is needed which ideally would
+    # happen in C++.
+    for layer in action.layers:
+        for strip in layer.strips:
+            channelbag = strip.channels(slot.handle)
+            return channelbag
+    return None

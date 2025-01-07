@@ -485,6 +485,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, frame, depsgr
                 and blender_obj.data.shape_keys is not None \
                 and blender_obj.data.shape_keys.animation_data is not None \
                 and blender_obj.data.shape_keys.animation_data.action is not None \
+                and blender_obj.data.shape_keys.animation_data.action_slot is not None \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
 
             key1, key2, key3, key4 = obj_uuid, blender_obj.data.shape_keys.animation_data.action.name, "sk", None

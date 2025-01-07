@@ -69,7 +69,7 @@ def gather_tracks_animations(export_settings):
 
     return new_animations
 
-
+# TODOSLOT slot-1-B: Is there any need to store the slot here?
 def gather_track_animations(obj_uuid: int,
                             tracks: typing.Dict[str,
                                                 typing.List[int]],
@@ -94,16 +94,19 @@ def gather_track_animations(obj_uuid: int,
 
     # Keep current situation
     current_action = None
+    current_action_slot = None
     current_sk_action = None
+    current_sk_action_slot = None
     current_world_matrix = None
     current_use_nla = None
     current_use_nla_sk = None
     restore_track_mute = {}
     restore_track_mute["OBJECT"] = {}
-    restore_track_mute["SHAPEKEY"] = {}
+    restore_track_mute["KEY"] = {}
 
     if blender_object.animation_data:
         current_action = blender_object.animation_data.action
+        current_action_slot = blender_object.animation_data.action_slot
         current_use_nla = blender_object.animation_data.use_nla
         restore_tweak_mode = blender_object.animation_data.use_tweak_mode
     current_world_matrix = blender_object.matrix_world.copy()
@@ -113,11 +116,14 @@ def gather_track_animations(obj_uuid: int,
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
         current_sk_action = blender_object.data.shape_keys.animation_data.action
+        current_sk_action_slot = blender_object.data.shape_keys.animation_data.action_slot
         current_use_nla_sk = blender_object.data.shape_keys.animation_data.use_nla
 
     # Prepare export for obj
     solo_track = None
     if blender_object.animation_data:
+        if blender_object.animation_data.action is not None:
+            blender_object.animation_data.action_slot = None
         blender_object.animation_data.action = None
         blender_object.animation_data.use_nla = True
     # Remove any solo (starred) NLA track. Restored after export
@@ -144,9 +150,9 @@ def gather_track_animations(obj_uuid: int,
         for track in track_group:
             restore_track_mute["OBJECT"][track.idx] = blender_object.animation_data.nla_tracks[track.idx].mute
             blender_object.animation_data.nla_tracks[track.idx].mute = True
-    for track_group in [b[0] for b in blender_tracks if b[2] == "SHAPEKEY"]:
+    for track_group in [b[0] for b in blender_tracks if b[2] == "KEY"]:
         for track in track_group:
-            restore_track_mute["SHAPEKEY"][track.idx] = blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute
+            restore_track_mute["KEY"][track.idx] = blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute
             blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = True
 
     export_user_extensions('animation_track_switch_loop_hook', export_settings, blender_object, False)
@@ -195,7 +201,7 @@ def gather_track_animations(obj_uuid: int,
                     on_type)
 
         reset_bone_matrix(blender_object, export_settings)
-        if on_type == "SHAPEKEY":
+        if on_type == "KEY":
             reset_sk_data(blender_object, blender_tracks, export_settings)
 
         # Export animation
@@ -222,8 +228,12 @@ def gather_track_animations(obj_uuid: int,
     # Restoring
     if current_action is not None:
         blender_object.animation_data.action = current_action
+        if current_action is not None:
+            blender_object.animation_data.action_slot = current_action_slot
     if current_sk_action is not None:
         blender_object.data.shape_keys.animation_data.action = current_sk_action
+        if current_sk_action is not None:
+            blender_object.data.shape_keys.animation_data.action_slot = current_sk_action_slot
     if solo_track is not None:
         solo_track.is_solo = True
     if solo_track_sk is not None:
@@ -239,9 +249,9 @@ def gather_track_animations(obj_uuid: int,
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
         blender_object.data.shape_keys.animation_data.use_nla = current_use_nla_sk
-        for track_group in [b[0] for b in blender_tracks if b[2] == "SHAPEKEY"]:
+        for track_group in [b[0] for b in blender_tracks if b[2] == "KEY"]:
             for track in track_group:
-                blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = restore_track_mute["SHAPEKEY"][track.idx]
+                blender_object.data.shape_keys.animation_data.nla_tracks[track.idx].mute = restore_track_mute["KEY"][track.idx]
 
     blender_object.matrix_world = current_world_matrix
 
@@ -381,7 +391,7 @@ def __get_nla_tracks_sk(obj_uuid: str, export_settings):
     exported_tracks.append(current_exported_tracks)
 
     track_names = [obj.data.shape_keys.animation_data.nla_tracks[tracks_group[0].idx].name for tracks_group in exported_tracks]
-    on_types = ['SHAPEKEY'] * len(track_names)
+    on_types = ['KEY'] * len(track_names)
     return exported_tracks, track_names, on_types
 
 
@@ -468,7 +478,9 @@ def gather_data_track_animations(
 
     # Keep current situation
     current_action = None
+    current_action_slot = None
     current_nodetree_action = None
+    current_nodetree_action_slot = None
     current_use_nla = None
     current_use_nla_node_tree = None
     restore_track_mute = {}
@@ -479,6 +491,7 @@ def gather_data_track_animations(
 
     if blender_data_object.animation_data:
         current_action = blender_data_object.animation_data.action
+        current_action_slot = blender_data_object.animation_data.action_slot
         current_use_nla = blender_data_object.animation_data.use_nla
         restore_tweak_mode = blender_data_object.animation_data.use_tweak_mode
 
@@ -486,11 +499,14 @@ def gather_data_track_animations(
             and blender_data_object.node_tree is not None \
             and blender_data_object.node_tree.animation_data is not None:
         current_nodetree_action = blender_data_object.node_tree.animation_data.action
+        current_nodetree_action_slot = blender_data_object.node_tree.animation_data.action_slot
         current_use_nla_node_tree = blender_data_object.node_tree.animation_data.use_nla
 
     # Prepare export for obj
     solo_track = None
     if blender_data_object.animation_data:
+        if blender_data_object.animation_data.action is not None:
+            blender_data_object.animation_data.action_slot = None
         blender_data_object.animation_data.action = None
         blender_data_object.animation_data.use_nla = True
     # Remove any solo (starred) NLA track. Restored after export
@@ -575,8 +591,12 @@ def gather_data_track_animations(
     # Restoring
     if current_action is not None:
         blender_data_object.animation_data.action = current_action
+        if current_action is not None:
+            blender_data_object.animation_data.action_slot = current_action_slot
     if current_nodetree_action is not None:
         blender_data_object.node_tree.animation_data.action = current_nodetree_action
+        if current_nodetree_action is not None:
+            blender_data_object.node_tree.animation_data.action_slot = current_nodetree_action_slot
     if solo_track is not None:
         solo_track.is_solo = True
     if solo_track_sk is not None:
