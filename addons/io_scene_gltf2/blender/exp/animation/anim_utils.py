@@ -70,19 +70,22 @@ def reset_bone_matrix(blender_object, export_settings) -> None:
         bone.matrix_basis = Matrix()
 
 
-def reset_sk_data(blender_object, blender_actions, export_settings) -> None:
+def reset_sk_data(blender_object, datas, export_settings) -> None:
     # Using NLA for SK is not so common
     # Reset to 0.0 will happen here only if there are at least 2 tracks to export
     if export_settings['gltf_export_reset_sk_data'] is False:
         return
 
-    if type(blender_actions) == list:
+    if datas is None:
+        return
+
+    if datas.data_type == "TRACK":
         # For tracks
-        if len([i for i in blender_actions if i[2] == "KEY"]) <= 1:
+        if len(list(datas.loop_on_type("KEY"))) <= 1:
             return
     else:
         # For actions
-        if len([i for i in blender_actions.values() if len([s for s in i.slots if s.id_root == "KEY"]) != 0]) <= 1:
+        if len([i for i in datas.values() if len([s for s in i.slots if s.id_root == "KEY"]) != 0]) <= 1:
             return
 
     if blender_object.type != "MESH":

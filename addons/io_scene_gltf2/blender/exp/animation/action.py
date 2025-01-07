@@ -35,6 +35,8 @@ from .anim_utils import reset_bone_matrix, reset_sk_data, link_samplers, add_sli
 
 
 class ActionsData:
+    data_type = "ACTION"
+
     def __init__(self):
         self.actions = {}
 
