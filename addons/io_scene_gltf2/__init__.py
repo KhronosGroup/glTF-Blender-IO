@@ -27,7 +27,7 @@ bl_info = {
 }
 
 
-# TODOSLOT slot-1-A: 26_nla_export is changed after export. Check if this is linked to slot, or a previous bug
+# TODOSLOT slot-1-B: 26_nla_export is changed after export. Check if this is linked to slot, or a previous bug
 # TODOSLOT slot-1-B: 28_sk_not_reset is changed after export. Check if this is linked to slot, or a previous bug
 
 def get_version_string():
@@ -816,6 +816,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    # TODOSLOT slot-2-E make ACTION by default, but need to change some tests?
     export_merge_animation: EnumProperty(
         name='Merge Animation',
         items=(('NLA_TRACK', 'NLA Track Names', 'Merge by NLA Track Names'),
