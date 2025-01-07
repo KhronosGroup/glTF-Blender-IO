@@ -816,6 +816,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_merge_animation: EnumProperty(
+        name='Merge Animation',
+        items=(('NLA_TRACK', 'NLA Track Names', 'Merge by NLA Track Names'),
+                ('ACTION', 'Actions', 'Merge by Actions'),
+                ('NONE', 'No Merge', 'Do not merge animations'),
+                ),
+        description='Merge animations',
+        default='NLA_TRACK'
+    )
+
     export_anim_single_armature: BoolProperty(
         name='Export all Armature Actions',
         description=(
@@ -1206,6 +1216,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
             export_settings['gltf_export_reset_sk_data'] = self.export_morph_reset_sk_data
             export_settings['gltf_bake_animation'] = self.export_bake_animation
+            export_settings['gltf_merge_animation'] = self.export_merge_animation
             export_settings['gltf_negative_frames'] = self.export_negative_frame
             export_settings['gltf_anim_slide_to_zero'] = self.export_anim_slide_to_zero
             export_settings['gltf_export_extra_animations'] = self.export_extra_animations
@@ -1600,16 +1611,9 @@ def export_panel_animation(layout, operator):
         if operator.export_animation_mode == "ACTIVE_ACTIONS":
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
 
-        row = body.row()
-        row.active = operator.export_force_sampling and operator.export_animation_mode in [
-            'ACTIONS', 'ACTIVE_ACTIONS', 'BROACAST']
-        row.prop(operator, 'export_bake_animation')
-        if operator.export_animation_mode == "SCENE":
-            body.prop(operator, 'export_anim_scene_split_object')
-        row = body.row()
-
         if operator.export_animation_mode in ["NLA_TRACKS", "SCENE"]:
             export_panel_animation_notes(body, operator)
+        export_panel_animation_bake_and_merge(body, operator)
         export_panel_animation_ranges(body, operator)
         export_panel_animation_armature(body, operator)
         export_panel_animation_shapekeys(body, operator)
@@ -1636,6 +1640,27 @@ def export_panel_animation_notes(layout, operator):
             body.label(text="Track mode uses full bake mode:")
             body.label(text="- sampling is active")
             body.label(text="- baking all objects is active")
+
+def export_panel_animation_bake_and_merge(layout, operator):
+    header, body = layout.panel("GLTF_export_animation_bake_and_merge", default_closed=False)
+    header.label(text="Bake & Merge")
+    if body:
+        body.active = operator.export_animations
+
+        row = body.row()
+        row.active = operator.export_force_sampling and operator.export_animation_mode in [
+            'ACTIONS', 'ACTIVE_ACTIONS', 'BROACAST']
+        row.prop(operator, 'export_bake_animation')
+
+        if operator.export_animation_mode == "SCENE":
+            row = body.row()
+            row.prop(operator, 'export_anim_scene_split_object')
+
+        row = body.row()
+        row.active = operator.export_force_sampling and operator.export_animation_mode in ['ACTIONS']
+        row.prop(operator, 'export_merge_animation')
+
+        row = body.row()
 
 
 def export_panel_animation_ranges(layout, operator):

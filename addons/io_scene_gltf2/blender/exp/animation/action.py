@@ -132,6 +132,9 @@ def gather_actions_animations(export_settings):
         for idx, animation in enumerate(animations):
             merged_tracks[merged_tracks_name].append(idx)
 
+    if export_settings['gltf_animation_merge'] == "NONE":
+        return animations
+
     new_animations = merge_tracks_perform(merged_tracks, animations, export_settings)
 
     return new_animations
@@ -649,12 +652,21 @@ def gather_action_animations(obj_uuid: int,
                 animations.append(animation)
 
                 # Store data for merging animation later
-                if track_name is not None:  # Do not take into account animation not in NLA
-                    # Do not take into account default NLA track names
-                    if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
-                        if track_name not in tracks.keys():
-                            tracks[track_name] = []
-                        tracks[track_name].append(offset + len(animations) - 1)  # Store index of animation in animations
+                if export_settings['gltf_merge_animation'] == "NLA_TRACK":
+                    if track_name is not None:  # Do not take into account animation not in NLA
+                        # Do not take into account default NLA track names
+                        if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
+                            if track_name not in tracks.keys():
+                                tracks[track_name] = []
+                            tracks[track_name].append(offset + len(animations) - 1)  # Store index of animation in animations
+                elif export_settings['gltf_merge_animation'] == "ACTION":
+                    if blender_action.name not in tracks.keys():
+                        tracks[blender_action.name] = []
+                    tracks[blender_action.name].append(offset + len(animations) - 1)
+                elif export_settings['gltf_merge_animation'] == "NONE":
+                    pass # Nothing to store, we are not going to merge animations
+                else:
+                    pass # This should not happen (or the developer added a new option, and forget to take it into account here)
 
 
 # Restoring current situation

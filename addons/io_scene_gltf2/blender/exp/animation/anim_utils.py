@@ -109,6 +109,7 @@ def add_slide_data(start_frame, uuid: int, key: str, export_settings, add_driver
 
 
 def merge_tracks_perform(merged_tracks, animations, export_settings):
+    # Depending on the option choose, here "track" can be the NLA Track or the action name
     to_delete_idx = []
     for merged_anim_track in merged_tracks.keys():
         if len(merged_tracks[merged_anim_track]) < 2:
