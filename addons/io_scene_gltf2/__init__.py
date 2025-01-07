@@ -1207,6 +1207,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 export_settings['gltf_trs_w_animation_pointer'] = False
                 export_settings['gltf_export_anim_pointer'] = False
 
+            # TODOSLOT slot-1-D broadcast, check what should be this value
+            if export_settings['gltf_animation_mode'] != "ACTION":
+                export_settings['gltf_merge_animation'] = "NLA_TRACK"
+            else:
+                export_settings['gltf_merge_animation'] = self.export_merge_animation
+
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
@@ -1216,7 +1222,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
             export_settings['gltf_export_reset_sk_data'] = self.export_morph_reset_sk_data
             export_settings['gltf_bake_animation'] = self.export_bake_animation
-            export_settings['gltf_merge_animation'] = self.export_merge_animation
             export_settings['gltf_negative_frames'] = self.export_negative_frame
             export_settings['gltf_anim_slide_to_zero'] = self.export_anim_slide_to_zero
             export_settings['gltf_export_extra_animations'] = self.export_extra_animations
