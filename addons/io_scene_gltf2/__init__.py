@@ -1207,7 +1207,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 export_settings['gltf_trs_w_animation_pointer'] = False
                 export_settings['gltf_export_anim_pointer'] = False
 
-            # TODOSLOT slot-1-D broadcast, check what should be this value
             if export_settings['gltf_animation_mode'] != "ACTIONS":
                 export_settings['gltf_merge_animation'] = "NLA_TRACK"
             else:
