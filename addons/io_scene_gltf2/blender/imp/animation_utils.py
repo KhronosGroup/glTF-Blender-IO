@@ -147,7 +147,6 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
             slot.name_display = obj.name
             # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
             gltf.needs_stash.append((obj.data.shape_keys, action, slot))
-            # TODOSLOT slot-2-A Assign manually the slot, and then call the operator to adapt the strip?
         else:
             pass # This should not happen, as we only support TRS and weights animations here
             # animation pointer is managed in another place
@@ -170,7 +169,6 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
                 # Do not change the display name of the shape key slot
                 slot.name_display = obj.name
                 # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
-                # TODOSLOT slot-2-A Assign manually the slot, and then call the operator to adapt the strip?
                 gltf.needs_stash.append((obj.data.shape_keys, action, slot))
             else:
                 pass # This should not happen, as we only support TRS and weights animations here
