@@ -195,8 +195,9 @@ def prepare_actions_range(export_settings):
                 if end_frame - start_frame == 1:
                     # To workaround Blender bug 107030, check manually
                     try:  # Avoid crash in case of strange/buggy fcurves
-                        start_frame = int(min([c.range()[0] for c in blender_action.fcurves]))
-                        end_frame = int(max([c.range()[1] for c in blender_action.fcurves]))
+                        chanelbag = get_channelbag_for_slot(blender_action, slot.slot)
+                        start_frame = int(min([c.range()[0] for c in chanelbag.fcurves]))
+                        end_frame = int(max([c.range()[1] for c in chanelbag.fcurves]))
                     except:
                         pass
 
@@ -428,6 +429,7 @@ def gather_action_animations(obj_uuid: int,
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, False)
 
 # Export
+# TODOSLOT add slot to hook calls
 
     # Export all collected actions.
     for action_data in blender_actions.values():
@@ -540,7 +542,7 @@ def gather_action_animations(obj_uuid: int,
                 #  - fcurve that cannot be handled not sampled, to be sampled
                 # to_be_sampled is : (object_uuid , type , prop, optional(bone.name) )
                 animation, to_be_sampled, extra_samplers = gather_animation_fcurves(
-                    obj_uuid, blender_action, export_settings)
+                    obj_uuid, blender_action, slot.slot.handle, export_settings)
                 for (obj_uuid, type_, prop, bone) in to_be_sampled:
                     if type_ == "BONE":
                         channel = gather_sampled_bone_channel(

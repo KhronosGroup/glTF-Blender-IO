@@ -35,7 +35,7 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, s
     if object_uuid != blender_action_name and blender_action_name in bpy.data.actions:
         # Not bake situation
         channels_animated, to_be_sampled, extra_channels = get_channel_groups(
-            object_uuid, bpy.data.actions[blender_action_name], export_settings)
+            object_uuid, bpy.data.actions[blender_action_name], slot_handle, export_settings)
         for chan in [chan for chan in channels_animated.values() if chan['bone'] is None]:
             for prop in chan['properties'].keys():
                 list_of_animated_channels[get_channel_from_target(get_target(prop))] = get_gltf_interpolation(

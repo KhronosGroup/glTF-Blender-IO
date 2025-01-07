@@ -22,12 +22,13 @@ from .channels import gather_animation_fcurves_channels
 def gather_animation_fcurves(
         obj_uuid: str,
         blender_action: bpy.types.Action,
+        slot_handle: int,
         export_settings
 ):
 
     name = __gather_name(blender_action, export_settings)
 
-    channels, to_be_sampled, extra_samplers = __gather_channels_fcurves(obj_uuid, blender_action, export_settings)
+    channels, to_be_sampled, extra_samplers = __gather_channels_fcurves(obj_uuid, blender_action, slot_handle, export_settings)
 
     animation = gltf2_io.Animation(
         channels=channels,
@@ -55,8 +56,9 @@ def __gather_name(blender_action: bpy.types.Action,
 def __gather_channels_fcurves(
         obj_uuid: str,
         blender_action: bpy.types.Action,
+        slot_handle: int,
         export_settings):
-    return gather_animation_fcurves_channels(obj_uuid, blender_action, export_settings)
+    return gather_animation_fcurves_channels(obj_uuid, blender_action, slot_handle, export_settings)
 
 
 def __gather_extras(blender_action, export_settings):
