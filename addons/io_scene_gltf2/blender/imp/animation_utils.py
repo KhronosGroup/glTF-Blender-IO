@@ -61,11 +61,10 @@ def make_fcurve(action, slot, co, data_path, index=0, group_name='', interpolati
         fcurve = channelbag.fcurves.new(data_path=data_path, index=index)
 
         # Add the fcurve to the group
-        # TODOSLOT : should be unique group_name, so can't be location/rotation/scale/shapekeys
         if group_name:
-            if group_name not in action.groups:
-                action.groups.new(group_name)
-            fcurve.group = action.groups[group_name]
+            if group_name not in channelbag.groups:
+                channelbag.groups.new(group_name)
+            fcurve.group = channelbag.groups[group_name]
     except:
         # Some non valid files can have multiple target path
         return None
