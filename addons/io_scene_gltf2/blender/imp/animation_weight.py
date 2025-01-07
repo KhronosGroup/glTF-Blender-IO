@@ -88,7 +88,7 @@ class BlenderWeightAnim():
                     slot,
                     coords,
                     data_path=data_path,
-                    group_name="ShapeKeys",
+                    group_name="",
                     interpolation=animation.samplers[channel.sampler].interpolation,
                 )
 
