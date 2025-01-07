@@ -146,12 +146,15 @@ def material_caching(data, action_name, slot_handle, frame, export_settings):
         if blender_material and blender_material.animation_data and blender_material.animation_data.action \
                 and blender_material.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-            key1, key2, key3, key4 = mat, blender_material.animation_data.action.name, slot_handle, "value"
+            # TODOSLOT: what slot_handle we need here?
+            key1, key2, key3, key4 = mat, blender_material.animation_data.action.name, blender_material.animation_data.action_slot_handle, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4 = mat, action_name, slot_handle, "value"
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4 = mat, mat, slot_handle, "value"
 
         if key2 not in data[key1].keys():
@@ -199,14 +202,15 @@ def material_nodetree_caching(data, action_name, slot_handle, frame, export_sett
         if blender_material.node_tree and blender_material.node_tree.animation_data and blender_material.node_tree.animation_data.action \
                 and blender_material.node_tree.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-
-            key1, key2, key3, key4 = mat, blender_material.node_tree.animation_data.action.name, slot_handle, "value"
+            # TODOSLOT: what slot_handle we need here?
+            key1, key2, key3, key4 = mat, blender_material.node_tree.animation_data.action.name, blender_material.node_tree.animation_data.action_slot_handle, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4 = mat, action_name, slot_handle, "value"
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
-
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4 = mat, mat, slot_handle, "value"
 
         if key2 not in data[key1].keys():
@@ -377,11 +381,13 @@ def armature_caching(data, obj_uuid, blender_obj, action_name, slot_handle, fram
     if blender_obj.animation_data and blender_obj.animation_data.action \
             and blender_obj.animation_data.action_slot \
             and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
-        key1, key2, key3, key4 = obj_uuid, blender_obj.animation_data.action.name, slot_handle, "bone"
+        key1, key2, key3, key4 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot_handle, "bone"
     elif blender_obj.animation_data \
             and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+        # TODOSLOT: what slot_handle we need here?
         key1, key2, key3, key4 = obj_uuid, action_name, slot_handle, "bone"
     else:
+        # TODOSLOT: what slot_handle we need here?
         key1, key2, key3, key4 = obj_uuid, obj_uuid, slot_handle, "bone"
 
     if key3 not in data[key1][key2].keys():
@@ -482,14 +488,17 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
             if blender_obj and blender_obj.animation_data and blender_obj.animation_data.action \
                     and blender_obj.animation_data.action_slot \
                     and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
-                key1, key2, key3, key4, key5 = obj_uuid, blender_obj.animation_data.action.name, slot_handle, "matrix", None
+                key1, key2, key3, key4, key5 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot_handle, "matrix", None
             elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                # TODOSLOT: what slot_handle we need here?
                 key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_handle, "matrix", None
             else:
                 # case of baking object.
                 # There is no animation, so use uuid of object as key
+                # TODOSLOT: what slot_handle we need here?
                 key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
         else:
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4, ket5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
         initialize_data_dict(data, key1, key2, key3, key4, key5)
         data[key1][key2][key3][key4][key5][frame] = mat
@@ -502,6 +511,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
         elif blender_obj is None:  # GN instances
             # case of baking object, for GN instances
             # There is no animation, so use uuid of object as key
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
             initialize_data_dict(data, key1, key2, key3, key4, key5)
             data[key1][key2][key3][key4][key5][frame] = mat
@@ -517,7 +527,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
                 and blender_obj.data.shape_keys.animation_data.action_slot is not None \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
 
-            key1, key2, key3, key4, key5 = obj_uuid, blender_obj.data.shape_keys.animation_data.action.name, slot_handle, "sk", None
+            key1, key2, key3, key4, key5 = obj_uuid, blender_obj.data.shape_keys.animation_data.action.name, blender_obj.data.shape_keys.animation_data.action_slot_handle, "sk", None
             cache_sk = True
 
         elif export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
@@ -526,12 +536,14 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
                 and blender_obj.data.shape_keys.animation_data is not None \
                 and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
 
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_handle, "sk", None
             cache_sk = True
 
         elif export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
                 and blender_obj.data is not None \
                 and blender_obj.data.shape_keys is not None:
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "sk", None
             cache_sk = True
 
@@ -559,13 +571,15 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
                 if blender_obj.animation_data and blender_obj.animation_data.action \
                         and blender_obj.animation_data.action_slot \
                         and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
-                    key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + blender_obj.animation_data.action.name, slot_handle, "sk", None
+                    key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot_handle, "sk", None
                     cache_sk = True
                 elif blender_obj.animation_data \
                         and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                    # TODOSLOT: what slot_handle we need here?
                     key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + action_name, slot_handle, "sk", None
                     cache_sk = True
                 else:
+                    # TODOSLOT: what slot_handle we need here?
                     key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + obj_uuid, slot_handle, "sk", None
                     cache_sk = True
 
@@ -595,12 +609,15 @@ def light_nodetree_caching(data, action_name, slot_handle, frame, export_setting
         if blender_light.node_tree and blender_light.node_tree.animation_data and blender_light.node_tree.animation_data.action \
                 and blender_light.node_tree.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-            key1, key2, key3, key4 = light, blender_light.node_tree.animation_data.action.name, slot_handle, "value"
+            # TODOSLOT: what slot_handle we need here?
+            key1, key2, key3, key4 = light, blender_light.node_tree.animation_data.action.name, blender_light.node_tree.animation_data.action_slot_handle, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4 = light, action_name, slot_handle, "value"
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4 = light, light, slot_handle, "value"
 
         if key2 not in data[key1].keys():
@@ -688,12 +705,15 @@ def camera_caching(data, action_name, slot_handle, frame, export_settings):
         if blender_camera and blender_camera.animation_data and blender_camera.animation_data.action \
                 and blender_camera.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-            key1, key2, key3, key4 = cam, blender_camera.animation_data.action.name, slot_handle, "value"
+                # TODOSLOT: what slot_handle we need here?
+            key1, key2, key3, key4 = cam, blender_camera.animation_data.action.name, blender_camera.animation_data.action_slot_handle, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4 = cam, action_name, slot_handle, "value"
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
+            # TODOSLOT: what slot_handle we need here?
             key1, key2, key3, key4 = cam, cam, slot_handle, "value"
 
         if key2 not in data[key1].keys():
