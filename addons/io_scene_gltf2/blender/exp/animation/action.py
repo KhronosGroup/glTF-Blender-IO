@@ -86,7 +86,7 @@ class ActionData:
         new_slot = SlotData(slot, id_root, track)
         self.slots.append(new_slot)
 
-    def sort(self): #TODOSLOT slot-1-B
+    def sort(self):
         #Implement sorting, to be sure to get:
         # TRS first, and then SK
         sort_items = {'OBJECT': 1, 'KEY': 2}
