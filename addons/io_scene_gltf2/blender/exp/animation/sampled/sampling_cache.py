@@ -38,7 +38,8 @@ def get_cache_data(path: str,
 
     data = {}
 
-    min_, max_ = get_range(blender_obj_uuid, action_name, export_settings) #TODOSLOT slot-1-B : using slot here?
+    # Ranges are stored at action level, so no need to give the slot_handle here
+    min_, max_ = get_range(blender_obj_uuid, action_name, export_settings)
 
     if only_gather_provided:
         # If object is not in vtree, this is a material or light for pointers
