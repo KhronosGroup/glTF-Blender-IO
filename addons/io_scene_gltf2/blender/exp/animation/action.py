@@ -637,7 +637,7 @@ def gather_action_animations(obj_uuid: int,
             animation = gltf2_io.Animation(
                 channels=all_channels,
                 name=blender_action.name,
-                extras=generate_extras(blender_action),
+                extras=__gather_extras(blender_action, export_settings),
                 samplers=[], # This will be generated later, in link_samplers
                 extensions=None
             )

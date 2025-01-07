@@ -29,8 +29,6 @@ def gather_action_armature_sampled(armature_uuid: str,
 
     blender_object = export_settings['vtree'].nodes[armature_uuid].blender_object
 
-    name = __gather_name(blender_action, armature_uuid, cache_key, export_settings)
-
     try:
         channels, extra_channels = __gather_channels(
             armature_uuid, blender_action.name if blender_action else cache_key, slot_handle if blender_action else None, export_settings)
@@ -70,26 +68,5 @@ def gather_action_armature_sampled(armature_uuid: str,
     return channels, extra_samplers
 
 
-# TODOSLOT to move
-def __gather_name(blender_action: bpy.types.Action,
-                  armature_uuid: str,
-                  cache_key: str,
-                  export_settings
-                  ) -> str:
-    if blender_action:
-        return blender_action.name
-    elif armature_uuid == cache_key:
-        return export_settings['vtree'].nodes[armature_uuid].blender_object.name
-    else:
-        return cache_key
-
-
 def __gather_channels(armature_uuid, blender_action_name, slot_handle, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_handle, export_settings)
-
-
-# TODOSLOT to move
-def __gather_extras(blender_action, export_settings):
-    if export_settings['gltf_extras']:
-        return generate_extras(blender_action) if blender_action else None
-    return None

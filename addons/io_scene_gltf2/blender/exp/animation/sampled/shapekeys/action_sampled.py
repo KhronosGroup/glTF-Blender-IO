@@ -47,24 +47,7 @@ def gather_action_sk_sampled(object_uuid: str,
 
     return channels
 
-
-# TODOSLOT to move
-def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
-    if blender_action:
-        return blender_action.name
-    elif object_uuid == cache_key:
-        return export_settings['vtree'].nodes[object_uuid].blender_object.name
-    else:
-        return cache_key
-
-
 def __gather_channels(object_uuid: str, blender_action_name: str, slot_handle: int,
                       export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_sk_sampled_channels(object_uuid, blender_action_name, slot_handle, export_settings)
 
-
-# TODOSLOT to move
-def __gather_extras(blender_action, export_settings):
-    if export_settings['gltf_extras']:
-        return generate_extras(blender_action) if blender_action else None
-    return None

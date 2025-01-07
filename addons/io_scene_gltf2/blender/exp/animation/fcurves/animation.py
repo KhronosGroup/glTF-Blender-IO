@@ -26,8 +26,6 @@ def gather_animation_fcurves(
         export_settings
 ):
 
-    name = __gather_name(blender_action, export_settings)
-
     channels, to_be_sampled, extra_samplers = __gather_channels_fcurves(obj_uuid, blender_action, slot_handle, export_settings)
 
     if not channels:
@@ -38,13 +36,6 @@ def gather_animation_fcurves(
 
     return channels, to_be_sampled, extra_samplers
 
-# TODOSLOT to move
-def __gather_name(blender_action: bpy.types.Action,
-                  export_settings
-                  ) -> str:
-    return blender_action.name
-
-
 def __gather_channels_fcurves(
         obj_uuid: str,
         blender_action: bpy.types.Action,
@@ -52,8 +43,3 @@ def __gather_channels_fcurves(
         export_settings):
     return gather_animation_fcurves_channels(obj_uuid, blender_action, slot_handle, export_settings)
 
-# TODOSLOT to move
-def __gather_extras(blender_action, export_settings):
-    if export_settings['gltf_extras']:
-        return generate_extras(blender_action)
-    return None
