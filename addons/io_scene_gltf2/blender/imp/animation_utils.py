@@ -44,8 +44,11 @@ def restore_animation_on_object(obj, anim_name):
             continue
 
         obj.animation_data.action = track.strips[0].action
+        obj.animation_data.action_slot = track.strips[0].action.slots[0] # For now, we only support one slot per action
         return
 
+    if obj.animation_data.action is not None:
+        obj.animation_data.action_slot = None
     obj.animation_data.action = None
 
 
