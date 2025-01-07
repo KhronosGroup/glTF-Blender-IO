@@ -503,7 +503,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
         elif blender_obj is None:  # GN instances
             # case of baking object, for GN instances
             # There is no animation, so use uuid of object as key
-            # TODOSLOT slot-1-E: what slot_handle we need here?
+            # slot_handle is always None for baking
             key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
             initialize_data_dict(data, key1, key2, key3, key4, key5)
             data[key1][key2][key3][key4][key5][frame] = mat
