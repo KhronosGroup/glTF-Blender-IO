@@ -706,7 +706,7 @@ def camera_caching(data, action_name, slot_handle, frame, export_settings):
         else:
             # case of baking camera data (scene export).
             # There is no animation, so use id as key
-            # TODOSLOT slot-1-E: what slot_handle we need here?
+            # No really matter for slot_handle, as we bake all when exporting with scene export
             key1, key2, key3, key4 = cam, cam, slot_handle, "value"
 
         if key2 not in data[key1].keys():
