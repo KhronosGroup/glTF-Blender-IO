@@ -100,9 +100,9 @@ def get_channelbag_for_slot(action, slot):
 # This is use for TRS & weights animations
 # For pointers, see the same function in animation_pointer.py
 # TODOSLOT test on armature
-def get_or_create_action_and_slot(gltf, node_idx, anim_idx, path):
+def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
     animation = gltf.data.animations[anim_idx]
-    vnode = gltf.vnodes[node_idx]
+    vnode = gltf.vnodes[vnode_idx]
 
     if vnode.type == VNode.Bone:
         # For bones, the action goes on the armature.
