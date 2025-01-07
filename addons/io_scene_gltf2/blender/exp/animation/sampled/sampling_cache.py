@@ -463,10 +463,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
             parent_mat = mathutils.Matrix.Identity(4).freeze()
 
         if blender_obj:
-            if export_settings['vtree'].nodes[obj_uuid].blender_type != VExportNode.COLLECTION:
-                mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
-            else:
-                mat = parent_mat.inverted_safe()
+            mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
         else:
             eval = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.evaluated_get(
                 depsgraph)
@@ -482,22 +479,18 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
         if obj_uuid not in data.keys():
             data[obj_uuid] = {}
 
-        if export_settings['vtree'].nodes[obj_uuid].blender_type != VExportNode.COLLECTION:
-            if blender_obj and blender_obj.animation_data and blender_obj.animation_data.action \
-                    and blender_obj.animation_data.action_slot \
-                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
-                key1, key2, key3, key4, key5 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot_handle, "matrix", None
-            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-                # We can keep the input slot_handle here, as we are caching only one object / NLA track
-                key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_handle, "matrix", None
-            else:
-                # case of baking object.
-                # There is no animation, so use uuid of object as key
-                # slot_handle is always None for scene export
-                key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
+        if blender_obj and blender_obj.animation_data and blender_obj.animation_data.action \
+                and blender_obj.animation_data.action_slot \
+                and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
+            key1, key2, key3, key4, key5 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot_handle, "matrix", None
+        elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+            # We can keep the input slot_handle here, as we are caching only one object / NLA track
+            key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_handle, "matrix", None
         else:
-            # case of collection, TODOSLOT slot-1-E: what slot_handle we need here?
-            key1, key2, key3, key4, ket5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
+            # case of baking object.
+            # There is no animation, so use uuid of object as key
+            # slot_handle is always None for scene export
+            key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
 
         initialize_data_dict(data, key1, key2, key3, key4, key5)
         data[key1][key2][key3][key4][key5][frame] = mat
