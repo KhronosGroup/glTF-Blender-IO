@@ -15,15 +15,15 @@
 import bpy
 from .vnode import VNode
 
-# TODOSLOT rename obj to data, as this can be obj, obj.data, material, material.node_tree, camera, light
-def simulate_stash(obj, track_name, action, action_slot, start_frame=None):
+# Here data can be object, object.data, material, material.node_tree, camera, light
+def simulate_stash(data, track_name, action, action_slot, start_frame=None):
     # Simulate stash :
     # * add a track
     # * add an action on track
     # * lock & mute the track
-    if not obj.animation_data:
-        obj.animation_data_create()
-    tracks = obj.animation_data.nla_tracks
+    if not data.animation_data:
+        data.animation_data_create()
+    tracks = data.animation_data.nla_tracks
     new_track = tracks.new(prev=None)
     new_track.name = track_name
     if start_frame is None:
@@ -33,25 +33,24 @@ def simulate_stash(obj, track_name, action, action_slot, start_frame=None):
     new_track.lock = True
     new_track.mute = True
 
-# TODOSLOT rename obj to data, as this can be obj, obj.data, material, material.node_tree, camera, light
-def restore_animation_on_object(obj, anim_name):
-    """ here, obj can be an object, shapekeys, camera or light data """
-    if not getattr(obj, 'animation_data', None):
+def restore_animation_on_object(data, anim_name):
+    """ here, data can be an object, shapekeys, camera or light data """
+    if not getattr(data, 'animation_data', None):
         return
 
-    for track in obj.animation_data.nla_tracks:
+    for track in data.animation_data.nla_tracks:
         if track.name != anim_name:
             continue
         if not track.strips:
             continue
 
-        obj.animation_data.action = track.strips[0].action
-        obj.animation_data.action_slot = track.strips[0].action_slot
+        data.animation_data.action = track.strips[0].action
+        data.animation_data.action_slot = track.strips[0].action_slot
         return
 
-    if obj.animation_data.action is not None:
-        obj.animation_data.action_slot = None
-    obj.animation_data.action = None
+    if data.animation_data.action is not None:
+        data.animation_data.action_slot = None
+    data.animation_data.action = None
 
 
 def make_fcurve(action, slot, co, data_path, index=0, group_name='', interpolation=None):
