@@ -23,6 +23,7 @@ from .channels import gather_object_sampled_channels
 
 def gather_action_object_sampled(object_uuid: str,
                                  blender_action: typing.Optional[bpy.types.Action],
+                                 slot_handle: int,
                                  cache_key: str,
                                  export_settings):
 
@@ -33,7 +34,7 @@ def gather_action_object_sampled(object_uuid: str,
         return None, extra_samplers
 
     channels, extra_channels = __gather_channels(
-        object_uuid, blender_action.name if blender_action else cache_key, export_settings)
+        object_uuid, blender_action.name if blender_action else cache_key, slot_handle if blender_action else None, export_settings)
     animation = gltf2_io.Animation(
         channels=channels,
         extensions=None,
@@ -77,9 +78,9 @@ def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Ac
         return cache_key
 
 
-def __gather_channels(object_uuid: str, blender_action_name: str,
+def __gather_channels(object_uuid: str, blender_action_name: str, slot_handle: int,
                       export_settings) -> typing.List[gltf2_io.AnimationChannel]:
-    return gather_object_sampled_channels(object_uuid, blender_action_name, export_settings)
+    return gather_object_sampled_channels(object_uuid, blender_action_name, slot_handle, export_settings)
 
 
 def __gather_extras(blender_action, export_settings):

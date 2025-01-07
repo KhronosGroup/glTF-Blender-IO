@@ -27,7 +27,7 @@ from .channel_target import gather_armature_sampled_channel_target
 from .sampler import gather_bone_sampled_animation_sampler
 
 
-def gather_armature_sampled_channels(armature_uuid, blender_action_name,
+def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_handle,
                                      export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
     extra_channels = {}
@@ -64,6 +64,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name,
                 bone,
                 p,
                 blender_action_name,
+                slot_handle,
                 (bone, p) in list_of_animated_bone_channels.keys(),
                 list_of_animated_bone_channels[(bone, p)] if (bone, p) in list_of_animated_bone_channels.keys() else get_gltf_interpolation("LINEAR"),
                 export_settings)
@@ -91,6 +92,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name,
             armature_uuid,
             p,
             blender_action_name,
+            slot_handle,
             p in [a[0] for a in animated_channels],
             [c[1] for c in animated_channels if c[0] == p][0] if p in [a[0] for a in animated_channels] else bake_interpolation,
             export_settings
@@ -102,7 +104,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name,
     # Retrieve channels for drivers, if needed
     drivers_to_manage = get_sk_drivers(armature_uuid, export_settings)
     for obj_driver_uuid in drivers_to_manage:
-        channel = gather_sampled_sk_channel(obj_driver_uuid, armature_uuid + "_" + blender_action_name, export_settings)
+        channel = gather_sampled_sk_channel(obj_driver_uuid, armature_uuid + "_" + blender_action_name, slot_handle, export_settings)
         if channel is not None:
             channels.append(channel)
 
@@ -114,6 +116,7 @@ def gather_sampled_bone_channel(
         bone: str,
         channel: str,
         action_name: str,
+        slot_handle: int,
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
         export_settings
@@ -126,6 +129,7 @@ def gather_sampled_bone_channel(
             bone,
             channel,
             action_name,
+            slot_handle,
             node_channel_is_animated,
             node_channel_interpolation,
             export_settings)
@@ -170,6 +174,7 @@ def __gather_sampler(
         bone,
         channel,
         action_name,
+        slot_handle,
         node_channel_is_animated,
         node_channel_interpolation,
         export_settings):
@@ -178,6 +183,7 @@ def __gather_sampler(
         bone,
         channel,
         action_name,
+        slot_handle,
         node_channel_is_animated,
         node_channel_interpolation,
         export_settings

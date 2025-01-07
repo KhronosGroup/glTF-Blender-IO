@@ -568,7 +568,7 @@ def gather_data_track_animations(
                 blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute = False
 
         # Export animation
-        animation = bake_data_animation(blender_type_data, blender_id, track_name, on_type, export_settings)
+        animation = bake_data_animation(blender_type_data, blender_id, track_name, None, on_type, export_settings)
         get_cache_data.reset_cache()
         if animation is not None:
             animations.append(animation)

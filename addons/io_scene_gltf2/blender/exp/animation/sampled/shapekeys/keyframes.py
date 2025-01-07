@@ -28,6 +28,7 @@ from ..sampling_cache import get_cache_data
 @cached
 def gather_sk_sampled_keyframes(obj_uuid,
                                 action_name,
+                                slot_handle,
                                 export_settings):
 
     start_frame = export_settings['ranges'][obj_uuid][action_name]['start']
@@ -88,6 +89,7 @@ def gather_sk_sampled_keyframes(obj_uuid,
                     action_name,
                     frame,
                     step,
+                    slot_handle,
                     export_settings
                 )
 
@@ -106,6 +108,7 @@ def gather_sk_sampled_keyframes(obj_uuid,
                 action_name,
                 frame,
                 step,
+                slot_handle,
                 export_settings
             )
 

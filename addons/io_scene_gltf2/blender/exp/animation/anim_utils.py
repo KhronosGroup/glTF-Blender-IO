@@ -212,7 +212,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
         # (skinned meshes TRS must be ignored, says glTF specification)
         if export_settings['vtree'].nodes[obj_uuid].skin is None:
             if mode is None or mode == "OBJECT":
-                animation, _ = gather_action_object_sampled(obj_uuid, None, animation_key, export_settings)
+                animation, _ = gather_action_object_sampled(obj_uuid, None, None, animation_key, export_settings)
 
         # Need to bake sk only if not linked to a driver sk by parent armature
         # In case of NLA track export, no baking of SK
@@ -233,7 +233,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
                 ignore_sk = True
 
             if ignore_sk is False:
-                channel = gather_sampled_sk_channel(obj_uuid, animation_key, export_settings)
+                channel = gather_sampled_sk_channel(obj_uuid, animation_key, None, export_settings)
                 if channel is not None:
                     if animation is None:
                         animation = gltf2_io.Animation(
@@ -258,14 +258,14 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
         # We need to bake all bones. Because some bone can have some constraints linking to
         # some other armature bones, for example
 
-        animation, _ = gather_action_armature_sampled(obj_uuid, None, animation_key, export_settings)
+        animation, _ = gather_action_armature_sampled(obj_uuid, None, None, animation_key, export_settings)
         link_samplers(animation, export_settings)
         if animation is not None:
             return animation
     return None
 
 
-def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, export_settings):
+def bake_data_animation(blender_type_data, blender_id, animation_key, slot_handle, on_type, export_settings):
     # if there is no animation in file => no need to bake
     if len(bpy.data.actions) == 0:
         return None
@@ -290,7 +290,7 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, on_type, e
             if len(export_settings['KHR_animation_pointer'][blender_type_data][i]['paths']) == 0:
                 continue
 
-            channels = gather_data_sampled_channels(blender_type_data, i, animation_key, on_type, export_settings)
+            channels = gather_data_sampled_channels(blender_type_data, i, animation_key, slot_handle, on_type, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
 

@@ -439,7 +439,8 @@ def gather_action_animations(obj_uuid: int,
             # Set action as active, to be able to bake if needed
             if on_type == "OBJECT":  # Not for shapekeys!
                 if blender_object.animation_data.action is None \
-                        or (blender_object.animation_data.action.name != blender_action.name):
+                        or (blender_object.animation_data.action.name != blender_action.name) \
+                        or (blender_object.animation_data.action_slot.handle != slot.slot.handle):
                     if blender_object.animation_data.is_property_readonly('action'):
                         blender_object.animation_data.use_tweak_mode = False
                     try:
@@ -526,12 +527,12 @@ def gather_action_animations(obj_uuid: int,
             if export_settings['gltf_force_sampling'] is True:
                 if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
                     animation, extra_samplers = gather_action_armature_sampled(
-                        obj_uuid, blender_action, None, export_settings)
+                        obj_uuid, blender_action, slot.slot.handle, None, export_settings)
                 elif on_type == "OBJECT":
                     animation, extra_samplers = gather_action_object_sampled(
-                        obj_uuid, blender_action, None, export_settings)
+                        obj_uuid, blender_action, slot.slot.handle, None, export_settings)
                 else:
-                    animation = gather_action_sk_sampled(obj_uuid, blender_action, None, export_settings)
+                    animation = gather_action_sk_sampled(obj_uuid, blender_action, slot.slot.handle, None, export_settings)
             else:
                 # Not sampled
                 # This returns
@@ -547,15 +548,16 @@ def gather_action_animations(obj_uuid: int,
                             bone,
                             prop,
                             blender_action.name,
+                            slot.slot.handle,
                             True,
                             get_gltf_interpolation("LINEAR"),
                             export_settings)
                     elif type_ == "OBJECT":
                         channel = gather_sampled_object_channel(
-                            obj_uuid, prop, blender_action.name, True, get_gltf_interpolation("LINEAR"), export_settings)
+                            obj_uuid, prop, blender_action.name, slot.slot.handle, True, get_gltf_interpolation("LINEAR"), export_settings)
                     elif type_ == "SK":
-                        channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, export_settings)
-                    elif type_ == "EXTRA":
+                        channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, slot.slot.handle, export_settings)
+                    elif type_ == "EXTRA": #TODOSLOT
                         channel = None
                     else:
                         export_settings['log'].error("Type unknown. Should not happen")
@@ -595,7 +597,7 @@ def gather_action_animations(obj_uuid: int,
                         if obj_uuid not in export_settings['ranges'].keys():
                             export_settings['ranges'][obj_uuid] = {}
                         export_settings['ranges'][obj_uuid][obj_uuid] = export_settings['ranges'][obj_uuid][blender_action.name]
-                        channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
+                        channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
                         if channels is not None:
                             if animation is None:
                                 animation = gltf2_io.Animation(
@@ -627,7 +629,7 @@ def gather_action_animations(obj_uuid: int,
                         if obj_uuid not in export_settings['ranges'].keys():
                             export_settings['ranges'][obj_uuid] = {}
                         export_settings['ranges'][obj_uuid][obj_uuid] = export_settings['ranges'][obj_uuid][blender_action.name]
-                        channel = gather_sampled_sk_channel(obj_uuid, obj_uuid, export_settings)
+                        channel = gather_sampled_sk_channel(obj_uuid, obj_uuid, None, export_settings)
                         if channel is not None:
                             if animation is None:
                                 animation = gltf2_io.Animation(
