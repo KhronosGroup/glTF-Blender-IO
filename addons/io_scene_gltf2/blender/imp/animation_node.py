@@ -82,21 +82,21 @@ class BlenderNodeAnim():
 
         if path == "translation":
             blender_path = "location"
-            group_name = "Location"
+            group_name = "Object Transforms"
             num_components = 3
             values = [gltf.loc_gltf_to_blender(vals) for vals in values]
             values = vnode.base_locs_to_final_locs(values)
 
         elif path == "rotation":
             blender_path = "rotation_quaternion"
-            group_name = "Rotation"
+            group_name = "Object Transforms"
             num_components = 4
             values = [gltf.quaternion_gltf_to_blender(vals) for vals in values]
             values = vnode.base_rots_to_final_rots(values)
 
         elif path == "scale":
             blender_path = "scale"
-            group_name = "Scale"
+            group_name = "Object Transforms"
             num_components = 3
             values = [gltf.scale_gltf_to_blender(vals) for vals in values]
             values = vnode.base_scales_to_final_scales(values)
