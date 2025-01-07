@@ -48,10 +48,12 @@ class BlenderWeightAnim():
         for channel_idx in node.animations[anim_idx]:
             channel = animation.channels[channel_idx]
             if channel.target.path == "weights":
+                path = channel.target.path
                 break
             if channel.target.path == "pointer":
                 pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
                 if len(pointer_tab) >= 4 and pointer_tab[1] in ["nodes", "meshes"] and pointer_tab[3] == "weights":
+                    path = pointer_tab[3]
                     break
         else:
             return
