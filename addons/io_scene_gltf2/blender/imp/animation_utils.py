@@ -138,13 +138,11 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
 
         action = gltf.action_cache[anim_idx]['action']
         if use_id == "OBJECT":
-            slot = action.slots.new(for_id=obj)
-            slot.name_display = obj.name
+            slot = action.slots.new(obj.id_type, obj.name)
             gltf.needs_stash.append((obj, action, slot))
         elif use_id == "KEY":
-            slot = action.slots.new(for_id=obj.data.shape_keys)
+            slot = action.slots.new(obj.data.shape_keys.id_type, obj.name)
             # Do not change the display name of the shape key slot
-            slot.name_display = obj.name
             # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
             gltf.needs_stash.append((obj.data.shape_keys, action, slot))
         else:
@@ -161,13 +159,11 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
         if not ac_sl:
             action = gltf.action_cache[anim_idx]['action']
             if use_id == "OBJECT":
-                slot = action.slots.new(for_id=obj)
-                slot.name_display = obj.name
+                slot = action.slots.new(obj.id_type, obj.name)
                 gltf.needs_stash.append((obj, action, slot))
             elif use_id == "KEY":
-                slot = action.slots.new(for_id=obj.data.shape_keys)
+                slot = action.slots.new(obj.data.shape_keys.id_type, obj.name)
                 # Do not change the display name of the shape key slot
-                slot.name_display = obj.name
                 # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
                 gltf.needs_stash.append((obj.data.shape_keys, action, slot))
             else:

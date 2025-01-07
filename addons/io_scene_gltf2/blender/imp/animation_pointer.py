@@ -773,7 +773,7 @@ class BlenderPointerAnim():
             # We have no slots, create one
 
             action = gltf.action_cache[anim_idx]['action']
-            slot = action.slots.new(for_id=stash)
+            slot = action.slots.new(stash.id_type, "Slot")
             gltf.needs_stash.append((stash, action, slot))
 
             action.layers[0].strips[0].channelbags.new(slot)
@@ -785,7 +785,7 @@ class BlenderPointerAnim():
             ac_sl = slots.get(id_root)
             if not ac_sl:
                 action = gltf.action_cache[anim_idx]['action']
-                slot = action.slots.new(for_id=stash)
+                slot = action.slots.new(stash.id_type, "Slot")
                 gltf.needs_stash.append((stash, action, slot))
 
                 action.layers[0].strips[0].channelbags.new(slot)
