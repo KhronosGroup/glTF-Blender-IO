@@ -27,6 +27,9 @@ bl_info = {
 }
 
 
+# TODOSLOT slot-1-A: 26_nla_export is changed after export. Check if this is linked to slot, or a previous bug
+# TODOSLOT slot-1-B: 28_sk_not_reset is changed after export. Check if this is linked to slot, or a previous bug
+
 def get_version_string():
     return str(bl_info['version'][0]) + '.' + str(bl_info['version'][1]) + '.' + str(bl_info['version'][2])
 
