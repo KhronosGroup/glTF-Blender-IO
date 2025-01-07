@@ -32,18 +32,21 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, s
     # Access to fcurve and action data
 
     list_of_animated_channels = {}
-    if object_uuid != blender_action_name and blender_action_name in bpy.data.actions:
-        # Not bake situation
-        channels_animated, to_be_sampled, extra_channels = get_channel_groups(
-            object_uuid, bpy.data.actions[blender_action_name], slot_handle, export_settings)
-        for chan in [chan for chan in channels_animated.values() if chan['bone'] is None]:
-            for prop in chan['properties'].keys():
-                list_of_animated_channels[get_channel_from_target(get_target(prop))] = get_gltf_interpolation(
-                    chan['properties'][prop][0].keyframe_points[0].interpolation)  # Could be exported without sampling : keep interpolation
+    if slot_handle is not None:
+        if object_uuid != blender_action_name and blender_action_name in bpy.data.actions:
+            # Not bake situation
+            channels_animated, to_be_sampled, extra_channels = get_channel_groups(
+                object_uuid, bpy.data.actions[blender_action_name], slot_handle, export_settings)
+            for chan in [chan for chan in channels_animated.values() if chan['bone'] is None]:
+                for prop in chan['properties'].keys():
+                    list_of_animated_channels[get_channel_from_target(get_target(prop))] = get_gltf_interpolation(
+                        chan['properties'][prop][0].keyframe_points[0].interpolation)  # Could be exported without sampling : keep interpolation
 
-        for _, _, chan_prop, _ in [chan for chan in to_be_sampled if chan[1] == "OBJECT"]:
-            list_of_animated_channels[chan_prop] = get_gltf_interpolation(
-                "LINEAR")  # if forced to be sampled, keep LINEAR interpolation
+            for _, _, chan_prop, _ in [chan for chan in to_be_sampled if chan[1] == "OBJECT"]:
+                list_of_animated_channels[chan_prop] = get_gltf_interpolation(
+                    "LINEAR")  # if forced to be sampled, keep LINEAR interpolation
+    else:
+        pass # no slot handle => Nothing is animated
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gather_sampled_object_channel(

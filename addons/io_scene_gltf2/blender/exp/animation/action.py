@@ -602,6 +602,7 @@ def gather_action_animations(obj_uuid: int,
                         if obj_uuid not in export_settings['ranges'].keys():
                             export_settings['ranges'][obj_uuid] = {}
                         export_settings['ranges'][obj_uuid][obj_uuid] = export_settings['ranges'][obj_uuid][blender_action.name]
+                        # No TRS animation, so no slot
                         channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
                         if channels is not None:
                             if animation is None:

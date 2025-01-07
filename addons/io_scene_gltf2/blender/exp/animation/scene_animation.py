@@ -82,9 +82,13 @@ def gather_scene_animations(export_settings):
         if blender_object and blender_object.type != "ARMATURE":
             # We have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
-                channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
+                # Use the active action / slot => This will be used to get the animated channels
+                used_action = blender_object.animation_data.action if blender_object.animation_data else None
+                used_slot_handle = blender_object.animation_data.action_slot_handle if used_action else None
+                channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, used_slot_handle, export_settings)
                 if channels is not None:
                     total_channels.extend(channels)
+
             if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
                     and blender_object.data is not None \
                     and blender_object.data.shape_keys is not None:
@@ -98,17 +102,26 @@ def gather_scene_animations(export_settings):
                         ignore_sk = True
 
                 if ignore_sk is False:
-                    channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
+                    # Use the active action / slot => This will be used to get the animated channels
+                    used_slot_handle = None
+                    if blender_object.type == "MESH":
+                        used_action = blender_object.data.shape_keys.animation_data.action if blender_object.data.shape_keys.animation_data else None
+                        used_slot_handle = blender_object.data.shape_keys.animation_data.action_slot_handle if used_action else None
+                    channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, used_slot_handle, export_settings)
                     if channels is not None:
                         total_channels.extend(channels)
         elif blender_object is None:
             # This is GN instances
             # Currently, not checking if this instance is skinned.... #TODO
+            # No action / slot for GN instances
             channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
         else:
-            channels, _ = gather_armature_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
+            # Use the active action / slot => This will be used to get the animated channels
+            used_action = blender_object.animation_data.action if blender_object.animation_data else None
+            used_slot_handle = blender_object.animation_data.action_slot_handle if used_action else None
+            channels, _ = gather_armature_sampled_channels(obj_uuid, obj_uuid, used_slot_handle, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
 

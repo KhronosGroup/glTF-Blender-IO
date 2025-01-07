@@ -47,13 +47,19 @@ def gather_sk_sampled_keyframes(obj_uuid,
 
         if channels is None:
 
-            # If we are here because of a shapekey animation, we need to get the fcurves
-            if action_name in bpy.data.actions:
-                channel_group, _, _ = get_channel_groups(
-                    obj_uuid, bpy.data.actions[action_name], slot_handle, export_settings, no_sample_option=True)
-            elif blender_obj.data.shape_keys.animation_data and blender_obj.data.shape_keys.animation_data.action:
-                channel_group, _, _ = get_channel_groups(
-                    obj_uuid, blender_obj.data.shape_keys.animation_data.action, slot_handle, export_settings, no_sample_option=True)
+            if slot_handle is not None:
+
+                # If we are here because of a shapekey animation, we need to get the fcurves
+                if action_name in bpy.data.actions:
+                    channel_group, _, _ = get_channel_groups(
+                        obj_uuid, bpy.data.actions[action_name], slot_handle, export_settings, no_sample_option=True)
+                elif blender_obj.data.shape_keys.animation_data and blender_obj.data.shape_keys.animation_data.action:
+                    channel_group, _, _ = get_channel_groups(
+                        obj_uuid, blender_obj.data.shape_keys.animation_data.action, slot_handle, export_settings, no_sample_option=True)
+                else:
+                    channel_group = {}
+                    channels = [None] * len(get_sk_exported(blender_obj.data.shape_keys.key_blocks))
+
             else:
                 channel_group = {}
                 channels = [None] * len(get_sk_exported(blender_obj.data.shape_keys.key_blocks))

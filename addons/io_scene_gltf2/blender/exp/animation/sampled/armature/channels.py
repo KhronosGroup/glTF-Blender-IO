@@ -40,22 +40,25 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_ha
 
     # List of really animated bones is needed for optimization decision
     list_of_animated_bone_channels = {}
-    if armature_uuid != blender_action_name and blender_action_name in bpy.data.actions:
-        # Not bake situation
-        channels_animated, to_be_sampled, extra_channels = get_channel_groups(
-            armature_uuid, bpy.data.actions[blender_action_name], slot_handle, export_settings)
-        for chan in [chan for chan in channels_animated.values() if chan['bone'] is not None]:
-            for prop in chan['properties'].keys():
-                list_of_animated_bone_channels[(chan['bone'], get_channel_from_target(get_target(prop)))] = get_gltf_interpolation(
-                    chan['properties'][prop][0].keyframe_points[0].interpolation)  # Could be exported without sampling : keep interpolation
+    if slot_handle is not None:
+        if armature_uuid != blender_action_name and blender_action_name in bpy.data.actions:
+            # Not bake situation
+            channels_animated, to_be_sampled, extra_channels = get_channel_groups(
+                armature_uuid, bpy.data.actions[blender_action_name], slot_handle, export_settings)
+            for chan in [chan for chan in channels_animated.values() if chan['bone'] is not None]:
+                for prop in chan['properties'].keys():
+                    list_of_animated_bone_channels[(chan['bone'], get_channel_from_target(get_target(prop)))] = get_gltf_interpolation(
+                        chan['properties'][prop][0].keyframe_points[0].interpolation)  # Could be exported without sampling : keep interpolation
 
-        for _, _, chan_prop, chan_bone in [chan for chan in to_be_sampled if chan[1] == "BONE"]:
-            list_of_animated_bone_channels[
-                (
-                    chan_bone,
-                    chan_prop,
-                )
-            ] = get_gltf_interpolation("LINEAR")  # if forced to be sampled, keep LINEAR interpolation
+            for _, _, chan_prop, chan_bone in [chan for chan in to_be_sampled if chan[1] == "BONE"]:
+                list_of_animated_bone_channels[
+                    (
+                        chan_bone,
+                        chan_prop,
+                    )
+                ] = get_gltf_interpolation("LINEAR")  # if forced to be sampled, keep LINEAR interpolation
+    else:
+        pass # Not slot => Nothing is animated
 
     for bone in bones_to_be_animated:
         for p in ["location", "rotation_quaternion", "scale"]:
