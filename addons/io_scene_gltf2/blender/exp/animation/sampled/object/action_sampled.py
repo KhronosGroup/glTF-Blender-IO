@@ -35,13 +35,6 @@ def gather_action_object_sampled(object_uuid: str,
 
     channels, extra_channels = __gather_channels(
         object_uuid, blender_action.name if blender_action else cache_key, slot_handle if blender_action else None, export_settings)
-    animation = gltf2_io.Animation(
-        channels=channels,
-        extensions=None,
-        extras=__gather_extras(blender_action, export_settings),
-        name=__gather_name(object_uuid, blender_action, cache_key, export_settings),
-        samplers=[]
-    )
 
     if export_settings['gltf_export_extra_animations']:
         for chan in [chan for chan in extra_channels.values() if len(chan['properties']) != 0]:
@@ -54,21 +47,22 @@ def gather_action_object_sampled(object_uuid: str,
                 if sampler is not None:
                     extra_samplers.append((channel_group_name, sampler, "OBJECT", None))
 
-    if not animation.channels:
+    if not channels:
         return None, extra_samplers
 
-    blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
-    export_user_extensions(
-        'animation_action_object_sampled',
-        export_settings,
-        animation,
-        blender_object,
-        blender_action,
-        cache_key)
+    # TODOSLOT
+    # blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
+    # export_user_extensions(
+    #     'animation_action_object_sampled',
+    #     export_settings,
+    #     animation,
+    #     blender_object,
+    #     blender_action,
+    #     cache_key)
 
-    return animation, extra_samplers
+    return channels, extra_samplers
 
-
+# TODOSLOT to move
 def __gather_name(object_uuid: str, blender_action: typing.Optional[bpy.types.Action], cache_key: str, export_settings):
     if blender_action:
         return blender_action.name
@@ -83,6 +77,7 @@ def __gather_channels(object_uuid: str, blender_action_name: str, slot_handle: i
     return gather_object_sampled_channels(object_uuid, blender_action_name, slot_handle, export_settings)
 
 
+# TODOSLOT to move
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
         return generate_extras(blender_action) if blender_action else None

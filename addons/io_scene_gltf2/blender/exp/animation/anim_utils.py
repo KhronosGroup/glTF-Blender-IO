@@ -216,7 +216,8 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
         # (skinned meshes TRS must be ignored, says glTF specification)
         if export_settings['vtree'].nodes[obj_uuid].skin is None:
             if mode is None or mode == "OBJECT":
-                animation, _ = gather_action_object_sampled(obj_uuid, None, None, animation_key, export_settings)
+                channels, _ = gather_action_object_sampled(obj_uuid, None, None, animation_key, export_settings)
+                # TODOSLOT create the animation here . TODOSLOT: check this is correct
 
         # Need to bake sk only if not linked to a driver sk by parent armature
         # In case of NLA track export, no baking of SK
@@ -262,7 +263,8 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
         # We need to bake all bones. Because some bone can have some constraints linking to
         # some other armature bones, for example
 
-        animation, _ = gather_action_armature_sampled(obj_uuid, None, None, animation_key, export_settings)
+        channels, _ = gather_action_armature_sampled(obj_uuid, None, None, animation_key, export_settings)
+        # TODOSLOT create the animation here . TODOSLOT: check this is correct
         link_samplers(animation, export_settings)
         if animation is not None:
             return animation
