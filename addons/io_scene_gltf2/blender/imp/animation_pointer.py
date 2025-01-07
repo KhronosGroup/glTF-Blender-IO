@@ -687,21 +687,27 @@ class BlenderPointerAnim():
         if asset_type == "CAMERA":
             name = asset.name
             stash = asset.blender_object_data
+            id_root = "CAMERA"
         elif asset_type == "LIGHT":
             name = asset['name']
             stash = asset['blender_object_data']
+            id_root = "LIGHT"
         elif asset_type == "MATERIAL":
             name = asset.name
             stash = asset.blender_mat
+            id_root = "MATERIAL"
         elif asset_type == "NODETREE":
             name = name_ if name_ is not None else asset.name
             stash = asset.blender_nodetree
+            id_root = "NODETREE"
         elif asset_type == "TEX_TRANSFORM":
             name = name_ if name_ is not None else asset.name
             stash = asset['blender_nodetree']
+            id_root = "NODETREE"
         elif asset_type == "EXT":
             name = name_ if name_ is not None else asset.name
             stash = asset['blender_nodetree']
+            id_root = "NODETREE"
 
         objects = gltf.action_cache.get(anim_idx)
         if not objects:
@@ -732,7 +738,7 @@ class BlenderPointerAnim():
             gltf.action_cache[anim_idx]['object_slots'][name][slot.id_root] = (action, slot)
         else:
             # We have slots, check if we have the right slot (based on id_root)
-            ac_sl = slots.get(asset_type)
+            ac_sl = slots.get(id_root)
             if not ac_sl:
                 action = gltf.action_cache[anim_idx]['action']
                 slot = action.slots.new(for_id=stash)
