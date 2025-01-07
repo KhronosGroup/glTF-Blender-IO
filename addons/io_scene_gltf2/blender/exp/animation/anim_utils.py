@@ -108,6 +108,7 @@ def add_slide_data(start_frame, uuid: int, key: str, export_settings, add_driver
             export_settings['slide'][obj_dr][uuid + "_" + key] = start_frame
 
 
+# TODOSLOT slot-1-B : When merge by action, active actions should be merged too: bug (2 cubes on same TRS action)
 def merge_tracks_perform(merged_tracks, animations, export_settings):
     # Depending on the option choose, here "track" can be the NLA Track or the action name
     to_delete_idx = []
