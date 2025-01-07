@@ -46,7 +46,9 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, s
                 list_of_animated_channels[chan_prop] = get_gltf_interpolation(
                     "LINEAR")  # if forced to be sampled, keep LINEAR interpolation
     else:
-        pass # TODOSLOT slot-1-B we need to get a new way to get the list of animated channels
+        pass
+        # There is no animated channels (because if it was, we would have a slot_handle)
+        # We are in a bake situation
 
     for p in ["location", "rotation_quaternion", "scale"]:
         channel = gather_sampled_object_channel(

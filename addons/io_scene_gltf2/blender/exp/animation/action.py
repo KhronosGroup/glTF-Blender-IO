@@ -865,7 +865,7 @@ def __get_blender_actions(obj_uuid: str,
     # If an active action/slot is already in the list, this is because is active + in NLA
     # We keep only one of them (the NLA one)
     # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
-    # TODOSLOT slot-1-B
+    # TODOSLOT slot-1-B hook
     # blender_actions.sort(key=lambda a: a.name.lower())
 
     return actions
