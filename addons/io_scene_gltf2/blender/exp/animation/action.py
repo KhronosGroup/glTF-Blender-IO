@@ -606,7 +606,6 @@ def gather_action_animations(obj_uuid: int,
                         channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
                         if channels is not None:
                             all_channels.extend(channels)
-                            # TODOSLOT: name of the action here?
 
             if len([a for a in blender_actions.values() if len([s for s in a.slots if s.id_root == "KEY"]) != 0]) == 0 \
                     and export_settings['gltf_morph_anim'] \
@@ -630,7 +629,6 @@ def gather_action_animations(obj_uuid: int,
                         channel = gather_sampled_sk_channel(obj_uuid, obj_uuid, None, export_settings)
                         if channel is not None:
                             all_channels.append(channel)
-                            # TODOSLOT name of the action here?
 
         # We went through all slots of the action, we can now create the animation
         if len(all_channels) != 0:
