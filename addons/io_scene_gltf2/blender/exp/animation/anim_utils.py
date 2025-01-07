@@ -192,7 +192,7 @@ def merge_tracks_perform(merged_tracks, animations, export_settings):
 
 def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None):
 
-    # TODSLOT: When baking (track or scene), we need to find a way to retrieve if there is an active action / slot on the object
+    # TODOSLOT: When baking (track or scene), we need to find a way to retrieve if there is an active action / slot on the object
     # In order to get the real fcurve channel that are animated
 
     # Bake situation does not export any extra animation channels, as we bake TRS + weights on Track or scene level, without direct
@@ -216,7 +216,6 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
         # (skinned meshes TRS must be ignored, says glTF specification)
         if export_settings['vtree'].nodes[obj_uuid].skin is None:
             if mode is None or mode == "OBJECT":
-                # TODOSLOT: check slot_handle set to None is correct?
                 channels, _ = gather_action_object_sampled(obj_uuid, None, None, animation_key, export_settings)
                 if channels:
                     animation = gltf2_io.Animation(
@@ -271,7 +270,6 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
         # We need to bake all bones. Because some bone can have some constraints linking to
         # some other armature bones, for example
 
-        # TODOSLOT: check slot_handle set to None is correct?
         channels, _ = gather_action_armature_sampled(obj_uuid, None, None, animation_key, export_settings)
         if channels:
             animation = gltf2_io.Animation(

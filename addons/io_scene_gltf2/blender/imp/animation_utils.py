@@ -100,6 +100,7 @@ def get_channelbag_for_slot(action, slot):
 # This is use for TRS & weights animations
 # For pointers, see the same function in animation_pointer.py
 # TODOSLOT test on armature
+# TODOSLOT test on TRS managed as pointer
 def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
     animation = gltf.data.animations[anim_idx]
     vnode = gltf.vnodes[vnode_idx]
@@ -142,7 +143,8 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
             # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
             gltf.needs_stash.append((obj.data.shape_keys, action, slot))
         else:
-            pass # TODOSLOT (cameras, lights, materials, material node trees)
+            pass # This should not happen, as we only support TRS and weights animations here
+            # animation pointer is managed in another place
 
         action.layers[0].strips[0].channelbags.new(slot)
 
@@ -163,7 +165,8 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
                 # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
                 gltf.needs_stash.append((obj.data.shape_keys, action, slot))
             else:
-                pass # TODOSLOT (cameras, lights, materials, material node trees)
+                pass # This should not happen, as we only support TRS and weights animations here
+                # animation pointer is managed in another place
 
             action.layers[0].strips[0].channelbags.new(slot)
 
@@ -177,7 +180,8 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
 def __get_id_from_path(path):
     if path in ["translation", "rotation", "scale"]:
         return "OBJECT"
-    elif path == "pointer":
-        return "pointer" #TODOSLOT (cameras, lights, materials, material node trees)
     elif path == "weights":
         return "KEY"
+    else:
+        pass # This should not happen, as we only support TRS and weights animations here
+        # animation pointer is managed in another place
