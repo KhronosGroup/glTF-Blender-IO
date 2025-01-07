@@ -30,6 +30,8 @@ def simulate_stash(data, track_name, action, action_slot, start_frame=None):
         start_frame = bpy.context.scene.frame_start
     _strip = new_track.strips.new(action.name, start_frame, action)
     _strip.action_slot = action_slot
+    _strip.action_frame_start = action.frame_range[0]
+    _strip.action_frame_end = action.frame_range[1]
     new_track.lock = True
     new_track.mute = True
 
@@ -59,6 +61,7 @@ def make_fcurve(action, slot, co, data_path, index=0, group_name='', interpolati
         fcurve = channelbag.fcurves.new(data_path=data_path, index=index)
 
         # Add the fcurve to the group
+        # TODOSLOT : should be unique group_name, so can't be location/rotation/scale/shapekeys
         if group_name:
             if group_name not in action.groups:
                 action.groups.new(group_name)
@@ -142,6 +145,7 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
         elif use_id == "KEY":
             slot = action.slots.new(for_id=obj.data.shape_keys)
             # Do not change the display name of the shape key slot
+            slot.name_display = obj.name
             # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
             gltf.needs_stash.append((obj.data.shape_keys, action, slot))
             # TODOSLOT slot-2-A Assign manually the slot, and then call the operator to adapt the strip?
@@ -165,6 +169,7 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
             elif use_id == "KEY":
                 slot = action.slots.new(for_id=obj.data.shape_keys)
                 # Do not change the display name of the shape key slot
+                slot.name_display = obj.name
                 # It helps to automatically assign the right slot, and it will get range correctly without setting it by hand
                 # TODOSLOT slot-2-A Assign manually the slot, and then call the operator to adapt the strip?
                 gltf.needs_stash.append((obj.data.shape_keys, action, slot))
