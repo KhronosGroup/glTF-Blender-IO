@@ -706,13 +706,12 @@ def camera_caching(data, action_name, slot_handle, frame, export_settings):
         if blender_camera and blender_camera.animation_data and blender_camera.animation_data.action \
                 and blender_camera.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-                # TODOSLOT slot-1-E: what slot_handle we need here?
             key1, key2, key3, key4 = cam, blender_camera.animation_data.action.name, blender_camera.animation_data.action_slot_handle, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
             # We can keep the input slot_handle here, as we are caching only one object / NLA track
             key1, key2, key3, key4 = cam, action_name, slot_handle, "value"
         else:
-            # case of baking materials (scene export).
+            # case of baking camera data (scene export).
             # There is no animation, so use id as key
             # TODOSLOT slot-1-E: what slot_handle we need here?
             key1, key2, key3, key4 = cam, cam, slot_handle, "value"
