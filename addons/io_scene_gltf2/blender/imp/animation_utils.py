@@ -58,9 +58,12 @@ def make_fcurve(action, slot, co, data_path, index=0, group_name='', interpolati
     channelbag = get_channelbag_for_slot(action, slot)
     try:
         fcurve = channelbag.fcurves.new(data_path=data_path, index=index)
-        # TODOSLOT group name: We can no more setting it at creation.
-        # Need to create an ActionGroup and add the fcurve to it
-        # Cf bpy.data.actions['CubeAction'].groups & fcurve.group
+
+        # Add the fcurve to the group
+        if group_name:
+            if group_name not in action.groups:
+                action.groups.new(group_name)
+            fcurve.group = action.groups[group_name]
     except:
         # Some non valid files can have multiple target path
         return None
