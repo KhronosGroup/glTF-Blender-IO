@@ -899,7 +899,7 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings): #TODOSLOT slot-1
             continue  # We ignore this action
 
         # Keep all actions on objects (no Shapekey animation, No armature animation (on bones))
-        if blender_action.id_root == "OBJECT":  # TRS and Bone animations
+        if blender_action.id_root == "OBJECT":  # TRS and Bone animations #TODOSLOT
             if blender_object.animation_data is None:
                 continue
             if blender_object and blender_object.type == "ARMATURE" and __is_armature_action(blender_action): #TODOSLOT slot-1-D
@@ -911,7 +911,7 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings): #TODOSLOT slot-1
                     blender_actions.append(blender_action)
                     blender_tracks[blender_action.name] = None
                     action_on_type[blender_action.name] = "OBJECT"
-        elif blender_action.id_root == "KEY":
+        elif blender_action.id_root == "KEY": #TODOSLOT
             if blender_object.type != "MESH" or blender_object.data is None or blender_object.data.shape_keys is None or blender_object.data.shape_keys.animation_data is None:
                 continue
             # Checking that the object has some SK and some animation on it
