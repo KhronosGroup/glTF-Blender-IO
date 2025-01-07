@@ -132,7 +132,7 @@ def gather_actions_animations(export_settings):
         for idx, animation in enumerate(animations):
             merged_tracks[merged_tracks_name].append(idx)
 
-    if export_settings['gltf_animation_merge'] == "NONE":
+    if export_settings['gltf_merge_animation'] == "NONE":
         return animations
 
     new_animations = merge_tracks_perform(merged_tracks, animations, export_settings)

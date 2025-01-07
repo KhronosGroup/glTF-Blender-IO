@@ -212,12 +212,12 @@ def gather_track_animations(obj_uuid: int,
 
             # Store data for merging animation later
             # Do not take into account default NLA track names
-            if export_settings['gltf_animation_merge'] == "NLA_TRACK":
+            if export_settings['gltf_merge_animation'] == "NLA_TRACK":
                 if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
                     if track_name not in tracks.keys():
                         tracks[track_name] = []
                     tracks[track_name].append(offset + len(animations) - 1)  # Store index of animation in animations
-            elif export_settings['gltf_animation_merge'] == "ACTION":
+            elif export_settings['gltf_merge_animation'] == "ACTION":
                 if blender_action.name not in tracks.keys():
                     tracks[blender_action.name] = []
                 tracks[blender_action.name].append(offset + len(animations) - 1)  # Store index of animation in animations
