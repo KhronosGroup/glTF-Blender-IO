@@ -446,7 +446,6 @@ def gather_action_animations(obj_uuid: int,
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, False)
 
 # Export
-# TODOSLOT slot-hook add slot to hook calls
 
     # Export all collected actions.
     for action_data in blender_actions.values():
@@ -470,6 +469,7 @@ def gather_action_animations(obj_uuid: int,
                             export_settings,
                             blender_object,
                             blender_action,
+                            slot,
                             track_name,
                             on_type)
                         blender_object.animation_data.action = blender_action
@@ -479,6 +479,7 @@ def gather_action_animations(obj_uuid: int,
                             export_settings,
                             blender_object,
                             blender_action,
+                            slot,
                             track_name,
                             on_type)
                     except:
@@ -494,6 +495,7 @@ def gather_action_animations(obj_uuid: int,
                         export_settings,
                         blender_object,
                         blender_action,
+                        slot,
                         track_name,
                         on_type)
                     export_user_extensions(
@@ -501,6 +503,7 @@ def gather_action_animations(obj_uuid: int,
                         export_settings,
                         blender_object,
                         blender_action,
+                        slot,
                         track_name,
                         on_type)
 
@@ -516,6 +519,7 @@ def gather_action_animations(obj_uuid: int,
                         export_settings,
                         blender_object,
                         blender_action,
+                        slot,
                         track_name,
                         on_type)
                     blender_object.data.shape_keys.animation_data.action = blender_action
@@ -525,6 +529,7 @@ def gather_action_animations(obj_uuid: int,
                         export_settings,
                         blender_object,
                         blender_action,
+                        slot,
                         track_name,
                         on_type)
                 else:
@@ -534,6 +539,7 @@ def gather_action_animations(obj_uuid: int,
                         export_settings,
                         blender_object,
                         blender_action,
+                        slot,
                         track_name,
                         on_type)
                     export_user_extensions(
@@ -541,6 +547,7 @@ def gather_action_animations(obj_uuid: int,
                         export_settings,
                         blender_object,
                         blender_action,
+                        slot,
                         track_name,
                         on_type)
 

@@ -46,8 +46,8 @@ gather_actions_hook(self, blender_object, params, export_settings) # params = Ac
 gather_tracks_hook(self, blender_object, params, export_settings) # params = blender_tracks, blender_tracks_names, track_on_type
 pre_gather_actions_hook(self, blender_object, export_settings) # For action mode
 pre_gather_tracks_hook(self, blender_object, export_settings) # For track mode
-pre_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings) # For action mode
-post_animation_switch_hook(self, blender_object, blender_action, track_name, on_type, export_settings)  # For action mode
+pre_animation_switch_hook(self, blender_object, blender_action, slot, track_name, on_type, export_settings) # For action mode
+post_animation_switch_hook(self, blender_object, blender_action, slot, track_name, on_type, export_settings)  # For action mode
 pre_animation_track_switch_hook(self, blender_object, tracks, track_name, on_type, export_settings) # For track mode
 post_animation_track_switch_hook(self, blender_object, tracks, track_name, on_type, export_settings)  # For track mode
 animation_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for action mode
