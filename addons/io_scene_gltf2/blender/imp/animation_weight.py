@@ -58,7 +58,6 @@ class BlenderWeightAnim():
         else:
             return
 
-        path = channel.target.path
         action, slot = get_or_create_action_and_slot(gltf, node_idx, anim_idx, path)
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
