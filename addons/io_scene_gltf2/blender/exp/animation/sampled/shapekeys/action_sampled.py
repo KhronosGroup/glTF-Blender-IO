@@ -35,15 +35,15 @@ def gather_action_sk_sampled(object_uuid: str,
     if not channels:
         return None
 
-    # TODOSLOT slot-hook
-    # blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
-    # export_user_extensions(
-    #     'animation_action_sk_sampled',
-    #     export_settings,
-    #     animation,
-    #     blender_object,
-    #     blender_action,
-    #     cache_key)
+    blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
+    export_user_extensions(
+        'animation_channels_sk_sampled',
+        export_settings,
+        channels,
+        blender_object,
+        blender_action,
+        slot_handle,
+        cache_key)
 
     return channels
 

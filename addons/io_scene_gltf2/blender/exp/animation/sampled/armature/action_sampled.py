@@ -36,7 +36,7 @@ def gather_action_armature_sampled(armature_uuid: str,
         export_settings['log'].warning("Animation channels on action '{}' could not be exported. Cause: {}".format(name, error))
         return None
 
-    # export_user_extensions('pre_gather_animation_hook', export_settings, animation, blender_action, blender_object) # TODOSLOT slot-hook
+    export_user_extensions('pre_gather_animation_hook', export_settings, channels, blender_action, slot_handle, blender_object)
 
     extra_samplers = []
     if export_settings['gltf_export_extra_animations']:
@@ -55,15 +55,8 @@ def gather_action_armature_sampled(armature_uuid: str,
 
     # To allow reuse of samplers in one animation : This will be done later, when we know all channels are here
 
-    # TODOSLOT slot-hook
-    # export_user_extensions(
-    #     'gather_animation_hook',
-    #     export_settings,
-    #     animation,
-    #     blender_action,
-    #     blender_object)  # For compatibility for older version
-    # export_user_extensions('animation_action_armature_sampled', export_settings,
-    #                        animation, blender_object, blender_action, cache_key)
+    export_user_extensions('animation_channels_armature_sampled', export_settings,
+                           channels, blender_object, blender_action, slot_handle, cache_key)
 
     return channels, extra_samplers
 

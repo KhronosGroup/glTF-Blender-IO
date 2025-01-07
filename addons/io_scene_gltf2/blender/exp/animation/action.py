@@ -600,7 +600,6 @@ def gather_action_animations(obj_uuid: int,
                     if channel:
                         all_channels.append(channel)
 
-            # TODOSLOT slot-hook, no more animation here
             # Add extra samplers
             # Because this is not core glTF specification, you can add extra samplers using hook
             if export_settings['gltf_export_extra_animations'] and len(extra_samplers) != 0:
@@ -611,7 +610,7 @@ def gather_action_animations(obj_uuid: int,
                     obj_uuid,
                     blender_object,
                     blender_action,
-                    animation)
+                    all_channels)
 
             # If we are in a SK animation (without any TRS animation), and we need to bake
             if len([a for a in blender_actions.values() if len([s for s in a.slots if s.id_root == "OBJECT"]) != 0]) == 0 and slot.id_root == "KEY":
@@ -861,24 +860,7 @@ def __get_blender_actions(obj_uuid: str,
                         actions.add_action(new_action)
 
 
-    #TODOSLOT slot-1-B : we need to change this hook
-    # # Use a class to get parameters, to be able to modify them
-    # class GatherActionHookParameters:
-    #     def __init__(self, blender_actions, blender_tracks, action_on_type):
-    #         self.blender_actions = blender_actions
-    #         self.blender_tracks = blender_tracks
-    #         self.action_on_type = action_on_type
-
-
-    # gatheractionhookparams = GatherActionHookParameters(blender_actions, blender_tracks, action_on_type)
-
-    # export_user_extensions('gather_actions_hook', export_settings, blender_object, gatheractionhookparams)
-
-
-    # # Get params back from hooks
-    # blender_actions = gatheractionhookparams.blender_actions
-    # blender_tracks = gatheractionhookparams.blender_tracks
-    # action_on_type = gatheractionhookparams.action_on_type
+    export_user_extensions('gather_actions_hook', export_settings, blender_object, actions)
 
     # Duplicate actions/slot are already managed when inserting data
     # If an active action/slot is already in the list, this is because is active + in NLA
@@ -949,25 +931,9 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
             else:
                 pass # TODOSLOT slot-3
 
-    # TODOSLOT hook
-    # # Use a class to get parameters, to be able to modify them
-
-    #     class GatherActionHookParameters:
-    #         def __init__(self, blender_actions, blender_tracks, action_on_type):
-    #             self.blender_actions = blender_actions
-    #             self.blender_tracks = blender_tracks
-    #             self.action_on_type = action_on_type
-
-    #     gatheractionhookparams = GatherActionHookParameters(blender_actions, blender_tracks, action_on_type)
-
-    #     export_user_extensions('gather_actions_hook', export_settings, blender_object, gatheractionhookparams)
-
-    #     # Get params back from hooks
-    #     blender_actions = gatheractionhookparams.blender_actions
-    #     blender_tracks = gatheractionhookparams.blender_tracks
-    #     action_on_type = gatheractionhookparams.action_on_type
-
         if new_action.has_slots():
             blender_actions.add_action(new_action)
+
+        export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions)
 
     return blender_actions

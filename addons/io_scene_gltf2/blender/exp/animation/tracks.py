@@ -312,22 +312,7 @@ def __get_blender_tracks(obj_uuid: str, export_settings):
 
     tracks_data.extend(tracks_data_sk)
 
-    # TODOSLOT hook
-    # # Use a class to get parameters, to be able to modify them
-    # class GatherTrackHookParameters:
-    #     def __init__(self, blender_tracks, blender_tracks_name, track_on_type):
-    #         self.blender_tracks = blender_tracks
-    #         self.blender_tracks_name = blender_tracks_name
-    #         self.track_on_type = track_on_type
-
-    # gathertrackhookparams = GatherTrackHookParameters(tracks, names, types)
-
-    # export_user_extensions('gather_tracks_hook', export_settings, blender_object, gathertrackhookparams)
-
-    # # Get params back from hooks
-    # tracks = gathertrackhookparams.blender_tracks
-    # names = gathertrackhookparams.blender_tracks_name
-    # types = gathertrackhookparams.track_on_type
+    export_user_extensions('gather_tracks_hook', export_settings, blender_object, tracks_data)
 
     return tracks_data
 
