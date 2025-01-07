@@ -101,8 +101,8 @@ def get_channelbag_for_slot(action, slot):
 
 # This is use for TRS & weights animations
 # For pointers, see the same function in animation_pointer.py
-# TODOSLOT test on armature
-# TODOSLOT test on TRS managed as pointer
+# TODOSLOT slot-1-B test on armature
+# TODOSLOT slot-1-B test on TRS managed as pointer
 def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
     animation = gltf.data.animations[anim_idx]
     vnode = gltf.vnodes[vnode_idx]

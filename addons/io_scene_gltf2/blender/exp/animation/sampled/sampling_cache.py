@@ -38,7 +38,7 @@ def get_cache_data(path: str,
 
     data = {}
 
-    min_, max_ = get_range(blender_obj_uuid, action_name, export_settings) #TODOSLOT: using slot here?
+    min_, max_ = get_range(blender_obj_uuid, action_name, export_settings) #TODOSLOT slot-1-B : using slot here?
 
     if only_gather_provided:
         # If object is not in vtree, this is a material or light for pointers
@@ -496,7 +496,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
                 # slot_handle is always None for scene export
                 key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
         else:
-            # case of collection, TODOSLOT: what slot_handle we need here?
+            # case of collection, TODOSLOT slot-1-E: what slot_handle we need here?
             key1, key2, key3, key4, ket5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
 
         initialize_data_dict(data, key1, key2, key3, key4, key5)
@@ -510,7 +510,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
         elif blender_obj is None:  # GN instances
             # case of baking object, for GN instances
             # There is no animation, so use uuid of object as key
-            # TODOSLOT: what slot_handle we need here?
+            # TODOSLOT slot-1-E: what slot_handle we need here?
             key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
             initialize_data_dict(data, key1, key2, key3, key4, key5)
             data[key1][key2][key3][key4][key5][frame] = mat
@@ -706,7 +706,7 @@ def camera_caching(data, action_name, slot_handle, frame, export_settings):
         if blender_camera and blender_camera.animation_data and blender_camera.animation_data.action \
                 and blender_camera.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-                # TODOSLOT: what slot_handle we need here?
+                # TODOSLOT slot-1-E: what slot_handle we need here?
             key1, key2, key3, key4 = cam, blender_camera.animation_data.action.name, blender_camera.animation_data.action_slot_handle, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
             # We can keep the input slot_handle here, as we are caching only one object / NLA track
@@ -714,7 +714,7 @@ def camera_caching(data, action_name, slot_handle, frame, export_settings):
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
-            # TODOSLOT: what slot_handle we need here?
+            # TODOSLOT slot-1-E: what slot_handle we need here?
             key1, key2, key3, key4 = cam, cam, slot_handle, "value"
 
         if key2 not in data[key1].keys():

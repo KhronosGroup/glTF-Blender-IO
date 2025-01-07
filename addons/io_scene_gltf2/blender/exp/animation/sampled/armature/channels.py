@@ -58,7 +58,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_ha
                     )
                 ] = get_gltf_interpolation("LINEAR")  # if forced to be sampled, keep LINEAR interpolation
     else:
-        pass # Not slot = > TODOSLOT we need to get a new way of getting animated bones
+        pass # Not slot = > TODOSLOT slot-1-B we need to get a new way of getting animated bones
 
     for bone in bones_to_be_animated:
         for p in ["location", "rotation_quaternion", "scale"]:

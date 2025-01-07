@@ -45,7 +45,7 @@ class ActionsData:
             for slot in action.slots:
                 self.actions[id(action.action)].add_slot(slot.slot, slot.id_root, slot.track)
 
-    def sort(self): #TODOSLOT
+    def sort(self): #TODOSLOT slot-1-B
         pass #Implement sorting, to be sure to get:
         # - SK or TRS first (see current code)
         # Active action or NLA track (see current code)
@@ -82,7 +82,7 @@ class ActionData:
         new_slot = SlotData(slot, id_root, track)
         self.slots.append(new_slot)
 
-    def sort(self): #TODOSLOT
+    def sort(self): #TODOSLOT slot-1-B
         pass #Implement sorting, to be sure to get:
         # - SK or TRS first (see current code)
         # Active action or NLA track (see current code)
@@ -351,7 +351,7 @@ def gather_action_animations(obj_uuid: int,
         animation = bake_animation(obj_uuid, obj_uuid, export_settings)
         if animation is not None:
             animations.append(animation)
-        # TODOSLOT : return here?
+        # TODOSLOT : return here? slot-1-B
 
 
     # Keep current situation and prepare export
@@ -433,7 +433,7 @@ def gather_action_animations(obj_uuid: int,
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, False)
 
 # Export
-# TODOSLOT add slot to hook calls
+# TODOSLOT slot-hook add slot to hook calls
 
     # Export all collected actions.
     for action_data in blender_actions.values():
@@ -572,7 +572,7 @@ def gather_action_animations(obj_uuid: int,
                             obj_uuid, prop, blender_action.name, slot.slot.handle, True, get_gltf_interpolation("LINEAR"), export_settings)
                     elif type_ == "SK":
                         channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, slot.slot.handle, export_settings)
-                    elif type_ == "EXTRA": #TODOSLOT
+                    elif type_ == "EXTRA": #TODOSLOT slot-3
                         channel = None
                     else:
                         export_settings['log'].error("Type unknown. Should not happen")
@@ -580,7 +580,7 @@ def gather_action_animations(obj_uuid: int,
                     if channel:
                         all_channels.append(channel)
 
-            # TODOSLOT hook, no more animation here
+            # TODOSLOT slot-hook, no more animation here
             # Add extra samplers
             # Because this is not core glTF specification, you can add extra samplers using hook
             if export_settings['gltf_export_extra_animations'] and len(extra_samplers) != 0:
@@ -904,7 +904,7 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings): #TODOSLOT slot-1
             continue  # We ignore this action
 
         # Keep all actions on objects (no Shapekey animation, No armature animation (on bones))
-        if blender_action.id_root == "OBJECT":  # TRS and Bone animations #TODOSLOT
+        if blender_action.id_root == "OBJECT":  # TRS and Bone animations #TODOSLOT slot-1-D
             if blender_object.animation_data is None:
                 continue
             if blender_object and blender_object.type == "ARMATURE" and __is_armature_action(blender_action): #TODOSLOT slot-1-D
@@ -916,7 +916,7 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings): #TODOSLOT slot-1
                     blender_actions.append(blender_action)
                     blender_tracks[blender_action.name] = None
                     action_on_type[blender_action.name] = "OBJECT"
-        elif blender_action.id_root == "KEY": #TODOSLOT
+        elif blender_action.id_root == "KEY": #TODOSLOT slot-1-D
             if blender_object.type != "MESH" or blender_object.data is None or blender_object.data.shape_keys is None or blender_object.data.shape_keys.animation_data is None:
                 continue
             # Checking that the object has some SK and some animation on it

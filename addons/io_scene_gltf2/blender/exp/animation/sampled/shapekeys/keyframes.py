@@ -61,7 +61,7 @@ def gather_sk_sampled_keyframes(obj_uuid,
                     channels = [None] * len(get_sk_exported(blender_obj.data.shape_keys.key_blocks))
 
             else:
-                # TODOSLOT we need to get a new way to get the list of animated channels
+                # TODOSLOT slot-1-B we need to get a new way to get the list of animated channels
                 channel_group = {}
                 channels = [None] * len(get_sk_exported(blender_obj.data.shape_keys.key_blocks))
 
