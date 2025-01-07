@@ -66,8 +66,9 @@ class BlenderPointerAnim():
         else:
             id_root = asset_type
 
-        action = BlenderPointerAnim.get_or_create_action(
-            gltf, asset, asset_idx, animation.track_name, id_root, name=name)
+
+        action, slot = BlenderPointerAnim.get_or_create_action_and_slot(
+            gltf, anim_idx, asset, asset_idx, id_root, name_=name)
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
@@ -627,6 +628,7 @@ class BlenderPointerAnim():
                 num_components = 1
 
         if blender_path is None:
+            gltf.log.warning("Unsupported animation target: %s" % pointer_tab)
             return  # Should not happen if all specification is managed
 
         fps = bpy.context.scene.render.fps
@@ -638,6 +640,7 @@ class BlenderPointerAnim():
             coords[1::2] = (vals[i] for vals in values)
             make_fcurve(
                 action,
+                slot,
                 coords,
                 data_path=blender_path,
                 index=i,
@@ -669,6 +672,7 @@ class BlenderPointerAnim():
             coords[1::2] = (vals[3] for vals in values)
             make_fcurve(
                 action,
+                slot,
                 coords,
                 data_path=blender_path,
                 index=0,
@@ -677,48 +681,68 @@ class BlenderPointerAnim():
             )
 
     @staticmethod
-    def get_or_create_action(gltf, asset, asset_idx, anim_name, asset_type, name=None):
+    def get_or_create_action_and_slot(gltf, anim_idx, asset, asset_idx, asset_type, name_=None):
+        animation = gltf.data.animations[anim_idx]
 
-        action = None
         if asset_type == "CAMERA":
-            data_name = "camera_" + asset.name or "Camera%d" % asset_idx
-            action = gltf.action_cache.get(data_name)
-            id_root = "CAMERA"
+            name = asset.name
             stash = asset.blender_object_data
         elif asset_type == "LIGHT":
-            data_name = "light_" + asset['name'] or "Light%d" % asset_idx
-            action = gltf.action_cache.get(data_name)
-            id_root = "LIGHT"
+            name = asset['name']
             stash = asset['blender_object_data']
         elif asset_type == "MATERIAL":
-            data_name = "material_" + asset.name or "Material%d" % asset_idx
-            action = gltf.action_cache.get(data_name)
-            id_root = "MATERIAL"
+            name = asset.name
             stash = asset.blender_mat
         elif asset_type == "NODETREE":
-            name_ = name if name is not None else asset.name
-            data_name = "nodetree_" + name_ or "Nodetree%d" % asset_idx
-            action = gltf.action_cache.get(data_name)
-            id_root = "NODETREE"
+            name = name_ if name_ is not None else asset.name
             stash = asset.blender_nodetree
         elif asset_type == "TEX_TRANSFORM":
-            name_ = name if name is not None else asset.name
-            data_name = "nodetree_" + name_ or "Nodetree%d" % asset_idx
-            action = gltf.action_cache.get(data_name)
-            id_root = "NODETREE"
+            name = name_ if name_ is not None else asset.name
             stash = asset['blender_nodetree']
         elif asset_type == "EXT":
-            name_ = name if name is not None else asset.name
-            data_name = "nodetree_" + name_ or "Nodetree%d" % asset_idx
-            action = gltf.action_cache.get(data_name)
-            id_root = "NODETREE"
+            name = name_ if name_ is not None else asset.name
             stash = asset['blender_nodetree']
 
-        if not action:
-            name = anim_name + "_" + data_name
-            action = bpy.data.actions.new(name)
-            action.id_root = id_root
-            gltf.needs_stash.append((stash, action))
-            gltf.action_cache[data_name] = action
+        objects = gltf.action_cache.get(anim_idx)
+        if not objects:
+            # Nothing exists yet for this glTF animation
+            gltf.action_cache[anim_idx] = {}
 
-        return action
+            # So create a new action
+            action = bpy.data.actions.new(animation.track_name)
+            action.layers.new('layer0')
+            action.layers[0].strips.new(type='KEYFRAME')
+
+            gltf.action_cache[anim_idx]['action'] = action
+            gltf.action_cache[anim_idx]['object_slots'] = {}
+
+        # We now have an action for the animation, check if we have slots for this object
+        slots = gltf.action_cache[anim_idx]['object_slots'].get(name)
+        if not slots:
+
+            # We have no slots, create one
+
+            action = gltf.action_cache[anim_idx]['action']
+            slot = action.slots.new(for_id=stash)
+            gltf.needs_stash.append((stash, action, slot))
+
+            action.layers[0].strips[0].channelbags.new(slot)
+
+            gltf.action_cache[anim_idx]['object_slots'][name] = {}
+            gltf.action_cache[anim_idx]['object_slots'][name][slot.id_root] = (action, slot)
+        else:
+            # We have slots, check if we have the right slot (based on id_root)
+            ac_sl = slots.get(asset_type)
+            if not ac_sl:
+                action = gltf.action_cache[anim_idx]['action']
+                slot = action.slots.new(for_id=stash)
+                gltf.needs_stash.append((stash, action, slot))
+
+                action.layers[0].strips[0].channelbags.new(slot)
+
+                gltf.action_cache[anim_idx]['object_slots'][name][slot.id_root] = (action, slot)
+            else:
+                action, slot = ac_sl
+
+        # We now have action and slot, we can return the right slot
+        return action, slot
