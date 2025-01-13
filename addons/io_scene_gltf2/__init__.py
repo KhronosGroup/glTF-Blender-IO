@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 4, 26),
+    "version": (4, 4, 27),
     'blender': (4, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -813,6 +813,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_merge_animation: EnumProperty(
+        name='Merge Animation',
+        items=(('NLA_TRACK', 'NLA Track Names', 'Merge by NLA Track Names'),
+               ('ACTION', 'Actions', 'Merge by Actions'),
+               ('NONE', 'No Merge', 'Do not merge animations'),
+               ),
+        description='Merge animations',
+        default='ACTION'
+    )
+
     export_anim_single_armature: BoolProperty(
         name='Export all Armature Actions',
         description=(
@@ -1194,6 +1204,11 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 export_settings['gltf_trs_w_animation_pointer'] = False
                 export_settings['gltf_export_anim_pointer'] = False
 
+            if export_settings['gltf_animation_mode'] != "ACTIONS":
+                export_settings['gltf_merge_animation'] = "NLA_TRACK"
+            else:
+                export_settings['gltf_merge_animation'] = self.export_merge_animation
+
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
@@ -1488,7 +1503,7 @@ def export_panel_data_material(layout, operator):
         col.active = operator.export_image_format != "WEBP" and not operator.export_materials in ['PLACEHOLDER', 'NONE']
         col.prop(operator, "export_image_add_webp")
         col = body.column()
-        col.active = operator.export_image_format != "WEBP"  and not operator.export_materials in ['PLACEHOLDER', 'NONE']
+        col.active = operator.export_image_format != "WEBP" and not operator.export_materials in ['PLACEHOLDER', 'NONE']
         col.prop(operator, "export_image_webp_fallback")
 
         header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
@@ -1597,16 +1612,9 @@ def export_panel_animation(layout, operator):
         if operator.export_animation_mode == "ACTIVE_ACTIONS":
             layout.prop(operator, 'export_nla_strips_merged_animation_name')
 
-        row = body.row()
-        row.active = operator.export_force_sampling and operator.export_animation_mode in [
-            'ACTIONS', 'ACTIVE_ACTIONS', 'BROACAST']
-        row.prop(operator, 'export_bake_animation')
-        if operator.export_animation_mode == "SCENE":
-            body.prop(operator, 'export_anim_scene_split_object')
-        row = body.row()
-
         if operator.export_animation_mode in ["NLA_TRACKS", "SCENE"]:
             export_panel_animation_notes(body, operator)
+        export_panel_animation_bake_and_merge(body, operator)
         export_panel_animation_ranges(body, operator)
         export_panel_animation_armature(body, operator)
         export_panel_animation_shapekeys(body, operator)
@@ -1633,6 +1641,28 @@ def export_panel_animation_notes(layout, operator):
             body.label(text="Track mode uses full bake mode:")
             body.label(text="- sampling is active")
             body.label(text="- baking all objects is active")
+
+
+def export_panel_animation_bake_and_merge(layout, operator):
+    header, body = layout.panel("GLTF_export_animation_bake_and_merge", default_closed=False)
+    header.label(text="Bake & Merge")
+    if body:
+        body.active = operator.export_animations
+
+        row = body.row()
+        row.active = operator.export_force_sampling and operator.export_animation_mode in [
+            'ACTIONS', 'ACTIVE_ACTIONS', 'BROACAST']
+        row.prop(operator, 'export_bake_animation')
+
+        if operator.export_animation_mode == "SCENE":
+            row = body.row()
+            row.prop(operator, 'export_anim_scene_split_object')
+
+        row = body.row()
+        row.active = operator.export_force_sampling and operator.export_animation_mode in ['ACTIONS']
+        row.prop(operator, 'export_merge_animation')
+
+        row = body.row()
 
 
 def export_panel_animation_ranges(layout, operator):
@@ -1985,6 +2015,7 @@ def import_bone_panel(layout, operator):
         if operator.bone_heuristic == 'BLENDER':
             body.prop(operator, 'disable_bone_shape')
             body.prop(operator, 'bone_shape_scale_factor')
+
 
 def import_ux_panel(layout, operator):
     header, body = layout.panel("GLTF_import_ux", default_closed=False)
