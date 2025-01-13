@@ -817,9 +817,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Merge Animation',
         items=(('NLA_TRACK', 'NLA Track Names', 'Merge by NLA Track Names'),
                ('ACTION', 'Actions', 'Merge by Actions'),
-               ('NONE', 'No Merge', 'Do not merge animations'),
+               ('NONE', 'No Merge', 'Do Not Merge Animations'),
                ),
-        description='Merge animations',
+        description='Merge Animations',
         default='ACTION'
     )
 
