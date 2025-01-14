@@ -1492,16 +1492,12 @@ describe('Exporter', function () {
                 const arma2_scale_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "scale")[0];
 
                 const arma2_translation_sampler = anim_armature2.samplers[arma2_translation_channel.sampler];
-                const arma2_rotation_sampler = anim_armature2.samplers[arma2_rotation_channel.sampler];
-                const arma2_scale_sampler = anim_armature2.samplers[arma2_scale_channel.sampler];
+                assert.ok(arma2_rotation_channel == null);
+                assert.ok(arma2_scale_channel == null);
 
                 assert.strictEqual(arma2_translation_sampler.interpolation, "LINEAR");
-                assert.strictEqual(arma2_rotation_sampler.interpolation, "STEP");
-                assert.strictEqual(arma2_scale_sampler.interpolation, "STEP");
 
                 assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 1);
-                assert.strictEqual(asset.accessors[arma2_rotation_sampler.input].count, 1);
-                assert.strictEqual(asset.accessors[arma2_scale_sampler.input].count, 1);
 
                 const anim_sphere = asset.animations.filter(a => a.name === 'Sphere.001Action')[0];
 
@@ -1835,16 +1831,12 @@ describe('Exporter', function () {
                 const arma2_scale_channel = anim_armature2.channels.filter(a => asset.nodes[a.target.node].name === armature2_node.name).filter(a => a.target.path === "scale")[0];
 
                 const arma2_translation_sampler = anim_armature2.samplers[arma2_translation_channel.sampler];
-                const arma2_rotation_sampler = anim_armature2.samplers[arma2_rotation_channel.sampler];
-                const arma2_scale_sampler = anim_armature2.samplers[arma2_scale_channel.sampler];
+                assert.ok(arma2_rotation_channel == null);
+                assert.ok(arma2_scale_channel == null);
 
                 assert.strictEqual(arma2_translation_sampler.interpolation, "LINEAR");
-                assert.strictEqual(arma2_rotation_sampler.interpolation, "STEP");
-                assert.strictEqual(arma2_scale_sampler.interpolation, "STEP");
 
                 assert.strictEqual(asset.accessors[arma2_translation_sampler.input].count, 1);
-                assert.strictEqual(asset.accessors[arma2_rotation_sampler.input].count, 1);
-                assert.strictEqual(asset.accessors[arma2_scale_sampler.input].count, 1);
 
                 const anim_sphere = asset.animations.filter(a => a.name === 'Sphere.001Action')[0];
 
@@ -3139,6 +3131,40 @@ describe('Exporter', function () {
                 colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
                 assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
                 assert.ok(!("COLOR_1" in primitive.attributes));
+
+            });
+
+            it('exports broadcast actions', function () {
+
+                let gltfPath = path.resolve(outDirPath, '35_broadcast_slots.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.animations.length, 16);
+
+                // check object by object that the animations are correctly assigned
+                // First, get index of each object in asset.nodes array
+                const cube = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Cube')[0];
+                const cube_001 = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Cube.001')[0];
+                const armature = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Armature')[0];
+                const bone = asset.nodes[armature].children.filter(child => asset.nodes[child].name === 'Bone')[0];
+                const cylinder = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Cylinder')[0];
+                const suzanne = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Suzanne')[0];
+
+                // Check that the correct animations are assigned to each object
+                const cubeAnimations = asset.animations.filter(animation => animation.channels[0].target.node === cube);
+                assert.strictEqual(cubeAnimations.length, 4);
+
+                const cube_001Animations = asset.animations.filter(animation => animation.channels[0].target.node === cube_001);
+                assert.strictEqual(cube_001Animations.length, 4);
+
+                const armatureAnimations = asset.animations.filter(animation => animation.channels[0].target.node === bone);
+                assert.strictEqual(armatureAnimations.length, 2);
+
+                const cylinderAnimations = asset.animations.filter(animation => animation.channels[0].target.node === cylinder);
+                assert.strictEqual(cylinderAnimations.length, 3);
+
+                const suzanneAnimations = asset.animations.filter(animation => animation.channels[0].target.node === suzanne);
+                assert.strictEqual(suzanneAnimations.length, 3);
 
             });
 
