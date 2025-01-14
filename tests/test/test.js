@@ -3134,6 +3134,40 @@ describe('Exporter', function () {
 
             });
 
+            it('exports broadcast actions', function () {
+
+                let gltfPath = path.resolve(outDirPath, '35_broadcast_slots.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.animations.length, 16);
+
+                // check object by object that the animations are correctly assigned
+                // First, get index of each object in asset.nodes array
+                const cube = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Cube')[0];
+                const cube_001 = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Cube.001')[0];
+                const armature = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Armature')[0];
+                const bone = asset.nodes[armature].children.filter(child => asset.nodes[child].name === 'Bone')[0];
+                const cylinder = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Cylinder')[0];
+                const suzanne = asset.nodes.map((element, index) => index).filter(index => asset.nodes[index].name === 'Suzanne')[0];
+
+                // Check that the correct animations are assigned to each object
+                const cubeAnimations = asset.animations.filter(animation => animation.channels[0].target.node === cube);
+                assert.strictEqual(cubeAnimations.length, 4);
+
+                const cube_001Animations = asset.animations.filter(animation => animation.channels[0].target.node === cube_001);
+                assert.strictEqual(cube_001Animations.length, 4);
+
+                const armatureAnimations = asset.animations.filter(animation => animation.channels[0].target.node === bone);
+                assert.strictEqual(armatureAnimations.length, 2);
+
+                const cylinderAnimations = asset.animations.filter(animation => animation.channels[0].target.node === cylinder);
+                assert.strictEqual(cylinderAnimations.length, 3);
+
+                const suzanneAnimations = asset.animations.filter(animation => animation.channels[0].target.node === suzanne);
+                assert.strictEqual(suzanneAnimations.length, 3);
+
+            });
+
         });
     });
 
