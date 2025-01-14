@@ -26,10 +26,11 @@ from .anim_utils import link_samplers, add_slide_data
 
 def gather_scene_animations(export_settings):
 
-    # if there is no animation in file => no need to bake. Except if we are trying to bake GN instances
-    if len(bpy.data.actions) == 0 and export_settings['gltf_gn_mesh'] is False:
-        # TODO : get a better filter by checking we really have some GN instances...
-        return []
+    # Even if we don't have any animation,
+    # We are going to bake.
+    # Here are some cases where there are no action in bpy.data.actions, but we still have to bake:
+    # - GN instances, that can be animated
+    # - Everything that can be animated by drivers (animation pointer, but not only)
 
     total_channels = []
     animations = []
@@ -81,9 +82,11 @@ def gather_scene_animations(export_settings):
         if blender_object and blender_object.type != "ARMATURE":
             # We have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
-                channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
+                # Setting slot_handle to None, always
+                channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
                 if channels is not None:
                     total_channels.extend(channels)
+
             if export_settings['gltf_morph_anim'] and blender_object.type == "MESH" \
                     and blender_object.data is not None \
                     and blender_object.data.shape_keys is not None:
@@ -97,17 +100,21 @@ def gather_scene_animations(export_settings):
                         ignore_sk = True
 
                 if ignore_sk is False:
-                    channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, export_settings)
+                    # Setting slot_handle to None, always
+                    channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
                     if channels is not None:
                         total_channels.extend(channels)
         elif blender_object is None:
             # This is GN instances
             # Currently, not checking if this instance is skinned.... #TODO
-            channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, export_settings)
+            # No action / slot for GN instances
+            # Setting slot_handle to None, always
+            channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
         else:
-            channels, _ = gather_armature_sampled_channels(obj_uuid, obj_uuid, export_settings)
+            # Setting slot_handle to None, always
+            channels, _ = gather_armature_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
 
@@ -140,7 +147,8 @@ def gather_scene_animations(export_settings):
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, mat, mat, export_settings, add_drivers=False)
 
-            channels = gather_data_sampled_channels('materials', mat, mat, None, export_settings)
+            # Setting slot_handle to None, always
+            channels = gather_data_sampled_channels('materials', mat, mat, None, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
 
@@ -171,7 +179,8 @@ def gather_scene_animations(export_settings):
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, light, light, export_settings, add_drivers=False)
 
-            channels = gather_data_sampled_channels('lights', light, light, None, export_settings)
+            # Setting slot_handle to None, always
+            channels = gather_data_sampled_channels('lights', light, light, None, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
 
@@ -202,7 +211,8 @@ def gather_scene_animations(export_settings):
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, cam, cam, export_settings, add_drivers=False)
 
-            channels = gather_data_sampled_channels('cameras', cam, cam, None, export_settings)
+            # Setting slot_handle to None, always
+            channels = gather_data_sampled_channels('cameras', cam, cam, None, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
 
