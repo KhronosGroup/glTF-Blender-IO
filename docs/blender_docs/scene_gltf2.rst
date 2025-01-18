@@ -665,6 +665,8 @@ To play the whole animation, you need to enable Solo (star icon) for all its tra
 Each animation will be imported as a single action, with multiple slots if the animation affects multiple objects.
 One slot will be created for TRS, one for shape keys, etc...
 
+You can find more information about action slots in :doc:`Animation </animation/actions>`.
+
 .. note::
 
    There is currently no way to see the non-animated pose of a model that had animations.
@@ -712,6 +714,7 @@ Each action must be on its own NLA track.
 Before Blender 4.4, tracks was merged regarding their name.
 With Blender 4.4, and the introduction of slotted actions, this default behavior has been changed.
 Now, tracks are merged by the action they are using, and not by their name.
+You can find more information about action slots in :doc:`Animation </animation/actions>`.
 
 
 Active Actions merged
