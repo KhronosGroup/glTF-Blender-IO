@@ -681,6 +681,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    export_sampling_interpolation: EnumProperty(
+        name='Sampling Interpolation Mode',
+        items=(('LINEAR', 'Linear', 'Linear interpolation between keyframes'),
+               ('STEP', 'Step', 'No interpolation between keyframes'),
+        ),
+        description='Interpolation mode for sampled animations, when the property is not keyed',
+        default='LINEAR'
+    )
+
     export_pointer_animation: BoolProperty(
         name='Export Animation Pointer (Experimental)',
         description='Export material, Light & Camera animation as Animation Pointer. '
@@ -1189,6 +1198,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
+            export_settings['gltf_sampling_interpolation'] = self.export_sampling_interpolation
             if not self.export_force_sampling:
                 export_settings['gltf_def_bones'] = False
                 export_settings['gltf_bake_animation'] = False
@@ -1718,6 +1728,7 @@ def export_panel_animation_sampling(layout, operator):
         body.active = operator.export_animations and operator.export_force_sampling
 
         body.prop(operator, 'export_frame_step')
+        body.prop(operator, 'export_sampling_interpolation')
 
 
 def export_panel_animation_pointer(layout, operator):

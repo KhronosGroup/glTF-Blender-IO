@@ -1121,6 +1121,8 @@ Apply sampling to all animations. Do not sample animation can lead to wrong anim
 
 Sampling Rate
    How often to evaluate animated values (in frames).
+Sampling Interpolation mode
+   Interpolation choosen for properties that are not keyed (LINEAR or STEP/CONSTANT)
 
 Animation - Optimize
 ^^^^^^^^^^^^^^^^^^^^
