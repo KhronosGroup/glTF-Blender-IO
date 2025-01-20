@@ -30,7 +30,6 @@ class BlenderMaterial():
     def create(gltf, material_idx, vertex_color):
         """Material creation."""
         pymaterial = gltf.data.materials[material_idx]
-        gltf.created_materials[material_idx] = True
 
         import_user_extensions('gather_import_material_before_hook', gltf, pymaterial, vertex_color)
 

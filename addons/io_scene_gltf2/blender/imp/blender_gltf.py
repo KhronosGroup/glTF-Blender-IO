@@ -17,6 +17,7 @@ from mathutils import Vector, Quaternion, Matrix
 from ...io.imp.user_extensions import import_user_extensions
 from .scene import BlenderScene
 from .material import BlenderMaterial
+from .image import BlenderImage
 
 
 class BlenderGlTF():
@@ -57,10 +58,16 @@ class BlenderGlTF():
 
         # If needed, create not used materials
         if gltf.import_settings['import_unused_materials']:
-            for mat_idx in [i for i in range(len(gltf.data.materials)) if i not in gltf.created_materials]:
+            for mat_idx in [i for i in range(len(gltf.data.materials)) if len(gltf.data.materials[i].blender_material) == 0]:
                 BlenderMaterial.create(gltf, mat_idx, None)
                 # Force material users (fake user)
                 bpy.data.materials[gltf.data.materials[mat_idx].blender_material[None]].use_fake_user = True
+
+            # If needed, create not used images
+            for img_idx in [i for i in range(len(gltf.data.images)) if gltf.data.images[i].blender_image_name is None]:
+                BlenderImage.create(gltf, img_idx)
+                # Force image users (fake user)
+                bpy.data.images[gltf.data.images[img_idx].blender_image_name].use_fake_user = True
 
 
     @staticmethod

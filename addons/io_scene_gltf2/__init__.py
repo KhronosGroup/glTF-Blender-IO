@@ -1893,8 +1893,8 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     )
 
     import_unused_materials: BoolProperty(
-        name='Import Unused Materials',
-        description='Import materials not assigned to any mesh',
+        name='Import Unused Materials & Images',
+        description='Import materials & Images not assigned to any mesh',
         default=False,
     )
 
