@@ -123,4 +123,4 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
 
 def __gather_interpolation(export_settings):
     # TODO: check if the SK was animated with CONSTANT
-    return export_settings['gltf_sampling_interpolation']
+    return export_settings['gltf_sampling_interpolation_fallback']

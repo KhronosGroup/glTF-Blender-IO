@@ -56,7 +56,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_ha
                         chan_bone,
                         chan_prop,
                     )
-                ] = get_gltf_interpolation(export_settings['gltf_sampling_interpolation'], export_settings)  # if forced to be sampled, keep the interpolation chosen by the user
+                ] = get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings)  # if forced to be sampled, keep the interpolation chosen by the user
     else:
         pass
         # There is no animated channels (because if it was, we would have a slot_handle)
@@ -71,12 +71,12 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_ha
                 blender_action_name,
                 slot_handle,
                 (bone, p) in list_of_animated_bone_channels.keys(),
-                list_of_animated_bone_channels[(bone, p)] if (bone, p) in list_of_animated_bone_channels.keys() else get_gltf_interpolation(export_settings['gltf_sampling_interpolation'], export_settings),
+                list_of_animated_bone_channels[(bone, p)] if (bone, p) in list_of_animated_bone_channels.keys() else get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings),
                 export_settings)
             if channel is not None:
                 channels.append(channel)
 
-    bake_interpolation = get_gltf_interpolation(export_settings['gltf_sampling_interpolation'], export_settings)
+    bake_interpolation = get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings)
     # Retrieve animation on armature object itself, if any
     if blender_action_name == armature_uuid or export_settings['gltf_animation_mode'] in ["SCENE", "NLA_TRACKS"]:
         # If armature is baked (no animation of armature), need to use all channels
@@ -238,7 +238,7 @@ def __gather_armature_object_channel(obj_uuid: str, blender_action, slot_handle,
                     "delta_rotation_euler": "rotation_quaternion",
                     "delta_rotation_quaternion": "rotation_quaternion"
                 }.get(c[2]),
-                get_gltf_interpolation(export_settings['gltf_sampling_interpolation'], export_settings)  # Forced to be sampled, so use the interpolation chosen by the user
+                get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings)  # Forced to be sampled, so use the interpolation chosen by the user
             )
         )
 

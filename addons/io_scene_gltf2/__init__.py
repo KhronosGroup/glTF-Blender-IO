@@ -681,12 +681,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
-    export_sampling_interpolation: EnumProperty(
-        name='Sampling Interpolation Mode',
+    export_sampling_interpolation_fallback: EnumProperty(
+        name='Sampling Interpolation Fallback',
         items=(('LINEAR', 'Linear', 'Linear interpolation between keyframes'),
                ('STEP', 'Step', 'No interpolation between keyframes'),
         ),
-        description='Interpolation mode for sampled animations, when the property is not keyed',
+        description='Interpolation fallback for sampled animations, when the property is not keyed',
         default='LINEAR'
     )
 
@@ -1198,7 +1198,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
-            export_settings['gltf_sampling_interpolation'] = self.export_sampling_interpolation
+            export_settings['gltf_sampling_interpolation_fallback'] = self.export_sampling_interpolation_fallback
             if not self.export_force_sampling:
                 export_settings['gltf_def_bones'] = False
                 export_settings['gltf_bake_animation'] = False
@@ -1728,7 +1728,7 @@ def export_panel_animation_sampling(layout, operator):
         body.active = operator.export_animations and operator.export_force_sampling
 
         body.prop(operator, 'export_frame_step')
-        body.prop(operator, 'export_sampling_interpolation')
+        body.prop(operator, 'export_sampling_interpolation_fallback')
 
 
 def export_panel_animation_pointer(layout, operator):
