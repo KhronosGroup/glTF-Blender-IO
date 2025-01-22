@@ -1109,6 +1109,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # All custom export settings are stored in this container.
         export_settings = {}
 
+        # Collection Export does not handle correctly props declaration for now
+        # So use this tweak to manage it, waiting for a better solution
+        is_file_browser = context.space_data.type == 'FILE_BROWSER'
+        if not is_file_browser:
+            if not hasattr(context.scene, "gltf_action_filter") and self.export_action_filter:
+                bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(type=GLTF2_filter_action)
+                bpy.types.Scene.gltf_action_filter_active = bpy.props.IntProperty()
+
+
         # Get log level from parameters
         # If not set, get it from Blender app debug value
         export_settings['gltf_loglevel'] = self.export_loglevel
