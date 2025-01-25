@@ -37,15 +37,41 @@ class ExampleExtensionProperties(bpy.types.PropertyGroup):
         )
 
 def register():
+    # Register the properties
     bpy.utils.register_class(ExampleExtensionProperties)
+
+    # If you plan to use the Scene Exporter (File => Export => glTF 2.0), you probably want to register the properties to the scene
     bpy.types.Scene.ExampleExtensionProperties = bpy.props.PointerProperty(type=ExampleExtensionProperties)
 
+    # If you plan to use Collection Exporters, you may want to register the properties to the collection, instead of the scene
+    # bpy.types.Collection.ExampleExtensionProperties = bpy.props.PointerProperty(type=ExampleExtensionProperties)
+
+    # Use the following 2 lines to register the UI for this hook
+    from io_scene_gltf2 import exporter_extension_layout_draw
+    exporter_extension_layout_draw['Example glTF Extension'] = draw_export # Make sure to use the same name in unregister()
+
 def unregister():
+    # Unregister the properties
     bpy.utils.unregister_class(ExampleExtensionProperties)
     del bpy.types.Scene.ExampleExtensionProperties
 
+    # If you registered the properties to the collection, you should unregister them here
+    # del bpy.types.Collection.ExampleExtensionProperties
+
+    # Use the following 2 lines to unregister the UI for this hook
+    from io_scene_gltf2 import exporter_extension_layout_draw
+    del exporter_extension_layout_draw['Example glTF Extension'] # Make sure to use the same name in register()
+
 
 def draw_export(context, layout):
+
+    # Note: If you are using Collection Exporter, you may want to restrict UI for some collections
+    # You can access the collection like this: context.collection
+    # So you can check if you want to show the UI for this collection or not, using
+    # if context.collection.name != "Coll":
+    #     return
+
+
     header, body = layout.panel("GLTF_addon_example_exporter", default_closed=False)
     header.use_property_split = False
 
@@ -67,6 +93,13 @@ class glTF2ExportUserExtension:
         self.properties = bpy.context.scene.ExampleExtensionProperties
 
     def gather_node_hook(self, gltf2_object, blender_object, export_settings):
+
+        # Note: If you are using Collection Exporters, you may want to restrict the export for some collections
+        # You can access the collection like this: export_settings['gltf_collection']
+        # So you can check if you want to use this hook for this collection or not, using
+        # if export_settings['gltf_collection'] != "Coll":
+        #     return
+
         if self.properties.enabled:
             if gltf2_object.extensions is None:
                 gltf2_object.extensions = {}
