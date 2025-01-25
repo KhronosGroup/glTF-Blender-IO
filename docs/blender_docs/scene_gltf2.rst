@@ -1141,6 +1141,19 @@ Animation - Filter
 
 Restrict actions to be exported to the ones matching the filter.
 
+
+Collection Exporters
+====================
+
+This exporter can be used as a collection exporter.
+See :doc:`/scene_layout/collections/collections` for more information about collections and their exporters.
+
+Here are the options & specificity for collection export:
+
+- Include part of options are not available for collection exporter (like every other exporter).
+- Option to export at collection center (at center of mass of all root objects of the collection).
+
+
 Contributing
 ============
 
