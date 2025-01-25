@@ -477,7 +477,7 @@ Mask
 
    Rounding snaps alpha values that are 0.5 or greater up to 1, and ones below 0.5 down to
    1. It is also possible to use a cutoff value different than 0.5 by using Math nodes to
-   do `1 - (alpha < cutoff)`.
+   do ``1 - (alpha < cutoff)``.
 
    Mask mode is essentially the same as EEVEE's "Alpha Clip" blend mode, but is done with
    shader nodes so it works in other render engines.
@@ -662,6 +662,11 @@ The part of the animation that affects one object becomes an action stashed on t
 Use the track names to tell which actions are part of the same animation.
 To play the whole animation, you need to enable Solo (star icon) for all its tracks.
 
+Each animation will be imported as a single action, with multiple slots if the animation affects multiple objects.
+One slot will be created for TRS, one for shape keys, etc...
+
+You can find more information about action slots in :doc:`Animation </animation/actions>`.
+
 .. note::
 
    There is currently no way to see the non-animated pose of a model that had animations.
@@ -705,6 +710,11 @@ The importer organizes actions so they will be exported correctly with this mode
 
 This mode is useful if you are exporting for game engine, with an animation library of a character.
 Each action must be on its own NLA track.
+
+Before Blender 4.4, tracks was merged regarding their name.
+With Blender 4.4, and the introduction of slotted actions, this default behavior has been changed.
+Now, tracks are merged by the action they are using, and not by their name.
+You can find more information about action slots in :doc:`Animation </animation/actions>`.
 
 
 Active Actions merged
@@ -805,8 +815,6 @@ Properties
 Import
 ------
 
-Pack Images
-   Pack all images into the blend-file.
 Merge Vertices
    The glTF format requires discontinuous normals, UVs, and other vertex attributes to be stored as separate vertices,
    as required for rendering on typical graphics hardware.
@@ -814,9 +822,22 @@ Merge Vertices
    Currently cannot combine verts with different normals.
 Shading
    How normals are computed during import.
-Guess Original Bind Pose
-   Determines the pose for bones (and consequently, skinned meshes) in Edit Mode.
-   When on, attempts to guess the pose that was used to compute the inverse bind matrices.
+Lighting Mode
+   Optional backwards compatibility for non-standard render engines. Applies to lights.
+   Standard: Physically-based glTF lighting units (cd, lx, nt).
+   Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
+   Raw (Deprecated): Blender lighting strengths with no conversion
+
+Texture
+^^^^^^^
+Pack Images
+   Pack all images into the blend-file.
+Import WebP textures
+   If a texture exists in WebP format, loads the WebP texture instead of the fallback png/jpg one.
+
+Bones & Skin
+^^^^^^^^^^^^
+
 Bone Direction
    Changes the heuristic the importer uses to decide where to place bone tips.
    Note that the Fortune setting may cause inaccuracies in models that use non-uniform scaling.
@@ -824,13 +845,21 @@ Bone Direction
    The default value will not change axis, and is best for re-exporting from Blender.
    This default option will change display mode (adding shape and changing relationship line) to have a better view,
    even if original bones axis are not the most accurate (estheticaly speaking)
-Lighting Mode
-   Optional backwards compatibility for non-standard render engines. Applies to lights.
-   Standard: Physically-based glTF lighting units (cd, lx, nt).
-   Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
-   Raw (Deprecated): Blender lighting strengths with no conversion
-Import WebP textures
-   If a texture exists in WebP format, loads the WebP texture instead of the fallback png/jpg one.
+Guess Original Bind Pose
+   Determines the pose for bones (and consequently, skinned meshes) in Edit Mode.
+   When on, attempts to guess the pose that was used to compute the inverse bind matrices.
+Disable Bone Shape
+   Do not display bone shapes in the 3D View.
+Bone Shape Scale
+   Scale of the bone shapes in the 3D View.
+
+Pipeline
+^^^^^^^^
+
+Select Imported Objects
+   Select created objects after import.
+Import Scene Extras
+   Import glTF extras as custom properties, at scene level.
 
 
 Export
@@ -1039,11 +1068,18 @@ Animation
 ^^^^^^^^^
 
 Animation mode
-   Animation mode used for export (See `Animations`_ )
-Shape Keys Animations
-   Export Shape Keys Animation. Need Shape Keys to be exported (See `Data - Shape Keys`_)
+   Animation mode used for export (See `Animations`_
+
+Animation - Bake & Merge
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 Bake All Objects Animations
    Useful when some objects are constrained without being animated themselves.
+Merge Animation
+   Merge animation mode. Can be by Action (using slot), by NLA Track Name, or no merge.
+   When merging by NLA Track Name, all animation with the same NLA Track name will be merged.
+   When merging by Action, all animations with the same action will be merged.
+   When no merge, all animations will be exported as separate animations.
 
 
 Animation - Rest & Ranges
@@ -1068,6 +1104,15 @@ Reset pose bones between actions
    Reset pose bones between each action exported.
    This is needed when some bones are not keyed on some animations.
 
+Animation - Shape Keys
+^^^^^^^^^^^^^^^^^^^^^^
+
+Shape Keys Animations
+   Export Shape Keys Animation. Need Shape Keys to be exported (See `Data - Shape Keys`_)
+Reset Shape Keys between actions
+   Reset Shape Keys between each action exported.
+   This is needed when some shape keys are not keyed on some animations.
+
 
 Animation - Sampling
 ^^^^^^^^^^^^^^^^^^^^
@@ -1076,6 +1121,8 @@ Apply sampling to all animations. Do not sample animation can lead to wrong anim
 
 Sampling Rate
    How often to evaluate animated values (in frames).
+Sampling Interpolation Fallback
+   Interpolation choosen for properties that are not keyed (LINEAR or STEP/CONSTANT)
 
 Animation - Optimize
 ^^^^^^^^^^^^^^^^^^^^
@@ -1093,6 +1140,19 @@ Animation - Filter
 ^^^^^^^^^^^^^^^^^^
 
 Restrict actions to be exported to the ones matching the filter.
+
+
+Collection Exporters
+====================
+
+This exporter can be used as a collection exporter.
+See :doc:`/scene_layout/collections/collections` for more information about collections and their exporters.
+
+Here are the options & specificity for collection export:
+
+- Include part of options are not available for collection exporter (like every other exporter).
+- Option to export at collection center (at center of mass of all root objects of the collection).
+
 
 Contributing
 ============

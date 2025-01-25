@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 4, 28),
+    "version": (4, 4, 35),
     'blender': (4, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -305,6 +305,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Disable Quantization',
         description='Disable quantization; produces much larger glTF files with no extensions',
         default=True,
+    )
+
+    export_gltfpack_kn: BoolProperty(
+        name='Keep Named Nodes',
+        description='Restrict some optimization to keep named nodes and meshes attached to named nodes so that named nodes can be transformed externally',
+        default=False,
     )
 
     # TODO: some stuff in Textures
@@ -673,6 +679,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Always Sample Animations',
         description='Apply sampling to all animations',
         default=True
+    )
+
+    export_sampling_interpolation_fallback: EnumProperty(
+        name='Sampling Interpolation Fallback',
+        items=(('LINEAR', 'Linear', 'Linear interpolation between keyframes'),
+               ('STEP', 'Step', 'No interpolation between keyframes'),
+        ),
+        description='Interpolation fallback for sampled animations, when the property is not keyed',
+        default='LINEAR'
     )
 
     export_pointer_animation: BoolProperty(
@@ -1094,6 +1109,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # All custom export settings are stored in this container.
         export_settings = {}
 
+        # Collection Export does not handle correctly props declaration for now
+        # So use this tweak to manage it, waiting for a better solution
+        is_file_browser = context.space_data and context.space_data.type == 'FILE_BROWSER'
+        if not is_file_browser:
+            if not hasattr(context.scene, "gltf_action_filter") and self.export_action_filter:
+                bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(type=GLTF2_filter_action)
+                bpy.types.Scene.gltf_action_filter_active = bpy.props.IntProperty()
+
+
         # Get log level from parameters
         # If not set, get it from Blender app debug value
         export_settings['gltf_loglevel'] = self.export_loglevel
@@ -1183,6 +1207,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
+            export_settings['gltf_sampling_interpolation_fallback'] = self.export_sampling_interpolation_fallback
             if not self.export_force_sampling:
                 export_settings['gltf_def_bones'] = False
                 export_settings['gltf_bake_animation'] = False
@@ -1284,6 +1309,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_gltfpack_vpi'] = self.export_gltfpack_vpi
 
             export_settings['gltf_gltfpack_noq'] = self.export_gltfpack_noq
+            export_settings['gltf_gltfpack_kn'] = self.export_gltfpack_kn
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1711,6 +1737,7 @@ def export_panel_animation_sampling(layout, operator):
         body.active = operator.export_animations and operator.export_force_sampling
 
         body.prop(operator, 'export_frame_step')
+        body.prop(operator, 'export_sampling_interpolation_fallback')
 
 
 def export_panel_animation_pointer(layout, operator):
@@ -1777,7 +1804,7 @@ def export_panel_gltfpack(layout, operator):
         # col = body.column(heading = "Scene", align = True)
         col = body.column(heading="Miscellaneous", align=True)
         col.prop(operator, 'export_gltfpack_noq')
-
+        col.prop(operator, 'export_gltfpack_kn')
 
 def export_panel_user_extension(context, layout):
     for draw in exporter_extension_layout_draw.values():
@@ -1918,13 +1945,10 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
-        layout.prop(self, 'import_pack_images')
         layout.prop(self, 'merge_vertices')
         layout.prop(self, 'import_shading')
-        layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'export_import_convert_lighting_mode')
-        layout.prop(self, 'import_webp_texture')
-        layout.prop(self, 'import_unused_materials')
+        import_texture_panel(layout, operator)
         import_bone_panel(layout, operator)
         import_ux_panel(layout, operator)
 
@@ -2016,10 +2040,11 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
 
 def import_bone_panel(layout, operator):
     header, body = layout.panel("GLTF_import_bone", default_closed=False)
-    header.label(text="Bones")
+    header.label(text="Bones & Skin")
     if body:
         body.prop(operator, 'bone_heuristic')
         if operator.bone_heuristic == 'BLENDER':
+            body.prop(operator, 'guess_original_bind_pose')
             body.prop(operator, 'disable_bone_shape')
             body.prop(operator, 'bone_shape_scale_factor')
 
@@ -2030,6 +2055,14 @@ def import_ux_panel(layout, operator):
     if body:
         body.prop(operator, 'import_select_created_objects')
         body.prop(operator, 'import_scene_extras')
+
+def import_texture_panel(layout, operator):
+    header, body = layout.panel("GLTF_import_texture", default_closed=False)
+    header.label(text="Texture")
+    if body:
+        body.prop(operator, 'import_pack_images')
+        body.prop(operator, 'import_webp_texture')
+        body.prop(self, 'import_unused_materials')
 
 
 def import_panel_user_extension(context, layout):
