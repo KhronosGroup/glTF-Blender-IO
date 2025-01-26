@@ -1055,21 +1055,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
 
-        import sys
-        preferences = bpy.context.preferences
-        for addon_name in preferences.addons.keys():
-            try:
-                if hasattr(
-                        sys.modules[addon_name],
-                        'glTF2ExportUserExtension') or hasattr(
-                        sys.modules[addon_name],
-                        'glTF2ExportUserExtensions'):
-                    exporter_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_export if hasattr(
-                        sys.modules[addon_name], 'draw_export') else sys.modules[addon_name].draw
-            except Exception:
-                pass
-
-        self.has_active_exporter_extensions = len(exporter_extension_layout_draw.keys()) > 0
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
