@@ -18,6 +18,8 @@ If you want to use this file as a base of your addon, make sure to make it prope
 Next, define functions that contain the data of the extension you would like to include. Write those functions for each type you want to include extensions for. Currently implemented are:
 
 ```
+pre_export_hook(self, export_settings)
+post_export_hook(self, export_settings)
 gather_animation_channel_hook(self, gltf2_animation_channel, channel, blender_object, bone, action_name, node_channel_is_animated, export_settings)
 gather_animation_channel_target_hook(self, gltf2_animation_channel_target, channels, blender_object, bake_bone, bake_channel, export_settings)
 gather_animation_sampler_hook(self, gltf2_sampler, blender_object, bone, action_name, node_channel_is_animated, export_settings)

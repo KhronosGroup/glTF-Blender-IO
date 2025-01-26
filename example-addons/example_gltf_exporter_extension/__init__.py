@@ -75,3 +75,9 @@ class glTF2ExportUserExtension:
                 extension={"float": self.properties.float_property},
                 required=extension_is_required
             )
+
+def glTF2_pre_export_callback(export_settings):
+    print("This will be called before exporting the glTF file.")
+
+def glTF2_post_export_callback(export_settings):
+    print("This will be called after exporting the glTF file.")
