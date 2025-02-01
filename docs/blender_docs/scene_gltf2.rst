@@ -1152,6 +1152,7 @@ Here are the options & specificity for collection export:
 
 - Include part of options are not available for collection exporter (like every other exporter).
 - Option to export at collection center (at center of mass of all root objects of the collection).
+- Custom Properties of the collection are exported as Scene glTF extras.
 
 
 Contributing
