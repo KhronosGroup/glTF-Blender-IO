@@ -327,13 +327,3 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, slot_ident
         link_samplers(animation, export_settings)
         return animation
 
-
-def get_channelbag_for_slot(action, slot):
-    # This is on purpose limited to the first layer and strip. To support more
-    # than 1 layer, a rewrite of this operator is needed which ideally would
-    # happen in C++.
-    for layer in action.layers:
-        for strip in layer.strips:
-            channelbag = strip.channelbag(slot)
-            return channelbag
-    return None

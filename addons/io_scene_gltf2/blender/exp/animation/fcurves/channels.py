@@ -17,7 +17,7 @@ import typing
 from .....io.exp.user_extensions import export_user_extensions
 from .....io.com import gltf2_io
 from ....exp.cache import cached
-from ....com.data_path import get_target_object_path, get_target_property_name, get_rotation_modes, get_object_from_datapath, skip_sk
+from ....com.data_path import get_target_object_path, get_target_property_name, get_rotation_modes, get_object_from_datapath, skip_sk, get_channelbag_for_slot
 from ....com.conversion import get_target, get_channel_from_target
 from .channel_target import gather_fcurve_channel_target
 from .sampler import gather_animation_fcurves_sampler
@@ -74,7 +74,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, slot: bp
     # When both normal and delta are used --> Set to to_be_sampled list
     to_be_sampled = []  # (object_uuid , type , prop, optional(bone.name) )
 
-    channelbag = __get_channelbag_for_slot(blender_action, slot)
+    channelbag = get_channelbag_for_slot(blender_action, slot)
     fcurves = channelbag.fcurves if channelbag else []
     for fcurve in fcurves:
         type_ = None
@@ -386,14 +386,3 @@ def needs_baking(obj_uuid: str,
                 return True
 
     return False
-
-
-def __get_channelbag_for_slot(action, slot):
-    # This is on purpose limited to the first layer and strip. To support more
-    # than 1 layer, a rewrite of this operator is needed which ideally would
-    # happen in C++.
-    for layer in action.layers:
-        for strip in layer.strips:
-            channelbag = strip.channelbag(slot)
-            return channelbag
-    return None

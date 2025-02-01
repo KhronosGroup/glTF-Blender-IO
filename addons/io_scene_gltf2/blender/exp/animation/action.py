@@ -18,7 +18,7 @@ from math import ceil
 from ....io.com import gltf2_io
 from ....io.exp.user_extensions import export_user_extensions
 from ....blender.com.conversion import get_gltf_interpolation
-from ...com.data_path import is_bone_anim_channel
+from ...com.data_path import is_bone_anim_channel, get_channelbag_for_slot
 from ...com.extras import generate_extras
 from ..cache import cached
 from ..tree import VExportNode
@@ -30,7 +30,7 @@ from .sampled.shapekeys.action_sampled import gather_action_sk_sampled
 from .sampled.object.channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.channels import gather_sampled_sk_channel
 from .drivers import get_sk_drivers, get_driver_on_shapekey
-from .anim_utils import reset_bone_matrix, reset_sk_data, link_samplers, add_slide_data, merge_tracks_perform, bake_animation, get_channelbag_for_slot
+from .anim_utils import reset_bone_matrix, reset_sk_data, link_samplers, add_slide_data, merge_tracks_perform, bake_animation
 
 
 class ActionsData:
