@@ -27,12 +27,12 @@ from .sampler import gather_animation_fcurves_sampler
 def gather_animation_fcurves_channels(
         obj_uuid: int,
         blender_action: bpy.types.Action,
-        slot_handle: int,
+        slot_identifier: str,
         export_settings
 ):
 
     channels_to_perform, to_be_sampled, extra_channels_to_perform = get_channel_groups(
-        obj_uuid, blender_action, slot_handle, export_settings)
+        obj_uuid, blender_action, blender_action.slots[slot_identifier], export_settings)
 
     custom_range = None
     if blender_action.use_frame_range:
@@ -61,7 +61,7 @@ def gather_animation_fcurves_channels(
     return channels, to_be_sampled, extra_samplers
 
 
-def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, slot_handle: int, export_settings, no_sample_option=False):
+def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, slot: bpy.types.ActionSlot, export_settings, no_sample_option=False):
     # no_sample_option is used when we want to retrieve all SK channels, to be evaluate.
     targets = {}
     targets_extra = {}
@@ -74,7 +74,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action, slot_han
     # When both normal and delta are used --> Set to to_be_sampled list
     to_be_sampled = []  # (object_uuid , type , prop, optional(bone.name) )
 
-    channelbag = __get_channelbag_for_slot_handle(blender_action, slot_handle)
+    channelbag = __get_channelbag_for_slot(blender_action, slot)
     fcurves = channelbag.fcurves if channelbag else []
     for fcurve in fcurves:
         type_ = None
@@ -388,9 +388,12 @@ def needs_baking(obj_uuid: str,
     return False
 
 
-def __get_channelbag_for_slot_handle(action, slot_handle):
+def __get_channelbag_for_slot(action, slot):
+    # This is on purpose limited to the first layer and strip. To support more
+    # than 1 layer, a rewrite of this operator is needed which ideally would
+    # happen in C++.
     for layer in action.layers:
         for strip in layer.strips:
-            channelbag = strip.channels(slot_handle)
+            channelbag = strip.channelbag(slot)
             return channelbag
     return None

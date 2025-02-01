@@ -556,16 +556,16 @@ def gather_action_animations(obj_uuid: int,
             if export_settings['gltf_force_sampling'] is True:
                 if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
                     channels, extra_samplers = gather_action_armature_sampled(
-                        obj_uuid, blender_action, slot.slot.handle, None, export_settings)
+                        obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                     if channels:
                         all_channels.extend(channels)
                 elif on_type == "OBJECT":
                     channels, extra_samplers = gather_action_object_sampled(
-                        obj_uuid, blender_action, slot.slot.handle, None, export_settings)
+                        obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                     if channels:
                         all_channels.extend(channels)
                 else:
-                    channels = gather_action_sk_sampled(obj_uuid, blender_action, slot.slot.handle, None, export_settings)
+                    channels = gather_action_sk_sampled(obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                     if channels:
                         all_channels.extend(channels)
             else:
@@ -575,25 +575,25 @@ def gather_action_animations(obj_uuid: int,
                 #  - fcurve that cannot be handled not sampled, to be sampled
                 # to_be_sampled is : (object_uuid , type , prop, optional(bone.name) )
                 channels, to_be_sampled, extra_samplers = gather_animation_fcurves(
-                    obj_uuid, blender_action, slot.slot.handle, export_settings)
+                    obj_uuid, blender_action, slot.slot.identifier, export_settings)
                 if channels:
                     all_channels.extend(channels)
                 for (obj_uuid, type_, prop, bone) in to_be_sampled:
                     if type_ == "BONE":
-                        channel = gather_sampled_bone_channel(
+                        channel = gather_sampled_bone_channel( #TODOSLOT
                             obj_uuid,
                             bone,
                             prop,
                             blender_action.name,
-                            slot.slot.handle,
+                            slot.slot.identifier,
                             True,
                             get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings),
                             export_settings)
                     elif type_ == "OBJECT":
                         channel = gather_sampled_object_channel(
-                            obj_uuid, prop, blender_action.name, slot.slot.handle, True, get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings), export_settings)
+                            obj_uuid, prop, blender_action.name, slot.slot.identifier, True, get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings), export_settings)
                     elif type_ == "SK":
-                        channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, slot.slot.handle, export_settings)
+                        channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, slot.slot.identifier, export_settings)
                     elif type_ == "EXTRA":  # TODOSLOT slot-3
                         channel = None
                     else:
