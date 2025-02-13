@@ -856,6 +856,12 @@ def __get_blender_actions(obj_uuid: str,
                                                                                              for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
                             continue  # We ignore this action
 
+                        if slot.active is False:
+                            export_settings['log'].warning(
+                                "Animation '{}', slot '{}' is inactive, skipping".format(
+                                    act.name, slot.name_display))
+                            continue
+
                         new_action = ActionData(act)
                         new_action.add_slot(slot, slot.target_id_type, None)
                         actions.add_action(new_action)
@@ -906,6 +912,12 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
         new_action = ActionData(blender_action)
 
         for slot in blender_action.slots:
+
+            if slot.active is False:
+                export_settings['log'].warning(
+                    "Animation '{}', slot '{}' is inactive, skipping".format(
+                        blender_action.name, slot.name_display))
+                continue
 
             if slot.target_id_type == "OBJECT":
 
