@@ -149,14 +149,24 @@ class VExportTree:
             for blender_object in [obj.original for obj in scene_eval.objects if obj.parent is None]:
                 self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), False, blender_children)
         else:
-            self.recursive_node_traverse(
-                blender_scene.collection,
+            if self.export_settings['gltf_collection']:
+                self.recursive_node_traverse(
+                bpy.data.collections[self.export_settings['gltf_collection']],
                 None,
                 None,
                 Matrix.Identity(4),
                 False,
                 blender_children,
                 is_collection=True)
+            else:
+                self.recursive_node_traverse(
+                    blender_scene.collection,
+                    None,
+                    None,
+                    Matrix.Identity(4),
+                    False,
+                    blender_children,
+                    is_collection=True)
 
     def recursive_node_traverse(
             self,
@@ -940,12 +950,18 @@ class VExportTree:
         # Are taken into account all objects that are direct root in the exported collection
         centers = []
 
-        for node in [
-            n for n in self.nodes.values() if n.parent_uuid is None and n.blender_type in [
+        blender_types = [
                 VExportNode.OBJECT,
                 VExportNode.ARMATURE,
                 VExportNode.LIGHT,
-                VExportNode.CAMERA]]:
+                VExportNode.CAMERA]
+
+        # In case of full collection hierarchy, we need to take into account also collections & collection instances
+        if self.export_settings['gltf_hierarchy_full_collections'] is True:
+            blender_types.extend([VExportNode.COLLECTION, VExportNode.INST_COLLECTION])
+
+        for node in [
+            n for n in self.nodes.values() if n.parent_uuid is None and n.blender_type in blender_types]:
             if node.matrix_world is not None:
                 centers.append(node.matrix_world.translation)
 
