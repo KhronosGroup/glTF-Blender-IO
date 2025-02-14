@@ -842,6 +842,7 @@ def __get_blender_actions(obj_uuid: str,
             if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
                 # Keep all actions on objects (no Shapekey animation)
                 for act in bpy.data.actions:
+                    already_added_action = False
                     for slot in [s for s in act.slots if s.target_id_type == "OBJECT"]:
                         # We need to check this is an armature action
                         # Checking that at least 1 bone is animated
@@ -856,15 +857,16 @@ def __get_blender_actions(obj_uuid: str,
                                                                                              for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
                             continue  # We ignore this action
 
-                        if slot.active is False:
+                        if already_added_action is True:
                             export_settings['log'].warning(
-                                "Animation '{}', slot '{}' is inactive, skipping".format(
+                                "Animation '{}', slot '{}' is skipped, we already have exported a slot for this action".format(
                                     act.name, slot.name_display))
                             continue
 
                         new_action = ActionData(act)
                         new_action.add_slot(slot, slot.target_id_type, None)
                         actions.add_action(new_action)
+                        already_added_action = True
 
     export_user_extensions('gather_actions_hook', export_settings, blender_object, actions)
 
