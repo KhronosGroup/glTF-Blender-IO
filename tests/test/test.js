@@ -3173,9 +3173,12 @@ describe('Exporter', function () {
                 let gltfPath = path.resolve(outDirPath, 'gn_object_instances.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath));
 
+                // Check that there are no duplicate mesh entries being exported
                 assert.equal(asset.meshes.length, 2);
-                assert.ok(asset.meshes.includes('Suzanne'))
-                assert.ok(asset.meshes.includes('Plane'))
+
+                const meshNames = asset.meshes.map(({ name }) => name)
+                assert.ok(meshNames.includes('Suzanne'))
+                assert.ok(meshNames.includes('Plane'))
 
             });
 
