@@ -3169,6 +3169,16 @@ describe('Exporter', function () {
 
             });
 
+            it('exports GN object instances', function () {
+                let gltfPath = path.resolve(outDirPath, 'gn_object_instances.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.equal(asset.meshes.length, 2);
+                assert.ok(asset.meshes.includes('Suzanne'))
+                assert.ok(asset.meshes.includes('Plane'))
+
+            });
+
         });
     });
 
