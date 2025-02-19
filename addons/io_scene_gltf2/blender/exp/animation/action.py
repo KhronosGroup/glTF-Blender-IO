@@ -926,13 +926,9 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
 
         new_action = ActionData(blender_action)
 
+        already_added_object_slot = False
+        already_added_sk_slot = False
         for slot in blender_action.slots:
-
-            if slot.active is False:
-                export_settings['log'].warning(
-                    "Animation '{}', slot '{}' is inactive, skipping".format(
-                        blender_action.name, slot.name_display))
-                continue
 
             if slot.target_id_type == "OBJECT":
 
@@ -941,9 +937,25 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
                     continue
 
                 if blender_object and blender_object.type == "ARMATURE" and __is_armature_slot(blender_action, slot):
+
+                    if already_added_object_slot is True:
+                        export_settings['log'].warning(
+                            "Animation '{}', slot '{}' is skipped".format(
+                                blender_action.name, slot.name_display))
+                        continue
+
                     new_action.add_slot(slot, slot.target_id_type, None)
+                    already_added_object_slot = True
                 elif blender_object and blender_object.type == "MESH" and not __is_armature_slot(blender_action, slot):
+
+                    if already_added_object_slot is True:
+                        export_settings['log'].warning(
+                            "Animation '{}', slot '{}' is skipped".format(
+                                blender_action.name, slot.name_display))
+                        continue
+
                     new_action.add_slot(slot, slot.target_id_type, None)
+                    already_added_object_slot = True
 
             elif slot.target_id_type == "KEY":
                 if blender_object.type != "MESH" or blender_object.data is None or blender_object.data.shape_keys is None or blender_object.data.shape_keys.animation_data is None:
@@ -953,7 +965,15 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
                     continue
                 if blender_object.type != "MESH":
                     continue
+
+                if already_added_sk_slot is True:
+                    export_settings['log'].warning(
+                        "Animation '{}', slot '{}' is skipped".format(
+                            blender_action.name, slot.name_display))
+                    continue
+
                 new_action.add_slot(slot, slot.target_id_type, None)
+                already_added_sk_slot = True
 
             else:
                 pass  # TODOSLOT slot-3
