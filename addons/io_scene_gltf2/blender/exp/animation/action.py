@@ -64,6 +64,9 @@ class ActionsData:
 
         return False
 
+    def exists_action(self, action):
+        return id(action) in self.actions.keys()
+
     # Iterate over actions
     def values(self):
         # Create an iterator
@@ -843,6 +846,16 @@ def __get_blender_actions(obj_uuid: str,
                 # Keep all actions on objects (no Shapekey animation)
                 for act in bpy.data.actions:
                     already_added_action = False
+
+                    # For the assigned action, we aleady have the slot
+                    if act == blender_object.animation_data.action:
+                        continue
+
+                    # If we already have this action, we skip it
+                    # (We got it from NLA)
+                    if actions.exists_action(act):
+                        continue
+
                     for slot in [s for s in act.slots if s.target_id_type == "OBJECT"]:
                         # We need to check this is an armature action
                         # Checking that at least 1 bone is animated
