@@ -3168,8 +3168,8 @@ describe('Exporter', function () {
 
             });
 
-            it('exports GN object instances', function () {
-                let gltfPath = path.resolve(outDirPath, 'gn_object_instances.gltf');
+            it('exports GN unmodified instances as shared entry', function () {
+                let gltfPath = path.resolve(outDirPath, 'gn_unmodified_instances.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath));
 
                 // Check that there are no duplicate mesh entries being exported
@@ -3178,6 +3178,27 @@ describe('Exporter', function () {
                 const meshNames = asset.meshes.map(({ name }) => name)
                 assert.ok(meshNames.includes('Suzanne'))
                 assert.ok(meshNames.includes('Plane'))
+
+            });
+
+            it('exports GN modified instances as duplicate entries', function () {
+                let gltfPath = path.resolve(outDirPath, 'gn_modified_instances.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                // Expected 'Suzanne' to be duplicated
+                assert.equal(asset.meshes.length, 3);
+
+                const meshNames = asset.meshes.map(({ name }) => name)
+                assert.ok(meshNames.includes('Suzanne'))
+                assert.ok(meshNames.includes('Plane'))
+
+                // Verify there are two 'Suzanne entries
+                let suzanneCount = 0;
+                meshNames.forEach((name) => { 
+                    if (name === 'Suzanne')
+                        suzanneCount += 1
+                })
+                assert.equal(suzanneCount, 2);
 
             });
 

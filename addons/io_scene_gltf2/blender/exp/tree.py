@@ -479,7 +479,11 @@ class VExportTree:
                     if type(inst.object.data).__name__ == "Mesh" and len(inst.object.data.vertices) == 0:
                         continue  # This is nested instances, and this mesh has no vertices, so is an instancier for other instances
                     node.is_instancer = True
-                    inst_object = inst.object.original if inst.instance_object == inst.object else inst.object
+
+                    inst_object = inst.object
+                    if inst.instance_object == inst.object and len(inst.object.original.modifiers) == 0:
+                        # Grab the original object IFF the object is unmodified (otherwise just take the evaluated object)!
+                        inst_object = inst.object.original
                     self.recursive_node_traverse(
                         None,
                         None,
