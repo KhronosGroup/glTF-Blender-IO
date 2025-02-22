@@ -8,16 +8,16 @@ Documentation
 
 | Blender Version | Documentation |
 |---------|---------------------|
-| 4.2    | https://docs.blender.org/manual/en/4.2/addons/import_export/scene_gltf2.html  |
 | 4.3    | https://docs.blender.org/manual/en/4.3/addons/import_export/scene_gltf2.html  |
+| 4.4    | https://docs.blender.org/manual/en/4.4/addons/import_export/scene_gltf2.html  |
 | dev    | https://docs.blender.org/manual/en/dev/addons/import_export/scene_gltf2.html  |
 
 Notes:
-* 4.2 is the current stable release. Check the `blender-v4.2-release` branch (and `4.2.x` tag)
-* 4.3 is the next stable release. Check the `blender-v4.3-release` branch
-* 2.80 - 4.1 are previous stable releases.
+* 4.3 is the current stable release. Check the `blender-v4.3-release` branch (and `4.3.x` tag)
+* 4.4 is the next stable release. Check the `blender-v4.4-release` branch
+* 2.80 - 4.2 are previous stable releases.
 * 4.2.x is the current Blender LTS release. Check the `blender-v4.2-release` branch (and `4.2.x` tag)
-* main branch of this addon is mirrored in [Blender main](https://projects.blender.org/blender/blender/src/branch/main/scripts/addons_core/io_scene_gltf2), that will become Blender 4.4.
+* main branch of this addon is mirrored in [Blender main](https://projects.blender.org/blender/blender/src/branch/main/scripts/addons_core/io_scene_gltf2), that will become Blender 4.5.
 
 ### Legacy 2.79 Support
 
