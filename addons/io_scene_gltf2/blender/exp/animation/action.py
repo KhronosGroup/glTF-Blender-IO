@@ -481,11 +481,8 @@ def gather_action_animations(obj_uuid: int,
 
     # Export all collected actions.
     for action_data in blender_actions.values():
-        print("########", action_data.name)
-        print("\t", action_data.action.name)
         all_channels = []
         for slot in action_data.slots:
-            print("\t\t", slot.slot.name_display)
             blender_action = action_data.action
             track_name = slot.track
             on_type = slot.target_id_type
