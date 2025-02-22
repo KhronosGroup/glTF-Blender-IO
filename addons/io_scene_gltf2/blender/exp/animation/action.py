@@ -39,16 +39,25 @@ class ActionsData:
     def __init__(self):
         self.actions = {}
 
-    def add_action(self, action):
+    def add_action(self, action, force_new_action=False):
+        if force_new_action:
+            if id(action.action) not in self.actions.keys():
+                self.actions[id(action.action)] = []
+            self.actions[id(action.action)].append(action)
+            return
+
+        # Trying to add slot to existing action, if any (or create a new one)
         if id(action.action) not in self.actions.keys():
-            self.actions[id(action.action)] = action
+            self.actions[id(action.action)] = []
+            self.actions[id(action.action)].append(action)
         else:
+            # add to last action
             for slot in action.slots:
-                self.actions[id(action.action)].add_slot(slot.slot, slot.target_id_type, slot.track)
+                self.actions[id(action.action)][-1].add_slot(slot.slot, slot.target_id_type, slot.track)
 
     def get(self):
         # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
-        values = list(self.actions.values())
+        values = list([i for action_data in self.actions.values() for i in action_data])
         values.sort(key=lambda a: a.action.name.lower())
         for action in values:
             action.sort()
@@ -58,14 +67,28 @@ class ActionsData:
         if id(action) not in self.actions.keys():
             return False
 
-        for slot_ in self.actions[id(action)].slots:
-            if slot_.slot.handle == slot.handle:
-                return True
+        for action in self.actions[id(action)]:
+            for slot_ in action.slots:
+                if slot_.slot.handle == slot.handle:
+                    return True
 
         return False
 
     def exists_action(self, action):
         return id(action) in self.actions.keys()
+
+    def exists_action_slot_target(self, action, slot):
+        if id(action) not in self.actions.keys():
+            return False
+
+        for action in self.actions[id(action)]:
+            for slot_ in action.slots:
+                if slot_.slot.handle == slot.handle:
+                    continue
+                if slot_.target_id_type == slot.target_id_type:
+                    return True
+
+        return False
 
     # Iterate over actions
     def values(self):
@@ -82,6 +105,7 @@ class ActionData:
     def __init__(self, action):
         self.action = action
         self.slots = []
+        self.name = action.name
 
     def add_slot(self, slot, target_id_type, track):
         # If slot already exists with None track (so active action/slot) => Replace it with the track (NLA)
@@ -99,6 +123,9 @@ class ActionData:
 
     def has_slots(self):
         return len(self.slots) > 0
+
+    def force_name(self, name):
+        self.name = name
 
 
 class SlotData:
@@ -454,8 +481,11 @@ def gather_action_animations(obj_uuid: int,
 
     # Export all collected actions.
     for action_data in blender_actions.values():
+        print("########", action_data.name)
+        print("\t", action_data.action.name)
         all_channels = []
         for slot in action_data.slots:
+            print("\t\t", slot.slot.name_display)
             blender_action = action_data.action
             track_name = slot.track
             on_type = slot.target_id_type
@@ -676,9 +706,9 @@ def gather_action_animations(obj_uuid: int,
                             tracks[track_name] = []
                         tracks[track_name].append(offset + len(animations) - 1)  # Store index of animation in animations
             elif export_settings['gltf_merge_animation'] == "ACTION":
-                if blender_action.name not in tracks.keys():
-                    tracks[blender_action.name] = []
-                tracks[blender_action.name].append(offset + len(animations) - 1)
+                if action_data.name not in tracks.keys():
+                    tracks[action_data.name] = []
+                tracks[action_data.name].append(offset + len(animations) - 1)
             elif export_settings['gltf_merge_animation'] == "NONE":
                 pass  # Nothing to store, we are not going to merge animations
             else:
@@ -799,7 +829,14 @@ def __get_blender_actions(obj_uuid: str,
                     # Store Action info
                     new_action = ActionData(strip.action)
                     new_action.add_slot(strip.action_slot, strip.action_slot.target_id_type, track.name)
-                    actions.add_action(new_action)
+                    # If we already have a data for this action (so active or another NLA track on same target_id_type)
+                    # We force creation of another animation
+                    # Instead of adding a new slot to the existing action
+                    if actions.exists_action_slot_target(strip.action, strip.action_slot):
+                        new_action.force_name(strip.action.name + "-" + strip.name)
+                        actions.add_action(new_action, force_new_action=True)
+                    else:
+                        actions.add_action(new_action)
 
     # For caching, actions linked to SK must be after actions about TRS
     if export_settings['gltf_morph_anim'] and blender_object and blender_object.type == "MESH" \
@@ -835,7 +872,14 @@ def __get_blender_actions(obj_uuid: str,
                     # Store Action info
                     new_action = ActionData(strip.action)
                     new_action.add_slot(strip.action_slot, strip.action_slot.target_id_type, track.name)
-                    actions.add_action(new_action)
+                    # If we already have a data for this action (so active or another NLA track on same target_id_type)
+                    # We force creation of another animation
+                    # Instead of adding a new slot to the existing action
+                    if actions.exists_action_slot_target(strip.action, strip.action_slot):
+                        new_action.force_name(strip.action.name + "-" + strip.name)
+                        actions.add_action(new_action, force_new_action=True)
+                    else:
+                        actions.add_action(new_action)
 
     # If there are only 1 armature, include all animations, even if not in NLA
     # But only if armature has already some animation_data
@@ -871,9 +915,14 @@ def __get_blender_actions(obj_uuid: str,
                             continue  # We ignore this action
 
                         if already_added_action is True:
-                            export_settings['log'].warning(
-                                "Animation '{}', slot '{}' is skipped, we already have exported a slot for this action".format(
-                                    act.name, slot.name_display))
+                            # We already added an action for this object
+                            # So forcing creation of another animation
+                            # Instead of adding a new slot to the existing action
+                            new_action = ActionData(act)
+                            new_action.add_slot(slot, slot.target_id_type, None)
+                            # Force new name to avoid merging later
+                            new_action.force_name(act.name + "-" + slot.name_display)
+                            actions.add_action(new_action, force_new_action=True)
                             continue
 
                         new_action = ActionData(act)
@@ -939,22 +988,34 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
                 if blender_object and blender_object.type == "ARMATURE" and __is_armature_slot(blender_action, slot):
 
                     if already_added_object_slot is True:
-                        export_settings['log'].warning(
-                            "Animation '{}', slot '{}' is skipped".format(
-                                blender_action.name, slot.name_display))
+                        # We already added an action for this object
+                        # So forcing creation of another animation
+                        # Instead of adding a new slot to the existing action
+                        new_action_forced = ActionData(blender_action)
+                        new_action_forced.add_slot(slot, slot.target_id_type, None)
+                        # Force new name to avoid merging later
+                        new_action_forced.force_name(blender_action.name + "-" + slot.name_display)
+                        blender_actions.add_action(new_action_forced, force_new_action=True)
                         continue
 
                     new_action.add_slot(slot, slot.target_id_type, None)
+                    blender_actions.add_action(new_action)
                     already_added_object_slot = True
                 elif blender_object and blender_object.type == "MESH" and not __is_armature_slot(blender_action, slot):
 
                     if already_added_object_slot is True:
-                        export_settings['log'].warning(
-                            "Animation '{}', slot '{}' is skipped".format(
-                                blender_action.name, slot.name_display))
+                        # We already added an action for this object
+                        # So forcing creation of another animation
+                        # Instead of adding a new slot to the existing action
+                        new_action_forced = ActionData(blender_action)
+                        new_action_forced.add_slot(slot, slot.target_id_type, None)
+                        # Force new name to avoid merging later
+                        new_action_forced.force_name(blender_action.name + "-" + slot.name_display)
+                        blender_actions.add_action(new_action_forced, force_new_action=True)
                         continue
 
                     new_action.add_slot(slot, slot.target_id_type, None)
+                    blender_actions.add_action(new_action)
                     already_added_object_slot = True
 
             elif slot.target_id_type == "KEY":
@@ -967,19 +1028,22 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
                     continue
 
                 if already_added_sk_slot is True:
-                    export_settings['log'].warning(
-                        "Animation '{}', slot '{}' is skipped".format(
-                            blender_action.name, slot.name_display))
+                    # We already added an action for this object
+                    # So forcing creation of another animation
+                    # Instead of adding a new slot to the existing action
+                    new_action_forced = ActionData(blender_action)
+                    new_action_forced.add_slot(slot, slot.target_id_type, None)
+                    # Force new name to avoid merging later
+                    new_action_forced.force_name(blender_action.name + "-" + slot.name_display)
+                    blender_actions.add_action(new_action_forced, force_new_action=True)
                     continue
 
                 new_action.add_slot(slot, slot.target_id_type, None)
+                blender_actions.add_action(new_action)
                 already_added_sk_slot = True
 
             else:
                 pass  # TODOSLOT slot-3
-
-        if new_action.has_slots():
-            blender_actions.add_action(new_action)
 
         export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions)
 
