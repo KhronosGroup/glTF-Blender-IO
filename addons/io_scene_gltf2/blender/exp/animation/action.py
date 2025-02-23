@@ -41,6 +41,7 @@ class ActionsData:
 
     def add_action(self, action, force_new_action=False):
         if force_new_action:
+            action.active = False # If we force a new action, it is not active (but in NLA or broadcasted)
             if id(action.action) not in self.actions.keys():
                 self.actions[id(action.action)] = []
             self.actions[id(action.action)].append(action)
@@ -51,9 +52,12 @@ class ActionsData:
             self.actions[id(action.action)] = []
             self.actions[id(action.action)].append(action)
         else:
-            # add to last action
+            active = self.get_active_action(action.action)
+            idx = active if active is not None else -1
+
+            # add to the active action, or the last action
             for slot in action.slots:
-                self.actions[id(action.action)][-1].add_slot(slot.slot, slot.target_id_type, slot.track)
+                self.actions[id(action.action)][idx].add_slot(slot.slot, slot.target_id_type, slot.track)
 
     def get(self):
         # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
@@ -90,6 +94,16 @@ class ActionsData:
 
         return False
 
+    def get_active_action(self, action):
+        if id(action) not in self.actions.keys():
+            return None
+
+        for idx, action in enumerate(self.actions[id(action)]):
+            if action.active:
+                return idx
+
+        return None
+
     # Iterate over actions
     def values(self):
         # Create an iterator
@@ -106,6 +120,7 @@ class ActionData:
         self.action = action
         self.slots = []
         self.name = action.name
+        self.active = True
 
     def add_slot(self, slot, target_id_type, track):
         # If slot already exists with None track (so active action/slot) => Replace it with the track (NLA)
@@ -830,7 +845,7 @@ def __get_blender_actions(obj_uuid: str,
                     # We force creation of another animation
                     # Instead of adding a new slot to the existing action
                     if actions.exists_action_slot_target(strip.action, strip.action_slot):
-                        new_action.force_name(strip.action.name + "-" + strip.name)
+                        new_action.force_name(strip.action.name + "-" + strip.action_slot.name_display)
                         actions.add_action(new_action, force_new_action=True)
                     else:
                         actions.add_action(new_action)
@@ -873,7 +888,7 @@ def __get_blender_actions(obj_uuid: str,
                     # We force creation of another animation
                     # Instead of adding a new slot to the existing action
                     if actions.exists_action_slot_target(strip.action, strip.action_slot):
-                        new_action.force_name(strip.action.name + "-" + strip.name)
+                        new_action.force_name(strip.action.name + "-" + strip.action_slot.name_display)
                         actions.add_action(new_action, force_new_action=True)
                     else:
                         actions.add_action(new_action)
