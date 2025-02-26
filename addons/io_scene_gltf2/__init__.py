@@ -531,10 +531,18 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
              'Export vertex color when used by material'),
             ('ACTIVE', 'Active',
              'Export active vertex color'),
+            ('NAME', 'Name',
+             'Export vertex color with this name'),
             ('NONE', 'None',
              'Do not export vertex color')),
         description='How to export vertex color',
         default='MATERIAL'
+    )
+
+    export_vertex_color_name: StringProperty(
+        name='Vertex Color Name',
+        description='Name of vertex color to export',
+        default='Color'
     )
 
     export_all_vertex_colors: BoolProperty(
@@ -1161,6 +1169,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         else:
             export_settings['gltf_all_vertex_colors'] = self.export_all_vertex_colors
             export_settings['gltf_active_vertex_color_when_no_material'] = self.export_active_vertex_color_when_no_material
+        if self.export_vertex_color == 'NAME':
+            export_settings['gltf_vertex_color_name'] = self.export_vertex_color_name
+        else:
+            export_settings['gltf_vertex_color_name'] = ""
 
         export_settings['gltf_unused_textures'] = self.export_unused_textures
         export_settings['gltf_unused_images'] = self.export_unused_images
@@ -1496,7 +1508,10 @@ def export_panel_data_mesh(layout, operator):
         if sub_body:
             row = sub_body.row()
             row.prop(operator, 'export_vertex_color')
-            if operator.export_vertex_color == "ACTIVE":
+            row = sub_body.row()
+            if operator.export_vertex_color == "NAME":
+                row.prop(operator, 'export_vertex_color_name')
+            if operator.export_vertex_color in ["ACTIVE", "NAME"]:
                 row = sub_body.row()
                 row.label(
                     text="Note that fully compliant glTF 2.0 engine/viewer will use it as multiplicative factor for base color.",
