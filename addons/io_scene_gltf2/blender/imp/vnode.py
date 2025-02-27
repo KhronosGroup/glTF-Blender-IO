@@ -387,6 +387,7 @@ def move_skinned_meshes(gltf):
         gltf.vnodes[new_id].parent = arma
         gltf.vnodes[arma].children.append(new_id)
         gltf.vnodes[new_id].mesh_node_idx = vnode.mesh_node_idx
+        gltf.vnodes[new_id].scenes = vnode.scenes
         vnode.mesh_node_idx = None
 
 
