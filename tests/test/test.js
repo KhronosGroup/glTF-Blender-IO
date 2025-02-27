@@ -250,8 +250,7 @@ describe('Exporter', function () {
 
         variants.forEach(function (variant) {
             var args = variant[1];
-            const devNull = process.platform === "win32" ? "NUL" : "/dev/null";
-            args += ' 2>&1 > ' + devNull; // avoid str overflows
+            args += ' 2>&1 > /dev/null'; // avoid str overflows
             describe(blenderVersion + '_export' + variant[0], function () {
                 blenderSampleScenes.forEach((scene) => {
                     it(scene, function (done) {
