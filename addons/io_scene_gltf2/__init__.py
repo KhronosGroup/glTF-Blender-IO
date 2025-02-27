@@ -1931,6 +1931,12 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=True,
     )
 
+    import_scene_as_collection: BoolProperty(
+        name='Import Scene as Collection',
+        description='Import the scene as a collection',
+        default=True,
+    )
+
     def draw(self, context):
         operator = self
         layout = self.layout
@@ -2046,7 +2052,9 @@ def import_ux_panel(layout, operator):
     header, body = layout.panel("GLTF_import_ux", default_closed=False)
     header.label(text="Pipeline")
     if body:
-        body.prop(operator, 'import_select_created_objects')
+        body.prop(operator, 'import_scene_as_collection')
+        if operator.import_scene_as_collection is True:
+            body.prop(operator, 'import_select_created_objects')
         body.prop(operator, 'import_scene_extras')
 
 def import_texture_panel(layout, operator):

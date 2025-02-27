@@ -154,6 +154,17 @@ def init_vnodes(gltf):
     # Create a map of all scene / blender collections
     gltf.blender_collections = {}
     gltf.active_collection = bpy.context.collection
+    gltf.blender_scenes = {}
+
+    # Create needed scenes
+    for idx_scene, scene in enumerate(gltf.data.scenes or []):
+        # Create a new scene for all not default scenes
+        if idx_scene != gltf.data.scene:
+            new_scene = bpy.data.scenes.new(name=scene.name or "Scene %d" % idx_scene)
+            gltf.blender_scenes[idx_scene] = new_scene
+        else:
+            gltf.blender_scenes[idx_scene] = bpy.context.scene
+
 
     # If we have only 1 scene, we can use the active collection
     # If we have multiple scenes, we create a collection for each scene (as child of active collection)
@@ -162,12 +173,20 @@ def init_vnodes(gltf):
         gltf.blender_collections[gltf.data.scene] = bpy.context.collection
     elif len(gltf.data.scenes) > 1:
         for idx_scene, scene in enumerate(gltf.data.scenes or []):
-            # Create a new collection for the scene
-            collection = bpy.data.collections.new(gltf.data.scenes[idx_scene].name or "Scene %d" % idx_scene)
-            # Link the collection to the active collection
-            gltf.active_collection.children.link(collection)
-            # Add the collection to the map
-            gltf.blender_collections[idx_scene] = collection
+            if gltf.import_settings['import_scene_as_collection'] is True:
+                # Create a new collection for the scene
+                collection = bpy.data.collections.new(gltf.data.scenes[idx_scene].name or "Scene %d" % idx_scene)
+                # Link the collection to the active collection or the collection of the scene
+                # Collection on current scene
+                gltf.active_collection.children.link(collection)
+                # Add the collection to the map
+                gltf.blender_collections[idx_scene] = collection
+            else:
+                if idx_scene == gltf.data.scene:
+                    gltf.blender_collections[idx_scene] = gltf.active_collection
+                # No collection creation, so no linking
+                # Link between glTF scence and blender scene is already done
+
 
     # Check if we have orphan nodes
     orphan_nodes = [node for node in gltf.vnodes if len(gltf.vnodes[node].scenes) == 0]

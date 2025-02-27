@@ -137,7 +137,19 @@ class BlenderNode():
             gltf.blender_collections[None].objects.link(obj)
         else:
             for c in vnode.scenes:
-                gltf.blender_collections[c].objects.link(obj)
+                if gltf.import_settings['import_scene_as_collection'] is True:
+                    gltf.blender_collections[c].objects.link(obj)
+                else:
+                    if len(gltf.data.scenes) == 1:
+                        # Assign to the scene collection of the scene
+                        gltf.blender_scenes[c].collection.objects.link(obj)
+                    else:
+                        if c == gltf.data.scene:
+                            # Assign to the active collection
+                            gltf.blender_collections[c].objects.link(obj)
+                        else:
+                            # Assign to the scene collection of the scene
+                            gltf.blender_scenes[c].collection.objects.link(obj)
 
         return obj
 
