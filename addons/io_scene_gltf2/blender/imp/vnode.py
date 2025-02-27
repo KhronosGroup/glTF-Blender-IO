@@ -67,6 +67,9 @@ class VNode:
         self.camera_node_idx = None
         self.light_node_idx = None
 
+        # Store in which glTF scene(s) this node is used.
+        self.scenes = []
+
     def trs(self):
         # (final TRS) = (rotation after) (base TRS) (rotation before)
         t, r, s = self.base_trs
@@ -134,6 +137,48 @@ def init_vnodes(gltf):
         for child in gltf.vnodes[id].children:
             assert gltf.vnodes[child].parent is None
             gltf.vnodes[child].parent = id
+
+    # Map the node/scene
+
+    # Create a recursive function to find all the nodes in a scene
+    # add assign the nodes to the scene(s)
+    def add_nodes_to_scene(idx_scene, node):
+        gltf.vnodes[node].scenes.append(idx_scene)
+        for child in gltf.vnodes[node].children:
+            add_nodes_to_scene(idx_scene, child)
+
+    for idx_scene, scene in enumerate(gltf.data.scenes or []):
+        for node in scene.nodes:
+            add_nodes_to_scene(idx_scene, node)
+
+    # Create a map of all scene / blender collections
+    gltf.blender_collections = {}
+    gltf.active_collection = bpy.context.collection
+
+    # If we have only 1 scene, we can use the active collection
+    # If we have multiple scenes, we create a collection for each scene (as child of active collection)
+    # And if some nodes are orphan, we create a collection for them too
+    if len(gltf.data.scenes) == 1:
+        gltf.blender_collections[gltf.data.scene] = bpy.context.collection
+    elif len(gltf.data.scenes) > 1:
+        for idx_scene, scene in enumerate(gltf.data.scenes or []):
+            # Create a new collection for the scene
+            collection = bpy.data.collections.new(gltf.data.scenes[idx_scene].name or "Scene %d" % idx_scene)
+            # Link the collection to the active collection
+            gltf.active_collection.children.link(collection)
+            # Add the collection to the map
+            gltf.blender_collections[idx_scene] = collection
+
+    # Check if we have orphan nodes
+    orphan_nodes = [node for node in gltf.vnodes if len(gltf.vnodes[node].scenes) == 0]
+    if len(orphan_nodes) > 0:
+        # Create a new collection for the orphan nodes
+        orphan_collection = bpy.data.collections.new("Orphan Nodes")
+        # Link the collection to the active collection
+        gltf.active_collection.children.link(orphan_collection)
+        # Add the collection to the map
+        gltf.blender_collections[None] = orphan_collection
+
 
     # Inserting a root node will simplify things.
     roots = [id for id in gltf.vnodes if gltf.vnodes[id].parent is None]

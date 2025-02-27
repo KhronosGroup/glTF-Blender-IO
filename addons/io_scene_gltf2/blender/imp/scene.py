@@ -68,6 +68,12 @@ class BlenderScene():
             BlenderScene.select_imported_objects(gltf)
             BlenderScene.set_active_object(gltf)
 
+        # Exlude not default scens(s) collection(s)
+        if gltf.data.scene is not None:
+            for scene_idx, coll in gltf.blender_collections.items():
+                if scene_idx != gltf.data.scene:
+                    bpy.context.layer_collection.children[coll.name].exclude = True
+
     @staticmethod
     def create_animations(gltf):
         """Create animations."""

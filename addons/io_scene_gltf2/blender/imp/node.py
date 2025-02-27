@@ -131,7 +131,13 @@ class BlenderNode():
         if hasattr(obj, 'gltf2_animation_rest'):
             obj.gltf2_animation_rest = Matrix.LocRotScale(obj.location, obj.rotation_quaternion, obj.scale)
 
-        bpy.data.scenes[gltf.blender_scene].collection.objects.link(obj)
+        # Add to scene, by linking to the collections
+        if len(vnode.scenes) == 0:
+            # Add to the orphan collection
+            gltf.blender_collections[None].objects.link(obj)
+        else:
+            for c in vnode.scenes:
+                gltf.blender_collections[c].objects.link(obj)
 
         return obj
 
