@@ -51,6 +51,7 @@ compared to Blender, as such vertices are separated for export.
 Likewise, curves and other non-mesh data are not preserved,
 and must be converted to meshes prior to export.
 
+
 GPU Instances
 -------------
 
@@ -64,6 +65,7 @@ There are some limitations, at export:
 - Instances detected are objects sharing the same mesh data.
 
 At import, instances are created by creating objects sharing the same mesh data.
+
 
 Materials
 =========
@@ -276,6 +278,7 @@ All Image Texture nodes used for clearcoat shading should have their *Color Spac
    An example of a complex clearcoat application that will export correctly to glTF.
    A much simpler, smooth coating can be applied from just the Principled BSDF node alone.
 
+
 Sheen
 ^^^^^
 
@@ -357,6 +360,7 @@ that are solid but allow non-specularly-reflected light to transmit through the 
    Transmission is complex for real-time rendering engines to implement,
    and support for the ``KHR_materials_transmission`` glTF extension is not yet widespread.
 
+
 IOR
 ^^^
 
@@ -374,6 +378,7 @@ At export, IOR is included in the export only if one of these extensions are als
 
 IOR of 1.5 are not included in the export, because this is the default glTF IOR value.
 
+
 Volume
 ^^^^^^
 
@@ -387,6 +392,7 @@ Data will be exported using the ``KHR_materials_volume`` extension.
 - If a texture is used for thickness, it must be plugged on (``G``) Green channel of the image.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
+
 
 glTF Variants
 ^^^^^^^^^^^^^
@@ -405,6 +411,7 @@ There are two location to manage glTF Variants in Blender
 The main concept to understand for using Variants,
 is that each material slot will be used as equivalent of a glTF primitive.
 
+
 glTF Variants switching
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -415,6 +422,7 @@ After importing a glTF file including ``KHR_materials_variants`` extension, all 
 You can switch Variant, by *selecting* the variant you want to display, then clicking on *Display Variant*.
 
 You can switch to default materials (when no Variant are used), by clicking on *Reset to default*.
+
 
 glTF Variants creation
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -429,6 +437,7 @@ You can also set default materials using *Assign as Original*.
 These materials will be exported as default material in glTF.
 This are materials that will be displayed by any viewer that don't manage ``KHR_materials_variants`` extension.
 
+
 Advanced glTF Variant checks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -440,6 +449,7 @@ The *glTF Material Variants* tab refers to the active material Slot and Material
 You can see every Variants that are using this material for the given Slot/Primitive.
 
 You can also assign material to Variants from this tab, but recommendation is to perform it from 3D View tab.
+
 
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -541,6 +551,7 @@ a typical node structure when several of the above options are applied at once:
 
    A Principled BSDF material with an emissive texture.
 
+
 UDIM
 ^^^^
 
@@ -574,7 +585,6 @@ Certain Blender features can only be exported to glTF via these extensions.
 The following `glTF 2.0 extensions <https://github.com/KhronosGroup/glTF/tree/main/extensions>`__
 are supported directly by this add-on:
 
-
 .. rubric:: Import
 
 - ``KHR_materials_pbrSpecularGlossiness``
@@ -592,7 +602,6 @@ are supported directly by this add-on:
 - ``KHR_texture_transform``
 - ``KHR_mesh_quantization``
 - ``EXT_mesh_gpu_instancing``
-
 
 .. rubric:: Export
 
@@ -691,6 +700,7 @@ Export
 You can export animations using different ways. How glTF animations are made from actions / NLA is controlled by
 the :menuselection:`Animation --> Mode` export option.
 
+
 Actions (default)
 ^^^^^^^^^^^^^^^^^
 
@@ -723,6 +733,7 @@ Active Actions merged
 In this mode, the NLA organization is not used, and only one animation is exported using
 the active actions on all objects.
 
+
 NLA Tracks
 ^^^^^^^^^^
 
@@ -731,6 +742,7 @@ This mode is useful if you are using Strip modifiers, or if you get multiple act
 
 If you rename two tracks on two different objects to the same name, they will become part
 of the same glTF animation and will play together.
+
 
 Scene
 ^^^^^
@@ -828,12 +840,15 @@ Lighting Mode
    Unitless: Non-physical, unitless lighting. Useful when exposure controls are not available
    Raw (Deprecated): Blender lighting strengths with no conversion
 
+
 Texture
 ^^^^^^^
+
 Pack Images
    Pack all images into the blend-file.
 Import WebP textures
    If a texture exists in WebP format, loads the WebP texture instead of the fallback png/jpg one.
+
 
 Bones & Skin
 ^^^^^^^^^^^^
@@ -852,6 +867,7 @@ Disable Bone Shape
    Do not display bone shapes in the 3D View.
 Bone Shape Scale
    Scale of the bone shapes in the 3D View.
+
 
 Pipeline
 ^^^^^^^^
@@ -953,6 +969,7 @@ Shared Accessor
 
 Data - Mesh - Vertex Color
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Use Vertex Color
    :Material:
       Export vertex color when used in material node tree as Base Color multiplier.
@@ -994,6 +1011,7 @@ Unused images
 Unused textures
    Export texture info (sampler, image, texcoord) that are not used in any material.
 
+
 Data - Shape Keys
 ^^^^^^^^^^^^^^^^^
 
@@ -1004,6 +1022,7 @@ Shape Key Normals
 Shape Key Tangents
    Export vertex tangents with shape keys (morph targets).
 
+
 Data - Shape Keys - Optimize
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1012,6 +1031,7 @@ Use Sparse Accessor if better
 Omitting Sparse Accessor if data is empty
    If data is empty, omit to export SParce Accessor. Not all viewer managed it correctly, so this option is Off by
    default
+
 
 Data - Armature
 ^^^^^^^^^^^^^^^
@@ -1026,6 +1046,7 @@ Remove Armature Object
 Flatten Bone Hierarchy
    Useful in case of non-decomposable TRS matrix.
 
+
 Data - Skinning
 ^^^^^^^^^^^^^^^
 
@@ -1037,6 +1058,7 @@ Bone influences
 
 Include All Bone Influences
    Export all joint vertex influences. Models may appear incorrectly in many viewers.
+
 
 Data - Lighting
 ^^^^^^^^^^^^^^^
@@ -1071,7 +1093,8 @@ Animation
 ^^^^^^^^^
 
 Animation mode
-   Animation mode used for export (See `Animations`_
+   Animation mode used for export (See `Animations`_)
+
 
 Animation - Bake & Merge
 ^^^^^^^^^^^^^^^^^^^^^^^^
