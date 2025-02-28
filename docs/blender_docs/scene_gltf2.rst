@@ -1130,6 +1130,7 @@ Reset pose bones between actions
    Reset pose bones between each action exported.
    This is needed when some bones are not keyed on some animations.
 
+
 Animation - Shape Keys
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -1150,6 +1151,7 @@ Sampling Rate
 Sampling Interpolation Fallback
    Interpolation choosen for properties that are not keyed (LINEAR or STEP/CONSTANT)
 
+
 Animation - Optimize
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -1161,6 +1163,7 @@ Force keeping channel for objects
    if all keyframes are identical for object transformations, force keeping the minimal animation.
 Disable viewport for other objects
    When exporting animations, disable viewport for other objects, for performance reasons, when possible.
+
 
 Animation - Filter
 ^^^^^^^^^^^^^^^^^^
