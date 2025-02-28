@@ -960,6 +960,9 @@ Use Vertex Color
    :Active:
       Export active vertex colors, even if not used in material node tree.
       A fully compliant glTF viewer should display this VC as Base Color multiplier.
+   :Name:
+      Export vertex color with the given name.
+      A fully compliant glTF viewer should display this VC as Base Color multiplier.
    :None:
       Do not export vertex color.
 Export all vertex colors
