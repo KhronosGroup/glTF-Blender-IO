@@ -16,6 +16,7 @@
 from .action import gather_actions_animations
 from .scene_animation import gather_scene_animations
 from .tracks import gather_tracks_animations
+import bpy
 
 
 def gather_animations(export_settings):
