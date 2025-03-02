@@ -30,9 +30,4 @@ def gather_animations(export_settings):
     elif export_settings['gltf_animation_mode'] == "SCENE":
         return gather_scene_animations(export_settings)
     elif export_settings['gltf_animation_mode'] == "NLA_TRACKS":
-        # Before exporting, make sure the nla is not in edit mode
-        if bpy.context.scene.is_nla_tweakmode is True:
-            # Warning with popup
-            export_settings['log'].warning("NLA Tweak mode is enabled, disabling it for animation export", popup=True)
-            return []
         return gather_tracks_animations(export_settings)
