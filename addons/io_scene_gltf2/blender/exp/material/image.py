@@ -211,13 +211,34 @@ def __gather_uri(image_data, mime_type, name, export_settings):
     if export_settings['gltf_format'] == 'GLTF_SEPARATE':
         # as usual we just store the data in place instead of already resolving the references
         data, factor = image_data.encode(mime_type, export_settings)
-        return gltf2_io_image_data.ImageData(
+        image =  gltf2_io_image_data.ImageData(
             data=data,
             mime_type=mime_type,
             name=name
-        ), factor
+        )
+
+        # We need to set the "final" uri here, to be able to modify it in a hook if necessary
+        set_real_uri(image, export_settings)
+
+        return image, factor
 
     return None, None
+
+def set_real_uri(image, export_settings):
+    # We need to set the "final" uri here, to be able to modify it in a hook if necessary
+    # This is the uri that will be used in the glTF file (if using GLTF_SEPARATE)
+    adj_name = image.set_adjusted_name(export_settings['image_names'])
+    export_settings['image_names'].append(adj_name)
+
+    texture_dir = export_settings['gltf_texturedirectory']
+    abs_path = os.path.join(texture_dir, adj_name)
+    rel_path = os.path.relpath(
+        abs_path,
+        start=export_settings['gltf_filedirectory'],
+    )
+
+    uri = path_to_uri(adj_name)
+    image.set_uri(uri)
 
 
 def __get_image_data(sockets, use_tile, export_settings) -> ExportImage:

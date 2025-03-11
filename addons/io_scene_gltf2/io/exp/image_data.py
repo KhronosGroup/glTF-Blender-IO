@@ -24,6 +24,8 @@ class ImageData:
         self._data = data
         self._mime_type = mime_type
         self._name = name
+        self._adjusted_name = None
+        self._uri = None
 
     def __eq__(self, other):
         return self._data == other.data
@@ -56,3 +58,31 @@ class ImageData:
     @property
     def byte_length(self):
         return len(self._data)
+
+    def set_uri(self, uri):
+        self._uri = uri
+
+    @property
+    def uri(self):
+        return self._uri
+
+    def set_adjusted_name(self, names):
+        # Set adjusted name
+        name = self.name
+        count = 1
+        regex = re.compile(r"-\d+$")
+        while name + self.file_extension in names:
+            regex_found = re.findall(regex, name)
+            if regex_found:
+                name = re.sub(regex, "-" + str(count), name)
+            else:
+                name += "-" + str(count)
+
+            count += 1
+        # TODO: allow embedding of images (base64)
+        self._adjusted_name = name + self.file_extension
+        return self._adjusted_name
+
+    @property
+    def adjusted_name(self):
+        return self._adjusted_name
