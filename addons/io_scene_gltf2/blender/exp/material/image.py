@@ -241,7 +241,7 @@ def set_real_uri(image, export_settings):
     )
 
     uri = path_to_uri(adj_name)
-    image.set_uri(uri)
+    image.uri = uri
 
 
 def __get_image_data(sockets, use_tile, export_settings) -> ExportImage:

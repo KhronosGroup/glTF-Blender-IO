@@ -59,12 +59,14 @@ class ImageData:
     def byte_length(self):
         return len(self._data)
 
-    def set_uri(self, uri):
-        self._uri = uri
-
     @property
     def uri(self):
         return self._uri
+
+    @uri.setter
+    def uri(self, uri):
+        self._uri = uri
+
 
     def set_adjusted_name(self, names):
         # Set adjusted name
