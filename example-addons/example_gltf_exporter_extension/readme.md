@@ -26,7 +26,7 @@ gather_animation_sampler_hook(self, gltf2_sampler, blender_object, bone, action_
 gather_asset_hook(self, gltf2_asset, export_settings)
 gather_camera_hook(self, gltf2_camera, blender_camera, export_settings)
 gather_gltf_extensions_hook(self, gltf2_plan, export_settings)
-gather_image_hook(self, gltf2_image, blender_shader_sockets, export_settings)
+gather_image_hook(self, gltf2_image, mapping, blender_shader_sockets, export_settings)
 gather_joint_hook(self, gltf2_node, blender_bone, export_settings)
 gather_material_hook(self, gltf2_material, blender_material, export_settings)
 gather_material_pbr_metallic_roughness_hook(self, gltf2_material, blender_material, orm_texture, export_settings)
