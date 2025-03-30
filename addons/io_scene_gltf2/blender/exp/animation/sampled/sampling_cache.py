@@ -136,7 +136,7 @@ def material_caching(data, action_name, slot_identifier, frame, export_settings)
             continue
 
         if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
-            blender_material = [export_settings['material_identifiers'][mat][1]]
+            blender_material = [export_settings['material_identifiers'][mat]]
         else:
             blender_material = [m for m in bpy.data.materials if id(m) == mat]
         if len(blender_material) == 0:
@@ -194,7 +194,7 @@ def material_nodetree_caching(data, action_name, slot_identifier, frame, export_
             continue
 
         if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
-            blender_material = [export_settings['material_identifiers'][mat][1]]
+            blender_material = [export_settings['material_identifiers'][mat]]
         else:
             blender_material = [m for m in bpy.data.materials if id(m) == mat]
         if len(blender_material) == 0:

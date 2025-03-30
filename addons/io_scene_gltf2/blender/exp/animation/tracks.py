@@ -543,7 +543,7 @@ def gather_data_track_animations(
 
     if blender_type_data == "materials":
         if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
-            blender_data_object = export_settings['material_identifiers'][blender_id][1]
+            blender_data_object = export_settings['material_identifiers'][blender_id]
         else:
             blender_data_object = [mat for mat in bpy.data.materials if id(mat) == blender_id][0]
     elif blender_type_data == "cameras":
@@ -721,7 +721,7 @@ def __get_nla_tracks_material(blender_type_data, blender_id, export_settings):
     if blender_type_data == "materials":
         # Special cases for materials, where, when apply modifiers, the original material changed
         if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
-            blender_data_object = export_settings['material_identifiers'][blender_id][1]
+            blender_data_object = export_settings['material_identifiers'][blender_id]
         else:
             blender_data_object = [mat for mat in bpy.data.materials if id(mat) == blender_id][0]
         on_type = "MATERIAL"
@@ -798,7 +798,7 @@ def __get_nla_tracks_material_node_tree(blender_type_data, blender_id, export_se
     on_type = "NODETREE"
     if blender_type_data == "materials":
         if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
-            blender_object_data = export_settings['material_identifiers'][blender_id][1]
+            blender_object_data = export_settings['material_identifiers'][blender_id]
         else:
             blender_object_data = [mat for mat in bpy.data.materials if id(mat) == blender_id][0]
     elif blender_type_data == "lights":

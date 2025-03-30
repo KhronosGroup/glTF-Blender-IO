@@ -139,7 +139,7 @@ def gather_scene_animations(export_settings):
                 continue
 
             if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
-                blender_material = export_settings['material_identifiers'][blender_id][1]
+                blender_material = export_settings['material_identifiers'][blender_id]
             else:
                 blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
 
