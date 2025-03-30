@@ -385,9 +385,9 @@ def __keep_material_info(materials, originals, export_settings):
         if 'material_identifiers' not in export_settings.keys():
             export_settings['material_identifiers'] = {}
         if originals is True:
-            export_settings['material_identifiers'][id(m)] = id(m)
+            export_settings['material_identifiers'][id(m)] = (id(m), m)
         else:
-            export_settings['material_identifiers'][id(m)] = id(m.original)
+            export_settings['material_identifiers'][id(m)] = (id(m.original), m.original)
 
 def __gather_mesh_from_nonmesh(blender_object, export_settings):
     """Handles curves, surfaces, text, etc."""
