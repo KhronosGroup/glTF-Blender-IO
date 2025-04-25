@@ -74,6 +74,17 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
     path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
     export_settings['current_paths']['color'] = path_
 
+    color = blender_lamp.color
+    if blender_lamp.color_mode == "COLOR":
+        return color
+    elif blender_lamp.color_mode == "TEMPERATURE":
+        return [1.0, 1.0, 1.0]
+    else:
+        # TODO, check if we need to clamp
+        return color * blender_lamp.temperature
+
+    # TODO, check if temperature is animated, for KHR_animation_pointer
+
     return list(blender_lamp.color)
 
 
