@@ -78,13 +78,13 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
     temperature = blender_lamp.temperature
 
     if blender_lamp.color_mode == "COLOR":
-        return color
+        return list(color)
     elif blender_lamp.color_mode == "TEMPERATURE":
         # TODO, check if we need to clamp
-        return temperature
+        return list(temperature)
     else:
         # TODO, check if we need to clamp
-        return color * temperature
+        return list(color * temperature)
 
     # TODO, check if temperature is animated, for KHR_animation_pointer
 
