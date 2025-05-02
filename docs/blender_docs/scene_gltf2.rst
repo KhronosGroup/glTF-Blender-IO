@@ -857,6 +857,8 @@ Pack Images
    Pack all images into the blend-file.
 Import WebP textures
    If a texture exists in WebP format, loads the WebP texture instead of the fallback png/jpg one.
+Import unused Materials & Textures
+   Import all materials and textures, even if they are not used in the scene.
 
 
 Bones & Skin
