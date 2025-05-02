@@ -1736,13 +1736,16 @@ def export_panel_animation_armature(layout, operator):
 
 def export_panel_animation_shapekeys(layout, operator):
     header, body = layout.panel("GLTF_export_animation_shapekeys", default_closed=True)
+    header.active = operator.export_animations and operator.export_morph
     header.use_property_split = False
     header.prop(operator, "export_morph_animation", text="")
     header.label(text="Shape Keys Animation")
     if body:
-        body.active = operator.export_animations
+        body.active = operator.export_animations and operator.export_morph
 
-        body.prop(operator, 'export_morph_reset_sk_data')
+        row = body.row()
+        row.active = operator.export_morph_animation
+        row.prop(operator, 'export_morph_reset_sk_data')
 
 
 def export_panel_animation_sampling(layout, operator):
