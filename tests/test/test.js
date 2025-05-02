@@ -3265,8 +3265,8 @@ describe('Exporter', function () {
                 const pbr = mat.pbrMetallicRoughness;
 
                 assert.equalEpsilonArray(pbr.baseColorFactor, [0.0, 0.0, 0.8, 0.7]);
-                assert.equalEpisilon(pbr.metallicFactor, 1.0);
-                assert.equalEpisilon(pbr.roughnessFactor, 0.9);
+                assert.equalEpsilon(pbr.metallicFactor, 1.0);
+                assert.equalEpsilon(pbr.roughnessFactor, 0.9);
 
             });
 
