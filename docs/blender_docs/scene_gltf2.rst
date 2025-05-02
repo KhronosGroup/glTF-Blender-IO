@@ -427,7 +427,7 @@ You can switch to default materials (when no Variant are used), by clicking on *
 glTF Variants creation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You can add a new Variant by clicking the ``+`` at right of the Variant list.
+You can add a new Variant by clicking :bl-icon:`add` at right of the Variant list.
 Then you can change the name by double-clicking.
 
 After changing Materials in Material Slots, you can assign current materials to the active Variant using
