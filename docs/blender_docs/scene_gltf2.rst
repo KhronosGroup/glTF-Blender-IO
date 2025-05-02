@@ -436,7 +436,7 @@ You can switch to default materials (when no Variant are used), by clicking on *
 glTF Variants creation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You can add a new Variant by clicking the ``+`` at right of the Variant list.
+You can add a new Variant by clicking :bl-icon:`add` at right of the Variant list.
 Then you can change the name by double-clicking.
 
 After changing Materials in Material Slots, you can assign current materials to the active Variant using
@@ -1001,8 +1001,15 @@ Data - Material
 ^^^^^^^^^^^^^^^
 
 Materials
-   Export full materials, only placeholders (all primitives but without materials),
-   or does not export materials. (In that last case, primitives are merged, losing material slot information).
+   :Export:
+      Export full materials, including all textures and shaders from node tree.
+   :Placeholder:
+      Export only the material placeholder, without any texture or shader.
+      Primitives are not merged, so material slot information is kept.
+   :Viewport:
+      Export only the viewport material (Base Color, Roughness, and Metalness).
+   :No Export:
+      Does not export materials. Primitives are merged, losing material slot information.
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.

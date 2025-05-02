@@ -3256,6 +3256,20 @@ describe('Exporter', function () {
 
             });
 
+            it('exports Viewport Material', function () {
+                let gltfPath = path.resolve(outDirPath, '36_viewport_material_export.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const mat = asset.materials[0];
+                const pbr = mat.pbrMetallicRoughness;
+
+                assert.equalEpsilonArray(pbr.baseColorFactor, [0.0, 0.0, 0.8, 0.7]);
+                assert.equalEpsilon(pbr.metallicFactor, 0.1);
+                assert.equalEpsilon(pbr.roughnessFactor, 0.9);
+
+            });
+
             it('exports base color factors', function () {
 
                 let gltfPath = path.resolve(outDirPath, '01_base_color.gltf');
