@@ -950,7 +950,7 @@ Materials
       Primitives are not merged, so material slot information is kept.
    :Viewport:
       Export only the viewport material (Base Color, Roughness, and Metalness).
-   :None:
+   :No Export:
       Does not export materials. Primitives are merged, losing material slot information.
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
