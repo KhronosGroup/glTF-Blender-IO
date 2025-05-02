@@ -623,6 +623,11 @@ class SCENE_OT_gltf2_action_filter_refresh(bpy.types.Operator):
         return True
 
     def execute(self, context):
+        # Remove no more existing actions
+        for idx, i in enumerate(bpy.data.scenes[0].gltf_action_filter):
+            if i.action is None:
+                bpy.data.scenes[0].gltf_action_filter.remove(idx)
+
         for action in bpy.data.actions:
             if id(action) in [id(i.action) for i in bpy.data.scenes[0].gltf_action_filter]:
                 continue
@@ -659,6 +664,13 @@ def export_panel_animation_action_filter(layout, operator):
         body.active = operator.export_animations and operator.export_action_filter
 
         row = body.row()
+
+        # Collection Export does not handle correctly property declaration
+        # So use this tweak to avoid spaming the console, waiting for a better solution
+        is_file_browser = bpy.context.space_data.type == 'FILE_BROWSER'
+        if not is_file_browser and not hasattr(bpy.data.scenes[0], "gltf_action_filter"):
+            row.label(text="Please disable/enable 'action filter' to refresh the list")
+            return
 
         if len(bpy.data.actions) > 0:
             row.template_list(

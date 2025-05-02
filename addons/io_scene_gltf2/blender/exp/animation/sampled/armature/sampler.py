@@ -32,7 +32,7 @@ def gather_bone_sampled_animation_sampler(
         bone: str,
         channel: str,
         action_name: str,
-        slot_handle: int,
+        slot_identifier: str,
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
         export_settings
@@ -45,7 +45,7 @@ def gather_bone_sampled_animation_sampler(
         bone,
         channel,
         action_name,
-        slot_handle,
+        slot_identifier,
         node_channel_is_animated,
         export_settings)
 
@@ -84,7 +84,7 @@ def __gather_keyframes(
         bone: str,
         channel: str,
         action_name: str,
-        slot_handle: int,
+        slot_identifier: str,
         node_channel_is_animated: bool,
         export_settings
 ):
@@ -94,7 +94,7 @@ def __gather_keyframes(
         bone,
         channel,
         action_name,
-        slot_handle,
+        slot_identifier,
         node_channel_is_animated,
         export_settings
     )
@@ -222,15 +222,15 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
 def __gather_interpolation(node_channel_is_animated, node_channel_interpolation, keyframes, export_settings):
 
     if len(keyframes) > 2:
-        # keep STEP as STEP, other become LINEAR
+        # keep STEP as STEP, other become the interpolation choosen by the user
         return {
             "STEP": "STEP"
-        }.get(node_channel_interpolation, "LINEAR")
+        }.get(node_channel_interpolation, export_settings['gltf_sampling_interpolation_fallback'])
     elif len(keyframes) == 1:
         if node_channel_is_animated is False:
             return "STEP"
         elif node_channel_interpolation == "CUBICSPLINE":
-            return "LINEAR"  # We can't have a single keyframe with CUBICSPLINE
+            return export_settings['gltf_sampling_interpolation_fallback']  # We can't have a single keyframe with CUBICSPLINE
         else:
             return node_channel_interpolation
     else:
@@ -242,4 +242,4 @@ def __gather_interpolation(node_channel_is_animated, node_channel_interpolation,
             if keyframes[0].value == keyframes[1].value:
                 return "STEP"
             else:
-                return "LINEAR"
+                return export_settings['gltf_sampling_interpolation_fallback']

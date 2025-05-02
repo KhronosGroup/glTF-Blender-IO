@@ -14,6 +14,7 @@
 
 import bpy
 from .vnode import VNode
+from ..com.data_path import get_channelbag_for_slot
 
 # Here data can be object, object.data, material, material.node_tree, camera, light
 
@@ -94,17 +95,6 @@ def make_fcurve(action, slot, co, data_path, index=0, group_name='', interpolati
 
     return fcurve
 
-
-def get_channelbag_for_slot(action, slot):
-    # This is on purpose limited to the first layer and strip. To support more
-    # than 1 layer, a rewrite of this operator is needed which ideally would
-    # happen in C++.
-    for layer in action.layers:
-        for strip in layer.strips:
-            channelbag = strip.channels(slot.handle)
-            return channelbag
-    return None
-
 # This is use for TRS & weights animations
 # For pointers, see the same function in animation_pointer.py
 
@@ -156,9 +146,9 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
         action.layers[0].strips[0].channelbags.new(slot)
 
         gltf.action_cache[anim_idx]['object_slots'][obj.name] = {}
-        gltf.action_cache[anim_idx]['object_slots'][obj.name][slot.id_root] = (action, slot)
+        gltf.action_cache[anim_idx]['object_slots'][obj.name][slot.target_id_type] = (action, slot)
     else:
-        # We have slots, check if we have the right slot (based on id_root)
+        # We have slots, check if we have the right slot (based on target_id_type)
         ac_sl = slots.get(use_id)
         if not ac_sl:
             action = gltf.action_cache[anim_idx]['action']
@@ -176,7 +166,7 @@ def get_or_create_action_and_slot(gltf, vnode_idx, anim_idx, path):
 
             action.layers[0].strips[0].channelbags.new(slot)
 
-            gltf.action_cache[anim_idx]['object_slots'][obj.name][slot.id_root] = (action, slot)
+            gltf.action_cache[anim_idx]['object_slots'][obj.name][slot.target_id_type] = (action, slot)
         else:
             action, slot = ac_sl
 

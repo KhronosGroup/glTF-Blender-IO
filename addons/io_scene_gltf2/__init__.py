@@ -15,7 +15,7 @@
 bl_info = {
     'name': 'glTF 2.0 format',
     'author': 'Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein, and many external contributors',
-    "version": (4, 4, 28),
+    "version": (4, 5, 15),
     'blender': (4, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -307,6 +307,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True,
     )
 
+    export_gltfpack_kn: BoolProperty(
+        name='Keep Named Nodes',
+        description='Restrict some optimization to keep named nodes and meshes attached to named nodes so that named nodes can be transformed externally',
+        default=False,
+    )
+
     # TODO: some stuff in Textures
 
     # TODO: Animations
@@ -528,10 +534,18 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
              'Export vertex color when used by material'),
             ('ACTIVE', 'Active',
              'Export active vertex color'),
+            ('NAME', 'Name',
+             'Export vertex color with this name'),
             ('NONE', 'None',
              'Do not export vertex color')),
         description='How to export vertex color',
         default='MATERIAL'
+    )
+
+    export_vertex_color_name: StringProperty(
+        name='Vertex Color Name',
+        description='Name of vertex color to export',
+        default='Color'
     )
 
     export_all_vertex_colors: BoolProperty(
@@ -676,6 +690,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Always Sample Animations',
         description='Apply sampling to all animations',
         default=True
+    )
+
+    export_sampling_interpolation_fallback: EnumProperty(
+        name='Sampling Interpolation Fallback',
+        items=(('LINEAR', 'Linear', 'Linear interpolation between keyframes'),
+               ('STEP', 'Step', 'No interpolation between keyframes'),
+        ),
+        description='Interpolation fallback for sampled animations, when the property is not keyed',
+        default='LINEAR'
     )
 
     export_pointer_animation: BoolProperty(
@@ -1043,21 +1066,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
 
-        import sys
-        preferences = bpy.context.preferences
-        for addon_name in preferences.addons.keys():
-            try:
-                if hasattr(
-                        sys.modules[addon_name],
-                        'glTF2ExportUserExtension') or hasattr(
-                        sys.modules[addon_name],
-                        'glTF2ExportUserExtensions'):
-                    exporter_extension_layout_draw[addon_name] = sys.modules[addon_name].draw_export if hasattr(
-                        sys.modules[addon_name], 'draw_export') else sys.modules[addon_name].draw
-            except Exception:
-                pass
-
-        self.has_active_exporter_extensions = len(exporter_extension_layout_draw.keys()) > 0
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
@@ -1085,6 +1093,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         import os
         import datetime
         import logging
+        from .io.exp.user_extensions import export_user_extensions
         from .io.com.debug import Log
         from .blender.exp import export as gltf2_blender_export
         from .io.com.path import path_to_uri
@@ -1096,6 +1105,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         # All custom export settings are stored in this container.
         export_settings = {}
+
+        # Collection Export does not handle correctly props declaration for now
+        # So use this tweak to manage it, waiting for a better solution
+        is_file_browser = context.space_data and context.space_data.type == 'FILE_BROWSER'
+        if not is_file_browser:
+            if not hasattr(context.scene, "gltf_action_filter") and self.export_action_filter:
+                bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(type=GLTF2_filter_action)
+                bpy.types.Scene.gltf_action_filter_active = bpy.props.IntProperty()
+
 
         # Get log level from parameters
         # If not set, get it from Blender app debug value
@@ -1154,6 +1172,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         else:
             export_settings['gltf_all_vertex_colors'] = self.export_all_vertex_colors
             export_settings['gltf_active_vertex_color_when_no_material'] = self.export_active_vertex_color_when_no_material
+        if self.export_vertex_color == 'NAME':
+            export_settings['gltf_vertex_color_name'] = self.export_vertex_color_name
+        else:
+            export_settings['gltf_vertex_color_name'] = ""
 
         export_settings['gltf_unused_textures'] = self.export_unused_textures
         export_settings['gltf_unused_images'] = self.export_unused_images
@@ -1186,6 +1208,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         if self.export_animations:
             export_settings['gltf_frame_range'] = self.export_frame_range
             export_settings['gltf_force_sampling'] = self.export_force_sampling
+            export_settings['gltf_sampling_interpolation_fallback'] = self.export_sampling_interpolation_fallback
             if not self.export_force_sampling:
                 export_settings['gltf_def_bones'] = False
                 export_settings['gltf_bake_animation'] = False
@@ -1212,12 +1235,16 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             else:
                 export_settings['gltf_merge_animation'] = self.export_merge_animation
 
+            if export_settings['gltf_animation_mode'] == "ACTIONS":
+                export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
+            else:
+                export_settings['gltf_export_anim_single_armature'] = False
+
             export_settings['gltf_nla_strips_merged_animation_name'] = self.export_nla_strips_merged_animation_name
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
             export_settings['gltf_optimize_animation_keep_object'] = self.export_optimize_animation_keep_anim_object
             export_settings['gltf_optimize_disable_viewport'] = self.export_optimize_disable_viewport
-            export_settings['gltf_export_anim_single_armature'] = self.export_anim_single_armature
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
             export_settings['gltf_export_reset_sk_data'] = self.export_morph_reset_sk_data
             export_settings['gltf_bake_animation'] = self.export_bake_animation
@@ -1287,6 +1314,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_gltfpack_vpi'] = self.export_gltfpack_vpi
 
             export_settings['gltf_gltfpack_noq'] = self.export_gltfpack_noq
+            export_settings['gltf_gltfpack_kn'] = self.export_gltfpack_kn
 
         export_settings['gltf_binary'] = bytearray()
         export_settings['gltf_binaryfilename'] = (
@@ -1324,6 +1352,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         # Initialize logging for export
         export_settings['log'] = Log(export_settings['loglevel'])
 
+        # Pre-export hook
+        export_user_extensions('pre_export_hook', export_settings)
+
         profile = bpy.app.debug_value == 102
         if profile:
             import cProfile
@@ -1347,6 +1378,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             self.report({message_type}, message)
 
         export_settings['log'].flush()
+
+        # Post-export hook
+        export_user_extensions('post_export_hook', export_settings)
 
         return res
 
@@ -1477,7 +1511,10 @@ def export_panel_data_mesh(layout, operator):
         if sub_body:
             row = sub_body.row()
             row.prop(operator, 'export_vertex_color')
-            if operator.export_vertex_color == "ACTIVE":
+            row = sub_body.row()
+            if operator.export_vertex_color == "NAME":
+                row.prop(operator, 'export_vertex_color_name')
+            if operator.export_vertex_color in ["ACTIVE", "NAME"]:
                 row = sub_body.row()
                 row.label(
                     text="Note that fully compliant glTF 2.0 engine/viewer will use it as multiplicative factor for base color.",
@@ -1690,8 +1727,11 @@ def export_panel_animation_armature(layout, operator):
     if body:
         body.active = operator.export_animations
 
-        body.prop(operator, 'export_anim_single_armature')
-        body.prop(operator, 'export_reset_pose_bones')
+        row = body.row()
+        row.active = operator.export_animation_mode == "ACTIONS"
+        row.prop(operator, 'export_anim_single_armature')
+        row = body.row()
+        row.prop(operator, 'export_reset_pose_bones')
 
 
 def export_panel_animation_shapekeys(layout, operator):
@@ -1714,6 +1754,7 @@ def export_panel_animation_sampling(layout, operator):
         body.active = operator.export_animations and operator.export_force_sampling
 
         body.prop(operator, 'export_frame_step')
+        body.prop(operator, 'export_sampling_interpolation_fallback')
 
 
 def export_panel_animation_pointer(layout, operator):
@@ -1780,7 +1821,7 @@ def export_panel_gltfpack(layout, operator):
         # col = body.column(heading = "Scene", align = True)
         col = body.column(heading="Miscellaneous", align=True)
         col.prop(operator, 'export_gltfpack_noq')
-
+        col.prop(operator, 'export_gltfpack_kn')
 
 def export_panel_user_extension(context, layout):
     for draw in exporter_extension_layout_draw.values():
@@ -1915,12 +1956,10 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
-        layout.prop(self, 'import_pack_images')
         layout.prop(self, 'merge_vertices')
         layout.prop(self, 'import_shading')
-        layout.prop(self, 'guess_original_bind_pose')
         layout.prop(self, 'export_import_convert_lighting_mode')
-        layout.prop(self, 'import_webp_texture')
+        import_texture_panel(layout, operator)
         import_bone_panel(layout, operator)
         import_ux_panel(layout, operator)
 
@@ -2012,10 +2051,11 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
 
 def import_bone_panel(layout, operator):
     header, body = layout.panel("GLTF_import_bone", default_closed=False)
-    header.label(text="Bones")
+    header.label(text="Bones & Skin")
     if body:
         body.prop(operator, 'bone_heuristic')
         if operator.bone_heuristic == 'BLENDER':
+            body.prop(operator, 'guess_original_bind_pose')
             body.prop(operator, 'disable_bone_shape')
             body.prop(operator, 'bone_shape_scale_factor')
 
@@ -2026,6 +2066,13 @@ def import_ux_panel(layout, operator):
     if body:
         body.prop(operator, 'import_select_created_objects')
         body.prop(operator, 'import_scene_extras')
+
+def import_texture_panel(layout, operator):
+    header, body = layout.panel("GLTF_import_texture", default_closed=False)
+    header.label(text="Texture")
+    if body:
+        body.prop(operator, 'import_pack_images')
+        body.prop(operator, 'import_webp_texture')
 
 
 def import_panel_user_extension(context, layout):
