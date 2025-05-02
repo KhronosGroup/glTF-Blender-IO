@@ -3256,6 +3256,21 @@ describe('Exporter', function () {
 
             });
 
+            it('exports base color factors', function () {
+
+                let gltfPath = path.resolve(outDirPath, '01_base_color.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat1 = asset.materials.filter(m => m.name === 'Material')[0];
+                const mat2 = asset.materials.filter(m => m.name === 'Material.001')[0];
+                const mat3 = asset.materials.filter(m => m.name === 'Material.002')[0];
+
+                assert.equalEpsilonArray(mat1.pbrMetallicRoughness.baseColorFactor, [0.1, 0.2, 0.3, 1.0]);
+                assert.equalEpsilonArray(mat2.pbrMetallicRoughness.baseColorFactor, [0.2, 0.3, 0.4, 1.0]);
+                assert.equalEpsilonArray(mat3.pbrMetallicRoughness.baseColorFactor, [0.7, 0.8, 0.9, 1.0]);
+
+            });
+
         });
     });
 

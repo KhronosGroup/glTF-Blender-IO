@@ -136,6 +136,15 @@ that image will be used as the glTF base color.
 
    An image is used as the glTF base color.
 
+If no texture is connected, the base color can be specified:
+
+- From the Principled BSDF node's *Base Color* input, which is the default.
+- From a RGB node connected to the *Base Color* input.
+- From an Ambiant Occlusion node connected to the *Base Color* input. (The AO socket
+  is not used in glTF, but the color output can be used as a base color.)
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-base-color.png
+
 
 Metallic and Roughness
 ^^^^^^^^^^^^^^^^^^^^^^
