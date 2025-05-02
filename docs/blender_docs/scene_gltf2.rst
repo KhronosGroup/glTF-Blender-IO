@@ -883,6 +883,12 @@ Bone Shape Scale
 Pipeline
 ^^^^^^^^
 
+Import Scenes as Collections
+   Import glTF scenes as collections. This is the default.
+   For single scene import, all objects are created in active collection
+   For multiple scenes import, each scene is imported as a collection. Non default scene are excluded from View Layer.
+   If there are some orphan nodes (not in any scenes), an Orphan Collection is created (excluded from View Layer too).
+   When off, the glTF scene is imported in the Blender active scene. Other glTF scenes are imported as new Blender Scenes.
 Select Imported Objects
    Select created objects after import.
 Import Scene Extras
