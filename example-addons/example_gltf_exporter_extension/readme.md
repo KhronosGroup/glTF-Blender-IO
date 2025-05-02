@@ -76,4 +76,5 @@ gather_attributes_change(self, attributes, export_settings)
 gather_gltf_additional_textures_hook(self, json, additioan_json_textures, export_settings)
 gather_node_mesh_hook(self, option, blender_object, export_settings)
 extra_animation_manage(self, extra_samplers, obj_uuid, blender_object, blender_action, gltf_channels, export_settings)
+animation_action_hook(self, gltf2_animation, blender_object, blender_action_data, export_settings)
 ```
