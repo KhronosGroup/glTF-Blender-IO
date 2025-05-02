@@ -1323,6 +1323,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['warning_joint_weight_exceed_already_displayed'] = False
 
+        export_settings['image_names'] = []
+
         user_extensions = []
         pre_export_callbacks = []
         post_export_callbacks = []
