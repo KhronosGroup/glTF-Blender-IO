@@ -1,12 +1,23 @@
 {
+    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+    // Pointez pour afficher la description des attributs existants.
+    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Attach",
-            "type": "python",
+            "name": "Débogueur Python : Attachement à distance",
+            "type": "debugpy",
             "request": "attach",
-            "port": 5678,
-            "host": "localhost"
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "."
+                }
+            ]
         }
     ]
 }

@@ -24,14 +24,14 @@ from .keyframes import gather_sk_sampled_keyframes
 def gather_sk_sampled_animation_sampler(
         obj_uuid,
         action_name,
-        slot_handle,
+        slot_identifier,
         export_settings
 ):
 
     keyframes = __gather_keyframes(
         obj_uuid,
         action_name,
-        slot_handle,
+        slot_identifier,
         export_settings)
 
     if keyframes is None:
@@ -58,13 +58,13 @@ def gather_sk_sampled_animation_sampler(
 def __gather_keyframes(
         obj_uuid,
         action_name,
-        slot_handle,
+        slot_identifier,
         export_settings):
 
     keyframes = gather_sk_sampled_keyframes(
         obj_uuid,
         action_name,
-        slot_handle,
+        slot_identifier,
         export_settings
     )
 

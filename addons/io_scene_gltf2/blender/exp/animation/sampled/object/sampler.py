@@ -31,7 +31,7 @@ def gather_object_sampled_animation_sampler(
         obj_uuid: str,
         channel: str,
         action_name: str,
-        slot_handle: int,
+        slot_identifier: str,
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
         export_settings
@@ -41,7 +41,7 @@ def gather_object_sampled_animation_sampler(
         obj_uuid,
         channel,
         action_name,
-        slot_handle,
+        slot_identifier,
         node_channel_is_animated,
         export_settings)
 
@@ -73,7 +73,7 @@ def __gather_keyframes(
         obj_uuid: str,
         channel: str,
         action_name: str,
-        slot_handle: int,
+        slot_identifier: int,
         node_channel_is_animated: bool,
         export_settings
 ):
@@ -82,7 +82,7 @@ def __gather_keyframes(
         obj_uuid,
         channel,
         action_name,
-        slot_handle,
+        slot_identifier,
         node_channel_is_animated,
         export_settings
     )
