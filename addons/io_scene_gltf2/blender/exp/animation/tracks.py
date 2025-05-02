@@ -117,6 +117,11 @@ def gather_track_animations(obj_uuid: int,
     # Access to fcurve and action data
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+
+    # Before exporting, make sure the nla is not in edit mode
+    if bpy.context.scene.is_nla_tweakmode is True and blender_object.animation_data:
+        blender_object.animation_data.use_tweak_mode = False
+
     # Collect all tracks affecting this object.
     blender_tracks = __get_blender_tracks(obj_uuid, export_settings)
 
@@ -336,8 +341,6 @@ def __get_nla_tracks_obj(obj_uuid: str, export_settings):
     if len(obj.animation_data.nla_tracks) == 0:
         return TracksData()
 
-    exported_tracks = []
-
     current_exported_tracks = []
 
     tracks_data = TracksData()
@@ -361,30 +364,30 @@ def __get_nla_tracks_obj(obj_uuid: str, export_settings):
         else:
             # The previous one(s) can go to the list, if any (not for first track)
             if len(current_exported_tracks) != 0:
-                exported_tracks.append(current_exported_tracks)
-                current_exported_tracks = []
 
                 # Store data
                 track_data = TrackData(
                     current_exported_tracks,
-                    obj.animation_data.nla_tracks[exported_tracks[-1][0].idx].name,
+                    obj.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
                     "OBJECT"
                 )
+                current_exported_tracks = []
 
                 tracks_data.add(track_data)
 
         # Start a new stack
         current_exported_tracks.append(stored_track)
 
-    # End of loop. Keep the last one(s)
-    exported_tracks.append(current_exported_tracks)
-    # Store data for the last one
-    track_data = TrackData(
-        current_exported_tracks,
-        obj.animation_data.nla_tracks[exported_tracks[-1][0].idx].name,
-        "OBJECT"
-    )
-    tracks_data.add(track_data)
+    # End of loop. Keep the last one(s), if any
+    if len(current_exported_tracks) != 0:
+
+        # Store data for the last one
+        track_data = TrackData(
+            current_exported_tracks,
+            obj.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
+            "OBJECT"
+        )
+        tracks_data.add(track_data)
 
     return tracks_data
 
