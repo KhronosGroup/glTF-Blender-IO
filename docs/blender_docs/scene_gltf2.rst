@@ -992,8 +992,15 @@ Data - Material
 ^^^^^^^^^^^^^^^
 
 Materials
-   Export full materials, only placeholders (all primitives but without materials),
-   or does not export materials. (In that last case, primitives are merged, losing material slot information).
+   :Export:
+      Export full materials, including all textures and shaders from node tree.
+   :Placeholder:
+      Export only the material placeholder, without any texture or shader.
+      Primitives are not merged, so material slot information is kept.
+   :Viewport:
+      Export only the viewport material (Base Color, Roughness, and Metalness).
+   :No Export:
+      Does not export materials. Primitives are merged, losing material slot information.
 Images
    Output format for images. PNG is lossless and generally preferred, but JPEG might be preferable for
    web applications due to the smaller file size.
