@@ -2076,7 +2076,7 @@ def import_texture_panel(layout, operator):
     if body:
         body.prop(operator, 'import_pack_images')
         body.prop(operator, 'import_webp_texture')
-        body.prop(self, 'import_unused_materials')
+        body.prop(operator, 'import_unused_materials')
 
 
 def import_panel_user_extension(context, layout):
