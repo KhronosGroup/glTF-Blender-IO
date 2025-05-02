@@ -3222,6 +3222,19 @@ describe('Exporter', function () {
 
             });
 
+            it('export vertex color for unlit materials', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_colors.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "Unlit")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 0.534, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+            });
+
             it('exports broadcast actions', function () {
 
                 let gltfPath = path.resolve(outDirPath, '35_broadcast_slots.gltf');
