@@ -486,9 +486,13 @@ def make_temp_image_copy(guard: TmpImageGuard, src_image: bpy.types.Image):
     guard.image = src_image.copy()
     tmp_image = guard.image
 
-    tmp_image.update()
-    # See #1564 and T95616
-    tmp_image.scale(*src_image.size)
+    try:
+        tmp_image.update()
+        # See #1564 and T95616
+        tmp_image.scale(*src_image.size)
+    except RuntimeError:
+        # Can happen if the user deleted the image from the HDD
+        pass
 
     if src_image.is_dirty:  # Warning, img size change doesn't make it dirty, see T95616
         # Unsaved changes aren't copied by .copy(), so do them ourselves
