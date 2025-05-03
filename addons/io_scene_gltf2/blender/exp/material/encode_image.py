@@ -454,15 +454,18 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_sett
 
         tmp_image.file_format = file_format
 
-        # if image is jpeg, use quality export settings
-        if file_format in ["JPEG", "WEBP"]:
-            tmp_image.save(quality=export_settings['gltf_image_quality'])
-        else:
-            tmp_image.save()
+        try:
+            # if image is jpeg, use quality export settings
+            if file_format in ["JPEG", "WEBP"]:
+                tmp_image.save(quality=export_settings['gltf_image_quality'])
+            else:
+                tmp_image.save()
 
-        with open(tmpfilename, "rb") as f:
-            return f.read()
-
+            with open(tmpfilename, "rb") as f:
+                return f.read()
+        except Exception as e:
+            export_settings['log'].error("Error while saving image: %s" % e)
+            return b''
 
 class TmpImageGuard:
     """Guard to automatically clean up temp images (use it with `with`)."""
