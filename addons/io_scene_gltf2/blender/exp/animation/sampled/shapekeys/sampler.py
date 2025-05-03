@@ -24,14 +24,14 @@ from .keyframes import gather_sk_sampled_keyframes
 def gather_sk_sampled_animation_sampler(
         obj_uuid,
         action_name,
-        slot_handle,
+        slot_identifier,
         export_settings
 ):
 
     keyframes = __gather_keyframes(
         obj_uuid,
         action_name,
-        slot_handle,
+        slot_identifier,
         export_settings)
 
     if keyframes is None:
@@ -58,13 +58,13 @@ def gather_sk_sampled_animation_sampler(
 def __gather_keyframes(
         obj_uuid,
         action_name,
-        slot_handle,
+        slot_identifier,
         export_settings):
 
     keyframes = gather_sk_sampled_keyframes(
         obj_uuid,
         action_name,
-        slot_handle,
+        slot_identifier,
         export_settings
     )
 
@@ -103,19 +103,14 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
     component_type = gltf2_io_constants.ComponentType.Float
     data_type = gltf2_io_constants.DataType.Scalar
 
-    output = gltf2_io.Accessor(
-        buffer_view=gltf2_io_binary_data.BinaryData.from_list(values, component_type),
-        byte_offset=None,
-        component_type=component_type,
-        count=len(values) // gltf2_io_constants.DataType.num_elements(data_type),
-        extensions=None,
-        extras=None,
-        max=None,
-        min=None,
-        name=None,
-        normalized=None,
-        sparse=None,
-        type=data_type
+    output = gather_accessor(
+        gltf2_io_binary_data.BinaryData.from_list(values, component_type),
+        component_type,
+        len(values) // gltf2_io_constants.DataType.num_elements(data_type),
+        None,
+        None,
+        data_type,
+        export_settings
     )
 
     return input, output
@@ -123,4 +118,4 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
 
 def __gather_interpolation(export_settings):
     # TODO: check if the SK was animated with CONSTANT
-    return 'LINEAR'
+    return export_settings['gltf_sampling_interpolation_fallback']

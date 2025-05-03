@@ -82,7 +82,7 @@ def gather_scene_animations(export_settings):
         if blender_object and blender_object.type != "ARMATURE":
             # We have to check if this is a skinned mesh, because we don't have to force animation baking on this case
             if export_settings['vtree'].nodes[obj_uuid].skin is None:
-                # Setting slot_handle to None, always
+                # Setting slot_identifier to None, always
                 channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
                 if channels is not None:
                     total_channels.extend(channels)
@@ -100,7 +100,7 @@ def gather_scene_animations(export_settings):
                         ignore_sk = True
 
                 if ignore_sk is False:
-                    # Setting slot_handle to None, always
+                    # Setting slot_identifier to None, always
                     channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
                     if channels is not None:
                         total_channels.extend(channels)
@@ -108,12 +108,12 @@ def gather_scene_animations(export_settings):
             # This is GN instances
             # Currently, not checking if this instance is skinned.... #TODO
             # No action / slot for GN instances
-            # Setting slot_handle to None, always
+            # Setting slot_identifier to None, always
             channels, _ = gather_object_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
         else:
-            # Setting slot_handle to None, always
+            # Setting slot_identifier to None, always
             channels, _ = gather_armature_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
@@ -138,7 +138,10 @@ def gather_scene_animations(export_settings):
             if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
                 continue
 
-            blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
+            if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
+                blender_material = export_settings['material_identifiers'][blender_id]
+            else:
+                blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
 
             export_settings['ranges'][id(blender_material)] = {}
             export_settings['ranges'][id(blender_material)][id(blender_material)] = {
@@ -147,7 +150,7 @@ def gather_scene_animations(export_settings):
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, mat, mat, export_settings, add_drivers=False)
 
-            # Setting slot_handle to None, always
+            # Setting slot_identifier to None, always
             channels = gather_data_sampled_channels('materials', mat, mat, None, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
@@ -179,7 +182,7 @@ def gather_scene_animations(export_settings):
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, light, light, export_settings, add_drivers=False)
 
-            # Setting slot_handle to None, always
+            # Setting slot_identifier to None, always
             channels = gather_data_sampled_channels('lights', light, light, None, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
@@ -211,7 +214,7 @@ def gather_scene_animations(export_settings):
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, cam, cam, export_settings, add_drivers=False)
 
-            # Setting slot_handle to None, always
+            # Setting slot_identifier to None, always
             channels = gather_data_sampled_channels('cameras', cam, cam, None, None, export_settings)
             if channels is not None:
                 total_channels.extend(channels)

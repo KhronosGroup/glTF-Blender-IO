@@ -31,14 +31,14 @@ def get_cache_data(path: str,
                    action_name: str,
                    current_frame: int,
                    step: int,
-                   slot_handle: int,
+                   slot_identifier: str,
                    export_settings,
                    only_gather_provided=False
                    ):
 
     data = {}
 
-    # Ranges are stored at action level, so no need to give the slot_handle here
+    # Ranges are stored at action level, so no need to give the slot_identifier here
     min_, max_ = get_range(blender_obj_uuid, action_name, export_settings)
 
     if only_gather_provided:
@@ -80,14 +80,14 @@ def get_cache_data(path: str,
         bpy.context.scene.frame_set(int(frame))
         current_instance = {}  # For GN instances, we are going to track instances by their order in instance iterator
 
-        object_caching(data, obj_uuids, current_instance, action_name, slot_handle, frame, depsgraph, export_settings)
+        object_caching(data, obj_uuids, current_instance, action_name, slot_identifier, frame, depsgraph, export_settings)
 
         # KHR_animation_pointer caching for materials, lights, cameras
         if export_settings['gltf_export_anim_pointer'] is True:
-            material_nodetree_caching(data, action_name, slot_handle, frame, export_settings)
-            material_caching(data, action_name, slot_handle, frame, export_settings)
-            light_nodetree_caching(data, action_name, slot_handle, frame, export_settings)
-            camera_caching(data, action_name, slot_handle, frame, export_settings)
+            material_nodetree_caching(data, action_name, slot_identifier, frame, export_settings)
+            material_caching(data, action_name, slot_identifier, frame, export_settings)
+            light_nodetree_caching(data, action_name, slot_identifier, frame, export_settings)
+            camera_caching(data, action_name, slot_identifier, frame, export_settings)
 
         frame += step
 
@@ -130,12 +130,15 @@ def initialize_data_dict(data, key1, key2, key3, key4, key5):
         data[key1][key2][key3][key4][key5] = {}
 
 
-def material_caching(data, action_name, slot_handle, frame, export_settings):
+def material_caching(data, action_name, slot_identifier, frame, export_settings):
     for mat in export_settings['KHR_animation_pointer']['materials'].keys():
         if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
             continue
 
-        blender_material = [m for m in bpy.data.materials if id(m) == mat]
+        if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
+            blender_material = [export_settings['material_identifiers'][mat]]
+        else:
+            blender_material = [m for m in bpy.data.materials if id(m) == mat]
         if len(blender_material) == 0:
             # This is not a material from Blender (coming from Geometry Node for example, so no animation on it)
             continue
@@ -147,15 +150,15 @@ def material_caching(data, action_name, slot_handle, frame, export_settings):
         if blender_material and blender_material.animation_data and blender_material.animation_data.action \
                 and blender_material.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-            key1, key2, key3, key4 = mat, blender_material.animation_data.action.name, blender_material.animation_data.action_slot_handle, "value"
+            key1, key2, key3, key4 = mat, blender_material.animation_data.action.name, blender_material.animation_data.action_slot.identifier, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-            # We can keep the input slot_handle here, as we are caching only one object / NLA track
-            key1, key2, key3, key4 = mat, action_name, slot_handle, "value"
+            # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+            key1, key2, key3, key4 = mat, action_name, slot_identifier, "value"
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
-            # slot_handle is always None for scene export
-            key1, key2, key3, key4 = mat, mat, slot_handle, "value"
+            # slot_identifier is always None for scene export
+            key1, key2, key3, key4 = mat, mat, slot_identifier, "value"
 
         if key2 not in data[key1].keys():
             data[key1][key2] = {}
@@ -184,13 +187,16 @@ def material_caching(data, action_name, slot_handle, frame, export_settings):
                 data[key1][key2][key3][key4][path][frame] = list(val)
 
 
-def material_nodetree_caching(data, action_name, slot_handle, frame, export_settings):
+def material_nodetree_caching(data, action_name, slot_identifier, frame, export_settings):
     # After caching objects, caching materials, for KHR_animation_pointer
     for mat in export_settings['KHR_animation_pointer']['materials'].keys():
         if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
             continue
 
-        blender_material = [m for m in bpy.data.materials if id(m) == mat]
+        if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
+            blender_material = [export_settings['material_identifiers'][mat]]
+        else:
+            blender_material = [m for m in bpy.data.materials if id(m) == mat]
         if len(blender_material) == 0:
             # This is not a material from Blender (coming from Geometry Node for example, so no animation on it)
             continue
@@ -202,15 +208,15 @@ def material_nodetree_caching(data, action_name, slot_handle, frame, export_sett
         if blender_material.node_tree and blender_material.node_tree.animation_data and blender_material.node_tree.animation_data.action \
                 and blender_material.node_tree.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-            key1, key2, key3, key4 = mat, blender_material.node_tree.animation_data.action.name, blender_material.node_tree.animation_data.action_slot_handle, "value"
+            key1, key2, key3, key4 = mat, blender_material.node_tree.animation_data.action.name, blender_material.node_tree.animation_data.action_slot.identifier, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-            # We can keep the input slot_handle here, as we are caching only one object / NLA track
-            key1, key2, key3, key4 = mat, action_name, slot_handle, "value"
+            # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+            key1, key2, key3, key4 = mat, action_name, slot_identifier, "value"
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
-            # slot_handle is always None for scene export
-            key1, key2, key3, key4 = mat, mat, slot_handle, "value"
+            # slot_identifier is always None for scene export
+            key1, key2, key3, key4 = mat, mat, slot_identifier, "value"
 
         if key2 not in data[key1].keys():
             data[key1][key2] = {}
@@ -356,11 +362,20 @@ def material_nodetree_caching(data, action_name, slot_handle, frame, export_sett
                         "/",
                         1)[0] and export_settings['KHR_animation_pointer']['materials'][mat]['paths'][i]['path'].rsplit(
                         "/",
-                        1)[1] == "specularColorFactor"][0]
-                val_colorfactor = blender_material.path_resolve(colorfactor_path)
+                        1)[1] == "specularColorFactor"]
+                if len(colorfactor_path) == 0:
+                    # No specularColorFactor, so using default value
+                    val_colorfactor = [1.0, 1.0, 1.0]
+                else:
+                    val_colorfactor = blender_material.path_resolve(colorfactor_path[0])
+                    colorfactor_path = colorfactor_path[0]
                 if fac > 1.0:
                     val_colorfactor = [i * fac for i in val_colorfactor]
-                data[key1][key2][key3][key4][colorfactor_path][frame] = val_colorfactor
+                    if len(colorfactor_path) == 0:
+                        export_settings['log'].warning(
+                            "SpecularFactor is greater than 1.0, but no specularColorFactor found. Using default value for specularColorFactor.")
+                if len(colorfactor_path) != 0:
+                    data[key1][key2][key3][key4][colorfactor_path][frame] = val_colorfactor
             elif export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['path'] == "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor":
                 # Already handled by specularFactor
                 continue
@@ -375,19 +390,19 @@ def material_nodetree_caching(data, action_name, slot_handle, frame, export_sett
                         :export_settings['KHR_animation_pointer']['materials'][mat]['paths'][path]['length']]
 
 
-def armature_caching(data, obj_uuid, blender_obj, action_name, slot_handle, frame, export_settings):
+def armature_caching(data, obj_uuid, blender_obj, action_name, slot_identifier, frame, export_settings):
     bones = export_settings['vtree'].get_all_bones(obj_uuid)
     if blender_obj.animation_data and blender_obj.animation_data.action \
             and blender_obj.animation_data.action_slot \
             and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
-        key1, key2, key3, key4 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot_handle, "bone"
+        key1, key2, key3, key4 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot.identifier, "bone"
     elif blender_obj.animation_data \
             and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-        # We can keep the input slot_handle here, as we are caching only one object / NLA track
-        key1, key2, key3, key4 = obj_uuid, action_name, slot_handle, "bone"
+        # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+        key1, key2, key3, key4 = obj_uuid, action_name, slot_identifier, "bone"
     else:
-        # slot_handle is always None for scene export
-        key1, key2, key3, key4 = obj_uuid, obj_uuid, slot_handle, "bone"
+        # slot_identifier is always None for scene export
+        key1, key2, key3, key4 = obj_uuid, obj_uuid, slot_identifier, "bone"
 
     if key3 not in data[key1][key2].keys():
         data[key1][key2][key3] = {}
@@ -420,7 +435,7 @@ def armature_caching(data, obj_uuid, blender_obj, action_name, slot_handle, fram
         data[key1][key2][key3][key4][blender_bone.name][frame] = matrix
 
 
-def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, frame, depsgraph, export_settings):
+def object_caching(data, obj_uuids, current_instance, action_name, slot_identifier, frame, depsgraph, export_settings):
     for obj_uuid in obj_uuids:
 
         # Do not cache real collection
@@ -483,15 +498,15 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
         if blender_obj and blender_obj.animation_data and blender_obj.animation_data.action \
                 and blender_obj.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
-            key1, key2, key3, key4, key5 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot_handle, "matrix", None
+            key1, key2, key3, key4, key5 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot.identifier, "matrix", None
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-            # We can keep the input slot_handle here, as we are caching only one object / NLA track
-            key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_handle, "matrix", None
+            # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+            key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_identifier, "matrix", None
         else:
             # case of baking object.
             # There is no animation, so use uuid of object as key
-            # slot_handle is always None for scene export
-            key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
+            # slot_identifier is always None for scene export
+            key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_identifier, "matrix", None
 
         initialize_data_dict(data, key1, key2, key3, key4, key5)
         data[key1][key2][key3][key4][key5][frame] = mat
@@ -499,13 +514,13 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
         # Store data for all bones, if object is an armature
 
         if blender_obj and blender_obj.type == "ARMATURE":
-            armature_caching(data, obj_uuid, blender_obj, action_name, slot_handle, frame, export_settings)
+            armature_caching(data, obj_uuid, blender_obj, action_name, slot_identifier, frame, export_settings)
 
         elif blender_obj is None:  # GN instances
             # case of baking object, for GN instances
             # There is no animation, so use uuid of object as key
-            # slot_handle is always None for baking
-            key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "matrix", None
+            # slot_identifier is always None for baking
+            key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_identifier, "matrix", None
             initialize_data_dict(data, key1, key2, key3, key4, key5)
             data[key1][key2][key3][key4][key5][frame] = mat
 
@@ -520,7 +535,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
                 and blender_obj.data.shape_keys.animation_data.action_slot is not None \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
 
-            key1, key2, key3, key4, key5 = obj_uuid, blender_obj.data.shape_keys.animation_data.action.name, blender_obj.data.shape_keys.animation_data.action_slot_handle, "sk", None
+            key1, key2, key3, key4, key5 = obj_uuid, blender_obj.data.shape_keys.animation_data.action.name, blender_obj.data.shape_keys.animation_data.action_slot.identifier, "sk", None
             cache_sk = True
 
         elif export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
@@ -529,15 +544,15 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
                 and blender_obj.data.shape_keys.animation_data is not None \
                 and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
 
-            # We can keep the input slot_handle here, as we are caching only one object / NLA track
-            key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_handle, "sk", None
+            # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+            key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_identifier, "sk", None
             cache_sk = True
 
         elif export_settings['gltf_morph_anim'] and blender_obj and blender_obj.type == "MESH" \
                 and blender_obj.data is not None \
                 and blender_obj.data.shape_keys is not None:
-            # slot_handle is always None for scene export
-            key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_handle, "sk", None
+            # slot_identifier is always None for scene export
+            key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_identifier, "sk", None
             cache_sk = True
 
         if cache_sk:
@@ -564,16 +579,16 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
                 if blender_obj.animation_data and blender_obj.animation_data.action \
                         and blender_obj.animation_data.action_slot \
                         and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
-                    key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot_handle, "sk", None
+                    key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot.identifier, "sk", None
                     cache_sk = True
                 elif blender_obj.animation_data \
                         and export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-                    # We can keep the input slot_handle here, as we are caching only one object / NLA track
-                    key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + action_name, slot_handle, "sk", None
+                    # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+                    key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + action_name, slot_identifier, "sk", None
                     cache_sk = True
                 else:
-                    # slot_handle is always None for scene export
-                    key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + obj_uuid, slot_handle, "sk", None
+                    # slot_identifier is always None for scene export
+                    key1, key2, key3, key4, key5 = dr_obj, obj_uuid + "_" + obj_uuid, slot_identifier, "sk", None
                     cache_sk = True
 
                 if cache_sk:
@@ -589,7 +604,7 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_handle, 
                     cache_sk = False
 
 
-def light_nodetree_caching(data, action_name, slot_handle, frame, export_settings):
+def light_nodetree_caching(data, action_name, slot_identifier, frame, export_settings):
     # After caching materials, caching lights, for KHR_animation_pointer
     for light in export_settings['KHR_animation_pointer']['lights'].keys():
         if len(export_settings['KHR_animation_pointer']['lights'][light]['paths']) == 0:
@@ -602,15 +617,15 @@ def light_nodetree_caching(data, action_name, slot_handle, frame, export_setting
         if blender_light.node_tree and blender_light.node_tree.animation_data and blender_light.node_tree.animation_data.action \
                 and blender_light.node_tree.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-            key1, key2, key3, key4 = light, blender_light.node_tree.animation_data.action.name, blender_light.node_tree.animation_data.action_slot_handle, "value"
+            key1, key2, key3, key4 = light, blender_light.node_tree.animation_data.action.name, blender_light.node_tree.animation_data.action_slot.identifier, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-            # We can keep the input slot_handle here, as we are caching only one object / NLA track
-            key1, key2, key3, key4 = light, action_name, slot_handle, "value"
+            # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+            key1, key2, key3, key4 = light, action_name, slot_identifier, "value"
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
-            # slot_handle is always None for scene export
-            key1, key2, key3, key4 = light, light, slot_handle, "value"
+            # slot_identifier is always None for scene export
+            key1, key2, key3, key4 = light, light, slot_identifier, "value"
 
         if key2 not in data[key1].keys():
             data[key1][key2] = {}
@@ -632,7 +647,7 @@ def light_nodetree_caching(data, action_name, slot_handle, frame, export_setting
                 data[key1][key2][key3][key4][path][frame] = list(val)
 
 
-def light_caching(data, action_name, slot_handle, frame, export_settings):
+def light_caching(data, action_name, slot_identifier, frame, export_settings):
     # After caching materials, caching lights, for KHR_animation_pointer
     for light in export_settings['KHR_animation_pointer']['lights'].keys():
         if len(export_settings['KHR_animation_pointer']['lights'][light]['paths']) == 0:
@@ -645,14 +660,14 @@ def light_caching(data, action_name, slot_handle, frame, export_settings):
         if blender_light and blender_light.animation_data and blender_light.animation_data.action \
                 and blender_light.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-            key1, key2, key3, key4 = light, blender_light.animation_data.action.name, blender_light.animation_data.action_slot_handle, "value"
+            key1, key2, key3, key4 = light, blender_light.animation_data.action.name, blender_light.animation_data.action_slot.identifier, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-            key1, key2, key3, key4 = light, action_name, slot_handle, "value"
+            key1, key2, key3, key4 = light, action_name, slot_identifier, "value"
         else:
             # case of baking materials (scene export).
             # There is no animation, so use id as key
-            # slot_handle is always None for scene export
-            key1, key2, key3, key4 = light, light, slot_handle, "value"
+            # slot_identifier is always None for scene export
+            key1, key2, key3, key4 = light, light, slot_identifier, "value"
 
         if key2 not in data[key1].keys():
             data[key1][key2] = {}
@@ -687,7 +702,7 @@ def light_caching(data, action_name, slot_handle, frame, export_settings):
                     data[key1][key2][key3][key4][path][frame] = list(val)
 
 
-def camera_caching(data, action_name, slot_handle, frame, export_settings):
+def camera_caching(data, action_name, slot_identifier, frame, export_settings):
     # After caching lights, caching cameras, for KHR_animation_pointer
     for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
         if len(export_settings['KHR_animation_pointer']['cameras'][cam]['paths']) == 0:
@@ -700,15 +715,15 @@ def camera_caching(data, action_name, slot_handle, frame, export_settings):
         if blender_camera and blender_camera.animation_data and blender_camera.animation_data.action \
                 and blender_camera.animation_data.action_slot \
                 and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-            key1, key2, key3, key4 = cam, blender_camera.animation_data.action.name, blender_camera.animation_data.action_slot_handle, "value"
+            key1, key2, key3, key4 = cam, blender_camera.animation_data.action.name, blender_camera.animation_data.action_slot.identifier, "value"
         elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-            # We can keep the input slot_handle here, as we are caching only one object / NLA track
-            key1, key2, key3, key4 = cam, action_name, slot_handle, "value"
+            # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+            key1, key2, key3, key4 = cam, action_name, slot_identifier, "value"
         else:
             # case of baking camera data (scene export).
             # There is no animation, so use id as key
-            # No really matter for slot_handle, as we bake all when exporting with scene export
-            key1, key2, key3, key4 = cam, cam, slot_handle, "value"
+            # No really matter for slot_identifier, as we bake all when exporting with scene export
+            key1, key2, key3, key4 = cam, cam, slot_identifier, "value"
 
         if key2 not in data[key1].keys():
             data[key1][key2] = {}

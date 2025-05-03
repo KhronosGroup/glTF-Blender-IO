@@ -28,7 +28,7 @@ def gather_data_sampled_animation_sampler(
         blender_id: str,
         channel: str,
         action_name: str,
-        slot_handle: int,
+        slot_identifier: str,
         node_channel_is_animated: bool,
         node_channel_interpolation: str,
         additional_key: str,  # Used to differentiate between material / material node_tree
@@ -40,7 +40,7 @@ def gather_data_sampled_animation_sampler(
         blender_id,
         channel,
         action_name,
-        slot_handle,
+        slot_identifier,
         node_channel_is_animated,
         additional_key,
         export_settings)
@@ -63,7 +63,7 @@ def __gather_keyframes(
         blender_id,
         channel,
         action_name,
-        slot_handle,
+        slot_identifier,
         node_channel_is_animated,
         additional_key,  # Used to differentiate between material / material node_tree
         export_settings):
@@ -73,7 +73,7 @@ def __gather_keyframes(
         blender_id,
         channel,
         action_name,
-        slot_handle,
+        slot_identifier,
         node_channel_is_animated,
         additional_key,
         export_settings
@@ -118,19 +118,14 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
     else:
         data_type = gltf2_io_constants.DataType.vec_type_from_num(1)
 
-    output = gltf2_io.Accessor(
-        buffer_view=gltf2_io_binary_data.BinaryData.from_list(values, component_type),
-        byte_offset=None,
-        component_type=component_type,
-        count=len(values) // gltf2_io_constants.DataType.num_elements(data_type),
-        extensions=None,
-        extras=None,
-        max=None,
-        min=None,
-        name=None,
-        normalized=None,
-        sparse=None,
-        type=data_type
+    output = gather_accessor(
+        gltf2_io_binary_data.BinaryData.from_list(values, component_type),
+        component_type,
+        len(values) // gltf2_io_constants.DataType.num_elements(data_type),
+        None,
+        None,
+        data_type,
+        export_settings
     )
 
     return input, output
@@ -143,7 +138,7 @@ def __gather_interpolation(
         keyframes,
         export_settings):
     # TODOPointer
-    return 'LINEAR'
+    return export_settings['gltf_sampling_interpolation_fallback']
 
 
 def __convert_to_gltf(value):

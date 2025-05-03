@@ -18,13 +18,15 @@ If you want to use this file as a base of your addon, make sure to make it prope
 Next, define functions that contain the data of the extension you would like to include. Write those functions for each type you want to include extensions for. Currently implemented are:
 
 ```
+pre_export_hook(self, export_settings)
+post_export_hook(self, export_settings)
 gather_animation_channel_hook(self, gltf2_animation_channel, channel, blender_object, bone, action_name, node_channel_is_animated, export_settings)
 gather_animation_channel_target_hook(self, gltf2_animation_channel_target, channels, blender_object, bake_bone, bake_channel, export_settings)
 gather_animation_sampler_hook(self, gltf2_sampler, blender_object, bone, action_name, node_channel_is_animated, export_settings)
 gather_asset_hook(self, gltf2_asset, export_settings)
 gather_camera_hook(self, gltf2_camera, blender_camera, export_settings)
 gather_gltf_extensions_hook(self, gltf2_plan, export_settings)
-gather_image_hook(self, gltf2_image, blender_shader_sockets, export_settings)
+gather_image_hook(self, gltf2_image, mapping, blender_shader_sockets, export_settings)
 gather_joint_hook(self, gltf2_node, blender_bone, export_settings)
 gather_material_hook(self, gltf2_material, blender_material, export_settings)
 gather_material_pbr_metallic_roughness_hook(self, gltf2_material, blender_material, orm_texture, export_settings)
@@ -40,7 +42,7 @@ gather_texture_info_hook(self, gltf2_texture_info, blender_shader_sockets, expor
 merge_animation_extensions_hook(self, gltf2_animation_source, gltf2_animation_destination, export_settings)
 vtree_before_filter_hook(self, vtree, export_settings)
 vtree_after_filter_hook(self, vtree, export_settings)
-pre_gather_animation_hook(self, gltf2_channels, blender_action, slot_handle, blender_object, export_settings)
+pre_gather_animation_hook(self, gltf2_channels, blender_action, slot_identifier, blender_object, export_settings)
 gather_actions_hook(self, blender_object, actions, export_settings) # params = ActionsData
 gather_tracks_hook(self, blender_object, tracks, export_settings) # params = TracksData, blender_tracks_names, track_on_type
 pre_gather_actions_hook(self, blender_object, export_settings) # For action mode
@@ -52,10 +54,10 @@ post_animation_track_switch_hook(self, blender_object, tracks, track_name, on_ty
 animation_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for action mode
 animation_track_switch_loop_hook(self, blender_object, post, export_settings) # post = False before loop, True after loop # for track mode
 animation_gather_fcurve(self, blender_object, blender_action, export_settings)
-animation_channels_object_sampled(self, gltf2_channels, blender_object, blender_action, slot_handle, cache_key, export_settings)
+animation_channels_object_sampled(self, gltf2_channels, blender_object, blender_action, slot_identifier, cache_key, export_settings)
 animation_gather_object_channel(self, blender_object, blender_action_name, export_settings)
 animation_gather_object_sampler(self, blender_object, action_name, export_settings)
-animation_channels_sk_sampled(self, gltf2_channels, blender_object, blender_action, slot_handle, cache_key, export_settings)
+animation_channels_sk_sampled(self, gltf2_channels, blender_object, blender_action, slot_identifier, cache_key, export_settings)
 animation_action_sk_sampled_target(self, blender_object, export_settings)
 animation_gather_sk_channels(self, blender_object, blender_action_name, export_settings)
 animation_gather_sk_channel(self, blender_object, blender_action_name, export_settings)
@@ -65,7 +67,7 @@ animation_gather_fcurve_channel(self, blender_object, bone_name, channel_group, 
 gather_gltf_hook(self, active_scene_idx, scenes, animations, export_settings)
 gather_gltf_encoded_hook(self, gltf_format, sort_order, export_settings)
 gather_tree_filter_tag_hook(self, tree, export_settings)
-animation_channels_armature_sampled(self, gltf2_channels, blender_object, blender_action, slot_handle, cache_key, export_settings)
+animation_channels_armature_sampled(self, gltf2_channels, blender_object, blender_action, slot_identifier, cache_key, export_settings)
 gather_animation_bone_sampled_channel_target_hook(self, blender_object, bone, channel, export_settings)
 gather_animation_object_sampled_channel_target_hook(self, blender_object, channel)
 gather_attribute_keep(self, keep_attribute, export_settings)
@@ -74,4 +76,5 @@ gather_attributes_change(self, attributes, export_settings)
 gather_gltf_additional_textures_hook(self, json, additioan_json_textures, export_settings)
 gather_node_mesh_hook(self, option, blender_object, export_settings)
 extra_animation_manage(self, extra_samplers, obj_uuid, blender_object, blender_action, gltf_channels, export_settings)
+animation_action_hook(self, gltf2_animation, blender_object, blender_action_data, export_settings)
 ```

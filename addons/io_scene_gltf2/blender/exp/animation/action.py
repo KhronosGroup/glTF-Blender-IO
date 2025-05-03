@@ -18,7 +18,7 @@ from math import ceil
 from ....io.com import gltf2_io
 from ....io.exp.user_extensions import export_user_extensions
 from ....blender.com.conversion import get_gltf_interpolation
-from ...com.data_path import is_bone_anim_channel
+from ...com.data_path import is_bone_anim_channel, get_channelbag_for_slot
 from ...com.extras import generate_extras
 from ..cache import cached
 from ..tree import VExportNode
@@ -30,7 +30,7 @@ from .sampled.shapekeys.action_sampled import gather_action_sk_sampled
 from .sampled.object.channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.channels import gather_sampled_sk_channel
 from .drivers import get_sk_drivers, get_driver_on_shapekey
-from .anim_utils import reset_bone_matrix, reset_sk_data, link_samplers, add_slide_data, merge_tracks_perform, bake_animation, get_channelbag_for_slot
+from .anim_utils import reset_bone_matrix, reset_sk_data, link_samplers, add_slide_data, merge_tracks_perform, bake_animation
 
 
 class ActionsData:
@@ -39,16 +39,29 @@ class ActionsData:
     def __init__(self):
         self.actions = {}
 
-    def add_action(self, action):
+    def add_action(self, action, force_new_action=False):
+        if force_new_action:
+            action.active = False # If we force a new action, it is not active (but in NLA or broadcasted)
+            if id(action.action) not in self.actions.keys():
+                self.actions[id(action.action)] = []
+            self.actions[id(action.action)].append(action)
+            return
+
+        # Trying to add slot to existing action, if any (or create a new one)
         if id(action.action) not in self.actions.keys():
-            self.actions[id(action.action)] = action
+            self.actions[id(action.action)] = []
+            self.actions[id(action.action)].append(action)
         else:
+            active = self.get_active_action(action.action)
+            idx = active if active is not None else -1
+
+            # add to the active action, or the last action
             for slot in action.slots:
-                self.actions[id(action.action)].add_slot(slot.slot, slot.id_root, slot.track)
+                self.actions[id(action.action)][idx].add_slot(slot.slot, slot.target_id_type, slot.track)
 
     def get(self):
         # sort animations alphabetically (case insensitive) so they have a defined order and match Blender's Action list
-        values = list(self.actions.values())
+        values = list([i for action_data in self.actions.values() for i in action_data])
         values.sort(key=lambda a: a.action.name.lower())
         for action in values:
             action.sort()
@@ -58,11 +71,38 @@ class ActionsData:
         if id(action) not in self.actions.keys():
             return False
 
-        for slot_ in self.actions[id(action)].slots:
-            if slot_.slot.handle == slot.handle:
-                return True
+        for action in self.actions[id(action)]:
+            for slot_ in action.slots:
+                if slot_.slot.handle == slot.handle:
+                    return True
 
         return False
+
+    def exists_action(self, action):
+        return id(action) in self.actions.keys()
+
+    def exists_action_slot_target(self, action, slot):
+        if id(action) not in self.actions.keys():
+            return False
+
+        for action in self.actions[id(action)]:
+            for slot_ in action.slots:
+                if slot_.slot.handle == slot.handle:
+                    continue
+                if slot_.target_id_type == slot.target_id_type:
+                    return True
+
+        return False
+
+    def get_active_action(self, action):
+        if id(action) not in self.actions.keys():
+            return None
+
+        for idx, action in enumerate(self.actions[id(action)]):
+            if action.active:
+                return idx
+
+        return None
 
     # Iterate over actions
     def values(self):
@@ -79,29 +119,34 @@ class ActionData:
     def __init__(self, action):
         self.action = action
         self.slots = []
+        self.name = action.name
+        self.active = True
 
-    def add_slot(self, slot, id_root, track):
+    def add_slot(self, slot, target_id_type, track):
         # If slot already exists with None track (so active action/slot) => Replace it with the track (NLA)
         f = [s for s in self.slots if s.slot.handle == slot.handle and s.track is None]
         if len(f) > 0:
             self.slots.remove(f[0])
-        new_slot = SlotData(slot, id_root, track)
+        new_slot = SlotData(slot, target_id_type, track)
         self.slots.append(new_slot)
 
     def sort(self):
         # Implement sorting, to be sure to get:
         # TRS first, and then SK
         sort_items = {'OBJECT': 1, 'KEY': 2}
-        self.slots.sort(key=lambda x: sort_items.get(x.id_root))
+        self.slots.sort(key=lambda x: sort_items.get(x.target_id_type))
 
     def has_slots(self):
         return len(self.slots) > 0
 
+    def force_name(self, name):
+        self.name = name
+
 
 class SlotData:
-    def __init__(self, slot, id_root, track):
+    def __init__(self, slot, target_id_type, track):
         self.slot = slot
-        self.id_root = id_root
+        self.target_id_type = target_id_type
         self.track = track
 
 
@@ -198,7 +243,7 @@ def prepare_actions_range(export_settings):
         for action_data in blender_actions.values():
             blender_action = action_data.action
             for slot in action_data.slots:
-                type_ = slot.id_root
+                type_ = slot.target_id_type
                 track = slot.track
 
                 # Frame range is set on action level, not on slot level
@@ -455,13 +500,15 @@ def gather_action_animations(obj_uuid: int,
         for slot in action_data.slots:
             blender_action = action_data.action
             track_name = slot.track
-            on_type = slot.id_root
+            on_type = slot.target_id_type
 
             # Set action as active, to be able to bake if needed
             if on_type == "OBJECT":  # Not for shapekeys!
                 if blender_object.animation_data.action is None \
                         or (blender_object.animation_data.action.name != blender_action.name) \
+                        or (blender_object.animation_data.action_slot is None) \
                         or (blender_object.animation_data.action_slot.handle != slot.slot.handle):
+
                     if blender_object.animation_data.is_property_readonly('action'):
                         blender_object.animation_data.use_tweak_mode = False
                     try:
@@ -556,16 +603,16 @@ def gather_action_animations(obj_uuid: int,
             if export_settings['gltf_force_sampling'] is True:
                 if export_settings['vtree'].nodes[obj_uuid].blender_object.type == "ARMATURE":
                     channels, extra_samplers = gather_action_armature_sampled(
-                        obj_uuid, blender_action, slot.slot.handle, None, export_settings)
+                        obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                     if channels:
                         all_channels.extend(channels)
                 elif on_type == "OBJECT":
                     channels, extra_samplers = gather_action_object_sampled(
-                        obj_uuid, blender_action, slot.slot.handle, None, export_settings)
+                        obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                     if channels:
                         all_channels.extend(channels)
                 else:
-                    channels = gather_action_sk_sampled(obj_uuid, blender_action, slot.slot.handle, None, export_settings)
+                    channels = gather_action_sk_sampled(obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                     if channels:
                         all_channels.extend(channels)
             else:
@@ -575,25 +622,25 @@ def gather_action_animations(obj_uuid: int,
                 #  - fcurve that cannot be handled not sampled, to be sampled
                 # to_be_sampled is : (object_uuid , type , prop, optional(bone.name) )
                 channels, to_be_sampled, extra_samplers = gather_animation_fcurves(
-                    obj_uuid, blender_action, slot.slot.handle, export_settings)
+                    obj_uuid, blender_action, slot.slot.identifier, export_settings)
                 if channels:
                     all_channels.extend(channels)
                 for (obj_uuid, type_, prop, bone) in to_be_sampled:
                     if type_ == "BONE":
-                        channel = gather_sampled_bone_channel(
+                        channel = gather_sampled_bone_channel( #TODOSLOT
                             obj_uuid,
                             bone,
                             prop,
                             blender_action.name,
-                            slot.slot.handle,
+                            slot.slot.identifier,
                             True,
-                            get_gltf_interpolation("LINEAR"),
+                            get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings),
                             export_settings)
                     elif type_ == "OBJECT":
                         channel = gather_sampled_object_channel(
-                            obj_uuid, prop, blender_action.name, slot.slot.handle, True, get_gltf_interpolation("LINEAR"), export_settings)
+                            obj_uuid, prop, blender_action.name, slot.slot.identifier, True, get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings), export_settings)
                     elif type_ == "SK":
-                        channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, slot.slot.handle, export_settings)
+                        channel = gather_sampled_sk_channel(obj_uuid, blender_action.name, slot.slot.identifier, export_settings)
                     elif type_ == "EXTRA":  # TODOSLOT slot-3
                         channel = None
                     else:
@@ -615,7 +662,7 @@ def gather_action_animations(obj_uuid: int,
                     all_channels)
 
             # If we are in a SK animation (without any TRS animation), and we need to bake
-            if len([a for a in blender_actions.values() if len([s for s in a.slots if s.id_root == "OBJECT"]) != 0]) == 0 and slot.id_root == "KEY":
+            if len([a for a in blender_actions.values() if len([s for s in a.slots if s.target_id_type == "OBJECT"]) != 0]) == 0 and slot.target_id_type == "KEY":
                 if export_settings['gltf_bake_animation'] is True and export_settings['gltf_force_sampling'] is True:
                     # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
                     # (skinned meshes TRS must be ignored, says glTF specification)
@@ -628,7 +675,7 @@ def gather_action_animations(obj_uuid: int,
                         if channels is not None:
                             all_channels.extend(channels)
 
-            if len([a for a in blender_actions.values() if len([s for s in a.slots if s.id_root == "KEY"]) != 0]) == 0 \
+            if len([a for a in blender_actions.values() if len([s for s in a.slots if s.target_id_type == "KEY"]) != 0]) == 0 \
                     and export_settings['gltf_morph_anim'] \
                     and blender_object.type == "MESH" \
                     and blender_object.data is not None \
@@ -661,6 +708,14 @@ def gather_action_animations(obj_uuid: int,
                 extensions=None
             )
 
+            # Hook for user extensions
+            export_user_extensions(
+                'animation_action_hook',
+                export_settings,
+                animation,
+                blender_object,
+                action_data)
+
             link_samplers(animation, export_settings)
             animations.append(animation)
 
@@ -673,9 +728,9 @@ def gather_action_animations(obj_uuid: int,
                             tracks[track_name] = []
                         tracks[track_name].append(offset + len(animations) - 1)  # Store index of animation in animations
             elif export_settings['gltf_merge_animation'] == "ACTION":
-                if blender_action.name not in tracks.keys():
-                    tracks[blender_action.name] = []
-                tracks[blender_action.name].append(offset + len(animations) - 1)
+                if action_data.name not in tracks.keys():
+                    tracks[action_data.name] = []
+                tracks[action_data.name].append(offset + len(animations) - 1)
             elif export_settings['gltf_merge_animation'] == "NONE":
                 pass  # Nothing to store, we are not going to merge animations
             else:
@@ -769,7 +824,7 @@ def __get_blender_actions(obj_uuid: str,
             else:
                 # Store Action info
                 new_action = ActionData(blender_object.animation_data.action)
-                new_action.add_slot(blender_object.animation_data.action_slot, blender_object.animation_data.action_slot.id_root, None)  # Active action => No track
+                new_action.add_slot(blender_object.animation_data.action_slot, blender_object.animation_data.action_slot.target_id_type, None)  # Active action => No track
                 actions.add_action(new_action)
 
         # Collect associated strips from NLA tracks.
@@ -795,8 +850,15 @@ def __get_blender_actions(obj_uuid: str,
 
                     # Store Action info
                     new_action = ActionData(strip.action)
-                    new_action.add_slot(strip.action_slot, strip.action_slot.id_root, track.name)
-                    actions.add_action(new_action)
+                    new_action.add_slot(strip.action_slot, strip.action_slot.target_id_type, track.name)
+                    # If we already have a data for this action (so active or another NLA track on same target_id_type)
+                    # We force creation of another animation
+                    # Instead of adding a new slot to the existing action
+                    if actions.exists_action_slot_target(strip.action, strip.action_slot):
+                        new_action.force_name(strip.action.name + "-" + strip.action_slot.name_display)
+                        actions.add_action(new_action, force_new_action=True)
+                    else:
+                        actions.add_action(new_action)
 
     # For caching, actions linked to SK must be after actions about TRS
     if export_settings['gltf_morph_anim'] and blender_object and blender_object.type == "MESH" \
@@ -804,7 +866,7 @@ def __get_blender_actions(obj_uuid: str,
             and blender_object.data.shape_keys is not None \
             and blender_object.data.shape_keys.animation_data is not None:
 
-        if blender_object.data.shape_keys.animation_data.action is not None:
+        if blender_object.data.shape_keys.animation_data.action is not None and blender_object.data.shape_keys.animation_data.action_slot is not None:
 
             # Check the action is not in list of actions to ignore
             if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(blender_object.data.shape_keys.animation_data.action) in [
@@ -813,7 +875,7 @@ def __get_blender_actions(obj_uuid: str,
             else:
                 # Store Action info
                 new_action = ActionData(blender_object.data.shape_keys.animation_data.action)
-                new_action.add_slot(blender_object.data.shape_keys.animation_data.action_slot, blender_object.data.shape_keys.animation_data.action_slot.id_root, None)
+                new_action.add_slot(blender_object.data.shape_keys.animation_data.action_slot, blender_object.data.shape_keys.animation_data.action_slot.target_id_type, None)
                 actions.add_action(new_action)
 
         if export_settings['gltf_animation_mode'] == "ACTIONS":
@@ -831,8 +893,15 @@ def __get_blender_actions(obj_uuid: str,
 
                     # Store Action info
                     new_action = ActionData(strip.action)
-                    new_action.add_slot(strip.action_slot, strip.action_slot.id_root, track.name)
-                    actions.add_action(new_action)
+                    new_action.add_slot(strip.action_slot, strip.action_slot.target_id_type, track.name)
+                    # If we already have a data for this action (so active or another NLA track on same target_id_type)
+                    # We force creation of another animation
+                    # Instead of adding a new slot to the existing action
+                    if actions.exists_action_slot_target(strip.action, strip.action_slot):
+                        new_action.force_name(strip.action.name + "-" + strip.action_slot.name_display)
+                        actions.add_action(new_action, force_new_action=True)
+                    else:
+                        actions.add_action(new_action)
 
     # If there are only 1 armature, include all animations, even if not in NLA
     # But only if armature has already some animation_data
@@ -842,7 +911,18 @@ def __get_blender_actions(obj_uuid: str,
             if len(export_settings['vtree'].get_all_node_of_type(VExportNode.ARMATURE)) == 1:
                 # Keep all actions on objects (no Shapekey animation)
                 for act in bpy.data.actions:
-                    for slot in [s for s in act.slots if s.id_root == "OBJECT"]:
+                    already_added_action = False
+
+                    # For the assigned action, we aleady have the slot
+                    if act == blender_object.animation_data.action:
+                        continue
+
+                    # If we already have this action, we skip it
+                    # (We got it from NLA)
+                    if actions.exists_action(act):
+                        continue
+
+                    for slot in [s for s in act.slots if s.target_id_type == "OBJECT"]:
                         # We need to check this is an armature action
                         # Checking that at least 1 bone is animated
                         if not __is_armature_slot(act, slot):
@@ -856,9 +936,21 @@ def __get_blender_actions(obj_uuid: str,
                                                                                              for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
                             continue  # We ignore this action
 
+                        if already_added_action is True:
+                            # We already added an action for this object
+                            # So forcing creation of another animation
+                            # Instead of adding a new slot to the existing action
+                            new_action = ActionData(act)
+                            new_action.add_slot(slot, slot.target_id_type, None)
+                            # Force new name to avoid merging later
+                            new_action.force_name(act.name + "-" + slot.name_display)
+                            actions.add_action(new_action, force_new_action=True)
+                            continue
+
                         new_action = ActionData(act)
-                        new_action.add_slot(slot, slot.id_root, None)
+                        new_action.add_slot(slot, slot.target_id_type, None)
                         actions.add_action(new_action)
+                        already_added_action = True
 
     export_user_extensions('gather_actions_hook', export_settings, blender_object, actions)
 
@@ -905,20 +997,50 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
 
         new_action = ActionData(blender_action)
 
+        already_added_object_slot = False
+        already_added_sk_slot = False
         for slot in blender_action.slots:
 
-            if slot.id_root == "OBJECT":
+            if slot.target_id_type == "OBJECT":
 
                 # Do not export actions on objects without animation data
                 if blender_object.animation_data is None:
                     continue
 
                 if blender_object and blender_object.type == "ARMATURE" and __is_armature_slot(blender_action, slot):
-                    new_action.add_slot(slot, slot.id_root, None)
-                elif blender_object and blender_object.type == "MESH" and not __is_armature_slot(blender_action, slot):
-                    new_action.add_slot(slot, slot.id_root, None)
 
-            elif slot.id_root == "KEY":
+                    if already_added_object_slot is True:
+                        # We already added an action for this object
+                        # So forcing creation of another animation
+                        # Instead of adding a new slot to the existing action
+                        new_action_forced = ActionData(blender_action)
+                        new_action_forced.add_slot(slot, slot.target_id_type, None)
+                        # Force new name to avoid merging later
+                        new_action_forced.force_name(blender_action.name + "-" + slot.name_display)
+                        blender_actions.add_action(new_action_forced, force_new_action=True)
+                        continue
+
+                    new_action.add_slot(slot, slot.target_id_type, None)
+                    blender_actions.add_action(new_action)
+                    already_added_object_slot = True
+                elif blender_object and blender_object.type == "MESH" and not __is_armature_slot(blender_action, slot):
+
+                    if already_added_object_slot is True:
+                        # We already added an action for this object
+                        # So forcing creation of another animation
+                        # Instead of adding a new slot to the existing action
+                        new_action_forced = ActionData(blender_action)
+                        new_action_forced.add_slot(slot, slot.target_id_type, None)
+                        # Force new name to avoid merging later
+                        new_action_forced.force_name(blender_action.name + "-" + slot.name_display)
+                        blender_actions.add_action(new_action_forced, force_new_action=True)
+                        continue
+
+                    new_action.add_slot(slot, slot.target_id_type, None)
+                    blender_actions.add_action(new_action)
+                    already_added_object_slot = True
+
+            elif slot.target_id_type == "KEY":
                 if blender_object.type != "MESH" or blender_object.data is None or blender_object.data.shape_keys is None or blender_object.data.shape_keys.animation_data is None:
                     continue
                 # Checking that the object has some SK and some animation on it
@@ -926,13 +1048,24 @@ def __get_blender_actions_broadcast(obj_uuid, export_settings):
                     continue
                 if blender_object.type != "MESH":
                     continue
-                new_action.add_slot(slot, slot.id_root, None)
+
+                if already_added_sk_slot is True:
+                    # We already added an action for this object
+                    # So forcing creation of another animation
+                    # Instead of adding a new slot to the existing action
+                    new_action_forced = ActionData(blender_action)
+                    new_action_forced.add_slot(slot, slot.target_id_type, None)
+                    # Force new name to avoid merging later
+                    new_action_forced.force_name(blender_action.name + "-" + slot.name_display)
+                    blender_actions.add_action(new_action_forced, force_new_action=True)
+                    continue
+
+                new_action.add_slot(slot, slot.target_id_type, None)
+                blender_actions.add_action(new_action)
+                already_added_sk_slot = True
 
             else:
                 pass  # TODOSLOT slot-3
-
-        if new_action.has_slots():
-            blender_actions.add_action(new_action)
 
         export_user_extensions('gather_actions_hook', export_settings, blender_object, blender_actions)
 

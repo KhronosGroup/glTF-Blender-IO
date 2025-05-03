@@ -2218,6 +2218,94 @@ describe('Exporter', function () {
                 }
             });
 
+            it('exports vertex color - Name', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_name.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_1_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "no_mat_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_1_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_wo_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_no_vc")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_act")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_1_vc_named")[0].mesh].primitives[0];
+                assert.ok(!("COLOR_0" in primitive.attributes));
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act1")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named0_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+
+                primitive = asset.meshes[asset.nodes.filter(a => a.name == "mat_vc_2_vc_named1_act0")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 1.0]);
+            });
+
             it('exports vertex color - Active - Not all - export without mat', function () {
                 let gltfPath = path.resolve(outDirPath, '24_vertex_color_and_factor_active_not_all.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath));
@@ -3134,6 +3222,19 @@ describe('Exporter', function () {
 
             });
 
+            it('export vertex color for unlit materials', function () {
+                let gltfPath = path.resolve(outDirPath, '24_vertex_colors.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                let primitive = asset.meshes[asset.nodes.filter(a => a.name == "Unlit")[0].mesh].primitives[0];
+                assert.ok("COLOR_0" in primitive.attributes);
+                colors = getAccessorData(gltfPath, asset, primitive.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 0.534, 0.0]);
+                assert.ok(!("COLOR_1" in primitive.attributes));
+            });
+
             it('exports broadcast actions', function () {
 
                 let gltfPath = path.resolve(outDirPath, '35_broadcast_slots.gltf');
@@ -3165,6 +3266,35 @@ describe('Exporter', function () {
 
                 const suzanneAnimations = asset.animations.filter(animation => animation.channels[0].target.node === suzanne);
                 assert.strictEqual(suzanneAnimations.length, 3);
+
+            });
+
+            it('exports Viewport Material', function () {
+                let gltfPath = path.resolve(outDirPath, '36_viewport_material_export.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.materials.length, 1);
+                const mat = asset.materials[0];
+                const pbr = mat.pbrMetallicRoughness;
+
+                assert.equalEpsilonArray(pbr.baseColorFactor, [0.0, 0.0, 0.8, 0.7]);
+                assert.equalEpsilon(pbr.metallicFactor, 0.1);
+                assert.equalEpsilon(pbr.roughnessFactor, 0.9);
+
+            });
+
+            it('exports base color factors', function () {
+
+                let gltfPath = path.resolve(outDirPath, '01_base_color.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat1 = asset.materials.filter(m => m.name === 'Material')[0];
+                const mat2 = asset.materials.filter(m => m.name === 'Material.001')[0];
+                const mat3 = asset.materials.filter(m => m.name === 'Material.002')[0];
+
+                assert.equalEpsilonArray(mat1.pbrMetallicRoughness.baseColorFactor, [0.1, 0.2, 0.3, 1.0]);
+                assert.equalEpsilonArray(mat2.pbrMetallicRoughness.baseColorFactor, [0.2, 0.3, 0.4, 1.0]);
+                assert.equalEpsilonArray(mat3.pbrMetallicRoughness.baseColorFactor, [0.7, 0.8, 0.9, 1.0]);
 
             });
 
