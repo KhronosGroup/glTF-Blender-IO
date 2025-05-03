@@ -1177,8 +1177,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         else:
             export_settings['gltf_vertex_color_name'] = ""
 
-        export_settings['gltf_unused_textures'] = self.export_unused_textures
-        export_settings['gltf_unused_images'] = self.export_unused_images
+        if self.export_materials == "EXPORT":
+            export_settings['gltf_unused_textures'] = self.export_unused_textures
+            export_settings['gltf_unused_images'] = self.export_unused_images
+        else:
+            export_settings['gltf_unused_textures'] = False
+            export_settings['gltf_unused_images'] = False
 
         export_settings['gltf_visible'] = self.use_visible
         export_settings['gltf_renderable'] = self.use_renderable
@@ -1550,7 +1554,9 @@ def export_panel_data_material(layout, operator):
 
         header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
         header.label(text="Unused Textures & Images")
+        header.active = operator.export_materials == "EXPORT"
         if sub_body:
+            sub_body.active = operator.export_materials == "EXPORT"
             row = sub_body.row()
             row.prop(operator, 'export_unused_images')
             row = sub_body.row()
