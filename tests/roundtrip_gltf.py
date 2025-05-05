@@ -28,7 +28,11 @@ try:
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
 
-    bpy.ops.import_scene.gltf(filepath=argv[0])
+    import_merge_material_slots=True
+    if '--import-not-merge' in argv:
+        import_merge_material_slots=False
+
+    bpy.ops.import_scene.gltf(filepath=argv[0], import_merge_material_slots=import_merge_material_slots)
 
     bpy.context.scene.frame_start = 0
 
