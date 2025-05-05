@@ -130,7 +130,8 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
         export_settings['current_paths']["energy"] = path_
 
     if export_settings['gltf_lighting_mode'] == 'RAW':
-        return emission_strength
+        # TODO: Detect exposure animation and add it to the path, for KRH_animation_pointer
+        return emission_strength * 2 ** blender_lamp.exposure
     else:
         # Assume at this point the computed strength is still in the appropriate
         # watt-related SI unit, which if everything up to here was done with
@@ -148,7 +149,8 @@ def __gather_intensity(blender_lamp, export_settings) -> Optional[float]:
             pass  # Just so we have an exhaustive tree to catch bugged values.
         else:
             raise ValueError(export_settings['gltf_lighting_mode'])
-        return emission_luminous
+        # TODO: Detect exposure animation and add it to the path, for KRH_animation_pointer
+        return emission_luminous * 2 ** blender_lamp.exposure
 
 
 def __gather_spot(blender_lamp, export_settings) -> Optional[gltf2_io_lights_punctual.LightSpot]:
