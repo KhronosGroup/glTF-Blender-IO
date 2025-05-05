@@ -1966,6 +1966,12 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=True,
     )
 
+    import_merge_material_slots: BoolProperty(
+        name='Merge Material Slot when possible',
+        description='Merge material slots when possible',
+        default=True,
+    )
+
     def draw(self, context):
         operator = self
         layout = self.layout
@@ -2071,6 +2077,7 @@ def import_mesh_panel(layout, operator):
     header.label(text="Mesh")
     if body:
         body.prop(operator, 'merge_vertices')
+        body.prop(operator, 'import_merge_material_slots')
 
 def import_bone_panel(layout, operator):
     header, body = layout.panel("GLTF_import_bone", default_closed=False)
