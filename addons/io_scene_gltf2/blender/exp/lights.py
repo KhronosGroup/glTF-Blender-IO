@@ -75,16 +75,14 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
     export_settings['current_paths']['color'] = path_
 
     color = blender_lamp.color
-    temperature = blender_lamp.temperature
 
-    if blender_lamp.color_mode == "COLOR":
-        return list(color)
-    elif blender_lamp.color_mode == "TEMPERATURE":
-        # TODO, check if we need to clamp
-        return list(temperature)
-    else:
-        # TODO, check if we need to clamp
-        return list(color * temperature)
+   if blender_lamp.use_temperature:
+        temperature_color = blender_lamp.temperature_color
+        color[0] *= temperature_color
+        color[1] *= temperature_color
+        color[2] *= temperature_color
+
+    return list(color)
 
     # TODO, check if temperature is animated, for KHR_animation_pointer
 
