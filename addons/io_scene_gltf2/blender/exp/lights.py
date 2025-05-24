@@ -76,7 +76,7 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
 
     color = blender_lamp.color
 
-   if blender_lamp.use_temperature:
+    if blender_lamp.use_temperature:
         temperature_color = blender_lamp.temperature_color
         color[0] *= temperature_color
         color[1] *= temperature_color
