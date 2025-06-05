@@ -18,7 +18,7 @@ Notes:
 * 4.5 is the next stable release. Check the `blender-v4.5-release` branch
 * 2.80 - 4.3 are previous stable releases.
 * 4.2.x is the current Blender LTS release. Check the `blender-v4.2-release` branch (and `4.2.x` tag)
-* main branch of this addon is mirrored in [Blender main](https://projects.blender.org/blender/blender/src/branch/main/scripts/addons_core/io_scene_gltf2), that will become Blender 4.5.
+* main branch of this addon is mirrored in [Blender main](https://projects.blender.org/blender/blender/src/branch/main/scripts/addons_core/io_scene_gltf2), that will become Blender 5.0.
 
 ### Legacy 2.79 Support
 
