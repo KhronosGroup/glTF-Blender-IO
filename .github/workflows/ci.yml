@@ -10,8 +10,8 @@ on:
 
 env:
   CI: true
-  BLENDER_MAJOR: 4
-  BLENDER_MINOR: 5
+  BLENDER_MAJOR: 5
+  BLENDER_MINOR: 0
 
 jobs:
   build:
