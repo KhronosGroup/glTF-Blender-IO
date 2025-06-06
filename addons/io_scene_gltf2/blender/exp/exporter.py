@@ -338,6 +338,8 @@ class GlTF2Exporter:
                     new_animation_list.append(animation)
             self.__gltf.animations = new_animation_list
 
+            # TODO: we need to slide animation target (and target of KHR_animation_pointer) to the new index
+
             # TODO: remove unused animation accessors?
 
             # And now really remove nodes
