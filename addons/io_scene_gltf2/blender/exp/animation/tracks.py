@@ -407,8 +407,6 @@ def __get_nla_tracks_sk(obj_uuid: str, export_settings):
     if len(obj.data.shape_keys.animation_data.nla_tracks) == 0:
         return TracksData()
 
-    exported_tracks = []
-
     current_exported_tracks = []
 
     tracks_data = TracksData()
@@ -432,31 +430,31 @@ def __get_nla_tracks_sk(obj_uuid: str, export_settings):
         else:
             # The previous one(s) can go to the list, if any (not for first track)
             if len(current_exported_tracks) != 0:
-                exported_tracks.append(current_exported_tracks)
-                current_exported_tracks = []
 
                 # Store data
                 track_data = TrackData(
                     current_exported_tracks,
-                    obj.data.shape_keys.animation_data.nla_tracks[exported_tracks[-1][0].idx].name,
+                    obj.data.shape_keys.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
                     "KEY"
                 )
+                current_exported_tracks = []
 
                 tracks_data.add(track_data)
 
         # Start a new stack
         current_exported_tracks.append(stored_track)
 
-    # End of loop. Keep the last one(s)
-    exported_tracks.append(current_exported_tracks)
-    # Store data for the last one
-    track_data = TrackData(
-        current_exported_tracks,
-        obj.data.shape_keys.animation_data.nla_tracks[exported_tracks[-1][0].idx].name,
-        "KEY"
-    )
+    # End of loop. Keep the last one(s), if any
+    if len(current_exported_tracks) != 0:
 
-    tracks_data.add(track_data)
+        # Store data for the last one
+        track_data = TrackData(
+            current_exported_tracks,
+            obj.data.shape_keys.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
+            "KEY"
+        )
+
+        tracks_data.add(track_data)
 
     return tracks_data
 
@@ -734,8 +732,6 @@ def __get_nla_tracks_data(blender_type_data, blender_id, export_settings):
     if len(blender_data_object.animation_data.nla_tracks) == 0:
         return TracksData()
 
-    exported_tracks = []
-
     current_exported_tracks = []
 
     tracks_data = TracksData()
@@ -759,32 +755,32 @@ def __get_nla_tracks_data(blender_type_data, blender_id, export_settings):
         else:
             # The previous one(s) can go to the list, if any (not for first track)
             if len(current_exported_tracks) != 0:
-                exported_tracks.append(current_exported_tracks)
-                current_exported_tracks = []
 
                 # Store data
                 track_data = TrackData(
                     current_exported_tracks,
-                    blender_data_object.animation_data.nla_tracks[exported_tracks[-1][0].idx].name,
+                    blender_data_object.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
                     on_type
                 )
+                current_exported_tracks = []
 
                 tracks_data.add(track_data)
 
         # Start a new stack
         current_exported_tracks.append(stored_track)
 
-    # End of loop. Keep the last one(s)
-    exported_tracks.append(current_exported_tracks)
+    # End of loop. Keep the last one(s), if any
+    # End of loop. Keep the last one(s), if any
+    if len(current_exported_tracks) != 0:
 
-    # Store data for the last one
-    track_data = TrackData(
-        current_exported_tracks,
-        blender_data_object.animation_data.nla_tracks[exported_tracks[-1][0].idx].name,
-        on_type
-    )
+        # Store data for the last one
+        track_data = TrackData(
+            current_exported_tracks,
+            blender_data_object.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
+            on_type
+        )
 
-    tracks_data.add(track_data)
+        tracks_data.add(track_data)
 
     return tracks_data
 
@@ -805,8 +801,6 @@ def __get_nla_tracks_material_node_tree(blender_type_data, blender_id, export_se
         return TracksData()
     if len(blender_object_data.node_tree.animation_data.nla_tracks) == 0:
         return TracksData()
-
-    exported_tracks = []
 
     current_exported_tracks = []
 
@@ -831,31 +825,32 @@ def __get_nla_tracks_material_node_tree(blender_type_data, blender_id, export_se
         else:
             # The previous one(s) can go to the list, if any (not for first track)
             if len(current_exported_tracks) != 0:
-                exported_tracks.append(current_exported_tracks)
-                current_exported_tracks = []
 
                 # Store data
                 track_data = TrackData(
                     current_exported_tracks,
-                    blender_object_data.node_tree.animation_data.nla_tracks[exported_tracks[-1][0].idx].name,
+                    blender_object_data.node_tree.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
                     on_type
                 )
+                current_exported_tracks = []
 
                 tracks_data.add(track_data)
 
         # Start a new stack
         current_exported_tracks.append(stored_track)
 
-    # End of loop. Keep the last one(s)
-    exported_tracks.append(current_exported_tracks)
+    # End of loop. Keep the last one(s), if any
 
-    # Store data for the last one
-    track_data = TrackData(
-        current_exported_tracks,
-        blender_object_data.node_tree.animation_data.nla_tracks[exported_tracks[-1][0].idx].name,
-        on_type
-    )
+    # End of loop. Keep the last one(s), if any
+    if len(current_exported_tracks) != 0:
 
-    tracks_data.add(track_data)
+        # Store data for the last one
+        track_data = TrackData(
+            current_exported_tracks,
+            blender_object_data.node_tree.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
+            on_type
+        )
+
+        tracks_data.add(track_data)
 
     return tracks_data
