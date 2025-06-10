@@ -253,7 +253,7 @@ def manage_gpu_instancing(gltf, vnode, i, ext, mesh_id):
         inst_vnode.children = []
         inst_vnode.base_trs = get_inst_trs(gltf, trans_list[inst], rot_list[inst], scale_list[inst])
         inst_vnode.mesh_idx = mesh_id
-        inst_vnode.scenes = vnode.scenes
+        # Do not set scenes here, this will be handle later by recursive add_nodes_to_scene
 
         vnode.children.append(inst_id)
 
