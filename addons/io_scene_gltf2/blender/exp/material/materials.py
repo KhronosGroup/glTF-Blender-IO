@@ -218,10 +218,12 @@ def __gather_alpha_cutoff(alpha_info, export_settings):
     if alpha_info['alphaMode'] == 'MASK':
         cutoff = alpha_info['alphaCutoff']
 
-        path_ = {}
-        path_['length'] = 1
-        path_['path'] = "/materials/XXX/alphaCutoff"
-        export_settings['current_paths']['alpha_threshold'] = path_
+        if alpha_info['alphaCutoffPath'] is not None:
+            # This can be None, because cutoff can be set using Round, that can not be animated
+            path_ = {}
+            path_['length'] = 1
+            path_['path'] = "/materials/XXX/alphaCutoff"
+            export_settings['current_paths'][alpha_info['alphaCutoffPath']] = path_
 
         return None if cutoff == 0.5 else cutoff
     return None
