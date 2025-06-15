@@ -515,11 +515,11 @@ def gather_alpha_info(alpha_nav):
         return info
 
     # Check for alpha clipping
-    cutoff = detect_alpha_clip(alpha_nav)
+    cutoff, cutoff_path = detect_alpha_clip(alpha_nav)
     if cutoff is not None:
         info['alphaMode'] = 'MASK'
         info['alphaCutoff'] = cutoff
-        # TODOALPHAPOINTER: why is alphaCutoffPath not set here?
+        info['alphaCutoffPath'] = cutoff_path
 
     # Reads the factor and color attribute by checking for variations on
     # -> [Multiply by Factor] -> [Multiply by Color Attrib Alpha] ->
@@ -584,13 +584,13 @@ def gather_alpha_info(alpha_nav):
 def detect_alpha_clip(alpha_nav):
     nav = alpha_nav.peek_back()
     if not nav.moved:
-        return None
+        return None, None
 
     # Detect [Math:Round]
     if nav.node.type == 'MATH' and nav.node.operation == 'ROUND':
         nav.select_input_socket(0)
         alpha_nav.assign(nav)
-        return 0.5
+        return 0.5, None # Round => can't be animated, so no path
 
     # Detect 1 - (X < cutoff)
     # (There is no >= node)
@@ -598,18 +598,18 @@ def detect_alpha_clip(alpha_nav):
         if nav.get_constant(0)[0] == 1.0:
             nav2 = nav.peek_back(1)
             if nav2.moved and nav2.node.type == 'MATH':
-                in0 = nav2.get_constant(0)[0]
-                in1 = nav2.get_constant(1)[0]
+                in0, in_path0 = nav2.get_constant(0)
+                in1, in_path1 = nav2.get_constant(1)
                 # X < cutoff
                 if nav2.node.operation == 'LESS_THAN' and in0 is None and in1 is not None:
                     nav2.select_input_socket(0)
                     alpha_nav.assign(nav2)
-                    return in1
+                    return in1, in_path1
                 # cutoff > X
                 elif nav2.node.operation == 'GREATER_THAN' and in0 is not None and in1 is None:
                     nav2.select_input_socket(1)
                     alpha_nav.assign(nav2)
-                    return in0
+                    return in0, in_path0
 
     # Detect (X > cutoff)
     # Wrong when X = cutoff, but backwards compatible with legacy
