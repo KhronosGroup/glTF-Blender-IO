@@ -223,7 +223,7 @@ class BlenderPointerAnim():
                     num_components = 3
             elif pointer_tab[3] == "alphaCutoff":
                 # Retrieve the alpha cutoff socket from the material node tree
-                alpha_socket = get_socket(asset.blender_nodetree, "Alpha")
+                alpha_socket = get_socket(asset.blender_nodetree, True, "Alpha")
                 if alpha_socket.socket.is_linked:
                     # We need to find the correct node value to animate (An Alpha Cutoff node)
                     substract_node = alpha_socket.socket.links[0].from_node
