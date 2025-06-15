@@ -69,10 +69,9 @@ def gather_material(blender_material, export_settings):
         return None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None,
                                                  'color_type': None, 'alpha_type': None, 'alpha_mode': "OPAQUE"}, "udim_info": {}}
 
-
     if export_settings['gltf_materials'] == "VIEWPORT":
         return export_viewport_material(blender_material, export_settings), {"uv_info": {}, "vc_info": {'color': None, 'alpha': None,
-                                                 'color_type': None, 'alpha_type': None, 'alpha_mode': "OPAQUE"}, "udim_info": {}}
+                                                                                                        'color_type': None, 'alpha_type': None, 'alpha_mode': "OPAQUE"}, "udim_info": {}}
 
     nodes_used = export_settings['nodes_used'] = {}
 
@@ -94,20 +93,13 @@ def gather_material(blender_material, export_settings):
     normal_texture, uvmap_info_normal, udim_info_normal = __gather_normal_texture(blender_material, export_settings)
     occlusion_texture, uvmap_info_occlusion, udim_occlusion = __gather_occlusion_texture(
         blender_material, orm_texture, export_settings)
-    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info, udim_info_prb_mr, alpha_info, alpha_info = __gather_pbr_metallic_roughness(
+    pbr_metallic_roughness, uvmap_info_pbr_metallic_roughness, vc_info, udim_info_prb_mr, alpha_info = __gather_pbr_metallic_roughness(
         blender_material, orm_texture, export_settings)
 
     if any([i > 1.0 for i in emissive_factor or []]) is True:
         # Strength is set on extension
         emission_strength = max(emissive_factor)
         emissive_factor = [f / emission_strength for f in emissive_factor]
-
-    #TODOALPHAPOINTER: why call this again? This is already done in gather_material_pbr_metallic_roughness
-    alpha_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, "Alpha")
-    if isinstance(alpha_socket.socket, bpy.types.NodeSocket):
-        alpha_info = gather_alpha_info(alpha_socket.to_node_nav())
-    else:
-        alpha_info = gather_alpha_info(None)
 
     material = gltf2_io.Material(
         alpha_cutoff=__gather_alpha_cutoff(alpha_info, export_settings),
