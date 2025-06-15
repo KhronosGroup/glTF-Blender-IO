@@ -511,6 +511,7 @@ def gather_alpha_info(alpha_nav):
     c, alpha_path = alpha_nav.get_constant()
     if c == 1:
         info['alphaMode'] = 'OPAQUE'
+        info['alphaPath'] = alpha_path # Maybe the alpha is animated, this will be managed later
         return info
 
     # Check for alpha clipping
@@ -518,6 +519,7 @@ def gather_alpha_info(alpha_nav):
     if cutoff is not None:
         info['alphaMode'] = 'MASK'
         info['alphaCutoff'] = cutoff
+        # TODOALPHAPOINTER: why is alphaCutoffPath not set here?
 
     # Reads the factor and color attribute by checking for variations on
     # -> [Multiply by Factor] -> [Multiply by Color Attrib Alpha] ->
@@ -559,6 +561,9 @@ def gather_alpha_info(alpha_nav):
         if info['alphaFactor'] == 0:
             info['alphaMode'] = 'MASK'
             info['alphaCutoff'] = 0.5
+            # In case alpha is animated, and started with zero, we need to overwrite it later...
+        elif info['alphaFactor'] == 1.0:
+            info['alphaMode'] = 'OPAQUE'
         else:
             info['alphaMode'] = 'BLEND'
 

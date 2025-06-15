@@ -110,6 +110,7 @@ def gather_material(blender_material, export_settings):
         emission_strength = max(emissive_factor)
         emissive_factor = [f / emission_strength for f in emissive_factor]
 
+    #TODOALPHAPOINTER: why call this again? This is already done in gather_material_pbr_metallic_roughness
     alpha_socket = get_socket(blender_material.node_tree, blender_material.use_nodes, "Alpha")
     if isinstance(alpha_socket.socket, bpy.types.NodeSocket):
         alpha_info = gather_alpha_info(alpha_socket.to_node_nav())
