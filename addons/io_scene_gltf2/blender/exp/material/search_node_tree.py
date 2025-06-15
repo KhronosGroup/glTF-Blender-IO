@@ -519,7 +519,6 @@ def gather_alpha_info(alpha_nav):
     if cutoff is not None:
         info['alphaMode'] = 'MASK'
         info['alphaCutoff'] = cutoff
-        info['alphaCutoffPath'] = cutoff_path
 
     # Reads the factor and color attribute by checking for variations on
     # -> [Multiply by Factor] -> [Multiply by Color Attrib Alpha] ->
