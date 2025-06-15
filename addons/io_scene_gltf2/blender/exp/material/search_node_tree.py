@@ -499,6 +499,7 @@ def gather_alpha_info(alpha_nav):
     info = {
         'alphaMode': None,
         'alphaCutoff': None,
+        'alphaCutoffPath': None,
         'alphaFactor': None,
         'alphaColorAttrib': None,
         'alphaColorAttribType': None,
@@ -615,18 +616,18 @@ def detect_alpha_clip(alpha_nav):
     # Wrong when X = cutoff, but backwards compatible with legacy
     # Alpha Clip setup
     if nav.node.type == 'MATH':
-        in0 = nav.get_constant(0)[0]
-        in1 = nav.get_constant(1)[0]
+        in0, in_path0 = nav.get_constant(0)
+        in1, in_path1 = nav.get_constant(1)
         if nav.node.operation == 'GREATER_THAN' and in1 is not None:
             nav.select_input_socket(0)
             alpha_nav.assign(nav)
-            return in1
+            return in1, in_path1
         elif nav.node.operation == 'LESS_THAN' and in0 is not None:
             nav.select_input_socket(1)
             alpha_nav.assign(nav)
-            return in0
+            return in0, in_path0
 
-    return None
+    return None, None
 
 
 # When nav connects to a multiply node (A*B), returns NodeNavs that
