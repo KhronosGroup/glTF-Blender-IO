@@ -222,21 +222,9 @@ class BlenderPointerAnim():
                     blender_path = emissive_socket.socket.path_from_id() + ".default_value"
                     num_components = 3
             elif pointer_tab[3] == "alphaCutoff":
-                # Retrieve the alpha cutoff socket from the material node tree
-                alpha_socket = get_socket(asset.blender_nodetree, "Alpha")
-                if alpha_socket.socket.is_linked:
-                    # We need to find the correct node value to animate (An Alpha Cutoff node)
-                    substract_node = alpha_socket.socket.links[0].from_node
-                    if substract_node.type == "MATH":
-                        less_node = substract_node.inputs[1].links[0].from_node
-                        if less_node.type == "MATH":
-                            blender_path = less_node.inputs[1].path_from_id() + ".default_value"
-                            group_name = 'Material'
-                            num_components = 1
-                        else:
-                            print("Error, something is wrong, we didn't detect clipping because of Pointers")
-                    else:
-                        print("Error, something is wrong, we didn't detect alpha clipping because of Pointers")
+                blender_path = "alpha_threshold"
+                group_name = 'Material'
+                num_components = 1
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "normalTexture" and \
