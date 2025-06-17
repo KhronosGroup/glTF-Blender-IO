@@ -1972,6 +1972,12 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=True,
     )
 
+    import_merge_material_slots: BoolProperty(
+        name='Merge Material Slot when possible',
+        description='Merge material slots when possible',
+        default=True,
+    )
+
     def draw(self, context):
         operator = self
         layout = self.layout
@@ -1979,9 +1985,9 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
-        layout.prop(self, 'merge_vertices')
         layout.prop(self, 'import_shading')
         layout.prop(self, 'export_import_convert_lighting_mode')
+        import_mesh_panel(layout, operator)
         import_texture_panel(layout, operator)
         import_bone_panel(layout, operator)
         import_ux_panel(layout, operator)
@@ -2071,6 +2077,13 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
             self.report({'ERROR'}, e.args[0])
             return {'CANCELLED'}
 
+
+def import_mesh_panel(layout, operator):
+    header, body = layout.panel("GLTF_import_mesh", default_closed=False)
+    header.label(text="Mesh")
+    if body:
+        body.prop(operator, 'merge_vertices')
+        body.prop(operator, 'import_merge_material_slots')
 
 def import_bone_panel(layout, operator):
     header, body = layout.panel("GLTF_import_bone", default_closed=False)
