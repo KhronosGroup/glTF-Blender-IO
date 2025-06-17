@@ -2226,6 +2226,8 @@ def unregister():
     blender_ui.unregister()
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is True:
         blender_ui.variant_unregister()
+    if bpy.context.preferences.addons['io_scene_gltf2'].preferences.animation_ui is True:
+        blender_ui.anim_ui_unregister()
 
     for c in classes:
         bpy.utils.unregister_class(c)
