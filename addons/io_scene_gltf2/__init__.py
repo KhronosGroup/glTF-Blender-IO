@@ -1066,7 +1066,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             except (AttributeError, TypeError):
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
-                
+        
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
