@@ -137,9 +137,10 @@ def on_export_action_filter_changed(self, context):
                 item.action = action
 
     else:
-        bpy.data.scenes[0].gltf_action_filter.clear()
-        del bpy.types.Scene.gltf_action_filter
-        del bpy.types.Scene.gltf_action_filter_active
+        if hasattr(bpy.data.scenes[0], "gltf_action_filter"):
+            bpy.data.scenes[0].gltf_action_filter.clear()
+            del bpy.types.Scene.gltf_action_filter
+            del bpy.types.Scene.gltf_action_filter_active
 
 
 def get_format_items(scene, context):
@@ -1065,7 +1066,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             except (AttributeError, TypeError):
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
-
         return ExportHelper.invoke(self, context, event)
 
     def save_settings(self, context):
