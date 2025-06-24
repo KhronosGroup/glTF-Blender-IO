@@ -292,10 +292,11 @@ class GlTF2Exporter:
 
     def manage_gpu_instancing_nodes(self, export_settings):
         if export_settings['gltf_gpu_instances'] is True:
+
+            self.nodes_idx_to_remove = []
             for scene_num in range(len(self.__gltf.scenes)):
                 # Modify the scene data in case of EXT_mesh_gpu_instancing export
 
-                self.nodes_idx_to_remove = []
                 for node_idx in self.__gltf.scenes[scene_num].nodes:
                     node = self.__gltf.nodes[node_idx]
                     if node.mesh is None:
@@ -303,45 +304,49 @@ class GlTF2Exporter:
                     else:
                         self.manage_gpu_instancing(node, also_mesh=True)
 
-                # Slides other nodes index
-
+            if self.nodes_idx_to_remove:
                 self.nodes_idx_to_remove.sort()
-                for node_idx in self.__gltf.scenes[scene_num].nodes:
-                    self.recursive_slide_node_idx(node_idx)
 
-                new_node_list = []
-                for node_idx in self.__gltf.scenes[scene_num].nodes:
-                    len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
-                    new_node_list.append(node_idx - len_)
-                self.__gltf.scenes[scene_num].nodes = new_node_list
+                for scene_num, scene in enumerate(self.__gltf.scenes):
 
-                for skin in self.__gltf.skins:
-                    new_joint_list = []
-                    for node_idx in skin.joints:
+                    # Slides other nodes index
+                    for node_idx in scene.nodes:
+                        self.recursive_slide_node_idx(node_idx)
+
+                    new_node_list = []
+                    for node_idx in scene.nodes:
                         len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
-                        new_joint_list.append(node_idx - len_)
-                    skin.joints = new_joint_list
-                    if skin.skeleton is not None:
-                        len_ = len([i for i in self.nodes_idx_to_remove if i < skin.skeleton])
-                        skin.skeleton = skin.skeleton - len_
+                        new_node_list.append(node_idx - len_)
+                    scene.nodes = new_node_list
 
-            # Remove animation channels that was targeting a node that will be removed
-            new_animation_list = []
-            for animation in self.__gltf.animations:
-                new_channel_list = []
-                for channel in animation.channels:
-                    if channel.target.node not in self.nodes_idx_to_remove:
-                        new_channel_list.append(channel)
-                animation.channels = new_channel_list
-                if len(animation.channels) > 0:
-                    new_animation_list.append(animation)
-            self.__gltf.animations = new_animation_list
+                    for skin in self.__gltf.skins:
+                        new_joint_list = []
+                        for node_idx in skin.joints:
+                            len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
+                            new_joint_list.append(node_idx - len_)
+                        skin.joints = new_joint_list
+                        if skin.skeleton is not None:
+                            len_ = len([i for i in self.nodes_idx_to_remove if i < skin.skeleton])
+                            skin.skeleton = skin.skeleton - len_
 
-            # TODO: remove unused animation accessors?
+                # Remove animation channels that was targeting a node that will be removed
+                new_animation_list = []
+                for animation in self.__gltf.animations:
+                    new_channel_list = []
+                    for channel in animation.channels:
+                        if channel.target.node not in self.nodes_idx_to_remove:
+                            new_channel_list.append(channel)
+                    animation.channels = new_channel_list
+                    if len(animation.channels) > 0:
+                        new_animation_list.append(animation)
+                self.__gltf.animations = new_animation_list
 
-            # And now really remove nodes
-            self.__gltf.nodes = [node for idx, node in enumerate(
-                self.__gltf.nodes) if idx not in self.nodes_idx_to_remove]
+                # TODO: remove unused animation accessors?
+
+                to_remove = set(self.nodes_idx_to_remove)
+                # # And now really remove nodes
+                self.__gltf.nodes = [node for idx, node in enumerate(
+                    self.__gltf.nodes) if idx not in to_remove]
 
     def add_scene(self, scene: gltf2_io.Scene, active: bool = False, export_settings=None):
         """
