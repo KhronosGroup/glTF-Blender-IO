@@ -278,26 +278,23 @@ class GlTF2Exporter:
             self.__traverse(holder.extensions)
 
             # Remove children from original Empty
-            new_children = []
-            for child_idx in node.children:
-                if child_idx not in insts:
-                    new_children.append(child_idx)
-            node.children = new_children
+            insts_set = set(insts)
+            node.children = [child_idx for child_idx in node.children if child_idx not in insts_set]
 
             self.nodes_idx_to_remove.extend(insts)
 
         for child_idx in node.children:
-                child = self.__gltf.nodes[child_idx]
-                self.manage_gpu_instancing(child, also_mesh=child.mesh is not None)
+            child = self.__gltf.nodes[child_idx]
+            self.manage_gpu_instancing(child, also_mesh=child.mesh is not None)
 
     def manage_gpu_instancing_nodes(self, export_settings):
         if export_settings['gltf_gpu_instances'] is True:
 
             self.nodes_idx_to_remove = []
-            for scene_num in range(len(self.__gltf.scenes)):
+            for scene in self.__gltf.scenes:
                 # Modify the scene data in case of EXT_mesh_gpu_instancing export
 
-                for node_idx in self.__gltf.scenes[scene_num].nodes:
+                for node_idx in scene.nodes:
                     node = self.__gltf.nodes[node_idx]
                     if node.mesh is None:
                         self.manage_gpu_instancing(node)
@@ -306,35 +303,36 @@ class GlTF2Exporter:
 
             if self.nodes_idx_to_remove:
                 self.nodes_idx_to_remove.sort()
+                to_remove = set(self.nodes_idx_to_remove)
 
-                for scene_num, scene in enumerate(self.__gltf.scenes):
+                old_to_new = {}
+                node_count = 0
+                for node_idx in range(len(self.__gltf.nodes)):
+                    if node_idx in to_remove:
+                        continue
+                    old_to_new[node_idx] = node_count
+                    node_count += 1
 
+                for scene in self.__gltf.scenes:
                     # Slides other nodes index
                     for node_idx in scene.nodes:
-                        self.recursive_slide_node_idx(node_idx)
+                        self.recursive_slide_node_idx(node_idx, old_to_new)
 
-                    new_node_list = []
-                    for node_idx in scene.nodes:
-                        len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
-                        new_node_list.append(node_idx - len_)
-                    scene.nodes = new_node_list
+                    scene.nodes = [old_to_new[node_idx] for node_idx in scene.nodes]
 
-                    for skin in self.__gltf.skins:
-                        new_joint_list = []
-                        for node_idx in skin.joints:
-                            len_ = len([i for i in self.nodes_idx_to_remove if i < node_idx])
-                            new_joint_list.append(node_idx - len_)
-                        skin.joints = new_joint_list
-                        if skin.skeleton is not None:
-                            len_ = len([i for i in self.nodes_idx_to_remove if i < skin.skeleton])
-                            skin.skeleton = skin.skeleton - len_
+                for skin in self.__gltf.skins:
+                    skin.joints = [old_to_new[node_idx] for node_idx in skin.joints]
+
+                    if skin.skeleton is not None:
+                        skin.skeleton = old_to_new[skin.skeleton]
 
                 # Remove animation channels that was targeting a node that will be removed
                 new_animation_list = []
                 for animation in self.__gltf.animations:
                     new_channel_list = []
                     for channel in animation.channels:
-                        if channel.target.node not in self.nodes_idx_to_remove:
+                        if channel.target.node in old_to_new:
+                            channel.target.node = old_to_new[channel.target.node]
                             new_channel_list.append(channel)
                     animation.channels = new_channel_list
                     if len(animation.channels) > 0:
@@ -364,16 +362,13 @@ class GlTF2Exporter:
         if active:
             self.__gltf.scene = scene_num
 
-    def recursive_slide_node_idx(self, node_idx):
+    def recursive_slide_node_idx(self, node_idx: int, old_to_new: dict):
         node = self.__gltf.nodes[node_idx]
 
-        new_node_children = []
-        for child_idx in node.children:
-            len_ = len([i for i in self.nodes_idx_to_remove if i < child_idx])
-            new_node_children.append(child_idx - len_)
+        new_node_children = [old_to_new[node_idx] for node_idx in node.children]
 
         for child_idx in node.children:
-            self.recursive_slide_node_idx(child_idx)
+            self.recursive_slide_node_idx(child_idx, old_to_new)
 
         node.children = new_node_children
 
