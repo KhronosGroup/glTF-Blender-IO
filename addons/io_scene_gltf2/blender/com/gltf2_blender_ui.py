@@ -87,7 +87,7 @@ class SCENE_PT_gltf2_variants(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
 
-        if bpy.data.scenes[0].get('gltf2_KHR_materials_variants_variants') and len(
+        if bpy.data.scenes[0].gltf2_KHR_materials_variants_variants and len(
                 bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) > 0:
 
             row.template_list(
