@@ -364,8 +364,7 @@ class MESH_PT_gltf2_mesh_variants(bpy.types.Panel):
             row.operator("scene.gltf2_remove_material_variant", icon="REMOVE", text="")
 
             row = layout.row()
-            if 'gltf2_KHR_materials_variants_variants' in bpy.data.scenes[0].keys() and len(
-                    bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) > 0:
+            if bpy.data.scenes[0].gltf2_KHR_materials_variants_variants:
                 row.prop_search(
                     context.object.data,
                     "gltf2_variant_pointer",
@@ -377,8 +376,7 @@ class MESH_PT_gltf2_mesh_variants(bpy.types.Panel):
             else:
                 row.label(text="Please Create a Variant First")
         else:
-            if 'gltf2_KHR_materials_variants_variants' in bpy.data.scenes[0].keys() and len(
-                    bpy.data.scenes[0].gltf2_KHR_materials_variants_variants) > 0:
+            if bpy.data.scenes[0].gltf2_KHR_materials_variants_variants:
                 row.operator("scene.gltf2_variants_slot_add", text="Add a new Variant Slot")
             else:
                 row.label(text="Please Create a Variant First")
