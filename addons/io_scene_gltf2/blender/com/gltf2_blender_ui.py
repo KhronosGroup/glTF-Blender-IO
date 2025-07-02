@@ -348,12 +348,11 @@ class MESH_PT_gltf2_mesh_variants(bpy.types.Panel):
         active_material_slots = bpy.context.object.active_material_index
 
         found = False
-        if 'gltf2_variant_mesh_data' in bpy.context.object.data.keys():
-            for idx, prim in enumerate(bpy.context.object.data.gltf2_variant_mesh_data):
-                if prim.material_slot_index == active_material_slots and id(prim.material) == id(
-                        bpy.context.object.material_slots[active_material_slots].material):
-                    found = True
-                    break
+        for idx, prim in enumerate(bpy.context.object.data.gltf2_variant_mesh_data):
+            if prim.material_slot_index == active_material_slots and id(prim.material) == id(
+                    bpy.context.object.material_slots[active_material_slots].material):
+                found = True
+                break
 
         row = layout.row()
         if found is True:
