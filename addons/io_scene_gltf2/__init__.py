@@ -1861,6 +1861,11 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
 
     filter_glob: StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
+    directory: StringProperty(
+        subtype='DIR_PATH',
+        options={'HIDDEN', 'SKIP_PRESET'},
+    )
+
     files: CollectionProperty(
         name="File Path",
         type=bpy.types.OperatorFileListElement,
@@ -2038,9 +2043,8 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         if self.files:
             # Multiple file import
             ret = {'CANCELLED'}
-            dirname = os.path.dirname(self.filepath)
             for file in self.files:
-                path = os.path.join(dirname, file.name)
+                path = os.path.join(self.directory, file.name)
                 if self.unit_import(path, import_settings) == {'FINISHED'}:
                     ret = {'FINISHED'}
             return ret
