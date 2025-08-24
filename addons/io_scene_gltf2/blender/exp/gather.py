@@ -111,6 +111,7 @@ def __gather_scene(blender_scene, export_settings):
     export_user_extensions('vtree_after_filter_hook', export_settings, vtree)
 
     export_settings['vtree'] = vtree
+    export_settings['mesh_instances'] = {}
 
     # If we don't remove armature object, we can't have bones directly at root of scene
     # So looping only on root nodes, as they are all nodes, not bones
@@ -148,6 +149,8 @@ def __gather_scene(blender_scene, export_settings):
     vtree.add_neutral_bones()
 
     export_user_extensions('gather_scene_hook', export_settings, scene, blender_scene)
+
+    export_settings['mesh_instances'].clear()
 
     return scene
 
