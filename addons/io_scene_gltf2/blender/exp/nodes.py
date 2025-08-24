@@ -337,16 +337,16 @@ def __gather_mesh(vnode, blender_object, export_settings):
                     # make own copy of mesh because result of `to_mesh` is temporary
                     # (and can be overwrite for example by call `to_mesh` on same object in other instance of collection)
                     blender_mesh = blender_mesh.copy()
-                    export_settings["mesh_instances"][blender_object.data] = [(blender_mesh, blender_mesh_owner, modifiers)]
+                    export_settings["mesh_instances"][blender_object.data] = [(blender_mesh, blender_mesh_owner)]
                 else:
-                    for other_mesh, _, other_modifiers in export_settings["mesh_instances"][blender_object.data]:
+                    for other_mesh, _ in export_settings["mesh_instances"][blender_object.data]:
                         compare = blender_mesh.unit_test_compare(mesh=other_mesh)
                         if compare == "Same":
                             blender_mesh = other_mesh
                             break
                     else:
                         blender_mesh = blender_mesh.copy()
-                        export_settings["mesh_instances"][blender_object.data].append((blender_mesh, blender_mesh_owner, modifiers))
+                        export_settings["mesh_instances"][blender_object.data].append((blender_mesh, blender_mesh_owner))
 
                 # blender_mesh is copy so we can clear temp mesh now
                 blender_mesh_owner.to_mesh_clear()
