@@ -398,8 +398,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
             if sk_name is None:
                 continue
 
-            ob.shape_key_add(name=sk_name)
-            key_block = mesh.shape_keys.key_blocks[sk_name]
+            key_block = ob.shape_key_add(name=sk_name)
+            key_block.value = 0.0 # Starting Blender 5.0, SK are created with weight 1.0, so setting to 0.0, as 0.0 is the default glTF SK weight
             key_block.points.foreach_set('co', squish(sk_vert_locs[sk_i], np.float32))
 
             sk_i += 1
