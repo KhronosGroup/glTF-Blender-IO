@@ -982,5 +982,6 @@ class VExportTree:
         if len(centers) == 0:
             self.export_settings['gltf_collection_center'] = Vector((0.0, 0.0, 0.0))
             return
-
-        self.export_settings['gltf_collection_center'] = sum(centers, Vector()) / len(centers)
+        center_at = self.export_settings['gltf_center_collection_at_axis']
+        axis = Vector((float('X' in center_at), float('Y' in center_at), float('Z' in center_at)))
+        self.export_settings['gltf_collection_center'] = (sum(centers, Vector()) / len(centers)) * axis
