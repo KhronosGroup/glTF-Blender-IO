@@ -332,6 +332,25 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 # Store that this evaluated mesh has been created by the exporter, and is not a GN instance mesh
                 blender_mesh['gltf2_mesh_applied'] = True
 
+                # check if other object used the same origin mesh produced the same mesh after modifier applies, if yes use this mesh
+                if not blender_object.data in export_settings["mesh_instances"]:
+                    # make own copy of mesh because result of `to_mesh` is temporary
+                    # (and can be overwrite for example by call `to_mesh` on same object in other instance of collection)
+                    blender_mesh = blender_mesh.copy()
+                    export_settings["mesh_instances"][blender_object.data] = [blender_mesh]
+                else:
+                    for other_mesh in export_settings["mesh_instances"][blender_object.data]:
+                        compare = blender_mesh.unit_test_compare(mesh=other_mesh)
+                        if compare == "Same":
+                            blender_mesh = other_mesh
+                            break
+                    else:
+                        blender_mesh = blender_mesh.copy()
+                        export_settings["mesh_instances"][blender_object.data].append(blender_mesh)
+
+                # blender_mesh is copy so we can clear temp mesh now
+                blender_mesh_owner.to_mesh_clear()
+
                 if export_settings['gltf_skins']:
                     # restore Armature modifiers
                     for idx, show_viewport in armature_modifiers.items():
@@ -348,12 +367,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
 
         else:
             blender_mesh = blender_object.data
-            if not export_settings['gltf_skins']:
-                modifiers = None
-            else:
-                # Check if there is an armature modidier
-                if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
-                    modifiers = None
 
             # Keep materials from object, as no modifiers are applied, so no risk that
             # modifiers changed them
@@ -369,6 +382,12 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 if modifier.type == 'ARMATURE':
                     uuid_for_skined_data = vnode.uuid
 
+        # no need keep modifiers if skins are not exported or object don't have an armature modifier
+        # (applying different set of modifiers results in different blender_mesh object)
+        # so set it to None to avoid unnecessary mesh duplication
+        if uuid_for_skined_data is None:
+            modifiers = None
+
     result = gltf2_blender_gather_mesh.gather_mesh(blender_mesh,
                                                    uuid_for_skined_data,
                                                    blender_object.vertex_groups if blender_object else None,
@@ -376,9 +395,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
                                                    materials,
                                                    None,
                                                    export_settings)
-
-    if export_settings['gltf_apply'] and modifiers is not None:
-        blender_mesh_owner.to_mesh_clear()
 
     return result
 
