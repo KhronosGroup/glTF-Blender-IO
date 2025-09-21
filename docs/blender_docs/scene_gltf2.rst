@@ -121,9 +121,9 @@ The material export process handles the settings described below.
 Base Color
 ^^^^^^^^^^
 
-The glTF base color is determined by looking for a Base Color input on a Principled BSDF node.
-If the input is unconnected, the input's default color (the color field next to the unconnected socket)
-is used as the Base Color for the glTF material.
+The glTF base color is determined by looking for a Base Color input on a Principled BSDF node
+or a Color input on a Diffuse BSDF node. If the input is unconnected, the input's default color
+(the color field next to the unconnected socket) is used as the Base Color for the glTF material.
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-base-color-solid-green.png
 
