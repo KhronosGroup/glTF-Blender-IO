@@ -33,7 +33,7 @@ class BlenderMaterial():
         if material_idx is None:
             # If no material is specified, we create a default one
             mat = bpy.data.materials.new(name="DefaultMaterial")
-            mat.node_tree.nodes.clear()
+            # Since Blender 5.0, no need to remove default nodes, as they are not created by default
             output_node = mat.node_tree.nodes.new(type='ShaderNodeOutputMaterial')
             output_node.location = (0, 0)
             shader_node = mat.node_tree.nodes.new(type='ShaderNodeBsdfPrincipled')
