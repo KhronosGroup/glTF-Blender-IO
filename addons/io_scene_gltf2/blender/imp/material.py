@@ -63,8 +63,7 @@ class BlenderMaterial():
         BlenderMaterial.set_eevee_surface_render_method(pymaterial, mat)
         BlenderMaterial.set_viewport_color(pymaterial, mat, vertex_color)
 
-        while mat.node_tree.nodes:  # clear all nodes
-            mat.node_tree.nodes.remove(mat.node_tree.nodes[0])
+        # Since Blender 5.0, no need to remove default nodes, as they are not created by default
 
         mh = MaterialHelper(gltf, pymaterial, mat, vertex_color)
 
