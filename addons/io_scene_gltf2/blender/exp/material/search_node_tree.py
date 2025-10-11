@@ -105,7 +105,7 @@ def from_socket(start_socket: NodeTreeSearchResult,
 
             if linked_node.type == "GROUP_INPUT":
                 socket = [sock for sock in group_path[-1].inputs if sock.name == link.from_socket.name][0]
-                linked_results = __search_from_socket(socket, shader_node_filter, search_path + [link], group_path[:-1])
+                linked_results = __search_from_socket(socket, shader_node_filter, search_path + [link], group_path[:-1].copy())
                 if linked_results:
                     # add the link to the current path
                     search_path.append(link)
@@ -114,7 +114,7 @@ def from_socket(start_socket: NodeTreeSearchResult,
 
             # check if the node matches the filter
             if shader_node_filter(linked_node):
-                results.append(NodeTreeSearchResult(linked_node, search_path + [link], group_path))
+                results.append(NodeTreeSearchResult(linked_node, search_path + [link], group_path.copy()))
             # traverse into inputs of the node
             for input_socket in linked_node.inputs:
                 linked_results = __search_from_socket(
@@ -133,7 +133,7 @@ def from_socket(start_socket: NodeTreeSearchResult,
     if shader_node_filter(start_socket.socket.node):
         return [NodeTreeSearchResult(start_socket.socket.node, [], start_socket.group_path.copy())]
 
-    return __search_from_socket(start_socket.socket, shader_node_filter, [], start_socket.group_path)
+    return __search_from_socket(start_socket.socket, shader_node_filter, [], start_socket.group_path.copy())
 
 
 @cached
@@ -189,7 +189,7 @@ def get_material_nodes(node_tree: bpy.types.NodeTree, group_path, type):
     return nodes
 
 
-def get_socket_from_gltf_material_node(blender_material_nodetree, use_nodes: bool, name: str):
+def get_socket_from_gltf_material_node(blender_material_nodetree, name: str):
     """
     For a given material input name, retrieve the corresponding node tree socket in the special glTF node group.
 
@@ -198,7 +198,7 @@ def get_socket_from_gltf_material_node(blender_material_nodetree, use_nodes: boo
     :return: a blender NodeSocket
     """
     gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
-    if blender_material_nodetree and use_nodes:
+    if blender_material_nodetree:
         nodes = get_material_nodes(blender_material_nodetree, [blender_material_nodetree], bpy.types.ShaderNodeGroup)
         # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
         nodes = [n for n in nodes if n[0].node_tree is not None and any(
@@ -774,7 +774,7 @@ def get_node_socket(blender_material_node_tree, type, name):
     return NodeSocket(None, None)
 
 
-def get_socket(blender_material_nodetree, use_nodes: bool, name: str, volume=False):
+def get_socket(blender_material_nodetree, name: str, volume=False):
     """
     For a given material input name, retrieve the corresponding node tree socket.
 
@@ -782,7 +782,7 @@ def get_socket(blender_material_nodetree, use_nodes: bool, name: str, volume=Fal
     :param name: the name of the socket
     :return: a blender NodeSocket
     """
-    if blender_material_nodetree and use_nodes:
+    if blender_material_nodetree:
         # i = [input for input in blender_material.node_tree.inputs]
         # o = [output for output in blender_material.node_tree.outputs]
         if name == "Emissive":
@@ -940,7 +940,7 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
 
 def check_if_is_linked_to_active_output(shader_socket, group_path):
 
-    # Here, group_path must be copyed, because if there are muliply link that enter/exit a group node
+    # Here, group_path must be copied, because if there are muliple links that enter/exit a group node
     # This will modify it, and we don't want to modify the original group_path (from the parameter) inside the loop
     for link in shader_socket.links:
 

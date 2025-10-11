@@ -4330,6 +4330,72 @@ describe('Exporter', function () {
 
                 });
 
+                it('roundtrips merging material slots', function () {
+                    let dir = '22_material_slot_merge';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const all_mat_no_vc = asset.meshes[asset.nodes.find(node => node.name === "all_mat_no_vc").mesh];
+                    const all_mat_vc = asset.meshes[asset.nodes.find(node => node.name === "all_mat_vc").mesh];
+                    const no_mat_no_vc = asset.meshes[asset.nodes.find(node => node.name === "no_mat_no_vc").mesh];
+                    const not_all_mat_no_vc = asset.meshes[asset.nodes.find(node => node.name === "not_all_mat_no_vc").mesh];
+                    const not_all_mat_vc = asset.meshes[asset.nodes.find(node => node.name === "not_all_mat_vc").mesh];
+                    const no_mat_vc = asset.meshes[asset.nodes.find(node => node.name === "no_mat_vc").mesh];
+
+                    assert.strictEqual(all_mat_no_vc.primitives.length, 6);
+
+                    assert.strictEqual(all_mat_vc.primitives.length, 6);
+
+                    assert.strictEqual(no_mat_no_vc.primitives.length, 1);
+                    assert.strictEqual(no_mat_no_vc.primitives.filter(prim => prim.material === undefined).length, 1);
+
+                    assert.strictEqual(not_all_mat_no_vc.primitives.length, 4);
+                    assert.strictEqual(not_all_mat_no_vc.primitives.filter(prim => prim.material === undefined).length, 1);
+                    assert.strictEqual(not_all_mat_no_vc.primitives.filter(prim => prim.material !== undefined).length, 3);
+
+                    assert.strictEqual(not_all_mat_vc.primitives.length, 4);
+                    assert.strictEqual(not_all_mat_vc.primitives.filter(prim => prim.material === undefined).length, 0);
+
+                    assert.strictEqual(no_mat_vc.primitives.length, 1);
+                    assert.strictEqual(no_mat_vc.primitives.filter(prim => prim.material === undefined).length, 0);
+
+                });
+
+                it('roundtrips material slots not merge', function () {
+                    let dir = '22_material_slot_not_merge';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    const all_mat_no_vc = asset.meshes[asset.nodes.find(node => node.name === "all_mat_no_vc").mesh];
+                    const all_mat_vc = asset.meshes[asset.nodes.find(node => node.name === "all_mat_vc").mesh];
+                    const no_mat_no_vc = asset.meshes[asset.nodes.find(node => node.name === "no_mat_no_vc").mesh];
+                    const not_all_mat_no_vc = asset.meshes[asset.nodes.find(node => node.name === "not_all_mat_no_vc").mesh];
+                    const not_all_mat_vc = asset.meshes[asset.nodes.find(node => node.name === "not_all_mat_vc").mesh];
+                    const no_mat_vc = asset.meshes[asset.nodes.find(node => node.name === "no_mat_vc").mesh];
+
+                    assert.strictEqual(all_mat_no_vc.primitives.length, 6);
+                    assert.strictEqual(all_mat_no_vc.primitives.filter(prim => prim.material === undefined).length, 0);
+
+                    assert.strictEqual(all_mat_vc.primitives.length, 6);
+                    assert.strictEqual(all_mat_vc.primitives.filter(prim => prim.material === undefined).length, 0);
+
+                    assert.strictEqual(no_mat_no_vc.primitives.length, 1);
+                    assert.strictEqual(no_mat_no_vc.primitives.filter(prim => prim.material === undefined).length, 1);
+
+                    assert.strictEqual(not_all_mat_no_vc.primitives.length, 6);
+                    assert.strictEqual(not_all_mat_no_vc.primitives.filter(prim => prim.material === undefined).length, 3);
+
+                    assert.strictEqual(not_all_mat_vc.primitives.length, 6);
+                    assert.strictEqual(not_all_mat_vc.primitives.filter(prim => prim.material === undefined).length, 0);
+
+                    assert.strictEqual(no_mat_vc.primitives.length, 6);
+                    assert.strictEqual(no_mat_vc.primitives.filter(prim => prim.material === undefined).length, 0);
+
+
+                });
+
             });
         });
     });

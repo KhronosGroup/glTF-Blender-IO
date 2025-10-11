@@ -1,0 +1,22 @@
+{
+	"asset": {
+		"generator": "Khronos glTF Blender I/O v5.0.16",
+		"version": "2.0"
+	},
+	"scenes": [
+		{
+			"name": "Scene",
+			"nodes": [
+				0
+			]
+		},
+		{
+			"name": "Empty Scene"
+		}
+	],
+	"nodes": [
+		{
+			"name": "Empty"
+		}
+	]
+}
