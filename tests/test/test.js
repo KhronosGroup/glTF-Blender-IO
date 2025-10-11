@@ -270,7 +270,7 @@ describe('Exporter', function () {
                                 done();
                             }
                         }, args);
-                        // validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
+                        //validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
                     });
                 });
             });
@@ -3445,7 +3445,7 @@ describe('Exporter', function () {
                             if (fs.existsSync(gltfOptionsPath)) {
                                 options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                             }
-                            // return done(); // uncomment to not roundtrip all files
+                            //return done(); // uncomment to not roundtrip all files
                             blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                                 if (error) {
                                     if (options.indexOf("--no-validate") !== -1) { return done(); }
