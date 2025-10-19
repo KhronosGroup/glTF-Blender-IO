@@ -659,6 +659,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_compare_meshes: BoolProperty(
+        name='Compare meshes',
+        description='Compare mesh objects after applying modifiers '
+                    '(to avoid duplication of identical meshes in the exported file)',
+        default=False
+    )
+
     export_shared_accessors: BoolProperty(
         name='Shared Accessors',
         description='Export Primitives using shared accessors for attributes',
@@ -1200,6 +1207,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_extras'] = self.export_extras
         export_settings['gltf_yup'] = self.export_yup
         export_settings['gltf_apply'] = self.export_apply
+        export_settings['gltf_compare_meshes'] = self.export_compare_meshes
         export_settings['gltf_shared_accessors'] = self.export_shared_accessors
         export_settings['gltf_current_frame'] = self.export_current_frame
         export_settings['gltf_animations'] = self.export_animations
@@ -1497,6 +1505,7 @@ def export_panel_data_mesh(layout, operator):
     header.label(text="Mesh")
     if body:
         body.prop(operator, 'export_apply')
+        body.prop(operator, 'export_compare_meshes')
         body.prop(operator, 'export_texcoords')
         body.prop(operator, 'export_normals')
         col = body.column()

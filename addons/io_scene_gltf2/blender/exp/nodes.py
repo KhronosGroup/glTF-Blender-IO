@@ -262,6 +262,8 @@ def __gather_matrix(blender_object, export_settings):
 
 
 def __gather_mesh(vnode, blender_object, export_settings):
+    need_to_mesh_clear = False
+
     if vnode.blender_type == VExportNode.COLLECTION:
         return None
     if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
@@ -319,6 +321,8 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 depsgraph = bpy.context.evaluated_depsgraph_get()
                 blender_mesh_owner = blender_object.evaluated_get(depsgraph)
                 blender_mesh = blender_mesh_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
+                need_to_mesh_clear = True
+
                 # Seems now (from 4.2) the custom properties are Statically Typed
                 # so no need to copy them in that case, because overwriting them will crash
                 if len(blender_mesh.keys()) == 0:
@@ -333,23 +337,21 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 blender_mesh['gltf2_mesh_applied'] = True
 
                 # check if other object used the same origin mesh produced the same mesh after modifier applies, if yes use this mesh
-                if not blender_object.data in export_settings["mesh_instances"]:
-                    # make own copy of mesh because result of `to_mesh` is temporary
-                    # (and can be overwrite for example by call `to_mesh` on same object in other instance of collection)
-                    blender_mesh = blender_mesh.copy()
-                    export_settings["mesh_instances"][blender_object.data] = [blender_mesh]
-                else:
-                    for other_mesh in export_settings["mesh_instances"][blender_object.data]:
-                        compare = blender_mesh.unit_test_compare(mesh=other_mesh)
-                        if compare == "Same":
-                            blender_mesh = other_mesh
-                            break
-                    else:
+                if export_settings["gltf_compare_meshes"]:
+                    if not blender_object.data in export_settings["mesh_instances"]:
+                        # make own copy of mesh because result of `to_mesh` is temporary
+                        # (and can be overwrite for example by call `to_mesh` on same object in other instance of collection)
                         blender_mesh = blender_mesh.copy()
-                        export_settings["mesh_instances"][blender_object.data].append(blender_mesh)
-
-                # blender_mesh is copy so we can clear temp mesh now
-                blender_mesh_owner.to_mesh_clear()
+                        export_settings["mesh_instances"][blender_object.data] = [blender_mesh]
+                    else:
+                        for other_mesh in export_settings["mesh_instances"][blender_object.data]:
+                            compare = blender_mesh.unit_test_compare(mesh=other_mesh)
+                            if compare == "Same":
+                                blender_mesh = other_mesh
+                                break
+                        else:
+                            blender_mesh = blender_mesh.copy()
+                            export_settings["mesh_instances"][blender_object.data].append(blender_mesh)
 
                 if export_settings['gltf_skins']:
                     # restore Armature modifiers
@@ -395,6 +397,9 @@ def __gather_mesh(vnode, blender_object, export_settings):
                                                    materials,
                                                    None,
                                                    export_settings)
+
+    if need_to_mesh_clear:
+        blender_mesh_owner.to_mesh_clear()
 
     return result
 
