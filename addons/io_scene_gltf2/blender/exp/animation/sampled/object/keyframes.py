@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import numpy as np
-from ....tree import VExportNode
 from ....cache import cached
 from ...keyframes import Keyframe
 from ..sampling_cache import get_cache_data

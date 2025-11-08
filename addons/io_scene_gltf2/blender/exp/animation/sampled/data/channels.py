@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
 import typing
 from ......io.com import gltf2_io
 from ......blender.com.conversion import get_gltf_interpolation
