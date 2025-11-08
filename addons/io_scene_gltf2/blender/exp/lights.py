@@ -100,7 +100,7 @@ def __gather_intensity(blender_lamp, blender_lamp_world_matrix, export_settings)
                 quadratic_falloff_node = result[0].shader_node
                 emission_strength = quadratic_falloff_node.inputs["Strength"].default_value / (math.pi * 4.0)
                 if not blender_lamp.normalize:
-                    emission_strength *= blender_lamp.area(world_matrix=blender_lamp_world_matrix)
+                    emission_strength *= blender_lamp.area(matrix_world=blender_lamp_world_matrix)
 
                 # Store data for KHR_animation_pointer
                 path_ = {}
@@ -122,7 +122,7 @@ def __gather_intensity(blender_lamp, blender_lamp_world_matrix, export_settings)
 
                 emission_strength = blender_lamp.energy
                 if not blender_lamp.normalize:
-                    emission_strength *= blender_lamp.area(world_matrix=blender_lamp_world_matrix)
+                    emission_strength *= blender_lamp.area(matrix_world=blender_lamp_world_matrix)
         else:
             emission_strength = emission_node.inputs["Strength"].default_value
 
@@ -137,7 +137,7 @@ def __gather_intensity(blender_lamp, blender_lamp_world_matrix, export_settings)
     else:
         emission_strength = blender_lamp.energy
         if not blender_lamp.normalize:
-            emission_strength *= blender_lamp.area(world_matrix=blender_lamp_world_matrix)
+            emission_strength *= blender_lamp.area(matrix_world=blender_lamp_world_matrix)
 
         path_ = {}
         path_['length'] = 1
