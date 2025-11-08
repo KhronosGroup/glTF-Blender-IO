@@ -13,13 +13,12 @@
 # limitations under the License.
 
 import bpy
-import re
 import os
 from typing import List
 
 from ... import get_version_string
 from ...io.com import gltf2_io, gltf2_io_extensions
-from ...io.com.path import path_to_uri, uri_to_path
+from ...io.com.path import uri_to_path
 from ...io.com.constants import ComponentType, DataType
 from ...io.exp import binary_data as gltf2_io_binary_data, buffer as gltf2_io_buffer, image_data as gltf2_io_image_data
 from ...io.exp.user_extensions import export_user_extensions
@@ -463,7 +462,7 @@ class GlTF2Exporter:
             #         self.__append_unique_and_get_index(self.__gltf.extensions_required, extension_name)
 
         if self.export_settings['gltf_trs_w_animation_pointer'] is True:
-            if type(node) == gltf2_io.AnimationChannelTarget:
+            if type(node) is gltf2_io.AnimationChannelTarget:
                 if node.path in ["translation", "rotation", "scale", "weights"]:
                     if node.extensions is None:
                         node.extensions = {}
@@ -472,7 +471,7 @@ class GlTF2Exporter:
                     node.path = "pointer"
                     self.__append_unique_and_get_index(self.__gltf.extensions_used, "KHR_animation_pointer")
 
-        if type(node) == gltf2_io.AnimationChannelTarget:
+        if type(node) is gltf2_io.AnimationChannelTarget:
             if node.path not in ["translation", "rotation", "scale", "weights"] and node.path != "pointer":
                 if node.extensions is None:
                     node.extensions = {}

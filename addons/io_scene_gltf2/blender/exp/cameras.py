@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import bpy
-import math
 from ...io.com import gltf2_io
 from ...blender.com.conversion import yvof_blender_to_gltf
 from ...io.exp.user_extensions import export_user_extensions

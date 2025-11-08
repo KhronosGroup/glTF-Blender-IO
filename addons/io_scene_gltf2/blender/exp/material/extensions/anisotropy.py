@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bpy
-
 import numpy as np
 from .....io.com.gltf2_io_extensions import Extension
 from ....com.conversion import get_anisotropy_rotation_blender_to_gltf
