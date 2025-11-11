@@ -802,6 +802,15 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_optimize_animation_keep_anim_data: BoolProperty(
+        name='Force keeping channel for data',
+        description=(
+            "If all keyframes are identical for properties (exported via KHR_animation_pointer), "
+            "force keeping the minimal animation"
+        ),
+        default=False
+    )
+
     export_optimize_disable_viewport: BoolProperty(
         name='Disable Viewport for Other Objects',
         description=(
@@ -1250,6 +1259,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_optimize_animation'] = self.export_optimize_animation_size
             export_settings['gltf_optimize_animation_keep_armature'] = self.export_optimize_animation_keep_anim_armature
             export_settings['gltf_optimize_animation_keep_object'] = self.export_optimize_animation_keep_anim_object
+            export_settings['gltf_optimize_animation_keep_data'] = self.export_optimize_animation_keep_anim_data
             export_settings['gltf_optimize_disable_viewport'] = self.export_optimize_disable_viewport
             export_settings['gltf_export_reset_pose_bones'] = self.export_reset_pose_bones
             export_settings['gltf_export_reset_sk_data'] = self.export_morph_reset_sk_data
@@ -1795,6 +1805,10 @@ def export_panel_animation_optimize(layout, operator):
 
         row = body.row()
         row.prop(operator, 'export_optimize_animation_keep_anim_object')
+
+        row = body.row()
+        row.active = operator.export_pointer_animation
+        row.prop(operator, 'export_optimize_animation_keep_anim_data')
 
         row = body.row()
         row.prop(operator, 'export_optimize_disable_viewport')
