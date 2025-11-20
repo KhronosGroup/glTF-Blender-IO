@@ -3298,6 +3298,109 @@ describe('Exporter', function () {
 
             });
 
+            it('exports animation pointer on alpha', function () {
+                let gltfPath = path.resolve(outDirPath, '01_alpha_animation.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const mat_alpha_0_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "alpha 0>1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_alpha_0_1.alphaMode, 'BLEND');
+                assert.strictEqual(mat_alpha_0_1.alphaCutoff, undefined);
+
+                const mat_alpha_1_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "alpha 1>0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_alpha_1_0.alphaMode, 'BLEND');
+                assert.strictEqual(mat_alpha_1_0.alphaCutoff, undefined);
+
+                const mat_alpha_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "alpha 1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_alpha_1.alphaMode, undefined);
+                assert.strictEqual(mat_alpha_1.alphaCutoff, undefined);
+
+                const mat_alpha_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "alpha 0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_alpha_0.alphaMode, "MASK");
+                assert.strictEqual(mat_alpha_0.alphaCutoff, undefined);
+
+                const mat_alpha_0_4 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "alpha 0.4")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_alpha_0_4.alphaMode, "BLEND");
+                assert.strictEqual(mat_alpha_0_4.alphaCutoff, undefined);
+
+                const mat_alpha_0_4_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "alpha 0.4>1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_alpha_0_4_1.alphaMode, "BLEND");
+                assert.strictEqual(mat_alpha_0_4_1.alphaCutoff, undefined);
+
+                const mat_tex_alpha_0_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex alpha 0>1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_alpha_0_1.alphaMode, 'BLEND');
+                assert.strictEqual(mat_tex_alpha_0_1.alphaCutoff, undefined);
+
+                const mat_tex_alpha_1_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex alpha 1>0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_alpha_1_0.alphaMode, 'BLEND');
+                assert.strictEqual(mat_tex_alpha_1_0.alphaCutoff, undefined);
+
+                const mat_tex_alpha_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex alpha 1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_alpha_1.alphaMode, undefined);
+                assert.strictEqual(mat_tex_alpha_1.alphaCutoff, undefined);
+
+                const mat_tex_alpha_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex alpha 0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_alpha_0.alphaMode, "MASK");
+                assert.strictEqual(mat_tex_alpha_0.alphaCutoff, undefined);
+
+                const mat_tex_alpha_0_4 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex alpha 0.4")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_alpha_0_4.alphaMode, "BLEND");
+                assert.strictEqual(mat_tex_alpha_0_4.alphaCutoff, undefined);
+
+                const mat_tex_alpha_0_4_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex alpha 0.4>1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_alpha_0_4_1.alphaMode, "BLEND");
+                assert.strictEqual(mat_tex_alpha_0_4_1.alphaCutoff, undefined);
+
+                const mat_col_alpha_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "col alpha 1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_col_alpha_1.alphaMode, undefined);
+                assert.strictEqual(mat_col_alpha_1.alphaCutoff, undefined);
+
+                const mat_col_alpha_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "col alpha 0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_col_alpha_0.alphaMode, "MASK");
+                assert.strictEqual(mat_col_alpha_0.alphaCutoff, undefined);
+
+                const mat_col_alpha_0_4 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "col alpha 0.4")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_col_alpha_0_4.alphaMode, "BLEND");
+                assert.strictEqual(mat_col_alpha_0_4.alphaCutoff, undefined);
+
+                const mat_tex_col_alpha_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex col alpha 1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_col_alpha_1.alphaMode, undefined);
+                assert.strictEqual(mat_tex_col_alpha_1.alphaCutoff, undefined);
+
+                const mat_tex_col_alpha_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex col alpha 0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_col_alpha_0.alphaMode, "MASK");
+                assert.strictEqual(mat_tex_col_alpha_0.alphaCutoff, undefined);
+
+                const mat_tex_col_alpha_0_4 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex col alpha 0.4")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_col_alpha_0_4.alphaMode, "BLEND");
+                assert.strictEqual(mat_tex_col_alpha_0_4.alphaCutoff, undefined);
+
+                const mat_col_alpha_0_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "col alpha 0>1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_col_alpha_0_1.alphaMode, 'BLEND');
+                assert.strictEqual(mat_col_alpha_0_1.alphaCutoff, undefined);
+
+                const mat_col_alpha_1_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "col alpha 1>0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_col_alpha_1_0.alphaMode, 'BLEND');
+                assert.strictEqual(mat_col_alpha_1_0.alphaCutoff, undefined);
+
+                const mat_col_alpha_0_4_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "col alpha 0.4>0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_col_alpha_0_4_0.alphaMode, 'BLEND');
+                assert.strictEqual(mat_col_alpha_0_4_0.alphaCutoff, undefined);
+
+                const mat_tex_col_tex_alpha_0_1 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex col tex alpha 0>1")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_col_tex_alpha_0_1.alphaMode, 'BLEND');
+                assert.strictEqual(mat_tex_col_tex_alpha_0_1.alphaCutoff, undefined);
+
+                const mat_tex_col_tex_alpha_1_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex col tex alpha 1>0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_col_tex_alpha_1_0.alphaMode, 'BLEND');
+                assert.strictEqual(mat_tex_col_tex_alpha_1_0.alphaCutoff, undefined);
+
+                const mat_tex_col_tex_alpha_0_4_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "tex col tex alpha 0.4>0")[0].mesh].primitives[0].material];
+                assert.strictEqual(mat_tex_col_tex_alpha_0_4_0.alphaMode, 'BLEND');
+                assert.strictEqual(mat_tex_col_tex_alpha_0_4_0.alphaCutoff, undefined);
+
+
+            });
+
         });
     });
 
