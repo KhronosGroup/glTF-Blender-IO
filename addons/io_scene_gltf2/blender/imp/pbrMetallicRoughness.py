@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from re import M
 import bpy
 from ...io.com.constants import GLTF_IOR, BLENDER_COAT_ROUGHNESS
-from ...io.com.gltf2_io import TextureInfo, MaterialPBRMetallicRoughness
+from ...io.com.gltf2_io import TextureInfo
 from ..com.material_helpers import get_gltf_node_name, create_settings_group
 from .texture import texture
 from .KHR_materials_anisotropy import anisotropy

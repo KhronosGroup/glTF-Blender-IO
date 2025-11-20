@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import struct
 import numpy as np
 
 from ..com.gltf2_io import Accessor
@@ -102,10 +101,6 @@ class BinaryData():
 
         accessor_offset = accessor.byte_offset or 0
         buffer_data = buffer_data[accessor_offset:]
-
-        bytes_per_elem = dtype(1).nbytes
-        default_stride = bytes_per_elem * component_nb
-        stride = default_stride
 
         array = np.frombuffer(
             buffer_data,

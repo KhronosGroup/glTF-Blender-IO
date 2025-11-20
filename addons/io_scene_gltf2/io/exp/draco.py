@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from ctypes import *
-from pathlib import Path
 
 from ...io.exp.binary_data import BinaryData
 from ...io.com.draco import dll_path
