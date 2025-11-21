@@ -140,9 +140,10 @@ def on_export_action_filter_changed(self, context):
                 item.action = action
 
     else:
-        bpy.data.scenes[0].gltf_action_filter.clear()
-        del bpy.types.Scene.gltf_action_filter
-        del bpy.types.Scene.gltf_action_filter_active
+        if hasattr(bpy.data.scenes[0], "gltf_action_filter"):
+            bpy.data.scenes[0].gltf_action_filter.clear()
+            del bpy.types.Scene.gltf_action_filter
+            del bpy.types.Scene.gltf_action_filter_active
 
 
 def get_format_items(scene, context):
