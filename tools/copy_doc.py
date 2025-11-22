@@ -30,6 +30,7 @@ doc = dirname(realpath(__file__)) + "/../docs/blender_docs/scene_gltf2.rst"
 images = dirname(realpath(__file__)) + "/../images/"
 
 if not isdir(args["repo"]):
+    import sys
     sys.exit()
 
 shutil.copy(doc, args["repo"] + "/manual/addons/import_export/scene_gltf2.rst")
