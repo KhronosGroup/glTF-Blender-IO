@@ -21,3 +21,5 @@ def import_user_extensions(hook_name, gltf, *args):
             except Exception as e:
                 gltf.log.error(hook_name, "fails on", extension)
                 gltf.log.error(str(e))
+                if getattr(extension, 'is_critical', False):
+                    raise
