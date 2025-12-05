@@ -91,6 +91,7 @@ class glTF2ExportUserExtension:
         from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
         self.Extension = Extension
         self.properties = bpy.context.scene.ExampleExtensionProperties
+        self.is_critical = True
 
     def gather_node_hook(self, gltf2_object, blender_object, export_settings):
 
