@@ -346,6 +346,9 @@ class GlTF2Exporter:
                 self.__gltf.nodes = [node for idx, node in enumerate(
                     self.__gltf.nodes) if idx not in to_remove]
 
+                for node in self.__gltf.nodes:
+                    node.index = old_to_new[node.index]
+
     def add_scene(self, scene: gltf2_io.Scene, active: bool = False, export_settings=None):
         """
         Add a scene to the glTF.
@@ -412,6 +415,13 @@ class GlTF2Exporter:
         :param property: A property type object that should be converted to a reference
         :return: a reference or the object itself if it is not child or root
         """
+        if isinstance(property, gltf2_io.Node):
+            if property.index is None:
+                property.index = len(self.__gltf.nodes)
+                self.__gltf.nodes.append(property)
+
+            return property.index
+
         gltf_list = self.__childOfRootPropertyTypeLookup.get(type(property), None)
         if gltf_list is None:
             # The object is not of a child of root --> don't convert to reference
