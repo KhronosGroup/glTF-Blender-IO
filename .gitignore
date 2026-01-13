@@ -14,3 +14,4 @@ node_modules
 /tests_out
 __pycache__
 *.pyc
+.vscode/
