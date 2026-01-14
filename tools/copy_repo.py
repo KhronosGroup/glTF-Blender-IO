@@ -14,22 +14,38 @@
 
 # This script is used to copy this repository to blender code repository
 
-
+import sys
 from os import walk, makedirs, remove
 import argparse
 from os.path import dirname, realpath, isdir, splitext, join, isfile
 from shutil import copyfile
+from subprocess import run
+
+autopep8_args = [
+    "/home/julien/blender-git/blender/lib/linux_x64/python/bin/python3.11",
+    "/home/julien/blender-git/blender/lib/linux_x64/python/lib/python3.11/site-packages/autopep8.py",
+    "--in-place",
+    "--recursive"
+]
+
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-r", "--repo", required=False, help="repo path")
 ap.add_argument("-b", "--bump", required=False, action="store_true", help="bump to +1 minor version number")
 ap.add_argument("-w", "--rewrite", required=False, action="store_true", help="rewrite SPDX license identifiers")
-ap.add_argument("-o", "--rewriteold", required=False, action="store_true", help="rewrite SPDX license identifiers before 4.0")
+ap.add_argument("-o", "--rewriteold", required=False, action="store_true",
+                help="rewrite SPDX license identifiers before 4.0")
 args = vars(ap.parse_args())
 
 root = dirname(realpath(__file__))
 INPUT = root + "/../addons/"
 
+# Apply autopep8 before copying
+autopep8_args.append(INPUT)
+print("Applying autopep8...")
+run(autopep8_args)
+
+print("Bumping version...")
 # On glTF-Blender-IO repo, increase version number if needed
 if args["bump"] is True:
     if args["repo"] is None:
@@ -57,7 +73,8 @@ if args["bump"] is True:
                         print("Can't find version properly")
                         sys.exit()
 
-                    new_line = "    \"version\": (" + versions[0] + "," + versions[1] + ", " + str(int(versions[2]) + 1) + "),"
+                    new_line = "    \"version\": (" + versions[0] + "," + \
+                        versions[1] + ", " + str(int(versions[2]) + 1) + "),"
                     break
                 except:
                     print("Can't find version")
@@ -74,6 +91,7 @@ if args["bump"] is True:
                     f_write.write(l + "\n")
 
 # Copy it on blender repo
+print("Copying files...")
 if args["repo"] is not None:
     if args["repo"][-1] != "/":
         args["repo"] += "/"
@@ -100,7 +118,7 @@ if args["repo"] is not None:
                         for idx, l in enumerate(fr.readlines()):
                             if args['rewrite'] is True:
                                 if idx == 0:
-                                    txt = l[12:-2] #remove Copyright word (and point at end of line)
+                                    txt = l[12:-2]  # remove Copyright word (and point at end of line)
                                     txt = "# SPDX-FileCopyrightText: " + txt + "\n"
                                     fw.write(txt)
                                 elif idx == 1:
