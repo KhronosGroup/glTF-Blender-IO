@@ -1,1 +1,1 @@
-python /home/julien/blender-git/blender/lib/linux_x64/python/lib/python3.11/site-packages/autopep8.py --ignore E721,E722,E402,E501,W690 --aggressive --in-place --max-line-length 120 --recursive addons/
+/home/julien/blender-git/blender/lib/linux_x64/python/bin/python3.11 /home/julien/blender-git/blender/lib/linux_x64/python/lib/python3.11/site-packages/autopep8.py --in-place --recursive addons/
