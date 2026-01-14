@@ -535,7 +535,7 @@ class PrimitiveCreator:
 
                         # Active Vertex Color
                         if (base_material is not None and self.export_settings['gltf_vertex_color'] == "ACTIVE") or (
-                            base_material is None and self.export_settings['gltf_active_vertex_color_when_no_material'] is True):
+                                base_material is None and self.export_settings['gltf_active_vertex_color_when_no_material'] is True):
                             if self.blender_mesh.color_attributes.render_color_index != -1:
                                 vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
                                 vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name

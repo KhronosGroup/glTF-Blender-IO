@@ -508,8 +508,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
              'Placeholder',
              'Do not export materials, but write multiple primitive groups per mesh, keeping material slot information'),
             ('VIEWPORT',
-            'Viewport',
-            'Export minimal materials as defined in Viewport display properties'),
+             'Viewport',
+             'Export minimal materials as defined in Viewport display properties'),
             ('NONE',
              'No export',
              'Do not export materials, and combine mesh primitive groups, losing material slot information')),
@@ -698,7 +698,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         name='Sampling Interpolation Fallback',
         items=(('LINEAR', 'Linear', 'Linear interpolation between keyframes'),
                ('STEP', 'Step', 'No interpolation between keyframes'),
-        ),
+               ),
         description='Interpolation fallback for sampled animations, when the property is not keyed',
         default='LINEAR'
     )
@@ -1114,7 +1114,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             if not hasattr(context.scene, "gltf_action_filter") and self.export_action_filter:
                 bpy.types.Scene.gltf_action_filter = bpy.props.CollectionProperty(type=GLTF2_filter_action)
                 bpy.types.Scene.gltf_action_filter_active = bpy.props.IntProperty()
-
 
         # Get log level from parameters
         # If not set, get it from Blender app debug value
@@ -1835,6 +1834,7 @@ def export_panel_gltfpack(layout, operator):
         col.prop(operator, 'export_gltfpack_noq')
         col.prop(operator, 'export_gltfpack_kn')
 
+
 def export_panel_user_extension(context, layout):
     for draw in exporter_extension_layout_draw.values():
         draw(context, layout)
@@ -2090,6 +2090,7 @@ def import_mesh_panel(layout, operator):
         body.prop(operator, 'merge_vertices')
         body.prop(operator, 'import_merge_material_slots')
 
+
 def import_bone_panel(layout, operator):
     header, body = layout.panel("GLTF_import_bone", default_closed=False)
     header.label(text="Bones & Skin")
@@ -2109,6 +2110,7 @@ def import_ux_panel(layout, operator):
         if operator.import_scene_as_collection is True:
             body.prop(operator, 'import_select_created_objects')
         body.prop(operator, 'import_scene_extras')
+
 
 def import_texture_panel(layout, operator):
     header, body = layout.panel("GLTF_import_texture", default_closed=False)

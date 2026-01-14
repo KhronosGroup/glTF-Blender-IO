@@ -256,11 +256,11 @@ def gather_track_animations(obj_uuid: int,
                         tracks[track_data.name] = []
                     tracks[track_data.name].append(offset + len(animations) - 1)  # Store index of animation in animations
             elif export_settings['gltf_merge_animation'] == "ACTION":
-                pass # This can't happen here, as we bake per NLA track
+                pass  # This can't happen here, as we bake per NLA track
             elif export_settings['gltf_merge_animation'] == "NONE":
-                pass # This can't happen here, as we bake per NLA track
+                pass  # This can't happen here, as we bake per NLA track
             else:
-                pass # This can't happen here, as we bake per NLA track
+                pass  # This can't happen here, as we bake per NLA track
 
         # Restoring muting
         if track_data.on_type == "OBJECT":
@@ -467,7 +467,6 @@ def prepare_tracks_range(obj_uuid, track_data, export_settings, with_driver=True
     # initialize (avoid lint error)
     frame_start = 0
     frame_end = 0
-
 
     for idx, btrack in enumerate(tracks):
         frame_start = btrack.frame_start if idx == 0 else min(frame_start, btrack.frame_start)

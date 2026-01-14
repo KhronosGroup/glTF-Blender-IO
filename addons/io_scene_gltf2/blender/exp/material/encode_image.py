@@ -467,6 +467,7 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_sett
             export_settings['log'].error("Error while saving image: %s" % e)
             return b''
 
+
 class TmpImageGuard:
     """Guard to automatically clean up temp images (use it with `with`)."""
 

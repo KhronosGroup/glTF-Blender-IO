@@ -27,7 +27,7 @@ from ..sampling_cache import get_cache_data
 @cached
 def gather_sk_sampled_keyframes(obj_uuid,
                                 action_name,
-                                slot_identifier, #TODOSLOT
+                                slot_identifier,  # TODOSLOT
                                 export_settings):
 
     start_frame = export_settings['ranges'][obj_uuid][action_name]['start']

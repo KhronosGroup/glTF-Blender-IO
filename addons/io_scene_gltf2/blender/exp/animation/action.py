@@ -41,7 +41,7 @@ class ActionsData:
 
     def add_action(self, action, force_new_action=False):
         if force_new_action:
-            action.active = False # If we force a new action, it is not active (but in NLA or broadcasted)
+            action.active = False  # If we force a new action, it is not active (but in NLA or broadcasted)
             if id(action.action) not in self.actions.keys():
                 self.actions[id(action.action)] = []
             self.actions[id(action.action)].append(action)
@@ -627,7 +627,7 @@ def gather_action_animations(obj_uuid: int,
                     all_channels.extend(channels)
                 for (obj_uuid, type_, prop, bone) in to_be_sampled:
                     if type_ == "BONE":
-                        channel = gather_sampled_bone_channel( #TODOSLOT
+                        channel = gather_sampled_bone_channel(  # TODOSLOT
                             obj_uuid,
                             bone,
                             prop,

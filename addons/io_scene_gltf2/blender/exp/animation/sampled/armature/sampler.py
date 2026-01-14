@@ -200,7 +200,6 @@ def __convert_keyframes(armature_uuid, bone_name, channel, keyframes, action_nam
     component_type = gltf2_io_constants.ComponentType.Float
     data_type = gltf2_io_constants.DataType.vec_type_from_num(len(keyframes[0].value))
 
-
     output = gather_accessor(
         gltf2_io_binary_data.BinaryData.from_list(values, component_type),
         component_type,
