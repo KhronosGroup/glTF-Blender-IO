@@ -210,7 +210,8 @@ def _align_frame_start(reference_frame_start, frame, export_settings):
     if export_settings['gltf_frame_step'] == 1:
         return frame
 
-    return reference_frame_start + export_settings['gltf_frame_step'] * ceil((frame - reference_frame_start) / export_settings['gltf_frame_step'])
+    return reference_frame_start + export_settings['gltf_frame_step'] * \
+        ceil((frame - reference_frame_start) / export_settings['gltf_frame_step'])
 
 
 def prepare_actions_range(export_settings):
@@ -670,7 +671,8 @@ def gather_action_animations(obj_uuid: int,
                     all_channels)
 
             # If we are in a SK animation (without any TRS animation), and we need to bake
-            if len([a for a in blender_actions.values() if len([s for s in a.slots if s.target_id_type == "OBJECT"]) != 0]) == 0 and slot.target_id_type == "KEY":
+            if len([a for a in blender_actions.values() if len(
+                    [s for s in a.slots if s.target_id_type == "OBJECT"]) != 0]) == 0 and slot.target_id_type == "KEY":
                 if export_settings['gltf_bake_animation'] is True and export_settings['gltf_force_sampling'] is True:
                     # We also have to check if this is a skinned mesh, because we don't have to force animation baking on this case
                     # (skinned meshes TRS must be ignored, says glTF specification)

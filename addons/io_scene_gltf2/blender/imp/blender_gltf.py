@@ -59,7 +59,8 @@ class BlenderGlTF():
 
         # If needed, create not used materials
         if gltf.import_settings['import_unused_materials']:
-            for mat_idx in [i for i in range(len(gltf.data.materials)) if len(gltf.data.materials[i].blender_material) == 0]:
+            for mat_idx in [i for i in range(len(gltf.data.materials)) if len(
+                    gltf.data.materials[i].blender_material) == 0]:
                 BlenderMaterial.create(gltf, mat_idx, None)
                 # Force material users (fake user)
                 bpy.data.materials[gltf.data.materials[mat_idx].blender_material[None]].use_fake_user = True
