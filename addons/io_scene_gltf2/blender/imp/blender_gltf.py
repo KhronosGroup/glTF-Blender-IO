@@ -205,16 +205,26 @@ class BlenderGlTF():
                         tex.extensions["KHR_texture_transform"]["animations"] = {}
 
                 texs_ext = [
-                    mat.extensions["KHR_materials_volume"].get("thicknessTexture") if mat.extensions and "KHR_materials_volume" in mat.extensions else None,
-                    mat.extensions["KHR_materials_transmission"].get("transmissionTexture") if mat.extensions and "KHR_materials_transmission" in mat.extensions else None,
-                    mat.extensions["KHR_materials_specular"].get("specularTexture") if mat.extensions and "KHR_materials_specular" in mat.extensions else None,
-                    mat.extensions["KHR_materials_specular"].get("specularColorTexture") if mat.extensions and "KHR_materials_specular" in mat.extensions else None,
-                    mat.extensions["KHR_materials_sheen"].get("sheenColorTexture") if mat.extensions and "KHR_materials_sheen" in mat.extensions else None,
-                    mat.extensions["KHR_materials_sheen"].get("sheenRoughnessTexture") if mat.extensions and "KHR_materials_sheen" in mat.extensions else None,
-                    mat.extensions["KHR_materials_clearcoat"].get("clearcoatTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
-                    mat.extensions["KHR_materials_clearcoat"].get("clearcoatRoughnessTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
-                    mat.extensions["KHR_materials_clearcoat"].get("clearcoatNormalTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
-                    mat.extensions["KHR_materials_anisotropy"].get("anisotropyTexture") if mat.extensions and "KHR_materials_anisotropy" in mat.extensions else None,
+                    mat.extensions["KHR_materials_volume"].get(
+                        "thicknessTexture") if mat.extensions and "KHR_materials_volume" in mat.extensions else None,
+                    mat.extensions["KHR_materials_transmission"].get(
+                        "transmissionTexture") if mat.extensions and "KHR_materials_transmission" in mat.extensions else None,
+                    mat.extensions["KHR_materials_specular"].get(
+                        "specularTexture") if mat.extensions and "KHR_materials_specular" in mat.extensions else None,
+                    mat.extensions["KHR_materials_specular"].get(
+                        "specularColorTexture") if mat.extensions and "KHR_materials_specular" in mat.extensions else None,
+                    mat.extensions["KHR_materials_sheen"].get(
+                        "sheenColorTexture") if mat.extensions and "KHR_materials_sheen" in mat.extensions else None,
+                    mat.extensions["KHR_materials_sheen"].get(
+                        "sheenRoughnessTexture") if mat.extensions and "KHR_materials_sheen" in mat.extensions else None,
+                    mat.extensions["KHR_materials_clearcoat"].get(
+                        "clearcoatTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
+                    mat.extensions["KHR_materials_clearcoat"].get(
+                        "clearcoatRoughnessTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
+                    mat.extensions["KHR_materials_clearcoat"].get(
+                        "clearcoatNormalTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
+                    mat.extensions["KHR_materials_anisotropy"].get(
+                        "anisotropyTexture") if mat.extensions and "KHR_materials_anisotropy" in mat.extensions else None,
                 ]
 
                 for tex in [t for t in texs_ext if t is not None]:

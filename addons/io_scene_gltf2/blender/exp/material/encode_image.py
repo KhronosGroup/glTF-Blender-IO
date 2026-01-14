@@ -443,7 +443,8 @@ class ExportImage:
 
         # We don't manage UDIM packed image, so this could not happen to be here
         # Lets display an error
-        export_settings['log'].error("UDIM packed images are not supported for export. Please unpack them before exporting.")
+        export_settings['log'].error(
+            "UDIM packed images are not supported for export. Please unpack them before exporting.")
         return b''
 
 

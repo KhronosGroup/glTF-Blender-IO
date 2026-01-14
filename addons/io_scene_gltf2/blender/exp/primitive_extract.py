@@ -541,8 +541,10 @@ class PrimitiveCreator:
                                 vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
                         # Named Vertex Color
                         elif (base_material is not None and self.export_settings['gltf_vertex_color'] == "NAME"):
-                            vc_color_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(self.export_settings['gltf_vertex_color_name']) != -1 else None
-                            vc_alpha_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(self.export_settings['gltf_vertex_color_name']) != -1 else None
+                            vc_color_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(
+                                self.export_settings['gltf_vertex_color_name']) != -1 else None
+                            vc_alpha_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(
+                                self.export_settings['gltf_vertex_color_name']) != -1 else None
 
                         if vc_color_name is not None:
 
@@ -559,7 +561,8 @@ class PrimitiveCreator:
 
                             elif materials_use_vc is None:
                                 materials_use_vc = vc_key
-                                add_alpha = True  # As we are using the active Vertex Color (or named) without checking node tree, we need to add alpha
+                                # As we are using the active Vertex Color (or named) without checking node tree, we need to add alpha
+                                add_alpha = True
                                 self.vc_infos.append({
                                     'color': vc_color_name,
                                     'alpha': vc_alpha_name,
@@ -590,8 +593,10 @@ class PrimitiveCreator:
 
                     if self.export_settings['gltf_vertex_color'] == "NAME":
                         # Even if we have something in node tree, we need to use the named Vertex Color
-                        vc_color_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(self.export_settings['gltf_vertex_color_name']) != -1 else None
-                        vc_alpha_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(self.export_settings['gltf_vertex_color_name']) != -1 else None
+                        vc_color_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(
+                            self.export_settings['gltf_vertex_color_name']) != -1 else None
+                        vc_alpha_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(
+                            self.export_settings['gltf_vertex_color_name']) != -1 else None
 
                     else:
                         if material_info['vc_info']['color_type'] == "name":
