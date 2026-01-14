@@ -804,7 +804,7 @@ class VExportTree:
                         continue  # Not a leaf bone
 
                     self.nodes[bone_uuid
-                                ].matrix_world_tail = armature.matrix_world @ Matrix.Translation(bone.tail) @ self.axis_basis_change
+                               ].matrix_world_tail = armature.matrix_world @ Matrix.Translation(bone.tail) @ self.axis_basis_change
 
                 bpy.ops.object.mode_set(mode="OBJECT")
 
@@ -813,8 +813,8 @@ class VExportTree:
 
             # If we are exporting only deform bones, we need to check if this bone is a def bone
             if self.export_settings['gltf_def_bones'] is True \
-                and self.nodes[bone_uuid].use_deform is False:
-                    continue
+                    and self.nodes[bone_uuid].use_deform is False:
+                continue
 
             bone_node = self.nodes[bone_uuid]
 

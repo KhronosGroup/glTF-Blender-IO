@@ -29,7 +29,6 @@ import sys
 import traceback
 
 
-
 def from_int(x):
     assert isinstance(x, int) and not isinstance(x, bool)
     return x

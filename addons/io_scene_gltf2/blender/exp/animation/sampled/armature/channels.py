@@ -44,7 +44,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
             # Not bake situation
             channels_animated, to_be_sampled, extra_channels = get_channel_groups(
                 armature_uuid, bpy.data.actions[blender_action_name],
-                    bpy.data.actions[blender_action_name].slots[slot_identifier], export_settings)
+                bpy.data.actions[blender_action_name].slots[slot_identifier], export_settings)
             for chan in [chan for chan in channels_animated.values() if chan['bone'] is not None]:
                 for prop in chan['properties'].keys():
                     list_of_animated_bone_channels[(chan['bone'], get_channel_from_target(get_target(prop)))] = get_gltf_interpolation(
@@ -179,7 +179,7 @@ def __gather_sampler(
         bone,
         channel,
         action_name,
-        slot_identifier, #TODOSLOT
+        slot_identifier,  # TODOSLOT
         node_channel_is_animated,
         node_channel_interpolation,
         export_settings):
@@ -188,7 +188,7 @@ def __gather_sampler(
         bone,
         channel,
         action_name,
-        slot_identifier, #TODOSLOT
+        slot_identifier,  # TODOSLOT
         node_channel_is_animated,
         node_channel_interpolation,
         export_settings

@@ -381,6 +381,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
 
     return result
 
+
 def __keep_material_info(materials, originals, export_settings):
     for m in [m for m in materials if m is not None]:
         if 'material_identifiers' not in export_settings.keys():
@@ -389,6 +390,7 @@ def __keep_material_info(materials, originals, export_settings):
             export_settings['material_identifiers'][id(m)] = m
         else:
             export_settings['material_identifiers'][id(m)] = m.original
+
 
 def __gather_mesh_from_nonmesh(blender_object, export_settings):
     """Handles curves, surfaces, text, etc."""

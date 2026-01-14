@@ -55,7 +55,7 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, s
             object_uuid,
             p,
             blender_action_name,
-            slot_identifier, #TODOSLOT
+            slot_identifier,  # TODOSLOT
             p in list_of_animated_channels.keys(),
             list_of_animated_channels[p] if p in list_of_animated_channels.keys() else get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings),
             export_settings
