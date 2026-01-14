@@ -104,7 +104,8 @@ def from_socket(start_socket: NodeTreeSearchResult,
 
             if linked_node.type == "GROUP_INPUT":
                 socket = [sock for sock in group_path[-1].inputs if sock.name == link.from_socket.name][0]
-                linked_results = __search_from_socket(socket, shader_node_filter, search_path + [link], group_path[:-1].copy())
+                linked_results = __search_from_socket(socket, shader_node_filter,
+                                                      search_path + [link], group_path[:-1].copy())
                 if linked_results:
                     # add the link to the current path
                     search_path.append(link)

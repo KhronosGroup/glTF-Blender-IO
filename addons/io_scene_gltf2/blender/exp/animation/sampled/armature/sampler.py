@@ -223,7 +223,8 @@ def __gather_interpolation(node_channel_is_animated, node_channel_interpolation,
         if node_channel_is_animated is False:
             return "STEP"
         elif node_channel_interpolation == "CUBICSPLINE":
-            return export_settings['gltf_sampling_interpolation_fallback']  # We can't have a single keyframe with CUBICSPLINE
+            # We can't have a single keyframe with CUBICSPLINE
+            return export_settings['gltf_sampling_interpolation_fallback']
         else:
             return node_channel_interpolation
     else:

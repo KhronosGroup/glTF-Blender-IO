@@ -549,7 +549,8 @@ def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
     # Set polys smooth/flat
     set_poly_smoothing(gltf, pymesh, mesh, vert_normals, loop_vidxs)
     has_loose_edges = len(edge_vidxs) != 0  # need to calc_loose_edges for them to show up
-    mesh.update(calc_edges=True, calc_edges_loose=has_loose_edges)  # Make sure edges are calculated (new for Blender 5.1+)
+    # Make sure edges are calculated (new for Blender 5.1+)
+    mesh.update(calc_edges=True, calc_edges_loose=has_loose_edges)
     mesh.validate()
 
     if has_normals:
