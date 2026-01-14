@@ -51,12 +51,8 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
                         chan['properties'][prop][0].keyframe_points[0].interpolation, export_settings)  # Could be exported without sampling : keep interpolation
 
             for _, _, chan_prop, chan_bone in [chan for chan in to_be_sampled if chan[1] == "BONE"]:
-                list_of_animated_bone_channels[
-                    (
-                        chan_bone,
-                        chan_prop,
-                    )
-                ] = get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings)  # if forced to be sampled, keep the interpolation chosen by the user
+                list_of_animated_bone_channels[(chan_bone, chan_prop, )] = get_gltf_interpolation(
+                    export_settings['gltf_sampling_interpolation_fallback'], export_settings)  # if forced to be sampled, keep the interpolation chosen by the user
     else:
         pass
         # There is no animated channels (because if it was, we would have a slot_identifier)
@@ -96,15 +92,10 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
 
     for (p, i) in armature_channels:
         armature_channel = gather_sampled_object_channel(
-            armature_uuid,
-            p,
-            blender_action_name,
-            slot_identifier,
-            p in [a[0] for a in animated_channels],
-            [c[1] for c in animated_channels if c[0] == p][0] if p in [a[0]
-                                                                       for a in animated_channels] else bake_interpolation,
-            export_settings
-        )
+            armature_uuid, p, blender_action_name, slot_identifier, p in [
+                a[0] for a in animated_channels], [
+                c[1] for c in animated_channels if c[0] == p][0] if p in [
+                a[0] for a in animated_channels] else bake_interpolation, export_settings)
 
         if armature_channel is not None:
             channels.append(armature_channel)

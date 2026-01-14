@@ -157,8 +157,8 @@ def datacache(func):
         # all is already cached
         else:
             # Here are the key used: result[obj_uuid][action_name][slot_identifier][path][bone][frame]
-            return func.__cache[cache_key_args[1]][cache_key_args[3]
-                                                   ][cache_key_args[6]][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
+            return func.__cache[cache_key_args[1]][cache_key_args[3]][cache_key_args[6]
+                                                                      ][cache_key_args[0]][cache_key_args[2]][cache_key_args[4]]
     return wrapper_objectcache
 
 

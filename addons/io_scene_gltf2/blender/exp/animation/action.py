@@ -355,8 +355,8 @@ def prepare_actions_range(export_settings):
                     if obj_dr not in export_settings['ranges']:
                         export_settings['ranges'][obj_dr] = {}
                     export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid] = {}
-                    export_settings['ranges'][obj_dr][obj_uuid + "_" +
-                                                      obj_uuid]['start'] = _align_frame_start(start_frame_reference, bpy.context.scene.frame_start, export_settings)
+                    export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid]['start'] = _align_frame_start(
+                        start_frame_reference, bpy.context.scene.frame_start, export_settings)
                     export_settings['ranges'][obj_dr][obj_uuid + "_" + obj_uuid]['end'] = bpy.context.scene.frame_end
 
     if (export_settings['gltf_negative_frames'] == "SLIDE"
@@ -646,7 +646,8 @@ def gather_action_animations(obj_uuid: int,
                             export_settings)
                     elif type_ == "OBJECT":
                         channel = gather_sampled_object_channel(
-                            obj_uuid, prop, blender_action.name, slot.slot.identifier, True, get_gltf_interpolation(export_settings['gltf_sampling_interpolation_fallback'], export_settings), export_settings)
+                            obj_uuid, prop, blender_action.name, slot.slot.identifier, True, get_gltf_interpolation(
+                                export_settings['gltf_sampling_interpolation_fallback'], export_settings), export_settings)
                     elif type_ == "SK":
                         channel = gather_sampled_sk_channel(
                             obj_uuid, blender_action.name, slot.slot.identifier, export_settings)
@@ -838,8 +839,10 @@ def __get_blender_actions(obj_uuid: str,
             else:
                 # Store Action info
                 new_action = ActionData(blender_object.animation_data.action)
-                new_action.add_slot(blender_object.animation_data.action_slot,
-                                    blender_object.animation_data.action_slot.target_id_type, None)  # Active action => No track
+                new_action.add_slot(
+                    blender_object.animation_data.action_slot,
+                    blender_object.animation_data.action_slot.target_id_type,
+                    None)  # Active action => No track
                 actions.add_action(new_action)
 
         # Collect associated strips from NLA tracks.

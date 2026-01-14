@@ -1,0 +1,35 @@
+[tool.autopep8]
+
+max_line_length = 120
+
+ignore = [
+    # Info: Use `isinstance()` instead of comparing types directly.
+    # Why disable? Changes code logic, in rare cases we want to compare exact types.
+    "E721",
+    # Info: Fix bare except.
+    # Why disable? Disruptive, leave our exceptions alone.
+    "E722",
+    # Info: Fix module level import not at top of file.
+    # Why disable? Re-ordering imports is disruptive and breaks some scripts
+    # that need to check if a module has already been loaded in the case of reloading.
+    "E402",
+    # Info: Fix various deprecated code (via lib2to3)
+    # Why disable? Does nothing besides incorrectly adding a duplicate import,
+    # could be reported as a bug except this is likely to be removed soon, see:
+    # https://github.com/python/cpython/issues/84540.
+    "W690",
+]
+
+# Use aggressive as many useful edits are disabled unless it's enabled.
+# Any edits which are overly disruptive or risky can be removed in the `ignore` list.
+aggressive = 2
+
+# Omit settings such as `jobs`, `in_place` & `recursive` as they can cause editor utilities that auto-format on save
+# to fail if the STDIN/STDOUT is used for formatting (which isn't compatible with these options).
+
+# Black shouldn't be used as a formatter. But if it's accidentally
+# used, it certainly shouldn't change all the quote marks around
+# strings. This simply makes such a mistake easier to recover from.
+[tool.black]
+skip-string-normalization = true
+line-length = 120
