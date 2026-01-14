@@ -41,11 +41,11 @@ def gather_gltf2(export_settings):
     elif export_settings['gltf_collection'] == "" and export_settings['gltf_active_scene'] is True:
         # If no collection export and active scene export, we need to export only the active scene
         scenes_to_export = [
-        scene for scene in bpy.data.scenes if scene.name == store_user_scene.name]
+            scene for scene in bpy.data.scenes if scene.name == store_user_scene.name]
     elif export_settings['gltf_collection'] != "":
         # If collection export, we need to export only the collection, so keeping only the active scene
         scenes_to_export = [
-        scene for scene in bpy.data.scenes if scene.name == store_user_scene.name]
+            scene for scene in bpy.data.scenes if scene.name == store_user_scene.name]
     else:
         # This should never happen
         raise Exception("Unknown export settings")
@@ -160,6 +160,7 @@ def __gather_extras(blender_object, export_settings):
             return generate_extras(bpy.data.collections[export_settings['gltf_collection']])
         return generate_extras(blender_object)
     return None
+
 
 def __gather_name(blender_scene, export_settings):
     if export_settings['gltf_collection']:
