@@ -804,8 +804,8 @@ class VExportTree:
                     if len([c for c in self.nodes[bone_uuid].children if self.nodes[c].blender_type == VExportNode.BONE]) != 0:
                         continue  # Not a leaf bone
 
-                    self.nodes[bone_uuid
-                               ].matrix_world_tail = armature.matrix_world @ Matrix.Translation(bone.tail) @ self.axis_basis_change
+                    self.nodes[bone_uuid].matrix_world_tail = armature.matrix_world @ Matrix.Translation(
+                        bone.tail) @ self.axis_basis_change
 
                 bpy.ops.object.mode_set(mode="OBJECT")
 
