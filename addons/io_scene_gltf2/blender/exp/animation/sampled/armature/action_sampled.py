@@ -62,5 +62,6 @@ def gather_action_armature_sampled(armature_uuid: str,
     return channels, extra_samplers
 
 
-def __gather_channels(armature_uuid, blender_action_name, slot_identifier, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
+def __gather_channels(armature_uuid, blender_action_name, slot_identifier,
+                      export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     return gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_identifier, export_settings)
