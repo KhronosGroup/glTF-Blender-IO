@@ -17,7 +17,7 @@ from ..com import conversion as gltf2_blender_conversion
 import numpy as np
 
 
-def gather_point_cloud(blender_mesh, export_settings):
+def gather_point_cloud(blender_pointcloud, export_settings):
 
     primitives = []
 
@@ -27,28 +27,28 @@ def gather_point_cloud(blender_mesh, export_settings):
 
     # Position
     locs = np.empty(
-        len(blender_mesh.attributes['position'].data) * 3, dtype=np.float32)
+        len(blender_pointcloud.attributes['position'].data) * 3, dtype=np.float32)
     position_attribute = gltf2_blender_conversion.get_attribute(
-        blender_mesh.attributes, 'position', 'FLOAT_VECTOR', 'POINT')
+        blender_pointcloud.attributes, 'position', 'FLOAT_VECTOR', 'POINT')
     source = position_attribute.data if position_attribute else None
     foreach_attribute = 'vector'
     if source:
         source.foreach_get(foreach_attribute, locs)
-    locs = locs.reshape(len(blender_mesh.attributes['position'].data), 3)
+    locs = locs.reshape(len(blender_pointcloud.attributes['position'].data), 3)
 
     # Radius
     radius = np.empty(
-        len(blender_mesh.attributes['radius'].data), dtype=np.float32)
+        len(blender_pointcloud.attributes['radius'].data), dtype=np.float32)
     radius_attribute = gltf2_blender_conversion.get_attribute(
-        blender_mesh.attributes, 'radius', 'FLOAT', 'POINT')
+        blender_pointcloud.attributes, 'radius', 'FLOAT', 'POINT')
     source = radius_attribute.data if radius_attribute else None
     foreach_attribute = 'value'
     if source:
         source.foreach_get(foreach_attribute, radius)
-    radius = radius.reshape(len(blender_mesh.attributes['radius'].data))
+    radius = radius.reshape(len(blender_pointcloud.attributes['radius'].data))
 
     # Get any other attributes that may be present, starting with an underscore
-    custom_attributes = __get_custom_attributes(blender_mesh, export_settings)
+    custom_attributes = __get_custom_attributes(blender_pointcloud, export_settings)
 
     custom_attributes['POSITION'] = {
         'data': locs,
@@ -74,9 +74,9 @@ def gather_point_cloud(blender_mesh, export_settings):
     return primitives
 
 
-def __get_custom_attributes(blender_mesh, export_settings):
+def __get_custom_attributes(blender_pointcloud, export_settings):
     custom_attributes = {}
-    for attribute in blender_mesh.attributes:
+    for attribute in blender_pointcloud.attributes:
         if attribute.domain != 'POINT':
             continue
         if attribute.name in ['position', 'radius']:
@@ -114,8 +114,6 @@ def __get_custom_attributes(blender_mesh, export_settings):
         elif attribute.data_type == "FLOAT4X4":
             attribute.data.foreach_get('value', data)
             data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "FLOAT_VECTOR_4":  # Specific case for tangent
-            pass  # TODOPC
         elif attribute.data_type == "INT":
             attribute.data.foreach_get('value', data)
             data = data.reshape(-1, len_attr)
