@@ -316,7 +316,8 @@ class BlenderNode():
                 cache_key = None  # don't use the cache at all
 
         if cache_key is not None and cache_key in pymesh.blender_name:
-            mesh = bpy.data.meshes[pymesh.blender_name[cache_key]] if is_point_cloud is False else bpy.data.pointclouds[pymesh.blender_name[cache_key]]
+            mesh = bpy.data.meshes[pymesh.blender_name[cache_key]
+                                   ] if is_point_cloud is False else bpy.data.pointclouds[pymesh.blender_name[cache_key]]
         else:
             if not is_point_cloud:
                 gltf.log.info("Blender create Mesh node {}".format(pymesh.name or pynode.mesh))
