@@ -3401,6 +3401,55 @@ describe('Exporter', function () {
 
             });
 
+            it('export object point cloud', function () {
+                let gltfPath = path.resolve(outDirPath, '38_pointcloud_object.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                assert.strictEqual(asset.meshes.length, 1);
+                const mesh = asset.meshes[0];
+                assert.strictEqual(mesh.primitives.length, 1);
+                const primitive = mesh.primitives[0];
+                assert.strictEqual(primitive.mode, 0); // POINTS
+
+                const positions = getAccessorData(gltfPath, asset, primitive.attributes.POSITION, bufferCache);
+                assert.strictEqual(positions.length, 1200); // 400 points * 3 components
+
+                const colors = getAccessorData(gltfPath, asset, primitive.attributes._color, bufferCache);
+                assert.strictEqual(colors.length, 1600); // RGBA : 400 points * 4 components
+                assert.equalEpsilon(colors[0], 0.1);
+                assert.equalEpsilon(colors[1], 0.2);
+                assert.equalEpsilon(colors[2], 0.3);
+                assert.equalEpsilon(colors[3], 1.0);
+
+                const tests = getAccessorData(gltfPath, asset, primitive.attributes._test, bufferCache);
+                assert.strictEqual(tests.length, 400); // 400 points * 1 components
+                assert.equalEpsilon(tests[0], 0.4);
+
+            });
+
+            it('export GN Point Cloud', function () {
+                let gltfPath = path.resolve(outDirPath, '38_pointcloud_GN.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                let bufferCache = {};
+
+                assert.strictEqual(asset.meshes.length, 1);
+                const mesh = asset.meshes[0];
+                assert.strictEqual(mesh.primitives.length, 1);
+                const primitive = mesh.primitives[0];
+                assert.strictEqual(primitive.mode, 0); // POINTS
+
+                const positions = getAccessorData(gltfPath, asset, primitive.attributes.POSITION, bufferCache);
+                assert.strictEqual(positions.length, 720); // 240 points * 3 components
+
+                const tests = getAccessorData(gltfPath, asset, primitive.attributes._TEST, bufferCache);
+                assert.strictEqual(tests.length, 240); // 240 points * 1 components
+                assert.equalEpsilon(tests[0], 0.35);
+
+            });
+
         });
     });
 
