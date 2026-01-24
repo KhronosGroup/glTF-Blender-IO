@@ -22,7 +22,10 @@ from . import primitives as gltf2_blender_gather_primitives
 from .cache import cached_by_key
 
 
-def get_mesh_cache_key(blender_mesh,
+# In this file, "blender_data" referes to bpy.types.Object.data
+# So this is bpy.types.Mesh for meshes, bpy.types.PointCloud for point clouds, etc.
+
+def get_mesh_cache_key(blender_data,
                        blender_object,
                        vertex_groups,
                        modifiers,
@@ -41,7 +44,7 @@ def get_mesh_cache_key(blender_mesh,
 
     # TODO check what is really needed for modifiers
 
-    mesh_to_id_cache = blender_mesh if original_mesh is None else original_mesh
+    mesh_to_id_cache = blender_data if original_mesh is None else original_mesh
     return (
         (id(mesh_to_id_cache),),
         (modifiers,),
@@ -50,24 +53,29 @@ def get_mesh_cache_key(blender_mesh,
 
 
 @cached_by_key(key=get_mesh_cache_key)
-def gather_mesh(blender_mesh: bpy.types.Mesh,
+def gather_mesh(blender_data,
                 uuid_for_skined_data,
                 vertex_groups: bpy.types.VertexGroups,
                 modifiers: Optional[bpy.types.ObjectModifiers],
                 materials: Tuple[bpy.types.Material],
-                original_mesh: bpy.types.Mesh,
+                original_mesh,
                 export_settings
                 ) -> Optional[gltf2_io.Mesh]:
-    if not __filter_mesh(blender_mesh, vertex_groups, modifiers, export_settings):
+    if not __filter_mesh(blender_data, vertex_groups, modifiers, export_settings):
         return None
 
     mesh = gltf2_io.Mesh(
         extensions=__gather_extensions(
-            blender_mesh, vertex_groups, modifiers, export_settings), extras=__gather_extras(
-            blender_mesh, vertex_groups, modifiers, export_settings), name=__gather_name(
-                blender_mesh, vertex_groups, modifiers, export_settings), weights=__gather_weights(
-                    blender_mesh, vertex_groups, modifiers, export_settings), primitives=__gather_primitives(
-                        blender_mesh, uuid_for_skined_data, vertex_groups, modifiers, materials, export_settings), )
+            blender_data, vertex_groups, modifiers, export_settings),
+        extras=__gather_extras(
+            blender_data, vertex_groups, modifiers, export_settings),
+        name=__gather_name(
+            blender_data, vertex_groups, modifiers, export_settings),
+        weights=__gather_weights(
+            blender_data, vertex_groups, modifiers, export_settings),
+        primitives=__gather_primitives(
+            blender_data, uuid_for_skined_data, vertex_groups, modifiers, materials, export_settings),
+    )
 
     if len(mesh.primitives) == 0:
         export_settings['log'].warning("Mesh '{}' has no primitives and will be omitted.".format(mesh.name))
@@ -80,7 +88,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
     export_user_extensions('gather_mesh_hook',
                            export_settings,
                            mesh,
-                           blender_mesh,
+                           blender_data,
                            blender_object,
                            vertex_groups,
                            modifiers,
@@ -89,7 +97,7 @@ def gather_mesh(blender_mesh: bpy.types.Mesh,
     return mesh
 
 
-def __filter_mesh(blender_mesh: bpy.types.Mesh,
+def __filter_mesh(blender_data,
                   vertex_groups: bpy.types.VertexGroups,
                   modifiers: Optional[bpy.types.ObjectModifiers],
                   export_settings
@@ -97,7 +105,7 @@ def __filter_mesh(blender_mesh: bpy.types.Mesh,
     return True
 
 
-def __gather_extensions(blender_mesh: bpy.types.Mesh,
+def __gather_extensions(blender_data,
                         vertex_groups: bpy.types.VertexGroups,
                         modifiers: Optional[bpy.types.ObjectModifiers],
                         export_settings
@@ -105,7 +113,7 @@ def __gather_extensions(blender_mesh: bpy.types.Mesh,
     return None
 
 
-def __gather_extras(blender_mesh: bpy.types.Mesh,
+def __gather_extras(blender_data,
                     vertex_groups: bpy.types.VertexGroups,
                     modifiers: Optional[bpy.types.ObjectModifiers],
                     export_settings
@@ -114,18 +122,17 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     extras = {}
 
     if export_settings['gltf_extras']:
-        extras = generate_extras(blender_mesh) or {}
-
+        extras = generate_extras(blender_data) or {}
     # Not for point clouds
-    if blender_mesh.id_type == "POINTCLOUD":
+    if blender_data.id_type == "POINTCLOUD":
         return extras if extras else None
 
     # Not for GN Instances
-    if export_settings['gltf_morph'] and blender_mesh.shape_keys and ((blender_mesh.is_evaluated is True and blender_mesh.get(
-            'gltf2_mesh_applied') is not None) or blender_mesh.is_evaluated is False):
-        morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
+    if export_settings['gltf_morph'] and blender_data.shape_keys and ((blender_data.is_evaluated is True and blender_data.get(
+            'gltf2_mesh_applied') is not None) or blender_data.is_evaluated is False):
+        morph_max = len(blender_data.shape_keys.key_blocks) - 1
         if morph_max > 0:
-            extras['targetNames'] = [k.name for k in get_sk_exported(blender_mesh.shape_keys.key_blocks)]
+            extras['targetNames'] = [k.name for k in get_sk_exported(blender_data.shape_keys.key_blocks)]
 
     if extras:
         return extras
@@ -133,22 +140,22 @@ def __gather_extras(blender_mesh: bpy.types.Mesh,
     return None
 
 
-def __gather_name(blender_mesh: bpy.types.Mesh,
+def __gather_name(blender_data,
                   vertex_groups: bpy.types.VertexGroups,
                   modifiers: Optional[bpy.types.ObjectModifiers],
                   export_settings
                   ) -> str:
-    return blender_mesh.name
+    return blender_data.name
 
 
-def __gather_primitives(blender_mesh: bpy.types.Mesh,
+def __gather_primitives(blender_data,
                         uuid_for_skined_data,
                         vertex_groups: bpy.types.VertexGroups,
                         modifiers: Optional[bpy.types.ObjectModifiers],
                         materials: Tuple[bpy.types.Material],
                         export_settings
                         ) -> List[gltf2_io.MeshPrimitive]:
-    return gltf2_blender_gather_primitives.gather_primitives(blender_mesh,
+    return gltf2_blender_gather_primitives.gather_primitives(blender_data,
                                                              uuid_for_skined_data,
                                                              vertex_groups,
                                                              modifiers,
@@ -156,25 +163,25 @@ def __gather_primitives(blender_mesh: bpy.types.Mesh,
                                                              export_settings)
 
 
-def __gather_weights(blender_mesh: bpy.types.Mesh,
+def __gather_weights(blender_data,
                      vertex_groups: bpy.types.VertexGroups,
                      modifiers: Optional[bpy.types.ObjectModifiers],
                      export_settings
                      ) -> Optional[List[float]]:
 
     # Not for Point Clouds
-    if blender_mesh.id_type == "POINTCLOUD":
+    if blender_data.id_type == "POINTCLOUD":
         return None
 
-    if not export_settings['gltf_morph'] or not blender_mesh.shape_keys:
+    if not export_settings['gltf_morph'] or not blender_data.shape_keys:
         return None
 
     # Not for GN Instances
-    if blender_mesh.is_evaluated is True and blender_mesh.get('gltf2_mesh_applied') is None:
+    if blender_data.is_evaluated is True and blender_data.get('gltf2_mesh_applied') is None:
         return None
 
-    morph_max = len(blender_mesh.shape_keys.key_blocks) - 1
+    morph_max = len(blender_data.shape_keys.key_blocks) - 1
     if morph_max <= 0:
         return None
 
-    return [k.value for k in get_sk_exported(blender_mesh.shape_keys.key_blocks)]
+    return [k.value for k in get_sk_exported(blender_data.shape_keys.key_blocks)]
