@@ -22,8 +22,8 @@ from shutil import copyfile
 from subprocess import run
 
 autopep8_args = [
-    "/home/julien/blender-git/blender/lib/linux_x64/python/bin/python3.11",
-    "/home/julien/blender-git/blender/lib/linux_x64/python/lib/python3.11/site-packages/autopep8.py",
+    "/home/julien/blender-git/blender/lib/linux_x64/python/bin/python3.13",
+    "/home/julien/blender-git/blender/lib/linux_x64/python/lib/python3.13/site-packages/autopep8.py",
     "--in-place",
     "--recursive"
 ]
