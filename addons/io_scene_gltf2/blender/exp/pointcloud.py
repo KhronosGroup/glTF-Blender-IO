@@ -14,6 +14,7 @@
 
 
 from ..com import conversion as gltf2_blender_conversion
+from .attribute_utils import extract_attribute_data
 import numpy as np
 
 
@@ -86,6 +87,17 @@ def __get_custom_attributes(blender_pointcloud, export_settings):
 
         len_attr = gltf2_blender_conversion.get_data_length(
             attribute.data_type)
+
+        data = extract_attribute_data(
+            attribute,
+            len(attribute.data),
+            np.float32,
+            attribute.data_type,
+            attribute.domain,
+            len_attr,
+            export_settings=export_settings
+        )
+
         data = np.empty(len(attribute.data) * len_attr, dtype=np.float32)
         if attribute.data_type == "BYTE_COLOR":
             attribute.data.foreach_get('color', data)
