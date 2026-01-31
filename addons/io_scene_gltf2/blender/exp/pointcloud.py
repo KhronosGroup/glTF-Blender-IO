@@ -98,43 +98,6 @@ def __get_custom_attributes(blender_pointcloud, export_settings):
             export_settings=export_settings
         )
 
-        data = np.empty(len(attribute.data) * len_attr, dtype=np.float32)
-        if attribute.data_type == "BYTE_COLOR":
-            attribute.data.foreach_get('color', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "INT8":
-            attribute.data.foreach_get('value', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "FLOAT2":
-            attribute.data.foreach_get('vector', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "BOOLEAN":
-            attribute.data.foreach_get('value', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "STRING":
-            attribute.data.foreach_get('value', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "FLOAT_COLOR":
-            attribute.data.foreach_get('color', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "FLOAT_VECTOR":
-            attribute.data.foreach_get('vector', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "QUATERNION":
-            attribute.data.foreach_get('value', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "FLOAT4X4":
-            attribute.data.foreach_get('value', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "INT":
-            attribute.data.foreach_get('value', data)
-            data = data.reshape(-1, len_attr)
-        elif attribute.data_type == "FLOAT":
-            attribute.data.foreach_get('value', data)
-            data = data.reshape(-1, len_attr)
-        else:
-            export_settings['log'].error(
-                "blender type not found " + attribute.data_type)
         if len_attr > 1:
             data = data.reshape(-1, len_attr)
         custom_attributes[attribute.name] = {
