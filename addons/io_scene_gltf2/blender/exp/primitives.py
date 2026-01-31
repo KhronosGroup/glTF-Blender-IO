@@ -259,7 +259,7 @@ def __gather_targets(blender_primitive, blender_data, modifiers, export_settings
     if export_settings['gltf_morph']:
 
         # Not for Point Clouds
-        if type(blender_mesh).__name__ == "PointCloud":
+        if type(blender_data).__name__ == "PointCloud":
             return None
 
         targets = []
