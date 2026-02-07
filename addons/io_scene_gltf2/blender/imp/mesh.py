@@ -93,6 +93,7 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
     attributes = {}
     attribute_type = {}
     attribute_component_type = {}
+    attribute_data_type = {}
 
     for prim in pypc.primitives:
         if 'POSITION' not in prim.attributes:
@@ -125,13 +126,18 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         custom_attrs = [k for k in prim.attributes if k.startswith('_')]
         for attr in custom_attrs:
             if attr not in attributes:  # This attribute is not yet known
+                # So set it up
                 attribute_type[attr] = gltf.data.accessors[prim.attributes[attr]].type
                 attribute_component_type[attr] = gltf.data.accessors[prim.attributes[attr]].component_type
-                attributes[attr] = np.empty(
+                # Initialize with empty data for all previous primitives
+                attributes[attr] = np.zeros(
                     dtype=ComponentType.to_numpy_dtype(attribute_component_type[attr]),
-                    shape=(0, DataType.num_elements(attribute_type[attr]))
+                    shape=(len(point_locs) - len(vs[unique_indices]), DataType.num_elements(attribute_type[attr]))
                 )
-
+                attribute_data_type[attr] = get_attribute_type(
+                    gltf.data.accessors[prim.attributes[attr]].component_type,
+                    gltf.data.accessors[prim.attributes[attr]].type
+                )
         for idx, attr in enumerate(attributes.keys()):
             if attr in prim.attributes:
                 attr_data = BinaryData.decode_accessor(gltf, prim.attributes[attr], cache=True)
@@ -154,16 +160,13 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
     # Custom Attributes
 
     for attr in attributes:
-        blender_attribute_data_type = get_attribute_type(
-            gltf.data.accessors[prim.attributes[attr]].component_type,
-            gltf.data.accessors[prim.attributes[attr]].type
-        )
+        blender_attribute_data_type = attribute_data_type[attr]
 
         if blender_attribute_data_type is None:
             continue
 
         blender_attribute = pointcloud.attributes.new(attr, blender_attribute_data_type, 'POINT')
-        if DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) == 1:
+        if DataType.num_elements(attribute_type[attr]) == 1:
             blender_attribute.data.foreach_set('value', attributes[attr].flatten())
         elif DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) > 1:
             if blender_attribute_data_type in ["BYTE_COLOR", "FLOAT_COLOR"]:
