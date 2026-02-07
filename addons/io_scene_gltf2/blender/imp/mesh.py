@@ -144,7 +144,7 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                 )
                 attributes[attr] = np.concatenate((attributes[attr], attr_data))
 
-    pointcloud.add(point_locs.shape[0])  # Add points to the point cloud
+    pointcloud.resize(point_locs.shape[0])  # Add points to the point cloud
 
     # Setup positions
     gltf.locs_batch_gltf_to_blender(point_locs)
