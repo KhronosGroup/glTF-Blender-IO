@@ -162,15 +162,14 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         if blender_attribute_data_type is None:
             continue
 
-        attr_data = BinaryData.decode_accessor(gltf, prim.attributes[attr], cache=True)
         blender_attribute = pointcloud.attributes.new(attr, blender_attribute_data_type, 'POINT')
         if DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) == 1:
-            blender_attribute.data.foreach_set('value', attr_data.flatten())
+            blender_attribute.data.foreach_set('value', attributes[attr].flatten())
         elif DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) > 1:
             if blender_attribute_data_type in ["BYTE_COLOR", "FLOAT_COLOR"]:
-                blender_attribute.data.foreach_set('color', attr_data.flatten())
+                blender_attribute.data.foreach_set('color', attributes[attr].flatten())
             else:
-                blender_attribute.data.foreach_set('vector', attr_data.flatten())
+                blender_attribute.data.foreach_set('vector', attributes[attr].flatten())
 
 
 def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
