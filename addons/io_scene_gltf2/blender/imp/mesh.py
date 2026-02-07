@@ -123,7 +123,7 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         point_locs = np.concatenate((point_locs, vs[unique_indices]))
 
         # Custom Attributes for this primitive
-        custom_attrs = [k for k in prim.attributes if k.startswith('_')]
+        custom_attrs = [k for k in prim.attributes if k.startswith('_') or k.startswith('KHR_')]
         for attr in custom_attrs:
             if attr not in attributes:  # This attribute is not yet known
                 # So set it up
