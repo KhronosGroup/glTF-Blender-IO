@@ -25,6 +25,12 @@ from ..com.blender_default import BLENDER_GLTF_SPECIAL_COLLECTION
 from . import accessors as gltf2_blender_gather_accessors
 
 
+# Helper to sort Blender objects/collections/bones alphabetically by name,
+# matching the default Outliner display order.
+def _sort_by_name(iterable):
+    return sorted(iterable, key=lambda x: x.name.lower())
+
+
 class VExportNode:
 
     OBJECT = 1
@@ -151,7 +157,8 @@ class VExportTree:
 
         if self.export_settings['gltf_hierarchy_full_collections'] is False:
             scene_eval = blender_scene.evaluated_get(depsgraph=depsgraph)
-            for blender_object in [obj.original for obj in scene_eval.objects if obj.parent is None]:
+            # Sort root objects alphabetically to match Outliner display order
+            for blender_object in _sort_by_name([obj.original for obj in scene_eval.objects if obj.parent is None]):
                 self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), False, blender_children)
         else:
             if self.export_settings['gltf_collection']:
@@ -343,7 +350,7 @@ class VExportTree:
 
         # standard children (of object, or of instance collection)
         if blender_bone is None and is_collection is False and blender_object.is_instancer is False:
-            for child_object in blender_children[blender_object]:
+            for child_object in _sort_by_name(blender_children[blender_object]):
                 if child_object.parent_bone and child_object.parent_type in ("BONE", "BONE_RELATIVE"):
                     # Object parented to bones
                     # Will be manage later
@@ -371,7 +378,7 @@ class VExportTree:
         if is_collection is False and (blender_object.instance_type ==
                                        'COLLECTION' and blender_object.instance_collection):
             if self.export_settings['gltf_hierarchy_full_collections'] is False:
-                for dupli_object in blender_object.instance_collection.all_objects:
+                for dupli_object in _sort_by_name(blender_object.instance_collection.all_objects):
                     if dupli_object.parent is not None:
                         continue
                     self.recursive_node_traverse(
@@ -384,7 +391,7 @@ class VExportTree:
                         is_children_in_collection=True)
 
                 # Some objects are parented to instance collection
-                for child in blender_children[blender_object]:
+                for child in _sort_by_name(blender_children[blender_object]):
                     self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
                                                  new_delta or delta, blender_children)
                 # Manage children collections
@@ -409,11 +416,11 @@ class VExportTree:
                     is_collection=True,
                     is_children_in_collection=True)
                 # Some objects are parented to instance collection
-                for child in blender_children[blender_object]:
+                for child in _sort_by_name(blender_children[blender_object]):
                     self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
                                                  new_delta or delta, blender_children, is_children_in_collection=True)
                 # Manage children collections
-                for child in blender_object.instance_collection.children:
+                for child in _sort_by_name(blender_object.instance_collection.children):
                     self.recursive_node_traverse(
                         child,
                         None,
@@ -425,10 +432,9 @@ class VExportTree:
 
         if is_collection is True:  # Only for gltf_hierarchy_full_collections == True
             # Manage children objects
-            collection_objects = set(blender_object.objects)
-            for child in collection_objects:
-                # On Collection, .objects returns all objects & instance collection
-                # Not only the direct children
+            for child in _sort_by_name(blender_object.objects):
+                if child.users_collection[0].name != blender_object.name:
+                    continue
 
                 # Keep only object if it has no parent, or parent is not in the collection
                 if child.parent is not None and len(child.parent.users_collection) > 0 \
@@ -439,7 +445,7 @@ class VExportTree:
                 self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
                                              new_delta or delta, blender_children)
             # Manage children collections
-            for child in blender_object.children:
+            for child in _sort_by_name(blender_object.children):
                 self.recursive_node_traverse(
                     child,
                     None,
@@ -451,7 +457,7 @@ class VExportTree:
 
         # Armature : children are bones with no parent
         if is_collection is False and blender_object.type == "ARMATURE" and blender_bone is None:
-            for b in [b for b in blender_object.pose.bones if b.parent is None]:
+            for b in _sort_by_name([b for b in blender_object.pose.bones if b.parent is None]):
                 self.recursive_node_traverse(
                     blender_object,
                     b,
@@ -463,7 +469,7 @@ class VExportTree:
 
         # Bones
         if is_collection is False and blender_object.type == "ARMATURE" and blender_bone is not None:
-            for b in blender_bone.children:
+            for b in _sort_by_name(blender_bone.children):
                 self.recursive_node_traverse(
                     blender_object,
                     b,
@@ -475,8 +481,8 @@ class VExportTree:
 
         # Object parented to bone
         if is_collection is False and blender_bone is not None:
-            for child_object in [c for c in blender_children[blender_object] if c.parent_type ==
-                                 "BONE" and c.parent_bone is not None and c.parent_bone == blender_bone.name]:
+            for child_object in _sort_by_name([c for c in blender_children[blender_object] if c.parent_type ==
+                                               "BONE" and c.parent_bone is not None and c.parent_bone == blender_bone.name]):
                 self.recursive_node_traverse(
                     child_object,
                     None,
