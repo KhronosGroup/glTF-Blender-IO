@@ -389,8 +389,11 @@ class VExportTree:
             else:
                 # Manage children objects
                 for child in blender_object.instance_collection.objects:
-                    if child.users_collection[0].name != blender_object.name:
-                        continue
+                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
+                                                 new_delta or delta, blender_children)
+
+                # Some objects are parented to instance collection
+                for child in blender_children[blender_object]:
                     self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
                                                  new_delta or delta, blender_children)
                 # Manage children collections
