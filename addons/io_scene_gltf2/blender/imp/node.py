@@ -177,7 +177,18 @@ class BlenderNode():
                 1, 1, 1))
         bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].objects.link(bpy.context.object)
         gltf.bone_shape = bpy.context.object.name
-        bpy.context.collection.objects.unlink(bpy.context.object)
+        try:
+            bpy.context.collection.objects.unlink(bpy.context.object)
+        except:
+            # If the collection was not in context, use active_collection instead.
+            gltf.active_collection.objects.unlink(bpy.context.object)
+            # Most likely reason for the context to fail if if the collection was hidden but active.
+            # Unhide from viewport
+            gltf.active_collection.hide_viewport = False
+            for child in bpy.context.view_layer.layer_collection.children:
+                # Unhide if hidden from view layer
+                if child.name == gltf.active_collection.name:
+                    child.hide_viewport = False
 
     @staticmethod
     def calc_empty_display_size(gltf, vnode_id):
