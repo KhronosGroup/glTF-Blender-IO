@@ -50,6 +50,7 @@ class glTF2ImportUserExtension:
 
     def __init__(self):
         self.properties = bpy.context.scene.ExampleImporterExtensionProperties
+        self.is_critical = True
 
     def gather_import_node_before_hook(self, vnode, gltf_node, gltf):
         if self.properties.enabled:
