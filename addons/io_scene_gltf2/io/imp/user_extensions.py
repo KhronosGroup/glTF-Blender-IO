@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+class MutatingArgument:
+    """simple wrapper to pass a value by reference"""
+    def __init__(self, value):
+        self.value = value
+
 def import_user_extensions(hook_name, gltf, *args):
     for extension in gltf.import_user_extensions:
         hook = getattr(extension, hook_name, None)
