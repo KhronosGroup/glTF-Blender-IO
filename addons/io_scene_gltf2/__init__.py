@@ -139,7 +139,7 @@ def on_export_action_filter_changed(self, context):
                 item.keep = True
                 item.action = action
 
-    else:
+    elif hasattr(bpy.data.scenes[0], "gltf_action_filter"):
         bpy.data.scenes[0].gltf_action_filter.clear()
         del bpy.types.Scene.gltf_action_filter
         del bpy.types.Scene.gltf_action_filter_active
