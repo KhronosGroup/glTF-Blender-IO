@@ -643,6 +643,18 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False,
     )
 
+    center_collection_at_axis: EnumProperty(
+        name="Center Collections at axis",
+        description="Choose in which axis to center the collection",
+        options= {'ENUM_FLAG'},
+        items=(
+            ('X', "X", "Centers the collection in the x axis"),
+            ('Y', "Y", "Centers the collection in the y axis"),
+            ('Z', "Z", "Centers the collection in the z axis"),
+        ),
+        default={'X','Y','Z'},
+    )
+
     export_extras: BoolProperty(
         name='Custom Properties',
         description='Export custom properties as glTF extras',
@@ -1195,6 +1207,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_active_scene'] = self.use_active_scene
         export_settings['gltf_collection'] = self.collection
         export_settings['gltf_at_collection_center'] = self.at_collection_center
+        export_settings['gltf_center_collection_at_axis'] = self.center_collection_at_axis
 
         export_settings['gltf_selected'] = self.use_selection
         export_settings['gltf_layers'] = True  # self.export_layers
@@ -1438,6 +1451,15 @@ def export_panel_collection(layout, operator, is_file_browser):
     header.label(text="Collection")
     if body:
         body.prop(operator, 'at_collection_center')
+        split = body.split(factor=0.4, align=False)
+        split.alignment = 'RIGHT'
+        split.active = operator.at_collection_center
+        split.label(text="Center at axis:")
+        row = split.row(align=True)
+        row.use_property_split = False
+        row.prop_enum(operator, "center_collection_at_axis", value='X')
+        row.prop_enum(operator, "center_collection_at_axis", value='Y')
+        row.prop_enum(operator, "center_collection_at_axis", value='Z')
 
 
 def export_panel_include(layout, operator, is_file_browser):
