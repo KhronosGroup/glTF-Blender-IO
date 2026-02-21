@@ -104,6 +104,7 @@ class PrimitiveCreator:
             self.blender_object = self.export_settings['vtree'].nodes[self.uuid_for_skined_data].blender_object
 
         self.use_normals = self.export_settings['gltf_normals']
+        self.only_active_uv = self.export_settings['gltf_only_active_uv']
 
         self.use_tangents = False
         if self.use_normals and self.export_settings['gltf_tangents']:
@@ -258,13 +259,21 @@ class PrimitiveCreator:
             self.blender_attributes.append(attr)
 
         # Manage uvs TEX_COORD_x
-        for tex_coord_i in range(self.tex_coord_max):
+        if self.only_active_uv and self.tex_coord_max != 0:
             attr = {}
             attr['blender_data_type'] = 'FLOAT2'
             attr['blender_domain'] = 'CORNER'
-            attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
+            attr['gltf_attribute_name'] = 'TEXCOORD_0'
             attr['get'] = self.get_function()
             self.blender_attributes.append(attr)
+        else:
+            for tex_coord_i in range(self.tex_coord_max):
+                attr = {}
+                attr['blender_data_type'] = 'FLOAT2'
+                attr['blender_domain'] = 'CORNER'
+                attr['gltf_attribute_name'] = 'TEXCOORD_' + str(tex_coord_i)
+                attr['get'] = self.get_function()
+                self.blender_attributes.append(attr)
 
         # Manage TANGENT
         if self.use_tangents:
@@ -1151,7 +1160,11 @@ class PrimitiveCreator:
             if attr['gltf_attribute_name'].startswith("_"):
                 self.__get_layer_attribute(attr)
             elif attr['gltf_attribute_name'].startswith("TEXCOORD_"):
-                self.__get_uvs_attribute(int(attr['gltf_attribute_name'].split("_")[-1]), attr)
+                if self.only_active_uv:
+                    layer_id = self.blender_mesh.uv_layers.active_index
+                else:
+                    layer_id = int(attr['gltf_attribute_name'].split("_")[-1])
+                self.__get_uvs_attribute(layer_id, attr)
             elif attr['gltf_attribute_name'] == "NORMAL":
                 self.__get_normal_attribute(attr)
             elif attr['gltf_attribute_name'] == "TANGENT":
