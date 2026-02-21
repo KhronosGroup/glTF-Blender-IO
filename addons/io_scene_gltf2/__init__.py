@@ -426,6 +426,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=True
     )
 
+    export_only_active_uv: BoolProperty(
+        name='Only active UVs',
+        description='Export only the active UV map',
+        default=True
+    )
+    
     export_normals: BoolProperty(
         name='Normals',
         description='Export vertex normals with meshes',
@@ -1143,6 +1149,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_image_quality'] = self.export_image_quality
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
+        export_settings['gltf_only_active_uv'] = self.export_only_active_uv
         export_settings['gltf_normals'] = self.export_normals
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
         export_settings['gltf_loose_edges'] = self.use_mesh_edges
@@ -1499,6 +1506,7 @@ def export_panel_data_mesh(layout, operator):
     if body:
         body.prop(operator, 'export_apply')
         body.prop(operator, 'export_texcoords')
+        body.prop(operator, 'export_only_active_uv')
         body.prop(operator, 'export_normals')
         col = body.column()
         col.active = operator.export_normals
