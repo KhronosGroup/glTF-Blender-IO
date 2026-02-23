@@ -52,11 +52,11 @@ class BlenderMaterialIndentifier:
         self.export_settings = export_settings
 
         self.__set_used_material()
+        self.name = self.material.name
 
     def __set_used_material(self):
-        # Currently, inline material does not support animation
-        # So, if we want to export animation with KHR_animation_pointer,
-        # we need to use the original material, and not the inline one
+        # Currently, there are a few cases where we can not use inline material,
+        # so we need to keep the original one for those cases
 
         if self.__can_use_inline() is False:
             self.use_material = self.material
@@ -65,7 +65,6 @@ class BlenderMaterialIndentifier:
             self.inline_material = bpy.types.InlineShaderNodes.from_material(self.material)
             self.use_material = self.inline_material
             self.used = "INLINE"
-        self.name = self.material.name
 
     def get_used_material(self):
         return self.use_material
@@ -80,6 +79,10 @@ class BlenderMaterialIndentifier:
         # We can not use inline if using the glTF node (for Occlusion, for example)
         test_occlusion = get_socket_from_gltf_material_node(self.material.node_tree, "Occlusion")
         if test_occlusion.socket is not None:
+            return False
+
+        # We can not use inline if we are collecting additional textures
+        if self.export_settings['gltf_unused_textures'] is True:
             return False
 
         return True
