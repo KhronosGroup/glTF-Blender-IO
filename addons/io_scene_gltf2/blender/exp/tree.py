@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+import re
 import uuid
 import numpy as np
 from mathutils import Quaternion, Matrix, Vector
@@ -25,10 +26,18 @@ from ..com.blender_default import BLENDER_GLTF_SPECIAL_COLLECTION
 from . import accessors as gltf2_blender_gather_accessors
 
 
-# Helper to sort Blender objects/collections/bones alphabetically by name,
-# matching the default Outliner display order.
+def _natural_sort_key(name):
+    """Mirror Blender's BLI_strcasecmp_natural: case-insensitive natural sort.
+    Splits name into text/number chunks so that numeric parts sort numerically.
+    E.g. Object2 < Object10, matching the Outliner's display order.
+    """
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', name)]
+
+
 def _sort_by_name(iterable):
-    return sorted(iterable, key=lambda x: x.name.lower())
+    """Sort Blender objects/collections/bones using natural sort to match
+    the Outliner's default alphabetical display order."""
+    return sorted(iterable, key=lambda x: _natural_sort_key(x.name))
 
 
 class VExportNode:
@@ -157,7 +166,6 @@ class VExportTree:
 
         if self.export_settings['gltf_hierarchy_full_collections'] is False:
             scene_eval = blender_scene.evaluated_get(depsgraph=depsgraph)
-            # Sort root objects alphabetically to match Outliner display order
             for blender_object in _sort_by_name([obj.original for obj in scene_eval.objects if obj.parent is None]):
                 self.recursive_node_traverse(blender_object, None, None, Matrix.Identity(4), False, blender_children)
         else:
