@@ -31,7 +31,7 @@ from .search_node_tree import \
 @cached
 def gather_material_pbr_metallic_roughness(blender_material, orm_texture, export_settings):
     if not __filter_pbr_material(blender_material, export_settings):
-        return None, {}, {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None, 'alpha_mode': "OPAQUE"}, {}, {}, {}
+        return None, {}, {'color': None, 'alpha': None, 'color_type': None, 'alpha_type': None, 'alpha_mode': "OPAQUE"}, {}, {}
 
     uvmap_infos = {}
     udim_infos = {}
