@@ -256,8 +256,6 @@ def gather_track_animations(obj_uuid: int,
                         tracks[track_data.name] = []
                     # Store index of animation in animations
                     tracks[track_data.name].append(offset + len(animations) - 1)
-                    # Store index of animation in animations
-                    tracks[track_data.name].append(offset + len(animations) - 1)
             elif export_settings['gltf_merge_animation'] == "ACTION":
                 pass  # This can't happen here, as we bake per NLA track
                 pass  # This can't happen here, as we bake per NLA track
@@ -644,13 +642,8 @@ def gather_data_track_animations(
                 blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute = False
 
         # Export animation
-        animation = bake_data_animation(
-            blender_type_data,
-            blender_id,
-            track_data.name,
-            None,
-            track_data.on_type,
-            export_settings)
+        animation = bake_data_animation(blender_type_data, blender_id, track_data.name,
+                                        None, track_data.on_type, export_settings)
         get_cache_data.reset_cache()
         if animation is not None:
             animations.append(animation)
