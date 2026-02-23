@@ -397,6 +397,7 @@ def __keep_material_info(materials, originals, export_settings):
             export_settings['material_identifiers'][id(m)] = m
         else:
             export_settings['material_identifiers'][id(m)] = m.original
+            export_settings['material_identifiers'][id(m.original)] = m.original
 
 
 def __gather_mesh_from_blender_nonmesh(blender_object, export_settings):

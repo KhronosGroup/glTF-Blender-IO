@@ -374,6 +374,9 @@ def __gather_extensions(blender_data,
                     base_material,
                     material_info["uv_info"],
                     export_settings)
+
+                # Make sure to store material in export settings, to be able to retrieve it later for animation pointer
+                export_settings['material_identifiers'][id(i.material)] = i.material
             else:
                 mat = None
 
