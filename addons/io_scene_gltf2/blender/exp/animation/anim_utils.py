@@ -298,10 +298,7 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, slot_ident
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS"):
 
         if blender_type_data == "materials":
-            if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
-                blender_data_object = export_settings['material_identifiers'][blender_id]
-            else:
-                blender_data_object = [i for i in bpy.data.materials if id(i) == blender_id][0]
+            blender_data_object = export_settings['material_identifiers'][blender_id]
         elif blender_type_data == "cameras":
             blender_data_object = [i for i in bpy.data.cameras if id(i) == blender_id][0]
         elif blender_type_data == "lights":
