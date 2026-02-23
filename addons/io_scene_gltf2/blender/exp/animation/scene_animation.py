@@ -138,10 +138,7 @@ def gather_scene_animations(export_settings):
             if len(export_settings['KHR_animation_pointer']['materials'][mat]['paths']) == 0:
                 continue
 
-            if export_settings['gltf_animation_mode'] == "NLA_TRACKS" and export_settings['gltf_apply'] is True:
-                blender_material = export_settings['material_identifiers'][mat]
-            else:
-                blender_material = [m for m in bpy.data.materials if id(m) == mat][0]
+            blender_material = export_settings['material_identifiers'][mat]
 
             export_settings['ranges'][id(blender_material)] = {}
             export_settings['ranges'][id(blender_material)][id(blender_material)] = {
