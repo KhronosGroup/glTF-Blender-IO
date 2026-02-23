@@ -258,7 +258,6 @@ def gather_track_animations(obj_uuid: int,
                     tracks[track_data.name].append(offset + len(animations) - 1)
             elif export_settings['gltf_merge_animation'] == "ACTION":
                 pass  # This can't happen here, as we bake per NLA track
-                pass  # This can't happen here, as we bake per NLA track
             elif export_settings['gltf_merge_animation'] == "NONE":
                 pass  # This can't happen here, as we bake per NLA track
             else:
