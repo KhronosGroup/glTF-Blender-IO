@@ -176,8 +176,25 @@ def gather_actions_animations(export_settings):
         if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
             continue
 
-        animations_, merged_tracks = gather_action_animations(obj_uuid, merged_tracks, len(animations), export_settings)
+        animations_, merged_tracks = gather_obj_action_animations(
+            obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
+
+    # # Material animation
+    # for mat_id in export_settings['KHR_animation_pointer']['materials'].keys():
+    #     if len(export_settings['KHR_animation_pointer']['materials'][mat_id]['paths']) == 0:
+    #         continue
+
+    #     blender_material = export_settings['material_identifiers'][mat_id]
+    #     animations_, merged_tracks = gather_material_action_animations(
+    #         id(blender_material), merged_tracks, len(animations), export_settings)
+    #     animations += animations_
+
+    # Light animation
+    # TODOPOINTER
+
+    # Camera animation
+    # TODOPOINTER
 
     if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
         # Fake an animation with all animations of the scene
@@ -239,7 +256,7 @@ def prepare_actions_range(export_settings):
         if obj_uuid not in export_settings['ranges']:
             export_settings['ranges'][obj_uuid] = {}
 
-        blender_actions = __get_blender_actions(obj_uuid, export_settings)
+        blender_actions = __get_obj_blender_actions(obj_uuid, export_settings)
 
         for action_data in blender_actions.values():
             blender_action = action_data.action
@@ -378,7 +395,7 @@ def prepare_actions_range(export_settings):
                 else:
                     continue
 
-            blender_actions = __get_blender_actions(obj_uuid, export_settings)
+            blender_actions = __get_obj_blender_actions(obj_uuid, export_settings)
             for action_data in blender_actions.values():
                 blender_action = action_data.action
                 for slot in action_data.slots:
@@ -389,14 +406,16 @@ def prepare_actions_range(export_settings):
                         elif export_settings['gltf_anim_slide_to_zero'] is True:
                             add_slide_data(track_slide[track], obj_uuid, blender_action.name, export_settings)
 
+    # TODOPointer: Manage material, light & camera
 
-def gather_action_animations(obj_uuid: int,
-                             tracks: typing.Dict[str,
-                                                 typing.List[int]],
-                             offset: int,
-                             export_settings) -> typing.Tuple[typing.List[gltf2_io.Animation],
-                                                              typing.Dict[str,
-                                                                          typing.List[int]]]:
+
+def gather_obj_action_animations(obj_uuid: int,
+                                 tracks: typing.Dict[str,
+                                                     typing.List[int]],
+                                 offset: int,
+                                 export_settings) -> typing.Tuple[typing.List[gltf2_io.Animation],
+                                                                  typing.Dict[str,
+                                                                              typing.List[int]]]:
     """
     Gather all animations which contribute to the objects property, and corresponding track names
 
@@ -409,7 +428,7 @@ def gather_action_animations(obj_uuid: int,
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
     # Collect all 'actions' affecting this object. There is a direct mapping between blender actions and glTF animations
-    blender_actions = __get_blender_actions(obj_uuid, export_settings)
+    blender_actions = __get_obj_blender_actions(obj_uuid, export_settings)
 
     # When object is not animated at all (no SK)
     # We can create an animation for this object
@@ -815,9 +834,9 @@ def gather_action_animations(obj_uuid: int,
 
 
 @cached
-def __get_blender_actions(obj_uuid: str,
-                          export_settings
-                          ) -> ActionsData:
+def __get_obj_blender_actions(obj_uuid: str,
+                              export_settings
+                              ) -> ActionsData:
 
     actions = ActionsData()
 
@@ -826,7 +845,7 @@ def __get_blender_actions(obj_uuid: str,
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_object)
 
     if export_settings['gltf_animation_mode'] == "BROADCAST":
-        return __get_blender_actions_broadcast(obj_uuid, export_settings)
+        return __get_obj_blender_actions_broadcast(obj_uuid, export_settings)
 
     if blender_object and blender_object.animation_data is not None:
         # Collect active action.
@@ -1005,7 +1024,7 @@ def __gather_extras(blender_action, export_settings):
     return None
 
 
-def __get_blender_actions_broadcast(obj_uuid, export_settings):
+def __get_obj_blender_actions_broadcast(obj_uuid, export_settings):
 
     blender_actions = ActionsData()
 
