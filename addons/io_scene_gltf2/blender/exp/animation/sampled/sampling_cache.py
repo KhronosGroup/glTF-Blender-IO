@@ -42,7 +42,7 @@ def get_cache_data(path: str,
     min_, max_ = get_range(blender_obj_uuid, action_name, export_settings)
 
     if only_gather_provided:
-        # If object is not in vtree, this is a material or light for pointers
+        # If object is not in vtree, this is a material,  light or camera for pointers
         obj_uuids = [blender_obj_uuid] if blender_obj_uuid in export_settings['vtree'].nodes.keys() else []
     else:
         obj_uuids = [uid for (uid, n) in export_settings['vtree'].nodes.items()
@@ -50,7 +50,7 @@ def get_cache_data(path: str,
 
     # For TRACK mode, we reset cache after each track export, so we don't need to keep others objects
     if export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
-        # If object is not in vtree, this is a material or light for pointers
+        # If object is not in vtree, this is a material, light or camera for pointers
         obj_uuids = [blender_obj_uuid] if blender_obj_uuid in export_settings['vtree'].nodes.keys() else []
 
     # If there is only 1 object to cache, we can disable viewport for other objects (for performance)
@@ -97,10 +97,9 @@ def get_cache_data(path: str,
 
     return data
 
-# For perf, we may be more precise, and get a list of ranges to be exported that include all needed frames
-
 
 def get_range(obj_uuid, key, export_settings):
+    # For perf, we may be more precise, and get a list of ranges to be exported that include all needed frames
     if export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
         return export_settings['ranges'][obj_uuid][key]['start'], export_settings['ranges'][obj_uuid][key]['end']
     else:

@@ -27,6 +27,7 @@ from .sampled.armature.action_sampled import gather_action_armature_sampled
 from .sampled.armature.channels import gather_sampled_bone_channel
 from .sampled.object.action_sampled import gather_action_object_sampled
 from .sampled.shapekeys.action_sampled import gather_action_sk_sampled
+from .sampled.data.action_sampled import gather_action_material_sampled
 from .sampled.object.channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.channels import gather_sampled_sk_channel
 from .drivers import get_sk_drivers, get_driver_on_shapekey
@@ -180,15 +181,15 @@ def gather_actions_animations(export_settings):
             obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
 
-    # # Material animation
-    # for mat_id in export_settings['KHR_animation_pointer']['materials'].keys():
-    #     if len(export_settings['KHR_animation_pointer']['materials'][mat_id]['paths']) == 0:
-    #         continue
+    # Material animation
 
-    #     blender_material = export_settings['material_identifiers'][mat_id]
-    #     animations_, merged_tracks = gather_material_action_animations(
-    #         id(blender_material), merged_tracks, len(animations), export_settings)
-    #     animations += animations_
+    for mat_id in export_settings['KHR_animation_pointer']['materials'].keys():
+        if len(export_settings['KHR_animation_pointer']['materials'][mat_id]['paths']) == 0:
+            continue
+
+        animations_, merged_tracks = gather_material_action_animations(
+            mat_id, merged_tracks, len(animations), export_settings)
+        animations += animations_
 
     # Light animation
     # TODOPOINTER
@@ -268,76 +269,8 @@ def prepare_actions_range(export_settings):
                 # So, do not manage range data at slot level, but action level
                 # (This is not the case for slide, that depends on track, so we have to get slot to get track)
 
-                # What about frame_range bug for single keyframe animations ? 107030
-                start_frame = int(blender_action.frame_range[0])
-                end_frame = int(blender_action.frame_range[1])
-
-                if end_frame - start_frame == 1:
-                    # To workaround Blender bug 107030, check manually
-                    try:  # Avoid crash in case of strange/buggy fcurves
-                        chanelbag = get_channelbag_for_slot(blender_action, slot.slot)
-                        fcurves = chanelbag.fcurves if chanelbag else []
-                        start_frame = int(min([c.range()[0] for c in fcurves]))
-                        end_frame = int(max([c.range()[1] for c in fcurves]))
-                    except Exception as _e:
-                        pass
-
-                export_settings['ranges'][obj_uuid][blender_action.name] = {}
-
-                # If some negative frame and crop -> set start at 0
-                if start_frame < 0 and export_settings['gltf_negative_frames'] == "CROP":
-                    start_frame = 0
-
-                if export_settings['gltf_frame_range'] is True:
-                    start_frame = max(bpy.context.scene.frame_start, start_frame)
-                    end_frame = min(bpy.context.scene.frame_end, end_frame)
-
-                export_settings['ranges'][obj_uuid][blender_action.name]['start'] = _align_frame_start(
-                    start_frame_reference, start_frame, export_settings)
-                export_settings['ranges'][obj_uuid][blender_action.name]['end'] = end_frame
-
-                if start_frame_reference is None:
-                    start_frame_reference = start_frame
-
-                    # Recheck all actions to align to this frame
-                    for obj_uuid_tmp in export_settings['ranges'].keys():
-                        for action_name_tmp in export_settings['ranges'][obj_uuid_tmp].keys():
-                            export_settings['ranges'][obj_uuid_tmp][action_name_tmp]['start'] = _align_frame_start(
-                                start_frame_reference, export_settings['ranges'][obj_uuid_tmp][action_name_tmp]['start'], export_settings)
-
-                if export_settings['gltf_negative_frames'] == "SLIDE":
-                    if track is not None:
-                        if not (track.startswith("NlaTrack") or track.startswith("[Action Stash]")):
-                            if track not in track_slide.keys() or (
-                                    track in track_slide.keys() and start_frame < track_slide[track]):
-                                track_slide.update({track: start_frame})
-                        else:
-                            if start_frame < 0:
-                                add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
-                    else:
-                        if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
-                            if None not in track_slide.keys() or (
-                                    None in track_slide.keys() and start_frame < track_slide[None]):
-                                track_slide.update({None: start_frame})
-                        else:
-                            if start_frame < 0:
-                                add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
-
-                if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
-                    if track is not None:
-                        if not (track.startswith("NlaTrack") or track.startswith("[Action Stash]")):
-                            if track not in track_slide.keys() or (
-                                    track in track_slide.keys() and start_frame < track_slide[track]):
-                                track_slide.update({track: start_frame})
-                        else:
-                            add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
-                    else:
-                        if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
-                            if None not in track_slide.keys() or (
-                                    None in track_slide.keys() and start_frame < track_slide[None]):
-                                track_slide.update({None: start_frame})
-                        else:
-                            add_slide_data(start_frame, obj_uuid, blender_action.name, export_settings)
+                start_frame_reference, start_frame, end_frame = __range_set(
+                    obj_uuid, blender_action, slot, track, start_frame_reference, track_slide, export_settings)
 
                 if type_ == "KEY" and export_settings['gltf_bake_animation']:
                     export_settings['ranges'][obj_uuid][obj_uuid] = {}
@@ -406,7 +339,217 @@ def prepare_actions_range(export_settings):
                         elif export_settings['gltf_anim_slide_to_zero'] is True:
                             add_slide_data(track_slide[track], obj_uuid, blender_action.name, export_settings)
 
-    # TODOPointer: Manage material, light & camera
+    # Material animation range
+    for mat_id, blender_mat in export_settings.get('material_identifiers', {}).items():
+
+        if mat_id not in export_settings['ranges']:
+            export_settings['ranges'][mat_id] = {}
+
+        blender_materials = __get_material_blender_actions(mat_id, export_settings)
+        for action_data in blender_materials.values():
+            blender_action = action_data.action
+            for slot in action_data.slots:
+                track = slot.track
+
+                start_frame_reference, start_frame, end_frame = __range_set(
+                    mat_id, blender_action, slot, track, start_frame_reference, track_slide, export_settings)
+
+
+def __range_set(used_id, blender_action, slot, track, start_frame_reference, track_slide, export_settings):
+    start_frame = int(blender_action.frame_range[0])
+    end_frame = int(blender_action.frame_range[1])
+
+    new_start_frame_reference = start_frame_reference
+
+    if end_frame - start_frame == 1:
+        # To workaround Blender bug 107030, check manually
+        try:  # Avoid crash in case of strange/buggy fcurves
+            chanelbag = get_channelbag_for_slot(blender_action, slot.slot)
+            fcurves = chanelbag.fcurves if chanelbag else []
+            start_frame = int(min([c.range()[0] for c in fcurves]))
+            end_frame = int(max([c.range()[1] for c in fcurves]))
+        except Exception as _e:
+            pass
+
+    export_settings['ranges'][used_id][blender_action.name] = {}
+
+    # If some negative frame and crop -> set start at 0
+    if start_frame < 0 and export_settings['gltf_negative_frames'] == "CROP":
+        start_frame = 0
+
+    if export_settings['gltf_frame_range'] is True:
+        start_frame = max(bpy.context.scene.frame_start, start_frame)
+        end_frame = min(bpy.context.scene.frame_end, end_frame)
+
+    export_settings['ranges'][used_id][blender_action.name]['start'] = _align_frame_start(
+        start_frame_reference, start_frame, export_settings)
+    export_settings['ranges'][used_id][blender_action.name]['end'] = end_frame
+
+    if start_frame_reference is None:
+        new_start_frame_reference = start_frame
+
+        # Recheck all actions to align to this frame
+        for mat_id_tmp in export_settings['ranges'].keys():
+            for action_name_tmp in export_settings['ranges'][mat_id_tmp].keys():
+                export_settings['ranges'][mat_id_tmp][action_name_tmp]['start'] = _align_frame_start(
+                    new_start_frame_reference, export_settings['ranges'][mat_id_tmp][action_name_tmp]['start'], export_settings)
+
+    if export_settings['gltf_negative_frames'] == "SLIDE":
+        if track is not None:
+            if not (track.startswith("NlaTrack") or track.startswith("[Action Stash]")):
+                if track not in track_slide.keys() or (
+                        track in track_slide.keys() and start_frame < track_slide[track]):
+                    track_slide.update({track: start_frame})
+            else:
+                if start_frame < 0:
+                    add_slide_data(start_frame, used_id, blender_action.name, export_settings)
+        else:
+            if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
+                if None not in track_slide.keys() or (
+                        None in track_slide.keys() and start_frame < track_slide[None]):
+                    track_slide.update({None: start_frame})
+            else:
+                if start_frame < 0:
+                    add_slide_data(start_frame, used_id, blender_action.name, export_settings)
+
+    if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
+        if track is not None:
+            if not (track.startswith("NlaTrack") or track.startswith("[Action Stash]")):
+                if track not in track_slide.keys() or (
+                        track in track_slide.keys() and start_frame < track_slide[track]):
+                    track_slide.update({track: start_frame})
+            else:
+                add_slide_data(start_frame, used_id, blender_action.name, export_settings)
+        else:
+            if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
+                if None not in track_slide.keys() or (
+                        None in track_slide.keys() and start_frame < track_slide[None]):
+                    track_slide.update({None: start_frame})
+            else:
+                add_slide_data(start_frame, used_id, blender_action.name, export_settings)
+
+    return new_start_frame_reference, start_frame, end_frame
+
+
+def gather_material_action_animations(mat_uuid, tracks, offset, export_settings):
+    animations = []
+
+    blender_material = export_settings['material_identifiers'][mat_uuid]
+
+    # Collect all 'actions' affecting this material.
+    blender_actions = __get_material_blender_actions(mat_uuid, export_settings)
+
+    export_user_extensions('animation_switch_loop_hook', export_settings, blender_material, False)
+
+    for action_data in blender_actions.values():
+        all_channels = []
+        for slot in action_data.slots:
+            blender_action = action_data.action
+            track_name = slot.track
+            on_type = slot.target_id_type
+
+            # Set action as active, to be able to bake if needed
+            if on_type == "NODETREE":
+
+                if blender_material.node_tree.animation_data.action is None \
+                        or (blender_material.node_tree.animation_data.action.name != blender_action.name) \
+                        or (blender_material.node_tree.animation_data.action_slot is None) \
+                        or (blender_material.node_tree.animation_data.action_slot.handle != slot.slot.handle):
+
+                    if blender_material.node_tree.animation_data.is_property_readonly('action'):
+                        blender_material.node_tree.animation_data.use_tweak_mode = False
+                    try:
+                        # TODOPOinter hook
+                        blender_material.node_tree.animation_data.action = blender_action
+                        blender_material.node_tree.animation_data.action_slot = slot.slot
+                        # TODOPointer hook
+                    except Exception as _e:
+                        error = "Action is readonly. Please check NLA editor"
+                        export_settings['log'].warning(
+                            "Animation '{}' could not be exported. Cause: {}".format(
+                                blender_action.name, error))
+                        continue
+                else:
+                    # No need to switch action, but we call the hook anyway, in case of user extension
+                    # TODOPOINTER hook
+                    pass
+
+                if export_settings['gltf_force_sampling'] is True:
+                    channels = gather_action_material_sampled(
+                        mat_uuid, blender_action, slot.slot.identifier, None, export_settings)
+                    if channels:
+                        all_channels.extend(channels)
+                else:
+                    pass  # TODOPOINTER
+            elif on_type == "MATERIAL":
+                if blender_material.animation_data.action is None \
+                        or (blender_material.animation_data.action.name != blender_action.name) \
+                        or (blender_material.animation_data.action_slot is None) \
+                        or (blender_material.animation_data.action_slot.handle != slot.slot.handle):
+
+                    if blender_material.animation_data.is_property_readonly('action'):
+                        blender_material.animation_data.use_tweak_mode = False
+                    try:
+                        # TODOPOinter hook
+                        blender_material.animation_data.action = blender_action
+                        blender_material.animation_data.action_slot = slot.slot
+                        # TODOPointer hook
+                    except Exception as _e:
+                        error = "Action is readonly. Please check NLA editor"
+                        export_settings['log'].warning(
+                            "Animation '{}' could not be exported. Cause: {}".format(
+                                blender_action.name, error))
+                        continue
+                else:
+                    # No need to switch action, but we call the hook anyway, in case of user extension
+                    # TODOPOINTER hook
+                    pass
+
+            # Add extra samplers TODOPOINTER
+
+        # We went through all slots of the action, we can now create the animation
+        if len(all_channels) != 0:
+            animation = gltf2_io.Animation(
+                channels=all_channels,
+                name=blender_action.name,
+                extras=__gather_extras(blender_action, export_settings),
+                samplers=[],  # This will be generated later, in link_samplers
+                extensions=None
+            )
+
+            # Hook for user extensions
+            export_user_extensions(
+                'animation_action_hook',
+                export_settings,
+                animation,
+                blender_material,
+                action_data)
+
+            link_samplers(animation, export_settings)
+            animations.append(animation)
+
+            # Store data for merging animation later
+            if export_settings['gltf_merge_animation'] == "NLA_TRACK":
+                if track_name is not None:  # Do not take into account animation not in NLA
+                    # Do not take into account default NLA track names
+                    if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
+                        if track_name not in tracks.keys():
+                            tracks[track_name] = []
+                        # Store index of animation in animations
+                        tracks[track_name].append(offset + len(animations) - 1)
+            elif export_settings['gltf_merge_animation'] == "ACTION":
+                if action_data.name not in tracks.keys():
+                    tracks[action_data.name] = []
+                tracks[action_data.name].append(offset + len(animations) - 1)
+            elif export_settings['gltf_merge_animation'] == "NONE":
+                pass  # Nothing to store, we are not going to merge animations
+            else:
+                # This should not happen (or the developer added a new option, and forget to take it into account here)
+                pass
+
+    export_user_extensions('animation_switch_loop_hook', export_settings, blender_material, True)
+
+    return animations, tracks
 
 
 def gather_obj_action_animations(obj_uuid: int,
@@ -834,6 +977,109 @@ def gather_obj_action_animations(obj_uuid: int,
 
 
 @cached
+def __get_material_blender_actions(mat_uuid: str,
+                                   export_settings
+                                   ) -> ActionsData:
+
+    actions = ActionsData()
+    blender_material = export_settings['material_identifiers'][mat_uuid]
+    export_user_extensions('pre_gather_actions_hook', export_settings, blender_material)
+
+    # No brodcast mode for material implemented (yet)
+
+    # Material animation (not nodetree)
+    if blender_material and blender_material.animation_data is not None:
+        # Collect active action
+        if blender_material.animation_data.action is not None and blender_material.animation_data.action_slot is not None:
+
+            # Check the action is not in list of actions to ignore
+            if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(blender_material.animation_data.action) in [
+                    id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                pass  # We ignore this action
+            else:
+                # Store Action info
+                new_action = ActionData(blender_material.animation_data.action)
+                new_action.add_slot(
+                    blender_material.animation_data.action_slot,
+                    blender_material.animation_data.action_slot.target_id_type,
+                    None)  # Active action => No track
+                actions.add_action(new_action)
+
+        # Collection associated strips from NLA tracks
+        if export_settings['gltf_animation_mode'] == "ACTIONS":
+            __track_extract(blender_material.animation_data.nla_tracks, actions, blender_material, export_settings)
+
+    # Material nodetree animation
+    if blender_material and blender_material.node_tree is not None and blender_material.node_tree.animation_data is not None:
+        # Collect active action
+        if blender_material.node_tree.animation_data.action is not None and blender_material.node_tree.animation_data.action_slot is not None:
+
+            # Check the action is not in list of actions to ignore
+            if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(blender_material.node_tree.animation_data.action) in [
+                    id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                pass  # We ignore this action
+            else:
+                # Store Action info
+                new_action = ActionData(blender_material.node_tree.animation_data.action)
+                new_action.add_slot(
+                    blender_material.node_tree.animation_data.action_slot,
+                    blender_material.node_tree.animation_data.action_slot.target_id_type,
+                    None)  # Active action => No track
+                actions.add_action(new_action)
+
+        # Collection associated strips from NLA tracks
+        if export_settings['gltf_animation_mode'] == "ACTIONS":
+            __track_extract(blender_material.node_tree.animation_data.nla_tracks,
+                            actions, blender_material.node_tree, export_settings)
+
+    return actions
+
+
+def __track_extract(tracks, actions, blender_obj, export_settings):
+    # Here, "blender_obj" can be a material, a camera or a light or an object
+    # actions will be modified by this function
+
+    # Collect associated strips from NLA tracks
+    for track in blender_obj.animation_data.nla_tracks:
+        # Multi-strip tracks do not export correctly yet (they need to be baked),
+        # so skip them for now and only write single-strip tracks.
+        non_muted_strips = [strip for strip in track.strips if strip.action is not None and strip.mute is False]
+        if track.strips is None or len(non_muted_strips) > 1:
+            # Warning if multiple strips are found, then ignore this track
+            # Ignore without warning if no strip
+            export_settings['log'].warning(
+                "NLA track '{}' has {} strips, but only single-strip tracks are supported in 'actions' mode.".format(
+                    track.name, len(
+                        track.strips)), popup=True)
+            continue
+        for strip in non_muted_strips:
+
+            # Check the action is not in list of actions to ignore
+            if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(strip.action) in [
+                    id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                continue  # We ignore this action
+
+            # Check that a slot is assigned to the strip
+            if strip.action_slot is None:
+                export_settings['log'].warning(
+                    "Strip '{}' on track '{}' has no action slot assigned, and will be ignored.".format(
+                        strip.name, track.name))
+                continue
+
+            # Store Action info
+            new_action = ActionData(strip.action)
+            new_action.add_slot(strip.action_slot, strip.action_slot.target_id_type, track.name)
+            # If we already have a data for this action (so active or another NLA track on same target_id_type)
+            # We force creation of another animation
+            # Instead of adding a new slot to the existing action
+            if actions.exists_action_slot_target(strip.action, strip.action_slot):
+                new_action.force_name(strip.action.name + "-" + strip.action_slot.name_display)
+                actions.add_action(new_action, force_new_action=True)
+            else:
+                actions.add_action(new_action)
+
+
+@cached
 def __get_obj_blender_actions(obj_uuid: str,
                               export_settings
                               ) -> ActionsData:
@@ -866,43 +1112,7 @@ def __get_obj_blender_actions(obj_uuid: str,
 
         # Collect associated strips from NLA tracks.
         if export_settings['gltf_animation_mode'] == "ACTIONS":
-            for track in blender_object.animation_data.nla_tracks:
-                # Multi-strip tracks do not export correctly yet (they need to be baked),
-                # so skip them for now and only write single-strip tracks.
-                non_muted_strips = [strip for strip in track.strips if strip.action is not None and strip.mute is False]
-                if track.strips is None or len(non_muted_strips) > 1:
-                    # Warning if multiple strips are found, then ignore this track
-                    # Ignore without warning if no strip
-                    export_settings['log'].warning(
-                        "NLA track '{}' has {} strips, but only single-strip tracks are supported in 'actions' mode.".format(
-                            track.name, len(
-                                track.strips)), popup=True)
-                    continue
-                for strip in non_muted_strips:
-
-                    # Check the action is not in list of actions to ignore
-                    if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(strip.action) in [
-                            id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
-                        continue  # We ignore this action
-
-                    # Check that a slot is assigned to the strip
-                    if strip.action_slot is None:
-                        export_settings['log'].warning(
-                            "Strip '{}' on track '{}' has no action slot assigned, and will be ignored.".format(
-                                strip.name, track.name))
-                        continue
-
-                    # Store Action info
-                    new_action = ActionData(strip.action)
-                    new_action.add_slot(strip.action_slot, strip.action_slot.target_id_type, track.name)
-                    # If we already have a data for this action (so active or another NLA track on same target_id_type)
-                    # We force creation of another animation
-                    # Instead of adding a new slot to the existing action
-                    if actions.exists_action_slot_target(strip.action, strip.action_slot):
-                        new_action.force_name(strip.action.name + "-" + strip.action_slot.name_display)
-                        actions.add_action(new_action, force_new_action=True)
-                    else:
-                        actions.add_action(new_action)
+            __track_extract(blender_object.animation_data.nla_tracks, actions, blender_object, export_settings)
 
     # For caching, actions linked to SK must be after actions about TRS
     if export_settings['gltf_morph_anim'] and blender_object and blender_object.type == "MESH" \
@@ -924,29 +1134,8 @@ def __get_obj_blender_actions(obj_uuid: str,
                 actions.add_action(new_action)
 
         if export_settings['gltf_animation_mode'] == "ACTIONS":
-            for track in blender_object.data.shape_keys.animation_data.nla_tracks:
-                # Multi-strip tracks do not export correctly yet (they need to be baked),
-                # so skip them for now and only write single-strip tracks.
-                non_muted_strips = [strip for strip in track.strips if strip.action is not None and strip.mute is False]
-                if track.strips is None or len(non_muted_strips) != 1:
-                    continue
-                for strip in non_muted_strips:
-                    # Check the action is not in list of actions to ignore
-                    if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(strip.action) in [
-                            id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
-                        continue  # We ignore this action
-
-                    # Store Action info
-                    new_action = ActionData(strip.action)
-                    new_action.add_slot(strip.action_slot, strip.action_slot.target_id_type, track.name)
-                    # If we already have a data for this action (so active or another NLA track on same target_id_type)
-                    # We force creation of another animation
-                    # Instead of adding a new slot to the existing action
-                    if actions.exists_action_slot_target(strip.action, strip.action_slot):
-                        new_action.force_name(strip.action.name + "-" + strip.action_slot.name_display)
-                        actions.add_action(new_action, force_new_action=True)
-                    else:
-                        actions.add_action(new_action)
+            __track_extract(blender_object.data.shape_keys.animation_data.nla_tracks,
+                            actions, blender_object.data.shape_keys, export_settings)
 
     # If there are only 1 armature, include all animations, even if not in NLA
     # But only if armature has already some animation_data
