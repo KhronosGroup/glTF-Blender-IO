@@ -33,9 +33,18 @@ def get_gltf_node_name():
 
 def create_settings_group(name):
     gltf_node_group = bpy.data.node_groups.new(name, 'ShaderNodeTree')
+
+    # Oclusion (glTF Core)
     gltf_node_group.interface.new_socket("Occlusion", socket_type="NodeSocketFloat")
+
+    # Thickness (glTF KHR_materials_volume)
     thicknessFactor = gltf_node_group.interface.new_socket("Thickness", socket_type="NodeSocketFloat", )
     thicknessFactor.default_value = 0.0
+
+    # Dispersion (glTF KHR_materials_dispersion)
+    dispersionFactor = gltf_node_group.interface.new_socket("Dispersion", socket_type="NodeSocketFloat", )
+    dispersionFactor.default_value = 0.0
+
     gltf_node_group.nodes.new('NodeGroupOutput')
     gltf_node_group_input = gltf_node_group.nodes.new('NodeGroupInput')
     gltf_node_group_input.location = -200, 0

@@ -92,6 +92,9 @@ def __export(export_settings):
     # Volum is a special case where we need to export only if transmission is used
     __check_volume(json, export_settings)
 
+    # Dispersion is a special case where we need to export only if volume is used
+    __check_dispersion(json, export_settings)
+
     __manage_extension_declaration(json, export_settings)
 
     # We need to run it again, as we can now have some "extensions" dict that are empty
@@ -176,6 +179,33 @@ def __check_volume(json, export_settings):
     if not volume_found:
         export_settings['gltf_need_to_keep_extension_declaration'] = [
             e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_materials_volume']
+
+
+def __check_dispersion(json, export_settings):
+    if 'materials' not in json.keys():
+        return
+    for mat in json['materials']:
+        if 'extensions' not in mat.keys():
+            continue
+        if 'KHR_materials_dispersion' not in mat['extensions'].keys():
+            continue
+        # We keep dispersion only if volume is used
+        # And because we may have deleted some extensions, we need to check again
+        if 'KHR_materials_volume' not in mat['extensions'].keys():
+            del mat['extensions']['KHR_materials_dispersion']
+
+    # Check if we need to keep the extension declaration
+    dispersion_found = False
+    for mat in json['materials']:
+        if 'extensions' not in mat.keys():
+            continue
+        if 'KHR_materials_dispersion' not in mat['extensions'].keys():
+            continue
+        dispersion_found = True
+        break
+    if not dispersion_found:
+        export_settings['gltf_need_to_keep_extension_declaration'] = [
+            e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_materials_dispersion']
 
 
 def __detect_animated_extensions(obj, export_settings):
@@ -357,7 +387,8 @@ def __should_include_json_value(key, value, export_settings):
             "KHR_materials_transmission",
             "KHR_materials_volume",
             "KHR_lights_punctual",
-            "KHR_materials_anisotropy"
+            "KHR_materials_anisotropy",
+            "KHR_materials_dispersion",
         ]
 
     if value is None:
