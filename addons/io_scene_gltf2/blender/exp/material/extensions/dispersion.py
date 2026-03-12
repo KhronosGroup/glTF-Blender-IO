@@ -42,4 +42,4 @@ def export_dispersion(blender_material, extensions, export_settings):
             path_['path'] = "/materials/XXX/extensions/KHR_materials_dispersion/dispersion"
             export_settings['current_paths'][path] = path_
 
-    return Extension('KHR_materials_dispersion', dispersion_extension)
+    return Extension('KHR_materials_dispersion', dispersion_extension, False)
