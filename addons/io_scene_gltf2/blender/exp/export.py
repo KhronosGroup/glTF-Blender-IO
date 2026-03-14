@@ -132,6 +132,8 @@ def __check_iridescence(json, export_settings):
             continue
 
 
+    # TODO: we need to remove animation pointer animation on factor if the thickness is 0 and not animated
+
         # Check if there is a not default factor
         if 'iridescenceFactor' in mat['extensions']['KHR_materials_iridescence'].keys() and \
                 mat['extensions']['KHR_materials_iridescence']['iridescenceFactor'] == 0.0:
