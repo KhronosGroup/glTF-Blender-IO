@@ -116,6 +116,10 @@ class BlenderAnimation():
                             "clearcoatNormalTexture") if "KHR_materials_clearcoat" in mat.extensions else None,
                         mat.extensions["KHR_materials_anisotropy"].get(
                             "anisotropyTexture") if "KHR_materials_anisotropy" in mat.extensions else None,
+                        mat.extensions["KHR_materials_iridescence"].get(
+                            "iridescenceTexture") if "KHR_materials_iridescence" in mat.extensions else None,
+                        mat.extensions["KHR_materials_iridescence"].get(
+                            "iridescenceThicknessTexture") if "KHR_materials_iridescence" in mat.extensions else None,
                     ]
 
                     for tex in [t for t in texs if t is not None]:
@@ -130,7 +134,7 @@ class BlenderAnimation():
 
                 for ext in [
                         "KHR_materials_emissive_strength",
-                        # "KHR_materials_iridescence",
+                        "KHR_materials_iridescence",
                         "KHR_materials_volume",
                         "KHR_materials_ior",
                         "KHR_materials_transmission",

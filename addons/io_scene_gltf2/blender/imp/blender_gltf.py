@@ -181,7 +181,7 @@ class BlenderGlTF():
 
                 for ext in [
                         "KHR_materials_emissive_strength",
-                        # "KHR_materials_iridescence",
+                        "KHR_materials_iridescence",
                         "KHR_materials_volume",
                         "KHR_materials_ior",
                         "KHR_materials_transmission",
@@ -226,6 +226,10 @@ class BlenderGlTF():
                         "clearcoatNormalTexture") if mat.extensions and "KHR_materials_clearcoat" in mat.extensions else None,
                     mat.extensions["KHR_materials_anisotropy"].get(
                         "anisotropyTexture") if mat.extensions and "KHR_materials_anisotropy" in mat.extensions else None,
+                    mat.extensions["KHR_materials_iridescence"].get(
+                        "iridescenceTexture") if mat.extensions and "KHR_materials_iridescence" in mat.extensions else None,
+                    mat.extensions["KHR_materials_iridescence"].get(
+                        "iridescenceThicknessTexture") if mat.extensions and "KHR_materials_iridescence" in mat.extensions else None,
                 ]
 
                 for tex in [t for t in texs_ext if t is not None]:
@@ -609,6 +613,17 @@ class BlenderGlTF():
                                     ].extensions["KHR_materials_anisotropy"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])
                                 ].extensions["KHR_materials_anisotropy"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_iridescence" and \
+                pointer_tab[5] in ["iridescenceFactor", "iridescenceIor", "iridescenceThicknessMinimum", "iridescenceThicknessMaximum"]:
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_iridescence"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["KHR_materials_iridescence"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_iridescence"]["animations"][anim_idx].append(channel_idx)
 
     @staticmethod
     def manage_material_variants(gltf):

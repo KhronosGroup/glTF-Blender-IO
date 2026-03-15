@@ -18,6 +18,7 @@ from ...io.com.gltf2_io import TextureInfo
 from ..com.material_helpers import get_gltf_node_name, create_settings_group
 from .texture import texture
 from .KHR_materials_anisotropy import anisotropy
+from .KHR_materials_iridescence import iridescence
 from .material_utils import \
     MaterialHelper, scalar_factor_and_texture, color_factor_and_texture, normal_map
 
@@ -41,6 +42,10 @@ def pbr_metallic_roughness(mh: MaterialHelper):
             need_volume_node = True
             need_settings_node = True
 
+    if iridescence_ext := mh.get_ext('KHR_materials_iridescence'):
+        if iridescence_ext.get('iridescenceFactor', 0) != 0 or iridescence_ext.get('iridescenceThickness', 0) != 0:
+            need_settings_node = True
+
     # We also need volume node for KHR_animation_pointer
     if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
         if mh.pymat.extensions and "KHR_materials_volume" in mh.pymat.extensions and len(
@@ -54,6 +59,20 @@ def pbr_metallic_roughness(mh: MaterialHelper):
                             pointer_tab[4] == "KHR_materials_volume" and \
                             pointer_tab[5] in ["thicknessFactor", "attenuationDistance", "attenuationColor"]:
                         need_volume_node = True
+                        need_settings_node = True
+
+    # We also need iridescence nodes for KHR_animation_pointer
+    if mh.gltf.data.extensions_used is not None and "KHR_animation_pointer" in mh.gltf.data.extensions_used:
+        if mh.pymat.extensions and "KHR_materials_iridescence" in mh.pymat.extensions and len(
+                mh.pymat.extensions["KHR_materials_iridescence"]["animations"]) > 0:
+            for anim_idx in mh.pymat.extensions["KHR_materials_iridescence"]["animations"].keys():
+                for channel_idx in mh.pymat.extensions["KHR_materials_iridescence"]["animations"][anim_idx]:
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
+                    pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
+                    if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                            pointer_tab[3] == "extensions" and \
+                            pointer_tab[4] == "KHR_materials_iridescence" and \
+                            pointer_tab[5] in ["iridescenceFactor", "iridescenceThicknessMinimum"]:
                         need_settings_node = True
 
     if need_settings_node:
@@ -125,6 +144,15 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     )
 
     sheen(mh, locs, pbr_node)
+
+    iridescence(
+    mh,
+    locs,
+    iridescence_factor_socket=mh.settings_node.inputs['Iridescence Factor'] if mh.settings_node else None,
+    iridescence_ior_socket=pbr_node.inputs['Thin Film IOR'],
+    iridescence_thickness_maximum_socket=pbr_node.inputs['Thin Film Thickness'],
+    iridescence_thickness_minimum_socket=mh.settings_node.inputs['Iridescence Thickness Minimum'] if mh.settings_node else None,
+)
 
     # IOR
     ior_ext = mh.get_ext('KHR_materials_ior', {})
@@ -427,6 +455,7 @@ def calc_locations(mh):
     specular_ext = mh.get_ext('KHR_materials_specular', {})
     anisotropy_ext = mh.get_ext('KHR_materials_anisotropy', {})
     sheen_ext = mh.get_ext('KHR_materials_sheen', {})
+    iridescence_ext = mh.get_ext('KHR_materials_iridescence', {})
 
     locs['base_color'] = (x, y)
     if mh.pymat.pbr_metallic_roughness.base_color_texture is not None or mh.vertex_color:
@@ -466,6 +495,9 @@ def calc_locations(mh):
         y -= height
     locs['emission'] = (x, y)
     if mh.pymat.emissive_texture is not None:
+        y -= height
+    locs['iridescence'] = (x, y)
+    if 'iridescenceTexture' in iridescence_ext:
         y -= height
     locs['occlusion'] = (x, y)
     if mh.pymat.occlusion_texture is not None:
