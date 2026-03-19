@@ -17,7 +17,7 @@ bl_info = {
     # This is now displayed as the maintainer, so show the foundation.
     # "author": "Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein", # Original Authors
     'author': "Blender Foundation, Khronos Group",
-    "version": (5, 2, 6),
+    "version": (5, 2, 7),
     'blender': (4, 4, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -1257,6 +1257,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_anim_slide_to_zero'] = self.export_anim_slide_to_zero
             export_settings['gltf_export_extra_animations'] = self.export_extra_animations
         else:
+            export_settings['gltf_export_anim_pointer'] = False
             export_settings['gltf_trs_w_animation_pointer'] = False
             export_settings['gltf_frame_range'] = False
             export_settings['gltf_force_sampling'] = False
