@@ -1293,7 +1293,8 @@ class PrimitiveCreator:
                         self.dots_points[vc['gltf_name'] + str(i)] = data_dots_points[:, i]
 
                 # As the Vertex Color can be used only for some materials, and not by other ones,
-                # We need to artificially set data to 1.0 for any dots that are corresponding to a material not using this Vertex Color
+                # We need to artificially set data to 1.0 for any dots that are
+                # corresponding to a material not using this Vertex Color
                 for material_idx, prim_info in self.prim_indices.items():
                     if self.material_idxs_using_vc.get(material_idx) == vc['gltf_name']:
                         # This material is using this Vertex Color, so keep real values
@@ -1309,7 +1310,6 @@ class PrimitiveCreator:
                         self.dots[vc['gltf_name'] + str(3)][dot_indices] = 1.0
 
                     # TODO : also manage edges & points
-
 
                 # Add COLOR_x in attribute list
                 attr_color_x = {}
