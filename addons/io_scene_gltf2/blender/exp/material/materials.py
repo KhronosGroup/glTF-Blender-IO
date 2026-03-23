@@ -349,7 +349,7 @@ def __gather_extensions(bmat, emissive_factor, export_settings):
         udim_infos.update(udim_info)
 
     # KHR_materials_dispersion
-    dispersion_extension = export_dispersion(blender_material, extensions, export_settings)
+    dispersion_extension = export_dispersion(bmat, extensions, export_settings)
     if dispersion_extension:
         extensions["KHR_materials_dispersion"] = dispersion_extension
 
