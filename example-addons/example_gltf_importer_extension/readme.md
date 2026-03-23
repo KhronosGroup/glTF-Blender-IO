@@ -51,4 +51,6 @@ gather_import_animation_weight_before_hook(self, gltf_node, blender_animation, g
 gather_import_animation_weight_after_hook(self, gltf_node, blender_animation, gltf)
 gather_import_decode_primitive(self, gltf_mesh, gltf_primitive, skin_idx, gltf)
 gather_import_gltf_before_hook(self, gltf)
+gather_import_pointcloud_before_hook(self, gltf, gltf_pc)
+gather_import_pointcloud_after_hook(self, gltf, gltf_pc, pc)
 ```
