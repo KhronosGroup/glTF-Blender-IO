@@ -351,7 +351,7 @@ def __gather_extensions(bmat, emissive_factor, export_settings):
         udim_infos.update(udim_info)
 
     # KHR_materials_iridescence
-    iridescence_extension, uvmap_info, udim_info = export_iridescence(blender_material, export_settings)
+    iridescence_extension, uvmap_info, udim_info = export_iridescence(bmat, export_settings)
     if iridescence_extension:
         extensions["KHR_materials_iridescence"] = iridescence_extension
         uvmap_infos.update(uvmap_info)

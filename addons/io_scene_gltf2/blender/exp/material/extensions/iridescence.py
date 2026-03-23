@@ -24,7 +24,7 @@ from ..search_node_tree import \
     get_socket, \
     get_factor_from_socket
 
-def export_iridescence(blender_material, export_settings):
+def export_iridescence(bmat, export_settings):
 
     # There is no iridescence Factor (Intensity) in Blender
     # So we consider that we export the extension if the Iridescence thickness is not 0
@@ -44,17 +44,17 @@ def export_iridescence(blender_material, export_settings):
     # Cases where the extension is not exported:
 
     # No thickness socket found (no Principled Shader)
-    iridescence_thickness_socket = get_socket(blender_material.node_tree, "Thin Film Thickness")
+    iridescence_thickness_socket = get_socket(bmat.get_used_material().node_tree, "Thin Film Thickness")
     if iridescence_thickness_socket.socket is None:
         return None, {}, {}
 
     # factor (from glTF Output group node)
-    iridescence_factor_socket = get_socket_from_gltf_material_node(blender_material.node_tree, "Iridescence Factor")
+    iridescence_factor_socket = get_socket_from_gltf_material_node(bmat.get_used_material().node_tree, "Iridescence Factor")
     if iridescence_factor_socket.socket is None:
         return None, {}, {}
 
     # Thickness minimum (from glTF Output group node)
-    iridescence_thickness_minimum_socket = get_socket_from_gltf_material_node(blender_material.node_tree, "Iridescence Thickness Minimum")
+    iridescence_thickness_minimum_socket = get_socket_from_gltf_material_node(bmat.get_used_material().node_tree, "Iridescence Thickness Minimum")
     if iridescence_thickness_minimum_socket is None:
         return None, {}, {}
 
@@ -67,7 +67,7 @@ def export_iridescence(blender_material, export_settings):
     # If not animated, it will be remove after export, because of the default value
 
     # IOR
-    iridescence_ior_socket = get_socket(blender_material.node_tree, "Thin Film IOR")
+    iridescence_ior_socket = get_socket(bmat.get_used_material().node_tree, "Thin Film IOR")
     if (iridescence_ior_socket.socket.default_value - GLTF_IRIDESCENCE_IOR) > 0.0001:
         iridescence_extension['iridescenceIor'] = iridescence_ior_socket.socket.default_value
 
