@@ -125,38 +125,80 @@ def __export(export_settings):
 def __check_iridescence(json, export_settings):
     if 'materials' not in json.keys():
         return
-    for mat in json['materials']:
+    animation_pointer_deleted = False
+    for mat_idx, mat in enumerate(json['materials']):
         if 'extensions' not in mat.keys():
             continue
         if 'KHR_materials_iridescence' not in mat['extensions'].keys():
             continue
 
+        # Check if the factor is animated or not for this material
+        # If not animated and 0.0 => remove the entire extension, because it is not changing the shader
+        # If animated => keep the extension, but we will remove the default value
+        factor_animated = False
+        if 'KHR_materials_iridescence' in export_settings['gltf_animated_extensions'].keys() and \
+                'iridescenceFactor' in export_settings['gltf_animated_extensions']['KHR_materials_iridescence']:
+            # We need to chec for this specific material, as it seems that some material can have animated factor
+            for anim in json['animations']:
+                for channel in anim['channels']:
+                    if not channel['target']['path'] == "pointer":
+                        continue
+                    pointer = channel['target']['extensions']['KHR_animation_pointer']['pointer']
+                    if pointer == f"/materials/{mat_idx}/extensions/KHR_materials_iridescence/iridescenceFactor":
+                        factor_animated = True
+                        break
+                if factor_animated:
+                    break
 
-    # TODO: we need to remove animation pointer animation on factor if the thickness is 0 and not animated
+        # Check if the thickness is animated or not for this material
+        # If not animated and 0.0 => remove the entire extension, because it is not changing the shader
+        # If animated => keep the extension, but we will remove the default value
+        thickness_animated = False
+        if 'KHR_materials_iridescence' in export_settings['gltf_animated_extensions'].keys() and \
+                'iridescenceThicknessMaximum' in export_settings['gltf_animated_extensions']['KHR_materials_iridescence']:
+            # We need to chec for this specific material, as it seems that some material can have animated thickness
+            for anim in json['animations']:
+                for channel in anim['channels']:
+                    if not channel['target']['path'] == "pointer":
+                        continue
+                    pointer = channel['target']['extensions']['KHR_animation_pointer']['pointer']
+                    if pointer == f"/materials/{mat_idx}/extensions/KHR_materials_iridescence/iridescenceThicknessMaximum":
+                        thickness_animated = True
+                        break
+                if thickness_animated:
+                    break
 
-        # Check if there is a not default factor
-        if 'iridescenceFactor' in mat['extensions']['KHR_materials_iridescence'].keys() and \
-                mat['extensions']['KHR_materials_iridescence']['iridescenceFactor'] == 0.0:
-            # Check if the factor is animated or not
-            # If not animated => remove the entire extension, because it is not changing the shader
-            # If animated => keep the extension, but we will remove the default value
-            if 'KHR_materials_iridescence' in export_settings['gltf_animated_extensions'].keys():
-                if 'iridescenceFactor' not in export_settings['gltf_animated_extensions']['KHR_materials_iridescence']:
-                    # We can remove the entire extension
-                    del mat['extensions']['KHR_materials_iridescence']
-                    continue
+        if (not factor_animated and mat['extensions']['KHR_materials_iridescence'].get('iridescenceFactor', 0.0) == 0.0) \
+                or (not thickness_animated and mat['extensions']['KHR_materials_iridescence'].get('iridescenceThicknessMaximum', 400.0) == 0.0):
+            # We can remove the entire extension, as no material animates the factor or the thickness, and default values are not changing the shader
+            del mat['extensions']['KHR_materials_iridescence']
+            # We can remove any animation pointer on this extension for this material, because it is not animating anything
+            for anim in json['animations']:
+                for channel in anim['channels']:
+                    if not channel['target']['path'] == "pointer":
+                        continue
+                    pointer = channel['target']['extensions']['KHR_animation_pointer']['pointer']
+                    if pointer.startswith(f"/materials/{mat_idx}/extensions/KHR_materials_iridescence/"):
+                        # We found an animation for this extension, but as no material animates the factor or the thickness, and default values are not changing the shader, we can remove this animation, as it is not animating anything
+                        anim['channels'].remove(channel)
+                        animation_pointer_deleted = True
+            continue
 
-        # Check if there is a not zero thickness
-        if 'iridescenceThicknessMaximum' in mat['extensions']['KHR_materials_iridescence'].keys() and \
-                mat['extensions']['KHR_materials_iridescence']['iridescenceThicknessMaximum'] == 0.0:
-            # Check if the thickness is animated or not
-            # If not animated => remove the entire extension, because it is not changing the shader
-            # If animated => keep the extension, but we will remove the default value
-            if 'KHR_materials_iridescence' in export_settings['gltf_animated_extensions'].keys():
-                if 'iridescenceThicknessMaximum' not in export_settings['gltf_animated_extensions']['KHR_materials_iridescence']:
-                    # We can remove the entire extension
-                    del mat['extensions']['KHR_materials_iridescence']
-                    continue
+    # As we may have deleted some animation pointer, we need to check if the extension is still needed
+    if animation_pointer_deleted:
+        animation_pointer_found = False
+        for anim in json['animations']:
+            for channel in anim['channels']:
+                if channel['target']['path'] == "pointer":
+                    animation_pointer_found = True
+                    break
+            if animation_pointer_found:
+                break
+        if not animation_pointer_found:
+            # We have deleted all animation pointer, so we can remove the extension declaration for animation pointer
+            export_settings['gltf_need_to_keep_extension_declaration'] = [
+                e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_animation_pointer']
+
 
     # Check if we need to keep the extension declaration
     iridescence_found = False
