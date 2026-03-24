@@ -173,7 +173,7 @@ def __check_iridescence(json, export_settings):
             # We can remove the entire extension, as no material animates the factor or the thickness, and default values are not changing the shader
             del mat['extensions']['KHR_materials_iridescence']
             # We can remove any animation pointer on this extension for this material, because it is not animating anything
-            for anim in json['animations']:
+            for anim in json.get('animations', []):
                 channels_to_keep = []
                 samplers_to_keep = []
                 for channel_idx, channel in enumerate(anim['channels']):
@@ -191,14 +191,14 @@ def __check_iridescence(json, export_settings):
                 anim['channels'] = channels_to_keep
                 anim['samplers'] = samplers_to_keep
             # If no more channel in this animation, we can remove the entire animation
-            json['animations'] = [anim for anim in json['animations'] if len(anim['channels']) > 0]
+            json['animations'] = [anim for anim in json.get('animations', []) if len(anim['channels']) > 0]
 
             continue
 
     # As we may have deleted some animation pointer, we need to check if the extension is still needed
     if animation_pointer_deleted:
         animation_pointer_found = False
-        for anim in json['animations']:
+        for anim in json.get('animations', []):
             for channel in anim['channels']:
                 if channel['target']['path'] == "pointer":
                     animation_pointer_found = True
@@ -213,7 +213,7 @@ def __check_iridescence(json, export_settings):
 
     # Check if we need to keep the extension declaration
     iridescence_found = False
-    for mat in json['materials']:
+    for mat in json.get('materials', []):
         if 'extensions' not in mat.keys():
             continue
         if 'KHR_materials_iridescence' not in mat['extensions'].keys():
@@ -246,7 +246,7 @@ def __check_ior(json, export_settings):
 
     # Check if we need to keep the extension declaration
     ior_found = False
-    for mat in json['materials']:
+    for mat in json.get('materials', []):
         if 'extensions' not in mat.keys():
             continue
         if 'KHR_materials_ior' not in mat['extensions'].keys():
@@ -273,7 +273,7 @@ def __check_volume(json, export_settings):
 
     # Check if we need to keep the extension declaration
     volume_found = False
-    for mat in json['materials']:
+    for mat in json.get('materials', []):
         if 'extensions' not in mat.keys():
             continue
         if 'KHR_materials_volume' not in mat['extensions'].keys():
