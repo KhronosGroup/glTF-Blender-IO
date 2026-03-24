@@ -174,14 +174,25 @@ def __check_iridescence(json, export_settings):
             del mat['extensions']['KHR_materials_iridescence']
             # We can remove any animation pointer on this extension for this material, because it is not animating anything
             for anim in json['animations']:
-                for channel in anim['channels']:
-                    if not channel['target']['path'] == "pointer":
-                        continue
-                    pointer = channel['target']['extensions']['KHR_animation_pointer']['pointer']
-                    if pointer.startswith(f"/materials/{mat_idx}/extensions/KHR_materials_iridescence/"):
+                channels_to_keep = []
+                samplers_to_keep = []
+                for channel_idx, channel in enumerate(anim['channels']):
+                    pointer_matches = (
+                        channel['target']['path'] == "pointer"
+                        and channel['target']['extensions']['KHR_animation_pointer']['pointer']
+                            .startswith(f"/materials/{mat_idx}/extensions/KHR_materials_iridescence/")
+                    )
+                    if pointer_matches:
                         # We found an animation for this extension, but as no material animates the factor or the thickness, and default values are not changing the shader, we can remove this animation, as it is not animating anything
-                        anim['channels'].remove(channel)
                         animation_pointer_deleted = True
+                    else:
+                        channels_to_keep.append(channel)
+                        samplers_to_keep.append(anim['samplers'][channel_idx])
+                anim['channels'] = channels_to_keep
+                anim['samplers'] = samplers_to_keep
+            # If no more channel in this animation, we can remove the entire animation
+            json['animations'] = [anim for anim in json['animations'] if len(anim['channels']) > 0]
+
             continue
 
     # As we may have deleted some animation pointer, we need to check if the extension is still needed
