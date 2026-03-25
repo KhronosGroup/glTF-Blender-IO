@@ -77,6 +77,7 @@ def gather_node(vnode, export_settings):
         translation=None,
         weights=__gather_weights(blender_object, export_settings)
     )
+    export_settings['KHR_animation_pointer']['extras']['objects'][id(blender_object)]['glTF_extras'] = node
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
     if node.skin is None:
@@ -100,10 +101,10 @@ def __gather_camera(vnode, export_settings):
     cam = gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
 
     if len(export_settings['current_paths']) > 0:
-        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)] = {}
-        export_settings['KHR_animation_pointer']['cameras'][id(
+        export_settings['KHR_animation_pointer'][None]['cameras'][id(vnode.blender_object.data)] = {}
+        export_settings['KHR_animation_pointer'][None]['cameras'][id(
             vnode.blender_object.data)]['paths'] = export_settings['current_paths'].copy()
-        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['glTF_camera'] = cam
+        export_settings['KHR_animation_pointer'][None]['cameras'][id(vnode.blender_object.data)]['glTF_camera'] = cam
 
     export_settings['current_paths'] = {}
 
@@ -243,10 +244,10 @@ def __gather_extensions(vnode, export_settings):
                 }
             )
             if len(export_settings['current_paths']) > 0:
-                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)] = {}
-                export_settings['KHR_animation_pointer']['lights'][id(
+                export_settings['KHR_animation_pointer'][None]['lights'][id(blender_lamp)] = {}
+                export_settings['KHR_animation_pointer'][None]['lights'][id(
                     blender_lamp)]['paths'] = export_settings['current_paths'].copy()
-                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['glTF_light'] = light_extension
+                export_settings['KHR_animation_pointer'][None]['lights'][id(blender_lamp)]['glTF_light'] = light_extension
 
             export_settings['current_paths'] = {}
 
@@ -255,7 +256,7 @@ def __gather_extensions(vnode, export_settings):
 
 def __gather_extras(blender_object, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_object)
+        return generate_extras(blender_object, 'objects', export_settings)
     return None
 
 

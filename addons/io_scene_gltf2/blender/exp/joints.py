@@ -107,6 +107,7 @@ def gather_joint_vnode(vnode, export_settings):
         translation=translation,
         weights=None
     )
+    export_settings['KHR_animation_pointer']['extras']['bones'][id(blender_bone.bone)]['glTF_extras'] = node
 
     export_user_extensions('gather_joint_hook', export_settings, node, blender_bone)
 
@@ -117,5 +118,5 @@ def gather_joint_vnode(vnode, export_settings):
 
 def __gather_extras(blender_bone, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_bone.bone)
+        return generate_extras(blender_bone.bone, 'bones', export_settings)
     return None

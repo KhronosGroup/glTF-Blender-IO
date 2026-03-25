@@ -81,19 +81,19 @@ def gather_tracks_animations(export_settings):
 
     if export_settings['gltf_export_anim_pointer'] is True:
         # Manage Material tracks (for KHR_animation_pointer)
-        for mat in export_settings['KHR_animation_pointer']['materials'].keys():
+        for mat in export_settings['KHR_animation_pointer'][None]['materials'].keys():
             animations_, merged_tracks = gather_data_track_animations(
                 'materials', mat, merged_tracks, len(animations), export_settings)
             animations += animations_
 
         # Manage Cameras tracks (for KHR_animation_pointer)
-        for cam in export_settings['KHR_animation_pointer']['cameras'].keys():
+        for cam in export_settings['KHR_animation_pointer'][None]['cameras'].keys():
             animations_, merged_tracks = gather_data_track_animations(
                 'cameras', cam, merged_tracks, len(animations), export_settings)
             animations += animations_
 
         # Manage lights tracks (for KHR_animation_pointer)
-        for light in export_settings['KHR_animation_pointer']['lights'].keys():
+        for light in export_settings['KHR_animation_pointer'][None]['lights'].keys():
             animations_, merged_tracks = gather_data_track_animations(
                 'lights', light, merged_tracks, len(animations), export_settings)
             animations += animations_

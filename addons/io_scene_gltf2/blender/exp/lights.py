@@ -42,6 +42,7 @@ def gather_lights_punctual(blender_lamp, blender_lamp_world_matrix, export_setti
         extensions=__gather_extensions(blender_lamp, export_settings),
         extras=__gather_extras(blender_lamp, export_settings)
     )
+    export_settings['KHR_animation_pointer']['extras']['lights'][id(blender_lamp)]['glTF_extras'] = light
 
     return light.to_dict()
 
@@ -200,7 +201,7 @@ def __gather_extensions(blender_lamp, export_settings) -> Optional[dict]:
 
 def __gather_extras(blender_lamp, export_settings) -> Optional[Any]:
     if export_settings['gltf_extras']:
-        return generate_extras(blender_lamp)
+        return generate_extras(blender_lamp, 'lights', export_settings)
     return None
 
 

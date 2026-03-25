@@ -35,6 +35,7 @@ def gather_camera(blender_camera, export_settings):
         perspective=__gather_perspective(blender_camera, export_settings),
         type=__gather_type(blender_camera, export_settings)
     )
+    export_settings['KHR_animation_pointer']['extras']['cameras'][id(blender_camera)]['glTF_extras'] = camera
 
     export_user_extensions('gather_camera_hook', export_settings, camera, blender_camera)
 
@@ -51,7 +52,7 @@ def __gather_extensions(blender_camera, export_settings):
 
 def __gather_extras(blender_camera, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_camera)
+        return generate_extras(blender_camera, 'cameras', export_settings)
     return None
 
 

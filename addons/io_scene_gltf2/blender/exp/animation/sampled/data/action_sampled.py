@@ -49,6 +49,7 @@ def gather_action_material_sampled(mat_uuid: str,
 def __gather_channels(mat_uuid: str, blender_action_name: str, slot_identifier: str,
                       export_settings):
     return gather_data_sampled_channels(
+        None,
         'materials',
         mat_uuid,
         blender_action_name,

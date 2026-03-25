@@ -307,11 +307,12 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, slot_ident
             pass  # Should not happen
 
         # Export now KHR_animation_pointer for materials / light / camera
-        for i in [a for a in export_settings['KHR_animation_pointer'][blender_type_data].keys() if a == blender_id]:
-            if len(export_settings['KHR_animation_pointer'][blender_type_data][i]['paths']) == 0:
+        for i in [a for a in export_settings['KHR_animation_pointer'][None][blender_type_data].keys() if a == blender_id]:
+            if len(export_settings['KHR_animation_pointer'][None][blender_type_data][i]['paths']) == 0:
                 continue
 
             channels = gather_data_sampled_channels(
+                None,
                 blender_type_data, i, animation_key, slot_identifier, on_type, export_settings)
             if channels is not None:
                 total_channels.extend(channels)

@@ -19,21 +19,22 @@ from .channel_target import gather_data_sampled_channel_target
 from .sampler import gather_data_sampled_animation_sampler
 
 
-def gather_data_sampled_channels(blender_type_data, blender_id, blender_action_name, slot_identifier,
+def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_id, blender_action_name, slot_identifier,
                                  additional_key, export_settings) -> typing.List[gltf2_io.AnimationChannel]:
     channels = []
 
     list_of_animated_data_channels = {}  # TODOPointer
 
     baseColorFactor_alpha_merged_already_done = False
-    for path in export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'].keys():
+    for path in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['paths'].keys():
 
         # Do not manage alpha, as it will be managaed by the baseColorFactor (merging Color and alpha)
-        if export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][path][
+        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['paths'][path][
                 'path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" and baseColorFactor_alpha_merged_already_done is True:
             continue
 
         channel = gather_sampled_data_channel(
+            blender_main_type,
             blender_type_data,
             blender_id,
             path,
@@ -48,13 +49,14 @@ def gather_data_sampled_channels(blender_type_data, blender_id, blender_action_n
         if channel is not None:
             channels.append(channel)
 
-        if export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
             baseColorFactor_alpha_merged_already_done = True
 
     return channels
 
 
 def gather_sampled_data_channel(
+        blender_main_type,
         blender_type_data: str,
         blender_id: str,
         channel: str,
@@ -66,9 +68,10 @@ def gather_sampled_data_channel(
         export_settings
 ):
 
-    __target = __gather_target(blender_type_data, blender_id, channel, additional_key, export_settings)
+    __target = __gather_target(blender_main_type, blender_type_data, blender_id, channel, additional_key, export_settings)
     if __target.path is not None:
         sampler, alpha_cst = __gather_sampler(
+            blender_main_type,
             blender_type_data,
             blender_id,
             channel,
@@ -98,6 +101,7 @@ def gather_sampled_data_channel(
 
 
 def __gather_target(
+    blender_main_type,
     blender_type_data: str,
     blender_id: str,
     channel: str,
@@ -106,10 +110,11 @@ def __gather_target(
 ) -> gltf2_io.AnimationChannelTarget:
 
     return gather_data_sampled_channel_target(
-        blender_type_data, blender_id, channel, additional_key, export_settings)
+        blender_main_type, blender_type_data, blender_id, channel, additional_key, export_settings)
 
 
 def __gather_sampler(
+        blender_main_type,
         blender_type_data,
         blender_id,
         channel,
@@ -120,6 +125,7 @@ def __gather_sampler(
         additional_key,
         export_settings):
     return gather_data_sampled_animation_sampler(
+        blender_main_type,
         blender_type_data,
         blender_id,
         channel,

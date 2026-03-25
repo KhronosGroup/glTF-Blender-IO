@@ -30,12 +30,17 @@ BLACK_LIST = [
     'gltf2_variant_mesh_data']
 
 
-def generate_extras(blender_element):
+def generate_extras(blender_element, blender_data_type, export_settings):
     """Filter and create a custom property, which is stored in the glTF extra field."""
     if not blender_element:
         return None
 
+    gltf_data_type = {'objects': 'nodes', 'bones': 'nodes'}.get(blender_data_type, blender_data_type)
+
     extras = {}
+    export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(blender_element)] = {} # TODOEXTRAS: check if user want to export animation pointer
+    export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(blender_element)]['paths'] = {}
+
 
     # Custom properties
     for custom_property in blender_element.keys():
@@ -46,6 +51,14 @@ def generate_extras(blender_element):
 
         if value is not None:
             extras[custom_property] = value
+
+            # Store the path of the custom property for KHR_animation_pointer
+            # TODOEXTRAS: check if user want to export animation pointer
+            path_ = {}
+            path_['length'] = 1 # TODOEXTRAS: support array custom properties
+            path_['path'] = "/" + gltf_data_type + "/XXX/extras/" + custom_property
+
+            export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(blender_element)]['paths']["[\"" + custom_property + "\"]"] = path_
 
     # System Custom Properties (ID properties)
     properties = blender_element.bl_system_properties_get() or {}

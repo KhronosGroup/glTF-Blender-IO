@@ -23,6 +23,7 @@ from .keyframes import gather_data_sampled_keyframes
 
 @cached
 def gather_data_sampled_animation_sampler(
+        blender_main_type,
         blender_type_data: str,
         blender_id: str,
         channel: str,
@@ -35,6 +36,7 @@ def gather_data_sampled_animation_sampler(
 ):
 
     keyframes, alpha_cst = __gather_keyframes(
+        blender_main_type,
         blender_type_data,
         blender_id,
         channel,
@@ -58,6 +60,7 @@ def gather_data_sampled_animation_sampler(
 
 
 def __gather_keyframes(
+        blender_main_type,
         blender_type_data,
         blender_id,
         channel,
@@ -68,6 +71,7 @@ def __gather_keyframes(
         export_settings):
 
     keyframes, alpha_cst = gather_data_sampled_keyframes(
+        blender_main_type,
         blender_type_data,
         blender_id,
         channel,

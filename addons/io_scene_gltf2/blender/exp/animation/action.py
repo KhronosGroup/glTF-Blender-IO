@@ -183,8 +183,8 @@ def gather_actions_animations(export_settings):
 
     # Material animation
 
-    for mat_id in export_settings['KHR_animation_pointer']['materials'].keys():
-        if len(export_settings['KHR_animation_pointer']['materials'][mat_id]['paths']) == 0:
+    for mat_id in export_settings['KHR_animation_pointer'][None]['materials'].keys():
+        if len(export_settings['KHR_animation_pointer'][None]['materials'][mat_id]['paths']) == 0:
             continue
 
         animations_, merged_tracks = gather_material_action_animations(
@@ -516,6 +516,7 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                 samplers=[],  # This will be generated later, in link_samplers
                 extensions=None
             )
+            export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_action)]['glTF_extras'] = animation
 
             # Hook for user extensions
             export_user_extensions(
@@ -881,6 +882,7 @@ def gather_obj_action_animations(obj_uuid: int,
                 samplers=[],  # This will be generated later, in link_samplers
                 extensions=None
             )
+            export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_action)]['glTF_extras'] = animation
 
             # Hook for user extensions
             export_user_extensions(
@@ -1209,7 +1211,7 @@ def __is_armature_slot(blender_action, slot) -> bool:
 
 def __gather_extras(blender_action, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_action)
+        return generate_extras(blender_action, 'animations', export_settings)
     return None
 
 
