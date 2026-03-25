@@ -182,20 +182,22 @@ def gather_actions_animations(export_settings):
         animations += animations_
 
     # Material animation
+    if export_settings['gltf_export_anim_pointer']:
+        for mat_id in export_settings['material_identifiers'].keys():
+            if mat_id not in export_settings['ranges']:
+                continue
+            if len(export_settings['ranges'][mat_id]) == 0:
+                continue
 
-    for mat_id in export_settings['KHR_animation_pointer'][None]['materials'].keys():
-        if len(export_settings['KHR_animation_pointer'][None]['materials'][mat_id]['paths']) == 0:
-            continue
+            animations_, merged_tracks = gather_material_action_animations(
+                mat_id, merged_tracks, len(animations), export_settings)
+            animations += animations_
 
-        animations_, merged_tracks = gather_material_action_animations(
-            mat_id, merged_tracks, len(animations), export_settings)
-        animations += animations_
+        # Light animation
+        # TODOPOINTER
 
-    # Light animation
-    # TODOPOINTER
-
-    # Camera animation
-    # TODOPOINTER
+        # Camera animation
+        # TODOPOINTER
 
     if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
         # Fake an animation with all animations of the scene
