@@ -74,7 +74,8 @@ def gather_mesh(blender_data,
                 blender_data, vertex_groups, modifiers, export_settings), weights=__gather_weights(
                     blender_data, vertex_groups, modifiers, export_settings), primitives=__gather_primitives(
                         blender_data, uuid_for_skined_data, vertex_groups, modifiers, materials, export_settings), )
-    export_settings['KHR_animation_pointer']['extras']['meshes'][id(blender_data)]['glTF_extras'] = mesh
+    if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+        export_settings['KHR_animation_pointer']['extras']['meshes'][id(blender_data)]['glTF_extras'] = mesh
 
     if len(mesh.primitives) == 0:
         export_settings['log'].warning("Mesh '{}' has no primitives and will be omitted.".format(mesh.name))

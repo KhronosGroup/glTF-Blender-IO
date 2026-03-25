@@ -127,7 +127,8 @@ def gather_scene_animations(export_settings):
                     name=blender_object.name if blender_object else "GN Instance",
                     samplers=[]
                 )
-                export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_object)]['glTF_extras'] = animation
+                if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+                    export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_object)]['glTF_extras'] = animation
                 link_samplers(animation, export_settings)
                 animations.append(animation)
 
@@ -162,7 +163,8 @@ def gather_scene_animations(export_settings):
                     name=blender_material.name,
                     samplers=[]
                 )
-                export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_material)]['glTF_extras'] = animation
+                if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+                    export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_material)]['glTF_extras'] = animation
                 link_samplers(animation, export_settings)
                 animations.append(animation)
 
@@ -195,8 +197,9 @@ def gather_scene_animations(export_settings):
                         name=blender_light.name,
                         samplers=[]
                     )
+                    if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+                        export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_light)]['glTF_extras'] = animation
                     link_samplers(animation, export_settings)
-                    export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_light)]['glTF_extras'] = animation
                     animations.append(animation)
 
                 total_channels = []
@@ -228,7 +231,8 @@ def gather_scene_animations(export_settings):
                         name=blender_camera.name,
                         samplers=[]
                     )
-                    export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_camera)]['glTF_extras'] = animation
+                    if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+                        export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_camera)]['glTF_extras'] = animation
                     link_samplers(animation, export_settings)
                     animations.append(animation)
 
@@ -310,7 +314,8 @@ def gather_scene_animations(export_settings):
                 name=bpy.context.scene.name,
                 samplers=[]
             )
-            export_settings['KHR_animation_pointer']['extras']['animations'][id(bpy.context.scene)]['glTF_extras'] = animation
+            if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+                export_settings['KHR_animation_pointer']['extras']['animations'][id(bpy.context.scene)]['glTF_extras'] = animation
             link_samplers(animation, export_settings)
             animations.append(animation)
 

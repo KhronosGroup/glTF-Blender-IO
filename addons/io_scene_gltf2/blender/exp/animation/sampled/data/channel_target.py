@@ -55,7 +55,8 @@ def __gather_node(blender_main_type, blender_type_data, blender_id, export_setti
         else:
             pass  # This should never happen
     elif blender_main_type == "extras":
-        return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['glTF_extras']
+        if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+            return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['glTF_extras']
     else:
         pass # This should never happen
 
