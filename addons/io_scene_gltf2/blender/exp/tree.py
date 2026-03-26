@@ -425,7 +425,8 @@ class VExportTree:
 
         if is_collection is True:  # Only for gltf_hierarchy_full_collections == True
             # Manage children objects
-            for child in blender_object.objects:
+            collection_objects = set(blender_object.objects)
+            for child in collection_objects:
                 # On Collection, .objects returns all objects & instance collection
                 # Not only the direct children
 
