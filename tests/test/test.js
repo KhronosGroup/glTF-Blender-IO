@@ -3415,7 +3415,7 @@ describe('Exporter', function () {
 
             });
 
-it('export object point cloud', function () {
+            it('export object point cloud', function () {
                 let gltfPath = path.resolve(outDirPath, '38_pointcloud_object.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath));
 
