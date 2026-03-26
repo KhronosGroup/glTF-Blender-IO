@@ -409,7 +409,7 @@ class VExportTree:
                 # Some objects are parented to instance collection
                 for child in blender_children[blender_object]:
                     self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
-                                                 new_delta or delta, blender_children)
+                                                 new_delta or delta, blender_children, is_children_in_collection=True)
                 # Manage children collections
                 for child in blender_object.instance_collection.children:
                     self.recursive_node_traverse(
