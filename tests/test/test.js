@@ -284,7 +284,7 @@ describe('Exporter', function () {
                 let gltfPath = path.resolve(outDirPath, '01_linked_collection.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                assert.strictEqual(asset.nodes.length, 3);
+                assert.strictEqual(asset.nodes.length, 4);
             });
 
             it('can export all collection instances', function () {
