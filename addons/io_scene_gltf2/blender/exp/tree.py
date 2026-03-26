@@ -385,14 +385,33 @@ class VExportTree:
 
                 # Some objects are parented to instance collection
                 for child in blender_children[blender_object]:
-                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
+                    self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
                                                  new_delta or delta, blender_children)
-
+                # Manage children collections
+                for child in blender_object.instance_collection.children:
+                    self.recursive_node_traverse(
+                        child,
+                        None,
+                        node.uuid,
+                        node.matrix_world,
+                        new_delta or delta,
+                        blender_children,
+                        is_collection=True)
             else:
                 # Manage children objects
-                for child in blender_object.instance_collection.objects:
-                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
-                                                 new_delta or delta, blender_children)
+                self.recursive_node_traverse(
+                    blender_object.instance_collection,
+                    None,
+                    node.uuid,
+                    node.matrix_world,
+                    new_delta or delta,
+                    blender_children,
+                    is_collection=True,
+                    is_children_in_collection=True)
+                # Some objects are parented to instance collection
+                for child in blender_children[blender_object]:
+                    self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
+                                                 new_delta or delta, blender_children, is_children_in_collection=True)
                 # Manage children collections
                 for child in blender_object.instance_collection.children:
                     self.recursive_node_traverse(
@@ -406,7 +425,8 @@ class VExportTree:
 
         if is_collection is True:  # Only for gltf_hierarchy_full_collections == True
             # Manage children objects
-            for child in blender_object.objects:
+            collection_objects = set(blender_object.objects)
+            for child in collection_objects:
                 # On Collection, .objects returns all objects & instance collection
                 # Not only the direct children
 
@@ -416,7 +436,7 @@ class VExportTree:
                         and child.users_collection[0].name == child.parent.users_collection[0].name:
                     continue
 
-                self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
+                self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
                                              new_delta or delta, blender_children)
             # Manage children collections
             for child in blender_object.children:
