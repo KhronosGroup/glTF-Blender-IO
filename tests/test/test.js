@@ -291,7 +291,7 @@ describe('Exporter', function () {
                 let gltfPath = path.resolve(outDirPath, '01_multiple_collection_instances.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                assert.strictEqual(asset.nodes.length, 7);
+                assert.strictEqual(asset.nodes.length, 9);
             });
 
             it('can export a base color', function () {
