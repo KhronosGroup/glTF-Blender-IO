@@ -31,7 +31,7 @@ def gather_animation_fcurves_channels(
         export_settings
 ):
 
-    channels_to_perform, to_be_sampled, extra_channels_to_perform = get_channel_groups(
+    channels_to_perform, to_be_sampled, additional_channels_to_perform = get_channel_groups(
         obj_uuid, blender_action, blender_action.slots[slot_identifier], export_settings)
 
     custom_range = None
@@ -49,7 +49,7 @@ def gather_animation_fcurves_channels(
                 channels.append(channel)
 
     if export_settings['gltf_export_extra_animations']:
-        for chan in [chan for chan in extra_channels_to_perform.values() if len(chan['properties']) != 0]:
+        for chan in [chan for chan in additional_channels_to_perform.values() if len(chan['properties']) != 0]:
             for channel_group_name, channel_group in chan['properties'].items():
 
                 # No glTF channel here, as we don't have any target
