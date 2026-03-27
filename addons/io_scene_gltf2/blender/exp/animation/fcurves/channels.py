@@ -66,6 +66,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
     # no_sample_option is used when we want to retrieve all SK channels, to be evaluate.
     targets = {}
     targets_additional = {}
+    targets_extras = {}
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
@@ -152,21 +153,48 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
         if type_ == "EXTRA":
             # No group by property, because we are going to export fcurve separately
             # We are going to evaluate fcurve, so no check if need to be sampled
-            if target_property is None:
-                target_property = fcurve.data_path
-            if not target_property.startswith("pose.bones["):
-                target_property = fcurve.data_path
-            target_data = targets_additional.get(target, {})
-            target_data['type'] = type_
-            target_data['bone'] = target.name if type_ == "BONE" else None
-            target_data['obj_uuid'] = obj_uuid
-            target_properties = target_data.get('properties', {})
-            channels = target_properties.get(target_property, [])
-            channels.append(fcurve)
-            target_properties[target_property] = channels
-            target_data['properties'] = target_properties
-            targets_additional[target] = target_data
-            continue
+
+
+            # We need here to split into 2 categories:
+            # extras (custom properties), and additional
+            # Extras will be managed only if user exports custom properties as extra, and
+            # export animation pointer
+            if export_settings['gltf_extras'] \
+                    and export_settings['gltf_export_anim_pointer']:
+                # Let's confirm that this is a custom property, and not a wrong path for example
+                if fcurve.data_path.startswith('["') and fcurve.data_path.endswith('"]'):
+                    test_custom_prop = fcurve.data_path[2:-2]
+                    if export_settings['vtree'].nodes[obj_uuid].node is not None:
+                        if export_settings['vtree'].nodes[obj_uuid].node.extras.get(test_custom_prop) is not None:
+                            # This is a custom property, we can export it as extra
+                            target_data = targets_extras.get(target, {})
+                            target_data['type'] = type_
+                            target_data['obj_uuid'] = obj_uuid
+                            target_data['bone'] = target.name if type_ == "BONE" else None
+                            target_properties = target_data.get('properties', {})
+                            channels = target_properties.get(fcurve.data_path, [])
+                            channels.append(fcurve)
+                            target_properties[fcurve.data_path] = channels
+                            target_data['properties'] = target_properties
+                            targets_extras[target] = target_data
+                            continue
+            else:
+
+                if target_property is None:
+                    target_property = fcurve.data_path
+                if not target_property.startswith("pose.bones["):
+                    target_property = fcurve.data_path
+                target_data = targets_additional.get(target, {})
+                target_data['type'] = type_
+                target_data['bone'] = target.name if type_ == "BONE" else None
+                target_data['obj_uuid'] = obj_uuid
+                target_properties = target_data.get('properties', {})
+                channels = target_properties.get(target_property, [])
+                channels.append(fcurve)
+                target_properties[target_property] = channels
+                target_data['properties'] = target_properties
+                targets_additional[target] = target_data
+                continue
 
         # group channels by target object and affected property of the target
         target_data = targets.get(target, {})
@@ -231,7 +259,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
 
     to_be_sampled = list(set(to_be_sampled))
 
-    return targets, to_be_sampled, targets_additional
+    return targets, to_be_sampled, targets_additional, targets_extras
 
 
 def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender_object: bpy.types.Object):
