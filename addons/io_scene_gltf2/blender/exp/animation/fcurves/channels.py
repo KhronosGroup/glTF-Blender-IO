@@ -39,7 +39,7 @@ def gather_animation_fcurves_channels(
         custom_range = (blender_action.frame_start, blender_action.frame_end)
 
     channels = []
-    extra_samplers = []
+    additional_samplers = []
 
     for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
         for channel_group in chan['properties'].values():
@@ -56,9 +56,9 @@ def gather_animation_fcurves_channels(
                 # Trying to retrieve sampler directly
                 sampler = __gather_sampler(obj_uuid, tuple(channel_group), None, custom_range, True, export_settings)
                 if sampler is not None:
-                    extra_samplers.append((channel_group_name, sampler, "OBJECT", None))
+                    additional_samplers.append((channel_group_name, sampler, "OBJECT", None))
 
-    return channels, to_be_sampled, extra_samplers
+    return channels, to_be_sampled, additional_samplers
 
 
 def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
