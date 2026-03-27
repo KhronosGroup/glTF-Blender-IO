@@ -31,7 +31,7 @@ def gather_animation_fcurves_channels(
         export_settings
 ):
 
-    channels_to_perform, to_be_sampled, additional_channels_to_perform = get_channel_groups(
+    channels_to_perform, to_be_sampled, additional_channels_to_perform, extras_channels_to_perform = get_channel_groups(
         obj_uuid, blender_action, blender_action.slots[slot_identifier], export_settings)
 
     custom_range = None
@@ -65,7 +65,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                        slot: bpy.types.ActionSlot, export_settings, no_sample_option=False):
     # no_sample_option is used when we want to retrieve all SK channels, to be evaluate.
     targets = {}
-    targets_extra = {}
+    targets_additional = {}
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
 
@@ -156,7 +156,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                 target_property = fcurve.data_path
             if not target_property.startswith("pose.bones["):
                 target_property = fcurve.data_path
-            target_data = targets_extra.get(target, {})
+            target_data = targets_additional.get(target, {})
             target_data['type'] = type_
             target_data['bone'] = target.name if type_ == "BONE" else None
             target_data['obj_uuid'] = obj_uuid
@@ -165,7 +165,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
             channels.append(fcurve)
             target_properties[target_property] = channels
             target_data['properties'] = target_properties
-            targets_extra[target] = target_data
+            targets_additional[target] = target_data
             continue
 
         # group channels by target object and affected property of the target
@@ -231,7 +231,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
 
     to_be_sampled = list(set(to_be_sampled))
 
-    return targets, to_be_sampled, targets_extra
+    return targets, to_be_sampled, targets_additional
 
 
 def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender_object: bpy.types.Object):
