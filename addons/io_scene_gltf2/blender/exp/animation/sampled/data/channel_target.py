@@ -56,9 +56,11 @@ def __gather_node(blender_main_type, blender_type_data, blender_id, export_setti
             pass  # This should never happen
     elif blender_main_type == "extras":
         if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-            if blender_type_data == "meshes":
-                if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+            if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+                if blender_type_data == "meshes":
                     used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
+                elif blender_type_data == "objects":
+                    used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
                 else:
                     used_blender_id = blender_id
             else:
@@ -71,13 +73,16 @@ def __gather_node(blender_main_type, blender_type_data, blender_id, export_setti
 def __gather_path(blender_main_type, blender_type_data, blender_id, channel, export_settings):
     # TODO, centralize this logic, used multiple times in the codebase (not only in this file)
     if blender_main_type == "extras":
-        if blender_type_data == "meshes":
-            if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+        if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+            if blender_type_data == "meshes":
                 used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
+            elif blender_type_data == "objects":
+                used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
             else:
                 used_blender_id = blender_id
         else:
             used_blender_id = blender_id
     else:
         used_blender_id = blender_id
+
     return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'][channel]['path']

@@ -19,6 +19,7 @@ from ......io.exp.user_extensions import export_user_extensions
 from ......blender.com.conversion import get_gltf_interpolation, get_target, get_channel_from_target
 from ....cache import cached
 from ...fcurves.channels import get_channel_groups
+from ..data.channels import gather_sampled_data_channel
 from .sampler import gather_object_sampled_animation_sampler
 from .channel_target import gather_object_sampled_channel_target
 
@@ -64,6 +65,26 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, s
         )
         if channel is not None:
             channels.append(channel)
+
+    # Manage extras channels (custom properties animated)
+    for chan in [chan for chan in extras_channels.values() if len(chan['properties']) != 0]:
+        for custom_prop, channel_group in chan['properties'].items():
+
+            channel = gather_sampled_data_channel(
+                "extras",
+                "objects",
+                object_uuid,
+                custom_prop,
+                blender_action_name,
+                slot_identifier,  # TODOSLOT
+                True,  # Extras channels are always animated (otherwise they are not exported)
+                get_gltf_interpolation(
+                    export_settings['gltf_sampling_interpolation_fallback'], export_settings),  # Keep user choice for interpolation of extras channels
+                None,  # No additional key for object extras channels
+                export_settings
+            )
+            if channel is not None:
+                channels.append(channel)
 
     blender_object = export_settings['vtree'].nodes[object_uuid].blender_object
     export_user_extensions('animation_gather_object_channel', export_settings, blender_object, blender_action_name)

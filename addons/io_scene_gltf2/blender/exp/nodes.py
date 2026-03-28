@@ -77,8 +77,10 @@ def gather_node(vnode, export_settings):
         translation=None,
         weights=__gather_weights(blender_object, export_settings)
     )
+    vnode.blender_object_id = id(blender_object)
+
     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-        export_settings['KHR_animation_pointer']['extras']['objects'][id(blender_object)]['glTF_extras'] = node
+        export_settings['KHR_animation_pointer']['extras']['objects'][vnode.blender_object_id]['glTF_extras'] = node
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
     if node.skin is None:

@@ -35,9 +35,11 @@ def gather_data_sampled_keyframes(
 
     # Factorize TODOPointer EXTRAS
     if blender_main_type == "extras":
-        if blender_type_data == "meshes":
-            if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+        if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+            if blender_type_data == "meshes":
                 used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
+            elif blender_type_data == "objects":
+                used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
             else:
                 used_blender_id = blender_id
         else:
