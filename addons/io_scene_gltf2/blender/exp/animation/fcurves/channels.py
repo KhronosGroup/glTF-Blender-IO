@@ -44,7 +44,7 @@ def gather_animation_fcurves_channels(
     for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
         for channel_group in chan['properties'].values():
             channel = __gather_animation_fcurve_channel(
-                chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
+                chan['id_type'], chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
             if channel is not None:
                 channels.append(channel)
 
@@ -54,7 +54,7 @@ def gather_animation_fcurves_channels(
         for chan in [chan for chan in extras_channels_to_perform.values() if len(chan['properties']) != 0]:
             for custom_prop, channel_group in chan['properties'].items():
                 channel = __gather_animation_fcurve_channel_extras(
-                    chan['obj_uuid'], custom_prop, channel_group, chan['bone'], custom_range, export_settings)
+                    chan['id_type'], chan['obj_uuid'], custom_prop, channel_group, chan['bone'], custom_range, export_settings)
                 if channel is not None:
                     channels.append(channel)
 
@@ -175,12 +175,23 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                 if fcurve.data_path.startswith('["') and fcurve.data_path.endswith('"]'):
                     test_custom_prop = fcurve.data_path[2:-2]
                     if export_settings['vtree'].nodes[obj_uuid].node is not None:
-                        if export_settings['vtree'].nodes[obj_uuid].node.extras.get(test_custom_prop) is not None:
+                        # Retrieve extras from right extra data ( node or mesh, ...)
+                        if slot.target_id_type == 'MESH':
+                            extras_target = export_settings['vtree'].nodes[obj_uuid].node.mesh.extras
+                        elif slot.target_id_type == 'OBJECT':
+                            extras_target = export_settings['vtree'].nodes[obj_uuid].node.extras
+                        else:
+                            # Not supported (yet)
+                            # Set a value to avoid crash
+                            extras_target = export_settings['vtree'].nodes[obj_uuid].node.extras
+
+                        if extras_target.get(test_custom_prop) is not None:
                             # This is a custom property, we can export it as extra
                             target_data = targets_extras.get(target, {})
                             target_data['type'] = type_
                             target_data['obj_uuid'] = obj_uuid
                             target_data['bone'] = target.name if type_ == "BONE" else None
+                            target_data['id_type'] = slot.target_id_type
                             target_properties = target_data.get('properties', {})
                             channels = target_properties.get(fcurve.data_path, [])
                             channels.append(fcurve)
@@ -198,6 +209,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                 target_data['type'] = type_
                 target_data['bone'] = target.name if type_ == "BONE" else None
                 target_data['obj_uuid'] = obj_uuid
+                target_data['id_type'] = slot.target_id_type
                 target_properties = target_data.get('properties', {})
                 channels = target_properties.get(target_property, [])
                 channels.append(fcurve)
@@ -211,6 +223,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
         target_data['type'] = type_
         target_data['obj_uuid'] = obj_uuid
         target_data['bone'] = target.name if type_ == "BONE" else None
+        target_data['id_type'] = slot.target_id_type
 
         target_properties = target_data.get('properties', {})
         channels = target_properties.get(target_property, [])
@@ -320,7 +333,8 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
     return channels
 
 
-def __gather_animation_fcurve_channel_extras(obj_uuid: str,
+def __gather_animation_fcurve_channel_extras(id_type: str,
+                                            obj_uuid: str,
                                             custom_property: str,
                                             channel_group: typing.Tuple[bpy.types.FCurve],
                                             bone: typing.Optional[str],
@@ -334,7 +348,7 @@ def __gather_animation_fcurve_channel_extras(obj_uuid: str,
         extensions=None,
         extras=None,
         sampler=sampler,
-        target=__gather_target_extras(obj_uuid, custom_property, export_settings)
+        target=__gather_target_extras(id_type, obj_uuid, custom_property, export_settings)
     )
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
@@ -342,14 +356,15 @@ def __gather_animation_fcurve_channel_extras(obj_uuid: str,
 
     return animation_channel
 
-def __gather_animation_fcurve_channel(obj_uuid: str,
+def __gather_animation_fcurve_channel(id_type: str,
+                                      obj_uuid: str,
                                       channel_group: typing.Tuple[bpy.types.FCurve],
                                       bone: typing.Optional[str],
                                       custom_range: typing.Optional[set],
                                       export_settings
                                       ) -> typing.Union[gltf2_io.AnimationChannel, None]:
 
-    __target = __gather_target(obj_uuid, channel_group, bone, export_settings)
+    __target = __gather_target(id_type, obj_uuid, channel_group, bone, export_settings)
     if __target.path is not None:
         sampler = __gather_sampler(obj_uuid, channel_group, bone, custom_range, False, export_settings)
 
@@ -371,20 +386,22 @@ def __gather_animation_fcurve_channel(obj_uuid: str,
     return None
 
 
-def __gather_target_extras(obj_uuid,
+def __gather_target_extras(id_type,
+                            obj_uuid,
                             custom_property,
                             export_settings
                             ) -> gltf2_io.AnimationChannelTarget:
-    return gather_fcurve_channel_target_extras(obj_uuid, custom_property, export_settings)
+    return gather_fcurve_channel_target_extras(id_type, obj_uuid, custom_property, export_settings)
 
 
-def __gather_target(obj_uuid: str,
+def __gather_target(id_type: str,
+                    obj_uuid: str,
                     channel_group: typing.Tuple[bpy.types.FCurve],
                     bone: typing.Optional[str],
                     export_settings
                     ) -> gltf2_io.AnimationChannelTarget:
 
-    return gather_fcurve_channel_target(obj_uuid, channel_group, bone, export_settings)
+    return gather_fcurve_channel_target(id_type, obj_uuid, channel_group, bone, export_settings)
 
 
 def __gather_sampler(obj_uuid: str,

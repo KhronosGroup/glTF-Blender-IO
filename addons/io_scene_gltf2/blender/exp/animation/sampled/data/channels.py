@@ -26,10 +26,25 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
     list_of_animated_data_channels = {}  # TODOPointer
 
     baseColorFactor_alpha_merged_already_done = False
-    for path in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['paths'].keys():
+
+
+    # If blender_main_type is extras, it means we need to retrieve the real blender_id used for animation pointer
+    if blender_main_type == 'extras':
+        if blender_type_data == 'meshes':
+            if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+                used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
+            else:
+                used_blender_id = blender_id
+        else:
+            # TODO
+            used_blender_id = blender_id # Avoid crash
+    else:
+        used_blender_id = blender_id
+
+    for path in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'].keys():
 
         # Do not manage alpha, as it will be managaed by the baseColorFactor (merging Color and alpha)
-        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['paths'][path][
+        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'][path][
                 'path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" and baseColorFactor_alpha_merged_already_done is True:
             continue
 
@@ -49,7 +64,7 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
         if channel is not None:
             channels.append(channel)
 
-        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
             baseColorFactor_alpha_merged_already_done = True
 
     return channels

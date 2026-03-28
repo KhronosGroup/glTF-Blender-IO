@@ -17,6 +17,26 @@ from ......io.exp.user_extensions import export_user_extensions
 from .channels import gather_data_sampled_channels
 
 
+def gather_action_mesh_sampled(obj_uuid: str,
+                              blender_action,
+                              slot_identifier: str,
+                              cache_key: str,
+                              export_settings):
+    # Used for custom properties on mesh data
+
+    # If no animation in file, no need to bake
+    if len(bpy.data.actions) == 0:
+        return None
+
+    channels = __gather_channels('meshes', obj_uuid, blender_action.name if blender_action else cache_key,
+                                 slot_identifier if blender_action else None, export_settings)
+
+    if not channels:
+        return None
+
+    return channels
+
+
 def gather_action_material_sampled(mat_uuid: str,
                                    blender_action,
                                    slot_identifier: str,
@@ -27,7 +47,7 @@ def gather_action_material_sampled(mat_uuid: str,
     if len(bpy.data.actions) == 0:
         return None
 
-    channels = __gather_channels(mat_uuid, blender_action.name if blender_action else cache_key,
+    channels = __gather_channels('materials', mat_uuid, blender_action.name if blender_action else cache_key,
                                  slot_identifier if blender_action else None, export_settings)
 
     if not channels:
@@ -46,12 +66,20 @@ def gather_action_material_sampled(mat_uuid: str,
     return channels
 
 
-def __gather_channels(mat_uuid: str, blender_action_name: str, slot_identifier: str,
+def __gather_channels(data_type: str, uuid: str, blender_action_name: str, slot_identifier: str,
                       export_settings):
+
+    # For meshes, this is only for custim properties
+    if data_type == 'meshes':
+        data_main_type = 'extras'
+    else:
+        # This is for animation pointer
+        data_main_type = None
+
     return gather_data_sampled_channels(
-        None,
-        'materials',
-        mat_uuid,
+        data_main_type,
+        data_type,
+        uuid,
         blender_action_name,
         slot_identifier,
         None,

@@ -27,7 +27,7 @@ from .sampled.armature.action_sampled import gather_action_armature_sampled
 from .sampled.armature.channels import gather_sampled_bone_channel
 from .sampled.object.action_sampled import gather_action_object_sampled
 from .sampled.shapekeys.action_sampled import gather_action_sk_sampled
-from .sampled.data.action_sampled import gather_action_material_sampled
+from .sampled.data.action_sampled import gather_action_material_sampled, gather_action_mesh_sampled
 from .sampled.object.channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.channels import gather_sampled_sk_channel
 from .drivers import get_sk_drivers, get_driver_on_shapekey
@@ -134,7 +134,7 @@ class ActionData:
     def sort(self):
         # Implement sorting, to be sure to get:
         # TRS first, and then SK
-        sort_items = {'OBJECT': 1, 'KEY': 2}
+        sort_items = {'OBJECT': 1, 'KEY': 2, 'MESH': 3}
         self.slots.sort(key=lambda x: sort_items.get(x.target_id_type))
 
     def has_slots(self):
@@ -783,11 +783,22 @@ def gather_obj_action_animations(obj_uuid: int,
                         obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                     if channels:
                         all_channels.extend(channels)
-                else:
+                elif on_type == "KEY":
                     channels = gather_action_sk_sampled(
                         obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                     if channels:
                         all_channels.extend(channels)
+                elif on_type == "MESH":
+                    # Custom Properties on mesh data
+                    if export_settings['gltf_export_anim_pointer'] and export_settings['gltf_extras']:
+                        channels = gather_action_mesh_sampled(
+                            obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
+                        if channels:
+                            all_channels.extend(channels
+                        )
+                else:
+
+                    pass
             else:
                 # Not sampled
                 # This returns
@@ -1142,6 +1153,29 @@ def __get_obj_blender_actions(obj_uuid: str,
         if export_settings['gltf_animation_mode'] == "ACTIONS":
             __track_extract(blender_object.data.shape_keys.animation_data.nla_tracks,
                             actions, blender_object.data.shape_keys, export_settings)
+
+    # get animation data for custom prop on mesh, if needed
+    if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+        if blender_object and blender_object.data and \
+                blender_object.data.animation_data and \
+                blender_object.data.animation_data.action and blender_object.data.animation_data.action_slot:
+
+            # Check the action is not in list of actions to ignore
+            if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(blender_object.data.animation_data.action) in [
+                    id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                pass  # We ignore this action
+            else:
+                # Store Action info
+                new_action = ActionData(blender_object.data.animation_data.action)
+                new_action.add_slot(
+                    blender_object.data.animation_data.action_slot,
+                    blender_object.data.animation_data.action_slot.target_id_type,
+                    None)  # Active action => No track
+                actions.add_action(new_action)
+
+            if export_settings['gltf_animation_mode'] == "ACTIONS":
+                __track_extract(blender_object.data.animation_data.nla_tracks,
+                                actions, blender_object.data, export_settings)
 
     # If there are only 1 armature, include all animations, even if not in NLA
     # But only if armature has already some animation_data

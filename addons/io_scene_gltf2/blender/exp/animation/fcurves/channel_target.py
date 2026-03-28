@@ -23,6 +23,7 @@ from ...joints import gather_joint_vnode
 
 @cached
 def gather_fcurve_channel_target(
+        id_type: str,
         obj_uuid: str,
         channels: typing.Tuple[bpy.types.FCurve],
         bone: typing.Optional[str],
@@ -32,7 +33,7 @@ def gather_fcurve_channel_target(
     animation_channel_target = gltf2_io.AnimationChannelTarget(
         extensions=None,
         extras=None,
-        node=__gather_node(obj_uuid, bone, export_settings),
+        node=__gather_node(id_type, obj_uuid, bone, export_settings),
         path=__gather_path(channels, export_settings)
     )
 
@@ -44,29 +45,44 @@ def gather_fcurve_channel_target(
 
 @cached
 def gather_fcurve_channel_target_extras(
+        id_type: str,
         obj_uuid: str,
         custom_property: str,
         export_settings) -> gltf2_io.AnimationChannelTarget:
 
+    impacted_data = {'OBJECT': 'nodes', 'BONE': 'nodes', 'MESH': 'meshes'}.get(id_type)
+    if impacted_data is None:
+        export_settings.log('WARNING', "Unsupported type for animation pointer extras: " + id_type)
+        return None
+
     animation_channel_target = gltf2_io.AnimationChannelTarget(
         extensions=None,
         extras=None,
-        node=__gather_node(obj_uuid, None, export_settings), # TODO not only on nodes
-        path="/nodes/XXX/extras/" + custom_property[2:-2] # TODO not only on nodes
+        node=__gather_node(id_type, obj_uuid, None, export_settings), # TODO : not only on node
+        path="/" + impacted_data + "/XXX/extras/" + custom_property[2:-2]
     )
 
     return animation_channel_target
 
 
-def __gather_node(obj_uuid: str,
+def __gather_node(id_type: str,
+                  obj_uuid: str,
                   bone: typing.Union[str, None],
                   export_settings
                   ) -> gltf2_io.Node:
 
-    if bone is not None:
-        return gather_joint_vnode(export_settings['vtree'].nodes[obj_uuid].bones[bone], export_settings)
+    if id_type == 'OBJECT':
+
+        if bone is not None:
+            return gather_joint_vnode(export_settings['vtree'].nodes[obj_uuid].bones[bone], export_settings)
+        else:
+            return export_settings['vtree'].nodes[obj_uuid].node
+
+    elif id_type == "MESH":
+        return export_settings['vtree'].nodes[obj_uuid].node.mesh
+
     else:
-        return export_settings['vtree'].nodes[obj_uuid].node
+        pass # TODO, not implemeted (yet) for custom prop on other type
 
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],

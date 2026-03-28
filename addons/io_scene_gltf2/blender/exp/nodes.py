@@ -270,7 +270,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if vnode.blender_type == VExportNode.COLLECTION:
         return None
     if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
-        return __gather_mesh_from_blender_nonmesh(blender_object, export_settings)
+        return __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings)
     if blender_object is None and type(vnode.data).__name__ not in ["Mesh", "PointCloud"]:
         return None  # TODO
     if blender_object is None:
@@ -385,6 +385,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                                                    materials,
                                                    None,
                                                    export_settings)
+    vnode.mesh_id = id(blender_data)
 
     if export_settings['gltf_apply'] and modifiers is not None:
         blender_data_owner.to_mesh_clear()
@@ -402,7 +403,7 @@ def __keep_material_info(materials, originals, export_settings):
             export_settings['material_identifiers'][id(m.original)] = m.original
 
 
-def __gather_mesh_from_blender_nonmesh(blender_object, export_settings):
+def __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings):
     """Handles curves, surfaces, text, etc."""
     needs_to_mesh_clear = False
     try:
@@ -438,6 +439,8 @@ def __gather_mesh_from_blender_nonmesh(blender_object, export_settings):
                                                        materials,
                                                        blender_object.data,
                                                        export_settings)
+
+        vnode.mesh_id = id(blender_mesh)
 
     finally:
         if needs_to_mesh_clear:
