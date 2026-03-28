@@ -33,6 +33,7 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, s
     # Access to fcurve and action data
 
     list_of_animated_channels = {}
+    extras_channels = {}
     if slot_identifier is not None:
         if object_uuid != blender_action_name and blender_action_name in bpy.data.actions:
             # Not bake situation
