@@ -81,6 +81,9 @@ def __gather_node(id_type: str,
     elif id_type == "MESH":
         return export_settings['vtree'].nodes[obj_uuid].node.mesh
 
+    elif id_type == "KEY":
+        return export_settings['vtree'].nodes[obj_uuid].node
+
     else:
         pass # TODO, not implemeted (yet) for custom prop on other type
 
