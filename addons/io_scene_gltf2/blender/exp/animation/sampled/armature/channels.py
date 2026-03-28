@@ -42,7 +42,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
     if slot_identifier is not None:
         if armature_uuid != blender_action_name and blender_action_name in bpy.data.actions:
             # Not bake situation
-            channels_animated, to_be_sampled, extra_channels = get_channel_groups(
+            channels_animated, to_be_sampled, extra_channels, _ = get_channel_groups(
                 armature_uuid, bpy.data.actions[blender_action_name],
                 bpy.data.actions[blender_action_name].slots[slot_identifier], export_settings)
             for chan in [chan for chan in channels_animated.values() if chan['bone'] is not None]:
@@ -193,7 +193,7 @@ def __gather_sampler(
 def __gather_armature_object_channel(obj_uuid: str, blender_action, slot_identifier, export_settings):
     channels = []
 
-    channels_animated, to_be_sampled, extra_channels = get_channel_groups(
+    channels_animated, to_be_sampled, extra_channels, _ = get_channel_groups(
         obj_uuid, blender_action, blender_action.slots[slot_identifier], export_settings)
     # Remove all channel linked to bones, keep only directly object channels
     channels_animated = [c for c in channels_animated.values() if c['type'] == "OBJECT"]

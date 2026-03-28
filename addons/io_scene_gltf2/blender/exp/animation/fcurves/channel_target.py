@@ -42,6 +42,22 @@ def gather_fcurve_channel_target(
     return animation_channel_target
 
 
+@cached
+def gather_fcurve_channel_target_extras(
+        obj_uuid: str,
+        custom_property: str,
+        export_settings) -> gltf2_io.AnimationChannelTarget:
+
+    animation_channel_target = gltf2_io.AnimationChannelTarget(
+        extensions=None,
+        extras=None,
+        node=__gather_node(obj_uuid, None, export_settings), # TODO not only on nodes
+        path="/nodes/XXX/extras/" + custom_property[2:-2] # TODO not only on nodes
+    )
+
+    return animation_channel_target
+
+
 def __gather_node(obj_uuid: str,
                   bone: typing.Union[str, None],
                   export_settings

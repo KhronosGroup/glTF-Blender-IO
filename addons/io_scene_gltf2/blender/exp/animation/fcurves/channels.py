@@ -19,7 +19,7 @@ from .....io.com import gltf2_io
 from ....exp.cache import cached
 from ....com.data_path import get_target_object_path, get_target_property_name, get_rotation_modes, get_object_from_datapath, skip_sk, get_channelbag_for_slot
 from ....com.conversion import get_target, get_channel_from_target
-from .channel_target import gather_fcurve_channel_target
+from .channel_target import gather_fcurve_channel_target, gather_fcurve_channel_target_extras
 from .sampler import gather_animation_fcurves_sampler
 
 
@@ -47,6 +47,16 @@ def gather_animation_fcurves_channels(
                 chan['obj_uuid'], channel_group, chan['bone'], custom_range, export_settings)
             if channel is not None:
                 channels.append(channel)
+
+    # Manage extras channels, only if user want to export custom properties as extra, and export animation pointer
+    if export_settings['gltf_extras'] \
+            and export_settings['gltf_export_anim_pointer']:
+        for chan in [chan for chan in extras_channels_to_perform.values() if len(chan['properties']) != 0]:
+            for custom_prop, channel_group in chan['properties'].items():
+                channel = __gather_animation_fcurve_channel_extras(
+                    chan['obj_uuid'], custom_prop, channel_group, chan['bone'], custom_range, export_settings)
+                if channel is not None:
+                    channels.append(channel)
 
     if export_settings['gltf_export_extra_animations']:
         for chan in [chan for chan in additional_channels_to_perform.values() if len(chan['properties']) != 0]:
@@ -174,7 +184,7 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                             target_properties = target_data.get('properties', {})
                             channels = target_properties.get(fcurve.data_path, [])
                             channels.append(fcurve)
-                            target_properties[fcurve.data_path] = channels
+                            target_properties[fcurve.data_path] = tuple(channels)
                             target_data['properties'] = target_properties
                             targets_extras[target] = target_data
                             continue
@@ -310,6 +320,28 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
     return channels
 
 
+def __gather_animation_fcurve_channel_extras(obj_uuid: str,
+                                            custom_property: str,
+                                            channel_group: typing.Tuple[bpy.types.FCurve],
+                                            bone: typing.Optional[str],
+                                            custom_range: typing.Optional[set],
+                                            export_settings
+                                            ) -> typing.Union[gltf2_io.AnimationChannel, None]:
+
+    sampler = __gather_sampler(obj_uuid, channel_group, bone, custom_range, True, export_settings)
+
+    animation_channel = gltf2_io.AnimationChannel(
+        extensions=None,
+        extras=None,
+        sampler=sampler,
+        target=__gather_target_extras(obj_uuid, custom_property, export_settings)
+    )
+
+    blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+    export_user_extensions('animation_gather_fcurve_channel_extras', export_settings, blender_object, bone, channel_group)
+
+    return animation_channel
+
 def __gather_animation_fcurve_channel(obj_uuid: str,
                                       channel_group: typing.Tuple[bpy.types.FCurve],
                                       bone: typing.Optional[str],
@@ -337,6 +369,13 @@ def __gather_animation_fcurve_channel(obj_uuid: str,
 
         return animation_channel
     return None
+
+
+def __gather_target_extras(obj_uuid,
+                            custom_property,
+                            export_settings
+                            ) -> gltf2_io.AnimationChannelTarget:
+    return gather_fcurve_channel_target_extras(obj_uuid, custom_property, export_settings)
 
 
 def __gather_target(obj_uuid: str,

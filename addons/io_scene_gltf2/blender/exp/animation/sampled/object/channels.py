@@ -35,7 +35,7 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, s
     if slot_identifier is not None:
         if object_uuid != blender_action_name and blender_action_name in bpy.data.actions:
             # Not bake situation
-            channels_animated, to_be_sampled, extra_channels = get_channel_groups(
+            channels_animated, to_be_sampled, extra_channels, _ = get_channel_groups(
                 object_uuid, bpy.data.actions[blender_action_name], bpy.data.actions[blender_action_name].slots[slot_identifier], export_settings)
             for chan in [chan for chan in channels_animated.values() if chan['bone'] is None]:
                 for prop in chan['properties'].keys():
