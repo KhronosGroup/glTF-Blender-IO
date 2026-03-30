@@ -76,6 +76,10 @@ def gather_tracks_animations(export_settings):
         if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
             continue
 
+        # Skip GN instances / GPU instances: they have no blender_object and therefore no animation data
+        if vtree.nodes[obj_uuid].blender_object is None:
+            continue
+
         animations_, merged_tracks = gather_track_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
 
@@ -335,6 +339,8 @@ def __get_nla_tracks_obj(obj_uuid: str, export_settings):
 
     obj = export_settings['vtree'].nodes[obj_uuid].blender_object
 
+    if obj is None:
+        return TracksData()
     if not obj.animation_data:
         return TracksData()
     if len(obj.animation_data.nla_tracks) == 0:

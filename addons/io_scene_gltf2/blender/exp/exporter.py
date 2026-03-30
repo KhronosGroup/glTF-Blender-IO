@@ -326,11 +326,17 @@ class GlTF2Exporter:
                         skin.skeleton = skin.skeleton - len_
 
             # Remove animation channels that was targeting a node that will be removed
+            # and slide remaining animation channel target node indices
             new_animation_list = []
             for animation in self.__gltf.animations:
                 new_channel_list = []
                 for channel in animation.channels:
-                    if channel.target.node not in self.nodes_idx_to_remove:
+                    if channel.target.node is None:
+                        # KHR_animation_pointer channels (materials, lights, cameras) have no target node
+                        new_channel_list.append(channel)
+                    elif channel.target.node not in self.nodes_idx_to_remove:
+                        len_ = len([i for i in self.nodes_idx_to_remove if i < channel.target.node])
+                        channel.target.node = channel.target.node - len_
                         new_channel_list.append(channel)
                 animation.channels = new_channel_list
                 if len(animation.channels) > 0:
