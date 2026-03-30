@@ -1,0 +1,18 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.autopep8",
+        "editor.formatOnSave": true
+    },
+    "autopep8.path": [
+        "/home/julien/blender-git/blender/lib/linux_x64/python/bin/python3.13",
+        "/home/julien/blender-git/blender/lib/linux_x64/python/lib/python3.13/site-packages/autopep8.py"
+    ],
+    "autopep8.args": [
+        "--ignore=E721,E722,E402,W690",
+        "--aggressive",
+        "--max-line-length=120"
+    ],
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
+    "ruff.format.enable": false
+}
