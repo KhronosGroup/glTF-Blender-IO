@@ -669,7 +669,7 @@ class PrimitiveCreator:
                 elif material_info['uv_info'][tex]['type'] == "Fixed":
                     index_uvmap = self.blender_mesh.uv_layers.find(material_info['uv_info'][tex]['value'])
                     if index_uvmap < 0:
-                        # Using active index
+                        # Using render index
                         index_uvmap = get_render_uvmap_index(self.blender_mesh)
                     uvmap_name = "TEXCOORD_" + str(index_uvmap)
                 else:  # Attribute
