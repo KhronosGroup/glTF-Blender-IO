@@ -663,7 +663,7 @@ class PrimitiveCreator:
             # So, retrieve all uvmaps used by this material
             all_uvmaps = {}
             for tex in material_info['udim_info'].keys():
-                if material_info['uv_info'][tex]['type'] == "Active":
+                if material_info['uv_info'][tex]['type'] == "Render":
                     index_uvmap = get_render_uvmap_index(self.blender_mesh)
                     uvmap_name = "TEXCOORD_" + str(index_uvmap)
                 elif material_info['uv_info'][tex]['type'] == "Fixed":
