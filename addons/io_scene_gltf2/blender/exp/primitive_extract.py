@@ -107,7 +107,7 @@ class PrimitiveCreator:
 
         self.use_tangents = False
         if self.use_normals and self.export_settings['gltf_tangents']:
-            if self.blender_mesh.uv_layers.active and len(self.blender_mesh.uv_layers) > 0:
+            if len(self.blender_mesh.uv_layers) > 0:
                 try:
                     self.blender_mesh.calc_tangents()
                     self.use_tangents = True
@@ -118,7 +118,7 @@ class PrimitiveCreator:
 
         self.tex_coord_max = 0
         if self.export_settings['gltf_texcoords']:
-            if self.blender_mesh.uv_layers.active:
+            if len(self.blender_mesh.uv_layers) > 0:
                 self.tex_coord_max = len(self.blender_mesh.uv_layers)
 
         self.use_morph_normals = self.use_normals and self.export_settings['gltf_morph_normal']
