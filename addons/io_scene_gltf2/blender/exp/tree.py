@@ -399,7 +399,6 @@ class VExportTree:
                         is_children_in_collection=True)
 
                 # Some objects are parented to instance collection
-                # CONFLICT 1 RESOLVED: keep _sort_by_name from patch-1, keep parent_coll_matrix_world from main
                 for child in _sort_by_name(blender_children[blender_object]):
                     self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
                                                  new_delta or delta, blender_children)
