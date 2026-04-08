@@ -413,7 +413,6 @@ class VExportTree:
                         blender_children,
                         is_collection=True)
             else:
-                # CONFLICT 2 RESOLVED: keep main's restructured logic, add _sort_by_name to children loop
                 # Manage children objects
                 self.recursive_node_traverse(
                     blender_object.instance_collection,
@@ -441,7 +440,6 @@ class VExportTree:
 
         if is_collection is True:  # Only for gltf_hierarchy_full_collections == True
             # Manage children objects
-            # CONFLICT 3 RESOLVED: keep _sort_by_name from patch-1, keep main's comment and filter logic
             for child in _sort_by_name(blender_object.objects):
                 # On Collection, .objects returns all objects & instance collection
                 # Not only the direct children
