@@ -559,8 +559,8 @@ def __export_unlit(bmat, export_settings):
     return material, uvmap_info, vc_info, udim_info
 
 
-def get_active_uvmap_index(blender_mesh):
-    # retrieve active render UVMap
+def get_render_uvmap_index(blender_mesh):
+    # retrieve render render UVMap
     active_uvmap_idx = 0
     for i in range(len(blender_mesh.uv_layers)):
         if blender_mesh.uv_layers[i].active_render is True:
@@ -589,10 +589,10 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
             if i >= 0:
                 indices[m] = i
             else:
-                # Using active index
-                indices[m] = get_active_uvmap_index(mesh)
-        elif v['type'] == 'Active':
-            indices[m] = get_active_uvmap_index(mesh)
+                # Using render index
+                indices[m] = get_render_uvmap_index(mesh)
+        elif v['type'] == 'Render':
+            indices[m] = get_render_uvmap_index(mesh)
         elif v['type'] == "Attribute":
             # This can be a regular UVMap or a custom attribute
             i = mesh.uv_layers.find(v['value'])
