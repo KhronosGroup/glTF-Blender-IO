@@ -463,7 +463,7 @@ You can also assign material to Variants from this tab, but recommendation is to
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For materials where only the front faces will be visible, turn on *Backface Culling* in
+For materials where only the front faces will be visible, turn on *Backface Culling* (Camera) in
 the *Settings* panel of an EEVEE material. When using other engines (Cycles, Workbench)
 you can temporarily switch to EEVEE to configure this setting, then switch back.
 
