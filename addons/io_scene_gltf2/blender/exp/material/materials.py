@@ -174,6 +174,9 @@ def gather_material(bmat, export_settings):
                     bmat.get_used_material().node_tree], bpy.types.ShaderNodeTexImage)
         else:
             nodes = []
+        # Store index of additional texture for this material
+        export_settings['additional_texture_export_current_idx'][bmat.id] = len(
+            export_settings['additional_texture_export'])
         cpt_additional = 0
         for node in nodes:
             if nodes_used.get(node[0].name):
@@ -576,7 +579,7 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
     for m, v in uvmap_info.items():
 
         if m.startswith("additional") and additional_indices <= int(m[10:]):
-            additional_indices = +1
+            additional_indices += 1
 
         if 'type' not in v.keys():
             continue
@@ -690,12 +693,12 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
             if material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture']:
                 material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'].tex_coord = ind
         elif tex.startswith("additional"):
-            export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx'] +
-                                                         int(tex[10:])].tex_coord = ind
+            export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx']
+                                                         [id(blender_material)] + int(tex[10:])].tex_coord = ind
+            # We can use id(blender_material) here, as we are not using inline tree
+            # for additional textures, so the material is always the original one
         else:
             export_settings['log'].error("some Textures tex coord are not managed")
-
-    export_settings['additional_texture_export_current_idx'] = len(export_settings['additional_texture_export'])
 
     return material
 
