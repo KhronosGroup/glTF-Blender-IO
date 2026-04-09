@@ -583,6 +583,36 @@ To export an unlit material, mix in a camera ray, and avoid using the Principled
    ``KHR_materials_unlit`` and render shadeless in Blender.
 
 
+Lights
+======
+
+The glTF format supports three types of punctual lights: point, spot, and directional (Sun in Blender).
+Blender's HEMI and AREA light types are not supported by glTF, and will be ignored during export.
+
+To enable light export, make sure to check the *Include Punctual Lights* option in the exporter.
+This will use the ``KHR_lights_punctual`` glTF extension.
+
+
+Light Color
+-----------
+
+The color of a glTF light is determined by the product of:
+- The color field on the light object, and
+- The color output of an Emission shader node, if the light is using nodes and has an Emission shader connected to its output.
+
+If you are using EEVEE render engine, only the color field on the light object is used, and Emission shader node is ignored.
+(This reflect Viewport rendering)
+
+
+Light Intensity
+---------------
+
+For Sun lights, the intensity is determined by the strength field on the light object.
+For Point and Spot lights, the intensity can also be determined by the Strength socket of a Quadratic Falloff node.
+
+If you are using EEVEE render engine, the node setup will be ignored, and only the strength field on the light object is used.
+
+
 Extensions
 ==========
 
