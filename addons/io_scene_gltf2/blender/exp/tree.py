@@ -440,7 +440,8 @@ class VExportTree:
 
         if is_collection is True:  # Only for gltf_hierarchy_full_collections == True
             # Manage children objects
-            for child in _sort_by_name(blender_object.objects):
+            collection_objects = set(blender_object.objects)
+            for child in _sort_by_name(collection_objects):
                 # On Collection, .objects returns all objects & instance collection
                 # Not only the direct children
 
@@ -490,7 +491,7 @@ class VExportTree:
         # Object parented to bone
         if is_collection is False and blender_bone is not None:
             for child_object in _sort_by_name([c for c in blender_children[blender_object] if c.parent_type ==
-                                 "BONE" and c.parent_bone is not None and c.parent_bone == blender_bone.name]):
+                                               "BONE" and c.parent_bone is not None and c.parent_bone == blender_bone.name]):
                 self.recursive_node_traverse(
                     child_object,
                     None,
