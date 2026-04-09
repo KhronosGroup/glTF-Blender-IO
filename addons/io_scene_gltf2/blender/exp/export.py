@@ -76,7 +76,8 @@ def __export(export_settings):
 
     export_user_extensions('gather_gltf_extensions_hook', export_settings, exporter.glTF)
     exporter.traverse_extensions()
-
+    passthrough_extensions = []
+    export_user_extensions('passthrough_extension_data', export_settings, passthrough_extensions, exporter.glTF)
     # Detect extensions that are animated
     # If they are not animated, we can remove the extension if it is empty (all default values), and if default values don't change the shader
     # But if they are animated, we need to keep the extension, even if it is empty
@@ -84,7 +85,7 @@ def __export(export_settings):
 
     # now that addons possibly add some fields in json, we can fix if needed
     # Also deleting no more needed extensions, based on what we detected above
-    json = __fix_json(exporter.glTF.to_dict(), export_settings)
+    json = __fix_json(exporter.glTF.to_dict(), export_settings, passthrough_extensions)
 
     # IOR is a special case where we need to export only if some other extensions are used
     __check_ior(json, export_settings)
@@ -97,7 +98,7 @@ def __export(export_settings):
     # We need to run it again, as we can now have some "extensions" dict that are empty
     # Or extensionsUsed / extensionsRequired that are empty
     # (because we removed some extensions)
-    json = __fix_json(json, export_settings)
+    json = __fix_json(json, export_settings, passthrough_extensions)
 
     # Convert additional data if needed
     if export_settings['gltf_unused_textures'] is True:
@@ -319,7 +320,7 @@ def __postprocess_with_gltfpack(export_settings):
         export_settings['log'].error("Calling gltfpack was not successful")
 
 
-def __fix_json(obj, export_settings):
+def __fix_json(obj, export_settings, passthrough_extensions=[]):
     # TODO: move to custom JSON encoder
     fixed = obj
     if isinstance(obj, dict):
@@ -330,11 +331,14 @@ def __fix_json(obj, export_settings):
                 continue
             if not __should_include_json_value(key, value, export_settings):
                 continue
-            fixed[key] = __fix_json(value, export_settings)
+            if key in passthrough_extensions and value is not None:
+                fixed[key] = value
+                continue
+            fixed[key] = __fix_json(value, export_settings, passthrough_extensions)
     elif isinstance(obj, list):
         fixed = []
         for value in obj:
-            fixed.append(__fix_json(value, export_settings))
+            fixed.append(__fix_json(value, export_settings, passthrough_extensions))
     elif isinstance(obj, float):
         # force floats to int, if they are integers (prevent INTEGER_WRITTEN_AS_FLOAT validator warnings)
         if int(obj) == obj:
