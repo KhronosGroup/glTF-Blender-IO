@@ -83,6 +83,25 @@ class SCENE_UL_gltf2_variants(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.prop(item, "name", text="", emboss=False)
 
+    def filter_items(self, _context, data, property):
+        attributes = getattr(data, property)
+        flags = []
+        indices = [i for i in range(len(attributes))]
+
+        # Filtering by name
+        if self.filter_name:
+            flags = bpy.types.UI_UL_list.filter_items_by_name(
+                self.filter_name, self.bitflag_filter_item, attributes, "name", reverse=self.use_filter_invert,
+            )
+        if not flags:
+            flags = [self.bitflag_filter_item] * len(attributes)
+
+        # Reorder by name.
+        if self.use_filter_sort_alpha:
+            indices = bpy.types.UI_UL_list.sort_items_by_name(attributes, "name")
+
+        return flags, indices
+
 
 class SCENE_PT_gltf2_variants(bpy.types.Panel):
     bl_label = "glTF Material Variants"
@@ -337,6 +356,30 @@ class MESH_UL_gltf2_mesh_variants(bpy.types.UIList):
         layout.prop(bpy.data.scenes[0].gltf2_KHR_materials_variants_variants[vari.variant_idx],
                     "name", text="", emboss=False)
 
+    def filter_items(self, _context, data, property):
+        attributes = getattr(data, property)
+        flags = []
+        indices = [i for i in range(len(attributes))]
+
+        # Filtering by name
+        if self.filter_name:
+            # Manually filter, as we want to sort on variant name (which is a pointer property).
+            for idx, item in enumerate(attributes):
+                variant_name = bpy.data.scenes[0].gltf2_KHR_materials_variants_variants[item.variant.variant_idx].name
+                if self.filter_name.lower() in variant_name.lower():
+                    flags.append(self.bitflag_filter_item if not self.use_filter_invert else 0)
+                else:
+                    flags.append(0 if not self.use_filter_invert else self.bitflag_filter_item)
+        if not flags:
+            flags = [self.bitflag_filter_item] * len(attributes)
+
+        # Reorder by name.
+        if self.use_filter_sort_alpha:
+            indices.sort(
+                key=lambda i: bpy.data.scenes[0].gltf2_KHR_materials_variants_variants[attributes[i].variant.variant_idx].name)
+
+        return flags, indices
+
 
 class MESH_PT_gltf2_mesh_variants(bpy.types.Panel):
     bl_label = "glTF Material Variants"
@@ -515,6 +558,25 @@ class SCENE_UL_gltf2_animation_track(bpy.types.UIList):
         op = row.operator("scene.gltf2_animation_apply", text='', icon=icon)
         op.index = index
 
+    def filter_items(self, _context, data, property):
+        attributes = getattr(data, property)
+        flags = []
+        indices = [i for i in range(len(attributes))]
+
+        # Filtering by name
+        if self.filter_name:
+            flags = bpy.types.UI_UL_list.filter_items_by_name(
+                self.filter_name, self.bitflag_filter_item, attributes, "name", reverse=self.use_filter_invert,
+            )
+        if not flags:
+            flags = [self.bitflag_filter_item] * len(attributes)
+
+        # Reorder by name.
+        if self.use_filter_sort_alpha:
+            indices = bpy.types.UI_UL_list.sort_items_by_name(attributes, "name")
+
+        return flags, indices
+
 
 class SCENE_OT_gltf2_animation_apply(bpy.types.Operator):
     """Apply glTF animations"""
@@ -646,6 +708,30 @@ class SCENE_UL_gltf2_filter_action(bpy.types.UIList):
         layout.context_pointer_set("id", action)
         layout.split().prop(item.action, "name", text="", emboss=False)
         layout.split().prop(item, "keep", text="", emboss=True)
+
+    def filter_items(self, _context, data, property):
+        attributes = getattr(data, property)
+        flags = []
+        indices = [i for i in range(len(attributes))]
+
+        # Filtering by name
+        if self.filter_name:
+            # Manually filter, as we want to sort on action.name
+            # (So we can not use filter_items_by_name with "name" attribute)
+            for idx, item in enumerate(attributes):
+                if self.filter_name.lower() in item.action.name.lower():
+                    flags.append(self.bitflag_filter_item if not self.use_filter_invert else 0)
+                else:
+                    flags.append(0 if not self.use_filter_invert else self.bitflag_filter_item)
+        if not flags:
+            flags = [self.bitflag_filter_item] * len(attributes)
+
+        # Reorder by name.
+        if self.use_filter_sort_alpha:
+            # Reorder indices by alphabetical order of the name attribute.
+            indices.sort(key=lambda i: attributes[i].action.name)
+
+        return flags, indices
 
 
 def export_panel_animation_action_filter(layout, operator):
