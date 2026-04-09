@@ -440,9 +440,10 @@ class VExportTree:
 
         if is_collection is True:  # Only for gltf_hierarchy_full_collections == True
             # Manage children objects
-            for child in _sort_by_name(blender_object.objects):
-                if child.users_collection[0].name != blender_object.name:
-                    continue
+            collection_objects = set(blender_object.objects)
+            for child in _sort_by_name(collection_objects):
+                # On Collection, .objects returns all objects & instance collection
+                # Not only the direct children
 
                 # Keep only object if it has no parent, or parent is not in the collection
                 if child.parent is not None and len(child.parent.users_collection) > 0 \
