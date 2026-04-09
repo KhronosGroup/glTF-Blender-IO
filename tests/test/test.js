@@ -3464,6 +3464,34 @@ describe('Exporter', function () {
 
             });
 
+            it("export light on Cycles", function () {
+                let gltfPath = path.resolve(outDirPath, '37_lamp_Cycles.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const light = asset.extensions['KHR_lights_punctual'].lights[0];
+                assert.strictEqual(light.type, 'point');
+                assert.equalEpsilonArray(light.color, [0.5, 0.0, 0.0]);
+                // TODO add intensity
+            });
+
+            it("export light on Eevee", function () {
+                let gltfPath = path.resolve(outDirPath, '37_lamp_EEVEE.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+                const light = asset.extensions['KHR_lights_punctual'].lights[0];
+                assert.strictEqual(light.type, 'point');
+                assert.equalEpsilonArray(light.color, [0.0, 0.0, 1.0]);
+                // TODO add intensity
+            });
+
+            it("export light on Workbench", function () {
+                let gltfPath = path.resolve(outDirPath, '37_lamp_Workbench.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+                const light = asset.extensions['KHR_lights_punctual'].lights[0];
+                assert.strictEqual(light.type, 'point');
+                assert.equalEpsilonArray(light.color, [0.75, 0.0, 0.0]);
+                // TODO add intensity
+
+            });
 
         });
     });
