@@ -62,7 +62,8 @@ class BinaryData():
 
         if buffer_slice.value is None:
             byte_offset = buffer_view.byte_offset or 0
-            buffer_slice.value = BinaryData.get_buffer_slice(gltf, buffer_view.buffer, byte_offset, buffer_view.byte_length)
+            buffer_slice.value = BinaryData.get_buffer_slice(
+                gltf, buffer_view.buffer, byte_offset, buffer_view.byte_length)
 
         import_user_extensions('get_buffer_view_after_hook', gltf, buffer_view, buffer_slice)
 
