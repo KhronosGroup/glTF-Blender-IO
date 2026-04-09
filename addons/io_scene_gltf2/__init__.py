@@ -18,7 +18,7 @@ bl_info = {
     # "author": "Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein", # Original Authors
     'author': "Blender Foundation, Khronos Group",
     "version": (5, 2, 20),
-    'blender': (4, 4, 0),
+    'blender': (5, 2, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
