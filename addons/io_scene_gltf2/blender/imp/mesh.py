@@ -61,6 +61,7 @@ def create_mesh(gltf, mesh_idx, skin_idx):
         tmp_ob = bpy.data.objects.new('##gltf-import:tmp-object##', mesh)
         do_primitives(gltf, mesh_idx, skin_idx, mesh, tmp_ob)
         set_extras(mesh, gltf.data.meshes[mesh_idx].extras, exclude=['targetNames'])
+        pymesh.extras['blender_object_data'] = mesh  # Used in case of for KHR_animation_pointer
 
     finally:
         if tmp_ob:
@@ -81,6 +82,7 @@ def create_pointcloud(gltf, mesh_idx):
     # no need to parent the pointcloud to an object, as there is no skinning or shapekeys for point clouds
     do_primitives_pointcloud(gltf, mesh_idx, pointcloud)
     set_extras(pointcloud, gltf.data.meshes[mesh_idx].extras)
+    pypc.extras['blender_object_data'] = pointcloud  # Used in case of for KHR_animation_pointer
 
     import_user_extensions('gather_import_pointcloud_after_hook', gltf, pypc, pointcloud)
     return pointcloud

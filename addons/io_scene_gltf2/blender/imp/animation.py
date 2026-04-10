@@ -142,6 +142,42 @@ class BlenderAnimation():
                     if mat.extensions is not None and ext in mat.extensions:
                         BlenderPointerAnim.anim(gltf, anim_idx, mat.extensions[ext], mat_idx, 'EXT', name=mat.name)
 
+            # Extras Node
+            for node_idx, node in enumerate(gltf.data.nodes if gltf.data.nodes else []):
+                if node.extras is not None and "gltf_tmp_data_animations" in node.extras:
+                    BlenderPointerAnim.anim(
+                        gltf,
+                        anim_idx,
+                        node.extras,
+                        node_idx,
+                        'EXTRAS',
+                        name=node.name,
+                        target_id_type='OBJECT')
+
+            # Extras Mesh
+            for mesh_idx, mesh in enumerate(gltf.data.meshes if gltf.data.meshes else []):
+                if mesh.extras is not None and "gltf_tmp_data_animations" in mesh.extras:
+                    BlenderPointerAnim.anim(
+                        gltf,
+                        anim_idx,
+                        mesh.extras,
+                        mesh_idx,
+                        'EXTRAS',
+                        name=mesh.name,
+                        target_id_type='MESH')
+
+            # Extras Material
+            for mat_idx, mat in enumerate(gltf.data.materials if gltf.data.materials else []):
+                if mat.extras is not None and "gltf_tmp_data_animations" in mat.extras:
+                    BlenderPointerAnim.anim(
+                        gltf,
+                        anim_idx,
+                        mat.extras,
+                        mat_idx,
+                        'EXTRAS',
+                        name=mat.name,
+                        target_id_type='MATERIAL')
+
         # Push all actions onto NLA tracks with this animation's name
         track_name = gltf.data.animations[anim_idx].track_name
         for (obj, action, slot) in gltf.needs_stash:
