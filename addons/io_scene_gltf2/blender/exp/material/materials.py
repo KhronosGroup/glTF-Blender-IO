@@ -163,6 +163,9 @@ def gather_material(bmat, export_settings):
         pbr_metallic_roughness=pbr_metallic_roughness
     )
 
+    if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+        export_settings['KHR_animation_pointer']['extras']['materials'][bmat.id]['glTF_extras'] = material
+
     uvmap_infos = {}
     udim_infos = {}
 
@@ -540,6 +543,9 @@ def __export_unlit(bmat, export_settings):
             extras=None,
         )
     )
+
+    if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+        export_settings['KHR_animation_pointer']['extras']['materials'][bmat.id]['glTF_extras'] = material
 
     export_user_extensions('gather_material_unlit_hook', export_settings, material, bmat.get_used_material())
 

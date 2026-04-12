@@ -27,7 +27,6 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
 
     baseColorFactor_alpha_merged_already_done = False
 
-
     # If blender_main_type is extras, it means we need to retrieve the real blender_id used for animation pointer
     if blender_main_type == 'extras':
         if blender_type_data == 'meshes':
@@ -35,9 +34,11 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
                 used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
             else:
                 used_blender_id = blender_id
+        elif blender_type_data == 'materials':
+            used_blender_id = blender_id  # TODOEXTRAS
         else:
-            # TODO
-            used_blender_id = blender_id # Avoid crash
+            # TODOEXTRAS
+            used_blender_id = blender_id  # Avoid crash
     else:
         used_blender_id = blender_id
 
@@ -64,7 +65,8 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
         if channel is not None:
             channels.append(channel)
 
-        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id][
+                'paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
             baseColorFactor_alpha_merged_already_done = True
 
     return channels
@@ -83,7 +85,13 @@ def gather_sampled_data_channel(
         export_settings
 ):
 
-    __target = __gather_target(blender_main_type, blender_type_data, blender_id, channel, additional_key, export_settings)
+    __target = __gather_target(
+        blender_main_type,
+        blender_type_data,
+        blender_id,
+        channel,
+        additional_key,
+        export_settings)
     if __target.path is not None:
         sampler, alpha_cst = __gather_sampler(
             blender_main_type,

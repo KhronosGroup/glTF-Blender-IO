@@ -703,6 +703,12 @@ class BlenderPointerAnim():
             group_name = 'Extras'
             num_components = 1  # TODOEXTRAS
 
+        # Extras Material
+        if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and pointer_tab[3] == "extras":
+            blender_path = '["%s"]' % pointer_tab[4]
+            group_name = 'Extras'
+            num_components = 1  # TODOEXTRAS
+
         if blender_path is None:
             gltf.log.warning("Unsupported animation target: %s" % pointer_tab)
             return  # Should not happen if all specification is managed

@@ -765,11 +765,13 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
                 continue
 
             if extra_type == "objects":
-                blender_object = [m for m in bpy.data.objects if id(m) == extra][0] # TODO will not work with modifiers applied
+                # TODO will not work with modifiers applied
+                blender_object = [m for m in bpy.data.objects if id(m) == extra][0]
             elif extra_type == "bones":
                 # TODO need to store the armature
                 pass
             elif extra_type == "materials":
+                # TODO will not work with modifiers applied
                 blender_object = [m for m in bpy.data.materials if id(m) == extra][0]
             elif extra_type == "lights":
                 blender_object = [m for m in bpy.data.lights if id(m) == extra][0]
@@ -788,8 +790,8 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
                 data[extra] = {}
 
             if blender_object and blender_object.animation_data and blender_object.animation_data.action \
-                and blender_object.animation_data.action_slot \
-                and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
+                    and blender_object.animation_data.action_slot \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
                 key1, key2, key3, key4 = extra, blender_object.animation_data.action.name, blender_object.animation_data.action_slot.identifier, "value"
             elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                 # We can keep the input slot_identifier here, as we are caching only one object / NLA track
@@ -818,4 +820,4 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
                 if type(val).__name__ in ["float", "int", "bool"]:
                     data[key1][key2][key3][key4][path][frame] = val
                 else:
-                    pass # Manage other types (array, vector, color, etc) if needed in the future
+                    pass  # Manage other types (array, vector, color, etc) if needed in the future

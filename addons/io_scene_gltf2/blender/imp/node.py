@@ -103,7 +103,8 @@ class BlenderNode():
         if isinstance(vnode_id, int):
             pynode = gltf.data.nodes[vnode_id]
             set_extras(obj, pynode.extras)
-            pynode.extras['blender_object_data'] = obj  # Used in case of for KHR_animation_pointer
+            if pynode.extras:
+                pynode.extras['blender_object_data'] = obj  # Used in case of for KHR_animation_pointer
 
         # Set transform
         trans, rot, scale = vnode.trs()
