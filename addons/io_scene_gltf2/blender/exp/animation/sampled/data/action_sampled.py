@@ -18,10 +18,10 @@ from .channels import gather_data_sampled_channels
 
 
 def gather_action_mesh_sampled(obj_uuid: str,
-                              blender_action,
-                              slot_identifier: str,
-                              cache_key: str,
-                              export_settings):
+                               blender_action,
+                               slot_identifier: str,
+                               cache_key: str,
+                               export_settings):
     # Used for custom properties on mesh data
 
     # If no animation in file, no need to bake
@@ -69,9 +69,12 @@ def gather_action_material_sampled(mat_uuid: str,
 def __gather_channels(data_type: str, uuid: str, blender_action_name: str, slot_identifier: str,
                       export_settings):
 
-    # For meshes, this is only for custim properties
+    # For meshes, this is only for custom properties
     if data_type == 'meshes':
         data_main_type = 'extras'
+    elif data_type == 'materials':
+        data_main_type = 'extras'  # TODOEXTRAS This can be either for materials animation pointer or for extras
+        # Currently, material animation pointer is not supported (doubleSided ?)
     else:
         # This is for animation pointer
         data_main_type = None

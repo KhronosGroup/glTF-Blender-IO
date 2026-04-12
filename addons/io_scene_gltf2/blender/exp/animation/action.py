@@ -507,6 +507,14 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                     # TODOPOINTER hook
                     pass
 
+                if export_settings['gltf_force_sampling'] is True:
+                    channels = gather_action_material_sampled(
+                        mat_uuid, blender_action, slot.slot.identifier, None, export_settings)
+                    if channels:
+                        all_channels.extend(channels)
+                else:
+                    pass  # TODOPOINTER
+
             # Add extra samplers TODOPOINTER
 
         # We went through all slots of the action, we can now create the animation
@@ -519,7 +527,8 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                 extensions=None
             )
             if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-                export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_action)]['glTF_extras'] = animation
+                export_settings['KHR_animation_pointer']['extras']['animations'][id(
+                    blender_action)]['glTF_extras'] = animation
 
             # Hook for user extensions
             export_user_extensions(
@@ -795,7 +804,7 @@ def gather_obj_action_animations(obj_uuid: int,
                             obj_uuid, blender_action, slot.slot.identifier, None, export_settings)
                         if channels:
                             all_channels.extend(channels
-                        )
+                                                )
                 else:
 
                     pass
@@ -897,7 +906,8 @@ def gather_obj_action_animations(obj_uuid: int,
                 extensions=None
             )
             if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-                export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_action)]['glTF_extras'] = animation
+                export_settings['KHR_animation_pointer']['extras']['animations'][id(
+                    blender_action)]['glTF_extras'] = animation
 
             # Hook for user extensions
             export_user_extensions(
