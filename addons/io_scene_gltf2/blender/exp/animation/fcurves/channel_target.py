@@ -50,7 +50,8 @@ def gather_fcurve_channel_target_extras(
         custom_property: str,
         export_settings) -> gltf2_io.AnimationChannelTarget:
 
-    impacted_data = {'OBJECT': 'nodes', 'BONE': 'nodes', 'MESH': 'meshes'}.get(id_type)
+    # TODOEXTRAS: add other type
+    impacted_data = {'OBJECT': 'nodes', 'BONE': 'nodes', 'MESH': 'meshes', 'MATERIALS': 'materials'}.get(id_type)
     if impacted_data is None:
         export_settings.log('WARNING', "Unsupported type for animation pointer extras: " + id_type)
         return None
@@ -58,7 +59,7 @@ def gather_fcurve_channel_target_extras(
     animation_channel_target = gltf2_io.AnimationChannelTarget(
         extensions=None,
         extras=None,
-        node=__gather_node(id_type, obj_uuid, None, export_settings), # TODO : not only on node
+        node=__gather_node(id_type, obj_uuid, None, export_settings),
         path="/" + impacted_data + "/XXX/extras/" + custom_property[2:-2]
     )
 
@@ -85,7 +86,7 @@ def __gather_node(id_type: str,
         return export_settings['vtree'].nodes[obj_uuid].node
 
     else:
-        pass # TODO, not implemeted (yet) for custom prop on other type
+        pass  # TODO, not implemeted (yet) for custom prop on other type
 
 
 def __gather_path(channels: typing.Tuple[bpy.types.FCurve],

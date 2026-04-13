@@ -766,33 +766,33 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
 
             if extra_type == "objects":
                 # TODO will not work with modifiers applied
-                blender_object = [m for m in bpy.data.objects if id(m) == extra][0]
+                blender_element = [m for m in bpy.data.objects if id(m) == extra][0]
             elif extra_type == "bones":
                 # TODO need to store the armature
                 pass
             elif extra_type == "materials":
                 # TODO will not work with modifiers applied
-                blender_object = [m for m in bpy.data.materials if id(m) == extra][0]
+                blender_element = [m for m in bpy.data.materials if id(m) == extra][0]
             elif extra_type == "lights":
-                blender_object = [m for m in bpy.data.lights if id(m) == extra][0]
+                blender_element = [m for m in bpy.data.lights if id(m) == extra][0]
             elif extra_type == "cameras":
-                blender_object = [m for m in bpy.data.cameras if id(m) == extra][0]
+                blender_element = [m for m in bpy.data.cameras if id(m) == extra][0]
             elif extra_type == "scenes":
-                blender_object = [s for s in bpy.data.scenes if id(s) == extra][0]
+                blender_element = [s for s in bpy.data.scenes if id(s) == extra][0]
             elif extra_type == "meshes":
-                blender_object = [m for m in bpy.data.meshes if id(m) == extra][0]
+                blender_element = [m for m in bpy.data.meshes if id(m) == extra][0]
             elif extra_type == "animations":
-                blender_object = [a for a in bpy.data.actions if id(a) == extra][0]
+                blender_element = [a for a in bpy.data.actions if id(a) == extra][0]
             else:
                 continue
 
             if extra not in data.keys():
                 data[extra] = {}
 
-            if blender_object and blender_object.animation_data and blender_object.animation_data.action \
-                    and blender_object.animation_data.action_slot \
+            if blender_element and blender_element.animation_data and blender_element.animation_data.action \
+                    and blender_element.animation_data.action_slot \
                     and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS"]:
-                key1, key2, key3, key4 = extra, blender_object.animation_data.action.name, blender_object.animation_data.action_slot.identifier, "value"
+                key1, key2, key3, key4 = extra, blender_element.animation_data.action.name, blender_element.animation_data.action_slot.identifier, "value"
             elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
                 # We can keep the input slot_identifier here, as we are caching only one object / NLA track
                 key1, key2, key3, key4 = extra, action_name, slot_identifier, "value"
@@ -816,7 +816,14 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
                     data[key1][key2][key3][key4][path] = {}
 
             for path in export_settings['KHR_animation_pointer']['extras'][extra_type][extra]['paths'].keys():
-                val = blender_object.path_resolve(path)
+
+                if not path.startswith("[\""):
+                    continue
+
+                if path not in data[key1][key2][key3][key4].keys():
+                    data[key1][key2][key3][key4][path] = {}
+
+                val = blender_element.path_resolve(path)
                 if type(val).__name__ in ["float", "int", "bool"]:
                     data[key1][key2][key3][key4][path][frame] = val
                 else:

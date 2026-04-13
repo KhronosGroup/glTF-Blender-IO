@@ -47,10 +47,21 @@ def gather_action_material_sampled(mat_uuid: str,
     if len(bpy.data.actions) == 0:
         return None
 
+    # Extras
     channels = __gather_channels('materials', mat_uuid, blender_action.name if blender_action else cache_key,
                                  slot_identifier if blender_action else None, export_settings)
 
     if not channels:
+        channels = []
+
+    # "classical" animation pointer (not extras)
+    channels_classical = __gather_channels(None, mat_uuid, blender_action.name if blender_action else cache_key,
+                                           slot_identifier if blender_action else None, export_settings)
+
+    if channels_classical:
+        channels.extend(channels_classical)
+
+    if len(channels) == 0:
         return None
 
     blender_material = export_settings['material_identifiers'][mat_uuid]
@@ -78,6 +89,7 @@ def __gather_channels(data_type: str, uuid: str, blender_action_name: str, slot_
     else:
         # This is for animation pointer
         data_main_type = None
+        data_type = 'materials'
 
     return gather_data_sampled_channels(
         data_main_type,

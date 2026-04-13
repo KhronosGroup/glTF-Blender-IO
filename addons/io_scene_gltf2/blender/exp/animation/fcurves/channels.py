@@ -23,6 +23,22 @@ from .channel_target import gather_fcurve_channel_target, gather_fcurve_channel_
 from .sampler import gather_animation_fcurves_sampler
 
 
+# Used only for extras on materials
+@cached
+def gather_animation_material_fcurves_channels(
+        mat_uuid: str,
+        blender_action: bpy.types.Action,
+        slot_identifier: str,
+        export_settings
+) -> typing.List[gltf2_io.AnimationChannel]:
+
+    channels = []
+
+    # TODOEXTRAS
+
+    return channels, [], []
+
+
 @cached
 def gather_animation_fcurves_channels(
         obj_uuid: int,
@@ -54,7 +70,13 @@ def gather_animation_fcurves_channels(
         for chan in [chan for chan in extras_channels_to_perform.values() if len(chan['properties']) != 0]:
             for custom_prop, channel_group in chan['properties'].items():
                 channel = __gather_animation_fcurve_channel_extras(
-                    chan['id_type'], chan['obj_uuid'], custom_prop, channel_group, chan['bone'], custom_range, export_settings)
+                    chan['id_type'],
+                    chan['obj_uuid'],
+                    custom_prop,
+                    channel_group,
+                    chan['bone'],
+                    custom_range,
+                    export_settings)
                 if channel is not None:
                     channels.append(channel)
 
@@ -163,7 +185,6 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
         if type_ == "EXTRA":
             # No group by property, because we are going to export fcurve separately
             # We are going to evaluate fcurve, so no check if need to be sampled
-
 
             # We need here to split into 2 categories:
             # extras (custom properties), and additional
@@ -334,13 +355,13 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
 
 
 def __gather_animation_fcurve_channel_extras(id_type: str,
-                                            obj_uuid: str,
-                                            custom_property: str,
-                                            channel_group: typing.Tuple[bpy.types.FCurve],
-                                            bone: typing.Optional[str],
-                                            custom_range: typing.Optional[set],
-                                            export_settings
-                                            ) -> typing.Union[gltf2_io.AnimationChannel, None]:
+                                             obj_uuid: str,
+                                             custom_property: str,
+                                             channel_group: typing.Tuple[bpy.types.FCurve],
+                                             bone: typing.Optional[str],
+                                             custom_range: typing.Optional[set],
+                                             export_settings
+                                             ) -> typing.Union[gltf2_io.AnimationChannel, None]:
 
     sampler = __gather_sampler(obj_uuid, channel_group, bone, custom_range, True, export_settings)
 
@@ -352,9 +373,15 @@ def __gather_animation_fcurve_channel_extras(id_type: str,
     )
 
     blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
-    export_user_extensions('animation_gather_fcurve_channel_extras', export_settings, blender_object, bone, channel_group)
+    export_user_extensions(
+        'animation_gather_fcurve_channel_extras',
+        export_settings,
+        blender_object,
+        bone,
+        channel_group)
 
     return animation_channel
+
 
 def __gather_animation_fcurve_channel(id_type: str,
                                       obj_uuid: str,
@@ -387,10 +414,10 @@ def __gather_animation_fcurve_channel(id_type: str,
 
 
 def __gather_target_extras(id_type,
-                            obj_uuid,
-                            custom_property,
-                            export_settings
-                            ) -> gltf2_io.AnimationChannelTarget:
+                           obj_uuid,
+                           custom_property,
+                           export_settings
+                           ) -> gltf2_io.AnimationChannelTarget:
     return gather_fcurve_channel_target_extras(id_type, obj_uuid, custom_property, export_settings)
 
 

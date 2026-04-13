@@ -22,7 +22,7 @@ from ...com.data_path import is_bone_anim_channel, get_channelbag_for_slot
 from ...com.extras import generate_extras
 from ..cache import cached
 from ..tree import VExportNode
-from .fcurves.animation import gather_animation_fcurves
+from .fcurves.animation import gather_animation_fcurves, gather_animation_material_fcurves
 from .sampled.armature.action_sampled import gather_action_armature_sampled
 from .sampled.armature.channels import gather_sampled_bone_channel
 from .sampled.object.action_sampled import gather_action_object_sampled
@@ -134,7 +134,7 @@ class ActionData:
     def sort(self):
         # Implement sorting, to be sure to get:
         # TRS first, and then SK
-        sort_items = {'OBJECT': 1, 'KEY': 2, 'MESH': 3}
+        sort_items = {'OBJECT': 1, 'KEY': 2, 'MESH': 3, 'NODETREE': 4, 'MATERIAL': 5}
         self.slots.sort(key=lambda x: sort_items.get(x.target_id_type))
 
     def has_slots(self):
@@ -184,10 +184,6 @@ def gather_actions_animations(export_settings):
     # Material animation
     if export_settings['gltf_export_anim_pointer']:
         for mat_id in export_settings['material_identifiers'].keys():
-            if mat_id not in export_settings['ranges']:
-                continue
-            if len(export_settings['ranges'][mat_id]) == 0:
-                continue
 
             animations_, merged_tracks = gather_material_action_animations(
                 mat_id, merged_tracks, len(animations), export_settings)
@@ -514,10 +510,14 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                         all_channels.extend(channels)
                 else:
                     pass  # TODOPOINTER
+                    channels = gather_animation_material_fcurves(
+                        mat_uuid, blender_action, slot.slot.identifier, export_settings)
+                    if channels:
+                        all_channels.extend(channels)
 
-            # Add extra samplers TODOPOINTER
+                    # Add extra samplers TODOPOINTER
 
-        # We went through all slots of the action, we can now create the animation
+                    # We went through all slots of the action, we can now create the animation
         if len(all_channels) != 0:
             animation = gltf2_io.Animation(
                 channels=all_channels,

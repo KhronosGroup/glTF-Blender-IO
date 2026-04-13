@@ -35,7 +35,13 @@ def generate_extras(blender_element, blender_data_type, export_settings):
     if not blender_element:
         return None
 
-    gltf_data_type = {'objects': 'nodes', 'bones': 'nodes'}.get(blender_data_type, blender_data_type)
+    gltf_data_type = {
+        'objects': 'nodes',
+        'bones': 'nodes',
+        'meshes': 'meshes',
+        'materials': 'materials'}.get(
+        blender_data_type,
+        blender_data_type)
 
     extras = {}
     # TODOEXTRAS: check if user want to export animation pointer
