@@ -42,8 +42,9 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
     else:
         used_blender_id = blender_id
 
-    # Extras
-    if not slot_identifier.startswith("NT") and blender_main_type == 'extras' \
+    # Extras ( for ACTIONS or ACTIVE_ACTIONS, as for scene, slot_indenfier is None)
+    # For Scene, data will be managed by "classical" loop (including extras)
+    if slot_identifier is not None and not slot_identifier.startswith("NT") and blender_main_type == 'extras' \
             and used_blender_id in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data]:
         for path in export_settings['KHR_animation_pointer'][
                 blender_main_type][blender_type_data][used_blender_id]['paths'].keys():
@@ -68,11 +69,12 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
                 channels.append(channel)
 
     # "classical" animation pointer (not extras)
-    if slot_identifier.startswith("NT") and blender_main_type is None:
+    if (slot_identifier is not None and slot_identifier.startswith(
+            "NT") and blender_main_type is None) or slot_identifier is None:
         for path in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'].keys(
         ):
 
-            if slot_identifier.startswith("NT") and path.startswith("[\""):
+            if slot_identifier is not None and slot_identifier.startswith("NT") and path.startswith("[\""):
                 continue
 
             # Do not manage alpha, as it will be managaed by the baseColorFactor (merging Color and alpha)
