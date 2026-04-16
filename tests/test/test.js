@@ -3249,6 +3249,35 @@ describe('Exporter', function () {
                 assert.ok(!("COLOR_1" in primitive.attributes));
             });
 
+            if('exports partial VC', function () {
+                let gltfPath = path.resolve(outDirPath, '24_material_partial_VC.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                // check that primitive that don't need VC have a VC with only 1.0 color
+                // (and the other one is exported with VC 0.0, as defined in Blender)
+
+                // retrieve the material where baseColorTexture is defined
+                const matWithTexture = asset.materials.filter(m => m.pbrMetallicRoughness.baseColorTexture !== undefined)[0];
+
+                // retrieve the primitive using this material
+                const primitiveWithTexture = asset.meshes[asset.nodes[0].mesh].primitives.filter(p => p.material === asset.materials.indexOf(matWithTexture))[0];
+
+                // check that it has a COLOR_0 with 1.0
+                assert.ok("COLOR_0" in primitiveWithTexture.attributes);
+                let colors = getAccessorData(gltfPath, asset, primitiveWithTexture.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [1.0, 1.0, 1.0, 1.0]);
+
+                const other_primitive_index = primitiveWithTexture === asset.meshes[asset.nodes[0].mesh].primitives[0] ? 1 : 0;
+
+                // check that the other primitive has a COLOR_0 with 0.0
+                const primitiveWithoutTexture = asset.meshes[asset.nodes[0].mesh].primitives[other_primitive_index];
+                assert.ok("COLOR_0" in primitiveWithoutTexture.attributes);
+                colors = getAccessorData(gltfPath, asset, primitiveWithoutTexture.attributes.COLOR_0, bufferCache);
+                assert.equalEpsilon(colors[0], [0.0, 0.0, 0.0, 1.0]);
+
+
+            });
+
             it('exports broadcast actions', function () {
 
                 let gltfPath = path.resolve(outDirPath, '35_broadcast_slots.gltf');
