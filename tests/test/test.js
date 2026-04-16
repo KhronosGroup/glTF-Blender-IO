@@ -280,6 +280,20 @@ describe('Exporter', function () {
             let outDirName = 'out' + blenderVersion;
             let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
 
+            it('can export a linked (to other file) collection', function () {
+                let gltfPath = path.resolve(outDirPath, '01_linked_collection.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.nodes.length, 4);
+            });
+
+            it('can export all collection instances', function () {
+                let gltfPath = path.resolve(outDirPath, '01_multiple_collection_instances.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                assert.strictEqual(asset.nodes.length, 9);
+            });
+
             it('can export a base color', function () {
                 let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
@@ -3447,6 +3461,35 @@ describe('Exporter', function () {
                 const tests = getAccessorData(gltfPath, asset, primitive.attributes._TEST, bufferCache);
                 assert.strictEqual(tests.length, 240); // 240 points * 1 components
                 assert.equalEpsilon(tests[0], 0.35);
+
+            });
+
+            it("export light on Cycles", function () {
+                let gltfPath = path.resolve(outDirPath, '37_lamp_Cycles.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                const light = asset.extensions['KHR_lights_punctual'].lights[0];
+                assert.strictEqual(light.type, 'point');
+                assert.equalEpsilonArray(light.color, [0.5, 0.0, 0.0]);
+                // TODO add intensity
+            });
+
+            it("export light on Eevee", function () {
+                let gltfPath = path.resolve(outDirPath, '37_lamp_EEVEE.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+                const light = asset.extensions['KHR_lights_punctual'].lights[0];
+                assert.strictEqual(light.type, 'point');
+                assert.equalEpsilonArray(light.color, [0.0, 0.0, 1.0]);
+                // TODO add intensity
+            });
+
+            it("export light on Workbench", function () {
+                let gltfPath = path.resolve(outDirPath, '37_lamp_Workbench.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+                const light = asset.extensions['KHR_lights_punctual'].lights[0];
+                assert.strictEqual(light.type, 'point');
+                assert.equalEpsilonArray(light.color, [0.75, 0.0, 0.0]);
+                // TODO add intensity
 
             });
 
