@@ -1309,7 +1309,7 @@ class PrimitiveCreator:
                     if vc['add_alpha']:
                         self.dots[vc['gltf_name'] + str(3)][dot_indices] = 1.0
 
-                    # TODO : also manage edges & points
+                    # Edges & Points don't have material, so we don't need to manage them for this workaround
 
                 # Add COLOR_x in attribute list
                 attr_color_x = {}
