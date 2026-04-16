@@ -117,7 +117,7 @@ def __detect_lightpath_trick(socket):
     in0 = previous_socket(NodeSocket(prev.node.inputs[0], prev.group_path))
     if in0.socket is None or in0.socket.node.type != 'LIGHT_PATH':
         return None
-    if in0.socket.name != 'Is Camera Ray':
+    if in0.socket.identifier != 'Is Camera Ray':
         return None
     next_socket = NodeSocket(prev.node.inputs[2], prev.group_path)
 

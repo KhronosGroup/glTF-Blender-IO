@@ -61,6 +61,16 @@ def gather_tracks_animations(export_settings):
     animations = []
     merged_tracks = {}
 
+    # Disable viewport updates for faster export. (Will be re-enabled at the end of export)
+    # This is needed to avoid refreshing the viewport at each track
+    # muting/unmuting, which can be very long when many tracks.
+    if export_settings['gltf_optimize_disable_viewport']:
+
+        # Before baking, disabling from viewport all meshes
+        for obj in [n.blender_object for n in export_settings['vtree'].nodes.values() if n.blender_type in
+                    [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
+            obj.hide_viewport = True
+
     vtree = export_settings['vtree']
     for obj_uuid in vtree.get_all_objects():
 
@@ -76,8 +86,16 @@ def gather_tracks_animations(export_settings):
         if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
             continue
 
+        # Enable only this object for faster export, as we export per object. Will be re-enabled at the end of export
+        if export_settings['gltf_optimize_disable_viewport']:
+            vtree.nodes[obj_uuid].blender_object.hide_viewport = False
+
         animations_, merged_tracks = gather_track_animations(obj_uuid, merged_tracks, len(animations), export_settings)
         animations += animations_
+
+        # After baking, re-enabling for this object
+        if export_settings['gltf_optimize_disable_viewport']:
+            vtree.nodes[obj_uuid].blender_object.hide_viewport = False
 
     if export_settings['gltf_export_anim_pointer'] is True:
         # Manage Material tracks (for KHR_animation_pointer)
@@ -97,6 +115,14 @@ def gather_tracks_animations(export_settings):
             animations_, merged_tracks = gather_data_track_animations(
                 'lights', light, merged_tracks, len(animations), export_settings)
             animations += animations_
+
+    # We can now re-enable viewport updates, as we are done with muting/unmuting tracks
+    if export_settings['gltf_optimize_disable_viewport']:
+
+        # After baking, re-enabling for all meshes
+        for n in [n for n in export_settings['vtree'].nodes.values() if n.blender_type in
+                  [VExportNode.OBJECT, VExportNode.ARMATURE, VExportNode.COLLECTION]]:
+            n.blender_object.hide_viewport = n.default_hide_viewport
 
     new_animations = merge_tracks_perform(merged_tracks, animations, export_settings)
 
