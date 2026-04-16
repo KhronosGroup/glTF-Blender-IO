@@ -21,7 +21,7 @@ from ...io.exp.user_extensions import export_user_extensions
 from ...io.com import constants as gltf2_io_constants
 from ..com import conversion as gltf2_blender_conversion
 from ..com.gltf2_blender_utils import fast_structured_np_unique
-from .material.materials import get_base_material, get_render_uvmap_index, get_new_material_texture_shared
+from .material.materials import get_base_material, get_new_material_texture_shared
 from .material.texture_info import gather_udim_texture_info
 from . import skins as gltf2_blender_gather_skins
 from . attribute_utils import extract_attribute_data
@@ -664,13 +664,13 @@ class PrimitiveCreator:
             all_uvmaps = {}
             for tex in material_info['udim_info'].keys():
                 if material_info['uv_info'][tex]['type'] == "Render":
-                    index_uvmap = get_render_uvmap_index(self.blender_mesh)
+                    index_uvmap = self.blender_mesh.uv_layers.active_render_index
                     uvmap_name = "TEXCOORD_" + str(index_uvmap)
                 elif material_info['uv_info'][tex]['type'] == "Fixed":
                     index_uvmap = self.blender_mesh.uv_layers.find(material_info['uv_info'][tex]['value'])
                     if index_uvmap < 0:
                         # Using render index
-                        index_uvmap = get_render_uvmap_index(self.blender_mesh)
+                        index_uvmap = self.blender_mesh.uv_layers.active_render_index
                     uvmap_name = "TEXCOORD_" + str(index_uvmap)
                 else:  # Attribute
                     # This can be a regular UVMap, or a custom attribute
