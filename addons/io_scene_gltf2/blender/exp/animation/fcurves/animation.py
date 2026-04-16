@@ -57,7 +57,9 @@ def gather_animation_material_fcurves(
     if not channels:
         return None
 
-    blender_material = export_settings['material_identifiers'][mat_uuid]
+    # TODO : sampled what needed to be sampled
+
+    blender_material = export_settings['material_identifiers'][mat_uuid]['blender']
     export_user_extensions('animation_gather_fcurve_material', export_settings, blender_material, blender_action)
 
     return channels

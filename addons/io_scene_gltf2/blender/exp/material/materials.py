@@ -165,6 +165,7 @@ def gather_material(bmat, export_settings):
 
     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
         export_settings['KHR_animation_pointer']['extras']['materials'][bmat.id]['glTF_extras'] = material
+        export_settings['material_identifiers'][bmat.id]['gltf'] = material
 
     uvmap_infos = {}
     udim_infos = {}

@@ -134,7 +134,7 @@ def material_caching(data, action_name, slot_identifier, frame, export_settings)
         if len(export_settings['KHR_animation_pointer'][None]['materials'][mat]['paths']) == 0:
             continue
 
-        blender_material = [export_settings['material_identifiers'][mat]]
+        blender_material = [export_settings['material_identifiers'][mat]['blender']]
         if len(blender_material) == 0:
             # This is not a material from Blender (coming from Geometry Node for example, so no animation on it)
             continue
@@ -189,7 +189,7 @@ def material_nodetree_caching(data, action_name, slot_identifier, frame, export_
         if len(export_settings['KHR_animation_pointer'][None]['materials'][mat]['paths']) == 0:
             continue
 
-        blender_material = [export_settings['material_identifiers'][mat]]
+        blender_material = [export_settings['material_identifiers'][mat]['blender']]
         if len(blender_material) == 0:
             # This is not a material from Blender (coming from Geometry Node for example, so no animation on it)
             continue

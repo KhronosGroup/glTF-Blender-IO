@@ -245,7 +245,7 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
                 ignore_sk = True
 
             if ignore_sk is False:
-                channel = gather_sampled_sk_channel(obj_uuid, animation_key, None, export_settings)
+                channel = gather_sampled_sk_channel('SK', obj_uuid, animation_key, None, export_settings)
                 if channel is not None:
                     if animation is None:
                         animation = gltf2_io.Animation(
@@ -298,7 +298,7 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, slot_ident
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS"):
 
         if blender_type_data == "materials":
-            blender_data_object = export_settings['material_identifiers'][blender_id]
+            blender_data_object = export_settings['material_identifiers'][blender_id]['blender']
         elif blender_type_data == "cameras":
             blender_data_object = [i for i in bpy.data.cameras if id(i) == blender_id][0]
         elif blender_type_data == "lights":
@@ -307,7 +307,8 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, slot_ident
             pass  # Should not happen
 
         # Export now KHR_animation_pointer for materials / light / camera
-        for i in [a for a in export_settings['KHR_animation_pointer'][None][blender_type_data].keys() if a == blender_id]:
+        for i in [a for a in export_settings['KHR_animation_pointer'][None][blender_type_data].keys() if a ==
+                  blender_id]:
             if len(export_settings['KHR_animation_pointer'][None][blender_type_data][i]['paths']) == 0:
                 continue
 

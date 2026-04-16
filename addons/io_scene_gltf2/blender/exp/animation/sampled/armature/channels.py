@@ -103,7 +103,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
     # Retrieve channels for drivers, if needed
     drivers_to_manage = get_sk_drivers(armature_uuid, export_settings)
     for obj_driver_uuid in drivers_to_manage:
-        channel = gather_sampled_sk_channel(obj_driver_uuid, armature_uuid + "_" +
+        channel = gather_sampled_sk_channel('SK', obj_driver_uuid, armature_uuid + "_" +
                                             blender_action_name, slot_identifier, export_settings)
         if channel is not None:
             channels.append(channel)

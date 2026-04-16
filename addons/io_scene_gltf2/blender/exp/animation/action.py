@@ -432,7 +432,7 @@ def __range_set(used_id, blender_action, slot, track, start_frame_reference, tra
 def gather_material_action_animations(mat_uuid, tracks, offset, export_settings):
     animations = []
 
-    blender_material = export_settings['material_identifiers'][mat_uuid]
+    blender_material = export_settings['material_identifiers'][mat_uuid]['blender']
 
     # Collect all 'actions' affecting this material.
     blender_actions = __get_material_blender_actions(mat_uuid, export_settings)
@@ -478,7 +478,10 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                     if channels:
                         all_channels.extend(channels)
                 else:
-                    pass  # TODOPOINTER
+                    channels = gather_animation_material_fcurves(
+                        mat_uuid, blender_action, slot.slot.identifier, export_settings)
+                    if channels:
+                        all_channels.extend(channels)
             elif on_type == "MATERIAL":
                 if blender_material.animation_data.action is None \
                         or (blender_material.animation_data.action.name != blender_action.name) \
@@ -509,7 +512,6 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                     if channels:
                         all_channels.extend(channels)
                 else:
-                    pass  # TODOPOINTER
                     channels = gather_animation_material_fcurves(
                         mat_uuid, blender_action, slot.slot.identifier, export_settings)
                     if channels:
@@ -836,7 +838,7 @@ def gather_obj_action_animations(obj_uuid: int,
                                 export_settings['gltf_sampling_interpolation_fallback'], export_settings), export_settings)
                     elif type_ == "SK":
                         channel = gather_sampled_sk_channel(
-                            obj_uuid, blender_action.name, slot.slot.identifier, export_settings)
+                            type_, obj_uuid, blender_action.name, slot.slot.identifier, export_settings)
                     elif type_ == "EXTRA":  # TODOSLOT slot-3
                         channel = None
                     else:
@@ -892,7 +894,7 @@ def gather_obj_action_animations(obj_uuid: int,
                         if obj_uuid not in export_settings['ranges'].keys():
                             export_settings['ranges'][obj_uuid] = {}
                         export_settings['ranges'][obj_uuid][obj_uuid] = export_settings['ranges'][obj_uuid][blender_action.name]
-                        channel = gather_sampled_sk_channel(obj_uuid, obj_uuid, None, export_settings)
+                        channel = gather_sampled_sk_channel('SK', obj_uuid, obj_uuid, None, export_settings)
                         if channel is not None:
                             all_channels.append(channel)
 
@@ -1009,7 +1011,7 @@ def __get_material_blender_actions(mat_uuid: str,
                                    ) -> ActionsData:
 
     actions = ActionsData()
-    blender_material = export_settings['material_identifiers'][mat_uuid]
+    blender_material = export_settings['material_identifiers'][mat_uuid]['blender']
     export_user_extensions('pre_gather_actions_hook', export_settings, blender_material)
 
     # No brodcast mode for material implemented (yet)

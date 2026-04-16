@@ -64,7 +64,7 @@ def gather_action_material_sampled(mat_uuid: str,
     if len(channels) == 0:
         return None
 
-    blender_material = export_settings['material_identifiers'][mat_uuid]
+    blender_material = export_settings['material_identifiers'][mat_uuid]['blender']
     export_user_extensions(
         'animation_channels_material_sampled',
         export_settings,

@@ -101,7 +101,7 @@ def gather_scene_animations(export_settings):
 
                 if ignore_sk is False:
                     # Setting slot_identifier to None, always
-                    channels = gather_sk_sampled_channels(obj_uuid, obj_uuid, None, export_settings)
+                    channels = gather_sk_sampled_channels('SK', obj_uuid, obj_uuid, None, export_settings)
                     if channels is not None:
                         total_channels.extend(channels)
         elif blender_object is None:
@@ -128,7 +128,8 @@ def gather_scene_animations(export_settings):
                     samplers=[]
                 )
                 if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-                    export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_object)]['glTF_extras'] = animation
+                    export_settings['KHR_animation_pointer']['extras']['animations'][id(
+                        blender_object)]['glTF_extras'] = animation
                 link_samplers(animation, export_settings)
                 animations.append(animation)
 
@@ -140,7 +141,7 @@ def gather_scene_animations(export_settings):
             if len(export_settings['KHR_animation_pointer'][None]['materials'][mat]['paths']) == 0:
                 continue
 
-            blender_material = export_settings['material_identifiers'][mat]
+            blender_material = export_settings['material_identifiers'][mat]['blender']
 
             export_settings['ranges'][id(blender_material)] = {}
             export_settings['ranges'][id(blender_material)][id(blender_material)] = {
@@ -164,7 +165,8 @@ def gather_scene_animations(export_settings):
                     samplers=[]
                 )
                 if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-                    export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_material)]['glTF_extras'] = animation
+                    export_settings['KHR_animation_pointer']['extras']['animations'][id(
+                        blender_material)]['glTF_extras'] = animation
                 link_samplers(animation, export_settings)
                 animations.append(animation)
 
@@ -198,7 +200,8 @@ def gather_scene_animations(export_settings):
                         samplers=[]
                     )
                     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-                        export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_light)]['glTF_extras'] = animation
+                        export_settings['KHR_animation_pointer']['extras']['animations'][id(
+                            blender_light)]['glTF_extras'] = animation
                     link_samplers(animation, export_settings)
                     animations.append(animation)
 
@@ -232,7 +235,8 @@ def gather_scene_animations(export_settings):
                         samplers=[]
                     )
                     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-                        export_settings['KHR_animation_pointer']['extras']['animations'][id(blender_camera)]['glTF_extras'] = animation
+                        export_settings['KHR_animation_pointer']['extras']['animations'][id(
+                            blender_camera)]['glTF_extras'] = animation
                     link_samplers(animation, export_settings)
                     animations.append(animation)
 
@@ -266,7 +270,8 @@ def gather_scene_animations(export_settings):
                     blender_element = armature.data.bones[[bone.name for bone in armature.data.bones].index(
                         [bone.name for bone in armature.data.bones if id(bone) == bone_id][0])]
                 elif extra_type == 'materials':
-                    blender_element = [mat for mat in bpy.data.materials if id(mat) == extra][0] # TODO : will not work when apply modifier
+                    blender_element = [mat for mat in bpy.data.materials if id(
+                        mat) == extra][0]  # TODO : will not work when apply modifier
                 elif extra_type == 'lights':
                     blender_element = [light for light in bpy.data.lights if id(light) == extra][0]
                 elif extra_type == 'cameras':
@@ -295,7 +300,7 @@ def gather_scene_animations(export_settings):
                         animation = gltf2_io.Animation(
                             channels=total_channels,
                             extensions=None,
-                            extras=None, # too late to gather extras, we are in the process of managing them :)
+                            extras=None,  # too late to gather extras, we are in the process of managing them :)
                             name=blender_element.name if blender_element else "Extra " + str(extra),
                             samplers=[]
                         )
@@ -303,7 +308,6 @@ def gather_scene_animations(export_settings):
                         animations.append(animation)
 
                     total_channels = []
-
 
     if export_settings['gltf_anim_scene_split_object'] is False:
         if len(total_channels) > 0:
@@ -315,7 +319,8 @@ def gather_scene_animations(export_settings):
                 samplers=[]
             )
             if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-                export_settings['KHR_animation_pointer']['extras']['animations'][id(bpy.context.scene)]['glTF_extras'] = animation
+                export_settings['KHR_animation_pointer']['extras']['animations'][id(
+                    bpy.context.scene)]['glTF_extras'] = animation
             link_samplers(animation, export_settings)
             animations.append(animation)
 

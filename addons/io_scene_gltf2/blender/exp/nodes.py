@@ -250,7 +250,8 @@ def __gather_extensions(vnode, export_settings):
                 export_settings['KHR_animation_pointer'][None]['lights'][id(blender_lamp)] = {}
                 export_settings['KHR_animation_pointer'][None]['lights'][id(
                     blender_lamp)]['paths'] = export_settings['current_paths'].copy()
-                export_settings['KHR_animation_pointer'][None]['lights'][id(blender_lamp)]['glTF_light'] = light_extension
+                export_settings['KHR_animation_pointer'][None]['lights'][id(
+                    blender_lamp)]['glTF_light'] = light_extension
 
             export_settings['current_paths'] = {}
 
@@ -399,10 +400,13 @@ def __keep_material_info(materials, originals, export_settings):
         if 'material_identifiers' not in export_settings.keys():
             export_settings['material_identifiers'] = {}
         if originals is True:
-            export_settings['material_identifiers'][id(m)] = m
+            export_settings['material_identifiers'][id(m)] = {}
+            export_settings['material_identifiers'][id(m)]['blender'] = m
         else:
-            export_settings['material_identifiers'][id(m)] = m.original
-            export_settings['material_identifiers'][id(m.original)] = m.original
+            export_settings['material_identifiers'][id(m)] = {}
+            export_settings['material_identifiers'][id(m)]['blender'] = m.original
+            export_settings['material_identifiers'][id(m.original)] = {}
+            export_settings['material_identifiers'][id(m.original)]['blender'] = m.original
 
 
 def __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings):

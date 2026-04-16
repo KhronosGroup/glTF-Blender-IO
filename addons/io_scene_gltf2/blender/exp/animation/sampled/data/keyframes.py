@@ -64,6 +64,7 @@ def gather_data_sampled_keyframes(
             length = 4
 
         key = Keyframe([None] * length, frame, 'value')
+        key.set_id_type(blender_type_data.upper())
 
         value = get_cache_data(
             'value',
