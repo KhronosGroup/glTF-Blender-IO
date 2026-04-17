@@ -113,7 +113,7 @@ def __gather_intensity(blender_lamp, blender_lamp_world_matrix, export_settings)
         if blender_lamp.type != 'SUN':
             # When using cycles, the strength should be influenced by a LightFalloff node
             result = search_node_tree.from_socket(
-                search_node_tree.NodeSocket(emission_node.inputs.get("Strength"), blender_lamp.node_tree),
+                search_node_tree.NodeSocket(emission_node.inputs.get("Strength"), [blender_lamp.node_tree]),
                 search_node_tree.FilterByType(bpy.types.ShaderNodeLightFalloff)
             )
             if result:
