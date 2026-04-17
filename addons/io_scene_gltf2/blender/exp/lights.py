@@ -226,14 +226,14 @@ def __gather_extras(blender_lamp, export_settings) -> Optional[Any]:
 
 
 def __get_cycles_emission_node(blender_lamp) -> Optional[bpy.types.ShaderNodeEmission]:
-    if blender_lamp.use_nodes and blender_lamp.node_tree:
+    if blender_lamp.node_tree:
         for currentNode in blender_lamp.node_tree.nodes:
             is_shadernode_output = isinstance(currentNode, bpy.types.ShaderNodeOutputLight)
             if is_shadernode_output:
                 if not currentNode.is_active_output:
                     continue
                 result = search_node_tree.from_socket(
-                    search_node_tree.NodeSocket(currentNode.inputs.get("Surface"), blender_lamp.node_tree),
+                    search_node_tree.NodeSocket(currentNode.inputs.get("Surface"), [blender_lamp.node_tree]),
                     search_node_tree.FilterByType(bpy.types.ShaderNodeEmission)
                 )
                 if not result:
