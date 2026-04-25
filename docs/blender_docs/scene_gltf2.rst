@@ -15,7 +15,7 @@ Enabling Add-on
 This add-on is enabled by default, in case it is not:
 
 #. Open Blender and go to :doc:`/editors/preferences/addons` section of the :doc:`/editors/preferences/index`.
-#. Search "glTF 2.0" and check the *Enable Extension* checkbox.
+#. Search "glTF 2.0" and check the *Enable Add-on* checkbox.
 
 
 Usage
@@ -55,7 +55,7 @@ and must be converted to meshes prior to export.
 GPU Instances
 -------------
 
-When the option is enable in Exporter, instances are exported using the ``EXT_mesh_gpu_instancing`` extension.
+When the option is enabled in Exporter, instances are exported using the ``EXT_mesh_gpu_instancing`` extension.
 There are some limitations, at export:
 
 - Instances must be meshes, and don't have any children themselves
@@ -86,7 +86,7 @@ The complete list can be found in `Extensions`_ part of this documentation.
 .. figure:: /images/addons_import-export_scene-gltf2_material-channels.jpg
 
    An example of the various image maps available in the glTF 2.0 core format. This is
-   the `water bottle sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/WaterBottle>`__
+   the `water bottle sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/WaterBottle>`__
    shown alongside slices of its various image maps.
 
 
@@ -140,7 +140,7 @@ If no texture is connected, the base color can be specified:
 
 - From the Principled BSDF node's *Base Color* input, which is the default.
 - From a RGB node connected to the *Base Color* input.
-- From an Ambiant Occlusion node connected to the *Base Color* input. (The AO socket
+- From an Ambient Occlusion node connected to the *Base Color* input. (The AO socket
   is not used in glTF, but the color output can be used as a base color.)
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-base-color.png
@@ -326,7 +326,7 @@ Then, exporter will convert these texture into a glTF compatible texture.
 .. figure:: /images/addons_import-export_scene-gltf2_material_anisotropy-grayscale-texture.png
 
 Note that the *tangent* socket must be linked to a *tangent* node, with UVMap.
-The choosen UVMap must be the UVMap of the Normal Map.
+The chosen UVMap must be the UVMap of the Normal Map.
 
 
 Transmission
@@ -463,7 +463,7 @@ You can also assign material to Variants from this tab, but recommendation is to
 Double-Sided / Backface Culling
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For materials where only the front faces will be visible, turn on *Backface Culling* in
+For materials where only the front faces will be visible, turn on *Backface Culling* (Camera) in
 the *Settings* panel of an EEVEE material. When using other engines (Cycles, Workbench)
 you can temporarily switch to EEVEE to configure this setting, then switch back.
 
@@ -583,6 +583,36 @@ To export an unlit material, mix in a camera ray, and avoid using the Principled
    ``KHR_materials_unlit`` and render shadeless in Blender.
 
 
+Lights
+======
+
+The glTF format supports three types of punctual lights: point, spot, and directional (Sun in Blender).
+Blender's Area light type and World lighting are not supported by glTF, and will be ignored during export.
+
+To enable light export, make sure to check the *Include Punctual Lights* option in the exporter.
+This will use the ``KHR_lights_punctual`` glTF extension.
+
+
+Light Color
+-----------
+
+The color of a glTF light is determined by the product of:
+- The color field on the light object, and
+- The color output of an Emission shader node, if the light is using nodes and has an Emission shader connected to its output.
+
+If you are using EEVEE render engine, only the color field on the light object is used, and Emission shader node is ignored.
+(This reflects Viewport rendering)
+
+
+Light Intensity
+---------------
+
+For Sun lights, the intensity is determined by the strength field on the light object.
+For Point and Spot lights, the intensity can also be determined by the Strength socket of a Light Falloff Node.
+
+If you are using EEVEE render engine, the node setup will be ignored, and only the strength field on the light object is used.
+
+
 Extensions
 ==========
 
@@ -674,7 +704,7 @@ To make the animation within that track visible, click Solo (star icon) next to 
 
 .. figure:: /images/addons_import-export_scene-gltf2_animation-solo-track.png
 
-   This is the `fox sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0/Fox>`__
+   This is the `fox sample model <https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Fox>`__
    showing its "Run" animation.
 
 If an animation affects multiple objects, it will be broken up into multiple parts.
@@ -732,7 +762,7 @@ The importer organizes actions so they will be exported correctly with this mode
 This mode is useful if you are exporting for game engine, with an animation library of a character.
 Each action must be on its own NLA track.
 
-Before Blender 4.4, tracks was merged regarding their name.
+Before Blender 4.4, tracks were merged regarding their name.
 With Blender 4.4, and the introduction of slotted actions, this default behavior has been changed.
 Now, tracks are merged by the action they are using, and not by their name.
 You can find more information about action slots in :doc:`Animation </animation/actions>`.
@@ -872,7 +902,7 @@ Bone Direction
    Otherwise this is purely aesthetic.
    The default value will not change axis, and is best for re-exporting from Blender.
    This default option will change display mode (adding shape and changing relationship line) to have a better view,
-   even if original bones axis are not the most accurate (estheticaly speaking)
+   even if original bones axis are not the most accurate (aesthetically speaking)
 Guess Original Bind Pose
    Determines the pose for bones (and consequently, skinned meshes) in Edit Mode.
    When on, attempts to guess the pose that was used to compute the inverse bind matrices.
@@ -890,7 +920,8 @@ Import Scenes as Collections
    For single scene import, all objects are created in active collection
    For multiple scenes import, each scene is imported as a collection. Non default scene are excluded from View Layer.
    If there are some orphan nodes (not in any scenes), an Orphan Collection is created (excluded from View Layer too).
-   When off, the glTF scene is imported in the Blender active scene. Other glTF scenes are imported as new Blender Scenes.
+   When off, the glTF scene is imported in the Blender active scene.
+   Other glTF scenes are imported as new Blender Scenes.
 Select Imported Objects
    Select created objects after import.
 Import Scene Extras
@@ -956,11 +987,11 @@ GPU Instances
    Export using ``EXT_mesh_gpu_instancing`` extensions.
 
 Flatten Object Hierarchy
-   Useful in case of non-decomposable TRS matrix. Only skined meshes will stay children of armature.
+   Useful in case of non-decomposable TRS matrix. Only skinned meshes will stay children of armature.
 
 Full Collection Hierarchy
    Export collections as empty, keeping full hierarchy. If an object is in multiple collections,
-   it will be exported it only once, in the first collection it is found.
+   it will be exported only once, in the first collection it is found.
 
 
 Data - Mesh
@@ -1029,7 +1060,7 @@ Image Quality
    When exporting jpeg or WebP files, the quality of the exported file.
 Create WebP
    Creates WebP textures for every textures, in addition to the existing texture.
-   For already WebP textures, nothing happen.
+   For already WebP textures, nothing happens.
 WebP fallback
    For all WebP textures, create a png fallback texture.
 Unused images
@@ -1053,9 +1084,9 @@ Data - Shape Keys - Optimize
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Use Sparse Accessor if better
-   Sparse Accessor will be used if it save space (if the exported file is smaller)
+   Sparse Accessor will be used if it saves space (if the exported file is smaller)
 Omitting Sparse Accessor if data is empty
-   If data is empty, omit to export SParce Accessor. Not all viewer managed it correctly, so this option is Off by
+   If data is empty, omit to export Sparse Accessor. Not all viewer managed it correctly, so this option is Off by
    default
 
 
@@ -1079,7 +1110,7 @@ Data - Skinning
 Export skinning data
 
 Bone influences
-   How many joint verex influences will be exported. Models may appear incorrectly in many viewers with value
+   How many joint vertex influences will be exported. Models may appear incorrectly in many viewers with value
    different to 4 or 8.
 
 Include All Bone Influences
@@ -1175,7 +1206,7 @@ Apply sampling to all animations. Do not sample animation can lead to wrong anim
 Sampling Rate
    How often to evaluate animated values (in frames).
 Sampling Interpolation Fallback
-   Interpolation choosen for properties that are not keyed (LINEAR or STEP/CONSTANT)
+   Interpolation chosen for properties that are not keyed (LINEAR or STEP/CONSTANT)
 
 
 Animation - Optimize

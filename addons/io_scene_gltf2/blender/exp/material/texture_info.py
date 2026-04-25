@@ -276,7 +276,7 @@ def __gather_texture_transform_and_tex_coord(primary_socket, export_settings):
         uvmap_info['value'] = node.node.attribute_name
 
     else:
-        uvmap_info['type'] = 'Active'
+        uvmap_info['type'] = 'Render'
 
     return texture_transform, uvmap_info
 

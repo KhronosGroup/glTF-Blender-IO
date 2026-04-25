@@ -33,7 +33,7 @@ if not isdir(args["repo"]):
     import sys
     sys.exit()
 
-shutil.copy(doc, args["repo"] + "/manual/addons/import_export/scene_gltf2.rst")
+shutil.copy(doc, args["repo"] + "/manual/addons/scene_gltf2.rst")
 
 images_list = listdir(images)
 for img in images_list:

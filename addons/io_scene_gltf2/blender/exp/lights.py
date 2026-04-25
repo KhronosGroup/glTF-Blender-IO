@@ -55,7 +55,16 @@ def __filter_lights_punctual(blender_lamp, export_settings) -> bool:
 
 
 def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
+    # Use multiplied color of emission node and lamp color
+    # To be aligned with the viewport rendering
+
+    # Except for EEVEE, where the emission node is not taken into account (yet)
+
     emission_node = __get_cycles_emission_node(blender_lamp)
+
+    if bpy.context.scene.render.engine == 'BLENDER_EEVEE':
+        emission_node = None  # EEVEE nodes are not taken into account (yet)
+
     if emission_node is not None:
 
         # Store data for KHR_animation_pointer
@@ -65,15 +74,22 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
         export_settings['current_paths']["node_tree." + emission_node.inputs["Color"].path_from_id() +
                                          ".default_value"] = path_
 
-        return list(emission_node.inputs["Color"].default_value)[:3]
+        emission_color = list(emission_node.inputs["Color"].default_value)[:3]
+    else:
+        emission_color = [1.0, 1.0, 1.0]  # Default color for lamps without emission node
 
-    # Store data for KHR_animation_pointer
-    path_ = {}
-    path_['length'] = 3
-    path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
-    export_settings['current_paths']['color'] = path_
+    if emission_node is None:
+        # Store data for KHR_animation_pointer
+        path_ = {}
+        path_['length'] = 3
+        path_['path'] = "/extensions/KHR_lights_punctual/lights/XXX/color"
+        export_settings['current_paths']['color'] = path_
 
     color = list(blender_lamp.color)  # Convert to list to allow modification
+
+    color[0] *= emission_color[0]
+    color[1] *= emission_color[1]
+    color[2] *= emission_color[2]
 
     if blender_lamp.use_temperature:
         temperature_color = list(blender_lamp.temperature_color)
@@ -84,15 +100,20 @@ def __gather_color(blender_lamp, export_settings) -> Optional[List[float]]:
     return color
 
     # TODO, check if temperature is animated, for KHR_animation_pointer
+    # TODO: merge both color for animation pointer ?
 
 
 def __gather_intensity(blender_lamp, blender_lamp_world_matrix, export_settings) -> Optional[float]:
     emission_node = __get_cycles_emission_node(blender_lamp)
+
+    if bpy.context.scene.render.engine == 'BLENDER_EEVEE':
+        emission_node = None  # EEVEE nodes are not taken into account (yet)
+
     if emission_node is not None:
         if blender_lamp.type != 'SUN':
             # When using cycles, the strength should be influenced by a LightFalloff node
             result = search_node_tree.from_socket(
-                search_node_tree.NodeSocket(emission_node.inputs.get("Strength"), blender_lamp.node_tree),
+                search_node_tree.NodeSocket(emission_node.inputs.get("Strength"), [blender_lamp.node_tree]),
                 search_node_tree.FilterByType(bpy.types.ShaderNodeLightFalloff)
             )
             if result:
@@ -205,14 +226,14 @@ def __gather_extras(blender_lamp, export_settings) -> Optional[Any]:
 
 
 def __get_cycles_emission_node(blender_lamp) -> Optional[bpy.types.ShaderNodeEmission]:
-    if blender_lamp.use_nodes and blender_lamp.node_tree:
+    if blender_lamp.node_tree:
         for currentNode in blender_lamp.node_tree.nodes:
             is_shadernode_output = isinstance(currentNode, bpy.types.ShaderNodeOutputLight)
             if is_shadernode_output:
                 if not currentNode.is_active_output:
                     continue
                 result = search_node_tree.from_socket(
-                    search_node_tree.NodeSocket(currentNode.inputs.get("Surface"), blender_lamp.node_tree),
+                    search_node_tree.NodeSocket(currentNode.inputs.get("Surface"), [blender_lamp.node_tree]),
                     search_node_tree.FilterByType(bpy.types.ShaderNodeEmission)
                 )
                 if not result:
