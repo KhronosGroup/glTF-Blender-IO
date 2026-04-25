@@ -71,7 +71,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
                     if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                             pointer_tab[3] == "extensions" and \
                             pointer_tab[4] == "KHR_materials_dispersion" and \
-                            pointer_tab[5]  == "dispersion":
+                            pointer_tab[5] == "dispersion":
                         need_settings_node = True
 
     if need_settings_node:
@@ -126,7 +126,6 @@ def pbr_metallic_roughness(mh: MaterialHelper):
 
     if dispersion_ext is not None:
         dispersion(mh, mh.settings_node.inputs['Dispersion'])  # Dispersion extension is only factor
-
 
     if need_volume_node:
         volume(
@@ -344,6 +343,7 @@ def volume(mh, location, volume_node, thickness_socket):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_volume']['thicknessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
+
 def dispersion(mh, dispersion_socket):
     ext = mh.get_ext('KHR_materials_dispersion', {})
 
@@ -353,6 +353,7 @@ def dispersion(mh, dispersion_socket):
         mh.pymat.extensions['KHR_materials_dispersion']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
 
     dispersion_socket.default_value = ext.get('dispersion', 0)
+
 
 def specular(mh, locs, pbr_node):
     ext = mh.get_ext('KHR_materials_specular', {})

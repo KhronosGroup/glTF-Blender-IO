@@ -684,7 +684,7 @@ class BlenderPointerAnim():
                 pointer_tab[5] == "dispersion":
             dispersion_socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], 'Dispersion')
             if dispersion_socket.socket.is_linked:
-                    print("Error, something is wrong, Dispersion should not be linked")
+                print("Error, something is wrong, Dispersion should not be linked")
             else:
                 blender_path = dispersion_socket.socket.path_from_id() + ".default_value"
                 group_name = 'Material'
