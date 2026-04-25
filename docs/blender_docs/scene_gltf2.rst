@@ -410,6 +410,23 @@ Dispersion can be exported only if the material also uses the ``KHR_materials_vo
 Data will be exported using the ``KHR_materials_dispersion`` extension.
 The dispersion socket of the custom group node ``glTF Material Output`` is used for this extension.
 
+
+Iridescence
+^^^^^^^^^^^
+
+Iridescence can be exported using the ``KHR_materials_iridescence`` extension.
+Data will be exported using the following nodes:
+- Iridescence Thickness Maximum can be plugged into the Thickness socket of custom group node ``glTF Material Output``. If a texture is used, it must be plugged on (``R``) Red channel of the image.
+- Iridescence IOR can be plugged into the Thin Film IOR socket of Principled BSDF node.
+- Iridescence Factor can be plugged into the thickness socket of Principled BSDF node.
+- Iridescence Maximum Thickness can be plugged into the Iridescence Thickness Maximum socket of custom group node ``glTF Material Output``
+
+Texture for Iridescence Factor can be plugged on (``R``) Red channel of an image plugged into this socket. You can use a Multiply node to multiply this texture with the Iridescence Factor value.
+Texture for Iridescence Thickness can be plugged on (``G``) Green channel of an image, used as a mix factor for thickness between Minimum and Maximum thickness.
+
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-iridescence.png
+
 glTF Variants
 ^^^^^^^^^^^^^
 
