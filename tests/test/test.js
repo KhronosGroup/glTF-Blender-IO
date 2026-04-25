@@ -259,18 +259,18 @@ describe('Exporter', function () {
                         let ext = args.indexOf('--glb') === -1 ? '.gltf' : '.glb';
                         let outDirPath = path.resolve(OUT_PREFIX, 'scenes', outDirName);
                         let dstPath = path.resolve(outDirPath, `${scene}${ext}`);
-                        // blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
-                        //     if (error)
-                        //         return done(error);
+                        blenderFileToGltf(blenderVersion, blenderPath, outDirPath, (error) => {
+                            if (error)
+                                return done(error);
 
-                        //     // tmp: skip validator if the name of file contains "pointer"
-                        //     if (!(scene.includes("pointer"))) {
-                        //         validateGltf(dstPath, done);
-                        //     } else {
-                        //         done();
-                        //     }
-                        // }, args);
-                        validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
+                            // tmp: skip validator if the name of file contains "pointer"
+                            if (!(scene.includes("pointer"))) {
+                                validateGltf(dstPath, done);
+                            } else {
+                                done();
+                            }
+                        }, args);
+                        // validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
                     });
                 });
             });
@@ -3543,8 +3543,8 @@ describe('Exporter', function () {
                 assert.strictEqual(mat_no_transmission.extensions, undefined);
                 // check we don't have any animation pointer on this material
                 const mat_no_transmission_index = asset.materials.indexOf(mat_no_transmission);
-                const animation_no_transmission = asset.animations.filter(animation => animation.channels[0].target['extensions']['KHR_animation_pointer']['pointer'] === "/materials/" + mat_no_transmission_index + "/extensions/KHR_materials_dispersion/dispersion")[0];
-                assert.ok(!animation_no_transmission);
+                const animation_no_transmission = asset.animations.filter(animation => animation.channels.filter(channel => channel.target.extensions['KHR_animation_pointer']['pointer'] === "/materials/" + mat_no_transmission_index + "/extensions/KHR_materials_dispersion/dispersion").length > 0);
+                assert.strictEqual(animation_no_transmission.length, 0);
 
                 // dispersion 1.0 (and animation pointer on this material)
                 const mat_disp_1_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube_disp_1_to_0")[0].mesh].primitives[0].material];
@@ -3595,7 +3595,7 @@ describe('Exporter', function () {
                             if (fs.existsSync(gltfOptionsPath)) {
                                 options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                             }
-                            return done(); // uncomment to not roundtrip all files
+                            // return done(); // uncomment to not roundtrip all files
                             blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                                 if (error) {
                                     if (options.indexOf("--no-validate") !== -1) { return done(); }
