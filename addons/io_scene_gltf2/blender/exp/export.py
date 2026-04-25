@@ -185,7 +185,8 @@ def __check_volume(json, export_settings):
 def __check_dispersion(json, export_settings):
     if 'materials' not in json.keys():
         return
-    for mat in json['materials']:
+    removed_materials = []
+    for idx_mat, mat in enumerate(json['materials']):
         if 'extensions' not in mat.keys():
             continue
         if 'KHR_materials_dispersion' not in mat['extensions'].keys():
@@ -194,6 +195,7 @@ def __check_dispersion(json, export_settings):
         # And because we may have deleted some extensions, we need to check again
         if 'KHR_materials_volume' not in mat['extensions'].keys():
             del mat['extensions']['KHR_materials_dispersion']
+            removed_materials.append(idx_mat)
 
     # Check if we need to keep the extension declaration
     dispersion_found = False
@@ -207,6 +209,40 @@ def __check_dispersion(json, export_settings):
     if not dispersion_found:
         export_settings['gltf_need_to_keep_extension_declaration'] = [
             e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_materials_dispersion']
+
+    # Remove animation of dispersion if dispersion was removed
+    if len(removed_materials) > 0 and 'animations' in json.keys():
+        remove_animations = []
+        for anim in json['animations']:
+            if 'channels' not in anim.keys():
+                continue
+            removed_channels = []
+            for idx_channel, channel in enumerate(anim['channels']):
+                if channel['target']['path'] != "pointer":
+                    continue
+                if 'extensions' not in channel['target'].keys():
+                    continue
+                if 'KHR_animation_pointer' not in channel['target']['extensions'].keys():
+                    continue
+                pointer = channel['target']['extensions']['KHR_animation_pointer']['pointer']
+                if not pointer.startswith("/materials/"):
+                    continue
+                tab = pointer.split("/")
+                if len(tab) < 3:
+                    continue
+                try:
+                    mat_idx = int(tab[2])
+                except ValueError:
+                    continue
+                if mat_idx in removed_materials:
+                    removed_channels.append(idx_channel)
+            for idx in reversed(removed_channels):
+                del anim['channels'][idx]
+
+            if len(anim['channels']) == 0:
+                remove_animations.append(anim)
+        for anim in reversed(remove_animations):
+            json['animations'].remove(anim)
 
 
 def __detect_animated_extensions(obj, export_settings):
