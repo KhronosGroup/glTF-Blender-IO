@@ -422,8 +422,8 @@ Data will be exported using the following nodes:
 - Iridescence Factor can be plugged into the thickness socket of Principled BSDF node.
 - Iridescence Maximum Thickness can be plugged into the Iridescence Thickness Maximum socket of custom group node ``glTF Material Output``
 
-Texture for Iridescence Factor can be plugged on (``R``) Red channel of an image plugged into this socket. You can use a Multiply node to multiply this texture with the Iridescence Factor value.
-Texture for Iridescence Thickness can be plugged on (``G``) Green channel of an image, used as a mix factor for thickness between Minimum and Maximum thickness.
+- Texture for Iridescence Factor can be plugged on (``R``) Red channel of an image plugged into this socket. You can use a Multiply node to multiply this texture with the Iridescence Factor value.
+- Texture for Iridescence Thickness can be plugged on (``G``) Green channel of an image, used as a mix factor for thickness between Minimum and Maximum thickness.
 
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-iridescence.png
