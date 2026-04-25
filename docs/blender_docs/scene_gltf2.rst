@@ -416,6 +416,7 @@ Iridescence
 
 Iridescence can be exported using the ``KHR_materials_iridescence`` extension.
 Data will be exported using the following nodes:
+
 - Iridescence Thickness Maximum can be plugged into the Thickness socket of custom group node ``glTF Material Output``. If a texture is used, it must be plugged on (``R``) Red channel of the image.
 - Iridescence IOR can be plugged into the Thin Film IOR socket of Principled BSDF node.
 - Iridescence Factor can be plugged into the thickness socket of Principled BSDF node.
