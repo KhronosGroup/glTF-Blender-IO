@@ -439,6 +439,7 @@ def __should_include_json_value(key, value, export_settings):
             if key in export_settings['gltf_animated_extensions']:
                 # There is an animation, so we can keep this empty collection, and store
                 # that this extension declaration needs to be kept
+                # TODO: this should be detected material by material, not globally
                 export_settings['gltf_need_to_keep_extension_declaration'].append(key)
                 return True
             else:
