@@ -3522,6 +3522,55 @@ describe('Exporter', function () {
 
             });
 
+            it('export iridecence', function () {
+                let gltfPath = path.resolve(outDirPath, '39_iridescence.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                // retrieve material of the object "no_iridescence"
+                const noIridescenceMat = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "no_iridescence")[0].mesh].primitives[0].material];
+                assert.strictEqual(noIridescenceMat.extensions?.KHR_materials_iridescence, undefined);
+
+                // no animation pointer on this material
+                const mat_no_iridescence_index = asset.materials.indexOf(noIridescenceMat);
+                // Use these 2 lines if one day, there are some animation in this file
+                //const animation_no_iridescnce = asset.animations.filter(animation => animation.channels.filter(channel => channel.target.extensions['KHR_animation_pointer']['pointer'] == "/materials/" + mat_no_iridescence_index + "/extensions/KHR_materials_iridescence/iridescenceFactor").length > 0);
+                //assert.strictEqual(animation_no_iridescnce.length , 0);
+                assert.strictEqual(asset.animations === undefined, true);
+
+                // retrieve material of the object "iridescence"
+                const iridescenceMat = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "iridescence")[0].mesh].primitives[0].material];
+                assert.equalEpsilon(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceFactor, 0.6);
+                assert.equalEpsilon(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceIor, 1.4);
+                assert.equalEpsilon(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMinimum, 90.0);
+                assert.equalEpsilon(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMaximum, 430.0);
+                // Verify we have textures
+                assert.strictEqual(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceTexture !== undefined, true);
+                assert.strictEqual(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceThicknessTexture !== undefined, true);
+
+                // retrieve material of the object "no_texture"
+                const noTextureMat = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "no_texture")[0].mesh].primitives[0].material];
+                assert.equalEpsilon(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceFactor, 0.5);
+                assert.equalEpsilon(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceIor, 1.33);
+                // if no texture => no need of minimum tickness
+                assert.strictEqual(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMinimum, undefined);
+                assert.equalEpsilon(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMaximum, 450.0);
+                // Verify we don't have textures
+                assert.strictEqual(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceTexture, undefined);
+                assert.strictEqual(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceThicknessTexture, undefined);
+
+                // retrieve material of the object "all_default"
+                const allDefaultMat = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "all_default")[0].mesh].primitives[0].material];
+                assert.equalEpsilon(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceFactor, 1.0);
+                // because Ior is default, not exported
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceIor, undefined);
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMinimum, undefined);
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMaximum, undefined);
+                // Verify we have textures
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceTexture !== undefined, true);
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceThicknessTexture !== undefined, true);
+
+            });
+
         });
     });
 
