@@ -682,7 +682,8 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_iridescence" and \
                 pointer_tab[5] == "iridescenceFactor":
-            iridescence_factor_socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], 'Iridescence Factor')
+            iridescence_factor_socket = get_socket_from_gltf_material_node(
+                asset['blender_nodetree'], 'Iridescence Factor')
             if iridescence_factor_socket.socket.is_linked:
                 mix_node = iridescence_factor_socket.socket.links[0].from_node
                 if mix_node.type == "MATH":
@@ -718,7 +719,8 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_iridescence" and \
                 pointer_tab[5] == "iridescenceThicknessMinimum":
-            iridescence_thickness_min_socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], 'Iridescence Thickness Minimum')
+            iridescence_thickness_min_socket = get_socket_from_gltf_material_node(
+                asset['blender_nodetree'], 'Iridescence Thickness Minimum')
             _, blender_path = get_factor_from_socket(iridescence_thickness_min_socket, kind='VALUE')
             group_name = 'Material'
             num_components = 1

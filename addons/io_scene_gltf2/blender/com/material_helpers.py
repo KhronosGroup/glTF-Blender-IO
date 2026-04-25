@@ -40,7 +40,8 @@ def create_settings_group(name):
     iridescenceFactor = gltf_node_group.interface.new_socket("Iridescence Factor", socket_type="NodeSocketFloat", )
     iridescenceFactor.default_value = 0.0
 
-    iridescenceTicknessMinimum = gltf_node_group.interface.new_socket("Iridescence Thickness Minimum", socket_type="NodeSocketFloat", )
+    iridescenceTicknessMinimum = gltf_node_group.interface.new_socket(
+        "Iridescence Thickness Minimum", socket_type="NodeSocketFloat", )
     iridescenceTicknessMinimum.default_value = 100.0
 
     gltf_node_group.nodes.new('NodeGroupOutput')

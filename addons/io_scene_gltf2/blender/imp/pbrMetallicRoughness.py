@@ -146,13 +146,13 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     sheen(mh, locs, pbr_node)
 
     iridescence(
-    mh,
-    locs,
-    iridescence_factor_socket=mh.settings_node.inputs['Iridescence Factor'] if mh.settings_node else None,
-    iridescence_ior_socket=pbr_node.inputs['Thin Film IOR'],
-    iridescence_thickness_maximum_socket=pbr_node.inputs['Thin Film Thickness'],
-    iridescence_thickness_minimum_socket=mh.settings_node.inputs['Iridescence Thickness Minimum'] if mh.settings_node else None,
-)
+        mh,
+        locs,
+        iridescence_factor_socket=mh.settings_node.inputs['Iridescence Factor'] if mh.settings_node else None,
+        iridescence_ior_socket=pbr_node.inputs['Thin Film IOR'],
+        iridescence_thickness_maximum_socket=pbr_node.inputs['Thin Film Thickness'],
+        iridescence_thickness_minimum_socket=mh.settings_node.inputs['Iridescence Thickness Minimum'] if mh.settings_node else None,
+    )
 
     # IOR
     ior_ext = mh.get_ext('KHR_materials_ior', {})

@@ -155,8 +155,8 @@ def __check_iridescence(json, export_settings):
         # If not animated and 0.0 => remove the entire extension, because it is not changing the shader
         # If animated => keep the extension, but we will remove the default value
         thickness_animated = False
-        if 'KHR_materials_iridescence' in export_settings['gltf_animated_extensions'].keys() and \
-                'iridescenceThicknessMaximum' in export_settings['gltf_animated_extensions']['KHR_materials_iridescence']:
+        if 'KHR_materials_iridescence' in export_settings['gltf_animated_extensions'].keys(
+        ) and 'iridescenceThicknessMaximum' in export_settings['gltf_animated_extensions']['KHR_materials_iridescence']:
             # We need to chec for this specific material, as it seems that some material can have animated thickness
             for anim in json['animations']:
                 for channel in anim['channels']:
@@ -169,11 +169,13 @@ def __check_iridescence(json, export_settings):
                 if thickness_animated:
                     break
 
-        if (not factor_animated and mat['extensions']['KHR_materials_iridescence'].get('iridescenceFactor', 0.0) == 0.0) \
-                or (not thickness_animated and mat['extensions']['KHR_materials_iridescence'].get('iridescenceThicknessMaximum', 400.0) == 0.0):
-            # We can remove the entire extension, as no material animates the factor or the thickness, and default values are not changing the shader
+        if (not factor_animated and mat['extensions']['KHR_materials_iridescence'].get('iridescenceFactor', 0.0) == 0.0) or (
+                not thickness_animated and mat['extensions']['KHR_materials_iridescence'].get('iridescenceThicknessMaximum', 400.0) == 0.0):
+            # We can remove the entire extension, as no material animates the factor
+            # or the thickness, and default values are not changing the shader
             del mat['extensions']['KHR_materials_iridescence']
-            # We can remove any animation pointer on this extension for this material, because it is not animating anything
+            # We can remove any animation pointer on this extension for this material,
+            # because it is not animating anything
             for anim in json.get('animations', []):
                 channels_to_keep = []
                 samplers_to_keep = []
@@ -181,10 +183,12 @@ def __check_iridescence(json, export_settings):
                     pointer_matches = (
                         channel['target']['path'] == "pointer"
                         and channel['target']['extensions']['KHR_animation_pointer']['pointer']
-                            .startswith(f"/materials/{mat_idx}/extensions/KHR_materials_iridescence/")
+                        .startswith(f"/materials/{mat_idx}/extensions/KHR_materials_iridescence/")
                     )
                     if pointer_matches:
-                        # We found an animation for this extension, but as no material animates the factor or the thickness, and default values are not changing the shader, we can remove this animation, as it is not animating anything
+                        # We found an animation for this extension, but as no material animates
+                        # the factor or the thickness, and default values are not changing the
+                        # shader, we can remove this animation, as it is not animating anything
                         animation_pointer_deleted = True
                     else:
                         channels_to_keep.append(channel)
@@ -210,7 +214,6 @@ def __check_iridescence(json, export_settings):
             # We have deleted all animation pointer, so we can remove the extension declaration for animation pointer
             export_settings['gltf_need_to_keep_extension_declaration'] = [
                 e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_animation_pointer']
-
 
     # Check if we need to keep the extension declaration
     iridescence_found = False
@@ -307,6 +310,7 @@ def __detect_animated_extensions(obj, export_settings):
                     export_settings['gltf_animated_extensions'][ext[-1]] = []
 
                 export_settings['gltf_animated_extensions'][ext[-1]].append(tab[-1])
+
 
 def __manage_extension_declaration(json, export_settings):
     if 'extensionsUsed' in json.keys():

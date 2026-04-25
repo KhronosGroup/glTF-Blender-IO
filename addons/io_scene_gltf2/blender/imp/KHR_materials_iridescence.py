@@ -17,6 +17,7 @@ from ...io.com.constants import GLTF_IRIDESCENCE_IOR
 from .material_utils import scalar_factor_and_texture
 from .texture import texture
 
+
 def iridescence(
     mh,
     locs,
@@ -99,7 +100,7 @@ def iridescence(
         # Separate RGB node
         separate_node = mh.node_tree.nodes.new('ShaderNodeSeparateColor')
         separate_node.location = x - 180 * 2, y - 300
-        mh.node_tree.links.new(separate_node.outputs[1], mix_node.inputs[0]) # Factor is in the green channel
+        mh.node_tree.links.new(separate_node.outputs[1], mix_node.inputs[0])  # Factor is in the green channel
 
         # Texture node
         texture(
@@ -114,7 +115,7 @@ def iridescence(
         # Value node (minimum thickness)
         value_node = mh.node_tree.nodes.new('ShaderNodeValue')
         value_node.label = 'Iridescence Thickness Minimum'
-        value_node.location = x - 180 * 2, y -500
+        value_node.location = x - 180 * 2, y - 500
         value_node.outputs[0].default_value = iridescence_thickness_minimum
         mh.node_tree.links.new(mix_node.inputs[2], value_node.outputs[0])
         mh.node_tree.links.new(iridescence_thickness_minimum_socket, value_node.outputs[0])
@@ -122,6 +123,6 @@ def iridescence(
         # Value node (maximum thickness)
         value_node_max = mh.node_tree.nodes.new('ShaderNodeValue')
         value_node_max.label = 'Iridescence Thickness Maximum'
-        value_node_max.location = x - 180 * 2, y -600
+        value_node_max.location = x - 180 * 2, y - 600
         value_node_max.outputs[0].default_value = iridescence_thickness_maximum
         mh.node_tree.links.new(mix_node.inputs[3], value_node_max.outputs[0])
