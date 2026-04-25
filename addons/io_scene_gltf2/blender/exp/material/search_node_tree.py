@@ -850,22 +850,22 @@ def previous_socket(socket: NodeSocket):
 
         # If we are entering a node group (from outputs)
         if from_socket.node.type == "GROUP":
-            socket_name = from_socket.name
+            socket_name = from_socket.identifier
             # Some groups can be undefined (because of linked librairies)
             next_socket = next(iter([n for n in from_socket.node.node_tree.nodes if n.type == "GROUP_OUTPUT"]), None)
             if next_socket is None:
                 return NodeSocket(None, None)
             sockets = next_socket.inputs
-            socket = [s for s in sockets if s.name == socket_name][0]
+            socket = [s for s in sockets if s.identifier == socket_name][0]
             group_path.append(from_socket.node)
             soc = socket
             continue
 
         # If we are exiting a node group (from inputs)
         if from_socket.node.type == "GROUP_INPUT":
-            socket_name = from_socket.name
+            socket_name = from_socket.identifier
             sockets = group_path[-1].inputs
-            socket = [s for s in sockets if s.name == socket_name][0]
+            socket = [s for s in sockets if s.identifier == socket_name][0]
             group_path = group_path[:-1]
             soc = socket
             continue
@@ -971,9 +971,9 @@ def check_if_is_linked_to_active_output(shader_socket, group_path):
 
         # If we are entering a node group
         if link.to_node.type == "GROUP":
-            socket_name = link.to_socket.name
+            socket_name = link.to_socket.identifier
             sockets = [n for n in link.to_node.node_tree.nodes if n.type == "GROUP_INPUT"][0].outputs
-            socket = [s for s in sockets if s.name == socket_name][0]
+            socket = [s for s in sockets if s.identifier == socket_name][0]
             new_group_path = group_path.copy()
             new_group_path.append(link.to_node)
             # TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
@@ -985,9 +985,9 @@ def check_if_is_linked_to_active_output(shader_socket, group_path):
 
         # If we are exiting a node group
         if link.to_node.type == "GROUP_OUTPUT":
-            socket_name = link.to_socket.name
+            socket_name = link.to_socket.identifier
             sockets = group_path[-1].outputs
-            socket = [s for s in sockets if s.name == socket_name][0]
+            socket = [s for s in sockets if s.identifier == socket_name][0]
             new_group_path = group_path[:-1]
             # TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
             # recursive until find an output material node
@@ -1137,7 +1137,7 @@ def detect_anisotropy_nodes(
     if separate_xyz_node is None or separate_xyz_node.type != "SEPXYZ":
         return False, None
     separate_xyz_z_socket = anisotropy_multiply_node.inputs[0].links[0].from_socket
-    if separate_xyz_z_socket.name != "Z":
+    if separate_xyz_z_socket.identifier != "Z":
         return False, None
     # This separate XYZ node output should be linked to ArcTan2 node (X on inputs[1], Y on inputs[0])
     if not separate_xyz_node.outputs[0].is_linked:
@@ -1147,9 +1147,9 @@ def detect_anisotropy_nodes(
         return False, None
     if arctan2_node.operation != "ARCTAN2":
         return False, None
-    if arctan2_node.inputs[0].links[0].from_socket.name != "Y":
+    if arctan2_node.inputs[0].links[0].from_socket.identifier != "Y":
         return False, None
-    if arctan2_node.inputs[1].links[0].from_socket.name != "X":
+    if arctan2_node.inputs[1].links[0].from_socket.identifier != "X":
         return False, None
     # This arctan2 node output should be linked to anisotropy rotation (Math add node)
     if not arctan2_node.outputs[0].is_linked:
@@ -1173,7 +1173,7 @@ def detect_anisotropy_nodes(
     # This rotation conversion node should have the output linked to anisotropy rotation socket of Principled BSDF
     if not rotation_conversion_node.outputs[0].is_linked:
         return False, None
-    if rotation_conversion_node.outputs[0].links[0].to_socket.name != "Anisotropic Rotation":
+    if rotation_conversion_node.outputs[0].links[0].to_socket.identifier != "Anisotropic Rotation":
         return False, None
     if rotation_conversion_node.outputs[0].links[0].to_node.type != "BSDF_PRINCIPLED":
         return False, None

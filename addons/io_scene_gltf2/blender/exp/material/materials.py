@@ -175,6 +175,9 @@ def gather_material(bmat, export_settings):
                     bmat.get_used_material().node_tree], bpy.types.ShaderNodeTexImage)
         else:
             nodes = []
+        # Store index of additional texture for this material
+        export_settings['additional_texture_export_current_idx'][bmat.id] = len(
+            export_settings['additional_texture_export'])
         cpt_additional = 0
         for node in nodes:
             if nodes_used.get(node[0].name):
@@ -564,16 +567,6 @@ def __export_unlit(bmat, export_settings):
     return material, uvmap_info, vc_info, udim_info
 
 
-def get_active_uvmap_index(blender_mesh):
-    # retrieve active render UVMap
-    active_uvmap_idx = 0
-    for i in range(len(blender_mesh.uv_layers)):
-        if blender_mesh.uv_layers[i].active_render is True:
-            active_uvmap_idx = i
-            break
-    return active_uvmap_idx
-
-
 def get_final_material(mesh, blender_material, attr_indices, base_material, uvmap_info, export_settings):
 
     # First, we need to calculate all index of UVMap
@@ -584,7 +577,7 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
     for m, v in uvmap_info.items():
 
         if m.startswith("additional") and additional_indices <= int(m[10:]):
-            additional_indices = +1
+            additional_indices += 1
 
         if 'type' not in v.keys():
             continue
@@ -594,10 +587,10 @@ def get_final_material(mesh, blender_material, attr_indices, base_material, uvma
             if i >= 0:
                 indices[m] = i
             else:
-                # Using active index
-                indices[m] = get_active_uvmap_index(mesh)
-        elif v['type'] == 'Active':
-            indices[m] = get_active_uvmap_index(mesh)
+                # Using render index
+                indices[m] = mesh.uv_layers.active_render_index
+        elif v['type'] == 'Render':
+            indices[m] = mesh.uv_layers.active_render_index
         elif v['type'] == "Attribute":
             # This can be a regular UVMap or a custom attribute
             i = mesh.uv_layers.find(v['value'])
@@ -704,12 +697,12 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
             if material.extensions["KHR_materials_iridescence"].extension['iridescenceThicknessTexture']:
                 material.extensions["KHR_materials_iridescence"].extension['iridescenceThicknessTexture'].tex_coord = ind
         elif tex.startswith("additional"):
-            export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx'] +
-                                                         int(tex[10:])].tex_coord = ind
+            export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx']
+                                                         [id(blender_material)] + int(tex[10:])].tex_coord = ind
+            # We can use id(blender_material) here, as we are not using inline tree
+            # for additional textures, so the material is always the original one
         else:
             export_settings['log'].error("some Textures tex coord are not managed")
-
-    export_settings['additional_texture_export_current_idx'] = len(export_settings['additional_texture_export'])
 
     return material
 

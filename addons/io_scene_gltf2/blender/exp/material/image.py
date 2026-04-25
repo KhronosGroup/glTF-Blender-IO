@@ -147,7 +147,7 @@ def __gather_extras(sockets, export_settings):
 def __gather_mime_type(sockets, export_image, export_settings):
     # force png or webp if Alpha contained so we can export alpha
     for socket in sockets:
-        if socket.socket.name == "Alpha":
+        if socket.socket.identifier == "Alpha":
             if export_settings["gltf_image_format"] == "WEBP":
                 return "image/webp"
             else:
@@ -278,9 +278,9 @@ def __get_image_data(sockets, use_tile, export_settings) -> ExportImage:
 
     need_to_check_anisotropy = is_anisotropy = False
     try:
-        anisotropy_socket = [s for s in sockets if s.socket.name == 'Anisotropic'][0]
-        anisotropy_rotation_socket = [s for s in sockets if s.socket.name == 'Anisotropic Rotation'][0]
-        anisotropy_tangent_socket = [s for s in sockets if s.socket.name == 'Tangent'][0]
+        anisotropy_socket = [s for s in sockets if s.socket.identifier == 'Anisotropic'][0]
+        anisotropy_rotation_socket = [s for s in sockets if s.socket.identifier == 'Anisotropic Rotation'][0]
+        anisotropy_tangent_socket = [s for s in sockets if s.socket.identifier == 'Tangent'][0]
         need_to_check_anisotropy = True
     except Exception as _e:
         need_to_check_anisotropy = False
@@ -325,37 +325,37 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
                         'Red': Channel.R,
                         'Green': Channel.G,
                         'Blue': Channel.B,
-                    }[elem.from_socket.name]
-                if elem.from_socket.name == 'Alpha':
+                    }[elem.from_socket.identifier]
+                if elem.from_socket.identifier == 'Alpha':
                     src_chan = Channel.A
 
             if src_chan is None:
                 # No SeparateColor node found, so take the specification channel that is needed
                 # So export is correct if user plug the texture directly to the socket
-                if socket.socket.name == 'Metallic':
+                if socket.socket.identifier == 'Metallic':
                     src_chan = Channel.B
-                elif socket.socket.name == 'Roughness':
+                elif socket.socket.identifier == 'Roughness':
                     src_chan = Channel.G
                 elif socket.socket.name == 'Occlusion':
                     src_chan = Channel.R
-                elif socket.socket.name == 'Alpha':
+                elif socket.socket.identifier == 'Alpha':
                     # For alpha, we need to check if we have a texture plugged in a Color socket
                     # In that case, we will convert RGB to BW
                     if elem.from_socket.type == "RGBA":
                         src_chan = Channel.RGB2BW
                     else:
                         src_chan = Channel.A
-                elif socket.socket.name == 'Coat Weight':
+                elif socket.socket.identifier == 'Coat Weight':
                     src_chan = Channel.R
-                elif socket.socket.name == 'Coat Roughness':
+                elif socket.socket.identifier == 'Coat Roughness':
                     src_chan = Channel.G
-                elif socket.socket.name == 'Thickness':  # For KHR_materials_volume
+                elif socket.socket.identifier == 'Thickness':  # For KHR_materials_volume
                     src_chan = Channel.G
 
             if src_chan is None:
                 # Seems we can't find the channel
                 # We are in a case where user plugged a texture in a Color socket, but we may have used the alpha one
-                if socket.socket.name in ["Alpha", "Specular IOR Level", "Sheen Roughness"]:
+                if socket.socket.identifier in ["Alpha", "Specular IOR Level", "Sheen Roughness"]:
                     src_chan = Channel.A
 
             if src_chan is None:
@@ -365,23 +365,23 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
             dst_chan = None
 
             # some sockets need channel rewriting (gltf pbr defines fixed channels for some attributes)
-            if socket.socket.name == 'Metallic':
+            if socket.socket.identifier == 'Metallic':
                 dst_chan = Channel.B
-            elif socket.socket.name == 'Roughness':
+            elif socket.socket.identifier == 'Roughness':
                 dst_chan = Channel.G
             elif socket.socket.name == 'Occlusion':
                 dst_chan = Channel.R
-            elif socket.socket.name == 'Alpha':
+            elif socket.socket.identifier == 'Alpha':
                 dst_chan = Channel.A
-            elif socket.socket.name == 'Coat Weight':
+            elif socket.socket.identifier == 'Coat Weight':
                 dst_chan = Channel.R
-            elif socket.socket.name == 'Coat Roughness':
+            elif socket.socket.identifier == 'Coat Roughness':
                 dst_chan = Channel.G
-            elif socket.socket.name == 'Thickness':  # For KHR_materials_volume
+            elif socket.socket.identifier == 'Thickness':  # For KHR_materials_volume
                 dst_chan = Channel.G
-            elif socket.socket.name == "Specular IOR Level":  # For KHR_materials_specular
+            elif socket.socket.identifier == "Specular IOR Level":  # For KHR_materials_specular
                 dst_chan = Channel.A
-            elif socket.socket.name == "Sheen Roughness":  # For KHR_materials_sheen
+            elif socket.socket.identifier == "Sheen Roughness":  # For KHR_materials_sheen
                 dst_chan = Channel.A
 
             if dst_chan is not None:
@@ -403,19 +403,19 @@ def __get_image_data_mapping(sockets, results, use_tile, export_settings) -> Exp
 
                 # Since metal/roughness are always used together, make sure
                 # the other channel is filled.
-                if socket.socket.name == 'Metallic' and not composed_image.is_filled(Channel.G):
+                if socket.socket.identifier == 'Metallic' and not composed_image.is_filled(Channel.G):
                     composed_image.fill_white(Channel.G)
-                elif socket.socket.name == 'Roughness' and not composed_image.is_filled(Channel.B):
+                elif socket.socket.identifier == 'Roughness' and not composed_image.is_filled(Channel.B):
                     composed_image.fill_white(Channel.B)
 
                 # Since Alpha is always used together with BaseColor in glTF, make sure
                 # the other channels are filled.
                 # All these channels may be overwritten later by BaseColor socket
-                if socket.socket.name == 'Alpha' and not composed_image.is_filled(Channel.R):
+                if socket.socket.identifier == 'Alpha' and not composed_image.is_filled(Channel.R):
                     composed_image.fill_white(Channel.R)
-                if socket.socket.name == 'Alpha' and not composed_image.is_filled(Channel.G):
+                if socket.socket.identifier == 'Alpha' and not composed_image.is_filled(Channel.G):
                     composed_image.fill_white(Channel.G)
-                if socket.socket.name == 'Alpha' and not composed_image.is_filled(Channel.B):
+                if socket.socket.identifier == 'Alpha' and not composed_image.is_filled(Channel.B):
                     composed_image.fill_white(Channel.B)
 
             else:

@@ -185,7 +185,7 @@ def detect_manual_uv_wrapping(blender_shader_node, group_path):
         if prev_node.type != 'SEPXYZ':
             return None
         # Make sure X goes to X, etc.
-        if prev_socket.socket.name != soc:
+        if prev_socket.socket.identifier != soc:
             return None
         # Make sure both attach to the same SeparateXYZ node
         if soc == 'X':
