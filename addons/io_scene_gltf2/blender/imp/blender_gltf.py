@@ -188,7 +188,8 @@ class BlenderGlTF():
                         "KHR_materials_clearcoat",
                         "KHR_materials_sheen",
                         "KHR_materials_specular",
-                        "KHR_materials_anisotropy"
+                        "KHR_materials_anisotropy",
+                        "KHR_materials_dispersion",
                 ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         mat.extensions[ext]["animations"] = {}
@@ -613,6 +614,17 @@ class BlenderGlTF():
                                     ].extensions["KHR_materials_anisotropy"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])
                                 ].extensions["KHR_materials_anisotropy"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_dispersion" and \
+                pointer_tab[5] == "dispersion":
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["KHR_materials_dispersion"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["KHR_materials_dispersion"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["KHR_materials_dispersion"]["animations"][anim_idx].append(channel_idx)
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \

@@ -18,6 +18,15 @@
                     "remoteRoot": "."
                 }
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Mocha Tests",
+            "program": "${workspaceFolder}/tests/node_modules/.bin/mocha",
+            "args": ["--reporter", "mochawesome"],
+            "cwd": "${workspaceFolder}/tests",
+            "console": "integratedTerminal"
         }
     ]
 }

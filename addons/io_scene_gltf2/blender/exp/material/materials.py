@@ -34,6 +34,7 @@ from .extensions.clearcoat import export_clearcoat
 from .extensions.anisotropy import export_anisotropy
 from .extensions.iridescence import export_iridescence
 from .extensions.ior import export_ior
+from .extensions.dispersion import export_dispersion
 from .search_node_tree import \
     has_image_node_from_socket, \
     get_socket_from_gltf_material_node, \
@@ -312,7 +313,6 @@ def __gather_extensions(bmat, emissive_factor, export_settings):
         udim_infos.update(udim_info_clearcoat)
 
     # KHR_materials_transmission
-
     transmission_extension, uvmap_info, udim_info_transmission = export_transmission(bmat, export_settings)
     if transmission_extension:
         extensions["KHR_materials_transmission"] = transmission_extension
@@ -325,7 +325,6 @@ def __gather_extensions(bmat, emissive_factor, export_settings):
         extensions["KHR_materials_emissive_strength"] = emissive_strength_extension
 
     # KHR_materials_volume
-
     volume_extension, uvmap_info, udim_info = export_volume(bmat, export_settings)
     if volume_extension:
         extensions["KHR_materials_volume"] = volume_extension
@@ -359,6 +358,11 @@ def __gather_extensions(bmat, emissive_factor, export_settings):
         extensions["KHR_materials_iridescence"] = iridescence_extension
         uvmap_infos.update(uvmap_info)
         udim_infos.update(udim_info)
+
+    # KHR_materials_dispersion
+    dispersion_extension = export_dispersion(bmat, extensions, export_settings)
+    if dispersion_extension:
+        extensions["KHR_materials_dispersion"] = dispersion_extension
 
     # KHR_materials_ior
     # Keep this extension at the end, because we export it only if some others are exported

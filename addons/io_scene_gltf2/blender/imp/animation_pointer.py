@@ -680,6 +680,18 @@ class BlenderPointerAnim():
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "KHR_materials_dispersion" and \
+                pointer_tab[5] == "dispersion":
+            dispersion_socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], 'Dispersion')
+            if dispersion_socket.socket.is_linked:
+                print("Error, something is wrong, Dispersion should not be linked")
+            else:
+                blender_path = dispersion_socket.socket.path_from_id() + ".default_value"
+                group_name = 'Material'
+                num_components = 1
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_iridescence" and \
                 pointer_tab[5] == "iridescenceFactor":
             iridescence_factor_socket = get_socket_from_gltf_material_node(

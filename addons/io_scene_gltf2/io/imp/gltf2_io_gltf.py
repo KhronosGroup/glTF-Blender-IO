@@ -67,6 +67,7 @@ class glTFImporter():
             'KHR_materials_volume',
             'EXT_texture_webp',
             'KHR_materials_anisotropy',
+            'KHR_materials_dispersion',
             'KHR_materials_iridescence',
         ]
 

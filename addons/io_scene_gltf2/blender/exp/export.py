@@ -97,6 +97,9 @@ def __export(export_settings):
     # not exported (factor, thickness)
     __check_iridescence(json, export_settings)
 
+    # Dispersion is a special case where we need to export only if volume is used
+    __check_dispersion(json, export_settings)
+
     __manage_extension_declaration(json, export_settings)
 
     # We need to run it again, as we can now have some "extensions" dict that are empty
@@ -289,6 +292,69 @@ def __check_volume(json, export_settings):
             e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_materials_volume']
 
 
+def __check_dispersion(json, export_settings):
+    if 'materials' not in json.keys():
+        return
+    removed_materials = []
+    for idx_mat, mat in enumerate(json['materials']):
+        if 'extensions' not in mat.keys():
+            continue
+        if 'KHR_materials_dispersion' not in mat['extensions'].keys():
+            continue
+        # We keep dispersion only if volume is used
+        # And because we may have deleted some extensions, we need to check again
+        if 'KHR_materials_volume' not in mat['extensions'].keys():
+            del mat['extensions']['KHR_materials_dispersion']
+            removed_materials.append(idx_mat)
+
+    # Check if we need to keep the extension declaration
+    dispersion_found = False
+    for mat in json['materials']:
+        if 'extensions' not in mat.keys():
+            continue
+        if 'KHR_materials_dispersion' not in mat['extensions'].keys():
+            continue
+        dispersion_found = True
+        break
+    if not dispersion_found:
+        export_settings['gltf_need_to_keep_extension_declaration'] = [
+            e for e in export_settings['gltf_need_to_keep_extension_declaration'] if e != 'KHR_materials_dispersion']
+
+    # Remove animation of dispersion if dispersion was removed
+    if len(removed_materials) > 0 and 'animations' in json.keys():
+        remove_animations = []
+        for anim in json['animations']:
+            if 'channels' not in anim.keys():
+                continue
+            removed_channels = []
+            for idx_channel, channel in enumerate(anim['channels']):
+                if channel['target']['path'] != "pointer":
+                    continue
+                if 'extensions' not in channel['target'].keys():
+                    continue
+                if 'KHR_animation_pointer' not in channel['target']['extensions'].keys():
+                    continue
+                pointer = channel['target']['extensions']['KHR_animation_pointer']['pointer']
+                if not pointer.startswith("/materials/"):
+                    continue
+                tab = pointer.split("/")
+                if len(tab) < 3:
+                    continue
+                try:
+                    mat_idx = int(tab[2])
+                except ValueError:
+                    continue
+                if mat_idx in removed_materials:
+                    removed_channels.append(idx_channel)
+            for idx in reversed(removed_channels):
+                del anim['channels'][idx]
+
+            if len(anim['channels']) == 0:
+                remove_animations.append(anim)
+        for anim in reversed(remove_animations):
+            json['animations'].remove(anim)
+
+
 def __detect_animated_extensions(obj, export_settings):
     export_settings['gltf_animated_extensions'] = {}
     export_settings['gltf_need_to_keep_extension_declaration'] = []
@@ -473,7 +539,8 @@ def __should_include_json_value(key, value, export_settings):
             "KHR_materials_transmission",
             "KHR_materials_volume",
             "KHR_lights_punctual",
-            "KHR_materials_anisotropy"
+            "KHR_materials_anisotropy",
+            "KHR_materials_dispersion",
         ]
 
     if value is None:
@@ -484,6 +551,7 @@ def __should_include_json_value(key, value, export_settings):
             if key in export_settings['gltf_animated_extensions'].keys():
                 # There is an animation, so we can keep this empty collection, and store
                 # that this extension declaration needs to be kept
+                # TODO: this should be detected material by material, not globally
                 export_settings['gltf_need_to_keep_extension_declaration'].append(key)
                 return True
             else:
