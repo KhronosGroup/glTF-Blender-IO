@@ -32,6 +32,7 @@ from .extensions.specular import export_specular
 from .extensions.transmission import export_transmission
 from .extensions.clearcoat import export_clearcoat
 from .extensions.anisotropy import export_anisotropy
+from .extensions.iridescence import export_iridescence
 from .extensions.ior import export_ior
 from .extensions.dispersion import export_dispersion
 from .search_node_tree import \
@@ -348,6 +349,13 @@ def __gather_extensions(bmat, emissive_factor, export_settings):
     anisotropy_extension, uvmap_info, udim_info = export_anisotropy(bmat, export_settings)
     if anisotropy_extension:
         extensions["KHR_materials_anisotropy"] = anisotropy_extension
+        uvmap_infos.update(uvmap_info)
+        udim_infos.update(udim_info)
+
+    # KHR_materials_iridescence
+    iridescence_extension, uvmap_info, udim_info = export_iridescence(bmat, export_settings)
+    if iridescence_extension:
+        extensions["KHR_materials_iridescence"] = iridescence_extension
         uvmap_infos.update(uvmap_info)
         udim_infos.update(udim_info)
 
@@ -686,6 +694,12 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
         elif tex == "anisotropyTexture":
             if material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture']:
                 material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'].tex_coord = ind
+        elif tex == "iridescenceTexture":
+            if material.extensions["KHR_materials_iridescence"].extension['iridescenceTexture']:
+                material.extensions["KHR_materials_iridescence"].extension['iridescenceTexture'].tex_coord = ind
+        elif tex == "iridescenceThicknessTexture":
+            if material.extensions["KHR_materials_iridescence"].extension['iridescenceThicknessTexture']:
+                material.extensions["KHR_materials_iridescence"].extension['iridescenceThicknessTexture'].tex_coord = ind
         elif tex.startswith("additional"):
             export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx']
                                                          [id(blender_material)] + int(tex[10:])].tex_coord = ind
@@ -760,6 +774,8 @@ def get_all_textures(idx=0):
     tab.append("sheenRoughnessTexture")
     tab.append("thicknessTexture")
     tab.append("anisotropyTexture")
+    tab.append("iridescenceTexture")
+    tab.append("iridescenceThicknessTexture")
 
     for i in range(idx):
         tab.append("additional" + str(i))
