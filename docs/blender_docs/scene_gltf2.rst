@@ -403,6 +403,13 @@ Data will be exported using the ``KHR_materials_volume`` extension.
 .. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
 
 
+Dispersion
+^^^^^^^^^^
+
+Dispersion can be exported only if the material also uses the ``KHR_materials_volume`` extension.
+Data will be exported using the ``KHR_materials_dispersion`` extension.
+The dispersion socket of the custom group node ``glTF Material Output`` is used for this extension.
+
 glTF Variants
 ^^^^^^^^^^^^^
 
