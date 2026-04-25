@@ -137,7 +137,8 @@ class BlenderAnimation():
                         "KHR_materials_clearcoat",
                         "KHR_materials_sheen",
                         "KHR_materials_specular",
-                        "KHR_materials_anisotropy"
+                        "KHR_materials_anisotropy",
+                        "KHR_materials_dispersion",
                 ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         BlenderPointerAnim.anim(gltf, anim_idx, mat.extensions[ext], mat_idx, 'EXT', name=mat.name)
