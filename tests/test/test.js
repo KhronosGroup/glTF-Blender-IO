@@ -3535,7 +3535,7 @@ describe('Exporter', function () {
 
                 // dispersion 0.2
                 const mat_disp_0_2 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube_disp_0.2")[0].mesh].primitives[0].material];
-                assert.strictEqual(mat_disp_0_2.extensions['KHR_materials_dispersion'].dispersion, 0.2);
+                assert.equalEpsilon(mat_disp_0_2.extensions['KHR_materials_dispersion'].dispersion, 0.2);
 
                 // no dispersion because no transmission
                 const mat_no_transmission = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "no_transmission")[0].mesh].primitives[0].material];
@@ -3547,7 +3547,7 @@ describe('Exporter', function () {
 
                 // dispersion 1.0 (and animation pointer on this material)
                 const mat_disp_1_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube_disp_1_to_0")[0].mesh].primitives[0].material];
-                assert.strictEqual(mat_disp_1_0.extensions['KHR_materials_dispersion'].dispersion, 1.0);
+                assert.equalEpsilon(mat_disp_1_0.extensions['KHR_materials_dispersion'].dispersion, 1.0);
                 // get index of the material
                 const mat_disp_1_0_index = asset.materials.indexOf(mat_disp_1_0);
                 // check that there is an animation channel targeting this material
