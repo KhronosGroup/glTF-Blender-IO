@@ -17,6 +17,7 @@ from .....io.com.gltf2_io_extensions import Extension
 from ..search_node_tree import get_socket_from_gltf_material_node, get_const_from_default_value_socket
 import bpy
 
+
 def export_dispersion(bmat, extensions, export_settings):
 
     # If no volume extension, no dispersion extension export
