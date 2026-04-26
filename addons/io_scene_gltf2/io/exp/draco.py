@@ -15,7 +15,7 @@
 from ctypes import *
 
 from ...io.exp.binary_data import BinaryData
-from ...io.com.draco import dll_path
+from ...io.com.library import dll_path
 
 
 def encode_scene_primitives(scenes, export_settings):
@@ -25,7 +25,7 @@ def encode_scene_primitives(scenes, export_settings):
     """
 
     # Load DLL and setup function signatures.
-    dll = cdll.LoadLibrary(str(dll_path().resolve()))
+    dll = cdll.LoadLibrary(str(dll_path('extern_draco', 'Draco').resolve()))
 
     dll.encoderCreate.restype = c_void_p
     dll.encoderCreate.argtypes = [c_uint32]
