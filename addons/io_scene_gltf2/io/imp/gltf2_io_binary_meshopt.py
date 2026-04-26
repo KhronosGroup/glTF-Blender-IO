@@ -48,9 +48,9 @@ class MeshoptDecoder:
 
         # Define type signatures for the decoder functions
         decode_funcs = [
-            lib.meshopt_decodeVertexBuffer,
-            lib.meshopt_decodeIndexBuffer,
-            lib.meshopt_decodeIndexSequence,
+            lib.decodeVertexBuffer,
+            lib.decodeIndexBuffer,
+            lib.decodeIndexSequence,
         ]
         for func in decode_funcs:
             func.restype = ctypes.c_int
@@ -63,9 +63,9 @@ class MeshoptDecoder:
             ]
 
         filter_funcs = [
-            lib.meshopt_decodeFilterOct,
-            lib.meshopt_decodeFilterQuat,
-            lib.meshopt_decodeFilterExp,
+            lib.decodeFilterOct,
+            lib.decodeFilterQuat,
+            lib.decodeFilterExp,
         ]
         for func in filter_funcs:
             func.restype = None
@@ -116,9 +116,9 @@ class MeshoptDecoder:
         buffer_ptr = (ctypes.c_ubyte * len(buffer)).from_buffer_copy(buffer)
 
         decode_func = {
-            'ATTRIBUTES': lib.meshopt_decodeVertexBuffer,
-            'TRIANGLES': lib.meshopt_decodeIndexBuffer,
-            'INDICES': lib.meshopt_decodeIndexSequence,
+            'ATTRIBUTES': lib.decodeVertexBuffer,
+            'TRIANGLES': lib.decodeIndexBuffer,
+            'INDICES': lib.decodeIndexSequence,
         }.get(mode)
 
         error_code = decode_func(
@@ -133,9 +133,9 @@ class MeshoptDecoder:
 
         if mode == 'ATTRIBUTES' and filter is not None:
             filter_func = {
-                'OCTAHEDRAL': lib.meshopt_decodeFilterOct,
-                'QUATERNION': lib.meshopt_decodeFilterQuat,
-                'EXPONENTIAL': lib.meshopt_decodeFilterExp,
+                'OCTAHEDRAL': lib.decodeFilterOct,
+                'QUATERNION': lib.decodeFilterQuat,
+                'EXPONENTIAL': lib.decodeFilterExp,
             }.get(filter)
             filter_func(dst_ptr, count, byte_stride)
 
