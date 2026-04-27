@@ -70,7 +70,6 @@ class NodeTreeSearchResult:
         self.group_path = group_path
 
 
-# TODO: cache these searches
 def from_socket(start_socket: NodeTreeSearchResult,
                 shader_node_filter):
     """
@@ -80,12 +79,29 @@ def from_socket(start_socket: NodeTreeSearchResult,
     :param shader_node_filter: should be a function(x: shader_node) -> bool
     :return: a list of shader nodes for which filter is true
     """
-    # hide implementation (especially the search path)
+    # Per-call memo so that shared shader sub-graphs (group nodes, mix nodes,
+    # multi-input nodes, etc.) are walked once. Without this the recursion
+    # below is at least quadratic in the number of shared input branches and
+    # dominates export time on complex materials.
+    memo: typing.Dict[typing.Tuple, typing.List[NodeTreeSearchResult]] = {}
+
+    def _gp_key(group_path):
+        # `group_path` is a list of group nodes for the materials traversal,
+        # but lamps pass their ShaderNodeTree directly. Hash by element
+        # pointers for the list case; otherwise by the tree's own pointer.
+        if isinstance(group_path, list):
+            return tuple(n.as_pointer() for n in group_path)
+        return ("tree", getattr(group_path, "as_pointer", id)())
+
     def __search_from_socket(start_socket: bpy.types.NodeSocket,
                              shader_node_filter: typing.Union[Filter, typing.Callable],
-                             search_path: typing.List[bpy.types.NodeLink],
-                             group_path: typing.List[bpy.types.Node]) -> typing.List[NodeTreeSearchResult]:
-        results = []
+                             group_path) -> typing.List[NodeTreeSearchResult]:
+        cache_key = (start_socket.as_pointer(), _gp_key(group_path))
+        cached_results = memo.get(cache_key)
+        if cached_results is not None:
+            return cached_results
+
+        results: typing.List[NodeTreeSearchResult] = []
         for link in start_socket.links:
             # follow the link to a shader node
             linked_node = link.from_node
@@ -93,37 +109,31 @@ def from_socket(start_socket: NodeTreeSearchResult,
             if linked_node.type == "GROUP":
                 group_output_node = [node for node in linked_node.node_tree.nodes if node.type == "GROUP_OUTPUT"][0]
                 socket = [sock for sock in group_output_node.inputs if sock.name == link.from_socket.name][0]
-                group_path.append(linked_node)
-                linked_results = __search_from_socket(
-                    socket, shader_node_filter, search_path + [link], group_path.copy())
-                if linked_results:
-                    # add the link to the current path
-                    search_path.append(link)
-                    results += linked_results
+                child_gp = (group_path + [linked_node]) if isinstance(group_path, list) else [linked_node]
+                for r in __search_from_socket(socket, shader_node_filter, child_gp):
+                    results.append(NodeTreeSearchResult(r.shader_node, [link] + r.path, r.group_path))
                 continue
 
             if linked_node.type == "GROUP_INPUT":
+                # GROUP_INPUT is only meaningful inside a group; if we have
+                # no enclosing group recorded there is nothing to ascend to.
+                if not isinstance(group_path, list) or not group_path:
+                    continue
                 socket = [sock for sock in group_path[-1].inputs if sock.name == link.from_socket.name][0]
-                linked_results = __search_from_socket(socket, shader_node_filter,
-                                                      search_path + [link], group_path[:-1].copy())
-                if linked_results:
-                    # add the link to the current path
-                    search_path.append(link)
-                    results += linked_results
+                for r in __search_from_socket(socket, shader_node_filter, group_path[:-1]):
+                    results.append(NodeTreeSearchResult(r.shader_node, [link] + r.path, r.group_path))
                 continue
 
             # check if the node matches the filter
             if shader_node_filter(linked_node):
-                results.append(NodeTreeSearchResult(linked_node, search_path + [link], group_path.copy()))
+                gp_snapshot = list(group_path) if isinstance(group_path, list) else group_path
+                results.append(NodeTreeSearchResult(linked_node, [link], gp_snapshot))
             # traverse into inputs of the node
             for input_socket in linked_node.inputs:
-                linked_results = __search_from_socket(
-                    input_socket, shader_node_filter, search_path + [link], group_path.copy())
-                if linked_results:
-                    # add the link to the current path
-                    search_path.append(link)
-                    results += linked_results
+                for r in __search_from_socket(input_socket, shader_node_filter, group_path):
+                    results.append(NodeTreeSearchResult(r.shader_node, [link] + r.path, r.group_path))
 
+        memo[cache_key] = results
         return results
 
     if start_socket.socket is None:
@@ -133,7 +143,7 @@ def from_socket(start_socket: NodeTreeSearchResult,
     if shader_node_filter(start_socket.socket.node):
         return [NodeTreeSearchResult(start_socket.socket.node, [], start_socket.group_path.copy())]
 
-    return __search_from_socket(start_socket.socket, shader_node_filter, [], start_socket.group_path.copy())
+    return __search_from_socket(start_socket.socket, shader_node_filter, start_socket.group_path)
 
 
 @cached
