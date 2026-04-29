@@ -61,6 +61,11 @@ class Buffer:
                 additional_buffer.__data.extend(binary_data.data)
             else:
                 self.add_fake_bytelength(binary_data.byte_length)
+                # We also need to have a padding in the main buffer for the fallback data,
+                # even if it doesn't contain real data, to have the correct offset for the
+                # fallback bufferview
+                padding = (4 - (binary_data.byte_length % 4)) % 4
+                self.add_fake_bytelength(padding)
 
         length = binary_data.byte_length
 
