@@ -149,7 +149,7 @@ def __gather_skins(blender_primitive, export_settings):
                     joints[:, idx] = 0.0
 
         joint = array_to_accessor(
-            None,  # TODO meshopt for joints
+            "JOINTS",
             joints,
             export_settings,
             component_type,
@@ -172,7 +172,7 @@ def __gather_skins(blender_primitive, export_settings):
         weight_arrs[s] /= weight_total
 
         weight = array_to_accessor(
-            None,  # TODO meshopt for weights
+            "WEIGHTS",
             weight_arrs[s],
             export_settings,
             component_type=gltf2_io_constants.ComponentType.Float,
