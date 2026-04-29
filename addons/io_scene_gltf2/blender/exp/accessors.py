@@ -16,6 +16,7 @@ import numpy as np
 
 from ...io.com import gltf2_io
 from ...io.com import constants as gltf2_io_constants
+from ...io.exp.meshopt import MeshoptEncoder
 from ...io.exp import binary_data as gltf2_io_binary_data
 from .cache import cached
 
@@ -45,6 +46,7 @@ def gather_accessor(buffer_view: gltf2_io_binary_data.BinaryData,
 
 
 def array_to_accessor(
+        attribute_name,
         array,
         export_settings,
         component_type,
@@ -57,10 +59,37 @@ def array_to_accessor(
     # Not trying to check if sparse is better
     if sparse_type is None:
 
-        buffer_view = gltf2_io_binary_data.BinaryData(
-            array.tobytes(),
-            gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER,
-        )
+        if export_settings['gltf_meshopt_compression'] and attribute_name is not None:
+            compressed_data = MeshoptEncoder.encode_attribute(attribute_name, array, export_settings)
+            buffer_view = gltf2_io_binary_data.BinaryData(
+                array.tobytes(),
+                gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER,
+            )
+
+            if attribute_name in ['POSITION', 'NORMAL']:
+                byteStride = 12  # 3 components * 4 bytes per component for float32, because no mesh_quantization
+            elif attribute_name in ['TEXCOORD_0', 'TEXCOORD_1']:
+                byteStride = 8  # 2 components * 4 bytes per component for float32, because no mesh_quantization
+            elif attribute_name in ['JOINTS_0', 'WEIGHTS_0']:
+                byteStride = 8  # 4 components * 2 bytes per component for uint16, because of mesh_quantization
+            else:
+                # fallback to uncompressed byte stride, should be correct for non-quantized attributes
+                byteStride = len(array[:1].tobytes())
+
+            buffer_view.set_extension('EXT_meshopt_compression', {
+                'buffer': compressed_data,  # to be filled in later by the exporter, use data in placeholder for now
+                'byteOffset': None,  # to be filled in later by the exporter
+                'byteStride': byteStride,
+                'byteLength': len(compressed_data),
+                'count': len(array),
+                'mode': 'ATTRIBUTES'
+            })
+
+        else:
+            buffer_view = gltf2_io_binary_data.BinaryData(
+                array.tobytes(),
+                gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER,
+            )
 
         amax = None
         amin = None

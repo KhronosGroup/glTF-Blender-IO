@@ -50,6 +50,10 @@ class MeshoptEncoder:
         lib.meshopt_encodeIndexVersion.restype = None
         lib.meshopt_encodeIndexVersion(1)
 
+        lib.meshopt_encodeVertexVersion.argtypes = [ctypes.c_int]
+        lib.meshopt_encodeVertexVersion.restype = None
+        lib.meshopt_encodeVertexVersion(0)   # TODO: 0 for EXT, 1 for KHR
+
         lib.meshopt_encodeIndexBufferBound.argtypes = [ctypes.c_size_t, ctypes.c_size_t]
         lib.meshopt_encodeIndexBufferBound.restype = ctypes.c_size_t
 
@@ -138,5 +142,31 @@ class MeshoptEncoder:
             to_be_converted_data.ctypes.data_as(ctypes.POINTER(ctypes.c_uint)),
             index_count
         )
+
+        return bytes(buffer[:written])
+
+    @staticmethod
+    def encode_attribute(attribute_name, data, export_settings):
+
+        MeshoptEncoder.load_library(export_settings)
+        lib = export_settings['meshopt_encoder']
+
+        vertex_count = len(data)
+        vertex_size = data.strides[0]
+
+        bound = lib.meshopt_encodeVertexBufferBound(vertex_count, vertex_size)
+        buffer = (ctypes.c_ubyte * bound)()
+
+        to_be_converted_data = np.ascontiguousarray(data)
+
+        written = lib.encodeVertexBuffer(
+            buffer,
+            bound,
+            to_be_converted_data.ctypes.data_as(ctypes.c_void_p),
+            vertex_count,
+            vertex_size
+        )
+
+        # TODO manage filter
 
         return bytes(buffer[:written])

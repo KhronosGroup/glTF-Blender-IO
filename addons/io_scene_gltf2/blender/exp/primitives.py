@@ -291,6 +291,7 @@ def __gather_targets(blender_primitive, blender_data, modifiers, export_settings
                     target = {}
                     internal_target_position = blender_primitive["attributes"][target_position_id]["data"]
                     target["POSITION"] = array_to_accessor(
+                        None,  # TODO meshopt for SK position
                         internal_target_position,
                         export_settings,
                         component_type=gltf2_io_constants.ComponentType.Float,
@@ -305,6 +306,7 @@ def __gather_targets(blender_primitive, blender_data, modifiers, export_settings
 
                         internal_target_normal = blender_primitive["attributes"][target_normal_id]["data"]
                         target['NORMAL'] = array_to_accessor(
+                            None,  # TODO meshopt for SK normal
                             internal_target_normal,
                             export_settings,
                             component_type=gltf2_io_constants.ComponentType.Float,
@@ -317,6 +319,7 @@ def __gather_targets(blender_primitive, blender_data, modifiers, export_settings
                             and blender_primitive["attributes"].get(target_tangent_id) is not None:
                         internal_target_tangent = blender_primitive["attributes"][target_tangent_id]["data"]
                         target['TANGENT'] = array_to_accessor(
+                            None,  # TODO meshopt for SK tangent
                             internal_target_tangent,
                             export_settings,
                             component_type=gltf2_io_constants.ComponentType.Float,
