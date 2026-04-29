@@ -77,7 +77,9 @@ class GlTF2Exporter:
 
         self.additional_data = AdditionalData()
 
-        self.__buffer = gltf2_io_buffer.Buffer()
+        self.__buffer = gltf2_io_buffer.Buffer(export_settings['gltf_format'] == 'GLB')
+        if export_settings['gltf_meshopt_compression']:
+            self.__additional_buffer = gltf2_io_buffer.Buffer(export_settings['gltf_format'] == 'GLB', buffer_index=1)
         self.__images = {}
 
         # mapping of all glTFChildOfRootProperty types to their corresponding root level arrays
@@ -127,15 +129,18 @@ class GlTF2Exporter:
         if self.__finalized:
             raise RuntimeError("Tried to finalize buffers for finalized glTF file")
 
-        if self.__buffer.byte_length > 0:
+        # Meshopt compression ... We need to invert buffers
+        buffer_to_use = self.__additional_buffer if self.export_settings['gltf_meshopt_compression'] else self.__buffer
+
+        if buffer_to_use.byte_length > 0:
             if is_glb:
                 uri = None
             elif output_path and buffer_name:
                 with open(output_path + uri_to_path(buffer_name), 'wb') as f:
-                    f.write(self.__buffer.to_bytes())
+                    f.write(buffer_to_use.to_bytes())
                 uri = buffer_name
             else:
-                uri = self.__buffer.to_embed_string()
+                uri = buffer_to_use.to_embed_string()
 
             buffer = gltf2_io.Buffer(
                 byte_length=self.__buffer.byte_length,
@@ -144,12 +149,35 @@ class GlTF2Exporter:
                 name=None,
                 uri=uri
             )
-            self.__gltf.buffers.append(buffer)
+
+            if not self.export_settings['gltf_meshopt_compression']:
+                self.__gltf.buffers.append(buffer)
+            else:
+                # Add extension on the buffer if meshopt is enabled
+                buffer.extensions = {'EXT_meshopt_compression': {"fallback": True}}
+                buffer.uri = None
+                buffer.byte_length = self.__buffer.get_fake_bytelength()
+                if not is_glb:
+                    # Make sure to add the compressed first
+                    self.__gltf.buffers.append(buffer)
+
+                # Create a new buffer for meshopt compressed data, and add it to the glTF
+                compressed_buffer = gltf2_io.Buffer(
+                    byte_length=self.__additional_buffer.byte_length,
+                    extensions=None,
+                    extras=None,
+                    name=None,
+                    uri=uri if not is_glb else None
+                )
+                self.__gltf.buffers.append(compressed_buffer)
+                if is_glb:
+                    # Now that the compressed buffer is added first, we can add the fallback
+                    self.__gltf.buffers.append(buffer)
 
         self.__finalized = True
 
         if is_glb:
-            return self.__buffer.to_bytes()
+            return buffer_to_use.to_bytes()
 
     def add_draco_extension(self):
         """
@@ -159,6 +187,15 @@ class GlTF2Exporter:
         """
         self.__gltf.extensions_required.append('KHR_draco_mesh_compression')
         self.__gltf.extensions_used.append('KHR_draco_mesh_compression')
+
+    def add_meshopt_extension(self):
+        """
+        Register Meshopt extension as *used* and *required*.
+
+        :return:
+        """
+        self.__gltf.extensions_required.append('EXT_meshopt_compression')
+        self.__gltf.extensions_used.append('EXT_meshopt_compression')
 
     def finalize_images(self):
         """
@@ -526,7 +563,8 @@ class GlTF2Exporter:
 
         # binary data needs to be moved to a buffer and referenced with a buffer view
         if isinstance(node, gltf2_io_binary_data.BinaryData):
-            buffer_view = self.__buffer.add_and_get_view(node)
+            add_buffer = self.__additional_buffer if self.export_settings['gltf_meshopt_compression'] else None
+            buffer_view = self.__buffer.add_and_get_view(node, additional_buffer=add_buffer)
             return self.__to_reference(buffer_view)
 
         # image data needs to be saved to file

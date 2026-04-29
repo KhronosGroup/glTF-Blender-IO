@@ -21,33 +21,102 @@ from ...io.exp import binary_data as gltf2_io_binary_data
 class Buffer:
     """Class representing binary data for use in a glTF file as 'buffer' property."""
 
-    def __init__(self, buffer_index=0, initial_data=None):
+    def __init__(self, is_glb, buffer_index=0, initial_data=None):
+        self.is_glb = is_glb
         self.__data = bytearray(b"")
         if initial_data is not None:
             self.__data = bytearray(initial_data.tobytes())
         self.__buffer_index = buffer_index
+        self.__fake_bytelength = 0
 
-    def add_and_get_view(self, binary_data: gltf2_io_binary_data.BinaryData) -> gltf2_io.BufferView:
+    def add_fake_bytelength(self, byte_length):
+        """used for meshopt compression fallback"""
+        self.__fake_bytelength += byte_length
+
+    def get_fake_bytelength(self):
+        """used for meshopt compression fallback"""
+        return self.__fake_bytelength
+
+    def add_and_get_view(self, binary_data: gltf2_io_binary_data.BinaryData,
+                         additional_buffer=None) -> gltf2_io.BufferView:
         """Add binary data to the buffer. Return a glTF BufferView."""
-        offset = len(self.__data)
-        self.__data.extend(binary_data.data)
+
+        # If there is an additional buffer => We are exporting with meshopt
+        # It means that compressed data will go in the additional buffer
+        # And uncomppressed data will also go in the additional buffer,
+        # as only fallback data must go in the main buffer (bufferView definition, but without any real data.
+
+        # if hasattr(binary_data, 'extensions') => Compressed data,
+        # So populate main bufferview with main buffer, extension buffer view with additional buffer
+        # else => no compressed data, so populate main bufferview with additional (compressed) buffer, no extension
+
+        if not additional_buffer:
+            offset = len(self.__data)
+            self.__data.extend(binary_data.data)
+
+        else:
+            offset = len(additional_buffer.__data)
+            fake_byte_length = self.__fake_bytelength  # Calculate the offset for the fallback data
+            if not hasattr(binary_data, 'extensions'):
+                additional_buffer.__data.extend(binary_data.data)
+            else:
+                self.add_fake_bytelength(binary_data.byte_length)
 
         length = binary_data.byte_length
 
         # offsets should be a multiple of 4 --> therefore add padding if necessary
         padding = (4 - (length % 4)) % 4
-        self.__data.extend(b"\x00" * padding)
+        if not additional_buffer:
+            self.__data.extend(b"\x00" * padding)
+        else:
+            if not hasattr(binary_data, 'extensions'):
+                additional_buffer.__data.extend(b"\x00" * padding)
+
+        if not additional_buffer:
+            buffer_index = self.__buffer_index
+        else:
+            if not self.is_glb:
+                if hasattr(binary_data, 'extensions'):
+                    buffer_index = self.__buffer_index
+                else:
+                    buffer_index = additional_buffer.__buffer_index
+            else:
+                # For glb, make sure the compressed buffer is first, and the fallback second
+                if hasattr(binary_data, 'extensions'):
+                    buffer_index = 1  # fallback buffer
+                else:
+                    buffer_index = 0  # compressed / data buffer
 
         buffer_view = gltf2_io.BufferView(
-            buffer=self.__buffer_index,
+            buffer=buffer_index,
             byte_length=length,
-            byte_offset=offset,
+            byte_offset=fake_byte_length if hasattr(binary_data, 'extensions') else offset,
             byte_stride=None,
             extensions=None,
             extras=None,
             name=None,
             target=binary_data.bufferViewTarget
         )
+
+        if additional_buffer is not None and hasattr(binary_data, 'extensions'):
+            # EXT_meshopt_compression
+            compressed_binary_data = binary_data.extensions['EXT_meshopt_compression']['buffer']
+            additional_buffer.__data.extend(compressed_binary_data)
+            length = len(compressed_binary_data)
+            padding = (4 - (length % 4)) % 4
+            additional_buffer.__data.extend(b"\x00" * padding)
+
+            buffer_view.extensions = binary_data.extensions
+
+            # For glb, make sure the real data (compressed or not) is in the first
+            # buffer, and the fallback in the second buffer
+            if not self.is_glb:
+                buffer_view.extensions['EXT_meshopt_compression']['buffer'] = additional_buffer.__buffer_index
+            else:
+                buffer_view.extensions['EXT_meshopt_compression']['buffer'] = 0
+
+            buffer_view.extensions['EXT_meshopt_compression']['byteOffset'] = offset
+
         return buffer_view
 
     @property

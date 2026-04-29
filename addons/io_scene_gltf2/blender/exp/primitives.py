@@ -16,6 +16,7 @@ import bpy
 from typing import List, Optional, Tuple
 import numpy as np
 from ...io.com import gltf2_io, constants as gltf2_io_constants, gltf2_io_extensions
+from ...io.exp.meshopt import MeshoptEncoder
 from ...blender.com.data_path import get_sk_exported
 from ...io.exp import binary_data as gltf2_io_binary_data
 from .cache import cached, cached_by_key
@@ -237,9 +238,24 @@ def __gather_indices(blender_primitive, blender_data, modifiers, export_settings
             ') and needs to be split before export.')
         return None
 
+    if export_settings['gltf_meshopt_compression']:
+        compressed_indices = MeshoptEncoder.encode_indices(blender_primitive.get('mode'), indices, export_settings)
+
     element_type = gltf2_io_constants.DataType.Scalar
     binary_data = gltf2_io_binary_data.BinaryData(
         indices.tobytes(), bufferViewTarget=gltf2_io_constants.BufferViewTarget.ELEMENT_ARRAY_BUFFER)
+
+    if export_settings['gltf_meshopt_compression']:
+        mode = 'TRIANGLES' if blender_primitive.get('mode') in [4, None] else 'INDICES'
+        binary_data.set_extension('EXT_meshopt_compression', {
+            'buffer': compressed_indices,  # to be filled in later by the exporter, use data in placeholder for now
+            'byteOffset': None,  # to be filled in later by the exporter
+            'byteLength': len(compressed_indices),
+            'byteStride': 4 if component_type == gltf2_io_constants.ComponentType.UnsignedInt else 2,
+            'count': len(indices),
+            'mode': mode
+        })
+
     return gather_accessor(
         binary_data,
         component_type,
