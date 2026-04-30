@@ -747,7 +747,6 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
                 # TODO need to store the armature
                 pass
             elif extra_type == "materials":
-                # TODO will not work with modifiers applied
                 blender_element = export_settings['material_identifiers'][extra]['blender']
             elif extra_type == "lights":
                 blender_element = [m for m in bpy.data.lights if id(m) == extra][0]
@@ -756,7 +755,6 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
             elif extra_type == "scenes":
                 blender_element = [s for s in bpy.data.scenes if id(s) == extra][0]
             elif extra_type == "meshes":
-                # TODO will not work with modifiers applied
                 blender_element = export_settings['mesh_identifiers'][extra]['blender']
             elif extra_type == "animations":
                 blender_element = [a for a in bpy.data.actions if id(a) == extra][0]
