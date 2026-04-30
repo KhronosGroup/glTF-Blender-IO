@@ -98,6 +98,9 @@ def gather_primitives(
             # Force change name of material to get the tile number in the name
             material.name = material.name + "." + tile
 
+        if blender_mat is not None:
+            export_settings['material_identifiers'][id(blender_mat)]['gltf'] = material
+
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
             extensions=__gather_extensions(

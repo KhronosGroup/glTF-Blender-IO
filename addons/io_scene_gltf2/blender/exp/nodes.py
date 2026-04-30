@@ -316,6 +316,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 # modifiers changed them
                 materials = tuple(ms.material for ms in blender_object.material_slots)
                 __keep_material_info(materials, True, export_settings)
+                __keep_mesh_info(blender_object.data, blender_data, export_settings)
             else:
                 armature_modifiers = {}
                 if export_settings['gltf_skins']:
@@ -354,6 +355,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 # We need to store link between the original material and the tmp data material,
                 # Because of animation pointer NLA that will still have the original
                 __keep_material_info(materials, False, export_settings)
+                __keep_mesh_info(blender_object.data, blender_data, export_settings)
                 if len(materials) == 1 and materials[0] is None:
                     materials = tuple(ms.material for ms in blender_object.material_slots)
                     __keep_material_info(materials, True, export_settings)
@@ -371,6 +373,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
             # modifiers changed them
             materials = tuple(ms.material for ms in blender_object.material_slots)
             __keep_material_info(materials, True, export_settings)
+            __keep_mesh_info(blender_object.data, blender_data, export_settings)
 
         # retrieve armature
         # Because data will be transforms to skeleton space,
@@ -393,6 +396,13 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if export_settings['gltf_apply'] and modifiers is not None:
         blender_data_owner.to_mesh_clear()
     return result
+
+
+def __keep_mesh_info(original, mesh, export_settings):
+    if 'mesh_identifiers' not in export_settings.keys():
+        export_settings['mesh_identifiers'] = {}
+    export_settings['mesh_identifiers'][id(mesh)] = {}
+    export_settings['mesh_identifiers'][id(mesh)]['blender'] = original
 
 
 def __keep_material_info(materials, originals, export_settings):

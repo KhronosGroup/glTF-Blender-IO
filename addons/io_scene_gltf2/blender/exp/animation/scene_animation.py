@@ -143,8 +143,8 @@ def gather_scene_animations(export_settings):
 
             blender_material = export_settings['material_identifiers'][mat]['blender']
 
-            export_settings['ranges'][id(blender_material)] = {}
-            export_settings['ranges'][id(blender_material)][id(blender_material)] = {
+            export_settings['ranges'][mat] = {}
+            export_settings['ranges'][mat][mat] = {
                 'start': start_frame, 'end': end_frame}
 
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
@@ -179,8 +179,8 @@ def gather_scene_animations(export_settings):
 
             blender_light = [alight for alight in bpy.data.lights if id(alight) == light][0]
 
-            export_settings['ranges'][id(blender_light)] = {}
-            export_settings['ranges'][id(blender_light)][id(blender_light)] = {'start': start_frame, 'end': end_frame}
+            export_settings['ranges'][light] = {}
+            export_settings['ranges'][light][light] = {'start': start_frame, 'end': end_frame}
 
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, light, light, export_settings, add_drivers=False)
@@ -214,8 +214,8 @@ def gather_scene_animations(export_settings):
 
             blender_camera = [camera for camera in bpy.data.cameras if id(camera) == cam][0]
 
-            export_settings['ranges'][id(blender_camera)] = {}
-            export_settings['ranges'][id(blender_camera)][id(blender_camera)] = {'start': start_frame, 'end': end_frame}
+            export_settings['ranges'][cam] = {}
+            export_settings['ranges'][cam][cam] = {'start': start_frame, 'end': end_frame}
 
             if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
                 add_slide_data(start_frame, cam, cam, export_settings, add_drivers=False)
@@ -270,8 +270,7 @@ def gather_scene_animations(export_settings):
                     blender_element = armature.data.bones[[bone.name for bone in armature.data.bones].index(
                         [bone.name for bone in armature.data.bones if id(bone) == bone_id][0])]
                 elif extra_type == 'materials':
-                    blender_element = [mat for mat in bpy.data.materials if id(
-                        mat) == extra][0]  # TODO : will not work when apply modifier
+                    blender_element = export_settings['material_identifiers'][extra]['blender']
                 elif extra_type == 'lights':
                     blender_element = [light for light in bpy.data.lights if id(light) == extra][0]
                 elif extra_type == 'cameras':
@@ -281,7 +280,7 @@ def gather_scene_animations(export_settings):
                 elif extra_type == 'animations':
                     blender_element = [action for action in bpy.data.actions if id(action) == extra][0]
                 elif extra_type == 'meshes':
-                    blender_element = [mesh for mesh in bpy.data.meshes if id(mesh) == extra][0]
+                    blender_element = export_settings['mesh_identifiers'][extra]['blender']
                 else:
                     continue
 

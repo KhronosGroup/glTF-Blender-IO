@@ -194,21 +194,12 @@ def gather_actions_animations(export_settings):
 
     # Material animation
     if export_settings['gltf_export_anim_pointer']:
-        for mat_id in export_settings['material_identifiers'].keys():
+        for mat_id in export_settings['material_identifiers'].keys(
+        ) if 'material_identifiers' in export_settings.keys() else []:
 
-            animations_, merged_tracks = gather_material_action_animations(
-                mat_id, merged_tracks, len(animations), export_settings)
-            animations += animations_
-
-        # Light animation
-        # TODOPOINTER
-
-        # Camera animation
-        # TODOPOINTER
-
-    # Material animation
-    if export_settings['gltf_export_anim_pointer']:
-        for mat_id in export_settings['material_identifiers'].keys():
+            # Keep only materials that are really exported, not original onces
+            if 'gltf' not in export_settings['material_identifiers'][mat_id].keys():
+                continue
 
             animations_, merged_tracks = gather_material_action_animations(
                 mat_id, merged_tracks, len(animations), export_settings)
