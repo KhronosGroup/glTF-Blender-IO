@@ -39,7 +39,8 @@ def generate_extras(blender_element, blender_data_type, export_settings):
         'objects': 'nodes',
         'bones': 'nodes',
         'meshes': 'meshes',
-        'materials': 'materials'}.get(
+        'materials': 'materials',
+        'lights': 'extensions/KHR_lights_punctual/lights'}.get(
         blender_data_type,
         blender_data_type)
 

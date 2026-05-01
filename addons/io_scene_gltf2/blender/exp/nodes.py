@@ -246,6 +246,12 @@ def __gather_extensions(vnode, export_settings):
                     "light": light_extension
                 }
             )
+
+            # Link for KHR_animation_pointer on extras
+            if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+                export_settings['KHR_animation_pointer']['extras']['lights'][id(
+                    blender_lamp)]['glTF_extras'] = light_extension
+
             if len(export_settings['current_paths']) > 0:
                 export_settings['KHR_animation_pointer'][None]['lights'][id(blender_lamp)] = {}
                 export_settings['KHR_animation_pointer'][None]['lights'][id(

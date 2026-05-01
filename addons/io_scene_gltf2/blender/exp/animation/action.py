@@ -212,11 +212,22 @@ def gather_actions_animations(export_settings):
                     None, 'lights', id(light), merged_tracks, len(animations), export_settings)
                 animations += animations_
 
+                if export_settings['gltf_extras']:
+                    animations_, merged_tracks = gather_data_action_animations(
+                        "extras", 'lights', id(light), merged_tracks, len(animations), export_settings)
+                animations += animations_
+
+        # Camera
         if export_settings['gltf_cameras']:
             for cam in bpy.data.cameras:  # TODO check if camera is exported?
                 animations_, merged_tracks = gather_data_action_animations(
                     None, 'cameras', id(cam), merged_tracks, len(animations), export_settings)
                 animations += animations_
+
+                if export_settings['gltf_extras']:
+                    animations_, merged_tracks = gather_data_action_animations(
+                        "extras", 'cameras', id(cam), merged_tracks, len(animations), export_settings)
+                    animations += animations_
 
     if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
         # Fake an animation with all animations of the scene
@@ -1197,7 +1208,10 @@ def __get_data_blender_actions(blender_main_type,
         elif blender_data_type == "cameras":
             blender_element = [c for c in bpy.data.cameras if id(c) == data_uuid][0]
     else:
-        pass  # TODO
+        if blender_data_type == "lights":
+            blender_element = [l for l in bpy.data.lights if id(l) == data_uuid][0]
+        elif blender_data_type == "cameras":
+            blender_element = [c for c in bpy.data.cameras if id(c) == data_uuid][0]
 
     # No brodcast mode for data implemented (yet)
 

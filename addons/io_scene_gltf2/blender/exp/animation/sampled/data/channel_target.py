@@ -67,7 +67,7 @@ def __gather_node(blender_main_type, blender_type_data, blender_id, export_setti
                 used_blender_id = blender_id
             return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['glTF_extras']
     else:
-        pass # This should never happen
+        pass  # This should never happen
 
 
 def __gather_path(blender_main_type, blender_type_data, blender_id, channel, export_settings):
