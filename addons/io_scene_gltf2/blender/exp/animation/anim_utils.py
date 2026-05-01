@@ -286,7 +286,14 @@ def bake_animation(obj_uuid: str, animation_key: str, export_settings, mode=None
     return None
 
 
-def bake_data_animation(blender_type_data, blender_id, animation_key, slot_identifier, on_type, export_settings):
+def bake_data_animation(
+        blender_main_type,
+        blender_type_data,
+        blender_id,
+        animation_key,
+        slot_identifier,
+        on_type,
+        export_settings):
     # if there is no animation in file => no need to bake
     if len(bpy.data.actions) == 0:
         return None
@@ -297,23 +304,33 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, slot_ident
     if (export_settings['gltf_bake_animation'] is True
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS"):
 
-        if blender_type_data == "materials":
-            blender_data_object = export_settings['material_identifiers'][blender_id]['blender']
-        elif blender_type_data == "cameras":
-            blender_data_object = [i for i in bpy.data.cameras if id(i) == blender_id][0]
-        elif blender_type_data == "lights":
-            blender_data_object = [i for i in bpy.data.lights if id(i) == blender_id][0]
+        if blender_main_type is None:
+            if blender_type_data == "materials":
+                blender_element = export_settings['material_identifiers'][blender_id]['blender']
+            elif blender_type_data == "cameras":
+                blender_element = [i for i in bpy.data.cameras if id(i) == blender_id][0]
+            elif blender_type_data == "lights":
+                blender_element = [i for i in bpy.data.lights if id(i) == blender_id][0]
+            else:
+                pass  # Should not happen
         else:
-            pass  # Should not happen
+            if blender_type_data == "objects":
+                blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
+            elif blender_type_data == "meshes":
+                blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
+            elif blender_type_data == "materials":
+                blender_element = export_settings['material_identifiers'][blender_id]['blender']
+            else:
+                pass  # TODO
 
-        # Export now KHR_animation_pointer for materials / light / camera
-        for i in [a for a in export_settings['KHR_animation_pointer'][None][blender_type_data].keys() if a ==
-                  blender_id]:
-            if len(export_settings['KHR_animation_pointer'][None][blender_type_data][i]['paths']) == 0:
+        # Export now KHR_animation_pointer for materials / light / camera / extras
+        for i in [a for a in export_settings['KHR_animation_pointer']
+                  [blender_main_type][blender_type_data].keys() if a == blender_id]:
+            if len(export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][i]['paths']) == 0:
                 continue
 
             channels = gather_data_sampled_channels(
-                None,
+                blender_main_type,
                 blender_type_data, i, animation_key, slot_identifier, on_type, export_settings)
             if channels is not None:
                 total_channels.extend(channels)
@@ -323,7 +340,7 @@ def bake_data_animation(blender_type_data, blender_id, animation_key, slot_ident
             channels=total_channels,
             extensions=None,  # as other animations
             extras=None,  # Because there is no animation to get extras from
-            name=blender_data_object.name,  # Use object name as animation name
+            name=blender_element.name,  # Use object name as animation name
             samplers=[]
         )
 

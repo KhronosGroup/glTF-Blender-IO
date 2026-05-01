@@ -101,20 +101,31 @@ def gather_tracks_animations(export_settings):
         # Manage Material tracks (for KHR_animation_pointer)
         for mat in export_settings['KHR_animation_pointer'][None]['materials'].keys():
             animations_, merged_tracks = gather_data_track_animations(
-                'materials', mat, merged_tracks, len(animations), export_settings)
+                None, 'materials', mat, merged_tracks, len(animations), export_settings)
             animations += animations_
 
         # Manage Cameras tracks (for KHR_animation_pointer)
         for cam in export_settings['KHR_animation_pointer'][None]['cameras'].keys():
             animations_, merged_tracks = gather_data_track_animations(
-                'cameras', cam, merged_tracks, len(animations), export_settings)
+                None, 'cameras', cam, merged_tracks, len(animations), export_settings)
             animations += animations_
 
         # Manage lights tracks (for KHR_animation_pointer)
         for light in export_settings['KHR_animation_pointer'][None]['lights'].keys():
             animations_, merged_tracks = gather_data_track_animations(
-                'lights', light, merged_tracks, len(animations), export_settings)
+                None, 'lights', light, merged_tracks, len(animations), export_settings)
             animations += animations_
+
+        # Manage extras (for KHR_animation_pointer)
+        for extra_type in export_settings['KHR_animation_pointer']['extras'].keys():
+            for extra in export_settings['KHR_animation_pointer']['extras'][extra_type].keys():
+
+                if len(export_settings['KHR_animation_pointer']['extras'][extra_type][extra]['paths']) == 0:
+                    continue
+
+                animations_, merged_tracks = gather_data_track_animations(
+                    "extras", extra_type, extra, merged_tracks, len(animations), export_settings)
+                animations += animations_
 
     # We can now re-enable viewport updates, as we are done with muting/unmuting tracks
     if export_settings['gltf_optimize_disable_viewport']:
@@ -552,6 +563,7 @@ def prepare_tracks_range(obj_uuid, track_data, export_settings, with_driver=True
 
 
 def gather_data_track_animations(
+        blender_main_type: str,
         blender_type_data: str,
         blender_id: str,
         tracks: typing.Dict[str, typing.List[int]],
@@ -561,16 +573,26 @@ def gather_data_track_animations(
     animations = []
 
     # Collect all tracks affecting this object.
-    blender_tracks = __get_data_blender_tracks(blender_type_data, blender_id, export_settings)
+    blender_tracks = __get_data_blender_tracks(blender_main_type, blender_type_data, blender_id, export_settings)
 
-    if blender_type_data == "materials":
-        blender_data_object = export_settings['material_identifiers'][blender_id]['blender']
-    elif blender_type_data == "cameras":
-        blender_data_object = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
-    elif blender_type_data == "lights":
-        blender_data_object = [light for light in bpy.data.lights if id(light) == blender_id][0]
+    if blender_main_type is None:
+        if blender_type_data == "materials":
+            blender_element = export_settings['material_identifiers'][blender_id]['blender']
+        elif blender_type_data == "cameras":
+            blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
+        elif blender_type_data == "lights":
+            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
+        else:
+            pass  # Should not happen
     else:
-        pass  # Should not happen
+        if blender_type_data == "materials":
+            blender_element = export_settings['material_identifiers'][blender_id]['blender']
+        elif blender_type_data == "meshes":
+            blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
+        elif blender_type_data == "objects":
+            blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
+        else:
+            pass  # TODO
 
     # Keep current situation
     current_action = None
@@ -585,28 +607,28 @@ def gather_data_track_animations(
     restore_track_mute["LIGHT"] = {}
     restore_track_mute["CAMERA"] = {}
 
-    if blender_data_object.animation_data:
-        current_action = blender_data_object.animation_data.action
-        current_action_slot = blender_data_object.animation_data.action_slot
-        current_use_nla = blender_data_object.animation_data.use_nla
-        restore_tweak_mode = blender_data_object.animation_data.use_tweak_mode
+    if blender_element.animation_data:
+        current_action = blender_element.animation_data.action
+        current_action_slot = blender_element.animation_data.action_slot
+        current_use_nla = blender_element.animation_data.use_nla
+        restore_tweak_mode = blender_element.animation_data.use_tweak_mode
 
     if blender_type_data in ["materials", "lights"] \
-            and blender_data_object.node_tree is not None \
-            and blender_data_object.node_tree.animation_data is not None:
-        current_nodetree_action = blender_data_object.node_tree.animation_data.action
-        current_nodetree_action_slot = blender_data_object.node_tree.animation_data.action_slot
-        current_use_nla_node_tree = blender_data_object.node_tree.animation_data.use_nla
+            and blender_element.node_tree is not None \
+            and blender_element.node_tree.animation_data is not None:
+        current_nodetree_action = blender_element.node_tree.animation_data.action
+        current_nodetree_action_slot = blender_element.node_tree.animation_data.action_slot
+        current_use_nla_node_tree = blender_element.node_tree.animation_data.use_nla
 
     # Prepare export for obj
     solo_track = None
-    if blender_data_object.animation_data:
-        if blender_data_object.animation_data.action is not None:
-            blender_data_object.animation_data.action_slot = None
-        blender_data_object.animation_data.action = None
-        blender_data_object.animation_data.use_nla = True
+    if blender_element.animation_data:
+        if blender_element.animation_data.action is not None:
+            blender_element.animation_data.action_slot = None
+        blender_element.animation_data.action = None
+        blender_element.animation_data.use_nla = True
     # Remove any solo (starred) NLA track. Restored after export
-        for track in blender_data_object.animation_data.nla_tracks:
+        for track in blender_element.animation_data.nla_tracks:
             if track.is_solo:
                 solo_track = track
                 track.is_solo = False
@@ -614,39 +636,40 @@ def gather_data_track_animations(
 
     solo_track_sk = None
     if blender_type_data == ["materials", "lights"] \
-            and blender_data_object.node_tree is not None \
-            and blender_data_object.node_tree.animation_data is not None:
+            and blender_element.node_tree is not None \
+            and blender_element.node_tree.animation_data is not None:
         # Remove any solo (starred) NLA track. Restored after export
-        for track in blender_data_object.node_tree.animation_data.nla_tracks:
+        for track in blender_element.node_tree.animation_data.nla_tracks:
             if track.is_solo:
                 solo_track_sk = track
                 track.is_solo = False
                 break
 
     # Mute all channels
+    # TODO what to mute for extras meshes? for objects ?
     if blender_type_data == "materials":
         for track_group in blender_tracks.loop_on_type("MATERIAL"):
             for track in track_group.tracks:
-                restore_track_mute["MATERIAL"][track.idx] = blender_data_object.animation_data.nla_tracks[track.idx].mute
-                blender_data_object.animation_data.nla_tracks[track.idx].mute = True
+                restore_track_mute["MATERIAL"][track.idx] = blender_element.animation_data.nla_tracks[track.idx].mute
+                blender_element.animation_data.nla_tracks[track.idx].mute = True
         for track_group in blender_tracks.loop_on_type("NODETREE"):
             for track in track_group.tracks:
-                restore_track_mute["NODETREE"][track.idx] = blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute
-                blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute = True
+                restore_track_mute["NODETREE"][track.idx] = blender_element.node_tree.animation_data.nla_tracks[track.idx].mute
+                blender_element.node_tree.animation_data.nla_tracks[track.idx].mute = True
     elif blender_type_data == "cameras":
         for track_group in blender_tracks.loop_on_type("CAMERA"):
             for track in track_group.tracks:
-                restore_track_mute["CAMERA"][track.idx] = blender_data_object.animation_data.nla_tracks[track.idx].mute
-                blender_data_object.animation_data.nla_tracks[track.idx].mute = True
+                restore_track_mute["CAMERA"][track.idx] = blender_element.animation_data.nla_tracks[track.idx].mute
+                blender_element.animation_data.nla_tracks[track.idx].mute = True
     elif blender_type_data == "lights":
         for track_group in blender_tracks.loop_on_type("LIGHT"):
             for track in track_group.tracks:
-                restore_track_mute["LIGHT"][track.idx] = blender_data_object.animation_data.nla_tracks[track.idx].mute
-                blender_data_object.animation_data.nla_tracks[track.idx].mute = True
+                restore_track_mute["LIGHT"][track.idx] = blender_element.animation_data.nla_tracks[track.idx].mute
+                blender_element.animation_data.nla_tracks[track.idx].mute = True
         for track_group in blender_tracks.loop_on_type("NODETREE"):
             for track in track_group.tracks:
-                restore_track_mute["NODETREE"][track.idx] = blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute
-                blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute = True
+                restore_track_mute["NODETREE"][track.idx] = blender_element.node_tree.animation_data.nla_tracks[track.idx].mute
+                blender_element.node_tree.animation_data.nla_tracks[track.idx].mute = True
 
     # Export
 
@@ -654,17 +677,18 @@ def gather_data_track_animations(
     for track_data in blender_tracks.values():
         prepare_tracks_range(blender_id, track_data, export_settings, with_driver=False)
 
+        # TODO what for extras meshes ? For objects ?
         if track_data.on_type in ["MATERIAL", "CAMERA", "LIGHT"]:
             # Enable tracks
             for track in track_data.tracks:
-                blender_data_object.animation_data.nla_tracks[track.idx].mute = False
+                blender_element.animation_data.nla_tracks[track.idx].mute = False
         elif track_data.on_type == "NODETREE":
             # Enable tracks
             for track in track_data.tracks:
-                blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute = False
+                blender_element.node_tree.animation_data.nla_tracks[track.idx].mute = False
 
         # Export animation
-        animation = bake_data_animation(blender_type_data, blender_id, track_data.name,
+        animation = bake_data_animation(blender_main_type, blender_type_data, blender_id, track_data.name,
                                         None, track_data.on_type, export_settings)
         get_cache_data.reset_cache()
         if animation is not None:
@@ -680,55 +704,56 @@ def gather_data_track_animations(
         # Restoring muting
         if track_data.on_type in ["MATERIAL", "CAMERA", "LIGHT"]:
             for track in track_data.tracks:
-                blender_data_object.animation_data.nla_tracks[track.idx].mute = True
+                blender_element.animation_data.nla_tracks[track.idx].mute = True
         elif track_data.on_type == "NODETREE":
             for track in track_data.tracks:
-                blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute = True
+                blender_element.node_tree.animation_data.nla_tracks[track.idx].mute = True
 
     # Restoring
     if current_action is not None:
-        blender_data_object.animation_data.action = current_action
+        blender_element.animation_data.action = current_action
         if current_action is not None:
-            blender_data_object.animation_data.action_slot = current_action_slot
+            blender_element.animation_data.action_slot = current_action_slot
     if current_nodetree_action is not None:
-        blender_data_object.node_tree.animation_data.action = current_nodetree_action
+        blender_element.node_tree.animation_data.action = current_nodetree_action
         if current_nodetree_action is not None:
-            blender_data_object.node_tree.animation_data.action_slot = current_nodetree_action_slot
+            blender_element.node_tree.animation_data.action_slot = current_nodetree_action_slot
     if solo_track is not None:
         solo_track.is_solo = True
     if solo_track_sk is not None:
         solo_track_sk.is_solo = True
-    if blender_data_object.animation_data:
-        blender_data_object.animation_data.use_nla = current_use_nla
-        blender_data_object.animation_data.use_tweak_mode = restore_tweak_mode
+    if blender_element.animation_data:
+        blender_element.animation_data.use_nla = current_use_nla
+        blender_element.animation_data.use_tweak_mode = restore_tweak_mode
+        # TODO what for extras meshes ? For objects ?
         if blender_type_data == "materials":
             for track_group in blender_tracks.loop_on_type("MATERIAL"):
                 for track in track_group.tracks:
-                    blender_data_object.animation_data.nla_tracks[track.idx].mute = restore_track_mute["MATERIAL"][track.idx]
+                    blender_element.animation_data.nla_tracks[track.idx].mute = restore_track_mute["MATERIAL"][track.idx]
         elif blender_type_data == "cameras":
             for track_group in blender_tracks.loop_on_type("CAMERA"):
                 for track in track_group.tracks:
-                    blender_data_object.animation_data.nla_tracks[track.idx].mute = restore_track_mute["CAMERA"][track.idx]
+                    blender_element.animation_data.nla_tracks[track.idx].mute = restore_track_mute["CAMERA"][track.idx]
         elif blender_type_data == "lights":
             for track_group in blender_tracks.loop_on_type("LIGHT"):
                 for track in track_group.tracks:
-                    blender_data_object.animation_data.nla_tracks[track.idx].mute = restore_track_mute["LIGHT"][track.idx]
+                    blender_element.animation_data.nla_tracks[track.idx].mute = restore_track_mute["LIGHT"][track.idx]
     if blender_type_data in ["materials", "lights"] \
-            and blender_data_object.node_tree is not None \
-            and blender_data_object.node_tree.animation_data is not None:
-        blender_data_object.node_tree.animation_data.use_nla = current_use_nla_node_tree
+            and blender_element.node_tree is not None \
+            and blender_element.node_tree.animation_data is not None:
+        blender_element.node_tree.animation_data.use_nla = current_use_nla_node_tree
         for track_group in blender_tracks.loop_on_type("NODETREE"):
             for track in track_group.tracks:
-                blender_data_object.node_tree.animation_data.nla_tracks[track.idx].mute = restore_track_mute["NODETREE"][track.idx]
+                blender_element.node_tree.animation_data.nla_tracks[track.idx].mute = restore_track_mute["NODETREE"][track.idx]
 
     return animations, tracks
 
 
-def __get_data_blender_tracks(blender_type_data, blender_id, export_settings):
-    tracks_data = __get_nla_tracks_data(blender_type_data, blender_id, export_settings)
+def __get_data_blender_tracks(blender_main_type, blender_type_data, blender_id, export_settings):
+    tracks_data = __get_nla_tracks_data(blender_main_type, blender_type_data, blender_id, export_settings)
     if blender_type_data in ["materials", "lights"]:
         tracks_data_tree = __get_nla_tracks_material_node_tree(
-            blender_type_data, blender_id, export_settings)
+            blender_main_type, blender_type_data, blender_id, export_settings)
     else:
         tracks_data_tree = TracksData()
 
@@ -737,30 +762,44 @@ def __get_data_blender_tracks(blender_type_data, blender_id, export_settings):
     return tracks_data
 
 
-def __get_nla_tracks_data(blender_type_data, blender_id, export_settings):
-    if blender_type_data == "materials":
-        # Special cases for materials, where, when apply modifiers, the original material changed
-        blender_data_object = export_settings['material_identifiers'][blender_id]['blender']
-        on_type = "MATERIAL"
-    elif blender_type_data == "cameras":
-        blender_data_object = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
-        on_type = "CAMERA"
-    elif blender_type_data == "lights":
-        blender_data_object = [light for light in bpy.data.lights if id(light) == blender_id][0]
-        on_type = "LIGHT"
+def __get_nla_tracks_data(blender_main_type, blender_type_data, blender_id, export_settings):
+    if blender_main_type is None:
+        if blender_type_data == "materials":
+            # Special cases for materials, where, when apply modifiers, the original material changed
+            blender_element = export_settings['material_identifiers'][blender_id]['blender']
+            on_type = "MATERIAL"
+        elif blender_type_data == "cameras":
+            blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
+            on_type = "CAMERA"
+        elif blender_type_data == "lights":
+            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
+            on_type = "LIGHT"
+        else:
+            pass  # Should not happen
     else:
-        pass  # Should not happen
+        if blender_type_data == "materials":
+            # Special cases for materials, where, when apply modifiers, the original material changed
+            blender_element = export_settings['material_identifiers'][blender_id]['blender']
+            on_type = "MATERIAL"
+        elif blender_type_data == "meshes":
+            blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
+            on_type = "MESH"
+        elif blender_type_data == "objects":
+            blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
+            on_type = "OBJECT"
+        else:
+            pass  # TODO
 
-    if not blender_data_object.animation_data:
+    if not blender_element.animation_data:
         return TracksData()
-    if len(blender_data_object.animation_data.nla_tracks) == 0:
+    if len(blender_element.animation_data.nla_tracks) == 0:
         return TracksData()
 
     current_exported_tracks = []
 
     tracks_data = TracksData()
 
-    for idx_track, track in enumerate(blender_data_object.animation_data.nla_tracks):
+    for idx_track, track in enumerate(blender_element.animation_data.nla_tracks):
         if len(track.strips) == 0:
             continue
 
@@ -783,7 +822,7 @@ def __get_nla_tracks_data(blender_type_data, blender_id, export_settings):
                 # Store data
                 track_data = TrackData(
                     current_exported_tracks,
-                    blender_data_object.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
+                    blender_element.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
                     on_type
                 )
                 current_exported_tracks = []
@@ -800,7 +839,7 @@ def __get_nla_tracks_data(blender_type_data, blender_id, export_settings):
         # Store data for the last one
         track_data = TrackData(
             current_exported_tracks,
-            blender_data_object.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
+            blender_element.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
             on_type
         )
 
@@ -809,25 +848,35 @@ def __get_nla_tracks_data(blender_type_data, blender_id, export_settings):
     return tracks_data
 
 
-def __get_nla_tracks_material_node_tree(blender_type_data, blender_id, export_settings):
+def __get_nla_tracks_material_node_tree(blender_main_type, blender_type_data, blender_id, export_settings):
     on_type = "NODETREE"
-    if blender_type_data == "materials":
-        blender_object_data = export_settings['material_identifiers'][blender_id]['blender']
-    elif blender_type_data == "lights":
-        blender_object_data = [light for light in bpy.data.lights if id(light) == blender_id][0]
+    if blender_main_type is None:
+        if blender_type_data == "materials":
+            blender_element = export_settings['material_identifiers'][blender_id]['blender']
+        elif blender_type_data == "lights":
+            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
+    else:
+        if blender_type_data == "materials":
+            blender_element = export_settings['material_identifiers'][blender_id]['blender']
+        elif blender_type_data == "meshes":
+            blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
+        elif blender_type_data == "objects":
+            blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
+        else:
+            pass  # TODO
 
-    if not blender_object_data.node_tree:
+    if not blender_element.node_tree:
         return TracksData()
-    if not blender_object_data.node_tree.animation_data:
+    if not blender_element.node_tree.animation_data:
         return TracksData()
-    if len(blender_object_data.node_tree.animation_data.nla_tracks) == 0:
+    if len(blender_element.node_tree.animation_data.nla_tracks) == 0:
         return TracksData()
 
     current_exported_tracks = []
 
     tracks_data = TracksData()
 
-    for idx_track, track in enumerate(blender_object_data.node_tree.animation_data.nla_tracks):
+    for idx_track, track in enumerate(blender_element.node_tree.animation_data.nla_tracks):
         if len(track.strips) == 0:
             continue
 
@@ -850,7 +899,7 @@ def __get_nla_tracks_material_node_tree(blender_type_data, blender_id, export_se
                 # Store data
                 track_data = TrackData(
                     current_exported_tracks,
-                    blender_object_data.node_tree.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
+                    blender_element.node_tree.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
                     on_type
                 )
                 current_exported_tracks = []
@@ -868,7 +917,7 @@ def __get_nla_tracks_material_node_tree(blender_type_data, blender_id, export_se
         # Store data for the last one
         track_data = TrackData(
             current_exported_tracks,
-            blender_object_data.node_tree.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
+            blender_element.node_tree.animation_data.nla_tracks[current_exported_tracks[0].idx].name,
             on_type
         )
 
