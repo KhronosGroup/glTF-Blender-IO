@@ -320,6 +320,10 @@ def bake_data_animation(
                 blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
             elif blender_type_data == "materials":
                 blender_element = export_settings['material_identifiers'][blender_id]['blender']
+            elif blender_type_data == "cameras":
+                blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
+            elif blender_type_data == "lights":
+                blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
             else:
                 pass  # TODO
 

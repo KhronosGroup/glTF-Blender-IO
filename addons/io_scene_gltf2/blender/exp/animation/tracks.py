@@ -591,6 +591,10 @@ def gather_data_track_animations(
             blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
         elif blender_type_data == "objects":
             blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
+        elif blender_type_data == "cameras":
+            blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
+        elif blender_type_data == "lights":
+            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
         else:
             pass  # TODO
 
@@ -787,6 +791,12 @@ def __get_nla_tracks_data(blender_main_type, blender_type_data, blender_id, expo
         elif blender_type_data == "objects":
             blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
             on_type = "OBJECT"
+        elif blender_type_data == "lights":
+            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
+            on_type = "LIGHT"
+        elif blender_type_data == "cameras":
+            blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
+            on_type = "CAMERA"
         else:
             pass  # TODO
 
@@ -862,6 +872,8 @@ def __get_nla_tracks_material_node_tree(blender_main_type, blender_type_data, bl
             blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
         elif blender_type_data == "objects":
             blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
+        elif blender_type_data == "lights":
+            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
         else:
             pass  # TODO
 
