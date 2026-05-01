@@ -27,7 +27,7 @@ from .sampled.armature.action_sampled import gather_action_armature_sampled
 from .sampled.armature.channels import gather_sampled_bone_channel
 from .sampled.object.action_sampled import gather_action_object_sampled
 from .sampled.shapekeys.action_sampled import gather_action_sk_sampled
-from .sampled.data.action_sampled import gather_action_material_sampled, gather_action_mesh_sampled
+from .sampled.data.action_sampled import gather_action_material_sampled, gather_action_mesh_sampled, gather_action_data_sampled
 from .sampled.object.channels import gather_object_sampled_channels, gather_sampled_object_channel
 from .sampled.shapekeys.channels import gather_sampled_sk_channel
 from .drivers import get_sk_drivers, get_driver_on_shapekey
@@ -206,10 +206,17 @@ def gather_actions_animations(export_settings):
             animations += animations_
 
         # Light animation
-        # TODOPOINTER
+        if export_settings['gltf_lights']:
+            for light in bpy.data.lights:  # TODO check if light is exported?
+                animations_, merged_tracks = gather_data_action_animations(
+                    None, 'lights', id(light), merged_tracks, len(animations), export_settings)
+                animations += animations_
 
-        # Camera animation
-        # TODOPOINTER
+        if export_settings['gltf_cameras']:
+            for cam in bpy.data.cameras:  # TODO check if camera is exported?
+                animations_, merged_tracks = gather_data_action_animations(
+                    None, 'cameras', id(cam), merged_tracks, len(animations), export_settings)
+                animations += animations_
 
     if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
         # Fake an animation with all animations of the scene
@@ -368,6 +375,38 @@ def prepare_actions_range(export_settings):
                 start_frame_reference, start_frame, end_frame = __range_set(
                     mat_id, blender_action, slot, track, start_frame_reference, track_slide, export_settings)
 
+    # Data - lights range
+    if export_settings['gltf_export_anim_pointer'] and export_settings['gltf_lights']:
+        for light in bpy.data.lights:
+            light_id = id(light)
+            if light_id not in export_settings['ranges']:
+                export_settings['ranges'][light_id] = {}
+
+            blender_data = __get_data_blender_actions(None, 'lights', light_id, export_settings)
+            for action_data in blender_data.values():
+                blender_action = action_data.action
+                for slot in action_data.slots:
+                    track = slot.track
+
+                    start_frame_reference, start_frame, end_frame = __range_set(
+                        light_id, blender_action, slot, track, start_frame_reference, track_slide, export_settings)
+
+    # Data - cameras range
+    if export_settings['gltf_export_anim_pointer'] and export_settings['gltf_cameras']:
+        for cam in bpy.data.cameras:
+            cam_id = id(cam)
+            if cam_id not in export_settings['ranges']:
+                export_settings['ranges'][cam_id] = {}
+
+            blender_data = __get_data_blender_actions(None, 'cameras', cam_id, export_settings)
+            for action_data in blender_data.values():
+                blender_action = action_data.action
+                for slot in action_data.slots:
+                    track = slot.track
+
+                    start_frame_reference, start_frame, end_frame = __range_set(
+                        cam_id, blender_action, slot, track, start_frame_reference, track_slide, export_settings)
+
 
 def __range_set(used_id, blender_action, slot, track, start_frame_reference, track_slide, export_settings):
     start_frame = int(blender_action.frame_range[0])
@@ -443,6 +482,120 @@ def __range_set(used_id, blender_action, slot, track, start_frame_reference, tra
                 add_slide_data(start_frame, used_id, blender_action.name, export_settings)
 
     return new_start_frame_reference, start_frame, end_frame
+
+
+def gather_data_action_animations(blender_main_type, blender_type_data, blender_id, tracks, offset, export_settings):
+    """ Used for lights & cameras """
+    animations = []
+
+    blender_element = None
+    on_type = None
+    if blender_type_data == "lights":
+        blender_element = [l for l in bpy.data.lights if id(l) == blender_id][0]
+    elif blender_type_data == "cameras":
+        blender_element = [c for c in bpy.data.cameras if id(c) == blender_id][0]
+    else:
+        pass  # TODO
+
+    # Collect all 'actions' affecting this element.
+    blender_actions = __get_data_blender_actions(blender_main_type, blender_type_data, blender_id, export_settings)
+
+    for action_data in blender_actions.values():
+        all_channels = []
+        for slot in action_data.slots:
+            blender_action = action_data.action
+            track_name = slot.track
+
+            # Set action as active, to be able to bake if needed
+            if blender_element.animation_data.action is None \
+                    or (blender_element.animation_data.action.name != blender_action.name) \
+                    or (blender_element.animation_data.action_slot is None) \
+                    or (blender_element.animation_data.action_slot.handle != slot.slot.handle):
+
+                if blender_element.animation_data.is_property_readonly('action'):
+                    blender_element.animation_data.use_tweak_mode = False
+                try:
+                    # TODOPOinter hook
+                    blender_element.animation_data.action = blender_action
+                    blender_element.animation_data.action_slot = slot.slot
+                    # TODOPointer hook
+                except Exception as _e:
+                    error = "Action is readonly. Please check NLA editor"
+                    export_settings['log'].warning(
+                        "Animation '{}' could not be exported. Cause: {}".format(
+                            blender_action.name, error))
+                    continue
+            else:
+                # No need to switch action, but we call the hook anyway, in case of user extension
+                # TODOPOINTER hook
+                pass
+
+            if export_settings['gltf_force_sampling'] is True:
+                channels = gather_action_data_sampled(
+                    blender_main_type,
+                    blender_type_data,
+                    blender_id,
+                    blender_action,
+                    slot.slot.identifier,
+                    None,
+                    export_settings)
+                if channels:
+                    all_channels.extend(channels)
+            else:
+                pass
+                # channels = gather_animation_data_fcurves(  # TODO not implemented yet
+                #     blender_main_type,
+                #     blender_type_data,
+                #     blender_id,
+                #     blender_action,
+                #     slot.slot.identifier,
+                #     export_settings)
+                # if channels:
+                #     all_channels.extend(channels)
+
+        if len(all_channels) != 0:
+            animation = gltf2_io.Animation(
+                channels=all_channels,
+                name=blender_action.name,
+                extras=__gather_extras(blender_action, export_settings),
+                samplers=[],  # This will be generated later, in link_samplers
+                extensions=None
+            )
+            if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+                export_settings['KHR_animation_pointer']['extras']['animations'][id(
+                    blender_action)]['glTF_extras'] = animation
+
+            # Hook for user extensions
+            export_user_extensions(
+                'animation_action_hook',
+                export_settings,
+                animation,
+                blender_element,
+                action_data)
+
+            link_samplers(animation, export_settings)
+            animations.append(animation)
+
+            # Store data for merging animation later
+            if export_settings['gltf_merge_animation'] == "NLA_TRACK":
+                if track_name is not None:  # Do not take into account animation not in NLA
+                    # Do not take into account default NLA track names
+                    if not (track_name.startswith("NlaTrack") or track_name.startswith("[Action Stash]")):
+                        if track_name not in tracks.keys():
+                            tracks[track_name] = []
+                        # Store index of animation in animations
+                        tracks[track_name].append(offset + len(animations) - 1)
+            elif export_settings['gltf_merge_animation'] == "ACTION":
+                if action_data.name not in tracks.keys():
+                    tracks[action_data.name] = []
+                tracks[action_data.name].append(offset + len(animations) - 1)
+            elif export_settings['gltf_merge_animation'] == "NONE":
+                pass  # Nothing to store
+            else:
+                # This should not happen (or the developer added a new option, and forget to take it into account here)
+                pass
+
+    return animations, tracks
 
 
 def gather_material_action_animations(mat_uuid, tracks, offset, export_settings):
@@ -1027,6 +1180,49 @@ def gather_obj_action_animations(obj_uuid: int,
     export_user_extensions('animation_switch_loop_hook', export_settings, blender_object, True)
 
     return animations, tracks
+
+
+@cached
+def __get_data_blender_actions(blender_main_type,
+                               blender_data_type,
+                               data_uuid: str,
+                               export_settings
+                               ) -> ActionsData:
+
+    actions = ActionsData()
+
+    if blender_main_type is None:
+        if blender_data_type == "lights":
+            blender_element = [l for l in bpy.data.lights if id(l) == data_uuid][0]
+        elif blender_data_type == "cameras":
+            blender_element = [c for c in bpy.data.cameras if id(c) == data_uuid][0]
+    else:
+        pass  # TODO
+
+    # No brodcast mode for data implemented (yet)
+
+    # Data animation (not nodetree)
+    if blender_element and blender_element.animation_data is not None:
+        # Collect active action
+        if blender_element.animation_data.action is not None and blender_element.animation_data.action_slot is not None:
+
+            # Check the action is not in list of actions to ignore
+            if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(blender_element.animation_data.action) in [
+                    id(item.action) for item in bpy.data.scenes[0].gltf_action_filter if item.keep is False]:
+                pass  # We ignore this action
+            else:
+                # Store Action info
+                new_action = ActionData(blender_element.animation_data.action)
+                new_action.add_slot(
+                    blender_element.animation_data.action_slot,
+                    blender_element.animation_data.action_slot.target_id_type,
+                    None)  # Active action => No track
+                actions.add_action(new_action)
+
+        # Collection associated strips from NLA tracks
+        # TODO
+
+    return actions
 
 
 @cached

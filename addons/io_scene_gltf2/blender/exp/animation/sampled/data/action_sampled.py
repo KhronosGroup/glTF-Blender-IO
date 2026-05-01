@@ -37,6 +37,44 @@ def gather_action_mesh_sampled(obj_uuid: str,
     return channels
 
 
+def gather_action_data_sampled(
+        blender_main_type: str,
+        blender_type_data: str,
+        blender_id: str,
+        blender_action,
+        slot_identifier: str,
+        cache_key: str,
+        export_settings):
+    """ For lights, cameras """
+
+    # If no animation in file, no need to bake
+    if len(bpy.data.actions) == 0:
+        return None
+
+    channels = gather_data_sampled_channels(
+        blender_main_type,
+        blender_type_data,
+        blender_id,
+        blender_action.name if blender_action else cache_key,
+        slot_identifier if blender_action else None,
+        None,
+        export_settings)
+
+    if not channels:
+        return None
+
+    export_user_extensions(
+        'animation_channels_data_sampled',
+        export_settings,
+        channels,
+        None,  # TODOEXTRAS This can be either for materials animation pointer or for extras
+        blender_action,
+        slot_identifier,
+        cache_key)
+
+    return channels
+
+
 def gather_action_material_sampled(mat_uuid: str,
                                    blender_action,
                                    slot_identifier: str,

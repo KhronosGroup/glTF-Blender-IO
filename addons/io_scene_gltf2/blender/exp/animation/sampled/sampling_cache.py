@@ -69,6 +69,7 @@ def get_cache_data(path: str,
             material_caching(data, action_name, slot_identifier, frame, export_settings)
             light_nodetree_caching(data, action_name, slot_identifier, frame, export_settings)
             camera_caching(data, action_name, slot_identifier, frame, export_settings)
+            light_caching(data, action_name, slot_identifier, frame, export_settings)
             extras_caching(data, action_name, slot_identifier, frame, export_settings)
 
         frame += step
@@ -664,7 +665,7 @@ def light_caching(data, action_name, slot_identifier, frame, export_settings):
                 # classic case
                 val = blender_light.path_resolve(path)
                 if type(val).__name__ == "float":
-                    data[key1][key2][key3][path][frame] = val
+                    data[key1][key2][key3][key4][path][frame] = val
                 else:
                     # When color is coming from a node, it is 4 values (RGBA), so need to convert it to 3 values (RGB)
                     if export_settings['KHR_animation_pointer'][None]['lights'][light]['paths'][path]['length'] == 3 and len(
