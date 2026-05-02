@@ -72,11 +72,13 @@ class BlenderPointerAnim():
             target_id_type = "NODETREE"
         elif asset_type == "MATERIAL_PBR":
             target_id_type = "NODETREE"
+        elif asset_type == "EXTRAS":
+            target_id_type = target_id_type
         else:
             target_id_type = asset_type
 
         action, slot = BlenderPointerAnim.get_or_create_action_and_slot(
-            gltf, anim_idx, asset, asset_idx, target_id_type, name_=name, target_id_type=target_id_type)
+            gltf, anim_idx, asset, asset_idx, target_id_type, asset_type, name_=name, target_id_type=target_id_type)
 
         keys = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].input)
         values = BinaryData.get_data_from_accessor(gltf, animation.samplers[channel.sampler].output)
@@ -709,6 +711,19 @@ class BlenderPointerAnim():
             group_name = 'Extras'
             num_components = 1  # TODOEXTRAS
 
+        # Extras light
+        if len(
+                pointer_tab) == 7 and pointer_tab[2] == "KHR_lights_punctual" and pointer_tab[3] == "lights" and pointer_tab[5] == "extras":
+            blender_path = '["%s"]' % pointer_tab[6]
+            group_name = 'Extras'
+            num_components = 1  # TODOEXTRAS
+
+        # Extras camera
+        if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and pointer_tab[3] == "extras":
+            blender_path = '["%s"]' % pointer_tab[4]
+            group_name = 'Extras'
+            num_components = 1  # TODOEXTRAS
+
         if blender_path is None:
             gltf.log.warning("Unsupported animation target: %s" % pointer_tab)
             return  # Should not happen if all specification is managed
@@ -763,15 +778,30 @@ class BlenderPointerAnim():
             )
 
     @staticmethod
-    def get_or_create_action_and_slot(gltf, anim_idx, asset, asset_idx, asset_type, name_=None, target_id_type=None):
+    def get_or_create_action_and_slot(
+            gltf,
+            anim_idx,
+            asset,
+            asset_idx,
+            asset_type,
+            real_asset_type,
+            name_=None,
+            target_id_type=None):
         animation = gltf.data.animations[anim_idx]
 
         if asset_type == "CAMERA":
-            name = asset.name
-            stash = asset.blender_object_data
+            if real_asset_type == "EXTRAS":
+                name = name_ if name_ is not None else asset.name
+                stash = asset['blender_object_data']
+            else:
+                name = asset.name
+                stash = asset.blender_object_data
             target_id_type = "CAMERA"
         elif asset_type == "LIGHT":
-            name = asset['name']
+            if real_asset_type == "EXTRAS":
+                name = name_ if name_ is not None else asset['name']
+            else:
+                name = asset['name']
             stash = asset['blender_object_data']
             target_id_type = "LIGHT"
         elif asset_type == "MATERIAL":

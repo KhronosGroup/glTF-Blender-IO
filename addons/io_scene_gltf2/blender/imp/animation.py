@@ -178,6 +178,31 @@ class BlenderAnimation():
                         name=mat.name,
                         target_id_type='MATERIAL')
 
+            # Extras Light
+            if gltf.data.extensions is not None and "KHR_lights_punctual" in gltf.data.extensions:
+                for light_idx, light in enumerate(gltf.data.extensions["KHR_lights_punctual"]["lights"]):
+                    if light['extras'] is not None and "gltf_tmp_data_animations" in light['extras']:
+                        BlenderPointerAnim.anim(
+                            gltf,
+                            anim_idx,
+                            light['extras'],
+                            light_idx,
+                            'EXTRAS',
+                            name=light['name'] if 'name' in light else None,
+                            target_id_type='LIGHT')
+
+            # Extras Camera
+            for cam_idx, cam in enumerate(gltf.data.cameras if gltf.data.cameras else []):
+                if cam.extras is not None and "gltf_tmp_data_animations" in cam.extras:
+                    BlenderPointerAnim.anim(
+                        gltf,
+                        anim_idx,
+                        cam.extras,
+                        cam_idx,
+                        'EXTRAS',
+                        name=cam.name,
+                        target_id_type='CAMERA')
+
         # Push all actions onto NLA tracks with this animation's name
         track_name = gltf.data.animations[anim_idx].track_name
         for (obj, action, slot) in gltf.needs_stash:

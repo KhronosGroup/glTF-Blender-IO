@@ -169,6 +169,8 @@ class BlenderGlTF():
 
             for cam in gltf.data.cameras if gltf.data.cameras is not None else []:
                 cam.animations = {}
+                if cam.extras is not None:
+                    cam.extras["gltf_tmp_data_animations"] = {}
 
             for mat in gltf.data.materials if gltf.data.materials is not None else []:
                 if mat.extras is not None:
@@ -242,6 +244,8 @@ class BlenderGlTF():
                 light["animations"] = {}
                 if "spot" in light:
                     light["spot"]["animations"] = {}
+                if "extras" in light:
+                    light["extras"]["gltf_tmp_data_animations"] = {}
 
             for node in gltf.data.nodes if gltf.data.nodes is not None else []:
                 if node.extras is not None:
@@ -638,6 +642,24 @@ class BlenderGlTF():
                 gltf.data.materials[int(pointer_tab[2])].extras["gltf_tmp_data_animations"] = {}
             gltf.data.materials[int(pointer_tab[2])].extras["gltf_tmp_data_animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])].extras["gltf_tmp_data_animations"][anim_idx].append(channel_idx)
+
+        # Extras on Camera
+        if len(pointer_tab) == 5 and pointer_tab[1] == "cameras" and pointer_tab[3] == "extras":
+            if anim_idx not in gltf.data.cameras[int(pointer_tab[2])].extras.keys():
+                gltf.data.cameras[int(pointer_tab[2])].extras["gltf_tmp_data_animations"] = {}
+            gltf.data.cameras[int(pointer_tab[2])].extras["gltf_tmp_data_animations"][anim_idx] = []
+            gltf.data.cameras[int(pointer_tab[2])].extras["gltf_tmp_data_animations"][anim_idx].append(channel_idx)
+
+        # Extras on Light
+        if len(
+                pointer_tab) == 7 and pointer_tab[1] == "extensions" and pointer_tab[2] == "KHR_lights_punctual" and pointer_tab[3] == "lights" and pointer_tab[5] == "extras":
+            if anim_idx not in gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])].keys():
+                gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["extras"][
+                    "gltf_tmp_data_animations"] = {}
+            gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["extras"][
+                "gltf_tmp_data_animations"][anim_idx] = []
+            gltf.data.extensions["KHR_lights_punctual"]["lights"][int(pointer_tab[4])]["extras"][
+                "gltf_tmp_data_animations"][anim_idx].append(channel_idx)
 
     @staticmethod
     def manage_material_variants(gltf):
