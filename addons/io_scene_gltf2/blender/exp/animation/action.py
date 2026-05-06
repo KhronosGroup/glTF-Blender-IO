@@ -22,7 +22,7 @@ from ...com.data_path import is_bone_anim_channel, get_channelbag_for_slot
 from ...com.extras import generate_extras
 from ..cache import cached
 from ..tree import VExportNode
-from .fcurves.animation import gather_animation_fcurves, gather_animation_material_fcurves
+from .fcurves.animation import gather_animation_fcurves, gather_animation_material_fcurves, gather_animation_data_fcurves
 from .sampled.armature.action_sampled import gather_action_armature_sampled
 from .sampled.armature.channels import gather_sampled_bone_channel
 from .sampled.object.action_sampled import gather_action_object_sampled
@@ -553,16 +553,15 @@ def gather_data_action_animations(blender_main_type, blender_type_data, blender_
                 if channels:
                     all_channels.extend(channels)
             else:
-                pass
-                # channels = gather_animation_data_fcurves(  # TODO not implemented yet
-                #     blender_main_type,
-                #     blender_type_data,
-                #     blender_id,
-                #     blender_action,
-                #     slot.slot.identifier,
-                #     export_settings)
-                # if channels:
-                #     all_channels.extend(channels)
+                channels = gather_animation_data_fcurves(
+                    blender_main_type,
+                    blender_type_data,
+                    blender_id,
+                    blender_action,
+                    slot.slot.identifier,
+                    export_settings)
+                if channels:
+                    all_channels.extend(channels)
 
         if len(all_channels) != 0:
             animation = gltf2_io.Animation(

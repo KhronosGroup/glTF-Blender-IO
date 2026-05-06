@@ -56,12 +56,14 @@ def gather_fcurve_channel_target_extras(
         export_settings) -> gltf2_io.AnimationChannelTarget:
 
     # TODOEXTRAS: add other type
+    # factorize
     impacted_data = {
         'OBJECT': 'nodes',
         'BONE': 'nodes',
         'MESH': 'meshes',
         'MATERIAL': 'materials',
-        'NODETREE': 'materials'}.get(id_type)
+        'NODETREE': 'materials',
+        'LIGHT': 'extensions/KHR_lights_punctual/lights'}.get(id_type)
     if impacted_data is None:
         export_settings['log'].warning("Unsupported type for animation pointer extras: " + id_type)
         return None
@@ -76,11 +78,42 @@ def gather_fcurve_channel_target_extras(
     return animation_channel_target
 
 
+@cached
+def gather_fcurve_channel_target_data(
+        id_type: str,
+        elem_uuid: str,
+        prop: str,
+        export_settings) -> gltf2_io.AnimationChannelTarget:
+
+    impacted_data = {
+        'OBJECT': 'nodes',
+        'BONE': 'nodes',
+        'MESH': 'meshes',
+        'MATERIAL': 'materials',
+        'NODETREE': 'materials',
+        'LIGHT': 'extensions/KHR_lights_punctual/lights'}.get(id_type)
+
+    gltf_prop = {
+        'energy': 'intensity'
+    }.get(prop, prop)
+
+    animation_channel_target = gltf2_io.AnimationChannelTarget(
+        extensions=None,
+        extras=None,
+        node=__gather_node(id_type, elem_uuid, None, export_settings),
+        path="/" + impacted_data + "/XXX/" + gltf_prop
+    )
+
+    return animation_channel_target
+
+
 def __gather_node(id_type: str,
                   elem_uuid: str,
                   bone: typing.Union[str, None],
                   export_settings
                   ) -> gltf2_io.Node:
+
+    # TODO factorize with same on sample channel target
 
     if id_type == 'OBJECT':
 
@@ -100,6 +133,9 @@ def __gather_node(id_type: str,
 
     elif id_type == "NODETREE":
         return export_settings['material_identifiers'][elem_uuid]['gltf']
+
+    elif id_type == "LIGHT":
+        return export_settings['KHR_animation_pointer'][None]['lights'][elem_uuid]['glTF_light']
 
     else:
         pass  # TODO, not implemeted (yet) for custom prop on other type

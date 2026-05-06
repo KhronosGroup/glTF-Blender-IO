@@ -19,7 +19,7 @@ from .....io.com import gltf2_io
 from ....exp.cache import cached
 from ....com.data_path import get_target_object_path, get_target_property_name, get_rotation_modes, get_object_from_datapath, skip_sk, get_channelbag_for_slot
 from ....com.conversion import get_target, get_channel_from_target
-from .channel_target import gather_fcurve_channel_target, gather_fcurve_channel_target_extras
+from .channel_target import gather_fcurve_channel_target, gather_fcurve_channel_target_extras, gather_fcurve_channel_target_data
 from .sampler import gather_animation_fcurves_sampler
 
 
@@ -131,7 +131,6 @@ def get_channel_groups_material(mat_uuid: str, blender_action: bpy.types.Action,
     targets_additional = {}
     targets_extras = {}
 
-    # TODO check this is correct when applying modifiers
     blender_material = export_settings['material_identifiers'][mat_uuid]['blender']
 
     to_be_sampled = []  # (mat_uuid , type , prop )
@@ -344,11 +343,9 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                         elif slot.target_id_type == 'OBJECT':
                             extras_target = export_settings['vtree'].nodes[obj_uuid].node.extras
                         else:
-                            # Not supported (yet)
-                            # Set a value to avoid crash
-                            extras_target = export_settings['vtree'].nodes[obj_uuid].node.extras
+                            extras_target = None  # Should not happen if all is implemeted
 
-                        if extras_target.get(test_custom_prop) is not None:
+                        if extras_target is not None and extras_target.get(test_custom_prop) is not None:
                             # This is a custom property, we can export it as extra
                             target_data = targets_extras.get(target, {})
                             target_data['type'] = type_
@@ -496,8 +493,28 @@ def __get_channel_group_sorted(channels: typing.Tuple[bpy.types.FCurve], blender
     return channels
 
 
+def __gather_animation_fcurve_channel_data(id_type: str,
+                                           elem_uuid: str,
+                                           channel_group: typing.Tuple[bpy.types.FCurve],
+                                           bone: typing.Optional[str],
+                                           custom_range: typing.Optional[set],
+                                           export_settings
+                                           ) -> typing.Union[gltf2_io.AnimationChannel, None]:
+
+    sampler = __gather_sampler(id_type, elem_uuid, channel_group, bone, custom_range, True, export_settings)
+
+    animation_channel = gltf2_io.AnimationChannel(
+        extensions=None,
+        extras=None,
+        sampler=sampler,
+        target=__gather_target_data(id_type, elem_uuid, channel_group[0].data_path, export_settings)
+    )
+
+    return animation_channel
+
+
 def __gather_animation_fcurve_channel_extras(id_type: str,
-                                             obj_uuid: str,
+                                             elem_uuid: str,
                                              custom_property: str,
                                              channel_group: typing.Tuple[bpy.types.FCurve],
                                              bone: typing.Optional[str],
@@ -505,17 +522,17 @@ def __gather_animation_fcurve_channel_extras(id_type: str,
                                              export_settings
                                              ) -> typing.Union[gltf2_io.AnimationChannel, None]:
 
-    sampler = __gather_sampler(id_type, obj_uuid, channel_group, bone, custom_range, True, export_settings)
+    sampler = __gather_sampler(id_type, elem_uuid, channel_group, bone, custom_range, True, export_settings)
 
     animation_channel = gltf2_io.AnimationChannel(
         extensions=None,
         extras=None,
         sampler=sampler,
-        target=__gather_target_extras(id_type, obj_uuid, custom_property, export_settings)
+        target=__gather_target_extras(id_type, elem_uuid, custom_property, export_settings)
     )
 
     if id_type == "OBJECT":
-        blender_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+        blender_object = export_settings['vtree'].nodes[elem_uuid].blender_object
         export_user_extensions(
             'animation_gather_fcurve_channel_extras',
             export_settings,
@@ -562,26 +579,34 @@ def __gather_animation_fcurve_channel(id_type: str,
     return None
 
 
+def __gather_target_data(id_type,
+                         elem_uuid,
+                         prop,
+                         export_settings
+                         ) -> gltf2_io.AnimationChannelTarget:
+    return gather_fcurve_channel_target_data(id_type, elem_uuid, prop, export_settings)
+
+
 def __gather_target_extras(id_type,
-                           obj_uuid,
+                           elem_uuid,
                            custom_property,
                            export_settings
                            ) -> gltf2_io.AnimationChannelTarget:
-    return gather_fcurve_channel_target_extras(id_type, obj_uuid, custom_property, export_settings)
+    return gather_fcurve_channel_target_extras(id_type, elem_uuid, custom_property, export_settings)
 
 
 def __gather_target(id_type: str,
-                    obj_uuid: str,
+                    elem_uuid: str,
                     channel_group: typing.Tuple[bpy.types.FCurve],
                     bone: typing.Optional[str],
                     export_settings
                     ) -> gltf2_io.AnimationChannelTarget:
 
-    return gather_fcurve_channel_target(id_type, obj_uuid, channel_group, bone, export_settings)
+    return gather_fcurve_channel_target(id_type, elem_uuid, channel_group, bone, export_settings)
 
 
 def __gather_sampler(id_type: str,
-                     obj_uuid: str,
+                     elem_uuid: str,
                      channel_group: typing.Tuple[bpy.types.FCurve],
                      bone: typing.Optional[str],
                      custom_range: typing.Optional[set],
@@ -590,7 +615,7 @@ def __gather_sampler(id_type: str,
 
     return gather_animation_fcurves_sampler(
         id_type,
-        obj_uuid,
+        elem_uuid,
         channel_group,
         bone,
         custom_range,
@@ -657,3 +682,145 @@ def needs_baking(obj_uuid: str,
                     return True
 
     return False
+
+
+def gather_animation_data_fcurves_channels(
+    blender_main_type, blender_type_data, blender_id, blender_action, slot_identifier, export_settings
+):
+    channels_to_perform, to_be_sampled, additional_channels_to_perform, extras_channels_to_perform = get_channel_groups_data(
+        blender_main_type, blender_type_data, blender_id, blender_action, blender_action.slots[slot_identifier], export_settings)
+
+    custom_range = None
+    if blender_action.use_frame_range:
+        custom_range = (blender_action.frame_start, blender_action.frame_end)
+
+    channels = []
+    additional_samplers = []
+
+    for chan in [chan for chan in channels_to_perform.values() if len(chan['properties']) != 0]:
+        for channel_group in chan['properties'].values():
+            channel = __gather_animation_fcurve_channel_data(
+                chan['id_type'], chan['data_uuid'], channel_group, None, custom_range, export_settings)
+            if channel is not None:
+                channels.append(channel)
+
+    # Manage extras channels, only if user want to export custom properties as extra, and export animation pointer
+    if export_settings['gltf_extras'] \
+            and export_settings['gltf_export_anim_pointer']:
+        for chan in [chan for chan in extras_channels_to_perform.values() if len(chan['properties']) != 0]:
+            for custom_prop, channel_group in chan['properties'].items():
+                channel = __gather_animation_fcurve_channel_extras(
+                    chan['id_type'],
+                    chan['data_uuid'],
+                    custom_prop,
+                    channel_group,
+                    None,  # No bone for data
+                    custom_range,
+                    export_settings)
+                if channel is not None:
+                    channels.append(channel)
+
+    # # TODO addition samplers for materials ?
+
+    return channels, to_be_sampled, additional_samplers
+
+
+def get_channel_groups_data(
+        blender_main_type: str,
+        blender_type_data: str,
+        data_uuid: str,
+        blender_action: bpy.types.Action,
+        slot: bpy.types.ActionSlot,
+        export_settings):
+
+    targets = {}
+    targets_additional = {}
+    targets_extras = {}
+
+    if blender_main_type is None:
+        if blender_type_data == "lights":
+            blender_element = [l for l in bpy.data.lights if id(l) == data_uuid][0]
+        elif blender_type_data == "cameras":
+            blender_element = [c for c in bpy.data.cameras if id(c) == data_uuid][0]
+    else:
+        if blender_type_data == "lights":
+            blender_element = [l for l in bpy.data.lights if id(l) == data_uuid][0]
+        elif blender_type_data == "cameras":
+            blender_element = [c for c in bpy.data.cameras if id(c) == data_uuid][0]
+
+    to_be_sampled = []  # (data_uuid , type , prop )
+
+    channelbag = get_channelbag_for_slot(blender_action, slot)
+    fcurves = channelbag.fcurves if channelbag else []
+    for fcurve in fcurves:
+        type_ = None
+        # In some invalid files, channel hasn't any keyframes ... this channel need to be ignored
+        if len(fcurve.keyframe_points) == 0:
+            continue
+        # Example of target property: ["my_custom_property"],
+        # nodes["Principled BSDF"].inputs[0].default_value, use_backface_culling
+
+        if fcurve.data_path.startswith("["):
+            type_ = "EXTRA"
+        else:
+            type_ = "DATA"
+
+        if type_ == "EXTRA":
+            # No group by property, because we are going to export fcurve separately
+            # We are going to evaluate fcurve, so no check if need to be sampled
+
+            # We need here to split into 2 categories:
+            # extras (custom properties), and additional
+            # Extras will be managed only if user exports custom properties as extra, and
+            # export animation pointer
+            if export_settings['gltf_extras'] \
+                    and export_settings['gltf_export_anim_pointer']:
+                # Let's confirm that this is a custom property, and not a wrong path for example
+                if fcurve.data_path.startswith('["') and fcurve.data_path.endswith('"]'):
+                    test_custom_prop = fcurve.data_path[2:-2]
+                    if blender_element.get(test_custom_prop) is not None:
+                        # This is a custom property, we can export it as extra
+                        target_data = targets_extras.get(blender_element, {})
+                        target_data['type'] = type_
+                        target_data['data_uuid'] = data_uuid
+                        target_data['id_type'] = slot.target_id_type
+                        target_properties = target_data.get('properties', {})
+                        channels = target_properties.get(fcurve.data_path, [])
+                        channels.append(fcurve)
+                        target_properties[fcurve.data_path] = tuple(channels)
+                        target_data['properties'] = target_properties
+                        targets_extras[blender_element] = target_data
+                        continue
+        else:
+            target_property = get_target_property_name(fcurve.data_path)
+            if target_property is None:
+                target_property = fcurve.data_path
+            target_data = targets.get(blender_element, {})
+            target_data['type'] = type_
+            target_data['data_uuid'] = data_uuid
+            target_data['id_type'] = slot.target_id_type
+            target_properties = target_data.get('properties', {})
+            channels = target_properties.get(target_property, [])
+            channels.append(fcurve)
+            target_properties[target_property] = channels
+            target_data['properties'] = target_properties
+            targets[blender_element] = target_data
+            continue
+
+    for elem, target_data in targets.items():
+        # Check if the property can be exported without sampling
+        new_properties = {}
+        for prop in target_data['properties'].keys():
+            if needs_baking(
+                    data_uuid, target_data['properties'][prop], export_settings, check_armature=False) is True:
+                to_be_sampled.append((data_uuid, target_data['type'], get_channel_from_target(
+                    get_target(prop)), None))  # No bone for material
+            else:
+                new_properties[prop] = target_data['properties'][prop]
+
+        for prop in target_data['properties'].keys():
+            target_data['properties'][prop] = tuple(target_data['properties'][prop])
+
+    to_be_sampled = list(set(to_be_sampled))
+
+    return targets, to_be_sampled, targets_additional, targets_extras
