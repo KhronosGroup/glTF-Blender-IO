@@ -212,12 +212,22 @@ def gather_actions_animations(export_settings):
                     None, 'lights', id(light), merged_tracks, len(animations), export_settings)
                 animations += animations_
 
+                if export_settings['gltf_extras'] and export_settings['gltf_force_sampling'] is True:
+                    animations_, merged_tracks = gather_data_action_animations(
+                        "extras", 'lights', id(light), merged_tracks, len(animations), export_settings)
+                    animations += animations_
+
         # Camera
         if export_settings['gltf_cameras']:
             for cam in bpy.data.cameras:  # TODO check if camera is exported?
                 animations_, merged_tracks = gather_data_action_animations(
                     None, 'cameras', id(cam), merged_tracks, len(animations), export_settings)
                 animations += animations_
+
+                if export_settings['gltf_extras'] and export_settings['gltf_force_sampling'] is True:
+                    animations_, merged_tracks = gather_data_action_animations(
+                        "extras", 'cameras', id(cam), merged_tracks, len(animations), export_settings)
+                    animations += animations_
 
     if export_settings['gltf_animation_mode'] == "ACTIVE_ACTIONS":
         # Fake an animation with all animations of the scene

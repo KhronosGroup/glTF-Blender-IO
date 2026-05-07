@@ -63,7 +63,8 @@ def gather_fcurve_channel_target_extras(
         'MESH': 'meshes',
         'MATERIAL': 'materials',
         'NODETREE': 'materials',
-        'LIGHT': 'extensions/KHR_lights_punctual/lights'}.get(id_type)
+        'LIGHT': 'extensions/KHR_lights_punctual/lights',
+        'CAMERA': 'cameras'}.get(id_type)
     if impacted_data is None:
         export_settings['log'].warning("Unsupported type for animation pointer extras: " + id_type)
         return None
@@ -91,10 +92,17 @@ def gather_fcurve_channel_target_data(
         'MESH': 'meshes',
         'MATERIAL': 'materials',
         'NODETREE': 'materials',
-        'LIGHT': 'extensions/KHR_lights_punctual/lights'}.get(id_type)
+        'LIGHT': 'extensions/KHR_lights_punctual/lights',
+        'CAMERA': 'cameras'}.get(id_type)
 
+    # TODO complete the list of properties that need to be renamed for glTF
+    # TODO : use the paths stored instead ?
     gltf_prop = {
-        'energy': 'intensity'
+        'energy': 'intensity',
+        'lens': 'yfov',
+        'ortho_scale': 'xmag',
+        'clip_start': 'znear',
+        'clip_end': 'zfar',
     }.get(prop, prop)
 
     animation_channel_target = gltf2_io.AnimationChannelTarget(
@@ -136,6 +144,9 @@ def __gather_node(id_type: str,
 
     elif id_type == "LIGHT":
         return export_settings['KHR_animation_pointer'][None]['lights'][elem_uuid]['glTF_light']
+
+    elif id_type == "CAMERA":
+        return export_settings['KHR_animation_pointer'][None]['cameras'][elem_uuid]['glTF_camera']
 
     else:
         pass  # TODO, not implemeted (yet) for custom prop on other type
