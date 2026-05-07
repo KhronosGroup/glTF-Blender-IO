@@ -81,6 +81,9 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
                     'path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" and baseColorFactor_alpha_merged_already_done is True:
                 continue
 
+            if path.startswith("node_tree.") and not slot_identifier.startswith("NT"):
+                continue
+
             channel = gather_sampled_data_channel(
                 blender_main_type,
                 blender_type_data,
